@@ -6,6 +6,7 @@ using Pakuri.NewCore.Definitions.Choices;
 using Pakuri.NewCore.Definitions.Skills;
 using Pakuri.NewCore.Units.Models;
 
+/* 포로를 사용한 스킬 선택지 후보 생성과 확정을 관리한다. */
 namespace Pakuri.NewCore.Run.Services
 {
     public enum OfferingCandidateKind
@@ -19,6 +20,7 @@ namespace Pakuri.NewCore.Run.Services
 
     public sealed class OfferingCandidate
     {
+        /* Offering에 표시할 선택지 종류와 정의를 하나의 후보 값으로 묶는다. */
         internal OfferingCandidate(
             OfferingCandidateKind kind,
             SkillDefinition skill,
@@ -41,6 +43,7 @@ namespace Pakuri.NewCore.Run.Services
 
     public sealed class OfferingOffer
     {
+        /* 대상 몬스터·포로와 화면에 노출할 후보 목록을 하나의 offer로 묶는다. */
         internal OfferingOffer(
             MonsterModel monster,
             Prisoner prisoner,
@@ -64,6 +67,7 @@ namespace Pakuri.NewCore.Run.Services
         private readonly StageManager stage;
         private readonly Func<int, int> randomIndex;
 
+        /* Offering 후보 생성과 확정에 필요한 카탈로그·stage·난수 공급원을 연결한다. */
         public OfferingService(
             GameDefinitionCatalog catalog,
             StageManager stage,
@@ -79,6 +83,7 @@ namespace Pakuri.NewCore.Run.Services
 
         public OfferingOffer PendingOffer { get; private set; }
 
+        /* 몬스터와 포로 소유권을 확인하고 학습 가능한 후보를 섞어 제한 수만 노출한다. */
         public OfferingOffer GenerateCandidates(
             MonsterModel monster,
             Prisoner prisoner)
@@ -108,6 +113,7 @@ namespace Pakuri.NewCore.Run.Services
             return offer;
         }
 
+        /* 현재 offer의 후보 id를 확정해 Choice를 적용하고 포로를 소비한다. */
         public bool TryConfirm(string candidateId)
         {
             if (string.IsNullOrEmpty(candidateId)
@@ -150,6 +156,7 @@ namespace Pakuri.NewCore.Run.Services
             return true;
         }
 
+        /* 몬스터가 학습·선택할 수 있는 액티브·패시브 Choice 후보를 구성한다. */
         private List<OfferingCandidate> BuildEligible(
             MonsterModel monster)
         {
@@ -213,6 +220,7 @@ namespace Pakuri.NewCore.Run.Services
             return result;
         }
 
+        /* 후보 종류에 따라 액티브·패시브 학습 또는 Choice 선택을 적용한다. */
         private bool ApplyCandidate(
             MonsterModel monster,
             OfferingCandidate candidate)
@@ -251,6 +259,7 @@ namespace Pakuri.NewCore.Run.Services
             }
         }
 
+        /* 몬스터와 패시브 skill id에 정확히 일치하는 PassiveBase Choice를 찾는다. */
         private SkillChoiceDefinition FindPassiveBase(
             string monsterId,
             string skillId)
@@ -287,6 +296,7 @@ namespace Pakuri.NewCore.Run.Services
             return found;
         }
 
+        /* 몬스터가 현재 파티 소유이고 포로가 현재 인벤토리에 있는지 확인한다. */
         private void RequireOwnedInputs(
             MonsterModel monster,
             Prisoner prisoner)
@@ -317,6 +327,7 @@ namespace Pakuri.NewCore.Run.Services
             }
         }
 
+        /* Offering 후보 순서를 난수 공급원으로 섞는다. */
         private void Shuffle(List<OfferingCandidate> candidates)
         {
             for (int index = candidates.Count - 1;
@@ -330,6 +341,7 @@ namespace Pakuri.NewCore.Run.Services
             }
         }
 
+        /* 난수 공급원이 반환한 index가 후보 범위 안인지 검증한다. */
         private int ResolveRandomIndex(int count)
         {
             int index = randomIndex(count);
@@ -342,6 +354,7 @@ namespace Pakuri.NewCore.Run.Services
             return index;
         }
 
+        /* Choice 그룹 문자열을 Offering 후보 종류로 변환할 수 있는지 확인한다. */
         private static bool TryResolveChoiceKind(
             string choiceGroup,
             out OfferingCandidateKind kind)

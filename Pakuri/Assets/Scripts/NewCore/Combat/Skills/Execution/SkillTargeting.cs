@@ -3,15 +3,18 @@ using System.Collections.Generic;
 using Pakuri.NewCore.Definitions.Skills;
 using Pakuri.NewCore.Units.Models;
 
+/* 스킬의 진영·거리·체력·상태·투사체 교차 규칙으로 대상을 선정한다. */
 namespace Pakuri.NewCore.Combat.Skills.Execution
 {
     public readonly struct CombatFootprint
     {
+        /* 중심 기준 반너비·반높이로 축 정렬 전투 범위를 구성한다. */
         public CombatFootprint(float halfWidth, float halfHeight)
             : this(default, halfWidth, halfHeight)
         {
         }
 
+        /* 중심 offset과 반너비·반높이로 축 정렬 전투 범위를 구성한다. */
         public CombatFootprint(
             CombatVector2 centerOffset,
             float halfWidth,
@@ -41,6 +44,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
 
     public readonly struct ProjectileIntersection
     {
+        /* 투사체 선분이 유닛 범위에 진입한 비율과 교차 위치를 묶는다. */
         public ProjectileIntersection(
             UnitBaseModel target,
             float segmentFraction,
@@ -63,6 +67,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
         private readonly Func<int, int> randomIndex;
         private readonly Func<UnitBaseModel, CombatFootprint> footprintResolver;
 
+        /* 무작위 index 공급원과 선택적 유닛 footprint 해석기를 저장한다. */
         public SkillTargeting(
             Func<int, int> randomIndex,
             Func<UnitBaseModel, CombatFootprint> footprintResolver = null)
@@ -72,6 +77,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 footprintResolver ?? (_ => default);
         }
 
+        /* 스킬 기본 최대 대상 수로 등록 유닛에서 대상을 선정한다. */
         public IReadOnlyList<UnitBaseModel> Resolve(
             UnitBaseModel source,
             SkillDefinition skill,
@@ -86,6 +92,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 0);
         }
 
+        /* 추가 최대 대상 수를 반영해 등록 유닛에서 대상을 선정한다. */
         public IReadOnlyList<UnitBaseModel> Resolve(
             UnitBaseModel source,
             SkillDefinition skill,
@@ -155,6 +162,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return candidates.GetRange(0, maximum).AsReadOnly();
         }
 
+        /* 스킬 대상 선정 조건에 맞는 대상을 탐색해 반환한다. */
         public UnitBaseModel FindNearestLiving(
             UnitBaseModel source,
             IReadOnlyList<UnitBaseModel> candidates,
@@ -189,6 +197,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return nearest;
         }
 
+        /* 조건에 맞는 모든 생존 후보를 선택 규칙에 따른 안정 순서로 반환한다. */
         public IReadOnlyList<UnitBaseModel> ResolveOrderedAll(
             UnitBaseModel source,
             SkillDefinition skill,
@@ -212,6 +221,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return candidates.AsReadOnly();
         }
 
+        /* 중심점 반경 안의 생존 유닛을 입력 순서대로 반환한다. */
         public IReadOnlyList<UnitBaseModel> InRadius(
             IReadOnlyList<UnitBaseModel> candidates,
             CombatVector2 center,
@@ -244,6 +254,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return result.AsReadOnly();
         }
 
+        /* 투사체 선분과 후보 유닛 범위의 교차점을 거리 순으로 반환한다. */
         public IReadOnlyList<ProjectileIntersection> ResolveProjectileIntersections(
             UnitBaseModel source,
             SkillDefinition skill,
@@ -301,6 +312,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return intersections.AsReadOnly();
         }
 
+        /* target scope와 진영 규칙에 맞는 생존 유닛 후보 목록을 구성한다. */
         private static List<UnitBaseModel> BuildCandidates(
             UnitBaseModel source,
             SkillDefinition skill,
@@ -351,6 +363,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return result;
         }
 
+        /* 대상 선택 규칙에 따라 후보 목록을 안정적으로 정렬한다. */
         private static void Sort(
             UnitBaseModel source,
             SkillDefinition skill,
@@ -411,6 +424,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             });
         }
 
+        /* 동률의 원래 순서를 보존하며 비교 함수 기준으로 목록을 정렬한다. */
         private static void StableSort<T>(
             List<T> values,
             Comparison<T> comparison)
@@ -429,6 +443,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 선택 규칙 비교가 동률이면 시전자와의 거리로 우선순위를 정한다. */
         private static int CompareWithDistance(
             UnitBaseModel source,
             int primary,
@@ -441,6 +456,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                     (right.Position - source.Position).SqrMagnitude);
         }
 
+        /* 두 후보의 시전자 기준 제곱거리를 비교한다. */
         private static int CompareDistance(
             CombatVector2 center,
             UnitBaseModel left,
@@ -450,6 +466,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 (right.Position - center).SqrMagnitude);
         }
 
+        /* 스킬의 선택 상태 조건과 일치하지 않는 후보를 제거한다. */
         private static void FilterBySelectionStatus(
             List<UnitBaseModel> candidates,
             SkillDefinition skill,
@@ -478,6 +495,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 체력이 가득 찬 유닛을 최저 체력 회복 대상 후보에서 제거한다. */
         private static void FilterUnavailableSupportTargets(
             List<UnitBaseModel> candidates,
             SkillDefinition skill,
@@ -502,6 +520,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 두 후보의 현재 체력 비율을 비교한다. */
         private static int CompareHealthRatio(
             UnitBaseModel left,
             UnitBaseModel right)
@@ -515,6 +534,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return leftRatio.CompareTo(rightRatio);
         }
 
+        /* 선분과 축 정렬 범위의 교차 여부와 최초 진입 비율을 계산한다. */
         private static bool TryIntersectSegmentBounds(
             CombatVector2 start,
             CombatVector2 end,
@@ -549,6 +569,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return true;
         }
 
+        /* 선분과 축 정렬 범위의 한 축 교차 구간을 clipping한다. */
         private static bool ClipAxis(
             float origin,
             float delta,
@@ -576,6 +597,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return minimum <= maximum;
         }
 
+        /* 유닛에서 지정 status id 또는 전체 상태의 스택 합계를 계산한다. */
         private static int CountStacks(UnitBaseModel unit, string statusId)
         {
             int stacks = 0;
@@ -594,6 +616,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return stacks;
         }
 
+        /* 난수 공급원이 반환한 index가 후보 범위 안인지 검증한다. */
         private int ResolveRandomIndex(int count)
         {
             int index = randomIndex(count);
@@ -605,6 +628,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return index;
         }
 
+        /* 스킬 적중 수 열을 숫자·All/global 규칙으로 해석하고 미지정 시 1을 반환한다. */
         private static int ResolveHitTargetCount(SkillDefinition skill)
         {
             if (!skill.Columns.TryGetValue("hit_target_count", out object value)
@@ -631,6 +655,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                     : 1;
         }
 
+        /* 스킬 정의의 지정 열이 float면 반환하고 아니면 0을 반환한다. */
         internal static float ReadFloat(SkillDefinition skill, string column)
         {
             return skill.Columns.TryGetValue(column, out object value) && value is float number
@@ -638,6 +663,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 : 0f;
         }
 
+        /* 스킬 정의의 지정 열이 int면 반환하고 아니면 0을 반환한다. */
         internal static int ReadInt(SkillDefinition skill, string column)
         {
             return skill.Columns.TryGetValue(column, out object value) && value is int number
@@ -645,6 +671,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 : 0;
         }
 
+        /* 스킬 정의의 지정 열이 문자열이면 반환하고 아니면 null을 반환한다. */
         internal static string ReadString(SkillDefinition skill, string column)
         {
             return skill.Columns.TryGetValue(column, out object value) ? value as string : null;

@@ -5,10 +5,12 @@ using Pakuri.NewCore.Combat.Skills.Actors;
 using Pakuri.NewCore.Definitions.Skills;
 using Pakuri.NewCore.Units.Models;
 
+/* 투사체 스킬의 이동 Actor 생성과 충돌 효과 적용을 실행한다. */
 namespace Pakuri.NewCore.Combat.Skills.Execution
 {
     internal sealed class ProjectileExecutor : SkillExecutor
     {
+        /* 공통 카탈로그·대상 선정·Actor·이펙트 서비스를 투사체 실행기에 연결한다. */
         public ProjectileExecutor(
             GameDefinitionCatalog catalog,
             SkillTargeting targeting,
@@ -19,6 +21,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
         {
         }
 
+        /* 조준·속도·수명·burst·관통을 계산해 기본 및 후속 투사체 Actor를 등록한다. */
         public override bool Execute(
             InGameCombatManager combat,
             SkillExecutionRequest request,
@@ -176,6 +179,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return true;
         }
 
+        /* 충돌 지점의 단일 또는 범위 대상에 피해·상태·적중 완료 처리를 적용한다. */
         private void ApplyImpact(
             InGameCombatManager combat,
             SkillExecutionRequest request,
@@ -223,6 +227,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 시전자의 해당 스킬 탄창이 비어 있는지 확인한다. */
         private static bool IsMagazineEmpty(SkillExecutionRequest request)
         {
             if (request.Caster is Units.Models.MonsterModel monster

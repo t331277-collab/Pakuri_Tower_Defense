@@ -1,7 +1,9 @@
+/* StatusDefinition CSV 레코드를 형식화된 불변 런타임 정의로 표현한다. */
 namespace Pakuri.NewCore.Definitions.Status
 {
     public sealed class StatusDefinition : CsvDefinition
     {
+        /* CSV 레코드의 열 값을 읽어 StatusDefinition 불변 정의를 구성한다. */
         internal StatusDefinition(CsvDefinitionData data)
             : base(data)
         {

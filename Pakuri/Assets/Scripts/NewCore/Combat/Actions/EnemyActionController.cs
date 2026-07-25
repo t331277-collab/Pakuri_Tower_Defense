@@ -5,6 +5,7 @@ using Pakuri.NewCore.Definitions.Skills;
 using Pakuri.NewCore.Run;
 using Pakuri.NewCore.Units.Models;
 
+/* 적의 대상 선정, 스킬 사용, 이동, 넥서스 공격 행동을 진행한다. */
 namespace Pakuri.NewCore.Combat.Actions
 {
     public sealed class EnemyActionController : UnitActionController
@@ -15,6 +16,7 @@ namespace Pakuri.NewCore.Combat.Actions
         private readonly NexusModel nexus;
         private readonly float nexusContactDistance;
 
+        /* 적 모델과 대상 선정·이동·stage·넥서스 전투 의존성을 연결한다. */
         public EnemyActionController(
             EnemyModel enemy,
             InGameCombatManager combatManager,
@@ -46,6 +48,7 @@ namespace Pakuri.NewCore.Combat.Actions
         public bool IsComplete =>
             !Enemy.IsAlive || Enemy.HasContactedNexus;
 
+        /* 쿨다운을 진행하고 사용할 스킬·대상을 정해 공격 또는 이동 행동을 수행한다. */
         public void Tick(float deltaTime, IReadOnlyList<UnitBaseModel> registeredUnits)
         {
             if (IsComplete || !Enemy.AutoAttackEnabled)
@@ -89,6 +92,7 @@ namespace Pakuri.NewCore.Combat.Actions
             Execute(new SkillExecutionRequest(Enemy, skill, registeredUnits));
         }
 
+        /* 스킬 대상 규칙으로 후보를 선정하고 첫 대상을 반환한다. */
         private UnitBaseModel ResolveTarget(
             SkillDefinition skill,
             IReadOnlyList<UnitBaseModel> registeredUnits)
@@ -98,6 +102,7 @@ namespace Pakuri.NewCore.Combat.Actions
             return targets.Count > 0 ? targets[0] : null;
         }
 
+        /* 적 행동 조건에 맞는 대상을 탐색해 반환한다. */
         private UnitBaseModel FindNearestPlayer(IReadOnlyList<UnitBaseModel> registeredUnits)
         {
             List<UnitBaseModel> players = new List<UnitBaseModel>();
@@ -112,6 +117,7 @@ namespace Pakuri.NewCore.Combat.Actions
             return targeting.FindNearestLiving(Enemy, players, false);
         }
 
+        /* 현재 대상·아군 피해 상태와 쿨다운에 따라 사용할 적 스킬을 선택한다. */
         private SkillDefinition ResolveSkill(IReadOnlyList<UnitBaseModel> registeredUnits)
         {
             SkillDefinition slotB = Enemy.SkillBucket.SlotBSkill;
@@ -134,6 +140,7 @@ namespace Pakuri.NewCore.Combat.Actions
                 : null;
         }
 
+        /* 등록 유닛 중 체력이 감소한 생존 아군이 있는지 확인한다. */
         private static bool HasDamagedAlly(IReadOnlyList<UnitBaseModel> units)
         {
             for (int index = 0; index < units.Count; index++)
@@ -149,6 +156,7 @@ namespace Pakuri.NewCore.Combat.Actions
             return false;
         }
 
+        /* 아군이 없을 때 넥서스로 이동하고 도달하면 피해 요청을 한 번 기록한다. */
         private void TickNexus(float deltaTime)
         {
             if (Enemy.HasContactedNexus)

@@ -22,16 +22,19 @@ using Pakuri.NewCore.Spawn;
 using Pakuri.NewCore.Units.Models;
 using UnityEngine;
 
+/* NewCore 중앙 전투 tick과 스킬 계열별 실행 계약을 검증한다. */
 namespace Pakuri.NewCore.Tests
 {
     internal static class NewCoreTestFactory
     {
+        /* CreateComponent 테스트 대상을 필요한 의존성과 함께 구성한다. */
         public static T CreateComponent<T>()
             where T : Component
         {
             return new GameObject(typeof(T).Name).AddComponent<T>();
         }
 
+        /* CreateStageManager 테스트 대상을 필요한 의존성과 함께 구성한다. */
         public static StageManager CreateStageManager(
             RunSessionModel session,
             int initialGold,
@@ -45,6 +48,7 @@ namespace Pakuri.NewCore.Tests
             return manager;
         }
 
+        /* CreateStageManager 테스트 대상을 필요한 의존성과 함께 구성한다. */
         public static StageManager CreateStageManager(
             RunSessionModel session,
             GameDefinitionCatalog catalog,
@@ -60,6 +64,7 @@ namespace Pakuri.NewCore.Tests
             return manager;
         }
 
+        /* CreateSpawnManager 테스트 대상을 필요한 의존성과 함께 구성한다. */
         public static SpawnManager CreateSpawnManager(
             GameDefinitionCatalog catalog,
             Func<int, int> randomIndex,
@@ -76,12 +81,14 @@ namespace Pakuri.NewCore.Tests
         private GameDefinitionCatalog catalog;
 
         [SetUp]
+        /* 각 테스트가 독립적으로 실행되도록 임시 객체와 공유 상태를 초기화한다. */
         public void SetUp()
         {
             catalog = GameBootstrap.CreateCatalog(LoadSources());
         }
 
         [Test]
+        /* CentralTickUsesTheBlueprintOrderExactlyOnce 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void CentralTickUsesTheBlueprintOrderExactlyOnce()
         {
             RuntimeFixture fixture = CreateFixture("ariel");
@@ -107,6 +114,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* ActorRegistrationStartsNextTickAndRemovalWaitsForIterationEnd 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void ActorRegistrationStartsNextTickAndRemovalWaitsForIterationEnd()
         {
             EffectManager effects =
@@ -131,6 +139,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* CombatResultsApplyDamageShieldHealAndStatusThroughModelAuthority 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void CombatResultsApplyDamageShieldHealAndStatusThroughModelAuthority()
         {
             RuntimeFixture fixture = CreateFixture("ariel");
@@ -163,6 +172,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* TargetingUsesLivingSideSelectionHealthStacksAndManualPoint 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void TargetingUsesLivingSideSelectionHealthStacksAndManualPoint()
         {
             SkillTargeting targeting = new SkillTargeting(_ => 0);
@@ -200,6 +210,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* EveryActiveSkillFamilyHasADeterministicExecutionPath 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void EveryActiveSkillFamilyHasADeterministicExecutionPath()
         {
             AssertFamilyExecutes("ariel", "ariel-a");
@@ -221,6 +232,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* SelectedChoiceNodesChangeTheSkillPlanWithoutChangingDefinitions 테스트의 선행 런타임 상태를 구성한다. */
         public void SelectedChoiceNodesChangeTheSkillPlanWithoutChangingDefinitions()
         {
             RuntimeFixture baseline = CreateFixture("eve");
@@ -260,6 +272,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* ManualInputBoundaryRejectsUiAndAutoThenPreservesProjectileAim 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void ManualInputBoundaryRejectsUiAndAutoThenPreservesProjectileAim()
         {
             RuntimeFixture fixture = CreateFixture("ariel");
@@ -296,6 +309,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* MovementHonorsDeltaTimeStopDistanceAndMovementStatus 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void MovementHonorsDeltaTimeStopDistanceAndMovementStatus()
         {
             MonsterModel unit = CreateMonster("ariel", false);
@@ -318,6 +332,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* EnemyUsesNexusWhenNoLivingPlayerAndRequestsExactNexusDamage 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void EnemyUsesNexusWhenNoLivingPlayerAndRequestsExactNexusDamage()
         {
             RuntimeFixture fixture = CreateFixture("ariel");
@@ -346,6 +361,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* CooldownBlocksRepeatedExecutionUntilCentralTickCompletesIt 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void CooldownBlocksRepeatedExecutionUntilCentralTickCompletesIt()
         {
             RuntimeFixture fixture = CreateFixture("ariel");
@@ -364,6 +380,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* EveryReachableNodeAndTriggerContractHasAnExecutableRuntimePath 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void EveryReachableNodeAndTriggerContractHasAnExecutableRuntimePath()
         {
             Assert.That(
@@ -409,6 +426,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* EveryMonsterTriggerAcceptsItsMatchingEventAndRejectsANonOwner 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void EveryMonsterTriggerAcceptsItsMatchingEventAndRejectsANonOwner()
         {
             SkillTriggerDefinition[] triggers = catalog.Triggers.Values
@@ -550,6 +568,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* EveryMonsterBaseDefinitionCreatesItsRuntimeContract 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void EveryMonsterBaseDefinitionCreatesItsRuntimeContract()
         {
             SkillDefinition[] definitions = catalog.Skills.Values
@@ -642,6 +661,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* EveryMonsterChoiceSelectsThroughItsOwnedRuntimeContract 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void EveryMonsterChoiceSelectsThroughItsOwnedRuntimeContract()
         {
             SkillChoiceDefinition[] choices = catalog.Choices.Values
@@ -733,6 +753,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* EveryPlanGraphRowRunsInsideASuccessfulSkillContract 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void EveryPlanGraphRowRunsInsideASuccessfulSkillContract()
         {
             ChoiceNodeDefinition[][] graphs = catalog.ChoiceNodes
@@ -875,6 +896,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* EveryEffectGraphRowEntersItsActualRuntimeHandler 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void EveryEffectGraphRowEntersItsActualRuntimeHandler()
         {
             ChoiceNodeDefinition[][] graphs = catalog.ChoiceNodes
@@ -976,6 +998,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* ScheduledActorHonorsInitialDelayAndExactRepeatCount 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void ScheduledActorHonorsInitialDelayAndExactRepeatCount()
         {
             EffectManager effects =
@@ -1000,6 +1023,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* SkillOwnedEffectGraphAppliesStatusAndRuntimeModifier 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void SkillOwnedEffectGraphAppliesStatusAndRuntimeModifier()
         {
             RuntimeFixture fixture = CreateFixture("ariel");
@@ -1044,6 +1068,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* ProjectileBurstPiercesOrderedTargetsThroughScheduledActors 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void ProjectileBurstPiercesOrderedTargetsThroughScheduledActors()
         {
             RuntimeFixture fixture = CreateFixture("vega");
@@ -1072,6 +1097,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* CombatStartTriggerDispatchesOwnedEnemyBuff 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void CombatStartTriggerDispatchesOwnedEnemyBuff()
         {
             RuntimeFixture fixture = CreateFixture("ariel");
@@ -1087,6 +1113,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* ActionManagerStartsEachUnitOnceAndResetsTheBoundary 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void ActionManagerStartsEachUnitOnceAndResetsTheBoundary()
         {
             RuntimeFixture fixture = CreateFixture("ariel");
@@ -1117,6 +1144,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* ManualInputQueueAndProjectileAimEndWithCombat 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void ManualInputQueueAndProjectileAimEndWithCombat()
         {
             RuntimeFixture fixture = CreateFixture("ariel");
@@ -1142,6 +1170,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* CombatResultExposesPositiveHealthShieldAndLethalDamage 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void CombatResultExposesPositiveHealthShieldAndLethalDamage()
         {
             RuntimeFixture fixture = CreateFixture("ariel");
@@ -1191,6 +1220,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* ReachableSkillsCarryCompleteVisualSpecifications 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void ReachableSkillsCarryCompleteVisualSpecifications()
         {
             RuntimeFixture projectile = CreateFixture("ariel");
@@ -1323,6 +1353,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* ChoicePlanAndGraphsStayScopedToTheirTargetSkill 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void ChoicePlanAndGraphsStayScopedToTheirTargetSkill()
         {
             RuntimeFixture baseline = CreateFixture("ariel");
@@ -1359,6 +1390,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* LineHitUsesFullGeometryAndAppliesAttachedPayloadOnce 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void LineHitUsesFullGeometryAndAppliesAttachedPayloadOnce()
         {
             RuntimeFixture fixture = CreateFixture("vega");
@@ -1394,6 +1426,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* TargetStackRateAndRepeatPerTargetExecuteFromEveD 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void TargetStackRateAndRepeatPerTargetExecuteFromEveD()
         {
             RuntimeFixture fixture = CreateFixture("eve");
@@ -1430,6 +1463,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* AreaFieldReevaluatesRegisteredTargetsAtEveryTick 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void AreaFieldReevaluatesRegisteredTargetsAtEveryTick()
         {
             RuntimeFixture fixture = CreateFixture("eve");
@@ -1461,6 +1495,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* SourceShieldLayersExpireIndependentlyAndReflectAbsorbedDamage 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void SourceShieldLayersExpireIndependentlyAndReflectAbsorbedDamage()
         {
             RuntimeFixture fixture = CreateFixture("ariel");
@@ -1516,6 +1551,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* NexusContactIsRemovedAfterExactlyOneDamageRequest 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void NexusContactIsRemovedAfterExactlyOneDamageRequest()
         {
             RuntimeFixture fixture = CreateFixture("ariel");
@@ -1545,6 +1581,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* EndCombatUnsubscribesStatusExpiryAndClearsTriggerState 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void EndCombatUnsubscribesStatusExpiryAndClearsTriggerState()
         {
             RuntimeFixture fixture = CreateFixture("ariel");
@@ -1584,6 +1621,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* ThresholdStatusUsesNameMarkTenAndRunsAfterBaseStatus 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void ThresholdStatusUsesNameMarkTenAndRunsAfterBaseStatus()
         {
             float belowThreshold = ExecuteVegaBAndReadSilenceDuration(9);
@@ -1594,6 +1632,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* BurstIndexZeroAndFollowUpProjectileRemainSeparateShots 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void BurstIndexZeroAndFollowUpProjectileRemainSeparateShots()
         {
             RuntimeFixture fixture = CreateFixture("vega");
@@ -1644,6 +1683,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* TriggerOwnedGraphUsesItsDeclaredOwnerAndEventTarget 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void TriggerOwnedGraphUsesItsDeclaredOwnerAndEventTarget()
         {
             RuntimeFixture fixture = CreateFixture("vega");
@@ -1679,6 +1719,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* CentralTickAppliesLearnedPassiveWithoutExternalCallback 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void CentralTickAppliesLearnedPassiveWithoutExternalCallback()
         {
             RuntimeFixture fixture = CreateFixture("ariel");
@@ -1704,6 +1745,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* EqualDistanceOrderIsStableAndRejectedSelectionDoesNotMutate 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void EqualDistanceOrderIsStableAndRejectedSelectionDoesNotMutate()
         {
             MonsterModel source = CreateMonster("ariel", false);
@@ -1731,6 +1773,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* TriggeredSkillCarriesAncestryAndCannotRetriggerItsOrigin 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void TriggeredSkillCarriesAncestryAndCannotRetriggerItsOrigin()
         {
             RuntimeFixture fixture = CreateFixture("sein", () => 0f);
@@ -1765,6 +1808,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* VegaTargetingAndDeploymentUseOnlyTheConfiguredNameMark 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void VegaTargetingAndDeploymentUseOnlyTheConfiguredNameMark()
         {
             RuntimeFixture fixture = CreateFixture("vega");
@@ -1811,6 +1855,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* VegaFinalSentenceAddsConfiguredDamageForEachNameMarkStack 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void VegaFinalSentenceAddsConfiguredDamageForEachNameMarkStack()
         {
             float oneStackDamage = ExecuteVegaEAndReadDamage(1);
@@ -1820,6 +1865,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* RinExecuteCastAndCooldownRewardsRequireThresholdAndKill 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void RinExecuteCastAndCooldownRewardsRequireThresholdAndKill()
         {
             RuntimeFixture blocked = CreateFixture("rin");
@@ -1879,6 +1925,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* RinExecuteFiltersCandidatesBeforeLowestHealthSelection 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void RinExecuteFiltersCandidatesBeforeLowestHealthSelection()
         {
             RuntimeFixture fixture = CreateFixture("rin");
@@ -1915,6 +1962,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* SkillStatusMaximumStacksCapsRepeatedSeinEApplications 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void SkillStatusMaximumStacksCapsRepeatedSeinEApplications()
         {
             RuntimeFixture fixture = CreateFixture("sein");
@@ -1947,6 +1995,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* AreaRuntimeKindTriggersVegaICooldownRefund 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void AreaRuntimeKindTriggersVegaICooldownRefund()
         {
             RuntimeFixture fixture = CreateFixture("vega");
@@ -1992,6 +2041,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* TriggeredSeinBCastUsesSeinGOriginForReloadReduction 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void TriggeredSeinBCastUsesSeinGOriginForReloadReduction()
         {
             RuntimeFixture fixture = CreateFixture("sein", () => 0f);
@@ -2051,6 +2101,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* ManualClickDrainsCompleteUsableSkillBatchWithoutStaleRequests 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void ManualClickDrainsCompleteUsableSkillBatchWithoutStaleRequests()
         {
             RuntimeFixture fixture = CreateFixture("ariel");
@@ -2119,6 +2170,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* ManualSpatialFamiliesCreateActorsWithoutPointerTarget 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void ManualSpatialFamiliesCreateActorsWithoutPointerTarget()
         {
             RuntimeFixture projectile = CreateFixture("ariel");
@@ -2197,6 +2249,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* AreaAndLineReevaluateLateEntrantsAtAuthoredVisualScale 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void AreaAndLineReevaluateLateEntrantsAtAuthoredVisualScale()
         {
             RuntimeFixture area = CreateFixture("eve");
@@ -2271,6 +2324,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* ProjectileUsesFixedSweptDirectionAndFinitePierceBudget 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void ProjectileUsesFixedSweptDirectionAndFinitePierceBudget()
         {
             MonsterModel source = CreateMonster("ariel", false);
@@ -2342,6 +2396,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* EmptyProjectileKeepsDirectionUntilFallbackLifetime 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void EmptyProjectileKeepsDirectionUntilFallbackLifetime()
         {
             RuntimeFixture fixture = CreateFixture("ariel");
@@ -2371,6 +2426,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* PriestTargetsLowestHealthRatioAllyAndHealsAtItsPosition 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void PriestTargetsLowestHealthRatioAllyAndHealsAtItsPosition()
         {
             RuntimeFixture fixture = CreateFixture("ariel");
@@ -2441,6 +2497,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* ShieldUpIsTimedIncomingDamageBuffAndCreatesNoShield 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void ShieldUpIsTimedIncomingDamageBuffAndCreatesNoShield()
         {
             SkillDefinition shieldUp = catalog.GetSkill("ShieldUp");
@@ -2500,6 +2557,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* ArielBaseVisualSurvivesOneSecondMinimum 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void ArielBaseVisualSurvivesOneSecondMinimum()
         {
             RuntimeFixture fixture = CreateFixture("ariel");
@@ -2553,6 +2611,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* UnitAnchorAndAutomaticAreaUseResolvedTargetPositions 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void UnitAnchorAndAutomaticAreaUseResolvedTargetPositions()
         {
             RuntimeFixture anchored = CreateFixture("ariel");
@@ -2602,6 +2661,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* ArielBShieldsOnlyAlliesWithAuthoredFormulaAndEnhancement 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void ArielBShieldsOnlyAlliesWithAuthoredFormulaAndEnhancement()
         {
             RuntimeFixture fixture = CreateFixture("ariel");
@@ -2670,6 +2730,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* EveFShieldsOnlyAlliesWithLearnedLightningActiveSkills 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void EveFShieldsOnlyAlliesWithLearnedLightningActiveSkills()
         {
             RuntimeFixture fixture = CreateFixture("eve");
@@ -2713,6 +2774,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* EveFPassiveEnhancementsKeepTheirSeparateGraphEffects 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void EveFPassiveEnhancementsKeepTheirSeparateGraphEffects()
         {
             RuntimeFixture shocked = CreateFixture("eve");
@@ -2773,6 +2835,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* ArielEShieldGraphUsesFlatPlusSpellPowerOnly 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void ArielEShieldGraphUsesFlatPlusSpellPowerOnly()
         {
             RuntimeFixture fixture = CreateFixture("ariel");
@@ -2809,6 +2872,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* EnemyMovesTowardNexusWhenAllSkillsAreCoolingDown 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void EnemyMovesTowardNexusWhenAllSkillsAreCoolingDown()
         {
             RuntimeFixture fixture = CreateFixture("ariel");
@@ -2839,6 +2903,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* EnemyRetargetsLivingMonsterOnItsNextActionStep 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void EnemyRetargetsLivingMonsterOnItsNextActionStep()
         {
             RuntimeFixture fixture = CreateFixture("ariel");
@@ -2867,6 +2932,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* GuardianFlagCooldownFallsThroughToSlashTrace 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void GuardianFlagCooldownFallsThroughToSlashTrace()
         {
             RuntimeFixture fixture = CreateFixture("ariel");
@@ -2919,6 +2985,7 @@ namespace Pakuri.NewCore.Tests
                 Is.True);
         }
 
+        /* PrepareChoiceOwner 테스트의 선행 런타임 상태를 구성한다. */
         private MonsterModel PrepareChoiceOwner(
             SkillChoiceDefinition choice)
         {
@@ -2928,6 +2995,7 @@ namespace Pakuri.NewCore.Tests
             return owner;
         }
 
+        /* PrepareChoiceOwner 테스트의 선행 런타임 상태를 구성한다. */
         private void PrepareChoiceOwner(
             MonsterModel owner,
             SkillChoiceDefinition choice)
@@ -3003,6 +3071,7 @@ namespace Pakuri.NewCore.Tests
             }
         }
 
+        /* EnsureActiveSlot 검증 조건을 공통 보조 절차로 확인한다. */
         private void EnsureActiveSlot(
             MonsterModel owner,
             char slot)
@@ -3014,6 +3083,7 @@ namespace Pakuri.NewCore.Tests
             EnsureActiveSkill(owner, skill);
         }
 
+        /* EnsureActiveSkill 검증 조건을 공통 보조 절차로 확인한다. */
         private static void EnsureActiveSkill(
             MonsterModel owner,
             SkillDefinition skill)
@@ -3030,6 +3100,7 @@ namespace Pakuri.NewCore.Tests
                 skill.skill_id);
         }
 
+        /* AssertFamilyExecutes 검증 조건을 공통 보조 절차로 확인한다. */
         private void AssertFamilyExecutes(string monsterId, string skillId)
         {
             RuntimeFixture fixture = CreateFixture(monsterId);
@@ -3052,6 +3123,7 @@ namespace Pakuri.NewCore.Tests
                 skillId);
         }
 
+        /* AssertEnemyFamilyExecutes 검증 조건을 공통 보조 절차로 확인한다. */
         private void AssertEnemyFamilyExecutes(string enemyId, string skillId)
         {
             RuntimeFixture fixture = CreateFixture("ariel");
@@ -3072,6 +3144,7 @@ namespace Pakuri.NewCore.Tests
                 skillId);
         }
 
+        /* CreateFixture 테스트 대상을 필요한 의존성과 함께 구성한다. */
         private RuntimeFixture CreateFixture(
             string monsterId,
             Func<float> randomValue = null)
@@ -3128,6 +3201,7 @@ namespace Pakuri.NewCore.Tests
             return fixture;
         }
 
+        /* CreateMonster 테스트 대상을 필요한 의존성과 함께 구성한다. */
         private MonsterModel CreateMonster(string monsterId, bool autoSkill)
         {
             MonsterDefinition definition = catalog.GetMonster(monsterId);
@@ -3140,6 +3214,7 @@ namespace Pakuri.NewCore.Tests
                 autoSkill);
         }
 
+        /* CreateEnemy 테스트 대상을 필요한 의존성과 함께 구성한다. */
         private EnemyModel CreateEnemy(string enemyId)
         {
             EnemyDefinition definition = catalog.GetEnemy(enemyId);
@@ -3150,6 +3225,7 @@ namespace Pakuri.NewCore.Tests
                 (PassiveDefinition)catalog.GetSkill(definition.passive_id));
         }
 
+        /* ExecuteProjectileAndReadDamage 시나리오의 기대 동작과 상태 변화를 검증한다. */
         private float ExecuteProjectileAndReadDamage(
             RuntimeFixture fixture,
             string skillId,
@@ -3169,6 +3245,7 @@ namespace Pakuri.NewCore.Tests
             return before - target.CurrentHealth;
         }
 
+        /* SelectEnhancementsAndMaster 테스트의 선행 런타임 상태를 구성한다. */
         private void SelectEnhancementsAndMaster(
             RuntimeFixture fixture,
             string skillId,
@@ -3187,6 +3264,7 @@ namespace Pakuri.NewCore.Tests
                 Is.True);
         }
 
+        /* CountStatus 검증에 필요한 실제 런타임 값을 읽어 반환한다. */
         private static int CountStatus(UnitBaseModel unit, string statusId)
         {
             return unit.StatusEffects
@@ -3195,6 +3273,7 @@ namespace Pakuri.NewCore.Tests
                 .Sum(status => status.CurrentStacks);
         }
 
+        /* EnsureTriggerOwnership 검증 조건을 공통 보조 절차로 확인한다. */
         private void EnsureTriggerOwnership(
             MonsterModel owner,
             SkillTriggerDefinition trigger)
@@ -3263,6 +3342,7 @@ namespace Pakuri.NewCore.Tests
             }
         }
 
+        /* PrepareGraphOwnerAndResolveSkill 테스트의 선행 런타임 상태를 구성한다. */
         private SkillDefinition PrepareGraphOwnerAndResolveSkill(
             MonsterModel owner,
             ChoiceNodeDefinition node)
@@ -3317,6 +3397,7 @@ namespace Pakuri.NewCore.Tests
             return skill;
         }
 
+        /* PrepareGraphConditions 테스트의 선행 런타임 상태를 구성한다. */
         private void PrepareGraphConditions(
             RuntimeFixture fixture,
             IReadOnlyList<ChoiceNodeDefinition> graph,
@@ -3497,6 +3578,7 @@ namespace Pakuri.NewCore.Tests
             }
         }
 
+        /* ApplyContractStatus 테스트의 선행 런타임 상태를 구성한다. */
         private void ApplyContractStatus(
             UnitBaseModel target,
             UnitBaseModel source,
@@ -3529,6 +3611,7 @@ namespace Pakuri.NewCore.Tests
             }
         }
 
+        /* EnsureSkillLearned 검증 조건을 공통 보조 절차로 확인한다. */
         private void EnsureSkillLearned(
             MonsterModel owner,
             SkillDefinition skill)
@@ -3553,6 +3636,7 @@ namespace Pakuri.NewCore.Tests
             EnsureActiveSkill(owner, skill);
         }
 
+        /* ResolveMatchingEventSkill 시나리오의 기대 동작과 상태 변화를 검증한다. */
         private SkillDefinition ResolveMatchingEventSkill(
             SkillTriggerDefinition trigger)
         {
@@ -3583,6 +3667,7 @@ namespace Pakuri.NewCore.Tests
                 ?? fallback;
         }
 
+        /* MatchesTriggerRuntimeKind 테스트 계약과 실제 값의 일치 여부를 판정한다. */
         private static bool MatchesTriggerRuntimeKind(
             string configured,
             string runtimeKind)
@@ -3606,6 +3691,7 @@ namespace Pakuri.NewCore.Tests
             return false;
         }
 
+        /* MatchesTriggerAttribute 테스트 계약과 실제 값의 일치 여부를 판정한다. */
         private static bool MatchesTriggerAttribute(
             string configured,
             string attribute)
@@ -3621,6 +3707,7 @@ namespace Pakuri.NewCore.Tests
                 .Any(value => value.Trim() == resolved);
         }
 
+        /* ReadTriggerString 검증에 필요한 실제 런타임 값을 읽어 반환한다. */
         private static string ReadTriggerString(
             SkillTriggerDefinition trigger,
             string column)
@@ -3632,6 +3719,7 @@ namespace Pakuri.NewCore.Tests
                 : null;
         }
 
+        /* ReadTriggerInt 검증에 필요한 실제 런타임 값을 읽어 반환한다. */
         private static int ReadTriggerInt(
             SkillTriggerDefinition trigger,
             string column)
@@ -3644,6 +3732,7 @@ namespace Pakuri.NewCore.Tests
                     : 0;
         }
 
+        /* NodeContractKey 시나리오의 기대 동작과 상태 변화를 검증한다. */
         private static string NodeContractKey(
             ChoiceNodeDefinition node)
         {
@@ -3660,6 +3749,7 @@ namespace Pakuri.NewCore.Tests
                 + node.node_type_id;
         }
 
+        /* ReadRuntimeContractState 검증에 필요한 실제 런타임 값을 읽어 반환한다. */
         private static string ReadRuntimeContractState(
             RuntimeFixture fixture,
             UnitBaseModel target)
@@ -3689,6 +3779,7 @@ namespace Pakuri.NewCore.Tests
                             + pair.Value.RemainingReload)));
         }
 
+        /* ReadStringColumn 검증에 필요한 실제 런타임 값을 읽어 반환한다. */
         private static string ReadStringColumn(
             SkillDefinition definition,
             string column)
@@ -3700,6 +3791,7 @@ namespace Pakuri.NewCore.Tests
                 : null;
         }
 
+        /* ReadFloatColumn 검증에 필요한 실제 런타임 값을 읽어 반환한다. */
         private static float ReadFloatColumn(
             SkillDefinition definition,
             string column)
@@ -3712,6 +3804,7 @@ namespace Pakuri.NewCore.Tests
                     : 0f;
         }
 
+        /* ExecuteVegaBAndReadSilenceDuration 시나리오의 기대 동작과 상태 변화를 검증한다. */
         private float ExecuteVegaBAndReadSilenceDuration(int nameMarkStacks)
         {
             RuntimeFixture fixture = CreateFixture("vega");
@@ -3760,6 +3853,7 @@ namespace Pakuri.NewCore.Tests
                 .RemainingDuration.Value;
         }
 
+        /* ExecuteVegaEAndReadDamage 시나리오의 기대 동작과 상태 변화를 검증한다. */
         private float ExecuteVegaEAndReadDamage(int nameMarkStacks)
         {
             RuntimeFixture fixture = CreateFixture("vega");
@@ -3786,6 +3880,7 @@ namespace Pakuri.NewCore.Tests
             return before - target.CurrentHealth;
         }
 
+        /* LoadSources 테스트 입력 데이터를 원본 형식으로 불러온다. */
         private static Dictionary<string, string> LoadSources()
         {
             string csvRoot = Path.Combine(Application.dataPath, "CSVdata");

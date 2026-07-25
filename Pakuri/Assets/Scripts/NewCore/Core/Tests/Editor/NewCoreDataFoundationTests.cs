@@ -10,6 +10,7 @@ using Pakuri.NewCore.Definitions.Skills;
 using Pakuri.NewCore.Parsing;
 using UnityEngine;
 
+/* NewCore CSV 파싱, 정의 생성, 참조 무결성 실패 조건을 검증한다. */
 namespace Pakuri.NewCore.Tests
 {
     public sealed class NewCoreDataFoundationTests
@@ -24,6 +25,7 @@ namespace Pakuri.NewCore.Tests
             "Assets/CSVdata/stage_flow/StageReward.csv";
 
         [Test]
+        /* AllRetainedCsvFilesCreateImmutableDefinitions 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void AllRetainedCsvFilesCreateImmutableDefinitions()
         {
             GameDefinitionCatalog catalog = BootstrapCurrentData();
@@ -46,6 +48,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* QuotedFieldsRetainCommasAndEscapedQuotes 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void QuotedFieldsRetainCommasAndEscapedQuotes()
         {
             Dictionary<string, string> sources = LoadSources();
@@ -63,6 +66,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* QuotedMultilineFieldRetainsActualCrLf 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void QuotedMultilineFieldRetainsActualCrLf()
         {
             Dictionary<string, string> sources = LoadSources();
@@ -78,6 +82,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* BlankRequiredMonsterDisplayNameFailsInitialization 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void BlankRequiredMonsterDisplayNameFailsInitialization()
         {
             Dictionary<string, string> sources = LoadSources();
@@ -94,6 +99,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* BlankRequiredMonsterPrimaryAttributeFailsInitialization 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void BlankRequiredMonsterPrimaryAttributeFailsInitialization()
         {
             Dictionary<string, string> sources = LoadSources();
@@ -110,6 +116,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* DuplicateIdFailsInitialization 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void DuplicateIdFailsInitialization()
         {
             Dictionary<string, string> sources = LoadSources();
@@ -125,6 +132,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* InvalidPrimitiveFailsInitialization 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void InvalidPrimitiveFailsInitialization()
         {
             Dictionary<string, string> sources = LoadSources();
@@ -140,6 +148,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* InvalidFloatFailsInitialization 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void InvalidFloatFailsInitialization()
         {
             Dictionary<string, string> sources = LoadSources();
@@ -155,6 +164,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* InvalidBoolFailsInitialization 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void InvalidBoolFailsInitialization()
         {
             Dictionary<string, string> sources = LoadSources();
@@ -170,6 +180,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* InvalidEnumFailsInitialization 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void InvalidEnumFailsInitialization()
         {
             Dictionary<string, string> sources = LoadSources();
@@ -186,6 +197,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* MissingReferenceFailsInitialization 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void MissingReferenceFailsInitialization()
         {
             Dictionary<string, string> sources = LoadSources();
@@ -202,6 +214,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* MissingRetainedCsvFailsInitialization 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void MissingRetainedCsvFailsInitialization()
         {
             Dictionary<string, string> sources = LoadSources();
@@ -215,6 +228,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* UnterminatedQuotedFieldFailsInitialization 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void UnterminatedQuotedFieldFailsInitialization()
         {
             Dictionary<string, string> sources = LoadSources();
@@ -226,11 +240,13 @@ namespace Pakuri.NewCore.Tests
             Assert.That(exception.Message, Does.Contain("Unterminated quoted field"));
         }
 
+        /* BootstrapCurrentData 시나리오의 기대 동작과 상태 변화를 검증한다. */
         private static GameDefinitionCatalog BootstrapCurrentData()
         {
             return GameBootstrap.CreateCatalog(LoadSources());
         }
 
+        /* LoadSources 테스트 입력 데이터를 원본 형식으로 불러온다. */
         private static Dictionary<string, string> LoadSources()
         {
             string csvRoot = Path.Combine(Application.dataPath, "CSVdata");
@@ -251,6 +267,7 @@ namespace Pakuri.NewCore.Tests
             return sources;
         }
 
+        /* ReplaceOnce 테스트 입력의 지정 부분만 교체해 반환한다. */
         private static string ReplaceOnce(string source, string oldValue, string newValue)
         {
             int index = source.IndexOf(oldValue, StringComparison.Ordinal);

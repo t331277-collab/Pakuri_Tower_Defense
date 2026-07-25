@@ -41,6 +41,7 @@ using MonsterAnimationBehaviour = Pakuri.NewCore.Units.Actors.MonsterActor;
 using EnemyActorBehaviour = Pakuri.NewCore.Units.Actors.EnemyActor;
 using NexusActorBehaviour = Pakuri.NewCore.Units.Actors.NexusActor;
 
+/* NewCore scene·prefab·UI·effect 표현 연결을 검증한다. */
 namespace Pakuri.NewCore.Tests
 {
     public sealed class NewCorePresentationTests
@@ -97,6 +98,7 @@ namespace Pakuri.NewCore.Tests
         };
 
         [Test]
+        /* RuntimeCatalogBuildsCompleteRetainedDefinitionSet 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void RuntimeCatalogBuildsCompleteRetainedDefinitionSet()
         {
             var catalog = AssetDatabase.LoadAssetAtPath<
@@ -141,6 +143,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* RunStartSelectionUsesNewCoreAssetType 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void RunStartSelectionUsesNewCoreAssetType()
         {
             var selection = AssetDatabase.LoadAssetAtPath<
@@ -152,6 +155,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* RunSceneHasCompleteNewCoreComponentWiring 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void RunSceneHasCompleteNewCoreComponentWiring()
         {
             var scene = EditorSceneManager.OpenPreviewScene(RunScenePath);
@@ -262,6 +266,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* MainMenuSceneUsesNewCoreControllerAndRetainedReferences 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void MainMenuSceneUsesNewCoreControllerAndRetainedReferences()
         {
             var scene = EditorSceneManager.OpenPreviewScene(MainMenuScenePath);
@@ -291,6 +296,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* ActiveUnitAndSkillPrefabsUseNewCoreActors 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void ActiveUnitAndSkillPrefabsUseNewCoreActors()
         {
             for (var index = 0; index < MonsterPrefabPaths.Length; index++)
@@ -325,6 +331,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* EffectViewConsumesPrefabSpriteAnimatorScaleAndSorting 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void EffectViewConsumesPrefabSpriteAnimatorScaleAndSorting()
         {
             var catalog = AssetDatabase.LoadAssetAtPath<
@@ -424,6 +431,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* EnemyActorDisablesCollidersWhenItsModelIsDefeated 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void EnemyActorDisablesCollidersWhenItsModelIsDefeated()
         {
             var runtimeCatalog = AssetDatabase.LoadAssetAtPath<
@@ -458,6 +466,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* EnemyActorReceivesSkillActivationPresentation 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void EnemyActorReceivesSkillActivationPresentation()
         {
             var runtimeCatalog = AssetDatabase.LoadAssetAtPath<
@@ -495,6 +504,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* EnemyActorDisablesCollidersAfterNexusContact 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void EnemyActorDisablesCollidersAfterNexusContact()
         {
             var runtimeCatalog = AssetDatabase.LoadAssetAtPath<
@@ -529,6 +539,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* TerminalEnemyActorDoesNotRegrowAcrossSpawnSyncPasses 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void TerminalEnemyActorDoesNotRegrowAcrossSpawnSyncPasses()
         {
             var runtimeCatalog = AssetDatabase.LoadAssetAtPath<
@@ -689,6 +700,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* OfferingWritesOwnerAndExactDescriptionIntoDedicatedFields 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void OfferingWritesOwnerAndExactDescriptionIntoDedicatedFields()
         {
             var runtimeCatalog = AssetDatabase.LoadAssetAtPath<
@@ -779,6 +791,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* DamagePopupsRemainIndependentAndCapOnlyTheOldest 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void DamagePopupsRemainIndependentAndCapOnlyTheOldest()
         {
             var root = new GameObject("Actor");
@@ -883,6 +896,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* MonsterDeathFreezeSamplesLastFrameAndStopsAnimator 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void MonsterDeathFreezeSamplesLastFrameAndStopsAnimator()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<
@@ -943,6 +957,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* MonsterDeathFallbackReportsMissingAnimatorOnce 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void MonsterDeathFallbackReportsMissingAnimatorOnce()
         {
             var root = new GameObject("MissingAnimator");
@@ -969,6 +984,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* MonsterDeathFallbackReportsMissingController 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void MonsterDeathFallbackReportsMissingController()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<
@@ -1008,6 +1024,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* DebugBothEightKeysToggleRootAndLearningChangesOnlyGivenBucket 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void DebugBothEightKeysToggleRootAndLearningChangesOnlyGivenBucket()
         {
             var scene = EditorSceneManager.OpenPreviewScene(RunScenePath);
@@ -1111,6 +1128,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* DamageMeterOrdersSourcesAndUsesLeaderRelativeSegmentWidths 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void DamageMeterOrdersSourcesAndUsesLeaderRelativeSegmentWidths()
         {
             var runtimeCatalog = AssetDatabase.LoadAssetAtPath<
@@ -1301,6 +1319,7 @@ namespace Pakuri.NewCore.Tests
 
         private const int MaximumDamagePanels = 5;
 
+        /* CreateText 테스트 대상을 필요한 의존성과 함께 구성한다. */
         private static TMP_Text CreateText(
             Transform parent,
             string name)
@@ -1313,6 +1332,7 @@ namespace Pakuri.NewCore.Tests
             return target.GetComponent<TMP_Text>();
         }
 
+        /* CreateButton 테스트 대상을 필요한 의존성과 함께 구성한다. */
         private static Button CreateButton(
             Transform parent,
             string name)
@@ -1326,6 +1346,7 @@ namespace Pakuri.NewCore.Tests
             return target.GetComponent<Button>();
         }
 
+        /* CreateDamagePanel 테스트 대상을 필요한 의존성과 함께 구성한다. */
         private static void CreateDamagePanel(
             Transform parent,
             int slot)
@@ -1359,6 +1380,7 @@ namespace Pakuri.NewCore.Tests
             CreateText(meter.transform, "SkillName");
         }
 
+        /* DirectChildren 시나리오의 기대 동작과 상태 변화를 검증한다. */
         private static RectTransform[] DirectChildren(
             Transform parent,
             string name)
@@ -1376,6 +1398,7 @@ namespace Pakuri.NewCore.Tests
             return result.ToArray();
         }
 
+        /* AssertPrefabHas 검증 조건을 공통 보조 절차로 확인한다. */
         private static void AssertPrefabHas<TComponent>(string path)
             where TComponent : Component
         {
@@ -1395,6 +1418,7 @@ namespace Pakuri.NewCore.Tests
             }
         }
 
+        /* AssertPrefabIsClean 검증 조건을 공통 보조 절차로 확인한다. */
         private static void AssertPrefabIsClean(string path)
         {
             var root = PrefabUtility.LoadPrefabContents(path);
@@ -1409,6 +1433,7 @@ namespace Pakuri.NewCore.Tests
             }
         }
 
+        /* Single 시나리오의 기대 동작과 상태 변화를 검증한다. */
         private static TComponent Single<TComponent>(Scene scene)
             where TComponent : Component
         {
@@ -1417,6 +1442,7 @@ namespace Pakuri.NewCore.Tests
             return values[0];
         }
 
+        /* IEnumerable 시나리오의 기대 동작과 상태 변화를 검증한다. */
         private static IEnumerable<TComponent> Components<TComponent>(
             Scene scene)
             where TComponent : Component
@@ -1425,6 +1451,7 @@ namespace Pakuri.NewCore.Tests
                 root => root.GetComponentsInChildren<TComponent>(true));
         }
 
+        /* AssertNoMissingScripts 검증 조건을 공통 보조 절차로 확인한다. */
         private static void AssertNoMissingScripts(
             Scene scene,
             string source)
@@ -1435,6 +1462,7 @@ namespace Pakuri.NewCore.Tests
             }
         }
 
+        /* AssertNoMissingScripts 검증 조건을 공통 보조 절차로 확인한다. */
         private static void AssertNoMissingScripts(
             GameObject root,
             string source)
@@ -1446,6 +1474,7 @@ namespace Pakuri.NewCore.Tests
             Assert.That(count, Is.Zero, source);
         }
 
+        /* AssertNoPreviousAuthorityTypes 검증 조건을 공통 보조 절차로 확인한다. */
         private static void AssertNoPreviousAuthorityTypes(
             Scene scene,
             string source)
@@ -1456,6 +1485,7 @@ namespace Pakuri.NewCore.Tests
             }
         }
 
+        /* AssertNoPreviousAuthorityTypes 검증 조건을 공통 보조 절차로 확인한다. */
         private static void AssertNoPreviousAuthorityTypes(
             GameObject root,
             string source)
@@ -1474,6 +1504,7 @@ namespace Pakuri.NewCore.Tests
             }
         }
 
+        /* AssertRequiredReferences 검증 조건을 공통 보조 절차로 확인한다. */
         private static void AssertRequiredReferences(
             UnityEngine.Object target,
             params string[] propertyNames)
@@ -1494,6 +1525,7 @@ namespace Pakuri.NewCore.Tests
             }
         }
 
+        /* AssertArraySize 검증 조건을 공통 보조 절차로 확인한다. */
         private static void AssertArraySize(
             UnityEngine.Object target,
             string propertyName,
@@ -1506,6 +1538,7 @@ namespace Pakuri.NewCore.Tests
             Assert.That(property.arraySize, Is.EqualTo(expected));
         }
 
+        /* SetField 시나리오의 기대 동작과 상태 변화를 검증한다. */
         private static void SetField(
             object target,
             string fieldName,
@@ -1518,6 +1551,7 @@ namespace Pakuri.NewCore.Tests
             field.SetValue(target, value);
         }
 
+        /* SetProperty 시나리오의 기대 동작과 상태 변화를 검증한다. */
         private static void SetProperty(
             object target,
             string propertyName,
@@ -1532,6 +1566,7 @@ namespace Pakuri.NewCore.Tests
             property.SetValue(target, value);
         }
 
+        /* GetListCount 검증에 필요한 실제 런타임 값을 읽어 반환한다. */
         private static int GetListCount(
             object target,
             string fieldName)

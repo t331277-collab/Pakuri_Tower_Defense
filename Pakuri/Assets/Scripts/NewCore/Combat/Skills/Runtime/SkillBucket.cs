@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Pakuri.NewCore.Definitions.Skills;
 
+/* 유닛이 보유한 액티브·패시브 스킬과 쿨다운의 공통 저장소를 제공한다. */
 namespace Pakuri.NewCore.Combat.Skills.Runtime
 {
     public abstract class SkillBucket
@@ -15,6 +16,7 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
         private readonly IReadOnlyList<PassiveDefinition> readOnlyPassiveSkills;
         private readonly IReadOnlyDictionary<string, SkillCooldown> readOnlyCooldowns;
 
+        /* 내부 스킬·쿨다운 컬렉션의 읽기 전용 view를 구성한다. */
         protected SkillBucket()
         {
             readOnlyActiveSkills = new ReadOnlyCollection<SkillDefinition>(activeSkills);
@@ -29,6 +31,7 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
 
         public IReadOnlyDictionary<string, SkillCooldown> Cooldowns => readOnlyCooldowns;
 
+        /* skill id의 쿨다운을 반환하고 미등록 id면 예외를 발생시킨다. */
         public SkillCooldown GetCooldown(string skillId)
         {
             if (skillId == null)
@@ -44,6 +47,7 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
             return cooldown;
         }
 
+        /* 등록된 모든 액티브 스킬 쿨다운을 경과 시간만큼 진행한다. */
         public void TickCooldowns(float deltaTime)
         {
             foreach (SkillCooldown cooldown in cooldowns.Values)
@@ -52,6 +56,7 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
             }
         }
 
+        /* 등록된 모든 쿨다운을 다음 round 초기 상태로 되돌린다. */
         public void ResetRuntimeState()
         {
             foreach (SkillCooldown cooldown in cooldowns.Values)
@@ -60,6 +65,7 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
             }
         }
 
+        /* 액티브 스킬과 전용 쿨다운을 중복 없이 등록한다. */
         protected void RegisterActive(SkillDefinition definition)
         {
             if (definition == null)
@@ -74,6 +80,7 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
             }
         }
 
+        /* 패시브 스킬을 중복 없이 등록한다. */
         protected void RegisterPassive(PassiveDefinition definition)
         {
             if (definition == null)

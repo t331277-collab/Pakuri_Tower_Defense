@@ -5,6 +5,7 @@ using Pakuri.NewCore.Definitions.Choices;
 using Pakuri.NewCore.Definitions.Skills;
 using Pakuri.NewCore.Definitions.Units;
 
+/* 몬스터의 스킬 학습, 선택지 제한, 패시브 선행 조건을 관리한다. */
 namespace Pakuri.NewCore.Combat.Skills.Runtime
 {
     public sealed class MonsterSkillBucket : SkillBucket
@@ -21,6 +22,7 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
             new Dictionary<string, SkillChoiceDefinition>(StringComparer.Ordinal);
         private readonly IReadOnlyList<SkillChoiceDefinition> readOnlySelectedChoices;
 
+        /* 몬스터 정의의 기본 액티브와 PassiveBase 선행 조건 목록을 검증해 등록한다. */
         public MonsterSkillBucket(
             MonsterDefinition ownerDefinition,
             SkillDefinition defaultActiveSkill,
@@ -47,6 +49,7 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
         public IReadOnlyList<SkillChoiceDefinition> SelectedChoices =>
             readOnlySelectedChoices;
 
+        /* 소유권·슬롯·중복·학습 한도를 확인해 액티브 학습 가능 여부를 반환한다. */
         public bool CanLearnActive(SkillDefinition definition)
         {
             return IsOwnedSkill(definition)
@@ -55,6 +58,7 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
                 && !ContainsSkill(ActiveSkills, definition.skill_id);
         }
 
+        /* 학습 가능한 액티브를 등록하고 성공 여부를 반환한다. */
         public bool TryLearnActive(SkillDefinition definition)
         {
             if (!CanLearnActive(definition))
@@ -66,6 +70,7 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
             return true;
         }
 
+        /* 소유권·중복·선행 액티브를 확인해 패시브 학습 가능 여부를 반환한다. */
         public bool CanLearnPassive(PassiveDefinition definition)
         {
             return IsOwnedSkill(definition)
@@ -74,6 +79,7 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
                 && HasLearnedPassivePrerequisite(definition);
         }
 
+        /* 학습 가능한 패시브를 등록하고 성공 여부를 반환한다. */
         public bool TryLearnPassive(PassiveDefinition definition)
         {
             if (!CanLearnPassive(definition))
@@ -85,6 +91,7 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
             return true;
         }
 
+        /* 선택지 소유권·선행 조건·그룹 한도를 확인해 선택 가능 여부를 반환한다. */
         public bool CanSelectChoice(SkillChoiceDefinition choice)
         {
             if (choice == null
@@ -128,6 +135,7 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
             }
         }
 
+        /* 선택 가능한 Choice를 기록하고 성공 여부를 반환한다. */
         public bool TrySelectChoice(SkillChoiceDefinition choice)
         {
             if (!CanSelectChoice(choice))
@@ -139,6 +147,7 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
             return true;
         }
 
+        /* 동일 choice id가 이미 선택됐는지 확인한다. */
         private bool ContainsChoice(string choiceId)
         {
             for (int index = 0; index < selectedChoices.Count; index++)
@@ -155,6 +164,7 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
             return false;
         }
 
+        /* 몬스터에 속한 PassiveBase Choice를 선행 조건 조회용으로 등록한다. */
         private void RegisterPassiveBaseChoices(
             IEnumerable<SkillChoiceDefinition> availablePassiveBaseChoices)
         {
@@ -189,6 +199,7 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
             }
         }
 
+        /* 패시브가 요구하는 액티브 슬롯의 스킬을 이미 학습했는지 확인한다. */
         private bool HasLearnedPassivePrerequisite(
             PassiveDefinition passive)
         {
@@ -209,6 +220,7 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
                     passiveBase.target_skill_id);
         }
 
+        /* 지정 액티브 슬롯에 학습된 스킬이 있는지 확인한다. */
         private bool ContainsActiveSlot(string slot)
         {
             for (int index = 0; index < ActiveSkills.Count; index++)
@@ -225,6 +237,7 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
             return false;
         }
 
+        /* PassiveBase Choice가 요구하는 액티브 슬롯 식별자를 반환한다. */
         private static string ResolveRequiredActiveSlot(
             string passiveSlot)
         {
@@ -240,6 +253,7 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
                 : null;
         }
 
+        /* Choice가 현재 몬스터에 구성된 PassiveBase인지 확인한다. */
         private bool IsConfiguredPassiveBase(SkillChoiceDefinition choice)
         {
             return passiveBaseChoices.TryGetValue(
@@ -250,6 +264,7 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
                     || ContainsSkill(ActiveSkills, choice.target_skill_id));
         }
 
+        /* 지정 스킬과 Choice 그룹에 이미 선택된 항목 수를 계산한다. */
         private int CountChoices(string skillId, string choiceGroup)
         {
             int count = 0;
@@ -266,6 +281,7 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
             return count;
         }
 
+        /* 스킬 정의가 현재 몬스터 소유인지 검증한다. */
         private void ValidateOwnedSkill(SkillDefinition definition)
         {
             if (!IsOwnedSkill(definition))
@@ -276,6 +292,7 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
             }
         }
 
+        /* 스킬 정의의 monster id가 현재 버킷 소유자와 일치하는지 확인한다. */
         private bool IsOwnedSkill(SkillDefinition definition)
         {
             return definition != null
@@ -285,6 +302,7 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
                     StringComparison.Ordinal);
         }
 
+        /* 스킬 목록에 동일 skill id가 포함되어 있는지 확인한다. */
         private static bool ContainsSkill<T>(IReadOnlyList<T> skills, string skillId)
             where T : SkillDefinition
         {

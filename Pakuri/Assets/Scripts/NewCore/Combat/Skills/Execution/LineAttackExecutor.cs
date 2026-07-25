@@ -5,13 +5,16 @@ using Pakuri.NewCore.Combat.Skills.Actors;
 using Pakuri.NewCore.Definitions.Skills;
 using Pakuri.NewCore.Units.Models;
 
+/* 선형 공격 범위의 대상 선정과 피해 적용을 실행한다. */
 namespace Pakuri.NewCore.Combat.Skills.Execution
 {
     internal sealed class LineAttackExecutor : SkillExecutor
     {
+        /* 공통 카탈로그·대상 선정·Actor·이펙트 서비스를 선형 공격 실행기에 연결한다. */
         public LineAttackExecutor(GameDefinitionCatalog catalog, SkillTargeting targeting, SkillActorManager actors, EffectManager effects, Func<float> randomValue)
             : base(catalog, targeting, actors, effects, randomValue) { }
 
+        /* 조준 방향·폭·반복 시간을 계산하고 선형 범위 대상을 재평가하는 Actor를 등록한다. */
         public override bool Execute(InGameCombatManager combat, SkillExecutionRequest request, SkillExecutionPlan plan)
         {
             var ordered = plan.FilterTargets(Targeting.ResolveOrderedAll(
@@ -87,6 +90,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return true;
         }
 
+        /* 시전자 전방에서 지정 폭 안에 있는 후보를 입력 순서대로 반환한다. */
         private static System.Collections.Generic.IReadOnlyList<UnitBaseModel>
             ResolveLineTargets(
                 UnitBaseModel caster,

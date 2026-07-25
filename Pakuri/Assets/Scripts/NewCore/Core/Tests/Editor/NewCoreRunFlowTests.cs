@@ -23,6 +23,7 @@ using Pakuri.NewCore.Spawn;
 using Pakuri.NewCore.Units.Models;
 using UnityEngine;
 
+/* NewCore stage 진행, 보상, Offering, 현현 run 흐름을 검증한다. */
 namespace Pakuri.NewCore.Tests
 {
     public sealed class NewCoreRunFlowTests
@@ -30,12 +31,14 @@ namespace Pakuri.NewCore.Tests
         private GameDefinitionCatalog catalog;
 
         [SetUp]
+        /* 각 테스트가 독립적으로 실행되도록 임시 객체와 공유 상태를 초기화한다. */
         public void SetUp()
         {
             catalog = GameBootstrap.CreateCatalog(LoadSources());
         }
 
         [Test]
+        /* SpawnSequenceUsesCsvOrderIntervalBossAndPosition 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void SpawnSequenceUsesCsvOrderIntervalBossAndPosition()
         {
             RunFixture fixture = CreateRun(
@@ -74,6 +77,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* PhaseThreeDefeatSignalEntersRewardAndGrantsRunRewards 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void PhaseThreeDefeatSignalEntersRewardAndGrantsRunRewards()
         {
             RunFixture fixture = CreateRun(
@@ -134,6 +138,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* EncounterBossRewardUsesTheActuallySelectedBoss 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void EncounterBossRewardUsesTheActuallySelectedBoss()
         {
             RunFixture fixture = CreateRun(
@@ -163,6 +168,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* StartCurrentDayRejectsActiveAndRewardStateReentry 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void StartCurrentDayRejectsActiveAndRewardStateReentry()
         {
             RunFixture active = CreateRun(
@@ -206,6 +212,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* RewardRejectsAForeignSpawnManagerWithoutMutation 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void RewardRejectsAForeignSpawnManagerWithoutMutation()
         {
             RunFixture fixture = CreateRun(
@@ -237,6 +244,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* OfferingKeepsPrisonerUntilAVisibleCandidateIsConfirmed 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void OfferingKeepsPrisonerUntilAVisibleCandidateIsConfirmed()
         {
             RunFixture fixture = CreateRun(
@@ -276,6 +284,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* OfferingUsesBucketPassiveSlotPrerequisites 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void OfferingUsesBucketPassiveSlotPrerequisites()
         {
             RunFixture fixture = CreateRun(
@@ -318,6 +327,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* OfferingWithNoEligibleCandidatesDoesNotConsumePrisoner 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void OfferingWithNoEligibleCandidatesDoesNotConsumePrisoner()
         {
             RunFixture fixture = CreateRun(
@@ -348,6 +358,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* ManifestationConsumesOnAttemptThenSupportsSkipAndRecruit 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void ManifestationConsumesOnAttemptThenSupportsSkipAndRecruit()
         {
             RunFixture fixture = CreateRun(
@@ -423,6 +434,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* RewardCompletionClearsPrisonersResetsPartyAndStartsNextDay 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void RewardCompletionClearsPrisonersResetsPartyAndStartsNextDay()
         {
             RunFixture fixture = CreateRun(
@@ -464,6 +476,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* ActionLifecycleClearsEffectsBeforeStartingTheNextDay 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void ActionLifecycleClearsEffectsBeforeStartingTheNextDay()
         {
             RunFixture fixture = CreateRun(
@@ -581,6 +594,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* FinalRewardCompletesRunAndNexusDeathSignalsDefeat 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void FinalRewardCompletesRunAndNexusDeathSignalsDefeat()
         {
             RunFixture victory = CreateRun(
@@ -623,6 +637,7 @@ namespace Pakuri.NewCore.Tests
             Assert.That(defeat.Stage.IsCombatActive, Is.False);
         }
 
+        /* CreateRun 테스트 대상을 필요한 의존성과 함께 구성한다. */
         private RunFixture CreateRun(
             string monsterId,
             int day,
@@ -660,6 +675,7 @@ namespace Pakuri.NewCore.Tests
             };
         }
 
+        /* CreateCombat 테스트 대상을 필요한 의존성과 함께 구성한다. */
         private InGameCombatManager CreateCombat(
             Func<float> randomValue)
         {
@@ -675,6 +691,7 @@ namespace Pakuri.NewCore.Tests
             return new InGameCombatManager(randomValue, execution);
         }
 
+        /* CreateMonster 테스트 대상을 필요한 의존성과 함께 구성한다. */
         private MonsterModel CreateMonster(
             string monsterId,
             bool autoSkill)
@@ -690,6 +707,7 @@ namespace Pakuri.NewCore.Tests
                 autoSkill);
         }
 
+        /* DefeatAllSpawned 테스트의 선행 런타임 상태를 구성한다. */
         private static void DefeatAllSpawned(RunFixture fixture)
         {
             foreach (SpawnedEnemyRecord record
@@ -699,6 +717,7 @@ namespace Pakuri.NewCore.Tests
             }
         }
 
+        /* ExhaustLearning 테스트의 선행 런타임 상태를 구성한다. */
         private void ExhaustLearning(MonsterModel monster)
         {
             bool changed;
@@ -732,6 +751,7 @@ namespace Pakuri.NewCore.Tests
             while (changed);
         }
 
+        /* LearnedCount 검증에 필요한 실제 런타임 값을 읽어 반환한다. */
         private static int LearnedCount(MonsterModel monster)
         {
             return monster.SkillBucket.ActiveSkills.Count
@@ -739,6 +759,7 @@ namespace Pakuri.NewCore.Tests
                 + monster.SkillBucket.SelectedChoices.Count;
         }
 
+        /* LoadSources 테스트 입력 데이터를 원본 형식으로 불러온다. */
         private static Dictionary<string, string> LoadSources()
         {
             string csvRoot = Path.Combine(

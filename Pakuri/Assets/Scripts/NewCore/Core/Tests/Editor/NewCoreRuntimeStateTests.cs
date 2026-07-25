@@ -17,6 +17,7 @@ using Pakuri.NewCore.Run;
 using Pakuri.NewCore.Units.Models;
 using UnityEngine;
 
+/* NewCore 유닛·스킬·run 런타임 상태의 불변 조건을 검증한다. */
 namespace Pakuri.NewCore.Tests
 {
     public sealed class NewCoreRuntimeStateTests
@@ -24,12 +25,14 @@ namespace Pakuri.NewCore.Tests
         private GameDefinitionCatalog catalog;
 
         [SetUp]
+        /* 각 테스트가 독립적으로 실행되도록 임시 객체와 공유 상태를 초기화한다. */
         public void SetUp()
         {
             catalog = GameBootstrap.CreateCatalog(LoadSources());
         }
 
         [Test]
+        /* StageManagerIsTheOnlyPublicCurrencyAndFieldUnitWriter 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void StageManagerIsTheOnlyPublicCurrencyAndFieldUnitWriter()
         {
             MonsterModel monster = CreateMonster("ariel", false);
@@ -59,6 +62,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* PartyRosterPreservesOrderAndRejectsDuplicatesAtFiveSlots 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void PartyRosterPreservesOrderAndRejectsDuplicatesAtFiveSlots()
         {
             string[] ids = { "ariel", "eve", "rin", "sein", "vega" };
@@ -80,6 +84,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* PrisonerInventoryConsumesExactEntriesAndClearsBetweenRewards 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void PrisonerInventoryConsumesExactEntriesAndClearsBetweenRewards()
         {
             PrisonerInventory inventory = new PrisonerInventory();
@@ -102,6 +107,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* UnitOwnsHealthShieldStatusSurvivalAndRoundReset 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void UnitOwnsHealthShieldStatusSurvivalAndRoundReset()
         {
             MonsterModel target = CreateMonster("ariel", false);
@@ -141,6 +147,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* PermanentStatusDoesNotExpireAndExplicitRemovalWorks 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void PermanentStatusDoesNotExpireAndExplicitRemovalWorks()
         {
             MonsterModel target = CreateMonster("eve", true);
@@ -157,6 +164,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* InvalidStatusRefreshDoesNotPartiallyMutateExistingState 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void InvalidStatusRefreshDoesNotPartiallyMutateExistingState()
         {
             MonsterModel target = CreateMonster("eve", true);
@@ -178,6 +186,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* MagazineCooldownEnforcesShotIntervalReloadAndReset 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void MagazineCooldownEnforcesShotIntervalReloadAndReset()
         {
             SkillCooldown cooldown = new SkillCooldown(catalog.GetSkill("ariel-a"));
@@ -211,6 +220,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* NonMagazineCooldownBlocksUntilDurationElapses 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void NonMagazineCooldownBlocksUntilDurationElapses()
         {
             SkillCooldown cooldown = new SkillCooldown(catalog.GetSkill("sein-c"));
@@ -226,6 +236,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* MonsterSkillBucketEnforcesLearningAndChoiceLimits 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void MonsterSkillBucketEnforcesLearningAndChoiceLimits()
         {
             MonsterModel monster = CreateMonster("ariel", false);
@@ -303,6 +314,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* PassiveSlotsRequireTheirPairedLearnedActiveSlots 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void PassiveSlotsRequireTheirPairedLearnedActiveSlots()
         {
             MonsterSkillBucket bucket =
@@ -353,6 +365,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* PassiveBasePrerequisiteBlocksLearningAndSelectionUntilActiveIsLearned 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void PassiveBasePrerequisiteBlocksLearningAndSelectionUntilActiveIsLearned()
         {
             MonsterModel monster = CreateMonster("sein", false);
@@ -378,6 +391,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* EnemyBucketPreservesTwoSlotsAndSharesDuplicateSkillRuntime 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void EnemyBucketPreservesTwoSlotsAndSharesDuplicateSkillRuntime()
         {
             EnemyModel enemy = CreateEnemy("stage1-swordsman");
@@ -401,6 +415,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* NexusUsesTheCommonHealthAuthorityWithoutADefinition 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void NexusUsesTheCommonHealthAuthorityWithoutADefinition()
         {
             NexusModel nexus = new NexusModel(100f);
@@ -414,6 +429,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* MutableAuthorityPropertiesHaveNoPublicSetters 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void MutableAuthorityPropertiesHaveNoPublicSetters()
         {
             AssertNoPublicSetter(typeof(StageManager), nameof(StageManager.Gold));
@@ -436,6 +452,7 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        /* PhaseOneCatalogRemainsCompatibleWithRuntimeModels 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void PhaseOneCatalogRemainsCompatibleWithRuntimeModels()
         {
             MonsterModel monster = CreateMonster("vega", false);
@@ -453,6 +470,7 @@ namespace Pakuri.NewCore.Tests
                 Is.SameAs(catalog.GetSkill("enemy-commander-resistance")));
         }
 
+        /* CreateSession 테스트 대상을 필요한 의존성과 함께 구성한다. */
         private RunSessionModel CreateSession(MonsterModel initialMonster)
         {
             return new RunSessionModel(
@@ -463,6 +481,7 @@ namespace Pakuri.NewCore.Tests
                 new PrisonerInventory());
         }
 
+        /* CreateMonster 테스트 대상을 필요한 의존성과 함께 구성한다. */
         private MonsterModel CreateMonster(string monsterId, bool autoSkillEnabled)
         {
             MonsterDefinition definition = catalog.GetMonster(monsterId);
@@ -481,6 +500,7 @@ namespace Pakuri.NewCore.Tests
                 autoSkillEnabled);
         }
 
+        /* CreateEnemy 테스트 대상을 필요한 의존성과 함께 구성한다. */
         private EnemyModel CreateEnemy(string enemyId)
         {
             EnemyDefinition definition = catalog.GetEnemy(enemyId);
@@ -491,6 +511,7 @@ namespace Pakuri.NewCore.Tests
                 (PassiveDefinition)catalog.GetSkill(definition.passive_id));
         }
 
+        /* AssertNoPublicSetter 검증 조건을 공통 보조 절차로 확인한다. */
         private static void AssertNoPublicSetter(Type type, string propertyName)
         {
             PropertyInfo property = type.GetProperty(propertyName);
@@ -498,6 +519,7 @@ namespace Pakuri.NewCore.Tests
             Assert.That(property.SetMethod == null || !property.SetMethod.IsPublic, Is.True);
         }
 
+        /* LoadSources 테스트 입력 데이터를 원본 형식으로 불러온다. */
         private static Dictionary<string, string> LoadSources()
         {
             string csvRoot = Path.Combine(Application.dataPath, "CSVdata");

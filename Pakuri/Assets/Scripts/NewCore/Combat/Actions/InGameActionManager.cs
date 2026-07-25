@@ -5,6 +5,7 @@ using Pakuri.NewCore.Combat.Skills.Execution;
 using Pakuri.NewCore.Run;
 using Pakuri.NewCore.Units.Models;
 
+/* 등록된 아군·적 행동을 중앙 tick 순서에 따라 실행하고 정리한다. */
 namespace Pakuri.NewCore.Combat.Actions
 {
     public enum CombatTickStep
@@ -35,6 +36,7 @@ namespace Pakuri.NewCore.Combat.Actions
         private readonly HashSet<UnitBaseModel> combatStartedUnits =
             new HashSet<UnitBaseModel>();
 
+        /* 중앙 tick에 필요한 stage·입력·스킬 Actor·trigger·전투 서비스를 연결한다. */
         public InGameActionManager(
             StageManager stageManager,
             Func<bool> canProgressCombat,
@@ -61,6 +63,7 @@ namespace Pakuri.NewCore.Combat.Actions
 
         public event Action<CombatTickStep> StepCompleted;
 
+        /* 몬스터 행동 컨트롤러를 선택 여부와 함께 중복 없이 등록한다. */
         public void RegisterMonster(MonsterActionController controller, bool selected)
         {
             if (controller == null)
@@ -88,6 +91,7 @@ namespace Pakuri.NewCore.Combat.Actions
             }
         }
 
+        /* 적 행동 컨트롤러를 중복 없이 등록한다. */
         public void RegisterEnemy(EnemyActionController controller)
         {
             if (controller == null)
@@ -103,6 +107,7 @@ namespace Pakuri.NewCore.Combat.Actions
             enemies.Add(controller);
         }
 
+        /* 패시브부터 상태 만료까지 정의된 CombatTickStep 순서로 한 frame을 진행한다. */
         public void Tick(float deltaTime)
         {
             ValidateDeltaTime(deltaTime);
@@ -184,6 +189,7 @@ namespace Pakuri.NewCore.Combat.Actions
             StepCompleted?.Invoke(CombatTickStep.PassiveAfter);
         }
 
+        /* 이번 전투에 새로 참가한 생존 유닛에 전투 시작 trigger를 한 번 전달한다. */
         public void BeginOrExtendCombat(
             IReadOnlyList<UnitBaseModel> units)
         {
@@ -204,6 +210,7 @@ namespace Pakuri.NewCore.Combat.Actions
             }
         }
 
+        /* 전투 시작 기록·수동 입력·스킬 Actor·전투 구독 상태를 정리한다. */
         public void EndCombat()
         {
             combatStartedUnits.Clear();
@@ -212,6 +219,7 @@ namespace Pakuri.NewCore.Combat.Actions
             combatManager.EndCombat();
         }
 
+        /* 중앙 tick 경과 시간이 음수가 아닌 유한값인지 검증한다. */
         private static void ValidateDeltaTime(float deltaTime)
         {
             if (deltaTime < 0f || float.IsNaN(deltaTime) || float.IsInfinity(deltaTime))

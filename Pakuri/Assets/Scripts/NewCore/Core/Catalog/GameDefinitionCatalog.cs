@@ -10,6 +10,7 @@ using Pakuri.NewCore.Definitions.Stage;
 using Pakuri.NewCore.Definitions.Status;
 using Pakuri.NewCore.Definitions.Units;
 
+/* CSV에서 만든 전체 게임 정의를 불변 컬렉션과 id 조회로 제공한다. */
 namespace Pakuri.NewCore.Catalog
 {
     public sealed class GameDefinitionCatalog
@@ -30,6 +31,7 @@ namespace Pakuri.NewCore.Catalog
         private readonly IReadOnlyDictionary<string, StageDayDefinition> stageDays;
         private readonly IReadOnlyDictionary<string, StageRewardDefinition> stageRewards;
 
+        /* 파싱된 정의 snapshot을 형식별 불변 목록과 고유 id 사전으로 구성한다. */
         internal GameDefinitionCatalog(
             IReadOnlyList<CsvDefinition> definitions,
             int sourceFileCount,
@@ -119,37 +121,44 @@ namespace Pakuri.NewCore.Catalog
 
         public IReadOnlyDictionary<string, StageRewardDefinition> StageRewards => stageRewards;
 
+        /* skill id에 해당하는 필수 스킬 정의를 반환한다. */
         public SkillDefinition GetSkill(string skillId)
         {
             return GetRequired(skills, skillId, "skill");
         }
 
+        /* monster id에 해당하는 필수 몬스터 정의를 반환한다. */
         public MonsterDefinition GetMonster(string monsterId)
         {
             return GetRequired(monsters, monsterId, "monster");
         }
 
+        /* enemy id에 해당하는 필수 적 정의를 반환한다. */
         public EnemyDefinition GetEnemy(string enemyId)
         {
             return GetRequired(enemies, enemyId, "enemy");
         }
 
+        /* status id에 해당하는 필수 상태 정의를 반환한다. */
         public StatusDefinition GetStatus(string statusId)
         {
             return GetRequired(statuses, statusId, "status");
         }
 
+        /* choice id에 해당하는 필수 선택지 정의를 반환한다. */
         public SkillChoiceDefinition GetChoice(string choiceId)
         {
             return GetRequired(choices, choiceId, "choice");
         }
 
+        /* 전체 정의에서 지정 형식만 골라 불변 목록으로 반환한다. */
         private static IReadOnlyList<T> ReadOnlyOf<T>(IEnumerable<CsvDefinition> definitions)
             where T : CsvDefinition
         {
             return Array.AsReadOnly(definitions.OfType<T>().ToArray());
         }
 
+        /* 필수 key를 검증하며 정의를 중복 없는 불변 사전으로 구성한다. */
         private static IReadOnlyDictionary<string, T> Unique<T>(
             IEnumerable<T> items,
             Func<T, string> keySelector,
@@ -174,6 +183,7 @@ namespace Pakuri.NewCore.Catalog
             return new ReadOnlyDictionary<string, T>(result);
         }
 
+        /* 지정 key 선택 결과가 전체 항목에서 중복되지 않는지 확인한다. */
         private static void EnsureUnique<T>(
             IEnumerable<T> items,
             Func<T, string> keySelector,
@@ -191,6 +201,7 @@ namespace Pakuri.NewCore.Catalog
             }
         }
 
+        /* 불변 사전에서 필수 id를 조회하고 없으면 종류가 포함된 예외를 발생시킨다. */
         private static T GetRequired<T>(
             IReadOnlyDictionary<string, T> definitions,
             string id,
@@ -209,6 +220,7 @@ namespace Pakuri.NewCore.Catalog
             return definition;
         }
 
+        /* 정의의 원본 경로와 레코드 번호를 포함한 데이터 예외를 생성한다. */
         private static InvalidDataException Invalid(CsvDefinition item, string message)
         {
             return new InvalidDataException(

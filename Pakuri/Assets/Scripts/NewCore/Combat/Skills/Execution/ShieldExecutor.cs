@@ -3,13 +3,16 @@ using Pakuri.NewCore.Catalog;
 using Pakuri.NewCore.Combat.Effects;
 using Pakuri.NewCore.Combat.Skills.Actors;
 
+/* 보호막 스킬의 대상 선정과 보호막 적용을 실행한다. */
 namespace Pakuri.NewCore.Combat.Skills.Execution
 {
     internal sealed class ShieldExecutor : SkillExecutor
     {
+        /* 공통 카탈로그·대상 선정·Actor·이펙트 서비스를 보호막 실행기에 연결한다. */
         public ShieldExecutor(GameDefinitionCatalog catalog, SkillTargeting targeting, SkillActorManager actors, EffectManager effects, Func<float> randomValue)
             : base(catalog, targeting, actors, effects, randomValue) { }
 
+        /* 대상별 보호막·상태를 적용하고 지속시간 뒤 같은 application만 제거한다. */
         public override bool Execute(InGameCombatManager combat, SkillExecutionRequest request, SkillExecutionPlan plan)
         {
             var targets = ResolveTargets(request);

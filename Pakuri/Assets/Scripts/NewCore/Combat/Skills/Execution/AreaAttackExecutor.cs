@@ -4,13 +4,16 @@ using Pakuri.NewCore.Combat.Effects;
 using Pakuri.NewCore.Combat.Skills.Actors;
 using Pakuri.NewCore.Definitions.Skills;
 
+/* 범위 공격과 지속 필드의 대상 재평가 및 피해 적용을 실행한다. */
 namespace Pakuri.NewCore.Combat.Skills.Execution
 {
     internal sealed class AreaAttackExecutor : SkillExecutor
     {
+        /* 공통 카탈로그·대상 선정·Actor·이펙트 서비스를 범위 공격 실행기에 연결한다. */
         public AreaAttackExecutor(GameDefinitionCatalog catalog, SkillTargeting targeting, SkillActorManager actors, EffectManager effects, Func<float> randomValue)
             : base(catalog, targeting, actors, effects, randomValue) { }
 
+        /* 범위 중심·반경·반복 시간을 계산하고 매 tick 대상을 재평가하는 Actor를 등록한다. */
         public override bool Execute(InGameCombatManager combat, SkillExecutionRequest request, SkillExecutionPlan plan)
         {
             var ordered = plan.FilterTargets(Targeting.ResolveOrderedAll(

@@ -7,10 +7,12 @@ using Pakuri.NewCore.Definitions.Units;
 using Pakuri.NewCore.Combat.Skills.Execution;
 using Pakuri.NewCore.Units.Models;
 
+/* 스킬 실행과 피해·회복·보호막·상태 적용의 전투 권한을 소유한다. */
 namespace Pakuri.NewCore.Combat
 {
     public readonly struct CombatResult
     {
+        /* 한 번의 전투 처리에서 발생한 체력·보호막 변화와 치명타·처치 결과를 묶는다. */
         public CombatResult(
             UnitBaseModel source,
             UnitBaseModel target,
@@ -59,6 +61,7 @@ namespace Pakuri.NewCore.Combat
         private readonly Dictionary<UnitBaseModel, int> outgoingHitCounts =
             new Dictionary<UnitBaseModel, int>();
 
+        /* 난수 공급원과 스킬 실행 런타임을 연결하고 trigger dispatcher를 준비한다. */
         public InGameCombatManager(
             Func<float> randomValue,
             SkillExecutionRuntime executionRuntime)
@@ -81,6 +84,7 @@ namespace Pakuri.NewCore.Combat
 
         public event Action<UnitBaseModel> UnitDefeated;
 
+        /* 요청 유닛을 관찰 대상으로 등록하고 스킬 런타임 실행을 시도한다. */
         public bool TryExecuteSkill(SkillExecutionRequest request)
         {
             if (request == null)
@@ -93,17 +97,20 @@ namespace Pakuri.NewCore.Combat
             return executionRuntime.TryExecute(this, request);
         }
 
+        /* 경과 시간만큼 예약된 trigger 실행 상태를 진행한다. */
         public void TickTriggers(float deltaTime)
         {
             triggers.Tick(deltaTime);
         }
 
+        /* 학습된 패시브 효과를 현재 유닛 목록에 다시 계산해 반영한다. */
         public void ApplyPassiveChanges(
             IReadOnlyList<UnitBaseModel> units)
         {
             executionRuntime.ApplyPassives(this, units);
         }
 
+        /* 전투 결과 실행을 종료하고 구독과 임시 상태를 정리한다. */
         public void EndCombat()
         {
             foreach (UnitBaseModel unit in observedUnits)
@@ -116,6 +123,7 @@ namespace Pakuri.NewCore.Combat
             executionRuntime.ResetCombat();
         }
 
+        /* 전투 시작 trigger를 각 유닛 소유 스킬에 전달하고 실행 수를 반환한다. */
         public int NotifyCombatStart(
             UnitBaseModel owner,
             IReadOnlyList<UnitBaseModel> units)
@@ -131,6 +139,7 @@ namespace Pakuri.NewCore.Combat
                 this);
         }
 
+        /* 탄창의 마지막 투사체 적중 정보를 후속 trigger에 전달한다. */
         public void NotifyMagazineLastProjectileHit(
             UnitBaseModel owner,
             SkillDefinition skill,
@@ -145,6 +154,7 @@ namespace Pakuri.NewCore.Combat
                 this);
         }
 
+        /* 만료된 보호막 양을 보호막 만료 trigger에 전달한다. */
         public void NotifyShieldExpired(
             UnitBaseModel owner,
             SkillDefinition skill,
@@ -161,6 +171,7 @@ namespace Pakuri.NewCore.Combat
                 eventShieldApplied: expiredAmount);
         }
 
+        /* 스킬 계수와 공격 능력치를 계산해 대상에게 피해와 후속 trigger를 적용한다. */
         public CombatResult ApplySkillDamage(
             UnitBaseModel source,
             UnitBaseModel target,
@@ -334,6 +345,7 @@ namespace Pakuri.NewCore.Combat
             return result;
         }
 
+        /* 지정 유닛이 현재 전투에서 발생시킨 누적 적중 횟수를 반환한다. */
         public int GetOutgoingHitCount(UnitBaseModel source)
         {
             return source != null
@@ -342,6 +354,7 @@ namespace Pakuri.NewCore.Combat
                     : 0;
         }
 
+        /* trigger가 제공한 직접 계수로 피해를 계산하고 대상과 후속 이벤트에 반영한다. */
         public CombatResult ApplyTriggeredDamage(
             UnitBaseModel source,
             UnitBaseModel target,
@@ -441,6 +454,7 @@ namespace Pakuri.NewCore.Combat
             return result;
         }
 
+        /* 지정 회복량을 대상 체력에 적용하고 실제 변화 결과를 발행한다. */
         public CombatResult Heal(
             UnitBaseModel source,
             UnitBaseModel target,
@@ -465,6 +479,7 @@ namespace Pakuri.NewCore.Combat
             return result;
         }
 
+        /* 기본 병합 정책으로 대상에게 보호막을 추가한다. */
         public CombatResult AddShield(
             UnitBaseModel source,
             UnitBaseModel target,
@@ -483,6 +498,7 @@ namespace Pakuri.NewCore.Combat
                 out _);
         }
 
+        /* 보호막 출처와 병합·갱신 정책을 적용하고 application version을 반환한다. */
         public CombatResult AddShield(
             UnitBaseModel source,
             UnitBaseModel target,
@@ -530,6 +546,7 @@ namespace Pakuri.NewCore.Combat
             return result;
         }
 
+        /* 시전자 보정이 반영된 상태 효과를 대상에게 적용하고 이벤트를 발행한다. */
         public void ApplyStatus(
             UnitBaseModel source,
             UnitBaseModel target,
@@ -569,6 +586,7 @@ namespace Pakuri.NewCore.Combat
             StatusApplied?.Invoke(source, target, status);
         }
 
+        /* 적 정의의 nexus 피해를 적용하고 파괴 시 처치 이벤트를 발행한다. */
         public float ApplyNexusDamage(EnemyModel source, NexusModel nexus)
         {
             RequireLiving(source, nameof(source));
@@ -588,6 +606,7 @@ namespace Pakuri.NewCore.Combat
             return applied;
         }
 
+        /* 스킬 기본값과 공격력·주문력 계수를 합산한 음수 없는 원시 값을 계산한다. */
         public float CalculateRawValue(UnitBaseModel source, SkillDefinition skill)
         {
             RequireLiving(source, nameof(source));
@@ -603,12 +622,14 @@ namespace Pakuri.NewCore.Combat
             return Math.Max(0f, value);
         }
 
+        /* 유닛의 정의와 런타임 보정을 반영한 음수 없는 주문력을 반환한다. */
         public float CalculateSpellPower(UnitBaseModel source)
         {
             RequireLiving(source, nameof(source));
             return Math.Max(0f, ResolveSpellPower(source));
         }
 
+        /* 스킬 활성화 이벤트를 발행하고 OnSkillCast trigger를 전달한다. */
         public void NotifySkillActivated(
             UnitBaseModel source,
             SkillDefinition skill,
@@ -630,6 +651,7 @@ namespace Pakuri.NewCore.Combat
                 triggerAncestry: triggerAncestry);
         }
 
+        /* 신규 유닛의 상태 만료 이벤트를 한 번만 구독한다. */
         private void ObserveUnits(IReadOnlyList<UnitBaseModel> units)
         {
             for (int index = 0; index < units.Count; index++)
@@ -642,6 +664,7 @@ namespace Pakuri.NewCore.Combat
             }
         }
 
+        /* 만료된 상태 정보를 status·shield 만료 trigger로 전달한다. */
         private void OnStatusExpired(StatusEffect effect)
         {
             triggers.Dispatch(
@@ -672,6 +695,7 @@ namespace Pakuri.NewCore.Combat
             }
         }
 
+        /* 유닛 정의와 상태·런타임 보정을 반영한 공격력을 계산한다. */
         private static float ResolveAttackPower(UnitBaseModel unit)
         {
             float value = unit is MonsterModel monster
@@ -685,6 +709,7 @@ namespace Pakuri.NewCore.Combat
                 + unit.ResolveRuntimeModifier("StatusAttackPowerBonus"));
         }
 
+        /* 유닛 정의와 런타임 보정을 반영한 주문력을 계산한다. */
         private static float ResolveSpellPower(UnitBaseModel unit)
         {
             float value = unit is MonsterModel monster
@@ -697,6 +722,7 @@ namespace Pakuri.NewCore.Combat
                 1f + unit.ResolveRuntimeModifier("StatusSpellPowerBonus"));
         }
 
+        /* 유닛 정의와 보정을 합산한 치명타 확률을 계산한다. */
         private static float ResolveCriticalChance(UnitBaseModel unit)
         {
             float value = unit is MonsterModel monster
@@ -708,6 +734,7 @@ namespace Pakuri.NewCore.Combat
                 + ResolveEnemyPassive(unit, "CritChanceUp", null);
         }
 
+        /* 유닛 정의와 보정을 합산한 치명타 피해 배율을 계산한다. */
         private static float ResolveCriticalDamage(UnitBaseModel unit)
         {
             float value = unit is MonsterModel monster
@@ -719,6 +746,7 @@ namespace Pakuri.NewCore.Combat
                 + ResolveEnemyPassive(unit, "CritDamageUp", null);
         }
 
+        /* 대상 정의와 상태 보정을 합산한 치명타 저항을 계산한다. */
         private static float ResolveCriticalResistance(UnitBaseModel unit)
         {
             float value = unit is MonsterModel monster
@@ -732,6 +760,7 @@ namespace Pakuri.NewCore.Combat
                 + unit.ResolveRuntimeModifier("StatusCriticalResistanceBonus");
         }
 
+        /* 피해 종류·속성·조건 상태에 따른 대상의 받는 피해 보정을 계산한다. */
         private static float ResolveDamageTakenBonus(
             UnitBaseModel source,
             UnitBaseModel unit,
@@ -763,6 +792,7 @@ namespace Pakuri.NewCore.Combat
             return value;
         }
 
+        /* 시전자의 추가 피해 modifier를 일치하는 속성의 trigger 피해로 적용한다. */
         private void ApplyOutgoingAdditionalDamage(
             UnitBaseModel source,
             UnitBaseModel target,
@@ -792,6 +822,7 @@ namespace Pakuri.NewCore.Combat
             }
         }
 
+        /* shield 별칭 또는 지정 status id가 유닛에 적용되어 있는지 확인한다. */
         private static bool HasStatus(
             UnitBaseModel unit,
             string statusId)
@@ -814,6 +845,7 @@ namespace Pakuri.NewCore.Combat
             return false;
         }
 
+        /* 유닛 정의와 속성별 상태 보정을 반영한 방어력을 계산한다. */
         private static float ResolveDefense(UnitBaseModel unit, string attribute)
         {
             UnitDefinition definition = unit.Definition;
@@ -852,6 +884,7 @@ namespace Pakuri.NewCore.Combat
             return defense;
         }
 
+        /* 적 패시브 중 요청 종류와 속성에 맞는 보정 합계를 반환한다. */
         private static float ResolveEnemyPassive(
             UnitBaseModel unit,
             string modifierKind,
@@ -874,6 +907,7 @@ namespace Pakuri.NewCore.Combat
             return ReadFloat(passive, "modifier_value");
         }
 
+        /* 유닛의 모든 상태 효과에서 지정 선택자가 반환한 값을 합산한다. */
         private static float ResolveStatusSum(
             UnitBaseModel unit,
             Func<Combat.Status.StatusEffect, float?> selector)
@@ -888,6 +922,7 @@ namespace Pakuri.NewCore.Combat
             return result;
         }
 
+        /* 스킬 정의의 지정 열이 float면 반환하고 아니면 0을 반환한다. */
         private static float ReadFloat(SkillDefinition skill, string column)
         {
             return skill.Columns.TryGetValue(column, out object value) && value is float number
@@ -895,6 +930,7 @@ namespace Pakuri.NewCore.Combat
                 : 0f;
         }
 
+        /* 스킬 정의의 지정 열이 true인 bool인지 확인한다. */
         private static bool ReadBool(SkillDefinition skill, string column)
         {
             return skill.Columns.TryGetValue(column, out object value)
@@ -902,6 +938,7 @@ namespace Pakuri.NewCore.Combat
                 && flag;
         }
 
+        /* 스킬 정의의 지정 열이 문자열이면 반환하고 아니면 null을 반환한다. */
         private static string ReadString(
             SkillDefinition skill,
             string column)
@@ -911,11 +948,13 @@ namespace Pakuri.NewCore.Combat
                 : null;
         }
 
+        /* 입력 값을 0 이상 1 이하 범위로 제한한다. */
         private static float Clamp01(float value)
         {
             return Math.Min(1f, Math.Max(0f, value));
         }
 
+        /* 빈 속성 값을 기본 Physical 속성으로 정규화한다. */
         private static string NormalizeAttribute(string attribute)
         {
             return string.IsNullOrEmpty(attribute)
@@ -923,6 +962,7 @@ namespace Pakuri.NewCore.Combat
                 : attribute;
         }
 
+        /* 유닛이 null이 아니고 생존 상태인지 검증한다. */
         private static void RequireLiving(UnitBaseModel unit, string parameterName)
         {
             if (unit == null)
@@ -936,6 +976,7 @@ namespace Pakuri.NewCore.Combat
             }
         }
 
+        /* 입력 값이 음수가 아닌 유한한 수인지 검증한다. */
         private static void ValidateNonNegativeFinite(float value, string parameterName)
         {
             if (value < 0f || float.IsNaN(value) || float.IsInfinity(value))

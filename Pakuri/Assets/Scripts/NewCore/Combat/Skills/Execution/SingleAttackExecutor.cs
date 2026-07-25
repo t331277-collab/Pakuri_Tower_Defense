@@ -5,13 +5,16 @@ using Pakuri.NewCore.Combat.Skills.Actors;
 using Pakuri.NewCore.Definitions.Skills;
 using Pakuri.NewCore.Units.Models;
 
+/* 단일 공격 스킬의 대상 피해, 배치, 부가 상태 실행을 담당한다. */
 namespace Pakuri.NewCore.Combat.Skills.Execution
 {
     internal sealed class SingleAttackExecutor : SkillExecutor
     {
+        /* 공통 카탈로그·대상 선정·Actor·이펙트 서비스를 단일 공격 실행기에 연결한다. */
         public SingleAttackExecutor(GameDefinitionCatalog catalog, SkillTargeting targeting, SkillActorManager actors, EffectManager effects, Func<float> randomValue)
             : base(catalog, targeting, actors, effects, randomValue) { }
 
+        /* 단일 공격 plan의 대상·배치 규칙을 해석해 공격 실행 여부를 반환한다. */
         public override bool Execute(InGameCombatManager combat, SkillExecutionRequest request, SkillExecutionPlan plan)
         {
             bool global = string.Equals(
@@ -91,6 +94,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return true;
         }
 
+        /* authored 적중 수와 plan 보너스로 대상 목록의 최대 길이를 제한한다. */
         private static System.Collections.Generic.IReadOnlyList<UnitBaseModel>
             LimitHitTargets(
                 System.Collections.Generic.IReadOnlyList<UnitBaseModel> targets,
@@ -122,6 +126,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return limited;
         }
 
+        /* 상태 필터별 배치 node를 만족하는 대상에게 개별 공격을 실행한다. */
         private bool ExecuteStatusFilteredDeployments(
             InGameCombatManager combat,
             SkillExecutionRequest request,
@@ -209,6 +214,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return true;
         }
 
+        /* 한 대상에게 피해·상태·후속 효과와 시각 효과를 적용한다. */
         private void ExecuteTarget(
             InGameCombatManager combat,
             SkillExecutionRequest request,
@@ -262,6 +268,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 plan.ResolveRepeatInterval()));
         }
 
+        /* plan에 상태 필터 기반 배치 node가 포함되어 있는지 확인한다. */
         private static bool UsesStatusFilteredDeployments(
             SkillDefinition skill,
             SkillExecutionPlan plan)
@@ -285,6 +292,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return false;
         }
 
+        /* 대상에게 적용된 지정 status id의 총 스택 수를 계산한다. */
         private static int CountStatus(
             UnitBaseModel target,
             string statusId)
@@ -303,6 +311,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return result;
         }
 
+        /* 수동 목표점, 첫 대상 위치, 시전자 위치 순으로 시각 효과 중심을 정한다. */
         private static CombatVector2 ResolveCenter(
             System.Collections.Generic.IReadOnlyList<UnitBaseModel> targets)
         {

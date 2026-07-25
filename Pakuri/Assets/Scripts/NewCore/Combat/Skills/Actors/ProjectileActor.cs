@@ -5,6 +5,7 @@ using Pakuri.NewCore.Combat.Skills.Execution;
 using Pakuri.NewCore.Definitions.Skills;
 using Pakuri.NewCore.Units.Models;
 
+/* 투사체의 이동, 교차 대상 적중, 관통 한도 생명주기를 표현한다. */
 namespace Pakuri.NewCore.Combat.Skills.Actors
 {
     public sealed class ProjectileActor : SkillActor
@@ -22,6 +23,7 @@ namespace Pakuri.NewCore.Combat.Skills.Actors
             new HashSet<UnitBaseModel>();
         private CombatVector2 position;
 
+        /* 이동 방향·속도·수명·관통 한도와 적중 콜백·이펙트를 구성한다. */
         public ProjectileActor(
             ProjectileDefinition definition,
             UnitBaseModel source,
@@ -69,6 +71,7 @@ namespace Pakuri.NewCore.Combat.Skills.Actors
 
         public int HitCount => hitTargets.Count;
 
+        /* 투사체를 이동시키며 새 교차 대상을 적중시키고 수명·관통 한도에서 종료한다. */
         protected override void TickActor(float deltaTime)
         {
             if (ElapsedSeconds >= lifetime)
