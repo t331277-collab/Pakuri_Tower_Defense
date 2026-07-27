@@ -18,4 +18,3 @@
 "passive-buff","Passive Buff","Buff","None","0","false","1","1","true","true","true","0","0","0","0","0","0","0","0",""
 "sein-a-hit-mark","열풍 화살 표식","Debuff","Fire","5","false","1","1","true","true","true","0","0","0","0","0","0","0","0",""
 "sein-d-heat-stack","초열 타격","Debuff","Fire","1","false","99","1","true","true","true","0","0","0","0","0","0","0","0",""
-"sein-d-superheated-presence","초열 지대 노출","Debuff","Fire","0.75","false","1","1","true","true","true","0","0","0","0","0","0","0","0",""

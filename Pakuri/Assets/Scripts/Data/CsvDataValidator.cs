@@ -482,6 +482,10 @@ namespace Pakuri.Data
                 var resolvedEffectId = ResolveTriggeredEffectId(trigger);
                 if (HasSkillGraphReference(trigger))
                 {
+                    if (trigger.TriggeredGraphOwnerId.StartsWith(trigger.MonsterId + "-", StringComparison.OrdinalIgnoreCase))
+                    {
+                        errors.Add($"Skill trigger '{trigger.Id}' triggered_graph_owner_id '{trigger.TriggeredGraphOwnerId}' must not repeat monster_id '{trigger.MonsterId}'.");
+                    }
                     if (!string.IsNullOrWhiteSpace(trigger.TriggeredEffectId))
                     {
                         errors.Add(
@@ -494,7 +498,7 @@ namespace Pakuri.Data
                     if (!HasSkillGraphSource(model, trigger))
                     {
                         errors.Add(
-                            $"Skill trigger '{trigger.Id}' references unknown skill graph '{trigger.TriggeredGraphOwnerKind}/{trigger.TriggeredGraphOwnerId}/Effect/{trigger.TriggeredGraphIndex}'.");
+                            $"Skill trigger '{trigger.Id}' references unknown skill graph '{trigger.TriggeredGraphOwnerKind}/{trigger.TriggeredGraphOwnerId}/Effect'.");
                     }
                 }
 
@@ -871,7 +875,6 @@ namespace Pakuri.Data
                 var graph = model.SkillGraphNodes[i];
                 if (graph.GraphKind == SkillGraphKind.Effect
                     && graph.OwnerKind == trigger.TriggeredGraphOwnerKind
-                    && graph.GraphIndex == trigger.TriggeredGraphIndex
                     && string.Equals(graph.MonsterId, trigger.MonsterId, StringComparison.OrdinalIgnoreCase)
                     && string.Equals(graph.OwnerId, trigger.TriggeredGraphOwnerId, StringComparison.OrdinalIgnoreCase))
                 {

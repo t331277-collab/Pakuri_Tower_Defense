@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using Pakuri.Combat;
 using Pakuri.InGame;
 
@@ -137,8 +138,6 @@ namespace Pakuri.Data
 
 			public SkillGraphKind GraphKind;
 
-			public int GraphIndex;
-
 			public string TargetSkillId;
 
 			public int NodeOrder;
@@ -209,7 +208,6 @@ namespace Pakuri.Data
 				OwnerKind = record.ReadEnum<SkillNodeOwnerKind>("owner_kind"),
 				OwnerId = record.ReadRequiredString("owner_id"),
 				GraphKind = record.ReadEnum<SkillGraphKind>("graph_kind"),
-				GraphIndex = record.ReadInt("graph_index"),
 				TargetSkillId = CsvRowParser.ReadOptionalStringIfColumnExists(record, "target_skill_id"),
 				NodeOrder = record.ReadInt("node_order"),
 				NodeTypeId = record.ReadRequiredString("node_type_id"),
@@ -614,20 +612,20 @@ namespace Pakuri.Data
 			List<SkillNodeParamRow> list3 = new List<SkillNodeParamRow>();
 			HashSet<string> hashSet2 = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			HashSet<string> hashSet3 = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-			Dictionary<string, int> dictionary2 = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+			Dictionary<SkillGraphNodeRow, int> dictionary2 = BuildEffectSequenceNumberLookup(model, list);
 			for (int j = 0; j < model.SkillGraphNodes.Count; j++)
 			{
 				SkillGraphNodeRow skillGraphNodeRow = model.SkillGraphNodes[j];
 				string text = BuildSkillGraphKey(skillGraphNodeRow);
 				string text2 = $"{text}:{skillGraphNodeRow.NodeOrder}";
+				if (skillGraphNodeRow.OwnerId.StartsWith(skillGraphNodeRow.MonsterId + "-", StringComparison.OrdinalIgnoreCase))
+				{
+					list.Add($"Skill graph '{text}' owner_id '{skillGraphNodeRow.OwnerId}' must not repeat monster_id '{skillGraphNodeRow.MonsterId}'.");
+				}
 				if (!hashSet3.Add(text2))
 				{
 					list.Add($"Skill graph '{text}' has duplicate node_order '{skillGraphNodeRow.NodeOrder}'.");
 					continue;
-				}
-				if (skillGraphNodeRow.GraphIndex < 0)
-				{
-					list.Add("Skill graph '" + text + "' requires graph_index >= 0.");
 				}
 				if (!model.Monsters.ContainsKey(skillGraphNodeRow.MonsterId))
 				{
@@ -652,11 +650,6 @@ namespace Pakuri.Data
 				{
 					list.Add($"Skill graph '{text}' is Plan but node '{skillGraphNodeRow.NodeOrder}' uses Effect-only handler '{value.HandlerId}'.");
 				}
-				if (skillGraphNodeRow.GraphKind == SkillGraphKind.Effect && IsEffectOperationHandler(value.HandlerId))
-				{
-					dictionary2.TryGetValue(text, out var value4);
-					dictionary2[text] = value4 + 1;
-				}
 				string text4 = BuildGeneratedSkillGraphNodeId(skillGraphNodeRow);
 				if (!hashSet2.Add(text4) || model.SkillNodes.ContainsKey(text4))
 				{
@@ -664,20 +657,24 @@ namespace Pakuri.Data
 					continue;
 				}
 				SkillNodeOwnerKind ownerKind = skillGraphNodeRow.OwnerKind;
-				string ownerId = skillGraphNodeRow.OwnerId;
+				string ownerId = BuildMonsterOwnedId(skillGraphNodeRow.MonsterId, skillGraphNodeRow.OwnerId);
 				string requiresActiveChoiceId = string.Empty;
 				string requiresPassiveSkillId = string.Empty;
 				if (skillGraphNodeRow.GraphKind == SkillGraphKind.Effect)
 				{
 					ownerKind = SkillNodeOwnerKind.Effect;
+					if (!dictionary2.TryGetValue(skillGraphNodeRow, out var effectNumber))
+					{
+						continue;
+					}
 					ownerId = BuildGeneratedSkillGraphEffectId(
 						skillGraphNodeRow.OwnerKind,
-						skillGraphNodeRow.OwnerId,
-						skillGraphNodeRow.GraphIndex);
+						BuildMonsterOwnedId(skillGraphNodeRow.MonsterId, skillGraphNodeRow.OwnerId),
+						effectNumber);
 					requiresPassiveSkillId = ResolveGeneratedEffectPassiveSkillId(model, skillGraphNodeRow);
 					if (skillGraphNodeRow.OwnerKind == SkillNodeOwnerKind.Choice)
 					{
-						requiresActiveChoiceId = skillGraphNodeRow.OwnerId;
+						requiresActiveChoiceId = BuildMonsterOwnedId(skillGraphNodeRow.MonsterId, skillGraphNodeRow.OwnerId);
 					}
 				}
 				list2.Add(new SkillNodeRow
@@ -733,23 +730,6 @@ namespace Pakuri.Data
 					{
 						list.Add($"Skill graph node '{text2}' sets arg_{l + 1}, but node type '{skillGraphNodeRow.NodeTypeId}' has no matching param definition.");
 					}
-				}
-			}
-			HashSet<string> hashSet5 = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-			for (int m = 0; m < model.SkillGraphNodes.Count; m++)
-			{
-				SkillGraphNodeRow skillGraphNodeRow2 = model.SkillGraphNodes[m];
-				if (skillGraphNodeRow2.GraphKind == SkillGraphKind.Effect)
-				{
-					hashSet5.Add(BuildSkillGraphKey(skillGraphNodeRow2));
-				}
-			}
-			foreach (string item in hashSet5)
-			{
-				dictionary2.TryGetValue(item, out var value7);
-				if (value7 != 1)
-				{
-					list.Add($"Effect graph '{item}' requires exactly one operation handler but has {value7}.");
 				}
 			}
 			if (list.Count > 0)
@@ -832,19 +812,20 @@ namespace Pakuri.Data
 		 */
 		internal static string ResolveSkillGraphTargetSkillId(CsvSourceModel.SourceModel model /* 처리할 상태 모델 */, SkillGraphNodeRow graph /* 그래프 */, List<string> errors /* 검증 오류를 모을 목록 */)
 		{
+			string text2 = BuildMonsterOwnedId(graph.MonsterId, graph.OwnerId);
 			string text;
 			switch (graph.OwnerKind)
 			{
 			case SkillNodeOwnerKind.Choice:
 			{
-				if (!model.SkillChoices.TryGetValue(graph.OwnerId, out var value2))
+				if (!model.SkillChoices.TryGetValue(text2, out var value2))
 				{
-					errors.Add("Skill graph '" + BuildSkillGraphKey(graph) + "' references unknown choice owner '" + graph.OwnerId + "'.");
+					errors.Add("Skill graph '" + BuildSkillGraphKey(graph) + "' references unknown choice owner '" + text2 + "'.");
 					return graph.TargetSkillId;
 				}
 				if (!string.Equals(value2.MonsterId, graph.MonsterId, StringComparison.OrdinalIgnoreCase))
 				{
-					errors.Add("Skill graph choice owner '" + graph.OwnerId + "' belongs to '" + value2.MonsterId + "', not '" + graph.MonsterId + "'.");
+					errors.Add("Skill graph choice owner '" + text2 + "' belongs to '" + value2.MonsterId + "', not '" + graph.MonsterId + "'.");
 				}
 				text = value2.TargetSkillId;
 				if (string.IsNullOrWhiteSpace(text))
@@ -855,28 +836,28 @@ namespace Pakuri.Data
 			}
 			case SkillNodeOwnerKind.Skill:
 			{
-				if (!model.Skills.TryGetValue(graph.OwnerId, out var value3))
+				if (!model.Skills.TryGetValue(text2, out var value3))
 				{
-					errors.Add("Skill graph '" + BuildSkillGraphKey(graph) + "' references unknown skill owner '" + graph.OwnerId + "'.");
+					errors.Add("Skill graph '" + BuildSkillGraphKey(graph) + "' references unknown skill owner '" + text2 + "'.");
 					return graph.TargetSkillId;
 				}
 				if (!string.Equals(value3.MonsterId, graph.MonsterId, StringComparison.OrdinalIgnoreCase))
 				{
-					errors.Add("Skill graph skill owner '" + graph.OwnerId + "' belongs to '" + value3.MonsterId + "', not '" + graph.MonsterId + "'.");
+					errors.Add("Skill graph skill owner '" + text2 + "' belongs to '" + value3.MonsterId + "', not '" + graph.MonsterId + "'.");
 				}
-				text = graph.OwnerId;
+				text = text2;
 				break;
 			}
 			case SkillNodeOwnerKind.Trigger:
 			{
-				if (!model.SkillTriggers.TryGetValue(graph.OwnerId, out var value))
+				if (!model.SkillTriggers.TryGetValue(text2, out var value))
 				{
-					errors.Add("Skill graph '" + BuildSkillGraphKey(graph) + "' references unknown trigger owner '" + graph.OwnerId + "'.");
+					errors.Add("Skill graph '" + BuildSkillGraphKey(graph) + "' references unknown trigger owner '" + text2 + "'.");
 					return graph.TargetSkillId;
 				}
 				if (!string.Equals(value.MonsterId, graph.MonsterId, StringComparison.OrdinalIgnoreCase))
 				{
-					errors.Add("Skill graph trigger owner '" + graph.OwnerId + "' belongs to '" + value.MonsterId + "', not '" + graph.MonsterId + "'.");
+					errors.Add("Skill graph trigger owner '" + text2 + "' belongs to '" + value.MonsterId + "', not '" + graph.MonsterId + "'.");
 				}
 				text = value.SourceSkillId;
 				break;
@@ -905,11 +886,12 @@ namespace Pakuri.Data
 			{
 				return string.Empty;
 			}
-			if (graph.OwnerKind == SkillNodeOwnerKind.Skill && model.Skills.TryGetValue(graph.OwnerId, out var value) && value.SkillKind == PakuriCsvSkillKind.Passive)
+			string text = BuildMonsterOwnedId(graph.MonsterId, graph.OwnerId);
+			if (graph.OwnerKind == SkillNodeOwnerKind.Skill && model.Skills.TryGetValue(text, out var value) && value.SkillKind == PakuriCsvSkillKind.Passive)
 			{
 				return value.Id;
 			}
-			if (graph.OwnerKind == SkillNodeOwnerKind.Choice && model.SkillChoices.TryGetValue(graph.OwnerId, out var value2) && model.Skills.TryGetValue(value2.SkillId, out var value3) && value3.SkillKind == PakuriCsvSkillKind.Passive)
+			if (graph.OwnerKind == SkillNodeOwnerKind.Choice && model.SkillChoices.TryGetValue(text, out var value2) && model.Skills.TryGetValue(value2.SkillId, out var value3) && value3.SkillKind == PakuriCsvSkillKind.Passive)
 			{
 				return value3.Id;
 			}
@@ -963,11 +945,47 @@ namespace Pakuri.Data
 		}
 
 		/*
+		 * Effect 그래프의 노드 순서에서 각 Effect의 순번을 만든다.
+		 */
+		internal static Dictionary<SkillGraphNodeRow, int> BuildEffectSequenceNumberLookup(CsvSourceModel.SourceModel model /* CSV 원본 모델 */, List<string> errors /* 검증 오류를 모을 목록 */)
+		{
+			Dictionary<SkillGraphNodeRow, int> dictionary = new Dictionary<SkillGraphNodeRow, int>();
+			IEnumerable<IGrouping<string, SkillGraphNodeRow>> enumerable = model.SkillGraphNodes
+				.Where(graph => graph.GraphKind == SkillGraphKind.Effect)
+				.GroupBy(BuildSkillGraphKey, StringComparer.OrdinalIgnoreCase);
+			foreach (IGrouping<string, SkillGraphNodeRow> item in enumerable)
+			{
+				int num = 0;
+				bool flag = false;
+				foreach (SkillGraphNodeRow item2 in item.OrderBy(graph => graph.NodeOrder))
+				{
+					if (model.SkillNodeTypes.TryGetValue(item2.NodeTypeId, out var value)
+						&& SkillNodeHandlerSchemas.TryGetValue(value.HandlerId, out var _)
+						&& IsEffectOperationHandler(value.HandlerId))
+					{
+						if (flag)
+						{
+							num++;
+						}
+						flag = true;
+					}
+					if (!flag)
+					{
+						errors.Add($"Effect graph '{item.Key}' requires an operation handler before node '{item2.NodeOrder}'.");
+						continue;
+					}
+					dictionary.Add(item2, num);
+				}
+			}
+			return dictionary;
+		}
+
+		/*
 		 * BuildSkillGraphKey에 필요한 결과를 만들어 반환한다.
 		 */
 		internal static string BuildSkillGraphKey(SkillGraphNodeRow graph /* 그래프 */)
 		{
-			return $"{graph.MonsterId}:{graph.OwnerKind}:{graph.OwnerId}:{graph.GraphKind}:{graph.GraphIndex}";
+			return $"{graph.MonsterId}:{graph.OwnerKind}:{graph.OwnerId}:{graph.GraphKind}";
 		}
 
 		/*
@@ -975,23 +993,31 @@ namespace Pakuri.Data
 		 */
 		internal static string BuildGeneratedSkillGraphNodeId(SkillGraphNodeRow graph /* 그래프 */)
 		{
-			return $"{graph.OwnerKind}:{graph.OwnerId}:{graph.GraphKind}:{graph.GraphIndex}:{graph.NodeOrder}";
+			return $"{graph.OwnerKind}:{BuildMonsterOwnedId(graph.MonsterId, graph.OwnerId)}:{graph.GraphKind}:{graph.NodeOrder}";
+		}
+
+		/*
+		 * 몬스터별 CSV의 짧은 소유자 식별자를 전체 식별자로 만든다.
+		 */
+		internal static string BuildMonsterOwnedId(string monsterId /* 몬스터 식별자 */, string ownerId /* 짧은 소유자 식별자 */)
+		{
+			return $"{monsterId}-{ownerId}";
 		}
 
 		/*
 		 * BuildGeneratedSkillGraphEffectId에 필요한 결과를 만들어 반환한다.
 		 */
-		internal static string BuildGeneratedSkillGraphEffectId(SkillNodeOwnerKind ownerKind /* 소유자 종류 */, string ownerId /* 소유자 식별자 */, int graphIndex /* 그래프 순서 번호 */)
+		internal static string BuildGeneratedSkillGraphEffectId(SkillNodeOwnerKind ownerKind /* 소유자 종류 */, string ownerId /* 소유자 식별자 */, int effectNumber /* 효과 순번 */)
 		{
 			if (ownerKind == SkillNodeOwnerKind.Choice || ownerKind == SkillNodeOwnerKind.Trigger)
 			{
-				if (graphIndex != 0)
+				if (effectNumber != 0)
 				{
-					return $"{ownerId}@effect{graphIndex + 1}";
+					return $"{ownerId}@effect{effectNumber + 1}";
 				}
 				return ownerId;
 			}
-			return $"{ownerId}@effect{graphIndex + 1}";
+			return $"{ownerId}@effect{effectNumber + 1}";
 		}
 
 		/*
@@ -1019,7 +1045,10 @@ namespace Pakuri.Data
 				}
 				return trigger.TriggeredEffectId;
 			}
-			return BuildGeneratedSkillGraphEffectId(trigger.TriggeredGraphOwnerKind, trigger.TriggeredGraphOwnerId, trigger.TriggeredGraphIndex);
+			return BuildGeneratedSkillGraphEffectId(
+				trigger.TriggeredGraphOwnerKind,
+				BuildMonsterOwnedId(trigger.MonsterId, trigger.TriggeredGraphOwnerId),
+				0);
 		}
 	}
 }
