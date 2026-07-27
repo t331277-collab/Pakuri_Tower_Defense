@@ -51,11 +51,11 @@ namespace Pakuri.Data
         }
 
         /*
-         * ResolveMonster 결과를 계산해 반환한다.
+         * GetMonster 결과를 계산해 반환한다.
          */
-        public MonsterDefinition ResolveMonster(string id /* 대상을 구분하는 식별자 */)
+        public MonsterDefinition GetMonster(string id /* 대상을 구분하는 식별자 */)
         {
-            return lookup.ResolveMonster(id);
+            return lookup.GetMonster(id);
         }
 
         /*
@@ -83,11 +83,11 @@ namespace Pakuri.Data
         }
 
         /*
-         * ResolveActiveSkill 결과를 계산해 반환한다.
+         * GetActiveSkill 결과를 계산해 반환한다.
          */
-        public SkillSourceDefinition ResolveActiveSkill(string monsterId /* 몬스터 식별자 */, SkillSlot slot /* 스킬이나 유닛이 배치될 슬롯 */)
+        public SkillSourceDefinition GetActiveSkill(string monsterId /* 몬스터 식별자 */, SkillSlot slot /* 스킬이나 유닛이 배치될 슬롯 */)
         {
-            return lookup.ResolveActiveSkill(monsterId, slot);
+            return lookup.GetActiveSkill(monsterId, slot);
         }
 
         /*
@@ -224,7 +224,7 @@ namespace Pakuri.Data
         /*
          * ID에 맞는 몬스터를 반환한다.
          */
-        public MonsterDefinition ResolveMonster(string id /* 대상을 구분하는 식별자 */)
+        public MonsterDefinition GetMonster(string id /* 대상을 구분하는 식별자 */)
         {
             return GetData<MonsterDefinition>(id);
         }
@@ -280,7 +280,7 @@ namespace Pakuri.Data
         /*
          * 몬스터의 액티브 스킬 중 요청 슬롯에 배치된 스킬을 찾는다.
          */
-        public SkillSourceDefinition ResolveActiveSkill(string monsterId /* 몬스터 식별자 */, SkillSlot slot /* 스킬이나 유닛이 배치될 슬롯 */)
+        public SkillSourceDefinition GetActiveSkill(string monsterId /* 몬스터 식별자 */, SkillSlot slot /* 스킬이나 유닛이 배치될 슬롯 */)
         {
             var skills = GetActiveSkills(monsterId);
             for (var i = 0; i < skills.Length; i++)

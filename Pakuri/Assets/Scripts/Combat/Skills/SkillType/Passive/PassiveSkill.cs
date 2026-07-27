@@ -241,7 +241,7 @@ namespace Pakuri.InGame
 
             var context = new SkillExecutionContext(combatManager, roster, ownerEntry, null);
             var ownerPosition = (Vector2)ownerEntry.Transform.position;
-            var snapshot = SkillExecutionState.ResolvePassiveChoices(owner, passiveId);
+            var snapshot = SkillExecutionState.PassiveChoices(owner, passiveId);
             for (var i = 0; i < passive.MultiEffects.Length; i++)
             {
                 var effect = passive.MultiEffects[i];
@@ -269,13 +269,13 @@ namespace Pakuri.InGame
                     nextHealthRatioThresholds.Add(Mathf.Clamp01(effect.ConditionHealthRatioMax));
                 }
 
-                var statusSpec = SkillStatus.ResolveEffectStatusSpec(effect, snapshot);
+                var statusSpec = SkillStatus.EffectStatusSpec(effect, snapshot);
                 if (statusSpec == null || !statusSpec.Enabled || statusSpec.StatusData == null)
                 {
                     continue;
                 }
 
-                var targets = SkillStatus.ResolvePassiveEffectTargets(context, snapshot, effect);
+                var targets = SkillStatus.PassiveEffectTargets(context, snapshot, effect);
                 for (var targetIndex = 0; targetIndex < targets.Count; targetIndex++)
                 {
                     var target = targets[targetIndex];
@@ -453,7 +453,7 @@ namespace Pakuri.InGame
          */
         private static string BuildOneShotKey(UnitCombatState owner /* 정보를 소유한 유닛 */, string passiveId /* 패시브 식별자 */, SkillEffectDefinition effect /* 실행하거나 변환할 효과 */)
         {
-            var unitId = ResolveUnitKey(owner);
+            var unitId = UnitKey(owner);
             var effectId = !string.IsNullOrWhiteSpace(effect.EffectId) ? effect.EffectId : effect.SkillId;
             return unitId + ":" + passiveId + ":" + effectId;
         }
@@ -468,16 +468,16 @@ namespace Pakuri.InGame
             UnitCombatState target /* 효과를 받을 대상 유닛 */)
         {
             var effectId = !string.IsNullOrWhiteSpace(effect.EffectId) ? effect.EffectId : effect.SkillId;
-            return ResolveUnitKey(owner)
+            return UnitKey(owner)
                 + ":" + passiveId
                 + ":" + effectId
-                + ":" + ResolveUnitKey(target);
+                + ":" + UnitKey(target);
         }
 
         /*
          * 유닛 키를 결정한다.
          */
-        private static string ResolveUnitKey(UnitCombatState unit /* 유닛 */)
+        private static string UnitKey(UnitCombatState unit /* 유닛 */)
         {
             return unit != null && unit.Identity != null && !string.IsNullOrWhiteSpace(unit.Identity.UnitId)
                 ? unit.Identity.UnitId

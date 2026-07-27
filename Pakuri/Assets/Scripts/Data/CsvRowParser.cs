@@ -95,6 +95,9 @@ namespace Pakuri.Data
             public float AttackPowerCoefficient;
             public float SpellPowerCoefficient;
             public float Radius;
+            public float LineLength;
+            public int CastRepeatCount = 1;
+            public float CastRepeatIntervalSeconds;
             public float KnockbackDistance;
             public float DamageDelaySeconds;
             public float ExecuteHealthRatioThreshold;
@@ -316,6 +319,9 @@ namespace Pakuri.Data
                 AttackPowerCoefficient = ReadOptionalFloatIfColumnExists(record, "attack_power_coefficient"),
                 SpellPowerCoefficient = ReadOptionalFloatIfColumnExists(record, "spell_power_coefficient"),
                 Radius = ReadOptionalFloatIfColumnExists(record, "radius"),
+                LineLength = ReadOptionalFloatIfColumnExists(record, "line_length"),
+                CastRepeatCount = Math.Max(1, ReadOptionalIntIfColumnExists(record, "cast_repeat_count")),
+                CastRepeatIntervalSeconds = ReadOptionalFloatIfColumnExists(record, "cast_repeat_interval_seconds"),
                 KnockbackDistance = ReadOptionalFloatIfColumnExists(record, "knockback_distance"),
                 DamageDelaySeconds = ReadOptionalFloatIfColumnExists(record, "damage_delay_seconds"),
                 ExecuteHealthRatioThreshold = ReadOptionalFloatIfColumnExists(record, "execute_health_ratio_threshold"),

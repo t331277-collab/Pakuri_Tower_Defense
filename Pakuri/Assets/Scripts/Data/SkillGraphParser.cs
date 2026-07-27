@@ -262,6 +262,7 @@ namespace Pakuri.Data
 			AddSkillNodeHandler(dictionary, "ReloadTimeMultiplier", SkillNodeKind.Action);
 			AddSkillNodeHandler(dictionary, "PierceBonus", SkillNodeKind.Action);
 			AddSkillNodeHandler(dictionary, "HitTargetCountBonus", SkillNodeKind.Action);
+			AddSkillNodeHandler(dictionary, "LineCastRepeatCountBonus", SkillNodeKind.Action);
 			AddSkillNodeHandler(dictionary, "RadiusMultiplier", SkillNodeKind.Action);
 			AddSkillNodeHandler(dictionary, "RadiusBonus", SkillNodeKind.Action);
 			AddSkillNodeHandler(dictionary, "BeamWidthBonus", SkillNodeKind.Action);

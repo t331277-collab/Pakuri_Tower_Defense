@@ -8,6 +8,47 @@ using UnityEngine;
  */
 namespace Pakuri.InGame
 {
+    public readonly struct EffectCreateRequest
+    {
+        public EffectCreateRequest(
+            RuntimeSkillVisualSpec visual /* 런타임 시각 효과 설정 */,
+            GameObject prefab /* 생성할 프리팹 */,
+            string objectName /* 게임 오브젝트 이름 */,
+            Vector3 position /* 배치할 위치 */,
+            Quaternion rotation /* 배치할 회전값 */,
+            Transform targetTransform /* 비주얼을 붙일 대상 */,
+            float durationSeconds /* 표시 시간 */,
+            StatusRuntimeInstance persistentStatus /* 중복을 막고 수명을 소유할 상태 */,
+            bool hitboxIsTrigger /* 피격 판정 트리거 여부 */,
+            bool includeHitbox /* 피격 판정 포함 여부 */,
+            bool createEmptyActor /* 비주얼 없이 Actor를 붙일 빈 오브젝트 생성 여부 */)
+        {
+            Visual = visual;
+            Prefab = prefab;
+            ObjectName = objectName;
+            Position = position;
+            Rotation = rotation;
+            TargetTransform = targetTransform;
+            DurationSeconds = durationSeconds;
+            PersistentStatus = persistentStatus;
+            HitboxIsTrigger = hitboxIsTrigger;
+            IncludeHitbox = includeHitbox;
+            CreateEmptyActor = createEmptyActor;
+        }
+
+        public RuntimeSkillVisualSpec Visual { get; }
+        public GameObject Prefab { get; }
+        public string ObjectName { get; }
+        public Vector3 Position { get; }
+        public Quaternion Rotation { get; }
+        public Transform TargetTransform { get; }
+        public float DurationSeconds { get; }
+        public StatusRuntimeInstance PersistentStatus { get; }
+        public bool HitboxIsTrigger { get; }
+        public bool IncludeHitbox { get; }
+        public bool CreateEmptyActor { get; }
+    }
+
     public class EffectManager : MonoBehaviour
     {
         [SerializeField] private Transform runtimeSkillRoot;
@@ -17,59 +58,28 @@ namespace Pakuri.InGame
         /*
          * 런타임 비주얼 또는 프리팹으로 효과 오브젝트만 생성
          */
-        public GameObject CreateEffect(
-            RuntimeSkillVisualSpec visual /* 런타임 시각 효과 설정 */,
-            GameObject prefab /* 생성할 프리팹 */,
-            string objectName /* 게임 오브젝트 이름 */,
-            Vector3 position /* 배치할 위치 */,
-            Quaternion rotation /* 배치할 회전값 */,
-            bool hitboxIsTrigger = false /* 피격 판정 트리거 여부 */,
-            bool includeHitbox = true /* 피격 판정 포함 여부 */)
+        private GameObject CreateObject(
+            EffectCreateRequest request /* 효과 생성 요청 */,
+            Vector3 position /* 생성 위치 */)
         {
-            if (visual != null && visual.HasVisual()) // 런타임 비주얼 생성
+            if (request.Visual != null && request.Visual.HasVisual()) // 런타임 비주얼 생성
             {
-                var instance = CreateSkillActorObject(objectName, position, rotation);
-                EffectVisualBuilder.Configure(instance, visual, hitboxIsTrigger, includeHitbox);
+                var instance = CreateRuntimeObject(request.ObjectName, position, request.Rotation);
+                EffectVisualBuilder.Configure(instance, request.Visual, request.HitboxIsTrigger, request.IncludeHitbox);
                 return instance;
             }
 
-            if (prefab != null) // 프리팹 생성
+            if (request.Prefab != null) // 프리팹 생성 Rin - D, E 전용
             {
-                return Instantiate(prefab, position, rotation, runtimeSkillRoot);
+                return Instantiate(request.Prefab, position, request.Rotation, runtimeSkillRoot);
+            }
+
+            if (request.CreateEmptyActor)
+            {
+                return CreateRuntimeObject(request.ObjectName, position, request.Rotation);
             }
 
             return null;
-        }
-
-        /*
-         * 비주얼을 생성해 대상의 자식으로 연결한다.
-         */
-        public GameObject CreateTargetVisual(
-            RuntimeSkillVisualSpec visual /* 런타임 시각 효과 설정 */,
-            GameObject prefab /* 생성할 프리팹 */,
-            string objectName /* 게임 오브젝트 이름 */,
-            Transform targetTransform /* 비주얼을 붙일 대상 */,
-            bool hitboxIsTrigger = false /* 피격 판정 트리거 여부 */,
-            bool includeHitbox = true /* 피격 판정 포함 여부 */)
-        {
-
-            var instance = CreateEffect(
-                visual,
-                prefab,
-                objectName,
-                targetTransform.position,
-                Quaternion.identity,
-                hitboxIsTrigger,
-                includeHitbox);
-            if (instance == null)
-            {
-                return null;
-            }
-
-            AttachVisualToTarget(instance, targetTransform);
-            targetAttachedEffects.RemoveWhere(effectObject => effectObject == null);
-            targetAttachedEffects.Add(instance);
-            return instance;
         }
 
         /*
@@ -78,13 +88,12 @@ namespace Pakuri.InGame
         private static void AttachVisualToTarget(GameObject instance, Transform targetTransform)
         {
             instance.transform.SetParent(targetTransform, true);
-            instance.transform.position = targetTransform.position;
         }
 
         /*
          * 비주얼이나 프리팹이 없을 때 스킬 Actor를 붙일 빈 오브젝트를 생성
          */
-        public GameObject CreateSkillActorObject(
+        private GameObject CreateRuntimeObject(
             string objectName /* 게임 오브젝트 이름 */,
             Vector3 position /* 배치할 위치 */,
             Quaternion rotation /* 배치할 회전값 */)
@@ -96,113 +105,58 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 상태 효과 비주얼을 생성 현재 아리엘 - D 만 구현되어있고 나중에 상태이상 공통 비쥬얼 이펙트로 사용할 예정
+         * 이펙트 생성기
          */
-        public void ShowOrRefreshStatusEffect(
-            Transform targetTransform /* 상태 효과를 표시할 대상 */,
-            StatusRuntimeInstance status /* 실행 중인 상태 효과 */)
+        public GameObject CreateEffect(EffectCreateRequest request /* 효과 생성 요청 */)
         {
-            if (targetTransform == null || status == null || status.SourceData == null) // 이펙트 생성하지 않음
+            GameObject instance = null;
+            var created = false;
+            if (request.PersistentStatus != null)
             {
-                return;
-            }
-
-            var statusData = status.SourceData;
-            var hasRuntimeVisual = statusData.RuntimeVisual != null && statusData.RuntimeVisual.HasVisual();
-            if (!hasRuntimeVisual && statusData.StatusEffectPrefab == null)
-            {
-                return;
-            }
-
-            statusEffectVisuals.TryGetValue(status, out var instance);
-            if (instance == null)
-            {
-                statusEffectVisuals.Remove(status);
-                var objectName = "RuntimeStatusVisual";
-                if (!string.IsNullOrWhiteSpace(status.SourceSkillId))
-                {
-                    objectName = "RuntimeStatusVisual_" + status.SourceSkillId;
-                }
-
-                instance = CreateTargetVisual(
-                    statusData.RuntimeVisual,
-                    statusData.StatusEffectPrefab,
-                    objectName,
-                    targetTransform,
-                    includeHitbox: false);
+                statusEffectVisuals.TryGetValue(request.PersistentStatus, out instance);
                 if (instance == null)
                 {
-                    return;
+                    statusEffectVisuals.Remove(request.PersistentStatus);
+                }
+            }
+
+            if (instance == null)
+            {
+                instance = CreateObject(request, request.Position);
+                if (instance == null)
+                {
+                    return null;
                 }
 
-                statusEffectVisuals[status] = instance;
+                created = true;
+
+                if (request.PersistentStatus != null)
+                {
+                    statusEffectVisuals[request.PersistentStatus] = instance;
+                }
+
+                if (request.TargetTransform != null)
+                {
+                    AttachVisualToTarget(instance, request.TargetTransform);
+                    targetAttachedEffects.RemoveWhere(effectObject => effectObject == null);
+                    targetAttachedEffects.Add(instance);
+                }
             }
 
-            AttachVisualToTarget(instance, targetTransform);
-        }
-
-        /*
-         * 비주얼을 생성하고 지정한 시간이 지나면 제거하도록 Actor에 전달
-         */
-        public GameObject CreateEffect(
-            SkillEffectDefinition effect /* 생성할 추가 효과 */,
-            Vector3 position /* 배치할 위치 */,
-            float durationSeconds /* 표시 시간 */)
-        {
-            var objectName = "SkillEffectVisual";
-            if (!string.IsNullOrWhiteSpace(effect.EffectId)) // 이름 추가
+            if (!created && request.TargetTransform != null)
             {
-                objectName = "SkillEffectVisual_" + effect.EffectId;
+                AttachVisualToTarget(instance, request.TargetTransform);
             }
-
-            var instance = CreateEffect(
-                effect.RuntimeVisual,
-                effect.SkillEffectPrefab,
-                objectName,
-                position,
-                Quaternion.identity);
-            if (instance != null)
+            if (request.PersistentStatus == null && request.TargetTransform != null)
             {
-                SingleSkillActor.Attach(instance).InitializeTimed(this, durationSeconds);
+                BuffSkillActor.Attach(instance).Initialize(this, request.DurationSeconds);
+            }
+            else if (request.PersistentStatus == null && request.DurationSeconds > 0f)
+            {
+                SingleSkillActor.Attach(instance).InitializeTimed(this, request.DurationSeconds);
             }
 
             return instance;
-        }
-
-        /*
-         * 이펙트 비주얼을 적용 대상에게 붙이고 수명 관리를 Actor에 전달한다.
-         */
-        public void ShowFollowingSkillEffects(
-            SkillEffectDefinition effect /* 표시할 추가 효과 */,
-            IReadOnlyList<CombatUnitEntry> targets /* 비주얼을 붙일 대상 목록 */,
-            float durationSeconds /* 표시 시간 */)
-        {
-            var objectName = "SkillEffectVisual";
-            if (!string.IsNullOrWhiteSpace(effect.EffectId)) // 이름 추가
-            {
-                objectName = "SkillEffectVisual_" + effect.EffectId;
-            }
-
-            for (var i = 0; i < targets.Count; i++)
-            {
-                var target = targets[i];
-                if (target == null || target.Transform == null)
-                {
-                    continue;
-                }
-
-                var instance = CreateTargetVisual(
-                    effect.RuntimeVisual,
-                    effect.SkillEffectPrefab,
-                    objectName,
-                    target.Transform);
-                if (instance != null)
-                {
-                    BuffSkillActor.Attach(instance).Initialize(
-                        this,
-                        durationSeconds);
-                }
-            }
         }
 
         /*

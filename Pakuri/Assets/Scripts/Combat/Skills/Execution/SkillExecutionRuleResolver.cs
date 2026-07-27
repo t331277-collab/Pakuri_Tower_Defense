@@ -9,7 +9,7 @@ namespace Pakuri.InGame
 {
     internal static class SkillExecutionRuleResolver
     {
-        internal static float ResolveConditionalDamageMultiplier(
+        internal static float ConditionalDamageMultiplier(
             SkillExecutionData data,
             UnitCombatState target)
         {
@@ -33,7 +33,7 @@ namespace Pakuri.InGame
             return multiplier;
         }
 
-        internal static float ResolveConditionalCritChanceBonus(
+        internal static float ConditionalCritChanceBonus(
             SkillExecutionData data,
             UnitCombatState target)
         {
@@ -56,7 +56,7 @@ namespace Pakuri.InGame
             return bonus;
         }
 
-        internal static float ResolveBurstDamageMultiplier(
+        internal static float BurstDamageMultiplier(
             SkillExecutionData data,
             int projectileIndex,
             int burstProjectileCount)
@@ -80,7 +80,7 @@ namespace Pakuri.InGame
             return multiplier;
         }
 
-        internal static int ResolveBurstStatusStacksBonus(
+        internal static int BurstStatusStacksBonus(
             SkillExecutionData data,
             int projectileIndex,
             int burstProjectileCount)
@@ -115,7 +115,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            SkillNode[] nodes = SkillNodeMapper.ResolveChoiceRuntimePlan(choice, targetSkillId).Nodes;
+            SkillNode[] nodes = SkillNodeMapper.GetChoiceRuntimePlan(choice, targetSkillId).Nodes;
             for (var i = 0; i < nodes.Length; i++)
             {
                 if (nodes[i] == null)

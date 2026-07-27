@@ -92,10 +92,10 @@ namespace Pakuri.InGame
         /*
          * Record 작업을 수행한다.
          */
-        private void Record(DamageApplicationOptions options /* 처리에 사용할 추가 설정 */, InGameResourceChangeResult result /* 처리 결과 */)
+        private void Record(AttackRule attackRule /* 처리에 사용할 공격 규칙 */, InGameResourceChangeResult result /* 처리 결과 */)
         {
             // 피해 통계는 전투 결과 이벤트를 받아 이 기록기가 저장한다.
-            var source = options.Source;
+            var source = attackRule.Source;
             var identity = source != null ? source.Identity : null;
             if (identity == null
                 || identity.Side != UnitSide.Player
@@ -113,9 +113,9 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var sourceId = !string.IsNullOrWhiteSpace(options.DamageMeterSourceId)
-                ? options.DamageMeterSourceId
-                : options.SourceSkillId;
+            var sourceId = !string.IsNullOrWhiteSpace(attackRule.DamageMeterSourceId)
+                ? attackRule.DamageMeterSourceId
+                : attackRule.SourceSkillId;
             if (string.IsNullOrWhiteSpace(sourceId))
             {
                 sourceId = "Unknown";

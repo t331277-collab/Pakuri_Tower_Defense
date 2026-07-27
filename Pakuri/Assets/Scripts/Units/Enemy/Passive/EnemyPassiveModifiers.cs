@@ -68,34 +68,47 @@ namespace Pakuri.InGame
         }
 
         /*
-         * ResolveOutgoingDamageMultiplier 결과를 계산해 반환한다.
+         * 주는 피해 보너스를 계산해 반환한다.
          */
-        public static float ResolveOutgoingDamageMultiplier(
+        public static float OutgoingDamageBonus(
             EnemyCombatState enemy /* 적 */,
             DamageAttribute attribute /* 피해 속성 */)
         {
             if (enemy == null)
             {
-                return 1f;
+                return 0f;
             }
 
             switch (attribute)
             {
                 case DamageAttribute.Physical:
-                    return Math.Max(0f, enemy.PassivePhysicalDamageMultiplier);
+                    return Math.Max(0f, enemy.PassivePhysicalDamageMultiplier) - 1f;
                 case DamageAttribute.Fire:
-                    return Math.Max(0f, enemy.PassiveFireDamageMultiplier);
+                    return Math.Max(0f, enemy.PassiveFireDamageMultiplier) - 1f;
                 case DamageAttribute.Lightning:
-                    return Math.Max(0f, enemy.PassiveLightningDamageMultiplier);
+                    return Math.Max(0f, enemy.PassiveLightningDamageMultiplier) - 1f;
                 case DamageAttribute.Ice:
-                    return Math.Max(0f, enemy.PassiveIceDamageMultiplier);
+                    return Math.Max(0f, enemy.PassiveIceDamageMultiplier) - 1f;
                 case DamageAttribute.Darkness:
-                    return Math.Max(0f, enemy.PassiveDarknessDamageMultiplier);
+                    return Math.Max(0f, enemy.PassiveDarknessDamageMultiplier) - 1f;
                 case DamageAttribute.Holy:
-                    return Math.Max(0f, enemy.PassiveHolyDamageMultiplier);
+                    return Math.Max(0f, enemy.PassiveHolyDamageMultiplier) - 1f;
             }
 
             throw new InvalidOperationException("Unsupported damage attribute: " + attribute);
+        }
+
+        /*
+         * 받는 피해 보너스를 계산해 반환한다.
+         */
+        public static float IncomingDamageBonus(EnemyCombatState enemy /* 적 */)
+        {
+            if (enemy == null)
+            {
+                return 0f;
+            }
+
+            return Math.Max(0f, enemy.PassiveIncomingDamageMultiplier) - 1f;
         }
 
         /*

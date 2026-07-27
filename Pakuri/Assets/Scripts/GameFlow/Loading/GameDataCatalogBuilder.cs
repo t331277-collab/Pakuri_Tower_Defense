@@ -252,7 +252,6 @@ namespace Pakuri.Data
                 BaseDamage = row.BaseDamage,
                 AttackPowerCoefficient = row.AttackPowerCoefficient,
                 SpellPowerCoefficient = row.SpellPowerCoefficient,
-                UseCombinedStatCoefficients = true,
                 Radius = source.EffectRadius,
                 CastRange = source.CastRange,
                 EffectRadius = source.EffectRadius,
@@ -494,6 +493,9 @@ namespace Pakuri.Data
                     AttackPowerCoefficient = skill.AttackPowerCoefficient,
                     SpellPowerCoefficient = skill.SpellPowerCoefficient,
                     Radius = skill.Radius,
+                    LineLength = skill.LineLength,
+                    CastRepeatCount = skill.CastRepeatCount,
+                    CastRepeatIntervalSeconds = skill.CastRepeatIntervalSeconds,
                     KnockbackDistance = skill.KnockbackDistance,
                     DamageDelaySeconds = skill.DamageDelaySeconds,
                     ExecuteHealthRatioThreshold = skill.ExecuteHealthRatioThreshold,
@@ -1552,9 +1554,8 @@ namespace Pakuri.Data
                     true);
             }
 
-            var useLocalScale = scaleX != 0f || scaleY != 0f || scaleZ != 0f;
-            var localScale = Vector3.one;
-            if (useLocalScale)
+            var localScale = Vector3.one * scale;
+            if (scaleX != 0f || scaleY != 0f || scaleZ != 0f)
             {
                 if (scaleX == 0f)
                 {
@@ -1576,8 +1577,6 @@ namespace Pakuri.Data
             {
                 Sprite = LoadSprite(spritePath),
                 AnimatorController = LoadAnimatorController(animatorControllerPath),
-                Scale = scale,
-                UseLocalScale = useLocalScale,
                 LocalScale = localScale,
                 SortingOrder = sortingOrder,
                 Anchor = anchor,

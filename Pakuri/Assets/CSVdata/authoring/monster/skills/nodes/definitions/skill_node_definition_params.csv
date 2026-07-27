@@ -196,3 +196,4 @@
 "ThresholdApplyStatus","1","source_status_id","status_id","true",""
 "ThresholdApplyStatus","2","min_stacks","int","true",""
 "ThresholdApplyStatus","3","apply_status_id","status_id","true",""
+"LineCastRepeatCountBonus","1","bonus","int","true",""

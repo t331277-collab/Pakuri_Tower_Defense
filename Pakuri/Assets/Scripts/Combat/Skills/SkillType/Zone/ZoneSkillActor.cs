@@ -120,7 +120,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var candidates = SkillTargeting.ResolveTargetList(sourceEntry, unitRoster, targetingSpec);
+            var candidates = SkillTargeting.TargetList(sourceEntry, unitRoster, targetingSpec);
             if (!areaCoversAll && areaRadius <= 0f)
             {
                 var target = SkillTargeting.FindNearestTarget(sourceEntry, unitRoster, targetingSpec);
@@ -130,13 +130,11 @@ namespace Pakuri.InGame
                 }
 
                 var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero;
-                var resolvedDamage = damagePerTick;
-                if (executionData != null)
-                {
-                    resolvedDamage *= SkillExecutionRuleResolver.ResolveConditionalDamageMultiplier(executionData, target.Model);
-                }
-                resolvedDamage = Mathf.Max(0f, resolvedDamage);
-                var damageResult = manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
+                var resolvedDamage = Mathf.Max(0f, damagePerTick);
+                var finalDamageMultiplier = executionData != null
+                    ? Mathf.Max(0f, executionData.DamageMultiplier) * SkillExecutionRuleResolver.ConditionalDamageMultiplier(executionData, target.Model)
+                    : 1f;
+                var damageResult = manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, finalDamageMultiplier: finalDamageMultiplier);
                 if (!damageResult.IsDead)
                 {
                     TryApplyStatus(manager, target.Model, onHitStatus, source);
@@ -305,7 +303,7 @@ namespace Pakuri.InGame
                     attribute,
                     statusSpec,
                     sourceModel,
-                    ResolveSourceSkillId(snapshot, runtime),
+                    SourceSkillId(snapshot, runtime),
                     runtime,
                     criticalAllowed,
                     critChanceBonus,
@@ -325,7 +323,7 @@ namespace Pakuri.InGame
                 attribute,
                 statusSpec,
                 sourceModel,
-                ResolveSourceSkillId(snapshot, runtime),
+                SourceSkillId(snapshot, runtime),
                 runtime,
                 criticalAllowed,
                 critChanceBonus,
@@ -360,7 +358,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var candidates = SkillTargeting.ResolveTargetList(sourceEntry, unitRoster, targetingSpec);
+            var candidates = SkillTargeting.TargetList(sourceEntry, unitRoster, targetingSpec);
             var hitUnitIds = new HashSet<string>();
             var eligibleTargets = new List<CombatUnitEntry>();
             for (var i = 0; i < candidates.Count; i++)
@@ -435,13 +433,11 @@ namespace Pakuri.InGame
                 }
 
                 var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero;
-                var resolvedDamage = damagePerTick;
-                if (executionData != null)
-                {
-                    resolvedDamage *= SkillExecutionRuleResolver.ResolveConditionalDamageMultiplier(executionData, target.Model);
-                }
-                resolvedDamage = Mathf.Max(0f, resolvedDamage);
-                var damageResult = manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
+                var resolvedDamage = Mathf.Max(0f, damagePerTick);
+                var finalDamageMultiplier = executionData != null
+                    ? Mathf.Max(0f, executionData.DamageMultiplier) * SkillExecutionRuleResolver.ConditionalDamageMultiplier(executionData, target.Model)
+                    : 1f;
+                var damageResult = manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, finalDamageMultiplier: finalDamageMultiplier);
                 if (!damageResult.IsDead)
                 {
                     TryApplyStatus(manager, target.Model, onHitStatus, source);
@@ -504,7 +500,7 @@ namespace Pakuri.InGame
         /*
          * 출처 스킬 ID를 결정한다.
          */
-        private static string ResolveSourceSkillId(SkillExecutionData executionData /* 실행 시점의 스킬 강화 정보 */, SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */)
+        private static string SourceSkillId(SkillExecutionData executionData /* 실행 시점의 스킬 강화 정보 */, SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */)
         {
             if (sourceRuntime != null && !string.IsNullOrWhiteSpace(sourceRuntime.SkillId))
             {

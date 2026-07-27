@@ -42,7 +42,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var targets = SkillTargeting.ResolveOrderedTargets(
+            var targets = SkillTargeting.OrderedTargets(
                 context.CasterEntry,
                 context.Roster,
                 skill.Targeting);

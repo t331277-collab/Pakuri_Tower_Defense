@@ -109,22 +109,22 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 피해 처리가 없는 투사체 비주얼의 애니메이션 수명을 설정하고 그 시간을 반환한다.
+         * 피해 처리가 없는 투사체 비주얼의 지정 수명을 설정하고 반환한다.
          */
         public float InitializeVisualLifetime(
             EffectManager manager /* 효과 생성과 제거를 담당하는 관리자 */,
-            float minimumLifetimeSeconds /* 최소 유지 시간(초) */)
+            float durationSeconds /* 지속 시간(초) */)
         {
             effectManager = manager;
             visualOnly = true;
-            maxLifetime = EffectVisualBuilder.ResolveLifetime(gameObject, minimumLifetimeSeconds);
+            maxLifetime = Mathf.Max(0.1f, durationSeconds);
             return maxLifetime;
         }
 
         /*
          * 투사체가 사라질 좌우 경계 위치를 결정한다.
          */
-        internal static float ResolveDestroyBoundaryX(
+        internal static float DestroyBoundaryX(
             Vector2 origin /* 시작 위치 */,
             Vector2 fireDirection /* 발사 방향 */,
             float projectileSpeed /* 투사체 속도 */,
@@ -245,7 +245,7 @@ namespace Pakuri.InGame
                 impactDelayRemaining -= deltaTime;
                 if (impactDelayRemaining <= 0f)
                 {
-                    ResolveImpact();
+                    Impact();
                 }
             }
 
@@ -336,8 +336,8 @@ namespace Pakuri.InGame
             var resolvedDamage = 0f;
             if (contactDamageEnabled)
             {
-                resolvedDamage = ResolveHitDamage(target.Model);
-                var damageResult = combatManager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, owner, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
+                resolvedDamage = HitDamage();
+                var damageResult = combatManager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, owner, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, finalDamageMultiplier: HitDamageMultiplier(target.Model));
                 if (!damageResult.IsDead)
                 {
                     TryApplyStatus(target.Model);
@@ -377,20 +377,30 @@ namespace Pakuri.InGame
         /*
          * 적중 피해를 결정한다.
          */
-        private float ResolveHitDamage(UnitCombatState target /* 효과를 받을 대상 유닛 */)
+        private float HitDamage()
         {
-            var hitDamage = damage;
+            return Mathf.Max(0f, damage);
+        }
+
+        /*
+         * 방어력 반영 후 적용할 적중 배율을 결정한다.
+         */
+        private float HitDamageMultiplier(UnitCombatState target /* 효과를 받을 대상 유닛 */)
+        {
+            var multiplier = executionData != null
+                ? Mathf.Max(0f, executionData.DamageMultiplier)
+                : 1f;
             if (executionData != null)
             {
-                hitDamage *= SkillExecutionRuleResolver.ResolveConditionalDamageMultiplier(executionData, target);
+                multiplier *= SkillExecutionRuleResolver.ConditionalDamageMultiplier(executionData, target);
             }
 
             if (runtime != null && executionData != null)
             {
-                hitDamage *= runtime.ResolveConsecutiveHitDamageMultiplier(target, executionData);
+                multiplier *= runtime.ConsecutiveHitDamageMultiplier(target, executionData);
             }
 
-            return Mathf.Max(0f, hitDamage);
+            return Mathf.Max(0f, multiplier);
         }
 
         /*
@@ -477,7 +487,7 @@ namespace Pakuri.InGame
             var candidates = combatManager.UnitRegistry.Entries;
             var radiusSq = branchDamageOnHit.SearchRadius * branchDamageOnHit.SearchRadius;
             var selectedTargets = new HashSet<UnitCombatState>();
-            var branchDamage = primaryDamage * Mathf.Max(0f, branchDamageOnHit.DamageMultiplier);
+            var branchDamage = primaryDamage;
             if (branchDamage <= 0f)
             {
                 return;
@@ -502,7 +512,8 @@ namespace Pakuri.InGame
                     critChanceBonus,
                     critDamageBonus,
                     sourceSkillId,
-                    true);
+                    suppressOutgoingDamageTriggers: true,
+                    finalDamageMultiplier: HitDamageMultiplier(target.Model) * Mathf.Max(0f, branchDamageOnHit.DamageMultiplier));
                 SpawnBranchDamageLine(hitPosition, targetPosition);
             }
         }
@@ -563,10 +574,18 @@ namespace Pakuri.InGame
             }
 
             const float durationSeconds = 0.12f;
-            var lineObject = combatManager.Effects.CreateSkillActorObject(
+            var lineObject = combatManager.Effects.CreateEffect(new EffectCreateRequest(
+                null,
+                null,
                 "InGameBranchDamageLine",
                 Vector3.zero,
-                Quaternion.identity);
+                Quaternion.identity,
+                null,
+                0f,
+                null,
+                false,
+                false,
+                true));
             var material = new Material(shader)
             {
                 name = "RuntimeBranchDamageLineMaterial"
@@ -644,7 +663,7 @@ namespace Pakuri.InGame
         /*
          * 충돌을 결정한다.
          */
-        private void ResolveImpact()
+        private void Impact()
         {
             if (impactResolved || combatManager == null)
             {
@@ -663,13 +682,18 @@ namespace Pakuri.InGame
                     objectName = "ProjectileImpact_" + sourceSkillId;
                 }
 
-                instance = effects.CreateEffect(
+                instance = effects.CreateEffect(new EffectCreateRequest(
                     impactRuntimeVisual,
                     null,
                     objectName,
                     impactCenter,
                     Quaternion.identity,
-                    includeHitbox: false);
+                    null,
+                    0f,
+                    null,
+                    false,
+                    false,
+                    false));
             }
 
             if (instance != null)
@@ -808,7 +832,7 @@ namespace Pakuri.InGame
         /*
          * 회전을 결정한다.
          */
-        private static Quaternion ResolveRotation(Vector3 direction /* 진행하거나 발사할 방향 */)
+        private static Quaternion Rotation(Vector3 direction /* 진행하거나 발사할 방향 */)
         {
             if (direction.sqrMagnitude <= 0.0001f)
             {

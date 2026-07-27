@@ -36,17 +36,13 @@ namespace Pakuri.Data
 
                 effect.ConditionStatuses = ParseConditionStatusExpression(effect.ConditionStatusId);
                 effect.ConditionStatusSourceSkillIds = ParseIdList(effect.ConditionStatusSourceSkillId);
-                if (effect.EffectKind != SkillMultiEffectKind.Status
-                    && effect.EffectKind != SkillMultiEffectKind.ExtendStatusDuration)
+                if (string.IsNullOrWhiteSpace(effect.StatusEffectId))
                 {
                     continue;
                 }
 
                 effect.StatusKind = ParseStatusKind(effect.StatusEffectId);
-                if (effect.EffectKind == SkillMultiEffectKind.Status)
-                {
-                    effect.CompiledStatusData = Create(effect);
-                }
+                effect.CompiledStatusData = Create(effect);
             }
         }
 

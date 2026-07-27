@@ -9,6 +9,46 @@
 - This active file now keeps only the current shared status runtime baseline and the resource-display rule still relevant to active work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-27 DamageAttribute Type Extraction
+
+### Task title
+
+Extract the shared `DamageAttribute` enum from `DamageCalculator.cs`.
+
+### Goals
+
+- Give the shared combat attribute type its own source file.
+- Preserve every existing type reference and runtime meaning.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Preserve `Pakuri.Combat.DamageAttribute`, all six member names, their order, and the existing public API.
+- Do not change damage, status, skill, CSV, prefab, scene, or runtime behavior.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- Keep future attributes in `DamageAttribute.cs`; no Play Mode verification is required for this behavior-preserving source move.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Damage/DamageAttribute.cs` is now the sole `DamageAttribute` declaration and keeps `namespace Pakuri.Combat`.
+- `DamageCalculator.cs` retains its existing `DamageAttribute` parameter and no consuming script required a namespace or call-site change.
+- Unity imported the new script and generated `DamageAttribute.cs.meta`; regenerated `Assembly-CSharp.csproj` includes the new source file.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` and its Editor counterpart completed with 0 errors. Existing `MSB3277` warning groups and Editor `CS2008` empty-source warning remain.
+
+### History
+
+- 2026-07-27: User requested Code Builder to separate the shared enum and preserve consuming scripts. The enum was mechanically moved without changing its full type name.
+
 ## Task: 2026-07-25 Target-Attached Effect Visual Unification
 
 ### Task title

@@ -12,12 +12,12 @@ using UnityEngine;
  */
 namespace Pakuri.InGame
 {
-    public readonly struct DamageApplicationOptions
+    public readonly struct AttackRule
     {
         /*
-         * 피해 적용 옵션을 구성한다.
+         * 공격 처리 규칙을 구성한다.
          */
-        public DamageApplicationOptions(
+        public AttackRule(
             UnitCombatState source /* 효과를 발생시킨 유닛 */,
             bool criticalAllowed /* 치명타 허용 여부 */,
             float critChanceBonus /* 추가 치명타 확률 */,
@@ -25,7 +25,8 @@ namespace Pakuri.InGame
             string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */,
             bool suppressOutgoingDamageTriggers /* 생략 주는 피해 트리거 목록 여부 */,
             bool sourceHitWasExecute /* 발생 원본 적중 발생 처형 여부 */,
-            string damageMeterSourceId /* 피해량 기록에 사용할 발생 원본 식별자 */)
+            string damageMeterSourceId /* 피해량 기록에 사용할 발생 원본 식별자 */,
+            float finalDamageBonus /* 방어력 반영 후 적용할 피해 보너스 */)
         {
             Source = source;
             CriticalAllowed = criticalAllowed;
@@ -35,6 +36,7 @@ namespace Pakuri.InGame
             SuppressOutgoingDamageTriggers = suppressOutgoingDamageTriggers;
             SourceHitWasExecute = sourceHitWasExecute;
             DamageMeterSourceId = damageMeterSourceId;
+            FinalDamageBonus = finalDamageBonus;
         }
 
         public UnitCombatState Source { get; }
@@ -45,6 +47,7 @@ namespace Pakuri.InGame
         public bool SuppressOutgoingDamageTriggers { get; }
         public bool SourceHitWasExecute { get; }
         public string DamageMeterSourceId { get; }
+        public float FinalDamageBonus { get; }
     }
 
     /*
@@ -68,7 +71,7 @@ namespace Pakuri.InGame
         internal SkillExecution SkillExecution => skillExecution;
 
         public int ActiveEnemyCount => unitRegistry.EnemyCount;
-        public event Action<DamageApplicationOptions, InGameResourceChangeResult> DamageApplied;
+        public event Action<AttackRule, InGameResourceChangeResult> DamageApplied;
         public event Action<UnitCombatState> UnitDefeated;
 
         /*
@@ -192,12 +195,14 @@ namespace Pakuri.InGame
             string sourceSkillId = null /* 효과를 발생시킨 스킬 식별자 */,
             bool suppressOutgoingDamageTriggers = false /* 생략 주는 피해 트리거 목록 여부 */,
             bool sourceHitWasExecute = false /* 발생 원본 적중 발생 처형 여부 */,
-            string damageMeterSourceId = null /* 피해량 기록에 사용할 발생 원본 식별자 */)
+            string damageMeterSourceId = null /* 피해량 기록에 사용할 발생 원본 식별자 */,
+            float finalDamageMultiplier = 1f /* 방어력 반영 후 적용할 피해 배율 */)
         {
             var depletedShields = new List<StatusRuntimeInstance>();
             var absorbedShields = new List<ShieldAbsorptionRecord>();
-            var options = new DamageApplicationOptions(source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, suppressOutgoingDamageTriggers, sourceHitWasExecute, damageMeterSourceId);
-            var result = ApplyDamageToResources(target, baseDamage, attribute, options, depletedShields, absorbedShields);
+            var finalDamageBonus = Mathf.Max(0f, finalDamageMultiplier) - 1f;
+            var attackRule = new AttackRule(source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, suppressOutgoingDamageTriggers, sourceHitWasExecute, damageMeterSourceId, finalDamageBonus);
+            var result = ApplyDamageToResources(target, baseDamage, attribute, attackRule, depletedShields, absorbedShields);
             // 자원 변화가 없으면 표시와 Trigger도 실행하지 않는다.
             if (!result.Changed)
             {
@@ -215,24 +220,24 @@ namespace Pakuri.InGame
                 }
             }
             // 통계와 UI에는 실제 자원 변화 결과만 전달한다.
-            DamageApplied?.Invoke(options, result);
+            DamageApplied?.Invoke(attackRule, result);
             var damagedEntry = unitRegistry.Find(result.Target);
             damagedEntry.RefreshDisplay();
             damagedEntry.ShowDamage(result.AppliedDamage, result.IsDead);
             SkillTrigger.ExecuteShieldAbsorbs(this, unitRegistry, target, source, absorbedShields);
             SkillTrigger.ExecuteExpiredStatuses(this, unitRegistry, target, depletedShields);
-            DispatchOutgoingDamageTriggers(target, attribute, options, result, baseDamage);
-            if (result.IsDead && options.Source != null)
+            DispatchOutgoingDamageTriggers(target, attribute, attackRule, result, baseDamage);
+            if (result.IsDead && attackRule.Source != null)
             {
                 SkillTrigger.ExecuteKill(
                     this,
                     unitRegistry,
-                    options.Source,
-                    options.SourceSkillId,
+                    attackRule.Source,
+                    attackRule.SourceSkillId,
                     target,
                     attribute,
                     result.AppliedDamage,
-                    options.SourceHitWasExecute);
+                    attackRule.SourceHitWasExecute);
             }
 
             RemoveUnitIfDead(result);
@@ -263,7 +268,7 @@ namespace Pakuri.InGame
             UnitCombatState target /* 효과를 받을 대상 유닛 */,
             float baseDamage /* 방어 계산 전 기본 피해량 */,
             DamageAttribute attribute /* 피해 속성 */,
-            DamageApplicationOptions options /* 처리에 사용할 추가 설정 */,
+            AttackRule attackRule /* 처리에 사용할 공격 규칙 */,
             ICollection<StatusRuntimeInstance> depletedShields /* 소진된 보호막 목록 */,
             ICollection<ShieldAbsorptionRecord> absorbedShields /* 흡수된 보호막 목록 */)
         {
@@ -276,7 +281,7 @@ namespace Pakuri.InGame
 
             if (baseDamage > 0f)
             {
-                finalDamage = DamageCalculator.CalculateFinalDamage(target, baseDamage, attribute, options);
+                finalDamage = DamageCalculator.CalculateFinalDamage(target, baseDamage, attribute, attackRule);
 
                 target.Statuses.RecordIncomingDamage(attribute, finalDamage);
 
@@ -372,7 +377,7 @@ namespace Pakuri.InGame
             passiveEffects.NotifyStatusChanged(target);
             target.SyncShield();
             unitRegistry.RefreshDisplay(target);
-            effectManager.ShowOrRefreshStatusEffect(unitRegistry.Find(target).Transform, status);
+            ShowStatusEffectVisual(target, status);
             return status;
         }
 
@@ -397,7 +402,7 @@ namespace Pakuri.InGame
             }
 
             // 대상의 보호막 수신 배율을 먼저 반영한다.
-            var adjustedShieldAmount = Mathf.Max(0f, shieldAmount) * StatusCombatRules.ResolveShieldReceivedMultiplier(target);
+            var adjustedShieldAmount = Mathf.Max(0f, shieldAmount) * StatusCombatRules.ShieldReceivedMultiplier(target);
             var status = target.Statuses.Apply(
                 statusData,
                 stacks,
@@ -411,7 +416,7 @@ namespace Pakuri.InGame
 
             target.SyncShield();
             unitRegistry.RefreshDisplay(target);
-            effectManager.ShowOrRefreshStatusEffect(unitRegistry.Find(target).Transform, status);
+            ShowStatusEffectVisual(target, status);
             return status;
         }
 
@@ -447,10 +452,28 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                effectManager.ShowOrRefreshStatusEffect(unitRegistry.Find(target).Transform, status);
+                ShowStatusEffectVisual(target, status);
             }
 
             return true;
+        }
+
+        private void ShowStatusEffectVisual(
+            UnitCombatState target /* 상태 효과를 표시할 대상 */,
+            StatusRuntimeInstance status /* 실행 중인 상태 효과 */)
+        {
+            effectManager.CreateEffect(new EffectCreateRequest(
+                status.SourceData.RuntimeVisual,
+                status.SourceData.StatusEffectPrefab,
+                "RuntimeStatusVisual_" + status.SourceSkillId,
+                unitRegistry.Find(target).Transform.position,
+                Quaternion.identity,
+                unitRegistry.Find(target).Transform,
+                0f,
+                status,
+                false,
+                false,
+                false));
         }
 
         /*
@@ -540,12 +563,12 @@ namespace Pakuri.InGame
         private void DispatchOutgoingDamageTriggers(
             UnitCombatState target /* 효과를 받을 대상 유닛 */,
             DamageAttribute attribute /* 피해 속성 */,
-            DamageApplicationOptions options /* 처리에 사용할 추가 설정 */,
+            AttackRule attackRule /* 처리에 사용할 공격 규칙 */,
             InGameResourceChangeResult result /* 처리 결과 */,
             float sourceBaseDamage /* 발생 원본 기본 피해 */)
         {
             // 출처나 실제 피해가 없거나 연쇄 Trigger를 막은 피해는 전달하지 않는다.
-            if (options.Source == null || options.SuppressOutgoingDamageTriggers || result.AppliedDamage <= 0f)
+            if (attackRule.Source == null || attackRule.SuppressOutgoingDamageTriggers || result.AppliedDamage <= 0f)
             {
                 return;
             }
@@ -553,14 +576,14 @@ namespace Pakuri.InGame
             SkillTrigger.ExecuteOutgoingDamage(
                 this,
                 unitRegistry,
-                options.Source,
-                options.SourceSkillId,
+                attackRule.Source,
+                attackRule.SourceSkillId,
                 target,
                 attribute,
                 result.AppliedDamage,
-                options.SourceHitWasExecute);
+                attackRule.SourceHitWasExecute);
 
-            ApplyOutgoingAdditionalDamageStatuses(target, attribute, options, sourceBaseDamage);
+            ApplyOutgoingAdditionalDamageStatuses(target, attribute, attackRule, sourceBaseDamage);
         }
 
         /*
@@ -569,7 +592,7 @@ namespace Pakuri.InGame
         private void ApplyOutgoingAdditionalDamageStatuses(
             UnitCombatState target /* 효과를 받을 대상 유닛 */,
             DamageAttribute triggerAttribute /* 트리거 속성 */,
-            DamageApplicationOptions options /* 처리에 사용할 추가 설정 */,
+            AttackRule attackRule /* 처리에 사용할 공격 규칙 */,
             float sourceBaseDamage /* 발생 원본 기본 피해 */)
         {
             if (target.Resources.CurrentHealth <= 0f)
@@ -577,7 +600,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var specs = StatusCombatRules.ResolveOutgoingAdditionalDamageSpecs(options.Source, triggerAttribute);
+            var specs = StatusCombatRules.OutgoingAdditionalDamageSpecs(attackRule.Source, triggerAttribute);
             for (var i = 0; i < specs.Count; i++)
             {
                 if (target.Resources.CurrentHealth <= 0f)
@@ -596,11 +619,11 @@ namespace Pakuri.InGame
                     target,
                     sourceBaseDamage * spec.Multiplier,
                     spec.DamageAttribute,
-                    options.Source,
+                    attackRule.Source,
                     true,
                     0f,
                     0f,
-                    options.SourceSkillId,
+                    attackRule.SourceSkillId,
                     true);
             }
         }

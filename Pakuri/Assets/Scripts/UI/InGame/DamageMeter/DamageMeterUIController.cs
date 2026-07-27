@@ -112,7 +112,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                var monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId);
+                var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId);
                 tracker.TryGetRecord(monsterId, out var record);
                 panel.SetRuntime(monster, record, leaderDamage, ResolveDisplayName, ResolveSortKey);
             }
@@ -171,7 +171,7 @@ namespace Pakuri.InGame
         private string ResolveDisplayName(string monsterId /* 몬스터 식별자 */, string sourceId /* 효과를 발생시킨 대상의 식별자 */)
         {
             var manager = GameDataLoader.CurrentCatalog;
-            var monster = manager.ResolveMonster(monsterId);
+            var monster = manager.GetMonster(monsterId);
             if (monster != null)
             {
                 var activeName = ResolveActiveSkillDisplayName(monster, sourceId);
@@ -214,7 +214,7 @@ namespace Pakuri.InGame
          */
         private int ResolveSortKey(string monsterId /* 몬스터 식별자 */, string sourceId /* 효과를 발생시킨 대상의 식별자 */, int firstSeenIndex /* 첫 번째 처음 발견 순서 번호 */)
         {
-            var monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId);
+            var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId);
             var activeSkills = monster != null ? monster.ActiveSkills : null;
             if (activeSkills != null)
             {

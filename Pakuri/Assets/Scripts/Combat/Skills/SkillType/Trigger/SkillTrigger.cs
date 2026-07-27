@@ -103,7 +103,7 @@ internal static class SkillTrigger
 		{
 			return;
 		}
-		Vector2 eventCenter = ResolveUnitPosition(roster, source);
+		Vector2 eventCenter = UnitPosition(roster, source);
 		for (int i = 0; i < readOnlyList.Count; i++)
 		{
 			SkillUseState skillRuntimeInstance = readOnlyList[i];
@@ -122,9 +122,9 @@ internal static class SkillTrigger
 	{
 		if (shieldTarget != null && shieldStatus != null && shieldStatus.IsShieldStatus)
 		{
-			UnitCombatState unitState = ResolveSourceModel(roster, shieldStatus.SourceUnitId, shieldStatus.SourceDefinitionId);
+			UnitCombatState unitState = SourceModel(roster, shieldStatus.SourceUnitId, shieldStatus.SourceDefinitionId);
 			string text = ((!string.IsNullOrWhiteSpace(shieldStatus.SourceSkillId)) ? shieldStatus.SourceSkillId : string.Empty);
-			Vector2 eventCenter = ResolveUnitPosition(roster, shieldTarget);
+			Vector2 eventCenter = UnitPosition(roster, shieldTarget);
 			TriggerExecutionContext triggerContext = new TriggerExecutionContext(shieldTarget, null, eventCenter, shieldStatus, 0f, 0f, DamageAttribute.Physical, text, unitState);
 			ExecuteSourceOwnedTriggers(combatManager, roster, unitState, text, SkillTriggerEvent.OnShieldExpire, triggerContext);
 			ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnShieldExpire, triggerContext);
@@ -138,9 +138,9 @@ internal static class SkillTrigger
 	{
 		if (shieldTarget != null && shieldStatus != null && shieldStatus.IsShieldStatus && !(absorbedAmount <= 0f))
 		{
-			UnitCombatState unitState = ResolveSourceModel(roster, shieldStatus.SourceUnitId, shieldStatus.SourceDefinitionId);
+			UnitCombatState unitState = SourceModel(roster, shieldStatus.SourceUnitId, shieldStatus.SourceDefinitionId);
 			string text = ((!string.IsNullOrWhiteSpace(shieldStatus.SourceSkillId)) ? shieldStatus.SourceSkillId : string.Empty);
-			Vector2 eventCenter = ((attacker != null) ? ResolveUnitPosition(roster, attacker) : ResolveUnitPosition(roster, shieldTarget));
+			Vector2 eventCenter = ((attacker != null) ? UnitPosition(roster, attacker) : UnitPosition(roster, shieldTarget));
 			TriggerExecutionContext triggerContext = new TriggerExecutionContext(attacker, attacker, eventCenter, shieldStatus, absorbedAmount, 0f, DamageAttribute.Physical, text, unitState);
 			ExecuteSourceOwnedTriggers(combatManager, roster, unitState, text, SkillTriggerEvent.OnShieldAbsorb, triggerContext);
 			ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnShieldAbsorb, triggerContext);
@@ -169,9 +169,9 @@ internal static class SkillTrigger
 	{
 		if (statusOwner != null && status != null)
 		{
-			UnitCombatState unitState = ResolveSourceModel(roster, status.SourceUnitId, status.SourceDefinitionId);
+			UnitCombatState unitState = SourceModel(roster, status.SourceUnitId, status.SourceDefinitionId);
 			string text = ((!string.IsNullOrWhiteSpace(status.SourceSkillId)) ? status.SourceSkillId : string.Empty);
-			Vector2 eventCenter = ResolveUnitPosition(roster, statusOwner);
+			Vector2 eventCenter = UnitPosition(roster, statusOwner);
 			TriggerExecutionContext triggerContext = new TriggerExecutionContext(statusOwner, null, eventCenter, status, 0f, 0f, DamageAttribute.Physical, text, unitState);
 			ExecuteSourceOwnedTriggers(combatManager, roster, unitState, text, SkillTriggerEvent.OnStatusExpire, triggerContext);
 			ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnStatusExpire, triggerContext);
@@ -213,7 +213,7 @@ internal static class SkillTrigger
 	{
 		if (!(combatManager == null) && roster != null && source != null)
 		{
-			Vector2 eventCenter = ((eventTarget != null) ? ResolveUnitPosition(roster, eventTarget) : ResolveUnitPosition(roster, source));
+			Vector2 eventCenter = ((eventTarget != null) ? UnitPosition(roster, eventTarget) : UnitPosition(roster, source));
 			TriggerExecutionContext triggerContext = new TriggerExecutionContext(eventTarget, null, eventCenter, null, 0f, eventAppliedDamage, attribute, sourceSkillId, source, eventWasExecute);
 			ExecuteSourceOwnedTriggers(combatManager, roster, source, sourceSkillId, SkillTriggerEvent.OnOutgoingDamage, triggerContext);
 			ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnOutgoingDamage, triggerContext);
@@ -240,7 +240,7 @@ internal static class SkillTrigger
 	{
 		if (!(combatManager == null) && roster != null && source != null)
 		{
-			Vector2 eventCenter = ((eventTarget != null) ? ResolveUnitPosition(roster, eventTarget) : ResolveUnitPosition(roster, source));
+			Vector2 eventCenter = ((eventTarget != null) ? UnitPosition(roster, eventTarget) : UnitPosition(roster, source));
 			TriggerExecutionContext triggerContext = new TriggerExecutionContext(eventTarget, source, eventCenter, null, 0f, eventAppliedDamage, attribute, sourceSkillId, source, eventWasExecute);
 			ExecuteSourceOwnedTriggers(combatManager, roster, source, sourceSkillId, SkillTriggerEvent.OnKill, triggerContext);
 			ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnKill, triggerContext);
@@ -257,8 +257,8 @@ internal static class SkillTrigger
 			return;
 		}
 		string id = ((source.Identity != null) ? source.Identity.DefinitionId : string.Empty);
-		MonsterDefinition monsterDefinition = GameDataLoader.CurrentCatalog.ResolveMonster(id);
-		SkillTriggerDefinition[] array = ResolveSourceOwnedPlanTriggers(source, sourceSkillId, (monsterDefinition != null) ? monsterDefinition.SkillTriggers : null);
+		MonsterDefinition monsterDefinition = GameDataLoader.CurrentCatalog.GetMonster(id);
+		SkillTriggerDefinition[] array = SourceOwnedPlanTriggers(source, sourceSkillId, (monsterDefinition != null) ? monsterDefinition.SkillTriggers : null);
 		if (array == null || array.Length == 0)
 		{
 			return;
@@ -273,9 +273,9 @@ internal static class SkillTrigger
 	}
 
 	/*
-	 * ResolveSourceOwnedPlanTriggers 결과를 계산해 반환한다.
+	 * SourceOwnedPlanTriggers 결과를 계산해 반환한다.
 	 */
-	private static SkillTriggerDefinition[] ResolveSourceOwnedPlanTriggers(UnitCombatState source /* 효과를 발생시킨 유닛 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */, SkillTriggerDefinition[] baseTriggers /* 유닛 기본 Trigger 목록 */)
+	private static SkillTriggerDefinition[] SourceOwnedPlanTriggers(UnitCombatState source /* 효과를 발생시킨 유닛 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */, SkillTriggerDefinition[] baseTriggers /* 유닛 기본 Trigger 목록 */)
 	{
 		SkillUseState sourceSkill = null;
 		if (source != null && source.Skills != null)
@@ -310,7 +310,7 @@ internal static class SkillTrigger
 				continue;
 			}
 			string id = ((unitState.Identity != null) ? unitState.Identity.DefinitionId : string.Empty);
-			MonsterDefinition monsterDefinition = GameDataLoader.CurrentCatalog.ResolveMonster(id);
+			MonsterDefinition monsterDefinition = GameDataLoader.CurrentCatalog.GetMonster(id);
 			SkillTriggerDefinition[] array = ((monsterDefinition != null) ? monsterDefinition.SkillTriggers : null);
 			if (array == null || array.Length == 0)
 			{
@@ -474,7 +474,7 @@ internal static class SkillTrigger
 		{
 			return false;
 		}
-		float num = SkillExecutionState.ResolvePassiveChoices(owner, trigger.SourceSkillId).ResolveTriggerProcChanceBonus(trigger.TriggerId);
+		float num = SkillExecutionState.PassiveChoices(owner, trigger.SourceSkillId).TriggerProcChanceBonus(trigger.TriggerId);
 		float num2 = ((trigger.ProcChance > 0f) ? Mathf.Clamp01(trigger.ProcChance + num) : Mathf.Clamp01(1f + num));
 		if (num2 <= 0f || UnityEngine.Random.value > num2)
 		{
@@ -670,7 +670,7 @@ internal static class SkillTrigger
 	 */
 	private static void ExecuteOnce(InGameCombatManager combatManager /* 전투 진행 관리자 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */, TriggerExecutionContext triggerContext /* 트리거 실행에 필요한 정보 */)
 	{
-		SkillTriggerActionKind action = ResolveTriggerAction(trigger);
+		SkillTriggerActionKind action = TriggerAction(trigger);
 		switch (action)
 		{
 			case SkillTriggerActionKind.SingleAttack:
@@ -697,7 +697,7 @@ internal static class SkillTrigger
 	/*
 	 * CSV 로딩에서 확정한 Trigger 동작을 반환한다.
 	 */
-	private static SkillTriggerActionKind ResolveTriggerAction(SkillTriggerDefinition trigger /* 실행할 Trigger */)
+	private static SkillTriggerActionKind TriggerAction(SkillTriggerDefinition trigger /* 실행할 Trigger */)
 	{
 		if (trigger.TriggerAction != SkillTriggerActionKind.Auto)
 		{
@@ -740,13 +740,13 @@ internal static class SkillTrigger
 		{
 			return false;
 		}
-		SkillEffectDefinition skillEffectDefinition = ResolveTriggeredEffect(sourceEntry.Model, trigger.TriggeredEffectId);
+		SkillEffectDefinition skillEffectDefinition = TriggeredEffect(sourceEntry.Model, trigger.TriggeredEffectId);
 		if (skillEffectDefinition == null)
 		{
 			return false;
 		}
 		SkillExecutionContext context = new SkillExecutionContext(combatManager, roster, sourceEntry, null, triggerContext.EventTarget);
-		SkillExecutionData snapshot = SkillExecutionState.ResolvePassiveChoices(sourceEntry.Model, trigger.SourceSkillId);
+		SkillExecutionData snapshot = SkillExecutionState.PassiveChoices(sourceEntry.Model, trigger.SourceSkillId);
 		return ApplyTriggeredEffect(context, snapshot, skillEffectDefinition, triggerContext.EventCenter);
 	}
 
@@ -779,15 +779,15 @@ internal static class SkillTrigger
 	}
 
 	/*
-	 * ResolveTriggeredEffect 결과를 계산해 반환한다.
+	 * TriggeredEffect 결과를 계산해 반환한다.
 	 */
-	private static SkillEffectDefinition ResolveTriggeredEffect(UnitCombatState source /* 효과를 발생시킨 유닛 */, string effectId /* 효과 식별자 */)
+	private static SkillEffectDefinition TriggeredEffect(UnitCombatState source /* 효과를 발생시킨 유닛 */, string effectId /* 효과 식별자 */)
 	{
 		if (source == null || source.Identity == null || string.IsNullOrWhiteSpace(effectId))
 		{
 			return null;
 		}
-		MonsterDefinition monsterDefinition = GameDataLoader.CurrentCatalog.ResolveMonster(source.Identity.DefinitionId);
+		MonsterDefinition monsterDefinition = GameDataLoader.CurrentCatalog.GetMonster(source.Identity.DefinitionId);
 		if (monsterDefinition == null)
 		{
 			return null;
@@ -869,7 +869,7 @@ internal static class SkillTrigger
 		{
 			return false;
 		}
-		List<SkillUseState> list = ResolveTargetRuntimes(roster, sourceEntry, trigger);
+		List<SkillUseState> list = TargetRuntimes(roster, sourceEntry, trigger);
 		bool flag = false;
 		for (int i = 0; i < list.Count; i++)
 		{
@@ -891,7 +891,7 @@ internal static class SkillTrigger
 		{
 			return false;
 		}
-		List<SkillUseState> list = ResolveTargetRuntimes(roster, sourceEntry, trigger);
+		List<SkillUseState> list = TargetRuntimes(roster, sourceEntry, trigger);
 		bool flag = false;
 		for (int i = 0; i < list.Count; i++)
 		{
@@ -905,12 +905,12 @@ internal static class SkillTrigger
 	}
 
 	/*
-	 * ResolveTargetRuntimes 결과를 계산해 반환한다.
+	 * TargetRuntimes 결과를 계산해 반환한다.
 	 */
-	private static List<SkillUseState> ResolveTargetRuntimes(CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */)
+	private static List<SkillUseState> TargetRuntimes(CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */)
 	{
 		List<SkillUseState> list = new List<SkillUseState>();
-		List<CombatUnitEntry> list2 = ResolveCooldownTargetEntries(roster, sourceEntry, trigger);
+		List<CombatUnitEntry> list2 = CooldownTargetEntries(roster, sourceEntry, trigger);
 		string text = string.Empty;
 		if (trigger != null)
 		{
@@ -957,9 +957,9 @@ internal static class SkillTrigger
 	}
 
 	/*
-	 * ResolveCooldownTargetEntries 결과를 계산해 반환한다.
+	 * CooldownTargetEntries 결과를 계산해 반환한다.
 	 */
-	private static List<CombatUnitEntry> ResolveCooldownTargetEntries(CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */)
+	private static List<CombatUnitEntry> CooldownTargetEntries(CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */)
 	{
 		List<CombatUnitEntry> list = new List<CombatUnitEntry>();
 		if (trigger != null && trigger.TargetSide == SkillMultiEffectTargetSide.AllAllies)
@@ -996,15 +996,15 @@ internal static class SkillTrigger
 			return false;
 		}
 		SkillTargetingSpec targeting = BuildTargeting(trigger);
-		Vector2 vector = ResolveCenter(sourceEntry, roster, triggerContext, trigger, targeting);
-		float num = ResolveDamage(source, trigger, triggerContext);
+		Vector2 vector = Center(sourceEntry, roster, triggerContext, trigger, targeting);
+		float num = Damage(source, trigger, triggerContext);
 		if (num <= 0f)
 		{
 			return false;
 		}
-		string sourceSkillId = ResolveTriggeredDamageSourceSkillId(trigger);
-		SkillEffectDefinition onHitStatusEffect = ResolveTriggeredOnHitStatusEffect(source, trigger);
-		SkillExecutionData onHitData = SkillExecutionState.ResolveActiveChoices(source, trigger.SourceSkillId);
+		string sourceSkillId = TriggeredDamageSourceSkillId(trigger);
+		SkillEffectDefinition onHitStatusEffect = TriggeredOnHitStatusEffect(source, trigger);
+		SkillExecutionData onHitData = SkillExecutionState.ActiveChoices(source, trigger.SourceSkillId);
 		RuntimeSkillVisualSpec runtimeVisual = trigger.RuntimeVisual;
 		bool flag = runtimeVisual != null && runtimeVisual.HasVisual();
 		bool flag2 = runtimeVisual != null && runtimeVisual.Hitbox != null && runtimeVisual.Hitbox.HasHitbox();
@@ -1019,11 +1019,11 @@ internal static class SkillTrigger
 			GameObject gameObject;
 			if (flag2)
 			{
-				gameObject = combatManager.Effects.CreateEffect(runtimeVisual, null, hitboxVisualName, vector, Quaternion.identity);
+				gameObject = combatManager.Effects.CreateEffect(new EffectCreateRequest(runtimeVisual, null, hitboxVisualName, vector, Quaternion.identity, null, 0f, null, false, true, false));
 			}
 			else
 			{
-				gameObject = combatManager.Effects.CreateEffect(null, trigger.SkillEffectPrefab, hitboxVisualName, vector, Quaternion.identity);
+				gameObject = combatManager.Effects.CreateEffect(new EffectCreateRequest(null, trigger.SkillEffectPrefab, hitboxVisualName, vector, Quaternion.identity, null, 0f, null, false, true, false));
 			}
 
 			if (gameObject == null)
@@ -1063,12 +1063,18 @@ internal static class SkillTrigger
 		}
 		if (flag3 && combatManager.Effects != null && (flag || trigger.SkillEffectPrefab != null))
 		{
-			var visualObject = combatManager.Effects.CreateEffect(
+			var visualObject = combatManager.Effects.CreateEffect(new EffectCreateRequest(
 				runtimeVisual,
 				trigger.SkillEffectPrefab,
 				visualName,
 				vector,
-				Quaternion.identity);
+				Quaternion.identity,
+				null,
+				0f,
+				null,
+				false,
+				true,
+				false));
 			if (visualObject != null)
 			{
 				SingleSkillActor.Attach(visualObject).InitializeTimed(combatManager.Effects, 1f);
@@ -1099,13 +1105,13 @@ internal static class SkillTrigger
 			return false;
 		}
 		vector2.Normalize();
-		float num = ResolveDamage(source, trigger, triggerContext);
+		float num = Damage(source, trigger, triggerContext);
 		if (num <= 0f)
 		{
 			return false;
 		}
-		SkillExecutionData skillExecutionData = SkillExecutionState.ResolveActiveChoices(source, trigger.SourceSkillId);
-		SkillEffectDefinition skillEffectDefinition = ResolveTriggeredOnHitStatusEffect(source, trigger);
+		SkillExecutionData skillExecutionData = SkillExecutionState.ActiveChoices(source, trigger.SourceSkillId);
+		SkillEffectDefinition skillEffectDefinition = TriggeredOnHitStatusEffect(source, trigger);
 		SkillEffectDefinition[] onHitEffects;
 		if (skillEffectDefinition == null)
 		{
@@ -1115,7 +1121,7 @@ internal static class SkillTrigger
 		{
 			onHitEffects = new SkillEffectDefinition[1] { skillEffectDefinition };
 		}
-		float num2 = ResolveTriggeredLineLength();
+		float num2 = TriggeredLineLength();
 		float num3 = Mathf.Max(0.1f, trigger.Radius);
 		Vector2 vector3 = vector + vector2 * (num2 * 0.5f);
 		RuntimeSkillVisualSpec visual = trigger.RuntimeVisual;
@@ -1129,7 +1135,7 @@ internal static class SkillTrigger
 			{
 				visualName = "RuntimeTriggerLineVisual_" + trigger.TriggerId;
 			}
-			gameObject = effects.CreateEffect(visual, trigger.SkillEffectPrefab, visualName, vector3, EffectVisualBuilder.ResolveRotation(vector2));
+			gameObject = effects.CreateEffect(new EffectCreateRequest(visual, trigger.SkillEffectPrefab, visualName, vector3, EffectVisualBuilder.Rotation(vector2), null, 0f, null, false, true, false));
 		}
 		if (gameObject != null)
 		{
@@ -1150,19 +1156,19 @@ internal static class SkillTrigger
 			criticalDamageBonus = skillExecutionData.CritDamageBonus;
 		}
 
-		return LineSkillActor.ApplyLineTick(combatManager, sourceEntry, roster, skillTargetingSpec, vector, vector2, num2, num3, 0f, num, trigger.Attribute, null, onHitEffects, null, skillExecutionData, source, ResolveTriggeredDamageSourceSkillId(trigger), criticalAllowed: true, criticalChanceBonus, criticalDamageBonus, null, null, trigger.TriggerId);
+		return LineSkillActor.ApplyLineTick(combatManager, sourceEntry, roster, skillTargetingSpec, vector, vector2, num2, num3, 0f, num, trigger.Attribute, null, onHitEffects, null, skillExecutionData, source, TriggeredDamageSourceSkillId(trigger), criticalAllowed: true, criticalChanceBonus, criticalDamageBonus, null, null, trigger.TriggerId);
 	}
 
 	/*
-	 * ResolveTriggeredOnHitStatusEffect 결과를 계산해 반환한다.
+	 * TriggeredOnHitStatusEffect 결과를 계산해 반환한다.
 	 */
-	private static SkillEffectDefinition ResolveTriggeredOnHitStatusEffect(UnitCombatState source /* 효과를 발생시킨 유닛 */, SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */)
+	private static SkillEffectDefinition TriggeredOnHitStatusEffect(UnitCombatState source /* 효과를 발생시킨 유닛 */, SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */)
 	{
 		if (source == null || trigger == null || string.IsNullOrWhiteSpace(trigger.TriggeredEffectId))
 		{
 			return null;
 		}
-		SkillEffectDefinition skillEffectDefinition = ResolveTriggeredEffect(source, trigger.TriggeredEffectId);
+		SkillEffectDefinition skillEffectDefinition = TriggeredEffect(source, trigger.TriggeredEffectId);
 		if (skillEffectDefinition == null || skillEffectDefinition.EffectKind != SkillMultiEffectKind.Status || skillEffectDefinition.EffectTiming != SkillMultiEffectTiming.OnHit || skillEffectDefinition.TargetSide != SkillMultiEffectTargetSide.Enemy)
 		{
 			return null;
@@ -1171,9 +1177,9 @@ internal static class SkillTrigger
 	}
 
 	/*
-	 * ResolveTriggeredDamageSourceSkillId 결과를 계산해 반환한다.
+	 * TriggeredDamageSourceSkillId 결과를 계산해 반환한다.
 	 */
-	private static string ResolveTriggeredDamageSourceSkillId(SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */)
+	private static string TriggeredDamageSourceSkillId(SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */)
 	{
 		if (!string.IsNullOrWhiteSpace((trigger != null) ? trigger.TriggeredSkillId : string.Empty))
 		{
@@ -1187,9 +1193,9 @@ internal static class SkillTrigger
 	}
 
 	/*
-	 * ResolveTriggeredLineLength 결과를 계산해 반환한다.
+	 * TriggeredLineLength 결과를 계산해 반환한다.
 	 */
-	private static float ResolveTriggeredLineLength()
+	private static float TriggeredLineLength()
 	{
 		return 31f;
 	}
@@ -1236,9 +1242,9 @@ internal static class SkillTrigger
 	}
 
 	/*
-	 * ResolveCenter 결과를 계산해 반환한다.
+	 * Center 결과를 계산해 반환한다.
 	 */
-	private static Vector2 ResolveCenter(CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, TriggerExecutionContext triggerContext /* 트리거 실행에 필요한 정보 */, SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */, SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */)
+	private static Vector2 Center(CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, TriggerExecutionContext triggerContext /* 트리거 실행에 필요한 정보 */, SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */, SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */)
 	{
 		if (trigger != null)
 		{
@@ -1260,16 +1266,16 @@ internal static class SkillTrigger
 				return unitEntry.Transform.position;
 			}
 			case SkillMultiEffectCenterMode.EffectTarget:
-				return ResolveUnitPosition(roster, triggerContext.EventTarget);
+				return UnitPosition(roster, triggerContext.EventTarget);
 			}
 		}
 		return triggerContext.EventCenter;
 	}
 
 	/*
-	 * ResolveDamage 결과를 계산해 반환한다.
+	 * Damage 결과를 계산해 반환한다.
 	 */
-	private static float ResolveDamage(UnitCombatState source /* 효과를 발생시킨 유닛 */, SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */, TriggerExecutionContext triggerContext /* 트리거 실행에 필요한 정보 */)
+	private static float Damage(UnitCombatState source /* 효과를 발생시킨 유닛 */, SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */, TriggerExecutionContext triggerContext /* 트리거 실행에 필요한 정보 */)
 	{
 		switch (trigger.DamageSource)
 		{
@@ -1280,22 +1286,21 @@ internal static class SkillTrigger
 		case SkillTriggerDamageSource.ShieldAbsorbedAmount:
 			return Mathf.Max(0f, triggerContext.ShieldAbsorbedAmount) * Mathf.Max(0f, trigger.DamageSourceMultiplier) * Mathf.Max(0f, trigger.DamageMultiplier);
 		case SkillTriggerDamageSource.TrackedIncomingDamage:
-			return Mathf.Max(0f, (triggerContext.Status != null) ? triggerContext.Status.GetTrackedIncomingDamage(ResolveTrackedAttribute(trigger)) : 0f) * Mathf.Max(0f, trigger.DamageSourceMultiplier) * Mathf.Max(0f, trigger.DamageMultiplier);
+			return Mathf.Max(0f, (triggerContext.Status != null) ? triggerContext.Status.GetTrackedIncomingDamage(TrackedAttribute(trigger)) : 0f) * Mathf.Max(0f, trigger.DamageSourceMultiplier) * Mathf.Max(0f, trigger.DamageMultiplier);
 		case SkillTriggerDamageSource.EventAppliedDamage:
 			return Mathf.Max(0f, triggerContext.EventAppliedDamage) * Mathf.Max(0f, trigger.DamageSourceMultiplier) * Mathf.Max(0f, trigger.DamageMultiplier);
 		default:
 		{
-			bool flag = Mathf.Abs(trigger.SpellPowerCoefficient) >= Mathf.Abs(trigger.AttackPowerCoefficient);
 			SkillDamageSpec damage = new SkillDamageSpec
 			{
 				SkillId = trigger.SourceSkillId,
 				Element = trigger.Attribute,
 				BaseDamage = trigger.BaseDamage,
-				StatCoefficient = (flag ? trigger.SpellPowerCoefficient : trigger.AttackPowerCoefficient),
-				StatSource = (flag ? StatSource.Intelligence : StatSource.Attack),
+				AttackPowerCoefficient = trigger.AttackPowerCoefficient,
+				SpellPowerCoefficient = trigger.SpellPowerCoefficient,
 				CriticalAllowed = true
 			};
-			return DamageCalculator.CalculateRawDamage(source, damage, 0f, 1f) * Mathf.Max(0f, trigger.DamageMultiplier);
+			return DamageCalculator.CalculateRawDamage(source, damage) * Mathf.Max(0f, trigger.DamageMultiplier);
 		}
 		}
 	}
@@ -1314,7 +1319,7 @@ internal static class SkillTrigger
 		{
 			return false;
 		}
-		List<CombatUnitEntry> list = ResolveOrderedTargets(sourceEntry, roster, targeting, preferredTarget, preferredTarget != null);
+		List<CombatUnitEntry> list = OrderedTargets(sourceEntry, roster, targeting, preferredTarget, preferredTarget != null);
 		bool result = false;
 		int num = 0;
 		for (int i = 0; i < list.Count; i++)
@@ -1339,11 +1344,11 @@ internal static class SkillTrigger
 	}
 
 	/*
-	 * ResolveOrderedTargets 결과를 계산해 반환한다.
+	 * OrderedTargets 결과를 계산해 반환한다.
 	 */
-	private static List<CombatUnitEntry> ResolveOrderedTargets(CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */, UnitCombatState preferredTarget /* 우선 처리할 대상 유닛 */, bool preferEventTarget /* 사건 대상 우선 여부 */)
+	private static List<CombatUnitEntry> OrderedTargets(CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */, UnitCombatState preferredTarget /* 우선 처리할 대상 유닛 */, bool preferEventTarget /* 사건 대상 우선 여부 */)
 	{
-		IReadOnlyList<CombatUnitEntry> readOnlyList = SkillTargeting.ResolveTargetList(sourceEntry, roster, targeting);
+		IReadOnlyList<CombatUnitEntry> readOnlyList = SkillTargeting.TargetList(sourceEntry, roster, targeting);
 		List<CombatUnitEntry> list = new List<CombatUnitEntry>();
 		for (int i = 0; i < readOnlyList.Count; i++)
 		{
@@ -1368,8 +1373,8 @@ internal static class SkillTrigger
 					return -1;
 				}
 			}
-			float num = ResolveDistanceSquared(sourceEntry, left);
-			float value = ResolveDistanceSquared(sourceEntry, right);
+			float num = DistanceSquared(sourceEntry, left);
+			float value = DistanceSquared(sourceEntry, right);
 			return num.CompareTo(value);
 		});
 		return list;
@@ -1384,7 +1389,7 @@ internal static class SkillTrigger
 		{
 			return false;
 		}
-		List<CombatUnitEntry> list = ResolveOrderedTargets(sourceEntry, roster, targeting, preferredTarget, preferEventTarget);
+		List<CombatUnitEntry> list = OrderedTargets(sourceEntry, roster, targeting, preferredTarget, preferEventTarget);
 		if (!coverAll && radius <= 0f)
 		{
 			CombatUnitEntry unitEntry = (preferEventTarget ? FindPreferredEntry(roster, preferredTarget) : ((list.Count > 0) ? list[0] : null));
@@ -1436,7 +1441,7 @@ internal static class SkillTrigger
 		SkillExecutionContext context = new SkillExecutionContext(manager, manager.UnitRegistry, sourceEntry, null);
 		if (target != null && onHitStatusEffect != null && SkillRequirement.CanRunEffect(context, onHitStatusEffect) && SkillTargeting.MatchesEffectTarget(target, onHitStatusEffect))
 		{
-			ProjectileStatusHitSpec projectileStatusHitSpec = SkillStatus.ResolveEffectStatusSpec(onHitStatusEffect, onHitData);
+			ProjectileStatusHitSpec projectileStatusHitSpec = SkillStatus.EffectStatusSpec(onHitStatusEffect, onHitData);
 			if (projectileStatusHitSpec != null && projectileStatusHitSpec.Enabled)
 			{
 				StatusCombatRules.ApplyStatus(manager, target, projectileStatusHitSpec, source);
@@ -1469,9 +1474,9 @@ internal static class SkillTrigger
 	}
 
 	/*
-	 * ResolveTrackedAttribute 결과를 계산해 반환한다.
+	 * TrackedAttribute 결과를 계산해 반환한다.
 	 */
-	private static DamageAttribute ResolveTrackedAttribute(SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */)
+	private static DamageAttribute TrackedAttribute(SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */)
 	{
 		if (trigger == null)
 		{
@@ -1493,9 +1498,9 @@ internal static class SkillTrigger
 	}
 
 	/*
-	 * ResolveSourceModel 결과를 계산해 반환한다.
+	 * SourceModel 결과를 계산해 반환한다.
 	 */
-	private static UnitCombatState ResolveSourceModel(CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, string sourceUnitId /* 발생 원본 유닛 식별자 */, string sourceDefinitionId /* 발생 원본 정의 식별자 */)
+	private static UnitCombatState SourceModel(CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, string sourceUnitId /* 발생 원본 유닛 식별자 */, string sourceDefinitionId /* 발생 원본 정의 식별자 */)
 	{
 		if (roster == null)
 		{
@@ -1524,9 +1529,9 @@ internal static class SkillTrigger
 	}
 
 	/*
-	 * ResolveUnitPosition 결과를 계산해 반환한다.
+	 * UnitPosition 결과를 계산해 반환한다.
 	 */
-	private static Vector2 ResolveUnitPosition(CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+	private static Vector2 UnitPosition(CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
 	{
 		CombatUnitEntry unitEntry = roster?.Find(model);
 		if (unitEntry == null || !(unitEntry.Transform != null))
@@ -1537,9 +1542,9 @@ internal static class SkillTrigger
 	}
 
 	/*
-	 * ResolveDistanceSquared 결과를 계산해 반환한다.
+	 * DistanceSquared 결과를 계산해 반환한다.
 	 */
-	private static float ResolveDistanceSquared(CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, CombatUnitEntry target /* 효과를 받을 대상의 등록 정보 */)
+	private static float DistanceSquared(CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, CombatUnitEntry target /* 효과를 받을 대상의 등록 정보 */)
 	{
 		if (sourceEntry == null || sourceEntry.Transform == null || target == null || target.Transform == null)
 		{

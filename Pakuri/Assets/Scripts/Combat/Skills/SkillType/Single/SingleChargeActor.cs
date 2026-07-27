@@ -62,7 +62,7 @@ namespace Pakuri.InGame
             var ramp = charge.RampSeconds > 0f ? Mathf.Clamp01(charge.ElapsedSeconds / charge.RampSeconds) : 1f;
             var speedMultiplier = Mathf.Lerp(1f, Mathf.Max(1f, charge.MaxMoveSpeedMultiplier), ramp);
             var baseSpeed = caster.Stats != null ? Mathf.Max(0f, caster.Stats.MoveSpeed) : 0f;
-            var speed = baseSpeed * speedMultiplier * StatusCombatRules.ResolveMoveSpeedMultiplier(caster);
+            var speed = baseSpeed * speedMultiplier * StatusCombatRules.MoveSpeedMultiplier(caster);
             if (speed > 0f && StatusCombatRules.CanMove(caster))
             {
                 casterEntry.Transform.position = Vector3.MoveTowards(
@@ -91,7 +91,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            ResolveHit(caster, hitTarget, combatManager, charge);
+            Hit(caster, hitTarget, combatManager, charge);
             return true;
         }
 
@@ -103,7 +103,7 @@ namespace Pakuri.InGame
             CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
             string unitId /* 유닛 식별자 */)
         {
-            var targets = SkillTargeting.ResolveTargetList(
+            var targets = SkillTargeting.TargetList(
                 casterEntry,
                 roster,
                 new SkillTargetingSpec { TargetSide = SkillTargetSide.Enemy });
@@ -124,7 +124,7 @@ namespace Pakuri.InGame
          */
         private static CombatUnitEntry FindHitTarget(CombatUnitEntry casterEntry /* 스킬 사용자의 전투 등록 정보 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */)
         {
-            var targets = SkillTargeting.ResolveTargetList(
+            var targets = SkillTargeting.TargetList(
                 casterEntry,
                 roster,
                 new SkillTargetingSpec { TargetSide = SkillTargetSide.Enemy });
@@ -168,7 +168,7 @@ namespace Pakuri.InGame
         /*
          * 최대 체력 비례 피해와 적중 상태를 적용하고 돌진을 끝낸다.
          */
-        private static void ResolveHit(
+        private static void Hit(
             UnitCombatState caster /* 스킬을 사용하는 유닛 */,
             CombatUnitEntry target /* 효과를 받을 대상의 등록 정보 */,
             InGameCombatManager combatManager /* 전투 진행 관리자 */,
@@ -185,7 +185,7 @@ namespace Pakuri.InGame
                 true,
                 sourceSkillId: charge.SkillId);
 
-            var statusSpec = SkillStatus.ResolveStatusSpec(charge.OnHitStatus, null);
+            var statusSpec = SkillStatus.StatusSpec(charge.OnHitStatus, null);
             if (!damageResult.IsDead && statusSpec != null)
             {
                 StatusCombatRules.ApplyStatus(combatManager, target.Model, statusSpec, caster);

@@ -320,7 +320,7 @@ namespace Pakuri.InGame
                 }
 
                 lastMonsterId = monsterId;
-                var monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId);
+                var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId);
                 if (monster != null && monster.MonsterIconImage != null)
                 {
                     monsterImage.sprite = monster.MonsterIconImage;

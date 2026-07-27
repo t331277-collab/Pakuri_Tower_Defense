@@ -32,13 +32,13 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var chance = ResolveApplicationChance(target, status, source);
+            var chance = ApplicationChance(target, status, source);
             if (chance <= 0f || UnityEngine.Random.value > chance)
             {
                 return false;
             }
 
-            var duration = ResolveDurationSeconds(status, source);
+            var duration = DurationSeconds(status, source);
             var appliedStatus = manager.ApplyStatus(
                 target,
                 status.StatusData,
@@ -58,9 +58,9 @@ namespace Pakuri.InGame
         }
 
         /*
-         * ResolveApplicationChance 결과를 계산해 반환한다.
+         * ApplicationChance 결과를 계산해 반환한다.
          */
-        public static float ResolveApplicationChance(
+        public static float ApplicationChance(
             UnitCombatState target /* 효과를 받을 대상 유닛 */,
             ProjectileStatusHitSpec status /* 적용하거나 검사할 상태 효과 */,
             UnitCombatState source = null /* 효과를 발생시킨 유닛 */)
@@ -70,26 +70,26 @@ namespace Pakuri.InGame
                 return 0f;
             }
 
-            var chanceBonus = ResolveConditionalStatusChanceBonus(source, target);
+            var chanceBonus = ConditionalStatusChanceBonus(source, target);
             var chance = Mathf.Clamp01(status.Chance + chanceBonus);
             if (chance <= 0f || target == null || !IsDebuff(status.StatusData))
             {
                 return chance;
             }
 
-            return Mathf.Clamp01(chance - ResolveAilmentResistanceBonus(target));
+            return Mathf.Clamp01(chance - AilmentResistanceBonus(target));
         }
 
         /*
-         * ResolveDurationSeconds 결과를 계산해 반환한다.
+         * DurationSeconds 결과를 계산해 반환한다.
          */
-        private static float ResolveDurationSeconds(ProjectileStatusHitSpec status /* 적용하거나 검사할 상태 효과 */, UnitCombatState source /* 효과를 발생시킨 유닛 */)
+        private static float DurationSeconds(ProjectileStatusHitSpec status /* 적용하거나 검사할 상태 효과 */, UnitCombatState source /* 효과를 발생시킨 유닛 */)
         {
             var duration = Mathf.Max(0f, status.DurationSeconds);
             var statusId = status.StatusData.StatusTag;
             if (!string.IsNullOrWhiteSpace(statusId))
             {
-                duration += ResolveAppliedStatusDurationBonus(source, statusId);
+                duration += AppliedStatusDurationBonus(source, statusId);
                 duration = Mathf.Max(0f, duration);
             }
 
@@ -215,7 +215,7 @@ namespace Pakuri.InGame
         /*
          * 행동 속도 배율을 결정한다.
          */
-        public static float ResolveActionSpeedMultiplier(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        public static float ActionSpeedMultiplier(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {
             return Mathf.Max(MinimumActionMultiplier, 1f + SumStacked(model, data => data.Modifiers.ActionSpeedBonus));
         }
@@ -223,7 +223,7 @@ namespace Pakuri.InGame
         /*
          * 이동 속도 배율을 결정한다.
          */
-        public static float ResolveMoveSpeedMultiplier(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        public static float MoveSpeedMultiplier(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {
             return Mathf.Max(0f, 1f + SumStacked(model, data => data.MoveSpeedBonus));
         }
@@ -231,7 +231,7 @@ namespace Pakuri.InGame
         /*
          * 공격 능력치 배율을 결정한다.
          */
-        public static float ResolveAttackPowerMultiplier(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        public static float AttackPowerMultiplier(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {
             return Mathf.Max(0f, 1f + SumStacked(model, data => data.Modifiers.AttackPowerBonus));
         }
@@ -239,7 +239,7 @@ namespace Pakuri.InGame
         /*
          * 주문 능력치 배율을 결정한다.
          */
-        public static float ResolveSpellPowerMultiplier(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        public static float SpellPowerMultiplier(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {
             return Mathf.Max(0f, 1f + SumStacked(model, data => data.Modifiers.SpellPowerBonus));
         }
@@ -247,7 +247,7 @@ namespace Pakuri.InGame
         /*
          * 보호막 받는 배율을 결정한다.
          */
-        public static float ResolveShieldReceivedMultiplier(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        public static float ShieldReceivedMultiplier(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {
             return Mathf.Max(0f, 1f + SumStacked(model, data => data.Modifiers.ShieldReceivedBonus));
         }
@@ -255,7 +255,7 @@ namespace Pakuri.InGame
         /*
          * 치명타 확률 보너스를 결정한다.
          */
-        public static float ResolveCriticalChanceBonus(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        public static float CriticalChanceBonus(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {
             return SumStacked(model, data => data.Modifiers.CritChanceBonusRate);
         }
@@ -263,17 +263,17 @@ namespace Pakuri.InGame
         /*
          * 치명타 피해 보너스를 결정한다.
          */
-        public static float ResolveCriticalDamageBonus(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        public static float CriticalDamageBonus(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {
             return SumStacked(model, data => data.Modifiers.CritDamageBonusRate);
         }
 
         /*
-         * 주는 피해 배율을 결정한다.
+         * 주는 피해 보너스를 결정한다.
          */
-        public static float ResolveOutgoingDamageMultiplier(UnitCombatState source /* 효과를 발생시킨 유닛 */, DamageAttribute attribute /* 피해 속성 */, string sourceSkillId = null /* 효과를 발생시킨 스킬 식별자 */)
+        public static float OutgoingDamageBonus(UnitCombatState source /* 효과를 발생시킨 유닛 */, DamageAttribute attribute /* 피해 속성 */, string sourceSkillId = null /* 효과를 발생시킨 스킬 식별자 */)
         {
-            return Mathf.Max(0f, 1f + SumStacked(source, data =>
+            return SumStacked(source, data =>
             {
                 if (MatchesAttribute(data, attribute)
                     && StatusConditionRules.MatchesSkillRuntimeKinds(
@@ -284,13 +284,13 @@ namespace Pakuri.InGame
                 }
 
                 return 0f;
-            }));
+            });
         }
 
         /*
          * 주는 추가 피해 설정을 결정한다.
          */
-        internal static List<OutgoingAdditionalDamageSpec> ResolveOutgoingAdditionalDamageSpecs(UnitCombatState source /* 효과를 발생시킨 유닛 */, DamageAttribute triggerAttribute /* 트리거 속성 */)
+        internal static List<OutgoingAdditionalDamageSpec> OutgoingAdditionalDamageSpecs(UnitCombatState source /* 효과를 발생시킨 유닛 */, DamageAttribute triggerAttribute /* 트리거 속성 */)
         {
             var results = new List<OutgoingAdditionalDamageSpec>();
             IReadOnlyList<StatusRuntimeInstance> statuses = null;
@@ -311,7 +311,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                var data = ResolveRuntimeData(runtime);
+                var data = RuntimeData(runtime);
                 if (data == null
                     || data.OutgoingAdditionalDamageMultiplier <= 0f
                     || data.OutgoingAdditionalDamageTriggerAttribute != triggerAttribute)
@@ -329,11 +329,11 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 받는 피해 배율을 결정한다.
+         * 받는 피해 보너스를 결정한다.
          */
-        public static float ResolveIncomingDamageMultiplier(UnitCombatState target /* 효과를 받을 대상 유닛 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, DamageAttribute attribute /* 피해 속성 */, string sourceSkillId = null /* 효과를 발생시킨 스킬 식별자 */)
+        public static float IncomingDamageBonus(UnitCombatState target /* 효과를 받을 대상 유닛 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, DamageAttribute attribute /* 피해 속성 */, string sourceSkillId = null /* 효과를 발생시킨 스킬 식별자 */)
         {
-            return Mathf.Max(0f, 1f + SumStacked(target, data =>
+            return SumStacked(target, data =>
             {
                 var runtimeKindMatches = StatusConditionRules.MatchesSkillRuntimeKinds(data.ConditionalIncomingSkillRuntimeKindValues, sourceSkillId);
                 var bonus = 0f;
@@ -352,29 +352,49 @@ namespace Pakuri.InGame
                 }
 
                 return bonus;
-            }));
+            });
         }
 
         /*
-         * 원소 저항 감소를 결정한다.
+         * 원소 저항 감소를 각 상태별 곱연산 배율로 결정한다.
          */
-        public static float ResolveElementResistReduction(UnitCombatState target /* 효과를 받을 대상 유닛 */, DamageAttribute attribute /* 피해 속성 */)
+        public static float ElementResistMultiplier(UnitCombatState target /* 효과를 받을 대상 유닛 */, DamageAttribute attribute /* 피해 속성 */)
         {
-            return Mathf.Clamp01(SumStacked(target, data =>
+            if (target == null || target.Statuses == null)
             {
-                if (MatchesAttribute(data, attribute))
+                return 1f;
+            }
+
+            var multiplier = 1f;
+            var statuses = target.Statuses.ActiveStatuses;
+            for (var statusIndex = 0; statusIndex < statuses.Count; statusIndex++)
+            {
+                var status = statuses[statusIndex];
+                if (status == null || status.Stacks <= 0)
                 {
-                    return data.ElementResistReduction;
+                    continue;
                 }
 
-                return 0f;
-            }));
+                var data = RuntimeData(status);
+                if (data == null || !MatchesAttribute(data, attribute))
+                {
+                    continue;
+                }
+
+                var reductionMultiplier = 1f - Mathf.Clamp01(data.ElementResistReduction);
+                for (var stackIndex = 0; stackIndex < status.Stacks; stackIndex++)
+                {
+                    multiplier *= reductionMultiplier;
+                }
+            }
+
+            return multiplier;
         }
 
         /*
          * 고정 원소 저항 감소를 결정한다.
          */
-        public static float ResolveFlatElementResistReduction(UnitCombatState target /* 효과를 받을 대상 유닛 */, DamageAttribute attribute /* 피해 속성 */)
+        public static float FlatElementResistReduction(UnitCombatState target /* 효과를 받을 대상 유닛 */, DamageAttribute attribute /* 피해 속성 */)
         {
             return Mathf.Max(0f, SumStacked(target, data =>
             {
@@ -390,7 +410,7 @@ namespace Pakuri.InGame
         /*
          * 치명타 피해 받는 보너스를 결정한다.
          */
-        public static float ResolveCriticalDamageTakenBonus(UnitCombatState target /* 효과를 받을 대상 유닛 */)
+        public static float CriticalDamageTakenBonus(UnitCombatState target /* 효과를 받을 대상 유닛 */)
         {
             return SumStacked(target, data => data.CriticalDamageTakenBonus);
         }
@@ -398,7 +418,7 @@ namespace Pakuri.InGame
         /*
          * 상태 이상 저항 보너스를 결정한다.
          */
-        public static float ResolveAilmentResistanceBonus(UnitCombatState target /* 효과를 받을 대상 유닛 */)
+        public static float AilmentResistanceBonus(UnitCombatState target /* 효과를 받을 대상 유닛 */)
         {
             return Mathf.Clamp01(SumStacked(target, data => data.AilmentResistanceBonus));
         }
@@ -406,7 +426,7 @@ namespace Pakuri.InGame
         /*
          * 치명타 저항 보너스를 결정한다.
          */
-        public static float ResolveCriticalResistanceBonus(UnitCombatState target /* 효과를 받을 대상 유닛 */)
+        public static float CriticalResistanceBonus(UnitCombatState target /* 효과를 받을 대상 유닛 */)
         {
             return SumStacked(target, data => data.CriticalResistanceBonus);
         }
@@ -414,7 +434,7 @@ namespace Pakuri.InGame
         /*
          * 조건부 상태 확률 보너스를 결정한다.
          */
-        public static float ResolveConditionalStatusChanceBonus(UnitCombatState source /* 효과를 발생시킨 유닛 */, UnitCombatState target /* 효과를 받을 대상 유닛 */)
+        public static float ConditionalStatusChanceBonus(UnitCombatState source /* 효과를 발생시킨 유닛 */, UnitCombatState target /* 효과를 받을 대상 유닛 */)
         {
             return SumStacked(source, data =>
             {
@@ -430,7 +450,7 @@ namespace Pakuri.InGame
         /*
          * 적용된 상태 지속시간 보너스를 결정한다.
          */
-        public static float ResolveAppliedStatusDurationBonus(UnitCombatState source /* 효과를 발생시킨 유닛 */, string statusId /* 상태 효과 식별자 */)
+        public static float AppliedStatusDurationBonus(UnitCombatState source /* 효과를 발생시킨 유닛 */, string statusId /* 상태 효과 식별자 */)
         {
             if (string.IsNullOrWhiteSpace(statusId))
             {
@@ -474,7 +494,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                var data = ResolveRuntimeData(runtime);
+                var data = RuntimeData(runtime);
                 if (data != null && predicate(data))
                 {
                     return true;
@@ -508,7 +528,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                var data = ResolveRuntimeData(runtime);
+                var data = RuntimeData(runtime);
                 if (data == null)
                 {
                     continue;
@@ -523,7 +543,7 @@ namespace Pakuri.InGame
         /*
          * 런타임 데이터를 결정한다.
          */
-        private static StatusRuntimeData ResolveRuntimeData(StatusRuntimeInstance runtime /* 실행 중인 스킬 정보 */)
+        private static StatusRuntimeData RuntimeData(StatusRuntimeInstance runtime /* 실행 중인 스킬 정보 */)
         {
             if (runtime == null)
             {
@@ -827,16 +847,16 @@ static class SkillStatus
     /*
      * 추가 효과 정의의 상태 데이터와 현재 강화 정보를 적중 설정으로 만든다.
      */
-    public static ProjectileStatusHitSpec ResolveEffectStatusSpec(
+    public static ProjectileStatusHitSpec EffectStatusSpec(
         SkillEffectDefinition effect /* 적용할 추가 효과 */,
         SkillExecutionData skillData = null /* 현재 스킬 강화 정보 */,
         bool scaleDurationWithSkillData = false /* 스킬 지속시간 보정 적용 여부 */)
     {
-        var statusData = ResolveStatusData(effect.CompiledStatusData, effect.CompiledStatusData.Kind, skillData);
+        var statusData = StatusData(effect.CompiledStatusData, effect.CompiledStatusData.Kind, skillData);
         var duration = statusData.Duration;
         if (skillData != null)
         {
-            var durationBonus = skillData.ResolveStatusDurationBonus(statusData.StatusTag);
+            var durationBonus = skillData.StatusDurationBonus(statusData.StatusTag);
             if (!Mathf.Approximately(durationBonus, 0f))
             {
                 duration = Mathf.Max(0f, duration + durationBonus);
@@ -872,14 +892,14 @@ static class SkillStatus
         Vector2 defaultCenter /* 기본 효과 중심 */,
         bool scaleDurationWithSkillData /* 스킬 지속시간 보정 적용 여부 */)
     {
-        var statusSpec = ResolveEffectStatusSpec(effect, skillData, scaleDurationWithSkillData);
+        var statusSpec = EffectStatusSpec(effect, skillData, scaleDurationWithSkillData);
         if (context == null || context.CombatManager == null || statusSpec == null || !statusSpec.Enabled)
         {
             return false;
         }
 
         var targeting = SkillTargeting.BuildEffectTargeting(effect);
-        var targets = SkillTargeting.ResolveEffectTargets(context, effect, targeting);
+        var targets = SkillTargeting.EffectTargets(context, effect, targeting);
         List<CombatUnitEntry> visualTargets = null;
         if (effect.VisualAnchorMode == SkillMultiEffectVisualAnchorMode.AppliedTargets)
         {
@@ -900,7 +920,7 @@ static class SkillStatus
                 context.CombatManager.ApplyShieldStatus(
                     target.Model,
                     statusSpec.StatusData,
-                    ResolveEffectShieldAmount(context.Caster, effect, skillData),
+                    EffectShieldAmount(context.Caster, effect, skillData),
                     statusSpec.DurationSeconds,
                     statusSpec.Stacks,
                     statusSpec.MaxStacks,
@@ -927,12 +947,21 @@ static class SkillStatus
 
         if (visualTargets != null)
         {
-            context.CombatManager.Effects.ShowFollowingSkillEffects(effect, visualTargets, statusSpec.DurationSeconds);
+            for (var i = 0; i < visualTargets.Count; i++)
+            {
+                var visualTarget = visualTargets[i];
+                if (visualTarget == null)
+                {
+                    continue;
+                }
+
+                ShowEffectVisual(context.CombatManager.Effects, effect, visualTarget.Transform.position, visualTarget.Transform, statusSpec.DurationSeconds);
+            }
         }
         else
         {
-            var center = SkillTargeting.ResolveEffectCenter(context, effect, targeting, defaultCenter);
-            context.CombatManager.Effects.CreateEffect(effect, center, 1f);
+            var center = SkillTargeting.EffectCenter(context, effect, targeting, defaultCenter);
+            ShowEffectVisual(context.CombatManager.Effects, effect, center, null, 1f);
         }
         return true;
     }
@@ -956,7 +985,7 @@ static class SkillStatus
         }
 
         var targeting = SkillTargeting.BuildEffectTargeting(effect);
-        var targets = SkillTargeting.ResolveTargetList(context.CasterEntry, context.Roster, targeting);
+        var targets = SkillTargeting.TargetList(context.CasterEntry, context.Roster, targeting);
         var extended = false;
         for (var i = 0; i < targets.Count; i++)
         {
@@ -972,7 +1001,7 @@ static class SkillStatus
     /*
      * 지속 패시브 상태를 적용할 수 있는 대상 목록을 반환한다.
      */
-    public static List<CombatUnitEntry> ResolvePassiveEffectTargets(
+    public static List<CombatUnitEntry> PassiveEffectTargets(
         SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
         SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
         SkillEffectDefinition effect /* 적용할 추가 효과 */)
@@ -987,7 +1016,7 @@ static class SkillStatus
         }
 
         var targeting = SkillTargeting.BuildEffectTargeting(effect);
-        var targets = SkillTargeting.ResolveEffectTargets(context, effect, targeting);
+        var targets = SkillTargeting.EffectTargets(context, effect, targeting);
         for (var i = 0; i < targets.Count; i++)
         {
             var target = targets[i];
@@ -1020,7 +1049,7 @@ static class SkillStatus
             return false;
         }
 
-        var statusSpec = ResolveEffectStatusSpec(effect, skillData);
+        var statusSpec = EffectStatusSpec(effect, skillData);
         if (statusSpec == null || !statusSpec.Enabled || statusSpec.StatusData == null)
         {
             return false;
@@ -1036,7 +1065,7 @@ static class SkillStatus
             var shield = context.CombatManager.ApplyShieldStatus(
                 target.Model,
                 statusSpec.StatusData,
-                ResolveEffectShieldAmount(context.Caster, effect, skillData),
+                EffectShieldAmount(context.Caster, effect, skillData),
                 statusSpec.DurationSeconds,
                 statusSpec.Stacks,
                 statusSpec.MaxStacks,
@@ -1057,21 +1086,42 @@ static class SkillStatus
 
         if (effect.VisualAnchorMode == SkillMultiEffectVisualAnchorMode.AppliedTargets)
         {
-            context.CombatManager.Effects.ShowFollowingSkillEffects(effect, new CombatUnitEntry[] { target }, visualDuration);
+            ShowEffectVisual(context.CombatManager.Effects, effect, target.Transform.position, target.Transform, visualDuration);
         }
         else
         {
             var targeting = SkillTargeting.BuildEffectTargeting(effect);
-            var center = SkillTargeting.ResolveEffectCenter(context, effect, targeting, defaultCenter);
-            context.CombatManager.Effects.CreateEffect(effect, center, 1f);
+            var center = SkillTargeting.EffectCenter(context, effect, targeting, defaultCenter);
+            ShowEffectVisual(context.CombatManager.Effects, effect, center, null, 1f);
         }
         return true;
+    }
+
+    private static void ShowEffectVisual(
+        EffectManager effects /* 효과 생성 관리자 */,
+        SkillEffectDefinition effect /* 표시할 추가 효과 */,
+        Vector3 position /* 표시 위치 */,
+        Transform targetTransform /* 비주얼을 붙일 대상 */,
+        float durationSeconds /* 표시 시간 */)
+    {
+        effects.CreateEffect(new EffectCreateRequest(
+            effect.RuntimeVisual,
+            effect.SkillEffectPrefab,
+            effect.RuntimeObjectName("SkillEffectVisual"),
+            position,
+            Quaternion.identity,
+            targetTransform,
+            durationSeconds,
+            null,
+            false,
+            true,
+            false));
     }
 
     /*
      * 추가 보호막 효과의 기본값과 시전자 능력치 계수를 계산한다.
      */
-    private static float ResolveEffectShieldAmount(
+    private static float EffectShieldAmount(
         UnitCombatState caster /* 스킬을 사용하는 유닛 */,
         SkillEffectDefinition effect /* 적용할 추가 효과 */,
         SkillExecutionData skillData /* 현재 스킬 강화 정보 */)
@@ -1082,11 +1132,11 @@ static class SkillStatus
         {
             if (useSpellPower)
             {
-                power = caster.Stats.SpellPower * StatusCombatRules.ResolveSpellPowerMultiplier(caster);
+                power = caster.Stats.SpellPower * StatusCombatRules.SpellPowerMultiplier(caster);
             }
             else
             {
-                power = caster.Stats.AttackPower * StatusCombatRules.ResolveAttackPowerMultiplier(caster);
+                power = caster.Stats.AttackPower * StatusCombatRules.AttackPowerMultiplier(caster);
             }
         }
 
@@ -1099,7 +1149,7 @@ static class SkillStatus
         var amount = (effect.BaseDamage + power * coefficient) * Mathf.Max(0f, effect.DamageMultiplier);
         if (skillData != null)
         {
-            amount = (amount + skillData.BaseDamageBonus) * Mathf.Max(0f, skillData.ShieldAmountMultiplier);
+            amount *= Mathf.Max(0f, skillData.ShieldAmountMultiplier);
         }
         return Mathf.Max(0f, amount);
     }
@@ -1107,7 +1157,7 @@ static class SkillStatus
     /*
      * 스킬의 기본 상태 설정과 실행 데이터 보정을 합쳐 투사체 적중 설정을 만든다.
      */
-    public static ProjectileStatusHitSpec ResolveStatusSpec(
+    public static ProjectileStatusHitSpec StatusSpec(
         StatusApplicationSpec baseStatus /* 기본 상태 효과 */,
         SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
     {
@@ -1156,10 +1206,10 @@ static class SkillStatus
             statusData = StatusRuntimeCompiler.Create(kind, null);
         }
 
-        var resolvedStatusData = ResolveStatusData(statusData, kind, snapshot);
+        var resolvedStatusData = StatusData(statusData, kind, snapshot);
         var duration = resolvedStatusData.Duration;
         var maxStacks = resolvedStatusData.MaxStacks;
-        var maxStacksBonus = ResolveStatusMaxStacksBonus(snapshot, resolvedStatusData);
+        var maxStacksBonus = StatusMaxStacksBonus(snapshot, resolvedStatusData);
         if (maxStacksBonus != 0)
         {
             maxStacks = Mathf.Max(0, maxStacks + maxStacksBonus);
@@ -1177,7 +1227,7 @@ static class SkillStatus
             }
         }
 
-        var durationBonus = ResolveStatusDurationBonus(snapshot, resolvedStatusData);
+        var durationBonus = StatusDurationBonus(snapshot, resolvedStatusData);
         if (!Mathf.Approximately(durationBonus, 0f))
         {
             duration = Mathf.Max(0f, duration + durationBonus);
@@ -1208,7 +1258,7 @@ static class SkillStatus
             RefreshDuration = refreshDuration,
             ThresholdSourceStatusKind = thresholdStatusKind,
             ThresholdSourceMinStacks = thresholdStatusMinStacks,
-            ThresholdStatusSpec = ResolveThresholdStatusSpec(snapshot)
+            ThresholdStatusSpec = ThresholdStatusSpec(snapshot)
         };
     }
 
@@ -1226,16 +1276,16 @@ static class SkillStatus
         }
 
         var statusData = StatusRuntimeCompiler.Create(kind, null);
-        statusData = ResolveStatusData(statusData, kind, snapshot);
+        statusData = StatusData(statusData, kind, snapshot);
         var duration = statusData.Duration;
-        var durationBonus = ResolveStatusDurationBonus(snapshot, statusData);
+        var durationBonus = StatusDurationBonus(snapshot, statusData);
         if (!Mathf.Approximately(durationBonus, 0f))
         {
             duration = Mathf.Max(0f, duration + durationBonus);
         }
 
         var maxStacks = statusData.MaxStacks;
-        var maxStacksBonus = ResolveStatusMaxStacksBonus(snapshot, statusData);
+        var maxStacksBonus = StatusMaxStacksBonus(snapshot, statusData);
         if (maxStacksBonus != 0)
         {
             maxStacks = Mathf.Max(0, maxStacks + maxStacksBonus);
@@ -1258,7 +1308,7 @@ static class SkillStatus
     /*
      * 실행 데이터의 상태 능력치 보너스를 복사한 상태 데이터에 적용한다.
      */
-    public static StatusRuntimeData ResolveStatusData(
+    public static StatusRuntimeData StatusData(
         StatusRuntimeData statusData /* 상태 효과 실행 데이터 */,
         StatusEffectKind kind /* 처리할 종류 */,
         SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
@@ -1268,7 +1318,7 @@ static class SkillStatus
             return statusData;
         }
 
-        var actionSpeedBonus = snapshot.ResolveStatusActionSpeedBonus(statusData.StatusTag);
+        var actionSpeedBonus = snapshot.GetStatusActionSpeedBonus(statusData.StatusTag);
         var hasActionSpeedBonus = !Mathf.Approximately(actionSpeedBonus, 0f);
         var hasOverride = snapshot.HasStatusElementDamageTakenBonus
             || snapshot.HasStatusCriticalDamageTakenBonus
@@ -1349,33 +1399,33 @@ static class SkillStatus
     /*
      * 상태 태그에 연결된 실행 데이터 지속시간 보너스를 반환한다.
      */
-    private static float ResolveStatusDurationBonus(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, StatusRuntimeData statusData /* 상태 효과 실행 데이터 */)
+    private static float StatusDurationBonus(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, StatusRuntimeData statusData /* 상태 효과 실행 데이터 */)
     {
         if (snapshot == null)
         {
             return 0f;
         }
 
-        return snapshot.ResolveStatusDurationBonus(statusData.StatusTag);
+        return snapshot.StatusDurationBonus(statusData.StatusTag);
     }
 
     /*
      * 상태 태그에 연결된 실행 데이터 최대 중첩 보너스를 반환한다.
      */
-    private static int ResolveStatusMaxStacksBonus(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, StatusRuntimeData statusData /* 상태 효과 실행 데이터 */)
+    private static int StatusMaxStacksBonus(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, StatusRuntimeData statusData /* 상태 효과 실행 데이터 */)
     {
         if (snapshot == null)
         {
             return 0;
         }
 
-        return snapshot.ResolveStatusMaxStacksBonus(statusData.StatusTag);
+        return snapshot.StatusMaxStacksBonus(statusData.StatusTag);
     }
 
     /*
      * 임계 중첩에 도달했을 때 추가로 적용할 상태 설정을 만든다.
      */
-    private static ProjectileStatusHitSpec ResolveThresholdStatusSpec(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+    private static ProjectileStatusHitSpec ThresholdStatusSpec(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
     {
         if (snapshot == null || snapshot.ThresholdApplyStatusKind == StatusEffectKind.None)
         {
@@ -1385,7 +1435,7 @@ static class SkillStatus
         var kind = snapshot.ThresholdApplyStatusKind;
         var statusData = StatusRuntimeCompiler.Create(kind, null);
         var duration = statusData.Duration;
-        var durationBonus = ResolveStatusDurationBonus(snapshot, statusData);
+        var durationBonus = StatusDurationBonus(snapshot, statusData);
         if (!Mathf.Approximately(durationBonus, 0f))
         {
             duration = Mathf.Max(0f, duration + durationBonus);

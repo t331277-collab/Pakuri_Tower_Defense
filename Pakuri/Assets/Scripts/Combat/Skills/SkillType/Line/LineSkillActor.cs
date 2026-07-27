@@ -27,7 +27,7 @@ namespace Pakuri.InGame
         private float damage;
         private DamageAttribute attribute;
         private ProjectileStatusHitSpec statusSpec;
-        private SkillEffectDefinition[] onHitStatusEffects;
+        private SkillEffectDefinition[] onHitEffects;
         private SkillUseState runtime;
         private SkillExecutionData executionData;
         private UnitCombatState sourceModel;
@@ -84,7 +84,7 @@ namespace Pakuri.InGame
             damage = Mathf.Max(0f, damagePerTick);
             attribute = damageAttribute;
             statusSpec = onHitStatus;
-            onHitStatusEffects = onHitEffects;
+            this.onHitEffects = onHitEffects;
             runtime = sourceRuntime;
             executionData = snapshot;
             sourceModel = source;
@@ -109,7 +109,7 @@ namespace Pakuri.InGame
                 damage,
                 attribute,
                 statusSpec,
-                onHitStatusEffects,
+                onHitEffects,
                 runtime,
                 executionData,
                 sourceModel,
@@ -124,15 +124,15 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 피해 처리가 없는 직선 비주얼의 애니메이션 수명을 설정하고 그 시간을 반환한다.
+         * 피해 처리가 없는 직선 비주얼의 지정 수명을 설정하고 반환한다.
          */
         public float InitializeVisualLifetime(
             EffectManager manager /* 효과 생성과 제거를 담당하는 관리자 */,
-            float minimumLifetimeSeconds /* 최소 유지 시간(초) */)
+            float durationSeconds /* 지속 시간(초) */)
         {
             effectManager = manager;
             visualOnly = true;
-            remainingDuration = EffectVisualBuilder.ResolveLifetime(gameObject, minimumLifetimeSeconds);
+            remainingDuration = Mathf.Max(0.05f, durationSeconds);
             return remainingDuration;
         }
 
@@ -185,7 +185,7 @@ namespace Pakuri.InGame
                 ContactFilter2D.noFilter,
                 overlappedColliders);
 
-            var candidates = SkillTargeting.ResolveTargetList(sourceEntry, unitRoster, targetingSpec);
+            var candidates = SkillTargeting.TargetList(sourceEntry, unitRoster, targetingSpec);
             var hitUnitIds = new HashSet<string>();
             var routed = false;
             for (var i = 0; i < candidates.Count; i++)
@@ -214,19 +214,27 @@ namespace Pakuri.InGame
                 }
 
                 var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero;
-                var resolvedDamage = damagePerTick;
-                if (snapshot != null)
-                {
-                    resolvedDamage *= SkillExecutionRuleResolver.ResolveConditionalDamageMultiplier(snapshot, target.Model);
-                }
-                resolvedDamage = Mathf.Max(0f, resolvedDamage);
-                var damageResult = manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, skillId, false, false, damageMeterSourceId);
+                var resolvedDamage = Mathf.Max(0f, damagePerTick);
+                var finalDamageMultiplier = snapshot != null
+                    ? Mathf.Max(0f, snapshot.DamageMultiplier) * SkillExecutionRuleResolver.ConditionalDamageMultiplier(snapshot, target.Model)
+                    : 1f;
+                var damageResult = manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, skillId, false, false, damageMeterSourceId, finalDamageMultiplier);
                 TryApplyKnockback(target, normalizedDirection, lineKnockbackDistance);
                 if (!damageResult.IsDead)
                 {
-                    var targetKey = ResolveTargetKey(target.Model);
+                    var targetKey = TargetKey(target.Model);
                     TryApplyStatus(manager, target.Model, onHitStatus, source, targetKey, baseStatusAppliedTargets);
-                    TryApplyOnHitEffects(manager, target.Model, onHitEffects, snapshot, source, targetKey, effectStatusAppliedTargets);
+                    TryApplyOnHitEffects(
+                        manager,
+                        target,
+                        onHitEffects,
+                        snapshot,
+                        sourceEntry,
+                        unitRoster,
+                        sourceRuntime,
+                        source,
+                        targetKey,
+                        effectStatusAppliedTargets);
                 }
                 LineSkillExecutor.ApplyHitEnhancements(
                     manager,
@@ -271,7 +279,7 @@ namespace Pakuri.InGame
                         damage,
                         attribute,
                         statusSpec,
-                        onHitStatusEffects,
+                        onHitEffects,
                         runtime,
                         executionData,
                         sourceModel,
@@ -433,14 +441,22 @@ namespace Pakuri.InGame
          */
         private static void TryApplyOnHitEffects(
             InGameCombatManager manager /* 전투 진행 관리자 */,
-            UnitCombatState target /* 효과를 받을 대상 유닛 */,
+            CombatUnitEntry target /* 효과를 받을 대상 유닛 */,
             SkillEffectDefinition[] effects /* 실행할 효과 목록 */,
             SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
+            CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */,
+            CombatUnitRegistry unitRoster /* 전투에 등록된 유닛 목록 */,
+            SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
             UnitCombatState source /* 효과를 발생시킨 유닛 */,
             string targetKey /* 대상 조회 키 */,
             HashSet<string> appliedEffects /* 적용된 효과 목록 */)
         {
-            if (manager == null || target == null || effects == null || effects.Length == 0)
+            if (manager == null
+                || target == null
+                || target.Model == null
+                || target.Transform == null
+                || effects == null
+                || effects.Length == 0)
             {
                 return;
             }
@@ -450,8 +466,7 @@ namespace Pakuri.InGame
                 var effect = effects[i];
                 if (effect == null
                     || effect.EffectTiming != SkillMultiEffectTiming.OnHit
-                    || effect.EffectKind != SkillMultiEffectKind.Status
-                    || !SkillTargeting.MatchesEffectTarget(target, effect))
+                    || !SkillTargeting.MatchesEffectTarget(target.Model, effect))
                 {
                     continue;
                 }
@@ -462,17 +477,48 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                var status = SkillStatus.ResolveEffectStatusSpec(effect, snapshot);
-                if (status == null || !status.Enabled)
+                if (effect.EffectKind == SkillMultiEffectKind.Status)
                 {
+                    var status = SkillStatus.EffectStatusSpec(effect, snapshot);
+                    if (status == null || !status.Enabled)
+                    {
+                        continue;
+                    }
+
+                    if (StatusCombatRules.ApplyStatus(manager, target.Model, status, source)
+                        && appliedEffects != null
+                        && !string.IsNullOrWhiteSpace(effectKey))
+                    {
+                        appliedEffects.Add(effectKey);
+                    }
+
                     continue;
                 }
 
-                if (StatusCombatRules.ApplyStatus(manager, target, status, source)
-                    && appliedEffects != null
-                    && !string.IsNullOrWhiteSpace(effectKey))
+                if (effect.EffectKind == SkillMultiEffectKind.Damage)
                 {
-                    appliedEffects.Add(effectKey);
+                    var context = new SkillExecutionContext(
+                        manager,
+                        unitRoster,
+                        sourceEntry,
+                        sourceRuntime,
+                        target.Model);
+                    if (LineSkillExecutor.ExecuteAdditionalEffects(
+                            context,
+                            snapshot,
+                            new[] { effect },
+                            target.Transform.position,
+                            true,
+                            SkillMultiEffectTiming.OnHit,
+                            false,
+                            0,
+                            target.Model,
+                            true)
+                        && appliedEffects != null
+                        && !string.IsNullOrWhiteSpace(effectKey))
+                    {
+                        appliedEffects.Add(effectKey);
+                    }
                 }
             }
         }
@@ -480,7 +526,7 @@ namespace Pakuri.InGame
         /*
          * 대상 키를 결정한다.
          */
-        private static string ResolveTargetKey(UnitCombatState target /* 효과를 받을 대상 유닛 */)
+        private static string TargetKey(UnitCombatState target /* 효과를 받을 대상 유닛 */)
         {
             var unitId = target != null && target.Identity != null ? target.Identity.UnitId : null;
             if (!string.IsNullOrWhiteSpace(unitId))

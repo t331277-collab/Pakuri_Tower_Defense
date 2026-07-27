@@ -89,3 +89,4 @@
 "TargetStatusCritBonus","TargetStatusCritBonus","CritModifier","",""
 "TargetStatusStackDamageMultiplier","TargetStatusStackDamageMultiplier","DamageModifier","",""
 "ThresholdApplyStatus","ThresholdApplyStatus","Action","",""
+"LineCastRepeatCountBonus","LineCastRepeatCountBonus","Action","",""

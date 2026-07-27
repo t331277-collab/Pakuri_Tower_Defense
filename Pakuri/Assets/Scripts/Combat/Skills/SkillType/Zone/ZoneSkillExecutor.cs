@@ -166,31 +166,23 @@ namespace Pakuri.InGame
             Vector2 defaultCenter /* 기본 효과 중심 */)
         {
             var targeting = SkillTargeting.BuildEffectTargeting(effect);
-            var center = SkillTargeting.ResolveEffectCenter(context, effect, targeting, defaultCenter);
-            var coefficient = effect.AttackPowerCoefficient;
-            var statSource = StatSource.Attack;
-            if (Mathf.Abs(effect.SpellPowerCoefficient) >= Mathf.Abs(effect.AttackPowerCoefficient))
-            {
-                coefficient = effect.SpellPowerCoefficient;
-                statSource = StatSource.Intelligence;
-            }
-
+            var center = SkillTargeting.EffectCenter(context, effect, targeting, defaultCenter);
             var damageSpec = new SkillDamageSpec
             {
                 SkillId = effect.SkillId,
                 Element = effect.Attribute,
                 BaseDamage = effect.BaseDamage,
-                StatCoefficient = coefficient,
-                StatSource = statSource,
+                AttackPowerCoefficient = effect.AttackPowerCoefficient,
+                SpellPowerCoefficient = effect.SpellPowerCoefficient,
                 CriticalAllowed = true
             };
-            var damage = DamageCalculator.CalculateRawDamage(context.Caster, damageSpec, skillData.BaseDamageBonus, skillData.DamageMultiplier)
-                * Mathf.Max(0f, effect.DamageMultiplier);
-            var statusSpec = SkillStatus.ResolveEffectStatusSpec(effect, skillData);
+            var damage = DamageCalculator.CalculateRawDamage(context.Caster, damageSpec);
+            var effectSkillData = skillData.CopyWithDamageMultiplier(effect.DamageMultiplier);
+            var statusSpec = SkillStatus.EffectStatusSpec(effect, skillData);
 
             if (effect.ActiveDurationSeconds > 0f && effect.TickIntervalSeconds > 0f)
             {
-                return CreateAdditionalDamageZone(context, skillData, effect, targeting, center, damage, statusSpec);
+                return CreateAdditionalDamageZone(context, effectSkillData, effect, targeting, center, damage, statusSpec);
             }
 
             bool routed;
@@ -221,12 +213,9 @@ namespace Pakuri.InGame
 
             if (eventTarget != null)
             {
-                var targetDamage = damage;
-                if (skillData != null)
-                {
-                    targetDamage *= SkillExecutionRuleResolver.ResolveConditionalDamageMultiplier(skillData, eventTarget);
-                }
-                targetDamage = Mathf.Max(0f, targetDamage);
+                var targetDamage = Mathf.Max(0f, damage);
+                var finalDamageMultiplier = Mathf.Max(0f, effectSkillData.DamageMultiplier)
+                    * SkillExecutionRuleResolver.ConditionalDamageMultiplier(effectSkillData, eventTarget);
                 var result = context.CombatManager.ApplyDamage(
                     eventTarget,
                     targetDamage,
@@ -235,14 +224,15 @@ namespace Pakuri.InGame
                     damageSpec.CriticalAllowed,
                     criticalChanceBonus,
                     criticalDamageBonus,
-                    effectId);
+                    effectId,
+                    finalDamageMultiplier: finalDamageMultiplier);
                 if (!result.IsDead)
                 {
                     StatusCombatRules.ApplyStatus(context.CombatManager, eventTarget, statusSpec, context.Caster);
                 }
                 if (context.CombatManager.Effects != null)
                 {
-                    context.CombatManager.Effects.CreateEffect(effect, center, 1f);
+                    ShowTimedEffectVisual(context, effect, center);
                 }
                 return true;
             }
@@ -253,7 +243,7 @@ namespace Pakuri.InGame
                 context.Roster,
                 targeting,
                 center,
-                SkillTargeting.ResolveRadius(effect.Radius, skillData.RadiusMultiplier, skillData.RadiusBonus),
+                SkillTargeting.Radius(effect.Radius, skillData.RadiusMultiplier, skillData.RadiusBonus),
                 effect.CoverAll || effect.TargetShape == SkillMultiEffectTargetShape.Battlefield,
                 damage,
                 effect.Attribute,
@@ -266,9 +256,28 @@ namespace Pakuri.InGame
                 criticalDamageBonus);
             if (hit && context.CombatManager.Effects != null)
             {
-                context.CombatManager.Effects.CreateEffect(effect, center, 1f);
+                ShowTimedEffectVisual(context, effect, center);
             }
             return hit;
+        }
+
+        private static void ShowTimedEffectVisual(
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillEffectDefinition effect /* 표시할 추가 효과 */,
+            Vector2 center /* 표시 위치 */)
+        {
+            context.CombatManager.Effects.CreateEffect(new EffectCreateRequest(
+                effect.RuntimeVisual,
+                effect.SkillEffectPrefab,
+                effect.RuntimeObjectName("SkillEffectVisual"),
+                center,
+                Quaternion.identity,
+                null,
+                1f,
+                null,
+                false,
+                true,
+                false));
         }
 
         /*
@@ -300,12 +309,8 @@ namespace Pakuri.InGame
                 return true;
             }
 
-            var objectName = "SkillEffectVisual";
-            if (!string.IsNullOrWhiteSpace(effect.EffectId))
-            {
-                objectName = "SkillEffectVisual_" + effect.EffectId;
-            }
-            var instance = context.CombatManager.Effects.CreateEffect(visual, null, objectName, center, Quaternion.identity);
+            var objectName = effect.RuntimeObjectName("SkillEffectVisual");
+            var instance = context.CombatManager.Effects.CreateEffect(new EffectCreateRequest(visual, null, objectName, center, Quaternion.identity, null, 0f, null, false, true, false));
             if (instance == null)
             {
                 return true;
@@ -383,26 +388,23 @@ namespace Pakuri.InGame
             duration = Mathf.Max(0.05f, duration);
             interval = Mathf.Max(0.05f, interval);
 
-            var objectName = "SkillEffectZone";
-            if (!string.IsNullOrWhiteSpace(effect.EffectId))
-            {
-                objectName = "SkillEffectZone_" + effect.EffectId;
-            }
-            var instance = context.CombatManager.Effects.CreateEffect(
+            var objectName = effect.RuntimeObjectName("SkillEffectZone");
+            var instance = context.CombatManager.Effects.CreateEffect(new EffectCreateRequest(
                 effect.RuntimeVisual,
                 effect.SkillEffectPrefab,
                 objectName,
                 center,
-                Quaternion.identity);
+                Quaternion.identity,
+                null,
+                0f,
+                null,
+                false,
+                true,
+                true));
             if (instance != null)
             {
                 EffectVisualBuilder.ConfigureAreaEffect(instance, effect.Radius, skillData.RadiusMultiplier, skillData.RadiusBonus);
             }
-            else
-            {
-                instance = context.CombatManager.Effects.CreateSkillActorObject(objectName, center, Quaternion.identity);
-            }
-
             var actor = instance.GetComponent<ZoneSkillActor>();
             if (actor == null)
             {
@@ -421,7 +423,7 @@ namespace Pakuri.InGame
                 context.Roster,
                 targeting,
                 center,
-                SkillTargeting.ResolveRadius(effect.Radius, skillData.RadiusMultiplier, skillData.RadiusBonus),
+                SkillTargeting.Radius(effect.Radius, skillData.RadiusMultiplier, skillData.RadiusBonus),
                 effect.CoverAll || effect.TargetShape == SkillMultiEffectTargetShape.Battlefield,
                 duration,
                 interval,
@@ -503,21 +505,22 @@ namespace Pakuri.InGame
                 {
                     manager.ApplyDamage(
                         hitTarget.Model,
-                        primaryBaseDamage * skillData.OnHitAdditionalDamageMultiplier,
+                        primaryBaseDamage,
                         skillData.OnHitAdditionalDamageAttribute,
                         source,
                         criticalAllowed: false,
                         0f,
                         0f,
                         sourceSkillId,
-                        suppressOutgoingDamageTriggers: true);
+                        suppressOutgoingDamageTriggers: true,
+                        finalDamageMultiplier: skillData.OnHitAdditionalDamageMultiplier);
                 }
 
                 if (skillData.HasOnHitChainDamageBehavior
                     && hitIndex > 0
                     && hitIndex % skillData.OnHitChainHitPeriod == 0)
                 {
-                    var chainTargets = SkillTargeting.ResolveChainTargets(
+                    var chainTargets = SkillTargeting.ChainTargets(
                         roster,
                         sourceEntry,
                         source,
@@ -532,14 +535,15 @@ namespace Pakuri.InGame
                         {
                             manager.ApplyDamage(
                                 chainTarget.Model,
-                                primaryBaseDamage * skillData.OnHitChainDamageMultiplier,
+                                primaryBaseDamage,
                                 skillData.OnHitChainDamageAttribute,
                                 source,
                                 criticalAllowed: false,
                                 0f,
                                 0f,
                                 sourceSkillId,
-                                suppressOutgoingDamageTriggers: true);
+                                suppressOutgoingDamageTriggers: true,
+                                finalDamageMultiplier: skillData.OnHitChainDamageMultiplier);
                         }
                     }
                 }
@@ -583,15 +587,15 @@ namespace Pakuri.InGame
             var snapshot = effect.RecastInheritSkillData
                 ? inheritedData
                 : new SkillExecutionData(skill);
-            var radius = ResolveRadius(skill, snapshot) * Mathf.Max(0f, effect.RecastRadiusMultiplier);
+            var radius = Radius(skill, snapshot) * Mathf.Max(0f, effect.RecastRadiusMultiplier);
             var duration = Mathf.Max(0.05f, effect.RecastDurationSeconds);
-            var tickInterval = ResolveTickInterval(skill, snapshot);
-            var hitTargetCount = ResolveHitTargetCount(skill, snapshot);
-            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick, snapshot.BaseDamageBonus, snapshot.DamageMultiplier);
+            var tickInterval = TickInterval(skill, snapshot);
+            var hitTargetCount = HitTargetCount(skill, snapshot);
+            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick);
             var attribute = skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element;
-            var statusSpec = SkillStatus.ResolveStatusSpec(skill.OnTickStatus, snapshot);
+            var statusSpec = SkillStatus.StatusSpec(skill.OnTickStatus, snapshot);
             var planEffects = skill.MultiEffects;
-            var expireEffects = ResolveOnExpireEffects(context, snapshot, planEffects);
+            var expireEffects = OnExpireEffects(context, snapshot, planEffects);
             var coverAll = (skill.Area != null && skill.Area.CoverAll)
                 || (skill.Targeting != null && skill.Targeting.CoverAll);
             var effects = context.CombatManager.Effects;
@@ -607,20 +611,22 @@ namespace Pakuri.InGame
                 objectName = "InGameRecastZone_" + skill.SkillId;
             }
 
-            var instance = effects.CreateEffect(
+            var instance = effects.CreateEffect(new EffectCreateRequest(
                 runtimeVisual,
                 prefab,
                 objectName,
                 center,
-                Quaternion.identity);
-            if (instance == null)
-            {
-                instance = effects.CreateSkillActorObject(objectName, center, Quaternion.identity);
-            }
+                Quaternion.identity,
+                null,
+                0f,
+                null,
+                false,
+                true,
+                true));
 
             EffectVisualBuilder.ConfigureAreaEffect(
                 instance,
-                SkillTargeting.ResolveBaseRadius(skill.Targeting, skill.Area),
+                SkillTargeting.BaseRadius(skill.Targeting, skill.Area),
                 snapshot.RadiusMultiplier,
                 snapshot.RadiusBonus,
                 effect.RecastRadiusMultiplier);
@@ -664,17 +670,17 @@ namespace Pakuri.InGame
             SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */)
         {
-            var deploymentCount = ResolveDeploymentCount(snapshot);
-            var centers = ResolveAreaCenters(context, skill.Targeting, skill.Area, deploymentCount);
-            var radius = ResolveRadius(skill, snapshot);
-            var duration = ResolveDuration(skill, snapshot);
-            var tickInterval = ResolveTickInterval(skill, snapshot);
-            var hitTargetCount = ResolveHitTargetCount(skill, snapshot);
-            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick, snapshot.BaseDamageBonus, snapshot.DamageMultiplier);
+            var deploymentCount = DeploymentCount(snapshot);
+            var centers = AreaCenters(context, skill.Targeting, skill.Area, deploymentCount);
+            var radius = Radius(skill, snapshot);
+            var duration = Duration(skill, snapshot);
+            var tickInterval = TickInterval(skill, snapshot);
+            var hitTargetCount = HitTargetCount(skill, snapshot);
+            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick);
             var attribute = skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element;
-            var statusSpec = SkillStatus.ResolveStatusSpec(skill.OnTickStatus, snapshot);
+            var statusSpec = SkillStatus.StatusSpec(skill.OnTickStatus, snapshot);
             var planEffects = skill.MultiEffects;
-            var expireEffects = ResolveOnExpireEffects(context, snapshot, planEffects);
+            var expireEffects = OnExpireEffects(context, snapshot, planEffects);
             var coverAll = (skill.Area != null && skill.Area.CoverAll)
                 || (skill.Targeting != null && skill.Targeting.CoverAll);
             var effects = context.CombatManager.Effects;
@@ -695,20 +701,22 @@ namespace Pakuri.InGame
                     objectName = "ZoneSkill_" + skill.SkillId;
                 }
 
-                var instance = effects.CreateEffect(
+                var instance = effects.CreateEffect(new EffectCreateRequest(
                     runtimeVisual,
                     prefab,
                     objectName,
                     center,
-                    Quaternion.identity);
-                if (instance == null)
-                {
-                    instance = effects.CreateSkillActorObject(objectName, center, Quaternion.identity);
-                }
+                    Quaternion.identity,
+                    null,
+                    0f,
+                    null,
+                    false,
+                    true,
+                    true));
 
                 EffectVisualBuilder.ConfigureAreaEffect(
                     instance,
-                    SkillTargeting.ResolveBaseRadius(skill.Targeting, skill.Area),
+                    SkillTargeting.BaseRadius(skill.Targeting, skill.Area),
                     snapshot.RadiusMultiplier,
                     snapshot.RadiusBonus);
 
@@ -749,7 +757,7 @@ namespace Pakuri.InGame
         /*
          * 배치 횟수를 결정한다.
          */
-        private static int ResolveDeploymentCount(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        private static int DeploymentCount(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
         {
             return 1 + (snapshot != null && snapshot.HasBranchCount ? Math.Max(0, snapshot.BranchCount) : 0);
         }
@@ -757,7 +765,7 @@ namespace Pakuri.InGame
         /*
          * 적중 대상 횟수를 결정한다.
          */
-        private static int ResolveHitTargetCount(ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        private static int HitTargetCount(ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
         {
             if (skill == null || skill.HitAllTargets || !skill.UsesHitTargetCount)
             {
@@ -772,16 +780,16 @@ namespace Pakuri.InGame
         /*
          * 범위 중심점을 결정한다.
          */
-        private static List<Vector2> ResolveAreaCenters(
+        private static List<Vector2> AreaCenters(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
             SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */,
             AreaBlueprintSpec area /* 범위 */,
             int deploymentCount /* 배치 개수 */)
         {
-            var primaryCenter = ResolveAreaCenter(context, targeting, area);
+            var primaryCenter = AreaCenter(context, targeting, area);
             var coverAll = (area != null && area.CoverAll)
                 || (targeting != null && targeting.CoverAll);
-            return SkillTargeting.ResolveTargetAnchoredCenters(
+            return SkillTargeting.TargetAnchoredCenters(
                 context,
                 targeting,
                 primaryCenter,
@@ -793,23 +801,23 @@ namespace Pakuri.InGame
         /*
          * 범위 중심점을 결정한다.
          */
-        private static Vector2 ResolveAreaCenter(
+        private static Vector2 AreaCenter(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
             SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */,
             AreaBlueprintSpec area /* 범위 */)
         {
-            return SkillTargeting.ResolveAreaCenter(context, targeting, area);
+            return SkillTargeting.AreaCenter(context, targeting, area);
         }
 
         /*
          * 반경을 결정한다.
          */
-        private static float ResolveRadius(ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        private static float Radius(ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
         {
             var area = skill != null ? skill.Area : null;
             var targeting = skill != null ? skill.Targeting : null;
-            return SkillTargeting.ResolveRadius(
-                SkillTargeting.ResolveBaseRadius(targeting, area),
+            return SkillTargeting.Radius(
+                SkillTargeting.BaseRadius(targeting, area),
                 snapshot.RadiusMultiplier,
                 snapshot.RadiusBonus);
         }
@@ -817,7 +825,7 @@ namespace Pakuri.InGame
         /*
          * 지속시간을 결정한다.
          */
-        private static float ResolveDuration(ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        private static float Duration(ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
         {
             var area = skill != null ? skill.Area : null;
             var timing = skill != null ? skill.Timing : null;
@@ -826,7 +834,7 @@ namespace Pakuri.InGame
                 : timing != null ? timing.ActiveDuration : 0f;
             if (duration <= 0f)
             {
-                duration = ResolveTickInterval(skill, snapshot);
+                duration = TickInterval(skill, snapshot);
             }
 
             if (snapshot != null)
@@ -840,7 +848,7 @@ namespace Pakuri.InGame
         /*
          * 주기 간격을 결정한다.
          */
-        private static float ResolveTickInterval(ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        private static float TickInterval(ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
         {
             var area = skill != null ? skill.Area : null;
             var timing = skill != null ? skill.Timing : null;
@@ -858,7 +866,7 @@ namespace Pakuri.InGame
         /*
          * 종료 효과를 결정한다.
          */
-        private static SkillEffectDefinition[] ResolveOnExpireEffects(
+        private static SkillEffectDefinition[] OnExpireEffects(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
             SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             SkillEffectDefinition[] effects /* 실행할 효과 목록 */)

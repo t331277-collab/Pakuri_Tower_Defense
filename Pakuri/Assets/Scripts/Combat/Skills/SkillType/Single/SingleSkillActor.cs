@@ -30,13 +30,13 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 단일 공격 비주얼이 애니메이션 종료 뒤 제거되도록 설정하고 수명을 반환한다.
+         * 단일 공격 비주얼의 지정 수명을 설정하고 반환한다.
          */
         public float InitializeAnimation(
             EffectManager manager /* 효과 생성과 제거를 담당하는 관리자 */,
-            float minimumLifetimeSeconds /* 최소 유지 시간(초) */)
+            float durationSeconds /* 지속 시간(초) */)
         {
-            var lifetime = EffectVisualBuilder.ResolveLifetime(gameObject, minimumLifetimeSeconds);
+            var lifetime = Mathf.Max(0.01f, durationSeconds);
             InitializeTimed(manager, lifetime);
             return lifetime;
         }

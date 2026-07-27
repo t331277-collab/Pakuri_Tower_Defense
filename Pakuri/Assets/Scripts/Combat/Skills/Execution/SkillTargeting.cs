@@ -18,28 +18,28 @@ namespace Pakuri.InGame
     internal static class SkillTargeting
     {
         /*
-         * ResolveOrderedTargets 결과를 계산해 반환한다.
+         * OrderedTargets 결과를 계산해 반환한다.
          */
-        public static List<CombatUnitEntry> ResolveOrderedTargets(
+        public static List<CombatUnitEntry> OrderedTargets(
             CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */,
             CombatUnitRegistry unitRoster /* 전투에 등록된 유닛 목록 */,
             SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */)
         {
             // 시전자와 Targeting 설정을 기준으로 유효 대상을 정렬하는 부분을 구현.
-            return ResolveOrderedTargets(sourceEntry, unitRoster, targetingSpec, StatusEffectKind.None, 0);
+            return OrderedTargets(sourceEntry, unitRoster, targetingSpec, StatusEffectKind.None, 0);
         }
 
         /*
-         * ResolveOrderedTargets 결과를 계산해 반환한다.
+         * OrderedTargets 결과를 계산해 반환한다.
          */
-        public static List<CombatUnitEntry> ResolveOrderedTargets(
+        public static List<CombatUnitEntry> OrderedTargets(
             CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */,
             CombatUnitRegistry unitRoster /* 전투에 등록된 유닛 목록 */,
             SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */,
             StatusEffectKind requiredStatusKind /* 필수 상태 효과 종류 여부 */,
             int requiredStatusMinStacks /* 필수 상태 효과 최소 중첩 수 여부 */)
         {
-            var candidates = ResolveTargetList(
+            var candidates = TargetList(
                 sourceEntry,
                 unitRoster,
                 targetingSpec,
@@ -72,7 +72,7 @@ namespace Pakuri.InGame
                 return null;
             }
 
-            var candidates = ResolveTargetList(caster, roster, targeting);
+            var candidates = TargetList(caster, roster, targeting);
             var selection = targeting != null ? targeting.Selection : SkillTargetSelection.Nearest;
             CombatUnitEntry best = null;
             var bestDistanceSq = float.MaxValue;
@@ -177,7 +177,7 @@ namespace Pakuri.InGame
 
                 if (selection == SkillTargetSelection.HighestStacks)
                 {
-                    var stacks = ResolveStatusStacks(candidate.Model, selectionStatusKind);
+                    var stacks = StatusStacks(candidate.Model, selectionStatusKind);
                     if (stacks < Mathf.Max(0, selectionStatusMinStacks))
                     {
                         continue;
@@ -247,18 +247,18 @@ namespace Pakuri.InGame
         /*
          * 대상 목록을 결정한다.
          */
-        public static IReadOnlyList<CombatUnitEntry> ResolveTargetList(
+        public static IReadOnlyList<CombatUnitEntry> TargetList(
             CombatUnitEntry caster /* 스킬을 사용하는 유닛 */,
             CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
             SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */)
         {
-            return ResolveTargetList(caster, roster, targeting, StatusEffectKind.None, 0);
+            return TargetList(caster, roster, targeting, StatusEffectKind.None, 0);
         }
 
         /*
          * 대상 목록을 결정한다.
          */
-        public static IReadOnlyList<CombatUnitEntry> ResolveTargetList(
+        public static IReadOnlyList<CombatUnitEntry> TargetList(
             CombatUnitEntry caster /* 스킬을 사용하는 유닛 */,
             CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
             SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */,
@@ -333,7 +333,7 @@ namespace Pakuri.InGame
         /*
          * 조준 정보와 대상 설정으로 범위 중심점을 결정한다.
          */
-        public static Vector2 ResolveAreaCenter(
+        public static Vector2 AreaCenter(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
             SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */,
             AreaBlueprintSpec area /* 범위 */)
@@ -348,7 +348,7 @@ namespace Pakuri.InGame
 
             if (context.HasManualAimDirection && context.ManualAimDirection.sqrMagnitude > 0.0001f)
             {
-                var radius = ResolveBaseRadius(targeting, area);
+                var radius = BaseRadius(targeting, area);
                 return (Vector2)origin + context.ManualAimDirection.normalized * Mathf.Max(1f, radius);
             }
 
@@ -364,7 +364,7 @@ namespace Pakuri.InGame
         /*
          * 대상 설정에 기록된 기본 반경을 결정한다.
          */
-        public static float ResolveBaseRadius(SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */, AreaBlueprintSpec area /* 범위 */)
+        public static float BaseRadius(SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */, AreaBlueprintSpec area /* 범위 */)
         {
             if (area != null && area.Radius > 0f)
             {
@@ -377,7 +377,7 @@ namespace Pakuri.InGame
         /*
          * 선택지의 반경 배율과 추가값을 적용한다.
          */
-        public static float ResolveRadius(
+        public static float Radius(
             float baseRadius /* 기본 반지름 */,
             float radiusMultiplier /* 적용할 반지름 배율 */,
             float radiusBonus /* 추가할 반지름 */)
@@ -389,7 +389,7 @@ namespace Pakuri.InGame
         /*
          * 반경 변화에 맞는 프리팹 크기 배율을 결정한다.
          */
-        public static float ResolvePrefabScaleFactor(
+        public static float PrefabScaleFactor(
             float baseRadius /* 기본 반지름 */,
             float radiusMultiplier /* 적용할 반지름 배율 */,
             float radiusBonus /* 추가할 반지름 */)
@@ -399,13 +399,13 @@ namespace Pakuri.InGame
                 return Mathf.Max(0.01f, radiusMultiplier);
             }
 
-            return Mathf.Max(0.01f, ResolveRadius(baseRadius, radiusMultiplier, radiusBonus) / baseRadius);
+            return Mathf.Max(0.01f, Radius(baseRadius, radiusMultiplier, radiusBonus) / baseRadius);
         }
 
         /*
          * 반복 배치 횟수만큼 서로 다른 대상 위치를 우선 선택한다.
          */
-        public static List<Vector2> ResolveTargetAnchoredCenters(
+        public static List<Vector2> TargetAnchoredCenters(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
             SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */,
             Vector2 primaryCenter /* 주 대상 중심 위치 */,
@@ -424,7 +424,7 @@ namespace Pakuri.InGame
                 return centers;
             }
 
-            var orderedTargets = SkillTargeting.ResolveOrderedTargets(
+            var orderedTargets = SkillTargeting.OrderedTargets(
                 context.CasterEntry,
                 context.Roster,
                 targeting);
@@ -543,16 +543,16 @@ namespace Pakuri.InGame
                 {
                     statusKind = targetingSpec.SelectionStatusKind;
                 }
-                var leftStacks = ResolveStatusStacks(left.Model, statusKind);
-                var rightStacks = ResolveStatusStacks(right.Model, statusKind);
+                var leftStacks = StatusStacks(left.Model, statusKind);
+                var rightStacks = StatusStacks(right.Model, statusKind);
                 if (leftStacks != rightStacks)
                 {
                     return rightStacks.CompareTo(leftStacks);
                 }
             }
 
-            var leftDistance = ResolveDistanceSquared(sourceEntry, left);
-            var rightDistance = ResolveDistanceSquared(sourceEntry, right);
+            var leftDistance = DistanceSquared(sourceEntry, left);
+            var rightDistance = DistanceSquared(sourceEntry, right);
             if (selection == SkillTargetSelection.Farthest)
             {
                 return rightDistance.CompareTo(leftDistance);
@@ -562,9 +562,9 @@ namespace Pakuri.InGame
         }
 
         /*
-         * ResolveDistanceSquared 결과를 계산해 반환한다.
+         * DistanceSquared 결과를 계산해 반환한다.
          */
-        private static float ResolveDistanceSquared(CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, CombatUnitEntry target /* 효과를 받을 대상의 등록 정보 */)
+        private static float DistanceSquared(CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, CombatUnitEntry target /* 효과를 받을 대상의 등록 정보 */)
         {
             if (sourceEntry == null || sourceEntry.Transform == null || target == null || target.Transform == null)
             {
@@ -607,7 +607,7 @@ namespace Pakuri.InGame
         /*
          * 상태 중첩을 결정한다.
          */
-        private static int ResolveStatusStacks(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, StatusEffectKind kind /* 처리할 종류 */)
+        private static int StatusStacks(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, StatusEffectKind kind /* 처리할 종류 */)
         {
             if (model == null || kind == StatusEffectKind.None)
             {
@@ -676,7 +676,7 @@ namespace Pakuri.InGame
         /*
          * 추가 효과가 적용될 중심 위치를 결정한다.
          */
-        public static Vector2 ResolveEffectCenter(
+        public static Vector2 EffectCenter(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
             SkillEffectDefinition effect /* 적용할 추가 효과 */,
             SkillTargetingSpec targeting /* 대상 선택 설정 */,
@@ -741,7 +741,7 @@ namespace Pakuri.InGame
         /*
          * 사건 대상이 지정되면 그 대상만 반환하고 아니면 일반 대상 목록을 반환한다.
          */
-        public static IReadOnlyList<CombatUnitEntry> ResolveEffectTargets(
+        public static IReadOnlyList<CombatUnitEntry> EffectTargets(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
             SkillEffectDefinition effect /* 적용할 추가 효과 */,
             SkillTargetingSpec targeting /* 대상 선택 설정 */)
@@ -759,7 +759,7 @@ namespace Pakuri.InGame
                 }
             }
 
-            return ResolveTargetList(context.CasterEntry, context.Roster, targeting);
+            return TargetList(context.CasterEntry, context.Roster, targeting);
         }
 
         /*
@@ -833,7 +833,7 @@ namespace Pakuri.InGame
         /*
          * 최초 적중 대상과 Nexus를 제외한 반대 진영 유닛을 거리순으로 찾는다.
          */
-        public static List<CombatUnitEntry> ResolveChainTargets(
+        public static List<CombatUnitEntry> ChainTargets(
             CombatUnitRegistry roster /* 전투 유닛 목록 */,
             CombatUnitEntry sourceEntry /* 시전자 등록 정보 */,
             UnitCombatState source /* 시전자 */,

@@ -41,6 +41,7 @@ namespace Pakuri.InGame
         TargetStatusStackDamageRateBonus,
         TriggerProcChanceBonus,
         HitTargetCountBonus,
+        LineCastRepeatCountBonus,
         StatusActionSpeedBonus,
         StatusAttackPowerBonus,
         StatusAilmentResistanceBonus,

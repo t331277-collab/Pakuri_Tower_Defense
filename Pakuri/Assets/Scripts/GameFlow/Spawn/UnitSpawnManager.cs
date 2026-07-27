@@ -250,7 +250,7 @@ namespace Pakuri.InGame
                 }
 
                 var monsterId = activeSession.PartyMembers[slotIndex].MonsterId;
-                var monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId)
+                var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId)
                     ?? throw new InvalidOperationException($"Party monster data '{monsterId}' is required.");
 
                 CreateManifestedMonster(monster, activeSession, slotIndex);

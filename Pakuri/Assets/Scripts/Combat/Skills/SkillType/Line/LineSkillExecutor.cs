@@ -220,21 +220,22 @@ namespace Pakuri.InGame
                 {
                     manager.ApplyDamage(
                         hitTarget.Model,
-                        primaryBaseDamage * skillData.OnHitAdditionalDamageMultiplier,
+                        primaryBaseDamage,
                         skillData.OnHitAdditionalDamageAttribute,
                         source,
                         criticalAllowed: false,
                         0f,
                         0f,
                         sourceSkillId,
-                        suppressOutgoingDamageTriggers: true);
+                        suppressOutgoingDamageTriggers: true,
+                        finalDamageMultiplier: skillData.OnHitAdditionalDamageMultiplier);
                 }
 
                 if (skillData.HasOnHitChainDamageBehavior
                     && hitIndex > 0
                     && hitIndex % skillData.OnHitChainHitPeriod == 0)
                 {
-                    var chainTargets = SkillTargeting.ResolveChainTargets(
+                    var chainTargets = SkillTargeting.ChainTargets(
                         roster,
                         sourceEntry,
                         source,
@@ -249,14 +250,15 @@ namespace Pakuri.InGame
                         {
                             manager.ApplyDamage(
                                 chainTarget.Model,
-                                primaryBaseDamage * skillData.OnHitChainDamageMultiplier,
+                                primaryBaseDamage,
                                 skillData.OnHitChainDamageAttribute,
                                 source,
                                 criticalAllowed: false,
                                 0f,
                                 0f,
                                 sourceSkillId,
-                                suppressOutgoingDamageTriggers: true);
+                                suppressOutgoingDamageTriggers: true,
+                                finalDamageMultiplier: skillData.OnHitChainDamageMultiplier);
                         }
                     }
                 }
@@ -266,8 +268,6 @@ namespace Pakuri.InGame
                 applyingHitEnhancement = false;
             }
         }
-
-        private const float DefaultLineLength = 31f;
 
         /*
          * 요청받은 Line 스킬을 실행한다.
@@ -280,30 +280,136 @@ namespace Pakuri.InGame
             var origin = context.CasterEntry.Transform != null
                 ? context.CasterEntry.Transform.position
                 : Vector3.zero;
-            var target = context.HasManualAimDirection
-                ? null
-                : SkillTargeting.FindNearestTarget(context.CasterEntry, context.Roster, skill.Targeting);
-            var direction = context.HasManualAimDirection
-                ? context.ManualAimDirection
-                : SkillTargeting.DirectionToTarget(origin, target);
-
-            if (direction.sqrMagnitude <= 0.0001f)
+            var repeatCount = CastRepeatCount(skill, snapshot);
+            var directions = CastDirections(context, skill, origin, repeatCount);
+            if (directions.Count == 0)
             {
                 return false;
             }
 
-            direction.Normalize();
-            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick, snapshot.BaseDamageBonus, snapshot.DamageMultiplier);
+            if (!ExecuteOnce(context, snapshot, skill, origin, directions[0]))
+            {
+                return false;
+            }
+
+            if (repeatCount > 1)
+            {
+                context.CombatManager.StartCoroutine(ExecuteRepeatedLineCasts(
+                    context,
+                    snapshot,
+                    skill,
+                    origin,
+                    directions,
+                    CastRepeatInterval(skill)));
+            }
+
+            return true;
+        }
+
+        /*
+         * 같은 시전에서 예약된 추가 직선 공격을 순서대로 실행한다.
+         */
+        private static IEnumerator ExecuteRepeatedLineCasts(
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
+            LineSkillDefinition skill /* 실행하거나 검사할 스킬 */,
+            Vector2 origin /* 직선 시작 위치 */,
+            IReadOnlyList<Vector2> directions /* 반복별 직선 진행 방향 */,
+            float repeatIntervalSeconds /* 반복 간격 */)
+        {
+            for (var i = 1; i < directions.Count; i++)
+            {
+                yield return new WaitForSeconds(repeatIntervalSeconds);
+                if (context == null
+                    || context.CombatManager == null
+                    || context.CasterEntry == null
+                    || context.Caster == null
+                    || skill == null)
+                {
+                    yield break;
+                }
+
+                ExecuteOnce(context, snapshot, skill, origin, directions[i]);
+            }
+        }
+
+        /*
+         * 자동 시전은 반복 수만큼 가까운 서로 다른 대상 방향을 만들고,
+         * 수동 조준은 입력한 방향을 모든 반복에 유지한다.
+         */
+        private static List<Vector2> CastDirections(
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            LineSkillDefinition skill /* 실행하거나 검사할 스킬 */,
+            Vector2 origin /* 직선 시작 위치 */,
+            int repeatCount /* 한 번의 시전에서 실행할 총 횟수 */)
+        {
+            var directions = new List<Vector2>(repeatCount);
+            if (context.HasManualAimDirection)
+            {
+                var direction = context.ManualAimDirection;
+                if (direction.sqrMagnitude <= 0.0001f)
+                {
+                    return directions;
+                }
+
+                direction.Normalize();
+                for (var i = 0; i < repeatCount; i++)
+                {
+                    directions.Add(direction);
+                }
+
+                return directions;
+            }
+
+            var target = SkillTargeting.FindNearestTarget(context.CasterEntry, context.Roster, skill.Targeting);
+            var primaryDirection = SkillTargeting.DirectionToTarget(origin, target);
+            if (primaryDirection.sqrMagnitude <= 0.0001f || target.Transform == null)
+            {
+                return directions;
+            }
+
+            var centers = SkillTargeting.TargetAnchoredCenters(
+                context,
+                skill.Targeting,
+                target.Transform.position,
+                repeatCount,
+                false,
+                SkillDeploymentRepeatMode.RepeatNearest);
+            for (var i = 0; i < centers.Count; i++)
+            {
+                var direction = centers[i] - origin;
+                if (direction.sqrMagnitude <= 0.0001f)
+                {
+                    continue;
+                }
+
+                directions.Add(direction.normalized);
+            }
+
+            return directions;
+        }
+
+        /*
+         * 한 번의 직선 공격을 실행한다.
+         */
+        private static bool ExecuteOnce(
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
+            LineSkillDefinition skill /* 실행하거나 검사할 스킬 */,
+            Vector2 origin /* 직선 시작 위치 */,
+            Vector2 direction /* 직선 진행 방향 */)
+        {
+            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick);
             var attribute = skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element;
-            var statusSpec = SkillStatus.ResolveStatusSpec(skill.OnHitStatus, snapshot);
-            var length = ResolveLineLength(skill);
-            var width = ResolveLineWidth(skill, snapshot);
-            var knockbackDistance = ResolveKnockbackDistance(skill, snapshot);
-            var duration = ResolveDuration(skill, snapshot);
-            var tickInterval = ResolveTickInterval(skill, snapshot);
+            var statusSpec = SkillStatus.StatusSpec(skill.OnHitStatus, snapshot);
+            var length = LineLength(skill);
+            var width = LineWidth(skill, snapshot);
+            var knockbackDistance = KnockbackDistance(skill, snapshot);
+            var duration = Duration(skill, snapshot);
+            var tickInterval = TickInterval(skill, snapshot);
             var planEffects = skill.MultiEffects;
-            var onHitStatusEffects = ResolveOnHitStatusEffects(context, snapshot, planEffects);
-            var castEffects = ResolveCastEffects(context, snapshot, planEffects);
+            var onHitEffects = OnHitEffects(context, snapshot, planEffects);
+            var castEffects = CastEffects(context, snapshot, planEffects);
             var center = (Vector2)origin + direction * (length * 0.5f);
             var effects = context.CombatManager.Effects;
             var runtimeVisual = skill.RuntimeVisual;
@@ -330,7 +436,7 @@ namespace Pakuri.InGame
                     damage,
                     attribute,
                     statusSpec,
-                    onHitStatusEffects,
+                    onHitEffects,
                     context.Runtime,
                     snapshot,
                     context.Caster,
@@ -342,22 +448,30 @@ namespace Pakuri.InGame
                 {
                     ExecuteAdditionalEffects(context, snapshot, castEffects, center, false, SkillMultiEffectTiming.OnCast, false);
                 }
+
+                ExecuteAdditionalEffects(context, snapshot, planEffects, center, true, SkillMultiEffectTiming.OnDeploymentCast, false);
                 return true;
             }
 
-            var rotation = EffectVisualBuilder.ResolveRotation(direction);
+            var rotation = EffectVisualBuilder.Rotation(direction);
             var objectName = "LineSkill";
             if (!string.IsNullOrWhiteSpace(skill.SkillId))
             {
                 objectName = "LineSkill_" + skill.SkillId;
             }
 
-            var instance = effects.CreateEffect(
+            var instance = effects.CreateEffect(new EffectCreateRequest(
                 runtimeVisual,
                 prefab,
                 objectName,
                 center,
-                rotation);
+                rotation,
+                null,
+                0f,
+                null,
+                false,
+                true,
+                false));
             if (instance == null)
             {
                 return false;
@@ -384,7 +498,7 @@ namespace Pakuri.InGame
                 damage,
                 attribute,
                 statusSpec,
-                onHitStatusEffects,
+                onHitEffects,
                 context.Runtime,
                 snapshot,
                 context.Caster,
@@ -396,32 +510,45 @@ namespace Pakuri.InGame
             {
                 ExecuteAdditionalEffects(context, snapshot, castEffects, center, false, SkillMultiEffectTiming.OnCast, false);
             }
+            ExecuteAdditionalEffects(context, snapshot, planEffects, center, true, SkillMultiEffectTiming.OnDeploymentCast, false);
             return true;
         }
 
         /*
          * Line 길이를 결정한다.
          */
-        private static float ResolveLineLength(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */)
+        private static float LineLength(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */)
         {
-            if (skill != null && skill.LineLength > 0f)
-            {
-                return skill.LineLength;
-            }
+            return Mathf.Max(0.1f, skill != null ? skill.LineLength : 0f);
+        }
 
-            // Line 길이 기본값은 Line 실행기가 직접 소유한다.
-            return DefaultLineLength;
+        /*
+         * 한 번의 시전에서 실행할 직선 공격 횟수를 결정한다.
+         */
+        private static int CastRepeatCount(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        {
+            var baseCount = skill != null ? skill.CastRepeatCount : 1;
+            var bonus = snapshot != null ? snapshot.LineCastRepeatCountBonus : 0;
+            return Mathf.Max(1, baseCount + bonus);
+        }
+
+        /*
+         * 직선 공격 반복 간격을 결정한다.
+         */
+        private static float CastRepeatInterval(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */)
+        {
+            return Mathf.Max(0f, skill != null ? skill.CastRepeatIntervalSeconds : 0f);
         }
 
         /*
          * 지속시간을 결정한다.
          */
-        private static float ResolveDuration(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        private static float Duration(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
         {
             var timing = skill != null ? skill.Timing : null;
             var duration = timing != null && timing.ActiveDuration > 0f
                 ? timing.ActiveDuration
-                : ResolveTickInterval(skill, snapshot);
+                : TickInterval(skill, snapshot);
             if (snapshot != null)
             {
                 duration = duration * Mathf.Max(0f, snapshot.DurationMultiplier) + snapshot.DurationBonus;
@@ -433,12 +560,12 @@ namespace Pakuri.InGame
         /*
          * Line 너비를 결정한다.
          */
-        private static float ResolveLineWidth(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        private static float LineWidth(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
         {
             var width = skill != null ? skill.LineWidth : 0f;
             if (snapshot != null)
             {
-                width *= ResolveLineVisualWidthScale(snapshot);
+                width *= LineVisualWidthScale(snapshot);
             }
 
             return Mathf.Max(0.1f, width);
@@ -447,7 +574,7 @@ namespace Pakuri.InGame
         /*
          * 밀쳐내기 거리를 결정한다.
          */
-        private static float ResolveKnockbackDistance(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        private static float KnockbackDistance(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
         {
             var distance = skill != null ? Mathf.Max(0f, skill.KnockbackDistance) : 0f;
             if (snapshot != null)
@@ -461,7 +588,7 @@ namespace Pakuri.InGame
         /*
          * Line 비주얼 너비 크기를 결정한다.
          */
-        private static float ResolveLineVisualWidthScale(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        private static float LineVisualWidthScale(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
         {
             return snapshot != null
                 ? Mathf.Max(0.01f, 1f + snapshot.BeamWidthBonus)
@@ -471,9 +598,9 @@ namespace Pakuri.InGame
         /*
          * 주기 간격을 결정한다.
          */
-        private static float ResolveTickInterval(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        private static float TickInterval(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
         {
-            var interval = ResolveTickInterval(skill);
+            var interval = TickInterval(skill);
             if (snapshot != null)
             {
                 interval *= Mathf.Max(0.05f, snapshot.ShotIntervalMultiplier);
@@ -485,7 +612,7 @@ namespace Pakuri.InGame
         /*
          * 주기 간격을 결정한다.
          */
-        private static float ResolveTickInterval(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */)
+        private static float TickInterval(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */)
         {
             var timing = skill != null ? skill.Timing : null;
             return timing != null && timing.TickInterval > 0f
@@ -496,7 +623,7 @@ namespace Pakuri.InGame
         /*
          * 적중 상태 효과를 결정한다.
          */
-        private static SkillEffectDefinition[] ResolveOnHitStatusEffects(
+        private static SkillEffectDefinition[] OnHitEffects(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
             SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             SkillEffectDefinition[] effects /* 실행할 효과 목록 */)
@@ -512,7 +639,8 @@ namespace Pakuri.InGame
                 var effect = effects[i];
                 if (effect == null
                     || effect.EffectTiming != SkillMultiEffectTiming.OnHit
-                    || effect.EffectKind != SkillMultiEffectKind.Status
+                    || (effect.EffectKind != SkillMultiEffectKind.Status
+                        && effect.EffectKind != SkillMultiEffectKind.Damage)
                     || effect.TargetSide != SkillMultiEffectTargetSide.Enemy
                     || !SkillRequirement.CanRunEffect(context, effect))
                 {
@@ -528,7 +656,7 @@ namespace Pakuri.InGame
         /*
          * 시전 효과를 결정한다.
          */
-        private static SkillEffectDefinition[] ResolveCastEffects(
+        private static SkillEffectDefinition[] CastEffects(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
             SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             SkillEffectDefinition[] effects /* 실행할 효과 목록 */)

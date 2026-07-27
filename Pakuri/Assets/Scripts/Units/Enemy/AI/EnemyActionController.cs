@@ -152,7 +152,7 @@ namespace Pakuri.InGame
             float deltaTime /* 이전 갱신 이후 지난 시간 */)
         {
             var moveSpeed = enemyModel.Stats.MoveSpeed;
-            moveSpeed *= StatusCombatRules.ResolveMoveSpeedMultiplier(enemyModel);
+            moveSpeed *= StatusCombatRules.MoveSpeedMultiplier(enemyModel);
             if (moveSpeed <= 0f)
             {
                 return;

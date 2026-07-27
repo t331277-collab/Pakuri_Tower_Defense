@@ -76,8 +76,10 @@ namespace Pakuri.Data
         public float BaseDamage;
         public float AttackPowerCoefficient;
         public float SpellPowerCoefficient;
-        public bool UseCombinedStatCoefficients;
         public float Radius;
+        public float LineLength;
+        public int CastRepeatCount = 1;
+        public float CastRepeatIntervalSeconds;
         public float CastRange;
         public float EffectRadius;
         public string TargetScope;
@@ -307,9 +309,6 @@ namespace Pakuri.InGame
         public string SkillId;
         public DamageAttribute Element;
         public float BaseDamage;
-        public float StatCoefficient;
-        public StatSource StatSource;
-        public bool UseCombinedStatCoefficients;
         public float AttackPowerCoefficient;
         public float SpellPowerCoefficient;
         public bool CriticalAllowed = true;
@@ -467,6 +466,8 @@ namespace Pakuri.InGame
         [Header("Line")]
         public float LineWidth;
         public float LineLength;
+        public int CastRepeatCount = 1;
+        public float CastRepeatIntervalSeconds;
         public float KnockbackDistance;
 
         [Header("Tick Damage")]
@@ -854,6 +855,12 @@ namespace Pakuri.Data
     {
         // 효과 식별과 실행 시점
         public string EffectId;
+
+        public string RuntimeObjectName(string prefix /* 런타임 오브젝트 이름 앞부분 */)
+        {
+            return prefix + "_" + EffectId;
+        }
+
         public string SkillId;
         public int SortOrder;
         public SkillMultiEffectKind EffectKind;
@@ -1009,8 +1016,6 @@ namespace Pakuri.Data
     {
         public Sprite Sprite;
         public RuntimeAnimatorController AnimatorController;
-        public float Scale = 1f;
-        public bool UseLocalScale;
         public Vector3 LocalScale = Vector3.one;
         public int SortingOrder;
         public RuntimeSkillVisualAnchor Anchor = RuntimeSkillVisualAnchor.Skill;

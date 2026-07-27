@@ -398,7 +398,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId);
+            var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId);
             if (slot.NameText != null)
             {
                 slot.NameText.text = monster != null && !string.IsNullOrWhiteSpace(monster.DisplayName)
@@ -1024,7 +1024,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId);
+            var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId);
             if (monster == null)
             {
                 return;

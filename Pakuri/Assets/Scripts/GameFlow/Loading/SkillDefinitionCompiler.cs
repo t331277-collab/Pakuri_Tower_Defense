@@ -313,7 +313,9 @@ public static class SkillDefinitionCompiler
 		}
 		else if (skill is LineSkillDefinition lineSkillExecutionDefinition)
 		{
-			lineSkillExecutionDefinition.LineLength = 0f;
+			lineSkillExecutionDefinition.LineLength = source.LineLength;
+			lineSkillExecutionDefinition.CastRepeatCount = Math.Max(1, source.CastRepeatCount);
+			lineSkillExecutionDefinition.CastRepeatIntervalSeconds = Mathf.Max(0f, source.CastRepeatIntervalSeconds);
 			lineSkillExecutionDefinition.LineWidth = source.Radius;
 			lineSkillExecutionDefinition.KnockbackDistance = source.KnockbackDistance;
 			MapDamage(lineSkillExecutionDefinition.DamagePerTick, source);
@@ -392,8 +394,8 @@ public static class SkillDefinitionCompiler
 			MapDamage(singleSkillExecutionDefinition.Damage, source);
 			singleSkillExecutionDefinition.TargetStatusStackDamage.Element = source.Attribute;
 			singleSkillExecutionDefinition.TargetStatusStackDamage.BaseDamage = source.TargetStatusStackBaseDamage;
-			singleSkillExecutionDefinition.TargetStatusStackDamage.StatCoefficient = GetDominantCoefficient(source.TargetStatusStackAttackPowerCoefficient, source.TargetStatusStackSpellPowerCoefficient, out var statSource);
-			singleSkillExecutionDefinition.TargetStatusStackDamage.StatSource = statSource;
+			singleSkillExecutionDefinition.TargetStatusStackDamage.AttackPowerCoefficient = source.TargetStatusStackAttackPowerCoefficient;
+			singleSkillExecutionDefinition.TargetStatusStackDamage.SpellPowerCoefficient = source.TargetStatusStackSpellPowerCoefficient;
 			singleSkillExecutionDefinition.TargetStatusStackDamage.CriticalAllowed = false;
 			ApplySingleBasePlanNodes(singleSkillExecutionDefinition, source.NormalizedPlanNodes, source.Attribute);
 			if (!string.IsNullOrWhiteSpace(singleSkillExecutionDefinition.DeploymentRequiredTargetStatusId))
@@ -478,9 +480,6 @@ public static class SkillDefinitionCompiler
 		damage.SkillId = source.SkillId;
 		damage.Element = source.Attribute;
 		damage.BaseDamage = source.BaseDamage;
-		damage.StatCoefficient = GetDominantCoefficient(source, out var statSource);
-		damage.StatSource = statSource;
-		damage.UseCombinedStatCoefficients = source.UseCombinedStatCoefficients;
 		damage.AttackPowerCoefficient = source.AttackPowerCoefficient;
 		damage.SpellPowerCoefficient = source.SpellPowerCoefficient;
 		damage.CriticalAllowed = source.CriticalAllowed;
@@ -526,20 +525,6 @@ public static class SkillDefinitionCompiler
 		}
 		statSource = StatSource.Attack;
 		return source.AttackPowerCoefficient;
-	}
-
-	/*
-	 * GetDominantCoefficient에 해당하는 값을 찾아 반환한다.
-	 */
-	private static float GetDominantCoefficient(float attackPowerCoefficient /* 공격력 계수 */, float spellPowerCoefficient /* 주문력 계수 */, out StatSource statSource /* 능력치 발생 원본 */)
-	{
-		if (Mathf.Abs(spellPowerCoefficient) >= Mathf.Abs(attackPowerCoefficient))
-		{
-			statSource = StatSource.Intelligence;
-			return spellPowerCoefficient;
-		}
-		statSource = StatSource.Attack;
-		return attackPowerCoefficient;
 	}
 
 	/*
@@ -655,10 +640,8 @@ public static class SkillDefinitionCompiler
 					single.TargetStatusStackMaxStacks = Mathf.Max(0, SkillNodeMapper.GetIntParam(skillNodeDefinition, "max_stacks", 0));
 					single.TargetStatusStackDamage.Element = attribute;
 					single.TargetStatusStackDamage.BaseDamage = SkillNodeMapper.GetFloatParam(skillNodeDefinition, "base_damage", 0f);
-					float floatParam = SkillNodeMapper.GetFloatParam(skillNodeDefinition, "attack_power_coefficient", 0f);
-					float floatParam2 = SkillNodeMapper.GetFloatParam(skillNodeDefinition, "spell_power_coefficient", 0f);
-					single.TargetStatusStackDamage.StatCoefficient = GetDominantCoefficient(floatParam, floatParam2, out var statSource);
-					single.TargetStatusStackDamage.StatSource = statSource;
+					single.TargetStatusStackDamage.AttackPowerCoefficient = SkillNodeMapper.GetFloatParam(skillNodeDefinition, "attack_power_coefficient", 0f);
+					single.TargetStatusStackDamage.SpellPowerCoefficient = SkillNodeMapper.GetFloatParam(skillNodeDefinition, "spell_power_coefficient", 0f);
 					single.TargetStatusStackDamage.CriticalAllowed = false;
 				}
 			}
@@ -727,7 +710,7 @@ namespace Pakuri.InGame
 	 * 선택지의 정리된 노드를 대상 스킬별 실행 값으로 한 번만 변환해 반환한다.
 	 * 모든 처리기는 SkillNode로 변환하므로 별도 임시 SkillChoice 객체를 만들지 않는다.
 	 */
-	internal static SkillChoiceRuntimePlan ResolveChoiceRuntimePlan(SkillChoice choice /* 적용할 선택지 */, string targetSkillId /* 적용 대상 스킬 식별자 */)
+	internal static SkillChoiceRuntimePlan GetChoiceRuntimePlan(SkillChoice choice /* 적용할 선택지 */, string targetSkillId /* 적용 대상 스킬 식별자 */)
 	{
 		if (choice == null || choice.Source == null)
 		{
@@ -1067,7 +1050,8 @@ namespace Pakuri.InGame
 			|| string.Equals(handlerId, "ConditionalDamageMultiplier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "TargetStatusStackDamageRateBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "TriggerProcChanceBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "HitTargetCountBonus", StringComparison.OrdinalIgnoreCase))
+			|| string.Equals(handlerId, "HitTargetCountBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "LineCastRepeatCountBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return true;
 		}
@@ -1192,6 +1176,10 @@ namespace Pakuri.InGame
 		if (string.Equals(handlerId, "HitTargetCountBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.HitTargetCountBonus, GetIntParam(node, "bonus", 0));
+		}
+		if (string.Equals(handlerId, "LineCastRepeatCountBonus", StringComparison.OrdinalIgnoreCase))
+		{
+			return new SkillActionOp(SkillActionOpKind.LineCastRepeatCountBonus, GetIntParam(node, "bonus", 0));
 		}
 		if (string.Equals(handlerId, "StatusActionSpeedBonus", StringComparison.OrdinalIgnoreCase))
 		{

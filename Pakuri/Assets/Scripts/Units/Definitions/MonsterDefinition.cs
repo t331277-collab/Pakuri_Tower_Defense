@@ -36,8 +36,6 @@ namespace Pakuri.Data
             AttackPower = 30f,
             SpellPower = 30f,
             MoveSpeed = 1f,
-            CriticalChance = DamageCalculator.BaseCriticalChance,
-            CriticalDamage = DamageCalculator.BaseCriticalMultiplier,
             CriticalResistance = 0f
         };
         public UnitDefenseStats Defenses = new UnitDefenseStats();

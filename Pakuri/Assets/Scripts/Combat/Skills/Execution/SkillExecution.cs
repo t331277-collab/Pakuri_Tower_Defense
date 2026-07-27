@@ -405,10 +405,10 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId);
+            var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId);
             for (var i = 0; i < ActiveSlots.Length; i++)
             {
-                var source = GameDataLoader.CurrentCatalog.ResolveActiveSkill(monsterId, ActiveSlots[i]);
+                var source = GameDataLoader.CurrentCatalog.GetActiveSkill(monsterId, ActiveSlots[i]);
                 if (source == null)
                 {
                     continue;
@@ -525,12 +525,12 @@ namespace Pakuri.InGame
          */
         public void ResetRuntimeState()
         {
-            effectiveMaxMagazineSize = ResolveMaxMagazineSize(Data);
-            effectiveBurstProjectileCount = ResolveBurstProjectileCount(Data);
-            effectiveReloadDuration = ResolveReloadDuration(Data);
-            effectiveTickInterval = ResolveTickInterval(Data);
-            effectiveBurstInterval = ResolveBurstInterval(Data);
-            effectiveCooldownDuration = ResolveCooldownDuration(Data);
+            effectiveMaxMagazineSize = CalculateMaxMagazineSize(Data);
+            effectiveBurstProjectileCount = BurstProjectileCount(Data);
+            effectiveReloadDuration = CalculateReloadDuration(Data);
+            effectiveTickInterval = TickInterval(Data);
+            effectiveBurstInterval = BurstInterval(Data);
+            effectiveCooldownDuration = CooldownDuration(Data);
             CooldownRemaining = 0f;
             CastRemaining = 0f;
             ActiveDurationRemaining = 0f;
@@ -575,7 +575,7 @@ namespace Pakuri.InGame
         /*
          * 같은 대상을 연속으로 적중했을 때 적용할 피해 배율을 결정한다.
          */
-        public float ResolveConsecutiveHitDamageMultiplier(UnitCombatState target /* 효과를 받을 대상 유닛 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        public float ConsecutiveHitDamageMultiplier(UnitCombatState target /* 효과를 받을 대상 유닛 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
         {
             if (target == null)
             {
@@ -641,7 +641,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var actionDeltaTime = deltaTime * StatusCombatRules.ResolveActionSpeedMultiplier(Owner);
+            var actionDeltaTime = deltaTime * StatusCombatRules.ActionSpeedMultiplier(Owner);
             CooldownRemaining = TickDown(CooldownRemaining, actionDeltaTime);
             CastRemaining = TickDown(CastRemaining, actionDeltaTime);
             ActiveDurationRemaining = TickDown(ActiveDurationRemaining, deltaTime);
@@ -758,7 +758,7 @@ namespace Pakuri.InGame
         /*
          * 현재 연속 발사에서 몇 번째 투사체인지 계산한다.
          */
-        public int ResolveCurrentBurstProjectileIndex()
+        public int CurrentBurstProjectileIndex()
         {
             if (effectiveBurstProjectileCount <= 1 || !IsBursting)
             {
@@ -848,12 +848,12 @@ namespace Pakuri.InGame
         private void RefreshRuntimeModifiers(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
         {
             var previousMax = effectiveMaxMagazineSize;
-            var nextMax = ResolveMaxMagazineSize(Data);
-            var nextBurst = ResolveBurstProjectileCount(Data);
-            effectiveReloadDuration = ResolveReloadDuration(Data);
-            effectiveTickInterval = ResolveTickInterval(Data);
-            effectiveBurstInterval = ResolveBurstInterval(Data);
-            effectiveCooldownDuration = ResolveCooldownDuration(Data);
+            var nextMax = CalculateMaxMagazineSize(Data);
+            var nextBurst = BurstProjectileCount(Data);
+            effectiveReloadDuration = CalculateReloadDuration(Data);
+            effectiveTickInterval = TickInterval(Data);
+            effectiveBurstInterval = BurstInterval(Data);
+            effectiveCooldownDuration = CooldownDuration(Data);
 
             if (snapshot != null)
             {
@@ -900,7 +900,7 @@ namespace Pakuri.InGame
         /*
          * 최대 탄창 크기를 결정한다.
          */
-        private static int ResolveMaxMagazineSize(SkillDefinition data /* 처리할 실행 데이터 */)
+        private static int CalculateMaxMagazineSize(SkillDefinition data /* 처리할 실행 데이터 */)
         {
             return Math.Max(0, data.MagazineCapacity);
         }
@@ -908,7 +908,7 @@ namespace Pakuri.InGame
         /*
          * 연속 발사 투사체 횟수를 결정한다.
          */
-        private static int ResolveBurstProjectileCount(SkillDefinition data /* 처리할 실행 데이터 */)
+        private static int BurstProjectileCount(SkillDefinition data /* 처리할 실행 데이터 */)
         {
             var projectile = data as ProjectileSkillDefinition;
             if (projectile != null && projectile.Projectile != null)
@@ -922,7 +922,7 @@ namespace Pakuri.InGame
         /*
          * 재장전 지속시간을 결정한다.
          */
-        private static float ResolveReloadDuration(SkillDefinition data /* 처리할 실행 데이터 */)
+        private static float CalculateReloadDuration(SkillDefinition data /* 처리할 실행 데이터 */)
         {
             return Mathf.Max(0f, data.ReloadSeconds);
         }
@@ -930,7 +930,7 @@ namespace Pakuri.InGame
         /*
          * 주기 간격을 결정한다.
          */
-        private static float ResolveTickInterval(SkillDefinition data /* 처리할 실행 데이터 */)
+        private static float TickInterval(SkillDefinition data /* 처리할 실행 데이터 */)
         {
             return Mathf.Max(0f, data.Timing.TickInterval);
         }
@@ -938,7 +938,7 @@ namespace Pakuri.InGame
         /*
          * 연속 발사 간격을 결정한다.
          */
-        private static float ResolveBurstInterval(SkillDefinition data /* 처리할 실행 데이터 */)
+        private static float BurstInterval(SkillDefinition data /* 처리할 실행 데이터 */)
         {
             var projectile = data as ProjectileSkillDefinition;
             if (projectile != null && projectile.Projectile != null)
@@ -950,13 +950,13 @@ namespace Pakuri.InGame
                 }
             }
 
-            return ResolveTickInterval(data);
+            return TickInterval(data);
         }
 
         /*
          * 재사용 대기시간 지속시간을 결정한다.
          */
-        private static float ResolveCooldownDuration(SkillDefinition data /* 처리할 실행 데이터 */)
+        private static float CooldownDuration(SkillDefinition data /* 처리할 실행 데이터 */)
         {
             return Mathf.Max(0f, data.Timing.Cooldown);
         }
@@ -1290,7 +1290,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            SkillNode[] nodes = SkillNodeMapper.ResolveChoiceRuntimePlan(choice, snapshot.SkillId).Nodes;
+            SkillNode[] nodes = SkillNodeMapper.GetChoiceRuntimePlan(choice, snapshot.SkillId).Nodes;
             for (int i = 0; i < nodes.Length; i++)
             {
                 if (nodes[i] == null)
@@ -1363,7 +1363,7 @@ namespace Pakuri.InGame
                 return 0;
             }
 
-            var entries = ResolveCountEntries(owner, roster, side);
+            var entries = CountEntries(owner, roster, side);
             var count = 0;
             for (var i = 0; i < entries.Count; i++)
             {
@@ -1385,7 +1385,7 @@ namespace Pakuri.InGame
         /*
          * 횟수 유닛 항목을 결정한다.
          */
-        private static System.Collections.Generic.IReadOnlyList<CombatUnitEntry> ResolveCountEntries(
+        private static System.Collections.Generic.IReadOnlyList<CombatUnitEntry> CountEntries(
             UnitCombatState owner /* 정보를 소유한 유닛 */,
             CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
             SkillMultiEffectTargetSide side /* 진영 */)
@@ -1534,23 +1534,23 @@ namespace Pakuri.InGame
         /*
          * 패시브에 연결된 강화 선택지를 실행 데이터로 만든다.
          */
-        public static SkillExecutionData ResolvePassiveChoices(UnitCombatState owner /* 정보를 소유한 유닛 */, string passiveId /* 패시브 식별자 */)
+        public static SkillExecutionData PassiveChoices(UnitCombatState owner /* 정보를 소유한 유닛 */, string passiveId /* 패시브 식별자 */)
         {
-            return ResolveChoices(owner, passiveId, true);
+            return Choices(owner, passiveId, true);
         }
 
         /*
          * 활성 스킬에 연결된 강화와 마스터 선택지를 실행 데이터로 만든다.
          */
-        public static SkillExecutionData ResolveActiveChoices(UnitCombatState owner /* 정보를 소유한 유닛 */, string skillId /* 스킬 식별자 */)
+        public static SkillExecutionData ActiveChoices(UnitCombatState owner /* 정보를 소유한 유닛 */, string skillId /* 스킬 식별자 */)
         {
-            return ResolveChoices(owner, skillId, false);
+            return Choices(owner, skillId, false);
         }
 
         /*
-         * ResolveChoices 결과를 계산해 반환한다.
+         * Choices 결과를 계산해 반환한다.
          */
-        private static SkillExecutionData ResolveChoices(UnitCombatState owner /* 정보를 소유한 유닛 */, string skillId /* 스킬 식별자 */, bool useTargetSkillId /* 사용 대상 스킬 식별자 여부 */)
+        private static SkillExecutionData Choices(UnitCombatState owner /* 정보를 소유한 유닛 */, string skillId /* 스킬 식별자 */, bool useTargetSkillId /* 사용 대상 스킬 식별자 여부 */)
         {
             var snapshot = new SkillExecutionData(null);
             if (owner == null || owner.Skills == null || string.IsNullOrWhiteSpace(skillId))

@@ -164,15 +164,15 @@ namespace Pakuri.InGame
             SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             BuffSkillDefinition skill /* 실행하거나 검사할 스킬 */)
         {
-            var statusSpec = ResolveBuffStatusSpec(skill, snapshot);
+            var statusSpec = BuffStatusSpec(skill, snapshot);
             if (statusSpec == null)
             {
                 return false;
             }
 
             var targets = skill.UseConfiguredTargeting
-                ? ResolveConfiguredTargets(context.CasterEntry, context.Roster, skill.Targeting)
-                : ResolveBuffTargets(context.CasterEntry, context.Roster, skill.Target);
+                ? ConfiguredTargets(context.CasterEntry, context.Roster, skill.Targeting)
+                : BuffTargets(context.CasterEntry, context.Roster, skill.Target);
             var effects = context.CombatManager.Effects;
             var runtimeVisual = skill.RuntimeVisual;
             var prefab = skill.SkillEffectPrefab;
@@ -223,17 +223,7 @@ namespace Pakuri.InGame
                         visualName = "RuntimeBuffVisual_" + skill.SkillId;
                     }
 
-                    visualInstance = effects.CreateTargetVisual(
-                        runtimeVisual,
-                        prefab,
-                        visualName,
-                        visualTarget);
-                    if (visualInstance != null)
-                    {
-                        BuffSkillActor.Attach(visualInstance).Initialize(
-                            effects,
-                            statusSpec.DurationSeconds);
-                    }
+                    visualInstance = effects.CreateEffect(new EffectCreateRequest(runtimeVisual, prefab, visualName, visualTarget.position, Quaternion.identity, visualTarget, statusSpec.DurationSeconds, null, false, true, false));
                 }
 
                 if (visualInstance != null)
@@ -260,20 +250,20 @@ namespace Pakuri.InGame
         /*
          * 버프 상태 설정을 결정한다.
          */
-        private static ProjectileStatusHitSpec ResolveBuffStatusSpec(BuffSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        private static ProjectileStatusHitSpec BuffStatusSpec(BuffSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
         {
             if (skill == null)
             {
                 return null;
             }
 
-            return SkillStatus.ResolveStatusSpec(skill.AttachedStatus, snapshot);
+            return SkillStatus.StatusSpec(skill.AttachedStatus, snapshot);
         }
 
         /*
          * 버프 대상을 결정한다.
          */
-        internal static System.Collections.Generic.IReadOnlyList<CombatUnitEntry> ResolveBuffTargets(
+        internal static System.Collections.Generic.IReadOnlyList<CombatUnitEntry> BuffTargets(
             CombatUnitEntry caster /* 스킬을 사용하는 유닛 */,
             CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
             SkillTargetSide targetMode /* 대상 방식 */)
@@ -285,7 +275,7 @@ namespace Pakuri.InGame
                     : System.Array.Empty<CombatUnitEntry>();
             }
 
-            return SkillTargeting.ResolveTargetList(
+            return SkillTargeting.TargetList(
                 caster,
                 roster,
                 new SkillTargetingSpec
@@ -300,12 +290,12 @@ namespace Pakuri.InGame
         /*
          * 설정된 대상을 결정한다.
          */
-        internal static IReadOnlyList<CombatUnitEntry> ResolveConfiguredTargets(
+        internal static IReadOnlyList<CombatUnitEntry> ConfiguredTargets(
             CombatUnitEntry caster /* 스킬을 사용하는 유닛 */,
             CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
             SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */)
         {
-            var targets = SkillTargeting.ResolveOrderedTargets(caster, roster, targeting);
+            var targets = SkillTargeting.OrderedTargets(caster, roster, targeting);
             if (caster == null || caster.Transform == null || targeting == null || targeting.Radius <= 0f)
             {
                 return targets;
@@ -335,17 +325,17 @@ namespace Pakuri.InGame
             BuffShieldSkillDefinition skill /* 실행하거나 검사할 스킬 */)
         {
             var shieldStat = context.Caster.Stats.SpellPower;
-            shieldStat *= StatusCombatRules.ResolveSpellPowerMultiplier(context.Caster);
+            shieldStat *= StatusCombatRules.SpellPowerMultiplier(context.Caster);
             if (skill.ShieldStatSource == StatSource.Attack)
             {
                 shieldStat = context.Caster.Stats.AttackPower;
-                shieldStat *= StatusCombatRules.ResolveAttackPowerMultiplier(context.Caster);
+                shieldStat *= StatusCombatRules.AttackPowerMultiplier(context.Caster);
             }
 
             var shield = Mathf.Max(0f, skill.ShieldBase + shieldStat * skill.ShieldCoefficient);
             if (snapshot != null)
             {
-                shield = (shield + snapshot.BaseDamageBonus)
+                shield = shield
                     * Mathf.Max(0f, snapshot.DamageMultiplier)
                     * Mathf.Max(0f, snapshot.ShieldAmountMultiplier);
             }
@@ -363,7 +353,7 @@ namespace Pakuri.InGame
                 duration = duration * Mathf.Max(0f, snapshot.DurationMultiplier) + snapshot.DurationBonus;
             }
 
-            var statusData = SkillStatus.ResolveStatusData(skill.ShieldStatus, StatusEffectKind.Shield, snapshot);
+            var statusData = SkillStatus.StatusData(skill.ShieldStatus, StatusEffectKind.Shield, snapshot);
             if (statusData == null || duration <= 0f)
             {
                 return false;
@@ -380,11 +370,11 @@ namespace Pakuri.InGame
             IReadOnlyList<CombatUnitEntry> targets;
             if (skill.UseConfiguredTargeting)
             {
-                targets = BuffSkillExecutor.ResolveConfiguredTargets(context.CasterEntry, context.Roster, skill.Targeting);
+                targets = BuffSkillExecutor.ConfiguredTargets(context.CasterEntry, context.Roster, skill.Targeting);
             }
             else
             {
-                targets = BuffSkillExecutor.ResolveBuffTargets(context.CasterEntry, context.Roster, skill.Target);
+                targets = BuffSkillExecutor.BuffTargets(context.CasterEntry, context.Roster, skill.Target);
             }
             var routed = false;
             var casterVisualSpawned = false;
@@ -422,17 +412,7 @@ namespace Pakuri.InGame
                         visualName = $"RuntimeShieldVisual_{skill.SkillId}";
                     }
 
-                    visualInstance = effects.CreateTargetVisual(
-                        runtimeVisual,
-                        prefab,
-                        visualName,
-                        visualTarget);
-                    if (visualInstance != null)
-                    {
-                        BuffSkillActor.Attach(visualInstance).Initialize(
-                            effects,
-                            duration);
-                    }
+                    visualInstance = effects.CreateEffect(new EffectCreateRequest(runtimeVisual, prefab, visualName, visualTarget.position, Quaternion.identity, visualTarget, duration, null, false, true, false));
                 }
 
                 if (visualInstance != null)
@@ -473,7 +453,7 @@ namespace Pakuri.InGame
             SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             BuffHealSkillDefinition skill /* 실행하거나 검사할 스킬 */)
         {
-            var targets = SkillTargeting.ResolveOrderedTargets(context.CasterEntry, context.Roster, skill.Targeting);
+            var targets = SkillTargeting.OrderedTargets(context.CasterEntry, context.Roster, skill.Targeting);
             CombatUnitEntry target = null;
             if (targets.Count > 0)
             {
@@ -485,28 +465,11 @@ namespace Pakuri.InGame
             }
 
             var healing = skill.Healing;
-            var amount = healing.BaseDamage;
-            if (healing.UseCombinedStatCoefficients)
-            {
-                var attack = context.Caster.Stats.AttackPower;
-                attack *= StatusCombatRules.ResolveAttackPowerMultiplier(context.Caster);
-                var spell = context.Caster.Stats.SpellPower;
-                spell *= StatusCombatRules.ResolveSpellPowerMultiplier(context.Caster);
-                amount += attack * healing.AttackPowerCoefficient;
-                amount += spell * healing.SpellPowerCoefficient;
-            }
-            else if (healing.StatSource == StatSource.Attack)
-            {
-                var attack = context.Caster.Stats.AttackPower;
-                attack *= StatusCombatRules.ResolveAttackPowerMultiplier(context.Caster);
-                amount += attack * healing.StatCoefficient;
-            }
-            else
-            {
-                var spell = context.Caster.Stats.SpellPower;
-                spell *= StatusCombatRules.ResolveSpellPowerMultiplier(context.Caster);
-                amount += spell * healing.StatCoefficient;
-            }
+            var attack = context.Caster.Stats.AttackPower * StatusCombatRules.AttackPowerMultiplier(context.Caster);
+            var spell = context.Caster.Stats.SpellPower * StatusCombatRules.SpellPowerMultiplier(context.Caster);
+            var amount = healing.BaseDamage
+                + attack * healing.AttackPowerCoefficient
+                + spell * healing.SpellPowerCoefficient;
             amount = Mathf.Max(0f, amount);
             if (context.Caster is EnemyCombatState enemy)
             {
@@ -523,17 +486,7 @@ namespace Pakuri.InGame
                     visualName = "RuntimeSupportVisual_" + skill.SkillId;
                 }
 
-                var visualInstance = effects.CreateTargetVisual(
-                    skill.RuntimeVisual,
-                    null,
-                    visualName,
-                    target.Transform);
-                if (visualInstance != null)
-                {
-                    BuffSkillActor.Attach(visualInstance).Initialize(
-                        effects,
-                        0.8f);
-                }
+                effects.CreateEffect(new EffectCreateRequest(skill.RuntimeVisual, null, visualName, target.Transform.position, Quaternion.identity, target.Transform, 0.8f, null, false, true, false));
             }
             return true;
         }

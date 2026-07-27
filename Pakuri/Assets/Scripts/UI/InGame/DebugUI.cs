@@ -142,13 +142,13 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId);
+            var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId);
             if (monster == null)
             {
                 return;
             }
 
-            var sourceSkill = GameDataLoader.CurrentCatalog.ResolveActiveSkill(
+            var sourceSkill = GameDataLoader.CurrentCatalog.GetActiveSkill(
                 monster.MonsterId,
                 DebugSlots[slotIndex]);
             if (sourceSkill == null || string.IsNullOrWhiteSpace(sourceSkill.SkillId))
@@ -184,7 +184,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId);
+            var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId);
             if (monster == null)
             {
                 return;
@@ -282,7 +282,7 @@ namespace Pakuri.InGame
                 model = selectedEntry.Model;
             }
             var monsterId = ResolveMonsterId(session, model);
-            var monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId);
+            var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId);
             var state = session != null && monster != null
                 ? session.GetPartyMemberState(monster.MonsterId)
                 : null;
@@ -299,7 +299,7 @@ namespace Pakuri.InGame
                 var slot = DebugSlots[i];
                 var isPassiveSlot = IsPassiveSlot(i);
                 var activeSkill = !isPassiveSlot && monster != null
-                    ? GameDataLoader.CurrentCatalog.ResolveActiveSkill(monster.MonsterId, slot)
+                    ? GameDataLoader.CurrentCatalog.GetActiveSkill(monster.MonsterId, slot)
                     : null;
                 var passiveSkill = isPassiveSlot && monster != null
                     ? GameDataLoader.CurrentCatalog.ResolvePassiveSkill(monster.MonsterId, slot)
@@ -1041,13 +1041,13 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId);
+            monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId);
             if (monster == null)
             {
                 return false;
             }
 
-            sourceSkill = GameDataLoader.CurrentCatalog.ResolveActiveSkill(
+            sourceSkill = GameDataLoader.CurrentCatalog.GetActiveSkill(
                 monster.MonsterId,
                 DebugSlots[slotIndex]);
             return sourceSkill != null;
@@ -1083,7 +1083,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId);
+            monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId);
             if (monster == null)
             {
                 return false;

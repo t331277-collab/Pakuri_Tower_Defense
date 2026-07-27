@@ -222,21 +222,22 @@ namespace Pakuri.InGame
                 {
                     manager.ApplyDamage(
                         hitTarget.Model,
-                        primaryBaseDamage * skillData.OnHitAdditionalDamageMultiplier,
+                        primaryBaseDamage,
                         skillData.OnHitAdditionalDamageAttribute,
                         source,
                         criticalAllowed: false,
                         0f,
                         0f,
                         sourceSkillId,
-                        suppressOutgoingDamageTriggers: true);
+                        suppressOutgoingDamageTriggers: true,
+                        finalDamageMultiplier: skillData.OnHitAdditionalDamageMultiplier);
                 }
 
                 if (skillData.HasOnHitChainDamageBehavior
                     && hitIndex > 0
                     && hitIndex % skillData.OnHitChainHitPeriod == 0)
                 {
-                    var chainTargets = SkillTargeting.ResolveChainTargets(
+                    var chainTargets = SkillTargeting.ChainTargets(
                         roster,
                         sourceEntry,
                         source,
@@ -251,14 +252,15 @@ namespace Pakuri.InGame
                         {
                             manager.ApplyDamage(
                                 chainTarget.Model,
-                                primaryBaseDamage * skillData.OnHitChainDamageMultiplier,
+                                primaryBaseDamage,
                                 skillData.OnHitChainDamageAttribute,
                                 source,
                                 criticalAllowed: false,
                                 0f,
                                 0f,
                                 sourceSkillId,
-                                suppressOutgoingDamageTriggers: true);
+                                suppressOutgoingDamageTriggers: true,
+                                finalDamageMultiplier: skillData.OnHitChainDamageMultiplier);
                         }
                     }
                 }
@@ -297,19 +299,19 @@ namespace Pakuri.InGame
                 direction = Vector2.right;
             }
 
-            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.Damage, snapshot.BaseDamageBonus, snapshot.DamageMultiplier);
+            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.Damage);
             var attribute = skill.Damage != null ? skill.Damage.Element : skill.Element;
             var currentBurstProjectileIndex = context.Runtime != null
-                ? context.Runtime.ResolveCurrentBurstProjectileIndex()
+                ? context.Runtime.CurrentBurstProjectileIndex()
                 : 1;
             var effects = context.CombatManager.Effects;
             var runtimeVisual = skill.RuntimeVisual;
             var hasRuntimeVisual = effects != null && runtimeVisual != null && runtimeVisual.HasVisual();
 
-            var baseStatusSpec = SkillStatus.ResolveStatusSpec(skill.OnHitStatus, snapshot);
+            var baseStatusSpec = SkillStatus.StatusSpec(skill.OnHitStatus, snapshot);
             var planEffects = skill.MultiEffects;
-            var onHitEffects = ResolveTimedEffects(context, snapshot, planEffects, SkillMultiEffectTiming.OnHit);
-            var onExpireEffects = ResolveTimedEffects(context, snapshot, planEffects, SkillMultiEffectTiming.OnExpire);
+            var onHitEffects = TimedEffects(context, snapshot, planEffects, SkillMultiEffectTiming.OnHit);
+            var onExpireEffects = TimedEffects(context, snapshot, planEffects, SkillMultiEffectTiming.OnExpire);
             var projectile = skill.Projectile;
             var burstProjectileCount = projectile != null ? Math.Max(1, projectile.BurstProjectileCount) : 1;
             var requiresProjectileActor = skill.StopOnFirstHit
@@ -322,7 +324,7 @@ namespace Pakuri.InGame
             {
                 if (target != null)
                 {
-                    var directStatusSpec = ResolveBurstStatusSpec(baseStatusSpec, snapshot, currentBurstProjectileIndex, burstProjectileCount);
+                    var directStatusSpec = BurstStatusSpec(baseStatusSpec, snapshot, currentBurstProjectileIndex, burstProjectileCount);
                     ApplyDirectProjectileHit(context, skill, snapshot, target, directStatusSpec, damage, attribute);
                     return true;
                 }
@@ -344,20 +346,20 @@ namespace Pakuri.InGame
 
             projectileCount = Math.Max(1, projectileCount);
             pierce = Math.Max(0, pierce);
-            var burstDamageMultiplier = ResolveBurstDamageMultiplier(
+            var burstDamageMultiplier = BurstDamageMultiplier(
                 skill,
                 snapshot,
                 currentBurstProjectileIndex,
                 burstProjectileCount);
-            var launchDamage = damage * burstDamageMultiplier;
+            var launchSnapshot = snapshot.CopyWithDamageMultiplier(burstDamageMultiplier);
             var isMagazineLastProjectile = context.Runtime != null
                 && context.Runtime.UsesMagazine
                 && context.Runtime.MagazineRemaining == 1;
-            var lifetime = ResolveProjectileLifetime(skill);
+            var lifetime = ProjectileLifetime(skill);
             for (var i = 0; i < projectileCount; i++)
             {
-                var spreadDirection = ResolveProjectileSpreadDirection(direction, i, projectileCount);
-                var boundary = ProjectileSkillActor.ResolveDestroyBoundaryX(
+                var spreadDirection = ProjectileSpreadDirection(direction, i, projectileCount);
+                var boundary = ProjectileSkillActor.DestroyBoundaryX(
                     origin,
                     spreadDirection,
                     speed,
@@ -366,8 +368,8 @@ namespace Pakuri.InGame
                 {
                     if (target != null)
                     {
-                        var directStatusSpec = ResolveBurstStatusSpec(baseStatusSpec, snapshot, currentBurstProjectileIndex, burstProjectileCount);
-                        ApplyDirectProjectileHit(context, skill, snapshot, target, directStatusSpec, launchDamage, attribute);
+                        var directStatusSpec = BurstStatusSpec(baseStatusSpec, snapshot, currentBurstProjectileIndex, burstProjectileCount);
+                        ApplyDirectProjectileHit(context, skill, launchSnapshot, target, directStatusSpec, damage, attribute);
                     }
 
                     continue;
@@ -376,32 +378,33 @@ namespace Pakuri.InGame
                 var projectileLaunchIndex = context.Runtime != null
                     ? context.Runtime.AdvanceProjectileLaunchCount()
                     : 0;
-                var branchSpec = ResolveBranchDamageSpec(snapshot, projectileLaunchIndex);
-                var rotation = EffectVisualBuilder.ResolveRotation(spreadDirection);
+                var branchSpec = BranchDamageSpec(snapshot, projectileLaunchIndex);
+                var rotation = EffectVisualBuilder.Rotation(spreadDirection);
                 var objectName = "Projectile";
                 if (!string.IsNullOrWhiteSpace(skill.SkillId))
                 {
                     objectName = "Projectile_" + skill.SkillId;
                 }
 
-                var instance = effects.CreateEffect(
+                var instance = effects.CreateEffect(new EffectCreateRequest(
                     runtimeVisual,
                     null,
                     objectName,
                     origin,
                     rotation,
-                    hitboxIsTrigger: true);
-                if (instance == null)
-                {
-                    instance = effects.CreateSkillActorObject(objectName, origin, rotation);
-                }
+                    null,
+                    0f,
+                    null,
+                    true,
+                    true,
+                    true));
 
                 if (instance == null)
                 {
                     if (target != null)
                     {
-                        var directStatusSpec = ResolveBurstStatusSpec(baseStatusSpec, snapshot, currentBurstProjectileIndex, burstProjectileCount);
-                        ApplyDirectProjectileHit(context, skill, snapshot, target, directStatusSpec, launchDamage, attribute);
+                        var directStatusSpec = BurstStatusSpec(baseStatusSpec, snapshot, currentBurstProjectileIndex, burstProjectileCount);
+                        ApplyDirectProjectileHit(context, skill, launchSnapshot, target, directStatusSpec, damage, attribute);
                     }
 
                     continue;
@@ -413,7 +416,7 @@ namespace Pakuri.InGame
                     actor = instance.AddComponent<ProjectileSkillActor>();
                 }
 
-                var statusSpec = ResolveBurstStatusSpec(baseStatusSpec, snapshot, currentBurstProjectileIndex, burstProjectileCount);
+                var statusSpec = BurstStatusSpec(baseStatusSpec, snapshot, currentBurstProjectileIndex, burstProjectileCount);
                 var impactRadius = 0f;
                 if (skill.ImpactArea != null)
                 {
@@ -424,28 +427,28 @@ namespace Pakuri.InGame
                     context.Caster,
                     spreadDirection,
                     speed,
-                    launchDamage,
+                    damage,
                     attribute,
                     pierce,
                     boundary,
                     lifetime,
                     statusSpec,
                     branchSpec,
-                    SkillStatus.ResolveStatusSpec(skill.ImpactStatus, snapshot),
+                    SkillStatus.StatusSpec(skill.ImpactStatus, snapshot),
                     onHitEffects,
                     onExpireEffects,
                     skill.ContactDamageEnabled,
                     skill.StopOnFirstHit,
-                    ResolveImpactDelay(skill, snapshot),
+                    ImpactDelay(skill, snapshot),
                     skill.ImpactRuntimeVisual,
                     skill.HasImpactArea,
-                    SkillTargeting.ResolveRadius(
+                    SkillTargeting.Radius(
                         impactRadius,
                         snapshot.RadiusMultiplier,
                         snapshot.RadiusBonus),
-                    launchDamage,
+                    damage,
                     context.Runtime,
-                    snapshot,
+                    launchSnapshot,
                     null,
                     skill.SkillId,
                     isMagazineLastProjectile,
@@ -468,7 +471,7 @@ namespace Pakuri.InGame
                 damage,
                 attribute,
                 pierce,
-                ProjectileSkillActor.ResolveDestroyBoundaryX(
+                ProjectileSkillActor.DestroyBoundaryX(
                     origin,
                     direction,
                     speed,
@@ -483,7 +486,7 @@ namespace Pakuri.InGame
         /*
          * 투사체 확산 방향을 결정한다.
          */
-        private static Vector2 ResolveProjectileSpreadDirection(Vector2 direction /* 진행하거나 발사할 방향 */, int index /* 목록에서의 순서 번호 */, int count /* 처리할 개수 */)
+        private static Vector2 ProjectileSpreadDirection(Vector2 direction /* 진행하거나 발사할 방향 */, int index /* 목록에서의 순서 번호 */, int count /* 처리할 개수 */)
         {
             if (count <= 1)
             {
@@ -515,7 +518,7 @@ namespace Pakuri.InGame
         /*
          * 분기 피해 설정을 결정한다.
          */
-        private static ProjectileBranchDamageSpec ResolveBranchDamageSpec(
+        private static ProjectileBranchDamageSpec BranchDamageSpec(
             SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             int projectileLaunchIndex /* 투사체 발사 순서 번호 */)
         {
@@ -524,7 +527,7 @@ namespace Pakuri.InGame
                 return null;
             }
 
-            var chance = ResolveBranchChance(snapshot, projectileLaunchIndex);
+            var chance = BranchChance(snapshot, projectileLaunchIndex);
             var count = snapshot.HasBranchCount ? snapshot.BranchCount : chance > 0f ? 1 : 0;
             var radius = snapshot.HasBranchSearchRadius ? snapshot.BranchSearchRadius : 4.5f;
             if (chance <= 0f || count <= 0 || radius <= 0f)
@@ -545,7 +548,7 @@ namespace Pakuri.InGame
         /*
          * 분기 확률을 결정한다.
          */
-        private static float ResolveBranchChance(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, int projectileLaunchIndex /* 투사체 발사 순서 번호 */)
+        private static float BranchChance(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, int projectileLaunchIndex /* 투사체 발사 순서 번호 */)
         {
             var chance = snapshot.HasBranchChanceSet ? snapshot.BranchChanceSet : snapshot.BranchChanceBonus;
             if (snapshot.HasBranchLaunchTrigger
@@ -561,7 +564,7 @@ namespace Pakuri.InGame
         /*
          * 연속 발사 피해 배율을 결정한다.
          */
-        private static float ResolveBurstDamageMultiplier(
+        private static float BurstDamageMultiplier(
             ProjectileSkillDefinition skill /* 실행하거나 검사할 스킬 */,
             SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             int projectileIndex /* 투사체 순서 번호 */,
@@ -578,7 +581,7 @@ namespace Pakuri.InGame
 
             if (snapshot != null)
             {
-                multiplier *= SkillExecutionRuleResolver.ResolveBurstDamageMultiplier(snapshot, projectileIndex, burstProjectileCount);
+                multiplier *= SkillExecutionRuleResolver.BurstDamageMultiplier(snapshot, projectileIndex, burstProjectileCount);
             }
 
             return Mathf.Max(0f, multiplier);
@@ -752,21 +755,26 @@ namespace Pakuri.InGame
             var projectileLaunchIndex = context.Runtime != null
                 ? context.Runtime.AdvanceProjectileLaunchCount()
                 : 0;
-            var branchSpec = ResolveBranchDamageSpec(snapshot, projectileLaunchIndex);
-            var rotation = EffectVisualBuilder.ResolveRotation(direction);
+            var branchSpec = BranchDamageSpec(snapshot, projectileLaunchIndex);
+            var rotation = EffectVisualBuilder.Rotation(direction);
             var objectName = "Projectile";
             if (!string.IsNullOrWhiteSpace(skill.SkillId))
             {
                 objectName = "Projectile_" + skill.SkillId;
             }
 
-            var instance = effects.CreateEffect(
+            var instance = effects.CreateEffect(new EffectCreateRequest(
                 runtimeVisual,
                 null,
                 objectName,
                 origin,
                 rotation,
-                hitboxIsTrigger: true);
+                null,
+                0f,
+                null,
+                true,
+                true,
+                false));
             if (instance == null)
             {
                 return;
@@ -795,15 +803,15 @@ namespace Pakuri.InGame
                 lifetime,
                 statusSpec,
                 branchSpec,
-                SkillStatus.ResolveStatusSpec(skill.ImpactStatus, snapshot),
+                SkillStatus.StatusSpec(skill.ImpactStatus, snapshot),
                 onHitEffects,
                 onExpireEffects,
                 skill.ContactDamageEnabled,
                 skill.StopOnFirstHit,
-                ResolveImpactDelay(skill, snapshot),
+                ImpactDelay(skill, snapshot),
                 skill.ImpactRuntimeVisual,
                 skill.HasImpactArea,
-                SkillTargeting.ResolveRadius(
+                SkillTargeting.Radius(
                     impactRadius,
                     snapshot.RadiusMultiplier,
                     snapshot.RadiusBonus),
@@ -848,17 +856,15 @@ namespace Pakuri.InGame
             }
 
             var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero;
-            var resolvedDamage = damage;
-            if (snapshot != null)
-            {
-                resolvedDamage *= SkillExecutionRuleResolver.ResolveConditionalDamageMultiplier(snapshot, target.Model);
-            }
+            var resolvedDamage = Mathf.Max(0f, damage);
+            var finalDamageMultiplier = snapshot != null
+                ? Mathf.Max(0f, snapshot.DamageMultiplier) * SkillExecutionRuleResolver.ConditionalDamageMultiplier(snapshot, target.Model)
+                : 1f;
             if (context.Runtime != null && snapshot != null)
             {
-                resolvedDamage *= context.Runtime.ResolveConsecutiveHitDamageMultiplier(target.Model, snapshot);
+                finalDamageMultiplier *= context.Runtime.ConsecutiveHitDamageMultiplier(target.Model, snapshot);
             }
 
-            resolvedDamage = Mathf.Max(0f, resolvedDamage);
             var damageResult = context.CombatManager.ApplyDamage(
                 target.Model,
                 resolvedDamage,
@@ -867,7 +873,8 @@ namespace Pakuri.InGame
                 skill.Damage != null && skill.Damage.CriticalAllowed,
                 snapshot != null ? snapshot.CritChanceBonus : 0f,
                 snapshot != null ? snapshot.CritDamageBonus : 0f,
-                skill.SkillId);
+                skill.SkillId,
+                finalDamageMultiplier: finalDamageMultiplier);
             if (!damageResult.IsDead)
             {
                 TryApplyDirectStatus(context.CombatManager, target.Model, statusSpec, context.Caster);
@@ -888,7 +895,7 @@ namespace Pakuri.InGame
         /*
          * 충돌 지연을 결정한다.
          */
-        private static float ResolveImpactDelay(ProjectileSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        private static float ImpactDelay(ProjectileSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
         {
             var delay = skill != null ? skill.ImpactDelaySeconds : 0f;
             if (snapshot != null)
@@ -902,7 +909,7 @@ namespace Pakuri.InGame
         /*
          * 연속 발사 상태 설정을 결정한다.
          */
-        private static ProjectileStatusHitSpec ResolveBurstStatusSpec(
+        private static ProjectileStatusHitSpec BurstStatusSpec(
             ProjectileStatusHitSpec baseStatusSpec /* 기본 상태 효과 설정 */,
             SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             int projectileIndex /* 투사체 순서 번호 */,
@@ -913,7 +920,7 @@ namespace Pakuri.InGame
                 return baseStatusSpec;
             }
 
-            var stacksBonus = SkillExecutionRuleResolver.ResolveBurstStatusStacksBonus(snapshot, projectileIndex, burstProjectileCount);
+            var stacksBonus = SkillExecutionRuleResolver.BurstStatusStacksBonus(snapshot, projectileIndex, burstProjectileCount);
             if (stacksBonus == 0)
             {
                 return baseStatusSpec;
@@ -952,7 +959,7 @@ namespace Pakuri.InGame
         /*
          * 시간 기반 효과를 결정한다.
          */
-        private static SkillEffectDefinition[] ResolveTimedEffects(
+        private static SkillEffectDefinition[] TimedEffects(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
             SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             SkillEffectDefinition[] effects /* 실행할 효과 목록 */,
@@ -981,9 +988,9 @@ namespace Pakuri.InGame
         }
 
         /*
-         * ResolveProjectileLifetime 결과를 계산해 반환한다.
+         * ProjectileLifetime 결과를 계산해 반환한다.
          */
-        private static float ResolveProjectileLifetime(ProjectileSkillDefinition skill /* 실행하거나 검사할 스킬 */)
+        private static float ProjectileLifetime(ProjectileSkillDefinition skill /* 실행하거나 검사할 스킬 */)
         {
             var projectile = skill.Projectile;
             if (projectile.LifetimeSeconds > 0f)

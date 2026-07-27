@@ -73,8 +73,6 @@ public class SkillExecutionData
 
 	public float DurationMultiplier { get; private set; }
 
-	public float BaseDamageBonus { get; private set; }
-
 	public int MagazineBonus { get; private set; }
 
 	public int AdditionalProjectileBonus { get; private set; }
@@ -129,6 +127,8 @@ public class SkillExecutionData
 	public float BranchLaunchChanceSet { get; private set; }
 
 	public int HitTargetCountBonus { get; private set; }
+
+	public int LineCastRepeatCountBonus { get; private set; }
 
 	public float CritChanceBonus { get; private set; }
 
@@ -421,20 +421,20 @@ public class SkillExecutionData
 	}
 
 	/*
-	 * 전투 중 전달된 피해 배율을 현재 피해 배율에 추가로 곱한다.
+	 * 전투 중 전달된 피해 배율을 현재 피해 배율에 합산한다.
 	 */
 	public void ApplyDynamicDamageMultiplier(float multiplier /* 값에 곱할 배율 */)
 	{
-		DamageMultiplier *= PositiveOrDefault(multiplier, 1f);
+		DamageMultiplier += PositiveOrDefault(multiplier, 1f) - 1f;
 	}
 
 	/*
-	 * 현재 실행 데이터를 복사하고 복사본에만 별도 피해 배율을 적용한다.
+	 * 현재 실행 데이터를 복사하고 복사본에만 별도 피해 배율을 합산한다.
 	 */
 	internal SkillExecutionData CopyWithDamageMultiplier(float multiplier /* 값에 곱할 배율 */)
 	{
 		SkillExecutionData copy = (SkillExecutionData)MemberwiseClone();
-		copy.DamageMultiplier *= Mathf.Max(0f, multiplier);
+		copy.DamageMultiplier += Mathf.Max(0f, multiplier) - 1f;
 		return copy;
 	}
 
@@ -448,7 +448,7 @@ public class SkillExecutionData
 		{
 			SkillEffectPrefab = choice.SkillEffectPrefab;
 		}
-		SkillChoiceRuntimePlan plan = SkillNodeMapper.ResolveChoiceRuntimePlan(choiceSpec, SkillId);
+		SkillChoiceRuntimePlan plan = SkillNodeMapper.GetChoiceRuntimePlan(choiceSpec, SkillId);
 		SkillNode[] nodes = plan.Nodes;
 		ApplyPlanNodes(nodes);
 	}
@@ -628,7 +628,7 @@ public class SkillExecutionData
 		switch (action.Kind)
 		{
 		case SkillActionOpKind.DamageMultiplier:
-			DamageMultiplier *= PositiveOrDefault(action.Amount, 1f);
+			DamageMultiplier += PositiveOrDefault(action.Amount, 1f) - 1f;
 			break;
 		case SkillActionOpKind.ShieldAmountMultiplier:
 			ShieldAmountMultiplier *= PositiveOrDefault(action.Amount, 1f);
@@ -696,6 +696,9 @@ public class SkillExecutionData
 			break;
 		case SkillActionOpKind.HitTargetCountBonus:
 			HitTargetCountBonus += action.Count;
+			break;
+		case SkillActionOpKind.LineCastRepeatCountBonus:
+			LineCastRepeatCountBonus += action.Count;
 			break;
 		case SkillActionOpKind.StatusActionSpeedBonus:
 			ApplyStatusActionSpeedBonus(action.ReferenceId, action.Amount);
@@ -1020,7 +1023,7 @@ public class SkillExecutionData
 	/*
 	 * 지정한 상태 효과에 누적된 지속시간 보너스를 반환한다.
 	 */
-	public float ResolveStatusDurationBonus(string statusId /* 상태 효과 식별자 */)
+	public float StatusDurationBonus(string statusId /* 상태 효과 식별자 */)
 	{
 		if (string.IsNullOrWhiteSpace(statusId))
 		{
@@ -1036,7 +1039,7 @@ public class SkillExecutionData
 	/*
 	 * 전체 상태 보너스와 지정한 상태의 행동 속도 보너스를 합산한다.
 	 */
-	public float ResolveStatusActionSpeedBonus(string statusId /* 상태 효과 식별자 */)
+	public float GetStatusActionSpeedBonus(string statusId /* 상태 효과 식별자 */)
 	{
 		float num = StatusActionSpeedBonus;
 		if (!string.IsNullOrWhiteSpace(statusId) && statusActionSpeedBonuses.TryGetValue(statusId, out var value))
@@ -1049,7 +1052,7 @@ public class SkillExecutionData
 	/*
 	 * 지정한 상태 효과의 최대 중첩 보너스를 반환한다.
 	 */
-	public int ResolveStatusMaxStacksBonus(string statusId /* 상태 효과 식별자 */)
+	public int StatusMaxStacksBonus(string statusId /* 상태 효과 식별자 */)
 	{
 		if (string.IsNullOrWhiteSpace(statusId))
 		{
@@ -1065,7 +1068,7 @@ public class SkillExecutionData
 	/*
 	 * 대상 상태 중첩 하나당 추가되는 피해 비율을 반환한다.
 	 */
-	public float ResolveTargetStatusStackDamageRateBonus(string statusId /* 상태 효과 식별자 */)
+	public float TargetStatusStackDamageRateBonus(string statusId /* 상태 효과 식별자 */)
 	{
 		if (string.IsNullOrWhiteSpace(statusId))
 		{
@@ -1081,7 +1084,7 @@ public class SkillExecutionData
 	/*
 	 * 지정한 Trigger에 누적된 발동 확률 보너스를 반환한다.
 	 */
-	public float ResolveTriggerProcChanceBonus(string triggerId /* 트리거 식별자 */)
+	public float TriggerProcChanceBonus(string triggerId /* 트리거 식별자 */)
 	{
 		if (string.IsNullOrWhiteSpace(triggerId))
 		{
