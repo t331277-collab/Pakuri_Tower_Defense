@@ -1,5 +1,6 @@
 using Pakuri.Combat;
 using Pakuri.Data;
+using UnityEngine;
 
 /*
  * GameDataCatalogBuilder가 만든 SkillNodeDefinition을 SkillNodeMapper가 전투용 값으로 바꾼다.
@@ -492,6 +493,211 @@ namespace Pakuri.InGame
 
         public float Bonus { get; }
         public StatusEffectKind RequiredSourceStatus { get; }
+    }
+
+    public readonly struct ApplyDamageNodeOp
+    {
+        public ApplyDamageNodeOp(
+            DamageAttribute attribute,
+            float baseDamage,
+            float attackPowerCoefficient,
+            float spellPowerCoefficient,
+            float damageMultiplier,
+            float radius,
+            float tickIntervalSeconds)
+        {
+            Attribute = attribute;
+            BaseDamage = baseDamage;
+            AttackPowerCoefficient = attackPowerCoefficient;
+            SpellPowerCoefficient = spellPowerCoefficient;
+            DamageMultiplier = damageMultiplier;
+            Radius = radius;
+            TickIntervalSeconds = tickIntervalSeconds;
+        }
+
+        public DamageAttribute Attribute { get; }
+        public float BaseDamage { get; }
+        public float AttackPowerCoefficient { get; }
+        public float SpellPowerCoefficient { get; }
+        public float DamageMultiplier { get; }
+        public float Radius { get; }
+        public float TickIntervalSeconds { get; }
+    }
+
+    public readonly struct ApplyStatusNodeOp
+    {
+        public ApplyStatusNodeOp(StatusEffectKind statusKind)
+        {
+            StatusKind = statusKind;
+        }
+
+        public StatusEffectKind StatusKind { get; }
+    }
+
+    public readonly struct StatusPayloadNodeOp
+    {
+        public StatusPayloadNodeOp(
+            StatusEffectKind statusKind,
+            float chance,
+            int stacks,
+            float durationSeconds,
+            int maxStacks,
+            bool refreshDuration)
+        {
+            StatusKind = statusKind;
+            Chance = chance;
+            Stacks = stacks;
+            DurationSeconds = durationSeconds;
+            MaxStacks = maxStacks;
+            RefreshDuration = refreshDuration;
+        }
+
+        public StatusEffectKind StatusKind { get; }
+        public float Chance { get; }
+        public int Stacks { get; }
+        public float DurationSeconds { get; }
+        public int MaxStacks { get; }
+        public bool RefreshDuration { get; }
+    }
+
+    public readonly struct ExtendStatusDurationNodeOp
+    {
+        public ExtendStatusDurationNodeOp(StatusEffectKind statusKind)
+        {
+            StatusKind = statusKind;
+        }
+
+        public StatusEffectKind StatusKind { get; }
+    }
+
+    public readonly struct SelectTargetsNodeOp
+    {
+        public SelectTargetsNodeOp(
+            SkillMultiEffectTargetSide targetSide,
+            SkillMultiEffectTargetSelection targetSelection,
+            SkillMultiEffectTargetShape targetShape,
+            SkillMultiEffectCenterMode centerMode,
+            SkillMultiEffectVisualAnchorMode visualAnchorMode,
+            bool applyOnce,
+            bool coverAll)
+        {
+            TargetSide = targetSide;
+            TargetSelection = targetSelection;
+            TargetShape = targetShape;
+            CenterMode = centerMode;
+            VisualAnchorMode = visualAnchorMode;
+            ApplyOnce = applyOnce;
+            CoverAll = coverAll;
+        }
+
+        public SkillMultiEffectTargetSide TargetSide { get; }
+        public SkillMultiEffectTargetSelection TargetSelection { get; }
+        public SkillMultiEffectTargetShape TargetShape { get; }
+        public SkillMultiEffectCenterMode CenterMode { get; }
+        public SkillMultiEffectVisualAnchorMode VisualAnchorMode { get; }
+        public bool ApplyOnce { get; }
+        public bool CoverAll { get; }
+    }
+
+    public readonly struct SetDurationNodeOp
+    {
+        public SetDurationNodeOp(float durationSeconds)
+        {
+            DurationSeconds = durationSeconds;
+        }
+
+        public float DurationSeconds { get; }
+    }
+
+    public readonly struct RequireStatusNodeOp
+    {
+        public RequireStatusNodeOp(
+            StatusEffectKind statusKind,
+            SkillMultiEffectTargetSide targetSide,
+            int minimumStacks)
+        {
+            StatusKind = statusKind;
+            TargetSide = targetSide;
+            MinimumStacks = minimumStacks;
+        }
+
+        public StatusEffectKind StatusKind { get; }
+        public SkillMultiEffectTargetSide TargetSide { get; }
+        public int MinimumStacks { get; }
+    }
+
+    public readonly struct ShowVisualNodeOp
+    {
+        public ShowVisualNodeOp(GameObject prefab, RuntimeSkillVisualSpec runtimeVisual)
+        {
+            Prefab = prefab;
+            RuntimeVisual = runtimeVisual;
+        }
+
+        public GameObject Prefab { get; }
+        public RuntimeSkillVisualSpec RuntimeVisual { get; }
+    }
+
+    public readonly struct RecastZoneNodeOp
+    {
+        public RecastZoneNodeOp(
+            string sourceSkillId,
+            float delaySeconds,
+            float durationSeconds,
+            float radiusMultiplier,
+            bool inheritSnapshot,
+            int maxGeneration)
+        {
+            SourceSkillId = sourceSkillId ?? string.Empty;
+            DelaySeconds = delaySeconds;
+            DurationSeconds = durationSeconds;
+            RadiusMultiplier = radiusMultiplier;
+            InheritSnapshot = inheritSnapshot;
+            MaxGeneration = maxGeneration;
+        }
+
+        public string SourceSkillId { get; }
+        public float DelaySeconds { get; }
+        public float DurationSeconds { get; }
+        public float RadiusMultiplier { get; }
+        public bool InheritSnapshot { get; }
+        public int MaxGeneration { get; }
+    }
+
+    public readonly struct ExecuteSkillNodeOp
+    {
+        public ExecuteSkillNodeOp(string skillId, float damageMultiplier)
+        {
+            SkillId = skillId ?? string.Empty;
+            DamageMultiplier = damageMultiplier;
+        }
+
+        public string SkillId { get; }
+        public float DamageMultiplier { get; }
+    }
+
+    public readonly struct RefundCooldownNodeOp
+    {
+        public RefundCooldownNodeOp(string skillId, float ratio)
+        {
+            SkillId = skillId ?? string.Empty;
+            Ratio = ratio;
+        }
+
+        public string SkillId { get; }
+        public float Ratio { get; }
+    }
+
+    public readonly struct ReduceReloadNodeOp
+    {
+        public ReduceReloadNodeOp(string skillId, float ratio)
+        {
+            SkillId = skillId ?? string.Empty;
+            Ratio = ratio;
+        }
+
+        public string SkillId { get; }
+        public float Ratio { get; }
     }
 
     /*

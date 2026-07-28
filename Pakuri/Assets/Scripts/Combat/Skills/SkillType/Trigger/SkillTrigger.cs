@@ -59,10 +59,12 @@ internal static class SkillTrigger
 
 		public string EventTriggerSourceSkillId { get; }
 
+		public int EventHitCount { get; }
+
 		/*
 		 * TriggerExecutionContext에 필요한 값을 초기화한다.
 		 */
-		public TriggerExecutionContext(UnitCombatState eventTarget /* 사건 대상 */, UnitCombatState attacker /* 공격자 */, Vector2 eventCenter /* 사건 중심 위치 */, StatusRuntimeInstance status /* 실행 중인 상태 효과 */, float shieldAbsorbedAmount /* 보호막 흡수된 수치 */, float eventAppliedDamage /* 사건 적용된 피해 */, DamageAttribute eventAttribute /* 사건 속성 */, string eventSourceSkillId /* 사건 발생 원본 스킬 식별자 */, UnitCombatState eventSource = null /* 사건 발생 원본 */, bool eventWasExecute = false /* 사건 발생 처형 여부 */, string eventTriggerSourceSkillId = null /* 사건 트리거 발생 원본 스킬 식별자 */)
+		public TriggerExecutionContext(UnitCombatState eventTarget /* 사건 대상 */, UnitCombatState attacker /* 공격자 */, Vector2 eventCenter /* 사건 중심 위치 */, StatusRuntimeInstance status /* 실행 중인 상태 효과 */, float shieldAbsorbedAmount /* 보호막 흡수된 수치 */, float eventAppliedDamage /* 사건 적용된 피해 */, DamageAttribute eventAttribute /* 사건 속성 */, string eventSourceSkillId /* 사건 발생 원본 스킬 식별자 */, UnitCombatState eventSource = null /* 사건 발생 원본 */, bool eventWasExecute = false /* 사건 발생 처형 여부 */, string eventTriggerSourceSkillId = null /* 사건 트리거 발생 원본 스킬 식별자 */, int eventHitCount = 0 /* 사건 적중 횟수 */)
 		{
 			EventTarget = eventTarget;
 			Attacker = attacker;
@@ -75,6 +77,7 @@ internal static class SkillTrigger
 			EventSource = eventSource;
 			EventWasExecute = eventWasExecute;
 			EventTriggerSourceSkillId = eventTriggerSourceSkillId;
+			EventHitCount = Mathf.Max(0, eventHitCount);
 		}
 	}
 
@@ -110,7 +113,8 @@ internal static class SkillTrigger
 			actionContext.EventDamage,
 			DamageAttribute.Physical,
 			actionContext.SourceSkillId,
-			actionContext.Source);
+			actionContext.Source,
+			eventHitCount: actionContext.HitCount);
 		ExecuteSourceOwnedTriggers(
 			executionContext.CombatManager,
 			executionContext.Roster,
@@ -717,6 +721,11 @@ internal static class SkillTrigger
 	 */
 	private static void ExecuteOnce(InGameCombatManager combatManager /* 전투 진행 관리자 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */, TriggerExecutionContext triggerContext /* 트리거 실행에 필요한 정보 */)
 	{
+		if (TryExecuteOwnedNodes(combatManager, roster, sourceEntry, source, trigger, triggerContext))
+		{
+			return;
+		}
+
 		SkillTriggerActionKind action = TriggerAction(trigger);
 		switch (action)
 		{
@@ -739,6 +748,47 @@ internal static class SkillTrigger
 				ExecuteTriggeredSkillAction(combatManager, sourceEntry, trigger, triggerContext);
 				break;
 		}
+	}
+
+	private static bool TryExecuteOwnedNodes(
+		InGameCombatManager combatManager,
+		CombatUnitRegistry roster,
+		CombatUnitEntry sourceEntry,
+		UnitCombatState source,
+		SkillTriggerDefinition trigger,
+		TriggerExecutionContext triggerContext)
+	{
+		if (combatManager == null
+			|| roster == null
+			|| sourceEntry == null
+			|| source == null
+			|| trigger == null
+			|| !SkillNodeExecutor.HasRuntimeActions(trigger.Nodes))
+		{
+			return false;
+		}
+
+		SkillUseState runtime = source.SkillState.FindBySkillId(trigger.SourceSkillId);
+		SkillExecutionData executionData = runtime != null
+			? source.SkillState.CreateExecutionData(source, runtime, roster)
+			: null;
+		var executionContext = new SkillExecutionContext(
+			combatManager,
+			roster,
+			sourceEntry,
+			runtime,
+			triggerContext.EventTarget);
+		var actionContext = new SkillActionContext(
+			source,
+			trigger.SourceSkillId,
+			triggerContext.EventTarget,
+			triggerContext.EventCenter,
+			triggerContext.EventAppliedDamage,
+			triggerContext.EventHitCount,
+			executionData,
+			executionContext);
+		SkillNodeExecutor.Execute(trigger.Nodes, actionContext);
+		return true;
 	}
 
 	/*

@@ -686,7 +686,7 @@ namespace Pakuri.InGame
 	 */
 	public static SkillNode[] MapSkillNodeDefinitions(SkillNodeDefinition[] source /* 변환할 스킬 노드 정의 목록 */)
 	{
-		if (source.Length == 0)
+		if (source == null || source.Length == 0)
 		{
 			return Array.Empty<SkillNode>();
 		}
@@ -778,16 +778,16 @@ namespace Pakuri.InGame
 	}
 
 	/*
-	 * CanProcessPlanNode 조건을 만족하는지 확인한다.
+	 * CanProcessNode 조건을 만족하는지 확인한다.
 	 */
-	internal static bool CanProcessPlanNode(string ownerKind /* 소유자 종류 */, string handlerId /* 처리기 식별자 */)
+	internal static bool CanProcessNode(string ownerKind /* 소유자 종류 */, string handlerId /* 처리기 식별자 */)
 	{
 		if (string.Equals(ownerKind, "Skill", StringComparison.OrdinalIgnoreCase)
 			&& IsSingleBaseFieldHandler(handlerId))
 		{
 			return true;
 		}
-		return IsRuntimePlanHandler(handlerId);
+		return IsRuntimeNodeHandler(handlerId);
 	}
 
 	/*
@@ -803,6 +803,104 @@ namespace Pakuri.InGame
 		if (text == null)
 		{
 			text = string.Empty;
+		}
+		if (string.Equals(text, "EffectDamage", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(text, "ApplyDamage", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new ApplyDamageNodeOp(
+				GetEnumParam(node, "attribute", DamageAttribute.Physical),
+				GetFloatParam(node, "base_damage", 0f),
+				GetFloatParam(node, "attack_power_coefficient", 0f),
+				GetFloatParam(node, "spell_power_coefficient", 0f),
+				GetFloatParam(node, "damage_multiplier", 1f),
+				GetFloatParam(node, "radius", 0f),
+				GetFloatParam(node, "tick_interval_seconds", 0f)));
+		}
+		if (string.Equals(text, "ApplyStatus", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new ApplyStatusNodeOp(
+				StatusRuntimeCompiler.ParseStatusKind(GetParam(node, "status_id"))));
+		}
+		if (string.Equals(text, "AttachStatusPayload", StringComparison.OrdinalIgnoreCase))
+		{
+			var statusId = GetParam(node, "status_id");
+			var statusKind = string.IsNullOrWhiteSpace(statusId)
+				? StatusEffectKind.None
+				: StatusRuntimeCompiler.ParseStatusKind(statusId);
+			return SkillNode.FromOperation(new StatusPayloadNodeOp(
+				statusKind,
+				GetFloatParam(node, "status_chance", 1f),
+				GetIntParam(node, "status_stack_amount", 1),
+				GetFloatParam(node, "status_duration_seconds", 0f),
+				GetIntParam(node, "status_max_stacks", 1),
+				!string.Equals(GetParam(node, "status_merge_policy"), "StackDuration", StringComparison.OrdinalIgnoreCase)));
+		}
+		if (string.Equals(text, "EffectExtendStatusDuration", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(text, "ExtendStatusDuration", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new ExtendStatusDurationNodeOp(
+				StatusRuntimeCompiler.ParseStatusKind(GetParam(node, "status_id"))));
+		}
+		if (string.Equals(text, "EffectTarget", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(text, "SelectTargets", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new SelectTargetsNodeOp(
+				GetEnumParam(node, "target_side", SkillMultiEffectTargetSide.Enemy),
+				GetEnumParam(node, "target_selection", SkillMultiEffectTargetSelection.Nearest),
+				GetEnumParam(node, "target_shape", SkillMultiEffectTargetShape.Single),
+				GetEnumParam(node, "center_mode", SkillMultiEffectCenterMode.PrimarySkillCenter),
+				GetEnumParam(node, "visual_anchor_mode", SkillMultiEffectVisualAnchorMode.Center),
+				GetBoolParam(node, "apply_once", false),
+				GetBoolParam(node, "cover_all", false)));
+		}
+		if (string.Equals(text, "EffectLifetime", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(text, "SetDuration", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new SetDurationNodeOp(
+				GetFloatParam(node, "duration_seconds", 0f)));
+		}
+		if (string.Equals(text, "ConditionStatus", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new RequireStatusNodeOp(
+				StatusRuntimeCompiler.ParseStatusKind(GetParam(node, "status_id")),
+				GetEnumParam(node, "target_side", SkillMultiEffectTargetSide.Enemy),
+				GetIntParam(node, "min_stacks", 1)));
+		}
+		if (string.Equals(text, "EffectVisual", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(text, "RuntimeEffectVisual", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(text, "ShowVisual", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new ShowVisualNodeOp(
+				node.ResolvedPrefab,
+				node.ResolvedRuntimeVisual));
+		}
+		if (string.Equals(text, "RecastZone", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new RecastZoneNodeOp(
+				GetParam(node, "source_skill_id"),
+				GetFloatParam(node, "delay_seconds", 0f),
+				GetFloatParam(node, "duration_seconds", 0f),
+				GetFloatParam(node, "radius_multiplier", 1f),
+				GetBoolParam(node, "inherit_snapshot", true),
+				GetIntParam(node, "max_generation", 1)));
+		}
+		if (string.Equals(text, "ExecuteSkill", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new ExecuteSkillNodeOp(
+				GetParam(node, "skill_id"),
+				GetFloatParam(node, "damage_multiplier", 1f)));
+		}
+		if (string.Equals(text, "RefundCooldown", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new RefundCooldownNodeOp(
+				GetParam(node, "skill_id"),
+				GetFloatParam(node, "ratio", 0f)));
+		}
+		if (string.Equals(text, "ReduceReload", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new ReduceReloadNodeOp(
+				GetParam(node, "skill_id"),
+				GetFloatParam(node, "ratio", 0f)));
 		}
 		if (string.Equals(node.OwnerKind, "Skill", StringComparison.OrdinalIgnoreCase)
 			&& IsSingleBaseFieldHandler(text))
@@ -1011,10 +1109,31 @@ namespace Pakuri.InGame
 	}
 
 	/*
-	 * IsRuntimePlanHandler 조건을 만족하는지 확인한다.
+	 * IsRuntimeNodeHandler 조건을 만족하는지 확인한다.
 	 */
-	private static bool IsRuntimePlanHandler(string handlerId /* 처리기 식별자 */)
+	private static bool IsRuntimeNodeHandler(string handlerId /* 처리기 식별자 */)
 	{
+		if (string.Equals(handlerId, "EffectDamage", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "ApplyDamage", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "ApplyStatus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "AttachStatusPayload", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "EffectExtendStatusDuration", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "ExtendStatusDuration", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "EffectTarget", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "SelectTargets", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "EffectLifetime", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "SetDuration", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "ConditionStatus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "EffectVisual", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "RuntimeEffectVisual", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "ShowVisual", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "RecastZone", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "ExecuteSkill", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "RefundCooldown", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "ReduceReload", StringComparison.OrdinalIgnoreCase))
+		{
+			return true;
+		}
 		if (string.Equals(handlerId, "TargetHealthRatioCondition", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "TargetHealthRatioThresholdBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "ExecuteDamageMultiplier", StringComparison.OrdinalIgnoreCase)

@@ -1205,7 +1205,7 @@ namespace Pakuri.Data
                 {
                     continue;
                 }
-                if (SkillNodeMapper.CanProcessPlanNode(graph.OwnerKind.ToString(), nodeType.HandlerId))
+                if (SkillNodeMapper.CanProcessNode(graph.OwnerKind.ToString(), nodeType.HandlerId))
                 {
                     continue;
                 }

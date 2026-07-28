@@ -834,6 +834,8 @@ namespace Pakuri.Data
         // Trigger 표시와 런타임 지원 상태
         public GameObject SkillEffectPrefab;
         public RuntimeSkillVisualSpec RuntimeVisual = new RuntimeSkillVisualSpec();
+        public SkillNodeDefinition[] NormalizedNodes = Array.Empty<SkillNodeDefinition>();
+        [NonSerialized] public Pakuri.InGame.SkillNode[] Nodes = Array.Empty<Pakuri.InGame.SkillNode>();
     }
 
     /*
@@ -956,6 +958,8 @@ namespace Pakuri.Data
         public string HandlerId;
         public bool EnabledByDefault;
         public SkillNodeParamDefinition[] Params = Array.Empty<SkillNodeParamDefinition>();
+        public GameObject ResolvedPrefab;
+        public RuntimeSkillVisualSpec ResolvedRuntimeVisual;
     }
 }
 

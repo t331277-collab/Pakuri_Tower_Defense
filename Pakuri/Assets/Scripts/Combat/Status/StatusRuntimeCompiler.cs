@@ -73,6 +73,7 @@ namespace Pakuri.Data
                 trigger.ConditionStatusSourceSkillIds = ParseIdList(trigger.ConditionStatusSourceSkillId);
                 trigger.EventSkillRuntimeKindValues = ParseSkillRuntimeKindConditions(
                     trigger.EventSkillRuntimeKinds);
+                trigger.Nodes = SkillNodeMapper.MapSkillNodeDefinitions(trigger.NormalizedNodes);
             }
         }
 

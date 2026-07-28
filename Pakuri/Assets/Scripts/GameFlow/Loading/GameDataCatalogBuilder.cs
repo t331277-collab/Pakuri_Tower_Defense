@@ -1131,7 +1131,12 @@ namespace Pakuri.Data
                     CooldownRefundRatio = trigger.CooldownRefundRatio,
                     ReloadReduceRatio = trigger.ReloadReduceRatio,
                     SkillEffectPrefab = LoadPrefab(trigger.SkillEffectPrefabPath),
-                    RuntimeVisual = BuildRuntimeVisual(trigger)
+                    RuntimeVisual = BuildRuntimeVisual(trigger),
+                    NormalizedNodes = BuildSkillNodeDefinitions(
+                        model,
+                        SkillNodeOwnerKind.Trigger,
+                        trigger.Id,
+                        trigger.SourceSkillId)
                 };
             }
 
@@ -1294,7 +1299,7 @@ namespace Pakuri.Data
                     targetSkillId = defaultTargetSkillId;
                 }
 
-                definitions[i] = new SkillNodeDefinition
+                var definition = new SkillNodeDefinition
                 {
                     OwnerKind = node.OwnerKind.ToString(),
                     TargetSkillId = targetSkillId,
@@ -1302,6 +1307,30 @@ namespace Pakuri.Data
                     EnabledByDefault = node.EnabledByDefault,
                     Params = BuildSkillNodeParamDefinitions(model, node.Id)
                 };
+
+                if (string.Equals(node.HandlerId, "EffectVisual", StringComparison.OrdinalIgnoreCase))
+                {
+                    var parameters = BuildSkillNodeParamValueLookup(model, node.Id);
+                    definition.ResolvedPrefab = LoadPrefab(
+                        GetSkillNodeStringParam(parameters, "skill_effect_prefab_path"));
+                }
+                else if (string.Equals(node.HandlerId, "RuntimeEffectVisual", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(node.HandlerId, "ShowVisual", StringComparison.OrdinalIgnoreCase))
+                {
+                    var parameters = BuildSkillNodeParamValueLookup(model, node.Id);
+                    definition.ResolvedRuntimeVisual = BuildRuntimeVisual(
+                        GetSkillNodeStringParam(parameters, "runtime_visual_sprite_path"),
+                        GetSkillNodeStringParam(parameters, "runtime_visual_animator_controller_path"),
+                        GetSkillNodeFloatParam(parameters, "runtime_visual_scale", 1f),
+                        0f,
+                        0f,
+                        0f,
+                        GetSkillNodeIntParam(parameters, "runtime_visual_sorting_order", 0),
+                        GetSkillNodeFloatParam(parameters, "runtime_hitbox_size_x", 0f),
+                        GetSkillNodeFloatParam(parameters, "runtime_hitbox_size_y", 0f));
+                }
+
+                definitions[i] = definition;
             }
 
             return definitions;
