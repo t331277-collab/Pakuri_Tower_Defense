@@ -138,6 +138,8 @@ namespace Pakuri.Data
 
 			public SkillGraphKind GraphKind;
 
+			public bool IsLegacySchema;
+
 			public string TargetSkillId;
 
 			public int NodeOrder;
@@ -202,12 +204,16 @@ namespace Pakuri.Data
 		 */
 		internal static SkillGraphNodeRow ParseSkillGraphNodeRow(CsvParser.CsvRecord record /* 읽을 CSV 행 */)
 		{
+			var isLegacySchema = record.HasColumn("graph_kind");
 			SkillGraphNodeRow skillGraphNodeRow = new SkillGraphNodeRow
 			{
 				MonsterId = record.ReadRequiredString("monster_id"),
 				OwnerKind = record.ReadEnum<SkillNodeOwnerKind>("owner_kind"),
 				OwnerId = record.ReadRequiredString("owner_id"),
-				GraphKind = record.ReadEnum<SkillGraphKind>("graph_kind"),
+				GraphKind = isLegacySchema
+					? record.ReadEnum<SkillGraphKind>("graph_kind")
+					: SkillGraphKind.Plan,
+				IsLegacySchema = isLegacySchema,
 				TargetSkillId = CsvRowParser.ReadOptionalStringIfColumnExists(record, "target_skill_id"),
 				NodeOrder = record.ReadInt("node_order"),
 				NodeTypeId = record.ReadRequiredString("node_type_id"),
@@ -616,6 +622,7 @@ namespace Pakuri.Data
 			List<string> list = new List<string>();
 			Dictionary<string, List<SkillNodeTypeParamRow>> dictionary = BuildSkillNodeTypeParamLookup(model, list);
 			ValidateSkillNodeTypeDefinitions(model, list);
+			ValidateContiguousNodeOrder(model.SkillGraphNodes, list);
 			List<SkillNodeRow> list2 = new List<SkillNodeRow>(model.SkillGraphNodes.Count);
 			List<SkillNodeParamRow> list3 = new List<SkillNodeParamRow>();
 			HashSet<string> hashSet2 = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -626,7 +633,8 @@ namespace Pakuri.Data
 				SkillGraphNodeRow skillGraphNodeRow = model.SkillGraphNodes[j];
 				string text = BuildSkillGraphKey(skillGraphNodeRow);
 				string text2 = $"{text}:{skillGraphNodeRow.NodeOrder}";
-				if (skillGraphNodeRow.OwnerId.StartsWith(skillGraphNodeRow.MonsterId + "-", StringComparison.OrdinalIgnoreCase))
+				if (skillGraphNodeRow.IsLegacySchema
+					&& skillGraphNodeRow.OwnerId.StartsWith(skillGraphNodeRow.MonsterId + "-", StringComparison.OrdinalIgnoreCase))
 				{
 					list.Add($"Skill graph '{text}' owner_id '{skillGraphNodeRow.OwnerId}' must not repeat monster_id '{skillGraphNodeRow.MonsterId}'.");
 				}
@@ -654,7 +662,7 @@ namespace Pakuri.Data
 				{
 					list.Add("Skill graph '" + text + "' target skill '" + text3 + "' belongs to '" + value3.MonsterId + "', not '" + skillGraphNodeRow.MonsterId + "'.");
 				}
-				if (skillGraphNodeRow.GraphKind == SkillGraphKind.Plan && IsEffectGraphOnlyHandler(value.HandlerId))
+				if (IsLegacyPlanGraph(skillGraphNodeRow) && IsEffectGraphOnlyHandler(value.HandlerId))
 				{
 					list.Add($"Skill graph '{text}' is Plan but node '{skillGraphNodeRow.NodeOrder}' uses Effect-only handler '{value.HandlerId}'.");
 				}
@@ -665,10 +673,10 @@ namespace Pakuri.Data
 					continue;
 				}
 				SkillNodeOwnerKind ownerKind = skillGraphNodeRow.OwnerKind;
-				string ownerId = BuildMonsterOwnedId(skillGraphNodeRow.MonsterId, skillGraphNodeRow.OwnerId);
+				string ownerId = ResolveAuthoredOwnerId(skillGraphNodeRow);
 				string requiresActiveChoiceId = string.Empty;
 				string requiresPassiveSkillId = string.Empty;
-				if (skillGraphNodeRow.GraphKind == SkillGraphKind.Effect)
+				if (IsLegacyEffectGraph(skillGraphNodeRow))
 				{
 					ownerKind = SkillNodeOwnerKind.Effect;
 					if (!dictionary2.TryGetValue(skillGraphNodeRow, out var effectNumber))
@@ -820,7 +828,7 @@ namespace Pakuri.Data
 		 */
 		internal static string ResolveSkillGraphTargetSkillId(CsvSourceModel.SourceModel model /* 처리할 상태 모델 */, SkillGraphNodeRow graph /* 그래프 */, List<string> errors /* 검증 오류를 모을 목록 */)
 		{
-			string text2 = BuildMonsterOwnedId(graph.MonsterId, graph.OwnerId);
+			string text2 = ResolveAuthoredOwnerId(graph);
 			string text;
 			switch (graph.OwnerKind)
 			{
@@ -890,7 +898,7 @@ namespace Pakuri.Data
 		 */
 		internal static string ResolveGeneratedEffectPassiveSkillId(CsvSourceModel.SourceModel model /* 처리할 상태 모델 */, SkillGraphNodeRow graph /* 그래프 */)
 		{
-			if (model == null || graph == null || graph.GraphKind != SkillGraphKind.Effect)
+			if (model == null || !IsLegacyEffectGraph(graph))
 			{
 				return string.Empty;
 			}
@@ -959,7 +967,7 @@ namespace Pakuri.Data
 		{
 			Dictionary<SkillGraphNodeRow, int> dictionary = new Dictionary<SkillGraphNodeRow, int>();
 			IEnumerable<IGrouping<string, SkillGraphNodeRow>> enumerable = model.SkillGraphNodes
-				.Where(graph => graph.GraphKind == SkillGraphKind.Effect)
+				.Where(IsLegacyEffectGraph)
 				.GroupBy(BuildSkillGraphKey, StringComparer.OrdinalIgnoreCase);
 			foreach (IGrouping<string, SkillGraphNodeRow> item in enumerable)
 			{
@@ -988,12 +996,61 @@ namespace Pakuri.Data
 			return dictionary;
 		}
 
+		internal static void ValidateContiguousNodeOrder(
+			IReadOnlyList<SkillGraphNodeRow> rows,
+			List<string> errors)
+		{
+			if (rows == null || errors == null)
+			{
+				return;
+			}
+
+			var groups = rows
+				.Where(row => row != null)
+				.GroupBy(BuildSkillGraphKey, StringComparer.OrdinalIgnoreCase);
+			foreach (var group in groups)
+			{
+				var ordered = group.OrderBy(row => row.NodeOrder).ToArray();
+				for (var i = 0; i < ordered.Length; i++)
+				{
+					var expected = i + 1;
+					if (ordered[i].NodeOrder != expected)
+					{
+						errors.Add(
+							$"Skill graph '{group.Key}' requires contiguous node_order values starting at 1; expected '{expected}' but found '{ordered[i].NodeOrder}'.");
+						break;
+					}
+				}
+			}
+		}
+
 		/*
 		 * BuildSkillGraphKey에 필요한 결과를 만들어 반환한다.
 		 */
 		internal static string BuildSkillGraphKey(SkillGraphNodeRow graph /* 그래프 */)
 		{
-			return $"{graph.MonsterId}:{graph.OwnerKind}:{graph.OwnerId}:{graph.GraphKind}";
+			if (graph != null && graph.IsLegacySchema)
+			{
+				return $"{graph.MonsterId}:{graph.OwnerKind}:{graph.OwnerId}:{graph.GraphKind}";
+			}
+
+			return graph == null
+				? string.Empty
+				: $"{graph.MonsterId}:{graph.OwnerKind}:{graph.OwnerId}:{graph.TargetSkillId}";
+		}
+
+		internal static bool IsLegacyEffectGraph(SkillGraphNodeRow graph)
+		{
+			return graph != null
+				&& graph.IsLegacySchema
+				&& graph.GraphKind == SkillGraphKind.Effect;
+		}
+
+		internal static bool IsLegacyPlanGraph(SkillGraphNodeRow graph)
+		{
+			return graph != null
+				&& graph.IsLegacySchema
+				&& graph.GraphKind == SkillGraphKind.Plan;
 		}
 
 		/*
@@ -1001,7 +1058,26 @@ namespace Pakuri.Data
 		 */
 		internal static string BuildGeneratedSkillGraphNodeId(SkillGraphNodeRow graph /* 그래프 */)
 		{
-			return $"{graph.OwnerKind}:{BuildMonsterOwnedId(graph.MonsterId, graph.OwnerId)}:{graph.GraphKind}:{graph.NodeOrder}";
+			if (graph != null && graph.IsLegacySchema)
+			{
+				return $"{graph.OwnerKind}:{BuildMonsterOwnedId(graph.MonsterId, graph.OwnerId)}:{graph.GraphKind}:{graph.NodeOrder}";
+			}
+
+			return graph == null
+				? string.Empty
+				: $"{graph.OwnerKind}:{graph.OwnerId}:{graph.TargetSkillId}:{graph.NodeOrder}";
+		}
+
+		internal static string ResolveAuthoredOwnerId(SkillGraphNodeRow graph)
+		{
+			if (graph == null)
+			{
+				return string.Empty;
+			}
+
+			return graph.IsLegacySchema
+				? BuildMonsterOwnedId(graph.MonsterId, graph.OwnerId)
+				: graph.OwnerId;
 		}
 
 		/*

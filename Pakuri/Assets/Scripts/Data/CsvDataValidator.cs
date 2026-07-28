@@ -873,7 +873,7 @@ namespace Pakuri.Data
             for (var i = 0; i < model.SkillGraphNodes.Count; i++)
             {
                 var graph = model.SkillGraphNodes[i];
-                if (graph.GraphKind == SkillGraphKind.Effect
+                if (IsLegacyEffectGraph(graph)
                     && graph.OwnerKind == trigger.TriggeredGraphOwnerKind
                     && string.Equals(graph.MonsterId, trigger.MonsterId, StringComparison.OrdinalIgnoreCase)
                     && string.Equals(graph.OwnerId, trigger.TriggeredGraphOwnerId, StringComparison.OrdinalIgnoreCase))
@@ -1197,7 +1197,7 @@ namespace Pakuri.Data
             for (var i = 0; i < model.SkillGraphNodes.Count; i++)
             {
                 var graph = model.SkillGraphNodes[i];
-                if (graph.GraphKind != SkillGraphKind.Plan)
+                if (IsLegacyEffectGraph(graph))
                 {
                     continue;
                 }
