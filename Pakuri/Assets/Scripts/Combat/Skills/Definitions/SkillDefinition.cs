@@ -730,6 +730,12 @@ namespace Pakuri.Data
      */
     public enum SkillTriggerEvent
     {
+        BuildExecutionData,
+        OnCast,
+        OnDeploymentCast,
+        OnHit,
+        OnExpire,
+        OnHitCount,
         OnMagazineLastProjectileHit,
         OnShieldExpire,
         OnShieldAbsorb,

@@ -173,6 +173,28 @@ namespace Pakuri.InGame
             Vector2 hitPosition /* 최초 적중 위치 */,
             float primaryBaseDamage /* 최초 적중 기본 피해 */)
         {
+            if (manager != null && roster != null && source != null && hitTarget != null && hitTarget.Model != null)
+            {
+                var actionExecutionContext = new SkillExecutionContext(
+                    manager,
+                    roster,
+                    sourceEntry,
+                    runtime,
+                    hitTarget.Model);
+                SkillTrigger.PublishLifecycleEvent(
+                    SkillTriggerEvent.OnHit,
+                    new SkillActionContext(
+                        source,
+                        sourceSkillId,
+                        hitTarget.Model,
+                        hitPosition,
+                        primaryBaseDamage,
+                        1,
+                        skillData,
+                        actionExecutionContext),
+                    legacyEffectActive: true);
+            }
+
             if (manager == null
                 || roster == null
                 || skillData == null
@@ -449,6 +471,10 @@ namespace Pakuri.InGame
                     ExecuteAdditionalEffects(context, snapshot, castEffects, center, false, SkillMultiEffectTiming.OnCast, false);
                 }
 
+                SkillTrigger.PublishLifecycleEvent(
+                    SkillTriggerEvent.OnDeploymentCast,
+                    new SkillActionContext(context.Caster, skill.SkillId, null, center, 0f, 0, snapshot, context),
+                    legacyEffectActive: true);
                 ExecuteAdditionalEffects(context, snapshot, planEffects, center, true, SkillMultiEffectTiming.OnDeploymentCast, false);
                 return true;
             }
@@ -510,6 +536,10 @@ namespace Pakuri.InGame
             {
                 ExecuteAdditionalEffects(context, snapshot, castEffects, center, false, SkillMultiEffectTiming.OnCast, false);
             }
+            SkillTrigger.PublishLifecycleEvent(
+                SkillTriggerEvent.OnDeploymentCast,
+                new SkillActionContext(context.Caster, skill.SkillId, null, center, 0f, 0, snapshot, context),
+                legacyEffectActive: true);
             ExecuteAdditionalEffects(context, snapshot, planEffects, center, true, SkillMultiEffectTiming.OnDeploymentCast, false);
             return true;
         }

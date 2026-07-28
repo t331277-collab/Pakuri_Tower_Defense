@@ -173,6 +173,28 @@ internal static class SingleSkillExecutor
 	    Vector2 hitPosition /* 최초 적중 위치 */,
 	    float primaryBaseDamage /* 최초 적중 기본 피해 */)
 	{
+	    if (manager != null && roster != null && source != null && hitTarget != null && hitTarget.Model != null)
+	    {
+	        var actionExecutionContext = new SkillExecutionContext(
+	            manager,
+	            roster,
+	            sourceEntry,
+	            runtime,
+	            hitTarget.Model);
+	        SkillTrigger.PublishLifecycleEvent(
+	            SkillTriggerEvent.OnHit,
+	            new SkillActionContext(
+	                source,
+	                sourceSkillId,
+	                hitTarget.Model,
+	                hitPosition,
+	                primaryBaseDamage,
+	                1,
+	                skillData,
+	                actionExecutionContext),
+	            legacyEffectActive: true);
+	    }
+
 	    if (manager == null
 	        || roster == null
 	        || skillData == null
@@ -665,6 +687,7 @@ internal static class SingleSkillExecutor
 			SingleExecutionOutcome singleExecutionOutcome = ExecuteAtCenter(context, snapshot, skill, vector, runtimeVisual, prefab, allowConditionalFollowUp: true);
 			flag = flag || singleExecutionOutcome.Routed;
 			flag2 = flag2 || singleExecutionOutcome.CastCommitted;
+			PublishDeploymentLifecycle(context, snapshot, skill, vector);
 			flag = ExecuteAdditionalEffects(context, snapshot, skill.MultiEffects, vector, true, SkillMultiEffectTiming.OnDeploymentCast, false) || flag;
 			ScheduleRepeatedDeployments(context, snapshot, skill, vector, runtimeVisual, prefab);
 		}
@@ -691,6 +714,7 @@ internal static class SingleSkillExecutor
 			if (num <= 0f)
 			{
 				ExecuteAtCenter(context, snapshot2, skill, center, runtimeVisual, prefab, allowConditionalFollowUp: false);
+				PublishDeploymentLifecycle(context, snapshot2, skill, center);
 				ExecuteAdditionalEffects(context, snapshot2, skill.MultiEffects, center, true, SkillMultiEffectTiming.OnDeploymentCast, false);
 			}
 			else
@@ -709,8 +733,26 @@ internal static class SingleSkillExecutor
 		if (context != null && !(context.CombatManager == null) && context.Roster != null && context.CasterEntry != null && context.Caster != null && skill != null)
 		{
 			ExecuteAtCenter(context, snapshot, skill, center, runtimeVisual, prefab, allowConditionalFollowUp: false);
+			PublishDeploymentLifecycle(context, snapshot, skill, center);
 			ExecuteAdditionalEffects(context, snapshot, skill.MultiEffects, center, true, SkillMultiEffectTiming.OnDeploymentCast, false);
 		}
+	}
+
+	private static void PublishDeploymentLifecycle(
+		SkillExecutionContext context,
+		SkillExecutionData snapshot,
+		SingleSkillDefinition skill,
+		Vector2 center)
+	{
+		if (context == null || skill == null)
+		{
+			return;
+		}
+
+		SkillTrigger.PublishLifecycleEvent(
+			SkillTriggerEvent.OnDeploymentCast,
+			new SkillActionContext(context.Caster, skill.SkillId, null, center, 0f, 0, snapshot, context),
+			legacyEffectActive: true);
 	}
 
 	/*
@@ -1119,8 +1161,13 @@ internal static class SingleSkillExecutor
 	{
 		if (!(manager == null) && roster != null && sourceEntry != null && skill != null && hitCount > 0)
 		{
+			var executionContext = new SkillExecutionContext(manager, roster, sourceEntry, sourceRuntime);
+			SkillTrigger.PublishLifecycleEvent(
+				SkillTriggerEvent.OnHitCount,
+				new SkillActionContext(sourceEntry.Model, skill.SkillId, null, center, 0f, hitCount, snapshot, executionContext),
+				legacyEffectActive: true);
 			ExecuteAdditionalEffects(
-				new SkillExecutionContext(manager, roster, sourceEntry, sourceRuntime),
+				executionContext,
 				snapshot,
 				skill.MultiEffects,
 				center,

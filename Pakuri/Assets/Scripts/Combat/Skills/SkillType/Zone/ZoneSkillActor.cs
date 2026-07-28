@@ -225,6 +225,29 @@ namespace Pakuri.InGame
          */
         private void TryExecuteExpireEffects()
         {
+            var hasLegacyExpireEffect = onExpireEffects != null && onExpireEffects.Length > 0;
+            if (combatManager != null && casterEntry != null && roster != null)
+            {
+                var lifecycleContext = new SkillExecutionContext(
+                    combatManager,
+                    roster,
+                    casterEntry,
+                    runtime,
+                    recastGeneration: recastGeneration);
+                SkillTrigger.PublishLifecycleEvent(
+                    SkillTriggerEvent.OnExpire,
+                    new SkillActionContext(
+                        casterEntry.Model,
+                        snapshot != null ? snapshot.SkillId : string.Empty,
+                        null,
+                        center,
+                        0f,
+                        0,
+                        snapshot,
+                        lifecycleContext),
+                    legacyEffectActive: hasLegacyExpireEffect);
+            }
+
             if (onExpireEffects == null || onExpireEffects.Length == 0 || combatManager == null || casterEntry == null || roster == null)
             {
                 return;

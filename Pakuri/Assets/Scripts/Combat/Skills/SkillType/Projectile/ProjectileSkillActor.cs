@@ -765,6 +765,30 @@ namespace Pakuri.InGame
                 return;
             }
 
+            var hasLegacyExpireEffect = onExpireEffects != null && onExpireEffects.Length > 0;
+            if (combatManager != null && combatManager.UnitRegistry != null && owner != null)
+            {
+                var lifecycleSourceEntry = combatManager.UnitRegistry.Find(owner);
+                var lifecycleContext = new SkillExecutionContext(
+                    combatManager,
+                    combatManager.UnitRegistry,
+                    lifecycleSourceEntry,
+                    runtime,
+                    impactTarget);
+                SkillTrigger.PublishLifecycleEvent(
+                    SkillTriggerEvent.OnExpire,
+                    new SkillActionContext(
+                        owner,
+                        sourceSkillId,
+                        impactTarget,
+                        impactCenter,
+                        0f,
+                        0,
+                        executionData,
+                        lifecycleContext),
+                    legacyEffectActive: hasLegacyExpireEffect);
+            }
+
             if (onExpireEffects == null || onExpireEffects.Length == 0 || combatManager == null || combatManager.UnitRegistry == null)
             {
                 onExpireEffects = System.Array.Empty<SkillEffectDefinition>();

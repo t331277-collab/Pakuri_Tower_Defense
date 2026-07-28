@@ -278,6 +278,23 @@ namespace Pakuri.InGame
                 manualAimDirection: manualAimDirection,
                 hasManualTargetPoint: hasManualTargetPoint,
                 manualTargetPoint: manualTargetPoint);
+            var lifecycleCenter = hasManualTargetPoint
+                ? manualTargetPoint
+                : entry.Transform != null
+                    ? (Vector2)entry.Transform.position
+                    : Vector2.zero;
+            SkillTrigger.PublishLifecycleEvent(
+                SkillTriggerEvent.BuildExecutionData,
+                new SkillActionContext(
+                    entry.Model,
+                    runtime.Data.SkillId,
+                    null,
+                    lifecycleCenter,
+                    0f,
+                    0,
+                    snapshot,
+                    context),
+                legacyEffectActive: true);
             var routed = ExecuteSkill(context, snapshot, runtime.Data);
             if (routed)
             {
@@ -292,6 +309,18 @@ namespace Pakuri.InGame
                     monsterActor.TryPlayActiveSkillAnimation();
                 }
 
+                SkillTrigger.PublishLifecycleEvent(
+                    SkillTriggerEvent.OnCast,
+                    new SkillActionContext(
+                        entry.Model,
+                        runtime.Data.SkillId,
+                        null,
+                        lifecycleCenter,
+                        0f,
+                        0,
+                        snapshot,
+                        context),
+                    legacyEffectActive: true);
                 NotifySkillCastTriggers(combatManager, roster, entry, runtime, context, triggerSourceSkillId);
             }
 

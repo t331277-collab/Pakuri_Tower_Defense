@@ -79,6 +79,53 @@ internal static class SkillTrigger
 	}
 
 	/*
+	 * family 실행기가 발행한 lifecycle 사건을 Trigger 판정 경로로 전달한다.
+	 * legacy Effect가 같은 사건을 처리하는 동안에는 Node 경로를 막아 중복 실행을 방지한다.
+	 */
+	internal static void PublishLifecycleEvent(
+		SkillTriggerEvent triggerEvent,
+		SkillActionContext actionContext,
+		bool legacyEffectActive)
+	{
+		if (legacyEffectActive
+			|| actionContext == null
+			|| actionContext.Source == null
+			|| actionContext.ExecutionContext == null)
+		{
+			return;
+		}
+
+		SkillExecutionContext executionContext = actionContext.ExecutionContext;
+		if (executionContext.CombatManager == null || executionContext.Roster == null)
+		{
+			return;
+		}
+
+		var triggerContext = new TriggerExecutionContext(
+			actionContext.EventTarget,
+			actionContext.Source,
+			actionContext.EventCenter,
+			null,
+			0f,
+			actionContext.EventDamage,
+			DamageAttribute.Physical,
+			actionContext.SourceSkillId,
+			actionContext.Source);
+		ExecuteSourceOwnedTriggers(
+			executionContext.CombatManager,
+			executionContext.Roster,
+			actionContext.Source,
+			actionContext.SourceSkillId,
+			triggerEvent,
+			triggerContext);
+		ExecutePassiveOwnerTriggers(
+			executionContext.CombatManager,
+			executionContext.Roster,
+			triggerEvent,
+			triggerContext);
+	}
+
+	/*
 	 * ExecuteProjectileHit 실행을 처리한다.
 	 */
 	public static void ExecuteProjectileHit(InGameCombatManager combatManager /* 전투 진행 관리자 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */, bool isMagazineLastProjectile /* 여부 탄창 마지막 투사체 여부 */, Vector2 eventCenter /* 사건 중심 위치 */)
