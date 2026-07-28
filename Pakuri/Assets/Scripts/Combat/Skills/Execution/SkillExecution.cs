@@ -1290,7 +1290,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            SkillNode[] nodes = SkillNodeMapper.GetChoiceRuntimePlan(choice, snapshot.SkillId).Nodes;
+            SkillNode[] nodes = SkillNodeMapper.GetChoiceRuntimeNodes(choice, snapshot.SkillId);
             for (int i = 0; i < nodes.Length; i++)
             {
                 if (nodes[i] == null)

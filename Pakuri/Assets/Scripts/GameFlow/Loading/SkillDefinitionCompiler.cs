@@ -710,14 +710,14 @@ namespace Pakuri.InGame
 	 * 선택지의 정리된 노드를 대상 스킬별 실행 값으로 한 번만 변환해 반환한다.
 	 * 모든 처리기는 SkillNode로 변환하므로 별도 임시 SkillChoice 객체를 만들지 않는다.
 	 */
-	internal static SkillChoiceRuntimePlan GetChoiceRuntimePlan(SkillChoice choice /* 적용할 선택지 */, string targetSkillId /* 적용 대상 스킬 식별자 */)
+	internal static SkillNode[] GetChoiceRuntimeNodes(SkillChoice choice /* 적용할 선택지 */, string targetSkillId /* 적용 대상 스킬 식별자 */)
 	{
 		if (choice == null || choice.Source == null)
 		{
-			return SkillChoiceRuntimePlan.Empty;
+			return Array.Empty<SkillNode>();
 		}
 
-		if (choice.TryGetRuntimePlan(targetSkillId, out var cached))
+		if (choice.TryGetRuntimeNodes(targetSkillId, out var cached))
 		{
 			return cached;
 		}
@@ -725,9 +725,9 @@ namespace Pakuri.InGame
 		SkillNodeDefinition[] filtered = FilterSkillNodeDefinitionsForTarget(
 			choice.Source.NormalizedPlanNodes,
 			targetSkillId);
-		var plan = new SkillChoiceRuntimePlan(MapSkillNodeDefinitions(filtered));
-		choice.CacheRuntimePlan(targetSkillId, plan);
-		return plan;
+		SkillNode[] nodes = MapSkillNodeDefinitions(filtered);
+		choice.CacheRuntimeNodes(targetSkillId, nodes);
+		return nodes;
 	}
 
 	/*

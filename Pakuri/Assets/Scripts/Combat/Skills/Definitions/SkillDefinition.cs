@@ -590,7 +590,7 @@ namespace Pakuri.InGame
     public class SkillChoice
     {
         [NonSerialized]
-        private Dictionary<string, SkillChoiceRuntimePlan> runtimePlansByTarget;
+        private Dictionary<string, SkillNode[]> runtimeNodesByTarget;
 
         public SkillChoiceDefinition Source;
 
@@ -601,43 +601,26 @@ namespace Pakuri.InGame
          * 실행 스냅샷은 매 시전마다 새로 만들어지지만, Choice 정의와 그 정규화 노드는 카탈로그 수명 동안
          * 변하지 않는다. 따라서 문자열 Params를 매번 다시 파싱하지 않고 대상 스킬 ID별 결과를 캐시한다.
          */
-        internal bool TryGetRuntimePlan(string targetSkillId /* 적용 대상 스킬 식별자 */, out SkillChoiceRuntimePlan plan /* 컴파일된 실행 계획 */)
+        internal bool TryGetRuntimeNodes(string targetSkillId /* 적용 대상 스킬 식별자 */, out SkillNode[] nodes /* 컴파일된 실행 노드 */)
         {
-            plan = null;
-            return runtimePlansByTarget != null
-                && runtimePlansByTarget.TryGetValue(targetSkillId ?? string.Empty, out plan);
+            nodes = null;
+            return runtimeNodesByTarget != null
+                && runtimeNodesByTarget.TryGetValue(targetSkillId ?? string.Empty, out nodes);
         }
 
         /*
          * SkillNodeMapper가 대상 스킬에 맞춰 만든 불변 실행 계획을 Choice에 기록한다.
          * 다음 시전부터 같은 Handler 문자열과 Params를 다시 필터링·파싱하지 않는다.
          */
-        internal void CacheRuntimePlan(string targetSkillId /* 적용 대상 스킬 식별자 */, SkillChoiceRuntimePlan plan /* 컴파일된 실행 계획 */)
+        internal void CacheRuntimeNodes(string targetSkillId /* 적용 대상 스킬 식별자 */, SkillNode[] nodes /* 컴파일된 실행 노드 */)
         {
-            if (runtimePlansByTarget == null)
+            if (runtimeNodesByTarget == null)
             {
-                runtimePlansByTarget = new Dictionary<string, SkillChoiceRuntimePlan>(StringComparer.OrdinalIgnoreCase);
+                runtimeNodesByTarget = new Dictionary<string, SkillNode[]>(StringComparer.OrdinalIgnoreCase);
             }
 
-            runtimePlansByTarget[targetSkillId ?? string.Empty] = plan ?? SkillChoiceRuntimePlan.Empty;
+            runtimeNodesByTarget[targetSkillId ?? string.Empty] = nodes ?? Array.Empty<SkillNode>();
         }
-    }
-
-    /*
-     * Choice의 정규화 노드를 특정 대상 스킬에 적용하기 위해 한 번 컴파일한 결과다.
-     * 모든 Handler가 SkillNode로 변환되므로 별도 가변 필드 사본은 보관하지 않는다.
-     */
-    internal sealed class SkillChoiceRuntimePlan
-    {
-        internal static readonly SkillChoiceRuntimePlan Empty = new SkillChoiceRuntimePlan(
-            Array.Empty<SkillNode>());
-
-        internal SkillChoiceRuntimePlan(SkillNode[] nodes /* 컴파일된 실행 노드 */)
-        {
-            Nodes = nodes ?? Array.Empty<SkillNode>();
-        }
-
-        internal SkillNode[] Nodes { get; }
     }
 }
 

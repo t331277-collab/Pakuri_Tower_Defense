@@ -404,7 +404,7 @@ public class SkillExecutionData
 		if (source != null)
 		{
 			SkillEffectPrefab = source.SkillEffectPrefab;
-			ApplyPlanNodes(source.NormalizedPlanNodes);
+			ApplyNodes(source.NormalizedPlanNodes);
 		}
 	}
 
@@ -448,9 +448,8 @@ public class SkillExecutionData
 		{
 			SkillEffectPrefab = choice.SkillEffectPrefab;
 		}
-		SkillChoiceRuntimePlan plan = SkillNodeMapper.GetChoiceRuntimePlan(choiceSpec, SkillId);
-		SkillNode[] nodes = plan.Nodes;
-		ApplyPlanNodes(nodes);
+		SkillNode[] nodes = SkillNodeMapper.GetChoiceRuntimeNodes(choiceSpec, SkillId);
+		ApplyNodes(nodes);
 	}
 
 	/*
@@ -468,7 +467,7 @@ public class SkillExecutionData
 	/*
 	 * 선택지 노드의 단순 행동과 복합 행동을 현재 실행 데이터에 적용한다.
 	 */
-	private void ApplyPlanNodes(IReadOnlyList<SkillNode> nodes /* 노드 목록 */)
+	internal void ApplyNodes(IReadOnlyList<SkillNode> nodes /* 노드 목록 */)
 	{
 		// SkillNode를 즉시 누적할 수치와 실행 시점에 판정할 규칙으로 나누어 적용하는 부분을 구현.
 		if (nodes == null || nodes.Count == 0)
