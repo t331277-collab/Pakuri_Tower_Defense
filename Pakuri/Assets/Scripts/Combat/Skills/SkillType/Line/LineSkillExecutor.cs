@@ -192,7 +192,7 @@ namespace Pakuri.InGame
                         1,
                         skillData,
                         actionExecutionContext),
-                    legacyEffectActive: true);
+                    legacyEffectActive: false);
             }
 
             if (manager == null
@@ -474,7 +474,7 @@ namespace Pakuri.InGame
                 SkillTrigger.PublishLifecycleEvent(
                     SkillTriggerEvent.OnDeploymentCast,
                     new SkillActionContext(context.Caster, skill.SkillId, null, center, 0f, 0, snapshot, context),
-                    legacyEffectActive: true);
+                    legacyEffectActive: false);
                 ExecuteAdditionalEffects(context, snapshot, planEffects, center, true, SkillMultiEffectTiming.OnDeploymentCast, false);
                 return true;
             }
@@ -539,7 +539,7 @@ namespace Pakuri.InGame
             SkillTrigger.PublishLifecycleEvent(
                 SkillTriggerEvent.OnDeploymentCast,
                 new SkillActionContext(context.Caster, skill.SkillId, null, center, 0f, 0, snapshot, context),
-                legacyEffectActive: true);
+                legacyEffectActive: false);
             ExecuteAdditionalEffects(context, snapshot, planEffects, center, true, SkillMultiEffectTiming.OnDeploymentCast, false);
             return true;
         }

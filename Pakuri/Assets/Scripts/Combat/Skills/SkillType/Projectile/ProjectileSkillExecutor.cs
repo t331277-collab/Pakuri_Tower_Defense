@@ -194,7 +194,7 @@ namespace Pakuri.InGame
                         1,
                         skillData,
                         actionExecutionContext),
-                    legacyEffectActive: true);
+                    legacyEffectActive: false);
             }
 
             if (manager == null

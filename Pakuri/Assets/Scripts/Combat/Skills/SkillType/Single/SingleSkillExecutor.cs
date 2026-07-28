@@ -192,7 +192,7 @@ internal static class SingleSkillExecutor
 	                1,
 	                skillData,
 	                actionExecutionContext),
-	            legacyEffectActive: true);
+	            legacyEffectActive: false);
 	    }
 
 	    if (manager == null
@@ -752,7 +752,7 @@ internal static class SingleSkillExecutor
 		SkillTrigger.PublishLifecycleEvent(
 			SkillTriggerEvent.OnDeploymentCast,
 			new SkillActionContext(context.Caster, skill.SkillId, null, center, 0f, 0, snapshot, context),
-			legacyEffectActive: true);
+			legacyEffectActive: false);
 	}
 
 	/*
@@ -1165,7 +1165,7 @@ internal static class SingleSkillExecutor
 			SkillTrigger.PublishLifecycleEvent(
 				SkillTriggerEvent.OnHitCount,
 				new SkillActionContext(sourceEntry.Model, skill.SkillId, null, center, 0f, hitCount, snapshot, executionContext),
-				legacyEffectActive: true);
+				legacyEffectActive: false);
 			ExecuteAdditionalEffects(
 				executionContext,
 				snapshot,

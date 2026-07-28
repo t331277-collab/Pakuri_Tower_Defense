@@ -533,7 +533,7 @@ namespace Pakuri.Data
                     Summary = skill.Summary,
                     EnhancementChoices = BuildSkillChoices(model, skill.Id, SkillChoiceGroup.ActiveEnhancement),
                     MasterSkillChoices = BuildSkillChoices(model, skill.Id, SkillChoiceGroup.ActiveMaster),
-                    MultiEffects = BuildSkillEffects(model, skill.Id),
+                    MultiEffects = Array.Empty<SkillEffectDefinition>(),
                     NormalizedPlanNodes = BuildSkillNodeDefinitions(model, SkillNodeOwnerKind.Skill, skill.Id, skill.Id)
                 };
 
@@ -1171,7 +1171,7 @@ namespace Pakuri.Data
                     Summary = skill.Summary,
                     BaseModifierChoices = BuildSkillChoices(model, skill.Id, SkillChoiceGroup.PassiveBase),
                     EnhancementChoices = BuildSkillChoices(model, skill.Id, SkillChoiceGroup.PassiveEnhancement),
-                    PassiveEffects = BuildSkillEffects(model, skill.Id),
+                    PassiveEffects = Array.Empty<SkillEffectDefinition>(),
                     NormalizedPlanNodes = BuildSkillNodeDefinitions(model, SkillNodeOwnerKind.Passive, skill.Id, skill.Id)
                 };
             }

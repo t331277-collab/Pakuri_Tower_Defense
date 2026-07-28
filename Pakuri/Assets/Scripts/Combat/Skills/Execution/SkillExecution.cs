@@ -294,7 +294,7 @@ namespace Pakuri.InGame
                     0,
                     snapshot,
                     context),
-                legacyEffectActive: true);
+                legacyEffectActive: false);
             var routed = ExecuteSkill(context, snapshot, runtime.Data);
             if (routed)
             {
@@ -320,7 +320,7 @@ namespace Pakuri.InGame
                         0,
                         snapshot,
                         context),
-                    legacyEffectActive: true);
+                    legacyEffectActive: false);
                 NotifySkillCastTriggers(combatManager, roster, entry, runtime, context, triggerSourceSkillId);
             }
 
