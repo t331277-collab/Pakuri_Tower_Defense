@@ -18,4 +18,4 @@ When work touches automation or build infrastructure, Code Builder must preserve
 
 The Builder to Reviewer transition is not considered complete based only on AI memory or prompt instructions. If Codex CLI has a verified native hook or event feature, use that feature; otherwise enforce the transition through an external wrapper or orchestration flow. Actual Reviewer execution still requires user permission.
 
-If Builder and Reviewer stages are connected through an external enforced flow, record each loop count and the final decision in `boards/OPS/REVIEWER_BLACKBOARD.md` or a separate log file. Add only links to the root `BLACKBOARD.md` when needed.
+If Builder and Reviewer stages are connected through an external enforced flow, record each loop count and the final decision in a separate log file. Add a concise current-state link to `boards/OPS/AUTOMATION_GUIDE.md` only when persistent OPS state is required.

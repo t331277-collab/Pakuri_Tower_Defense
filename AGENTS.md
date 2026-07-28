@@ -8,26 +8,14 @@ No repository rule is higher than this rule.
 
 If code or a file does not exist yet, say clearly that it does not exist and perform the required checks first. Do not claim that files, structures, functions, helpers, commands, or features exist in this repository based on guessing.
 
-## Skill Builder Absolute Boundary
+## Skill Builder Inactive Boundary
 
-`Skill Builder` owns new Base skill authoring only when an existing Projectile, Buff, SingleAttack, LineAttack, AreaAttack, or Passive runtime/schema can express the Reference. It also owns Enhancement and Master node authoring for an existing or newly authored Base skill.
+`Skill Builder` is preserved as a named role but is inactive.
 
-The exact user-provided skill Reference MD is the only semantic input. Builder derives ids and values only through `AGENTS_ROLE/GAMEBULIDER_SKILL.md` and the selected blueprint; it does not require separate parsed input.
-
-Default authority is limited to:
-
-- exactly one family Base blueprint for Base work;
-- `boards/SkillBluePrint/enhancement-master-node-blueprint.md` for Enhancement/Master work;
-- the exact user-provided skill Reference MD;
-- the selected family's minimum Base, Choice, graph, and trigger CSV rows allowed by the selected blueprint;
-- matching node-definition rows only when the selected graph requires them;
-- the uniquely matching row in `Pakuri/Assets/CSVdata/authoring/status/status_effects.csv` only when a Reference status label needs an id.
-
-Before reading any CSV, Builder must name its exact path and why it is required. Read and edit only the new Base skill, requested Choices, and their explicitly required Skill/Choice/Trigger-owned graph rows.
-
-Do not read another Base blueprint, another Reference, linked Obsidian documentation, MON/DATA/RUN/UI/OPS/archive markdown, old implementations, broad runtime code, unrelated CSV, prefabs, scenes, or asset folders by default.
-
-Skill Builder must stop when work requires a new runtime behavior, node type, handler, parameter, CSV file or column, shared code, prefab/scene change, asset creation, or a value missing or ambiguous in the provided Reference. Stop instead of widening scope or inventing an id, numeric value, policy, or asset path.
+- Do not route Base, Enhancement, Master, CSV, runtime, schema, node, prefab, scene, or asset work to Skill Builder.
+- `AGENTS_ROLE/GAMEBULIDER_SKILL.md` is retained only as the inactive-role entry point.
+- The former blueprints are historical records under `boards/ARCHIVE/SkillBluePrint/`. They are not active authority and must not be used to implement or validate current work.
+- An explicit request to reactivate Skill Builder requires a new user instruction and a separate policy task before any skill authoring begins.
 
 ## Startup Rules
 
@@ -68,12 +56,12 @@ When performing a role, read and follow that role file:
 - Common role rules: read `AGENTS_ROLE/COMMON.md` before Designer, Code Builder, Skill Builder, Code Reviewer, or Naive Code Filter role files.
 - Designer: read `AGENTS_ROLE/GAMEDESIGNER.md`.
 - Code Builder: read `AGENTS_ROLE/GAMEBULIDER.md`.
-- Skill Builder: read `AGENTS_ROLE/GAMEBULIDER.md`, then `AGENTS_ROLE/GAMEBULIDER_SKILL.md`.
+- Skill Builder: read `AGENTS_ROLE/GAMEBULIDER.md`, then `AGENTS_ROLE/GAMEBULIDER_SKILL.md`; the role is inactive and performs no authoring.
 - Code Reviewer: read `AGENTS_ROLE/GAMEREVIWER.md`.
 - Naive Code Filter: read `AGENTS_ROLE/NAIVE_CODE_FILTER.md`.
 - SimpelWorker: read `AGENTS_ROLE/SIMPELWORKER.md`.
 
-`Skill Builder` is the Code Builder track for Reference-driven Base authoring on an existing runtime/schema and Enhancement/Master node authoring.
+`Skill Builder` is an inactive preserved role. It has no active blueprint or implementation authority.
 
 `Naive Code Filter` is an inspection-only role. It audits one exact user-provided script or folder for deletion and consolidation candidates and does not implement changes.
 

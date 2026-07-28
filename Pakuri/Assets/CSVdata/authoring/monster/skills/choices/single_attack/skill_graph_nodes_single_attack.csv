@@ -80,6 +80,7 @@
 "ariel","Trigger","ariel-c-master-2","ariel-c","1","ApplyDamage","Holy","28","1.2","0.6","3","","","","","","","",""
 "ariel","Trigger","ariel-c-master-2","ariel-c","2","SelectTargets","","","Circle","","","","","","","","","",""
 "ariel","Trigger","ariel-c-master-2","ariel-c","3","ShowVisual","Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026년 5월 22일 오전 12_15_03-Photoroom 1.png","Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026년 5월 22일 오전 12_15_03-Photoroom 1.controller","1.4438237","0","3.07","3.16","","","","","","",""
+"ariel","Trigger","ariel-c-master-2","ariel-c","4","SetDuration","1","","","","","","","","","","","",""
 "ariel","Trigger","ariel-c-trait-5","ariel-c","1","ApplyStatus","blessing","","","","","","","","","","","",""
 "ariel","Trigger","ariel-c-trait-5","ariel-c","2","SelectTargets","AllAllies","Owner","Battlefield","","AppliedTargets","","","","","","","",""
 "ariel","Trigger","ariel-c-trait-5","ariel-c","3","ConditionStatus","shield","AllAllies","","1","","","","","","","","",""
@@ -155,3 +156,4 @@
 "rin","Trigger","rin-d-master1-kill-burst","rin-d","1","ApplyDamage","Holy","45","","0.9","0","2.4","","Fixed","0","","","",""
 "rin","Trigger","rin-d-master1-kill-burst","rin-d","2","SelectTargets","Enemy","EventTarget","Circle","EffectTarget","","","true","","","","","",""
 "rin","Trigger","rin-d-master1-kill-burst","rin-d","3","ShowVisual","Assets/Image/Monster/Rin/Legacy/Effect_Sprite/2-5-1.png","","1","0","3.9373517","3.788869","","","","","","",""
+"rin","Trigger","rin-d-master1-kill-burst","rin-d","4","SetDuration","1","","","","","","","","","","","",""

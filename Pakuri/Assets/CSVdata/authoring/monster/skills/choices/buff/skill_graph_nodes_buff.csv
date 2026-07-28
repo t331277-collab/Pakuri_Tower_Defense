@@ -51,5 +51,6 @@
 "ariel","Trigger","ariel-b-trait4-shield-expire","ariel-b","1","ApplyDamage","Holy","0","0",,"3",,"","ShieldAppliedAmount","0.6","","","",""
 "ariel","Trigger","ariel-b-trait4-shield-expire","ariel-b","2","SelectTargets","Enemy","Nearest","Circle","PrimarySkillCenter","","","true","","","","","",""
 "ariel","Trigger","ariel-b-trait4-shield-expire","ariel-b","3","ShowVisual","Assets/Image/Monster/ariel/SkillEffect/1.png","Assets/Image/Monster/ariel/SkillEffect/1.controller","0.5832231","0","5.85","5.46","","","","","","",""
+"ariel","Trigger","ariel-b-trait4-shield-expire","ariel-b","4","SetDuration","1","","","","","","","","","","","",""
 "ariel","Trigger","ariel-b-master2-shield-absorb-reflect","ariel-b","1","ApplyDamage","Holy","0","0",,"0",,"","ShieldAbsorbedAmount","0.35","","","",""
 "ariel","Trigger","ariel-b-master2-shield-absorb-reflect","ariel-b","2","SelectTargets","Enemy","EventTarget","Single","EffectTarget","","","","1","","","","",""

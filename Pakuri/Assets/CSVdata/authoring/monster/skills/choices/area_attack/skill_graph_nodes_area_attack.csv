@@ -35,6 +35,7 @@
 "eve","Trigger","eve-c-master-2","eve-c","1","ApplyDamage","Ice","24","1.5","1","3.2","","","","","","","",""
 "eve","Trigger","eve-c-master-2","eve-c","2","SelectTargets","Enemy","","Circle","PrimarySkillCenter","Center","true","","","","","","",""
 "eve","Trigger","eve-c-master-2","eve-c","3","ShowVisual","Assets/Image/Monster/Eve/SkillEffect/Effect_Sprite/1.png","Assets/Image/Monster/Eve/SkillEffect/Effect_Sprite/ChatGPT Image 2026년 5월 23일 오전 12_11_01-Photoroom 1_0.controller","0.435692","0","6.52","6.11","","","","","","",""
+"eve","Trigger","eve-c-master-2","eve-c","4","SetDuration","1","","","","","","","","","","","",""
 "eve","Trigger","eve-e-master-1","eve-e","1","RecastZone","eve-e","0.5","3","0.6","true","1","","","","","","",""
 "eve","Trigger","eve-e-master-1","eve-e","2","SelectTargets","","","","PrimarySkillCenter","Center","","","","","","","",""
 "sein","Trigger","sein-d-master-2","sein-d","1","ApplyDamage","Fire","12","0","0.4","3.2","0.55","0.5","","","","","",""

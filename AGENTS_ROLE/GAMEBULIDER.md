@@ -18,8 +18,8 @@ Read only the track files that match the request:
 
 - Structure support, class boundaries, module boundaries, interface contracts, data flow, or file organization: read `AGENTS_ROLE/GAMEBULIDER_STRUCTURE.md`.
 - Direct feature implementation or bug fix: read `AGENTS_ROLE/GAMEBULIDER_IMPLEMENTATION.md`.
-- New Base skill authoring on an existing runtime/schema, Enhancement or Master authoring, or user-invoked "Skill Builder" work: read `AGENTS_ROLE/GAMEBULIDER_SKILL.md`.
-- New base runtime behavior, skill runtime wiring, runtime code, or prefab/effect connection: read `AGENTS_ROLE/GAMEBULIDER_IMPLEMENTATION.md` instead of the Skill Builder track.
+- Skill data, skill runtime, schema, node, prefab/effect connection, Base, Enhancement, or Master implementation under the Code Builder role: read `AGENTS_ROLE/GAMEBULIDER_IMPLEMENTATION.md` and the smallest applicable structure/refactoring/verification tracks.
+- User-invoked `Skill Builder`: read `AGENTS_ROLE/GAMEBULIDER_SKILL.md`, report that the preserved role is inactive, and do not author or modify skill data.
 - Refactoring or behavior-preserving migration: read `AGENTS_ROLE/GAMEBULIDER_REFACT.md`.
 - Code quality, API stability, static state, hardcoding, complexity, or reviewability standards: read `AGENTS_ROLE/GAMEBULIDER_QUALITY.md`.
 - Unity UI implementation: read `AGENTS_ROLE/GAMEBULIDER_UI.md`.

@@ -61,10 +61,12 @@ internal static class SkillTrigger
 
 		public int EventHitCount { get; }
 
+		public int RecastGeneration { get; }
+
 		/*
 		 * TriggerExecutionContext에 필요한 값을 초기화한다.
 		 */
-		public TriggerExecutionContext(UnitCombatState eventTarget /* 사건 대상 */, UnitCombatState attacker /* 공격자 */, Vector2 eventCenter /* 사건 중심 위치 */, StatusRuntimeInstance status /* 실행 중인 상태 효과 */, float shieldAbsorbedAmount /* 보호막 흡수된 수치 */, float eventAppliedDamage /* 사건 적용된 피해 */, DamageAttribute eventAttribute /* 사건 속성 */, string eventSourceSkillId /* 사건 발생 원본 스킬 식별자 */, UnitCombatState eventSource = null /* 사건 발생 원본 */, bool eventWasExecute = false /* 사건 발생 처형 여부 */, string eventTriggerSourceSkillId = null /* 사건 트리거 발생 원본 스킬 식별자 */, int eventHitCount = 0 /* 사건 적중 횟수 */)
+		public TriggerExecutionContext(UnitCombatState eventTarget /* 사건 대상 */, UnitCombatState attacker /* 공격자 */, Vector2 eventCenter /* 사건 중심 위치 */, StatusRuntimeInstance status /* 실행 중인 상태 효과 */, float shieldAbsorbedAmount /* 보호막 흡수된 수치 */, float eventAppliedDamage /* 사건 적용된 피해 */, DamageAttribute eventAttribute /* 사건 속성 */, string eventSourceSkillId /* 사건 발생 원본 스킬 식별자 */, UnitCombatState eventSource = null /* 사건 발생 원본 */, bool eventWasExecute = false /* 사건 발생 처형 여부 */, string eventTriggerSourceSkillId = null /* 사건 트리거 발생 원본 스킬 식별자 */, int eventHitCount = 0 /* 사건 적중 횟수 */, int recastGeneration = 0 /* 재시전 실행 세대 */)
 		{
 			EventTarget = eventTarget;
 			Attacker = attacker;
@@ -78,6 +80,7 @@ internal static class SkillTrigger
 			EventWasExecute = eventWasExecute;
 			EventTriggerSourceSkillId = eventTriggerSourceSkillId;
 			EventHitCount = Mathf.Max(0, eventHitCount);
+			RecastGeneration = Mathf.Max(0, recastGeneration);
 		}
 	}
 
@@ -111,7 +114,8 @@ internal static class SkillTrigger
 			DamageAttribute.Physical,
 			actionContext.SourceSkillId,
 			actionContext.Source,
-			eventHitCount: actionContext.HitCount);
+			eventHitCount: actionContext.HitCount,
+			recastGeneration: executionContext.RecastGeneration);
 		ExecuteSourceOwnedTriggers(
 			executionContext.CombatManager,
 			executionContext.Roster,
@@ -748,7 +752,8 @@ internal static class SkillTrigger
 			roster,
 			sourceEntry,
 			runtime,
-			triggerContext.EventTarget);
+			triggerContext.EventTarget,
+			recastGeneration: triggerContext.RecastGeneration);
 		var actionContext = new SkillActionContext(
 			source,
 			trigger.SourceSkillId,
