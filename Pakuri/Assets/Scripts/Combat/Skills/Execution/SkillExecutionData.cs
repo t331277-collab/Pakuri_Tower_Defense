@@ -404,7 +404,7 @@ public class SkillExecutionData
 		if (source != null)
 		{
 			SkillEffectPrefab = source.SkillEffectPrefab;
-			ApplyNodes(source.NormalizedPlanNodes);
+			ApplyNodes(source.NormalizedNodes);
 		}
 	}
 
@@ -413,7 +413,7 @@ public class SkillExecutionData
 	 */
 	public void ApplyChoiceSpec(SkillChoice spec /* 처리에 사용할 설정 */)
 	{
-		if (spec == null || !HasNormalizedPlanNodes(spec.Source))
+		if (spec == null || !HasNormalizedNodes(spec.Source))
 		{
 			return;
 		}
@@ -455,11 +455,11 @@ public class SkillExecutionData
 	/*
 	 * 선택지에 적용할 정규화 노드가 하나 이상 있는지 확인한다.
 	 */
-	private static bool HasNormalizedPlanNodes(SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */)
+	private static bool HasNormalizedNodes(SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */)
 	{
-		if (choice != null && choice.NormalizedPlanNodes != null)
+		if (choice != null && choice.NormalizedNodes != null)
 		{
-			return choice.NormalizedPlanNodes.Length != 0;
+			return choice.NormalizedNodes.Length != 0;
 		}
 		return false;
 	}
@@ -512,7 +512,7 @@ public class SkillExecutionData
 			SkillActionOp? skillActionOp = nodes[i].GetOperation<SkillActionOp>();
 			if (skillActionOp.HasValue)
 			{
-				ApplyPlanAction(skillActionOp.Value);
+				ApplyNodeAction(skillActionOp.Value);
 			}
 
 			ConsecutiveHitActionOp? consecutiveHitAction = nodes[i].GetOperation<ConsecutiveHitActionOp>();
@@ -622,7 +622,7 @@ public class SkillExecutionData
 	/*
 	 * 행동 종류에 맞는 실행 데이터 속성이나 상태별 보너스에 값을 누적한다.
 	 */
-	private void ApplyPlanAction(SkillActionOp action /* 동작 */)
+	private void ApplyNodeAction(SkillActionOp action /* 동작 */)
 	{
 		switch (action.Kind)
 		{

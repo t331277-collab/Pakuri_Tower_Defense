@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.InGame;
@@ -215,7 +215,7 @@ namespace Pakuri.Data
             }
 
             ValidateNormalizedSkillAuthoringRows(model, assetCatalog, errors);
-            ValidateSkillPlanHandlers(model, errors);
+            ValidateSkillNodeHandlers(model, errors);
 
             ValidateUnitRuntimeValues(model, errors);
             ValidateEnemyRows(model, errors);
@@ -411,22 +411,6 @@ namespace Pakuri.Data
                 return;
             }
 
-            if (!string.IsNullOrWhiteSpace(trigger.RuntimeVisualAnchor)
-                && !Enum.TryParse<RuntimeSkillVisualAnchor>(trigger.RuntimeVisualAnchor, true, out _))
-            {
-                errors.Add($"Skill trigger '{trigger.Id}' has unsupported runtime_visual_anchor '{trigger.RuntimeVisualAnchor}'.");
-            }
-
-            if (trigger.RuntimeVisualScale <= 0f)
-            {
-                errors.Add($"Skill trigger '{trigger.Id}' requires positive runtime_visual_scale.");
-            }
-
-            if (trigger.RuntimeHitboxSizeX < 0f || trigger.RuntimeHitboxSizeY < 0f)
-            {
-                errors.Add($"Skill trigger '{trigger.Id}' has a negative runtime hitbox size.");
-            }
-
             if (model == null || !model.Monsters.ContainsKey(trigger.MonsterId))
             {
                 errors.Add($"Skill trigger '{trigger.Id}' references unknown monster '{trigger.MonsterId}'.");
@@ -447,116 +431,10 @@ namespace Pakuri.Data
                 errors.Add($"Skill trigger '{trigger.Id}' uses unsupported required_source_status_id '{trigger.RequiredSourceStatusId}'.");
             }
 
-            var triggerAction = trigger.TriggerAction;
             var hasOwnedNodes = HasOwnedTriggerNodeSource(model, trigger.Id);
-            if (triggerAction == SkillTriggerActionKind.Auto)
+            if (!hasOwnedNodes)
             {
-                triggerAction = SkillTriggerActionKind.TriggeredSkill;
-                if (trigger.RuntimeKind == SkillRuntimeKind.SingleAttack)
-                {
-                    triggerAction = SkillTriggerActionKind.SingleAttack;
-                }
-            }
-
-            if (!hasOwnedNodes && triggerAction == SkillTriggerActionKind.TriggeredSkill)
-            {
-                if (model == null || !model.Skills.TryGetValue(trigger.TriggeredSkillId, out var triggeredSkill))
-                {
-                    errors.Add($"Skill trigger '{trigger.Id}' references unknown triggered skill '{trigger.TriggeredSkillId}'.");
-                }
-                else
-                {
-                    if (!string.Equals(triggeredSkill.MonsterId, trigger.MonsterId, StringComparison.OrdinalIgnoreCase))
-                    {
-                        errors.Add($"Skill trigger '{trigger.Id}' triggered skill '{trigger.TriggeredSkillId}' belongs to '{triggeredSkill.MonsterId}', not '{trigger.MonsterId}'.");
-                    }
-
-                    if (triggeredSkill.RuntimeKind != trigger.RuntimeKind)
-                    {
-                        errors.Add($"Skill trigger '{trigger.Id}' runtime_kind '{trigger.RuntimeKind}' does not match triggered skill '{trigger.TriggeredSkillId}' runtime_kind '{triggeredSkill.RuntimeKind}'.");
-                    }
-                }
-            }
-
-            if (!hasOwnedNodes && triggerAction == SkillTriggerActionKind.Effect)
-            {
-                var resolvedEffectId = ResolveTriggeredEffectId(trigger);
-                if (HasSkillGraphReference(trigger))
-                {
-                    if (trigger.TriggeredGraphOwnerId.StartsWith(trigger.MonsterId + "-", StringComparison.OrdinalIgnoreCase))
-                    {
-                        errors.Add($"Skill trigger '{trigger.Id}' triggered_graph_owner_id '{trigger.TriggeredGraphOwnerId}' must not repeat monster_id '{trigger.MonsterId}'.");
-                    }
-                    if (!string.IsNullOrWhiteSpace(trigger.TriggeredEffectId))
-                    {
-                        errors.Add(
-                            $"Skill trigger '{trigger.Id}' cannot set both triggered_effect_id and triggered graph reference columns.");
-                    }
-                    if (trigger.TriggeredGraphKind != SkillGraphKind.Effect)
-                    {
-                        errors.Add($"Skill trigger '{trigger.Id}' graph reference must use graph_kind 'Effect'.");
-                    }
-                    if (!HasSkillGraphSource(model, trigger))
-                    {
-                        errors.Add(
-                            $"Skill trigger '{trigger.Id}' references unknown skill graph '{trigger.TriggeredGraphOwnerKind}/{trigger.TriggeredGraphOwnerId}/Effect'.");
-                    }
-                }
-
-                if (model == null || string.IsNullOrWhiteSpace(resolvedEffectId) || !HasSkillEffectSource(model, resolvedEffectId))
-                {
-                    errors.Add($"Skill trigger '{trigger.Id}' references unknown triggered effect '{resolvedEffectId}'.");
-                }
-            }
-
-            if (!hasOwnedNodes
-                && (triggerAction == SkillTriggerActionKind.CooldownRefund
-                    || triggerAction == SkillTriggerActionKind.ReloadReduce))
-            {
-                var targetSkillId = trigger.TargetSkillId;
-                if (string.IsNullOrWhiteSpace(targetSkillId))
-                {
-                    targetSkillId = trigger.TriggeredSkillId;
-                }
-                SkillRow targetSkill = null;
-                var requiresExplicitTargetSkill = !string.IsNullOrWhiteSpace(targetSkillId)
-                    || trigger.TargetSide != SkillMultiEffectTargetSide.AllAllies;
-                if (requiresExplicitTargetSkill
-                    && (model == null || string.IsNullOrWhiteSpace(targetSkillId) || !model.Skills.TryGetValue(targetSkillId, out targetSkill)))
-                {
-                    errors.Add($"Skill trigger '{trigger.Id}' references unknown target skill '{targetSkillId}'.");
-                }
-                else if (requiresExplicitTargetSkill
-                    && !string.Equals(targetSkill.MonsterId, trigger.MonsterId, StringComparison.OrdinalIgnoreCase))
-                {
-                    errors.Add($"Skill trigger '{trigger.Id}' target skill '{targetSkillId}' belongs to '{targetSkill.MonsterId}', not '{trigger.MonsterId}'.");
-                }
-            }
-
-            if (!hasOwnedNodes
-                && triggerAction == SkillTriggerActionKind.CooldownRefund
-                && (trigger.CooldownRefundRatio <= 0f || trigger.CooldownRefundRatio > 1f))
-            {
-                errors.Add($"Skill trigger '{trigger.Id}' requires cooldown_refund_ratio in 0..1 for CooldownRefund.");
-            }
-
-            if (!hasOwnedNodes
-                && triggerAction == SkillTriggerActionKind.ReloadReduce
-                && (trigger.ReloadReduceRatio <= 0f || trigger.ReloadReduceRatio > 1f))
-            {
-                errors.Add($"Skill trigger '{trigger.Id}' requires reload_reduce_ratio in 0..1 for ReloadReduce.");
-            }
-
-            if (!hasOwnedNodes
-                && trigger.RuntimeKind == SkillRuntimeKind.Passive
-                && triggerAction == SkillTriggerActionKind.TriggeredSkill)
-            {
-                errors.Add($"Skill trigger '{trigger.Id}' cannot route runtime_kind Passive.");
-            }
-
-            if (!IsSupportedHitTargetCount(trigger.HitTargetCount))
-            {
-                errors.Add($"Skill trigger '{trigger.Id}' has unsupported hit_target_count '{trigger.HitTargetCount}'. Expected positive integer or global.");
+                errors.Add($"Skill trigger '{trigger.Id}' requires at least one owned node.");
             }
 
             if (trigger.RepeatCount <= 0)
@@ -592,22 +470,6 @@ namespace Pakuri.Data
             if (trigger.InternalCooldownSeconds < 0f)
             {
                 errors.Add($"Skill trigger '{trigger.Id}' has negative internal_cooldown_seconds.");
-            }
-
-            if (!hasOwnedNodes
-                && (triggerAction == SkillTriggerActionKind.SingleAttack
-                    || triggerAction == SkillTriggerActionKind.LineAttack))
-            {
-                if (trigger.DamageSource == SkillTriggerDamageSource.Fixed
-                    && !HasPositiveDamagePayload(trigger.BaseDamage, trigger.AttackPowerCoefficient, trigger.SpellPowerCoefficient))
-                {
-                    errors.Add($"Skill trigger '{trigger.Id}' uses Fixed damage_source and requires positive base_damage or positive attack/spell coefficient.");
-                }
-
-                if (trigger.DamageSource != SkillTriggerDamageSource.Fixed && trigger.DamageSourceMultiplier <= 0f)
-                {
-                    errors.Add($"Skill trigger '{trigger.Id}' uses {trigger.DamageSource} and requires positive damage_source_multiplier.");
-                }
             }
 
             ValidateTriggerChoiceReference(trigger.RequiresActiveChoiceId, trigger, model, "requires_active_choice_id", errors);
@@ -847,51 +709,10 @@ namespace Pakuri.Data
         /*
          * 필요한 조건을 만족하는지 확인한다.
          */
-        internal static bool HasSkillEffectSource(SourceModel model /* CSV에서 읽은 원본 데이터 */, string effectId /* 효과 식별자 */)
-        {
-            if (model == null || string.IsNullOrWhiteSpace(effectId))
-            {
-                return false;
-            }
-
-            foreach (var node in model.SkillNodes.Values)
-            {
-                if (node != null
-                    && node.OwnerKind == SkillNodeOwnerKind.Effect
-                    && string.Equals(node.OwnerId, effectId, StringComparison.OrdinalIgnoreCase)
-                    && IsEffectOperationHandler(node.HandlerId))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
 
         /*
          * 필요한 조건을 만족하는지 확인한다.
          */
-        internal static bool HasSkillGraphSource(SourceModel model /* CSV에서 읽은 원본 데이터 */, SkillTriggerRow trigger /* 실행하거나 검사할 트리거 */)
-        {
-            if (model == null || !HasSkillGraphReference(trigger))
-            {
-                return false;
-            }
-
-            for (var i = 0; i < model.SkillGraphNodes.Count; i++)
-            {
-                var graph = model.SkillGraphNodes[i];
-                if (IsLegacyEffectGraph(graph)
-                    && graph.OwnerKind == trigger.TriggeredGraphOwnerKind
-                    && string.Equals(graph.MonsterId, trigger.MonsterId, StringComparison.OrdinalIgnoreCase)
-                    && string.Equals(graph.OwnerId, trigger.TriggeredGraphOwnerId, StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
 
         internal static bool HasOwnedTriggerNodeSource(
             SourceModel model,
@@ -906,7 +727,6 @@ namespace Pakuri.Data
             {
                 var graph = model.SkillGraphNodes[i];
                 if (graph != null
-                    && !graph.IsLegacySchema
                     && graph.OwnerKind == SkillNodeOwnerKind.Trigger
                     && string.Equals(graph.OwnerId, triggerId, StringComparison.OrdinalIgnoreCase))
                 {
@@ -1222,17 +1042,13 @@ namespace Pakuri.Data
         }
 
         /*
-         * Plan 그래프의 각 handler가 실제 전투 변환 경로를 가지는지 검사한다.
+         * 각 노드 handler가 실제 전투 변환 경로를 가지는지 검사한다.
          */
-        private static void ValidateSkillPlanHandlers(SourceModel model /* CSV에서 읽은 원본 데이터 */, List<string> errors /* 검증 오류를 모을 목록 */)
+        private static void ValidateSkillNodeHandlers(SourceModel model /* CSV에서 읽은 원본 데이터 */, List<string> errors /* 검증 오류를 모을 목록 */)
         {
             for (var i = 0; i < model.SkillGraphNodes.Count; i++)
             {
                 var graph = model.SkillGraphNodes[i];
-                if (IsLegacyEffectGraph(graph))
-                {
-                    continue;
-                }
                 if (!model.SkillNodeTypes.TryGetValue(graph.NodeTypeId, out var nodeType))
                 {
                     continue;
@@ -1425,15 +1241,6 @@ namespace Pakuri.Data
                 {
                     assets.AddPrefab(param.Value, $"Skill node param '{param.NodeId}.{param.ParamKey}'");
                 }
-            }
-
-            foreach (var trigger in model.SkillTriggers.Values)
-            {
-                assets.AddPrefab(trigger.SkillEffectPrefabPath, $"Skill trigger '{trigger.Id}' skill_effect_prefab_path");
-                assets.AddSprite(trigger.RuntimeVisualSpritePath, $"Skill trigger '{trigger.Id}' runtime_visual_sprite_path");
-                assets.AddAnimatorController(
-                    trigger.RuntimeVisualAnimatorControllerPath,
-                    $"Skill trigger '{trigger.Id}' runtime_visual_animator_controller_path");
             }
 
             foreach (var status in model.StatusEffects.Values)

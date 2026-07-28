@@ -293,8 +293,7 @@ namespace Pakuri.InGame
                     0f,
                     0,
                     snapshot,
-                    context),
-                legacyEffectActive: false);
+                    context));
             var routed = ExecuteSkill(context, snapshot, runtime.Data);
             if (routed)
             {
@@ -319,8 +318,7 @@ namespace Pakuri.InGame
                         0f,
                         0,
                         snapshot,
-                        context),
-                    legacyEffectActive: false);
+                        context));
                 NotifySkillCastTriggers(combatManager, roster, entry, runtime, context, triggerSourceSkillId);
             }
 
@@ -1544,10 +1542,10 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            if (choice.NormalizedPlanNodes != null && choice.NormalizedPlanNodes.Length > 0)
+            if (choice.NormalizedNodes != null && choice.NormalizedNodes.Length > 0)
             {
                 return SkillNodeMapper.HasSkillNodeForTarget(
-                    choice.NormalizedPlanNodes,
+                    choice.NormalizedNodes,
                     skillData.SkillId);
             }
 

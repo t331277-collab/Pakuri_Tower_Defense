@@ -111,8 +111,6 @@ public static class SkillDefinitionCompiler
 		passiveSkillExecutionDefinition.BaseModifierChoices = SkillChoiceCompiler.Compile(source.BaseModifierChoices);
 		passiveSkillExecutionDefinition.EnhancementChoices = SkillChoiceCompiler.Compile(source.EnhancementChoices);
 		passiveSkillExecutionDefinition.MasterChoices = Array.Empty<SkillChoice>();
-		passiveSkillExecutionDefinition.MultiEffects = source.PassiveEffects;
-		StatusRuntimeCompiler.CompileSkillEffects(passiveSkillExecutionDefinition.MultiEffects);
 		SkillTriggerDefinition[] triggers = null;
 		if (monster != null)
 		{
@@ -120,7 +118,7 @@ public static class SkillDefinitionCompiler
 		}
 		passiveSkillExecutionDefinition.SkillTriggers = FilterSkillTriggersForSkill(triggers, source.PassiveId);
 		StatusRuntimeCompiler.CompileTriggers(passiveSkillExecutionDefinition.SkillTriggers);
-		passiveSkillExecutionDefinition.NormalizedPlanNodes = SkillNodeMapper.MapSkillNodeDefinitions(source.NormalizedPlanNodes);
+		passiveSkillExecutionDefinition.NormalizedNodes = SkillNodeMapper.MapSkillNodeDefinitions(source.NormalizedNodes);
 		return passiveSkillExecutionDefinition;
 	}
 
@@ -196,11 +194,9 @@ public static class SkillDefinitionCompiler
 		skill.RuntimeVisual = source.RuntimeVisual;
 		skill.EnhancementChoices = SkillChoiceCompiler.Compile(source.EnhancementChoices);
 		skill.MasterChoices = SkillChoiceCompiler.Compile(source.MasterSkillChoices);
-		skill.MultiEffects = source.MultiEffects;
-		StatusRuntimeCompiler.CompileSkillEffects(skill.MultiEffects);
 		skill.SkillTriggers = FilterSkillTriggersForSkill(monsterTriggers, source.SkillId);
 		StatusRuntimeCompiler.CompileTriggers(skill.SkillTriggers);
-		skill.NormalizedPlanNodes = SkillNodeMapper.MapSkillNodeDefinitions(source.NormalizedPlanNodes);
+		skill.NormalizedNodes = SkillNodeMapper.MapSkillNodeDefinitions(source.NormalizedNodes);
 		skill.Timing.Cooldown = source.CooldownSeconds;
 		skill.Timing.ActiveDuration = source.ActiveDurationSeconds;
 		skill.Timing.TickInterval = source.ShotIntervalSeconds;
@@ -397,7 +393,7 @@ public static class SkillDefinitionCompiler
 			singleSkillExecutionDefinition.TargetStatusStackDamage.AttackPowerCoefficient = source.TargetStatusStackAttackPowerCoefficient;
 			singleSkillExecutionDefinition.TargetStatusStackDamage.SpellPowerCoefficient = source.TargetStatusStackSpellPowerCoefficient;
 			singleSkillExecutionDefinition.TargetStatusStackDamage.CriticalAllowed = false;
-			ApplySingleBasePlanNodes(singleSkillExecutionDefinition, source.NormalizedPlanNodes, source.Attribute);
+			ApplySingleBaseNodes(singleSkillExecutionDefinition, source.NormalizedNodes, source.Attribute);
 			if (!string.IsNullOrWhiteSpace(singleSkillExecutionDefinition.DeploymentRequiredTargetStatusId))
 			{
 				singleSkillExecutionDefinition.DeploymentRequiredTargetStatusKind = StatusRuntimeCompiler.ParseStatusKind(
@@ -616,9 +612,9 @@ public static class SkillDefinitionCompiler
 
 
 	/*
-	 * ApplySingleBasePlanNodes 처리를 대상에 적용한다.
+	 * ApplySingleBaseNodes 처리를 대상에 적용한다.
 	 */
-	private static void ApplySingleBasePlanNodes(SingleSkillDefinition single /* 단일 */, SkillNodeDefinition[] nodes /* 노드 목록 */, DamageAttribute attribute /* 피해 속성 */)
+	private static void ApplySingleBaseNodes(SingleSkillDefinition single /* 단일 */, SkillNodeDefinition[] nodes /* 노드 목록 */, DamageAttribute attribute /* 피해 속성 */)
 	{
 		foreach (SkillNodeDefinition skillNodeDefinition in nodes)
 		{
@@ -693,10 +689,10 @@ namespace Pakuri.InGame
 		List<SkillNode> list = new List<SkillNode>(source.Length);
 		for (int i = 0; i < source.Length; i++)
 		{
-			SkillNode skillExecutionPlanNode = MapSkillNodeDefinition(source[i]);
-			if (skillExecutionPlanNode != null)
+			SkillNode skillExecutionNode = MapSkillNodeDefinition(source[i]);
+			if (skillExecutionNode != null)
 			{
-				list.Add(skillExecutionPlanNode);
+				list.Add(skillExecutionNode);
 			}
 		}
 		if (list.Count != 0)
@@ -723,7 +719,7 @@ namespace Pakuri.InGame
 		}
 
 		SkillNodeDefinition[] filtered = FilterSkillNodeDefinitionsForTarget(
-			choice.Source.NormalizedPlanNodes,
+			choice.Source.NormalizedNodes,
 			targetSkillId);
 		SkillNode[] nodes = MapSkillNodeDefinitions(filtered);
 		choice.CacheRuntimeNodes(targetSkillId, nodes);
@@ -814,7 +810,10 @@ namespace Pakuri.InGame
 				GetFloatParam(node, "spell_power_coefficient", 0f),
 				GetFloatParam(node, "damage_multiplier", 1f),
 				GetFloatParam(node, "radius", 0f),
-				GetFloatParam(node, "tick_interval_seconds", 0f)));
+				GetFloatParam(node, "tick_interval_seconds", 0f),
+				GetEnumParam(node, "value_source", NodeDamageValueSource.Fixed),
+				GetFloatParam(node, "value_source_multiplier", 1f),
+				GetEnumParam(node, "tracked_attribute", DamageAttribute.Physical)));
 		}
 		if (string.Equals(text, "ApplyShield", StringComparison.OrdinalIgnoreCase))
 		{
@@ -864,7 +863,8 @@ namespace Pakuri.InGame
 				GetEnumParam(node, "center_mode", SkillMultiEffectCenterMode.PrimarySkillCenter),
 				GetEnumParam(node, "visual_anchor_mode", SkillMultiEffectVisualAnchorMode.Center),
 				GetBoolParam(node, "apply_once", false),
-				GetBoolParam(node, "cover_all", false)));
+				GetBoolParam(node, "cover_all", false),
+				GetIntParam(node, "max_targets", 0)));
 		}
 		if (string.Equals(text, "EffectLifetime", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(text, "SetDuration", StringComparison.OrdinalIgnoreCase))

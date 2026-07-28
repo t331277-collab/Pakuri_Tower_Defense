@@ -27,7 +27,6 @@ namespace Pakuri.InGame
         private ProjectileStatusHitSpec statusSpec;
         private SkillUseState runtime;
         private SkillExecutionData snapshot;
-        private SkillEffectDefinition[] onExpireEffects;
         private UnitCombatState sourceModel;
         private bool criticalAllowed;
         private float critChanceBonus;
@@ -55,7 +54,6 @@ namespace Pakuri.InGame
             ProjectileStatusHitSpec onTickStatus /* 발생 시 반복 적용 상태 효과 */,
             SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
             SkillExecutionData executionData /* 실행 시점의 스킬 강화 정보 */,
-            SkillEffectDefinition[] expireEffects /* 만료 효과 목록 */,
             UnitCombatState source /* 효과를 발생시킨 유닛 */,
             bool allowCritical /* 허용 치명타 여부 */,
             float criticalChanceBonus /* 치명타 확률 추가값 */,
@@ -78,7 +76,6 @@ namespace Pakuri.InGame
             statusSpec = onTickStatus;
             runtime = sourceRuntime;
             snapshot = executionData;
-            onExpireEffects = expireEffects;
             sourceModel = source;
             criticalAllowed = allowCritical;
             critChanceBonus = criticalChanceBonus;
@@ -225,7 +222,6 @@ namespace Pakuri.InGame
          */
         private void TryExecuteExpireEffects()
         {
-            var hasLegacyExpireEffect = onExpireEffects != null && onExpireEffects.Length > 0;
             if (combatManager != null && casterEntry != null && roster != null)
             {
                 var lifecycleContext = new SkillExecutionContext(
@@ -244,30 +240,8 @@ namespace Pakuri.InGame
                         0f,
                         0,
                         snapshot,
-                        lifecycleContext),
-                    legacyEffectActive: hasLegacyExpireEffect);
+                        lifecycleContext));
             }
-
-            if (onExpireEffects == null || onExpireEffects.Length == 0 || combatManager == null || casterEntry == null || roster == null)
-            {
-                return;
-            }
-
-            var context = new SkillExecutionContext(
-                combatManager,
-                roster,
-                casterEntry,
-                runtime,
-                recastGeneration: recastGeneration);
-            ZoneSkillExecutor.ExecuteAdditionalEffects(
-                context,
-                snapshot,
-                onExpireEffects,
-                center,
-                true,
-                SkillMultiEffectTiming.OnExpire,
-                false);
-            onExpireEffects = null;
         }
 
         /*

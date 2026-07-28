@@ -231,14 +231,14 @@ namespace Pakuri.InGame
             var refund = node.GetOperation<RefundCooldownNodeOp>();
             if (refund.HasValue)
             {
-                RefundCooldown(refund.Value, context);
+                RefundCooldown(refund.Value, context, state);
                 return;
             }
 
             var reload = node.GetOperation<ReduceReloadNodeOp>();
             if (reload.HasValue)
             {
-                ReduceReload(reload.Value, context);
+                ReduceReload(reload.Value, context, state);
             }
         }
 
@@ -255,16 +255,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var damageSpec = new SkillDamageSpec
-            {
-                SkillId = context.SourceSkillId,
-                Element = operation.Attribute,
-                BaseDamage = operation.BaseDamage,
-                AttackPowerCoefficient = operation.AttackPowerCoefficient,
-                SpellPowerCoefficient = operation.SpellPowerCoefficient,
-                CriticalAllowed = false
-            };
-            var rawDamage = DamageCalculator.CalculateRawDamage(context.Source, damageSpec);
+            var rawDamage = ResolveRawDamage(operation, context);
             var multiplier = Mathf.Max(0f, operation.DamageMultiplier);
             if (context.ExecutionData != null)
             {
@@ -291,6 +282,53 @@ namespace Pakuri.InGame
                     context.SourceSkillId,
                     finalDamageMultiplier: multiplier);
             }
+        }
+
+        private static float ResolveRawDamage(
+            ApplyDamageNodeOp operation,
+            SkillActionContext context)
+        {
+            if (operation.ValueSource == NodeDamageValueSource.Fixed)
+            {
+                return DamageCalculator.CalculateRawDamage(
+                    context.Source,
+                    new SkillDamageSpec
+                    {
+                        SkillId = context.SourceSkillId,
+                        Element = operation.Attribute,
+                        BaseDamage = operation.BaseDamage,
+                        AttackPowerCoefficient = operation.AttackPowerCoefficient,
+                        SpellPowerCoefficient = operation.SpellPowerCoefficient,
+                        CriticalAllowed = false
+                    });
+            }
+
+            var value = 0f;
+            switch (operation.ValueSource)
+            {
+                case NodeDamageValueSource.ShieldAppliedAmount:
+                    value = context.EventStatus != null
+                        ? context.EventStatus.AppliedShieldAmount
+                        : 0f;
+                    break;
+                case NodeDamageValueSource.ShieldRemainingAmount:
+                    value = context.EventStatus != null
+                        ? context.EventStatus.RemainingShieldAmount
+                        : 0f;
+                    break;
+                case NodeDamageValueSource.ShieldAbsorbedAmount:
+                    value = context.ShieldAbsorbedAmount;
+                    break;
+                case NodeDamageValueSource.TrackedIncomingDamage:
+                    value = context.EventStatus != null
+                        ? context.EventStatus.GetTrackedIncomingDamage(operation.TrackedAttribute)
+                        : 0f;
+                    break;
+                case NodeDamageValueSource.EventAppliedDamage:
+                    value = context.EventDamage;
+                    break;
+            }
+            return Mathf.Max(0f, value) * Mathf.Max(0f, operation.ValueSourceMultiplier);
         }
 
         private static void ExecuteStatus(
@@ -498,20 +536,10 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var compatibilityDefinition = new SkillEffectDefinition
-            {
-                EffectKind = SkillMultiEffectKind.RecastZone,
-                RecastSourceSkillId = operation.SourceSkillId,
-                DelaySeconds = operation.DelaySeconds,
-                RecastDurationSeconds = operation.DurationSeconds,
-                RecastRadiusMultiplier = operation.RadiusMultiplier,
-                RecastInheritSkillData = operation.InheritSnapshot,
-                RecastMaxGeneration = operation.MaxGeneration
-            };
             ZoneSkillExecutor.ExecuteRecast(
                 context.ExecutionContext,
                 context.ExecutionData,
-                compatibilityDefinition,
+                operation,
                 context.EventCenter);
         }
 
@@ -543,36 +571,73 @@ namespace Pakuri.InGame
                 triggerSourceSkillId: context.SourceSkillId);
         }
 
-        private static void RefundCooldown(RefundCooldownNodeOp operation, SkillActionContext context)
+        private static void RefundCooldown(
+            RefundCooldownNodeOp operation,
+            SkillActionContext context,
+            NodeExecutionState state)
         {
-            var runtime = FindSourceRuntime(operation.SkillId, context);
-            if (runtime != null)
+            var runtimes = ResolveRuntimes(operation.SkillId, context, state);
+            for (var i = 0; i < runtimes.Count; i++)
             {
-                runtime.ReduceCooldownRemaining(
-                    runtime.EffectiveCooldownDuration * Mathf.Clamp01(operation.Ratio));
+                runtimes[i].ReduceCooldownRemaining(
+                    runtimes[i].EffectiveCooldownDuration * Mathf.Clamp01(operation.Ratio));
             }
         }
 
-        private static void ReduceReload(ReduceReloadNodeOp operation, SkillActionContext context)
+        private static void ReduceReload(
+            ReduceReloadNodeOp operation,
+            SkillActionContext context,
+            NodeExecutionState state)
         {
-            var runtime = FindSourceRuntime(operation.SkillId, context);
-            if (runtime != null)
+            var runtimes = ResolveRuntimes(operation.SkillId, context, state);
+            for (var i = 0; i < runtimes.Count; i++)
             {
-                runtime.ReduceReloadRemaining(
-                    runtime.ReloadDuration * Mathf.Clamp01(operation.Ratio));
+                runtimes[i].ReduceReloadRemaining(
+                    runtimes[i].ReloadDuration * Mathf.Clamp01(operation.Ratio));
             }
         }
 
-        private static SkillUseState FindSourceRuntime(string skillId, SkillActionContext context)
+        private static List<SkillUseState> ResolveRuntimes(
+            string skillId,
+            SkillActionContext context,
+            NodeExecutionState state)
         {
-            if (context.Source == null
-                || context.Source.Skills == null
-                || string.IsNullOrWhiteSpace(skillId))
+            var runtimes = new List<SkillUseState>();
+            var entries = ResolveTargets(context, state, 0f);
+            if (state.Targets.TargetSide == SkillMultiEffectTargetSide.Self
+                && entries.Count == 0
+                && context.ExecutionContext != null
+                && context.ExecutionContext.CasterEntry != null)
             {
-                return null;
+                entries = new[] { context.ExecutionContext.CasterEntry };
             }
 
-            return context.Source.SkillState.FindBySkillId(skillId);
+            for (var i = 0; i < entries.Count; i++)
+            {
+                var model = entries[i] != null ? entries[i].Model : null;
+                if (model == null || model.Skills == null)
+                {
+                    continue;
+                }
+                if (!string.IsNullOrWhiteSpace(skillId))
+                {
+                    var runtime = model.SkillState.FindBySkillId(skillId);
+                    if (runtime != null)
+                    {
+                        runtimes.Add(runtime);
+                    }
+                    continue;
+                }
+                var activeSkills = model.SkillState.ActiveSkills;
+                for (var skillIndex = 0; skillIndex < activeSkills.Count; skillIndex++)
+                {
+                    if (activeSkills[skillIndex] != null)
+                    {
+                        runtimes.Add(activeSkills[skillIndex]);
+                    }
+                }
+            }
+            return runtimes;
         }
 
         private static IReadOnlyList<CombatUnitEntry> ResolveTargets(
@@ -605,6 +670,15 @@ namespace Pakuri.InGame
             if (state.Targets.TargetShape == SkillMultiEffectTargetShape.Single && targets.Count > 1)
             {
                 return new[] { targets[0] };
+            }
+            if (state.Targets.MaxTargets > 0 && targets.Count > state.Targets.MaxTargets)
+            {
+                var limited = new CombatUnitEntry[state.Targets.MaxTargets];
+                for (var i = 0; i < limited.Length; i++)
+                {
+                    limited[i] = targets[i];
+                }
+                return limited;
             }
 
             return targets;
@@ -905,7 +979,8 @@ namespace Pakuri.InGame
                 SkillMultiEffectCenterMode.PrimarySkillCenter,
                 SkillMultiEffectVisualAnchorMode.Center,
                 false,
-                false);
+                false,
+                0);
             internal float DurationSeconds;
             internal bool HasStatusPayload;
             internal StatusPayloadNodeOp StatusPayload;

@@ -384,11 +384,31 @@ namespace Pakuri.Data
                     MonsterId = enemyId,
                     SourceSkillId = row.SourceSkillId,
                     TriggerEvent = row.TriggerEvent,
-                    TriggerAction = SkillTriggerActionKind.TriggeredSkill,
-                    TriggeredSkillId = row.TriggeredSkillId,
-                    RuntimeKind = row.RuntimeKind,
                     SortOrder = row.SortOrder,
-                    ProcChance = 1f
+                    ProcChance = 1f,
+                    NormalizedNodes = new[]
+                    {
+                        new SkillNodeDefinition
+                        {
+                            OwnerKind = SkillNodeOwnerKind.Trigger.ToString(),
+                            TargetSkillId = row.SourceSkillId,
+                            HandlerId = "ExecuteSkill",
+                            EnabledByDefault = true,
+                            Params = new[]
+                            {
+                                new SkillNodeParamDefinition
+                                {
+                                    ParamKey = "skill_id",
+                                    Value = row.TriggeredSkillId
+                                },
+                                new SkillNodeParamDefinition
+                                {
+                                    ParamKey = "damage_multiplier",
+                                    Value = "1"
+                                }
+                            }
+                        }
+                    }
                 };
             }
 
@@ -533,8 +553,7 @@ namespace Pakuri.Data
                     Summary = skill.Summary,
                     EnhancementChoices = BuildSkillChoices(model, skill.Id, SkillChoiceGroup.ActiveEnhancement),
                     MasterSkillChoices = BuildSkillChoices(model, skill.Id, SkillChoiceGroup.ActiveMaster),
-                    MultiEffects = Array.Empty<SkillEffectDefinition>(),
-                    NormalizedPlanNodes = BuildSkillNodeDefinitions(model, SkillNodeOwnerKind.Skill, skill.Id, skill.Id)
+                    NormalizedNodes = BuildSkillNodeDefinitions(model, SkillNodeOwnerKind.Skill, skill.Id, skill.Id)
                 };
 
                 ApplyStatusPayload(definition, skill.Status);
@@ -547,422 +566,26 @@ namespace Pakuri.Data
         /*
          * 원본 값으로 런타임 자료를 만든다.
          */
-        internal static SkillEffectDefinition[] BuildSkillEffects(SourceModel model /* CSV에서 읽은 원본 데이터 */, string skillId /* 스킬 식별자 */)
-        {
-            return BuildEffectOwnedSkillEffects(model, skillId);
-        }
 
         /*
          * 원본 값으로 런타임 자료를 만든다.
          */
-        internal static SkillEffectDefinition[] BuildEffectOwnedSkillEffects(SourceModel model /* CSV에서 읽은 원본 데이터 */, string skillId /* 스킬 식별자 */)
-        {
-            var effectNodes = FilterAndSort(
-                model.SkillNodes.Values,
-                node => node.OwnerKind == SkillNodeOwnerKind.Effect
-                    && string.Equals(node.TargetSkillId, skillId, StringComparison.OrdinalIgnoreCase),
-                (left, right) =>
-                {
-                    var ownerCompare = string.Compare(left.OwnerId, right.OwnerId, StringComparison.OrdinalIgnoreCase);
-                    if (ownerCompare != 0)
-                    {
-                        return ownerCompare;
-                    }
-
-                    return left.SortOrder.CompareTo(right.SortOrder);
-                });
-
-            if (effectNodes.Count == 0)
-            {
-                return Array.Empty<SkillEffectDefinition>();
-            }
-
-            var grouped = new Dictionary<string, List<SkillNodeRow>>(StringComparer.OrdinalIgnoreCase);
-            for (var i = 0; i < effectNodes.Count; i++)
-            {
-                var node = effectNodes[i];
-                if (node == null || string.IsNullOrWhiteSpace(node.OwnerId))
-                {
-                    continue;
-                }
-
-                if (!grouped.TryGetValue(node.OwnerId, out var nodes))
-                {
-                    nodes = new List<SkillNodeRow>();
-                    grouped.Add(node.OwnerId, nodes);
-                }
-
-                nodes.Add(node);
-            }
-
-            var definitions = new List<SkillEffectDefinition>(grouped.Count);
-            foreach (var entry in grouped)
-            {
-                var nodes = entry.Value;
-                SkillNodeRow operationNode = null;
-                for (var i = 0; i < nodes.Count; i++)
-                {
-                    if (IsEffectOperationHandler(nodes[i].HandlerId))
-                    {
-                        operationNode = nodes[i];
-                        break;
-                    }
-                }
-
-                if (operationNode == null)
-                {
-                    continue;
-                }
-
-                var definition = BuildEffectOwnedSkillEffectDefinition(operationNode);
-                ApplyEffectOwnedSkillEffectOperationNode(model, definition, operationNode);
-                for (var i = 0; i < nodes.Count; i++)
-                {
-                    var node = nodes[i];
-                    if (node == operationNode)
-                    {
-                        continue;
-                    }
-
-                    ApplyEffectOwnedSkillEffectNode(model, definition, node);
-                }
-
-                definitions.Add(definition);
-            }
-
-            definitions.Sort((left, right) =>
-            {
-                var sortCompare = left.SortOrder.CompareTo(right.SortOrder);
-                if (sortCompare != 0)
-                {
-                    return sortCompare;
-                }
-
-                return string.Compare(left.EffectId, right.EffectId, StringComparison.OrdinalIgnoreCase);
-            });
-            return definitions.ToArray();
-        }
 
         /*
          * 원본 값으로 런타임 자료를 만든다.
          */
-        internal static SkillEffectDefinition BuildEffectOwnedSkillEffectDefinition(SkillNodeRow node /* 노드 */)
-        {
-            return new SkillEffectDefinition
-            {
-                EffectId = node.OwnerId,
-                SkillId = node.TargetSkillId,
-                SortOrder = node.SortOrder,
-                TargetSide = SkillMultiEffectTargetSide.Enemy,
-                TargetSelection = SkillMultiEffectTargetSelection.Nearest,
-                TargetShape = SkillMultiEffectTargetShape.Single,
-                CenterMode = SkillMultiEffectCenterMode.PrimarySkillCenter,
-                VisualAnchorMode = SkillMultiEffectVisualAnchorMode.Center,
-                EffectTiming = SkillMultiEffectTiming.OnCast,
-                EnabledByDefault = node.EnabledByDefault,
-                RequiresActiveChoiceId = node.RequiresActiveChoiceId,
-                ExcludesActiveChoiceId = node.ExcludesActiveChoiceId,
-                RequiresPassiveSkillId = node.RequiresPassiveSkillId,
-                ExcludesPassiveSkillId = node.ExcludesPassiveSkillId,
-                DamageMultiplier = 1f,
-                StatusChance = 1f,
-                StatusMaxStacks = 1,
-                StatusStackAmount = 1
-            };
-        }
 
         /*
          * 계산된 값을 대상 정의에 적용한다.
          */
-        internal static void ApplyEffectOwnedSkillEffectOperationNode(
-            SourceModel model /* CSV에서 읽은 원본 데이터 */,
-            SkillEffectDefinition definition /* 변환하거나 검사할 정의 */,
-            SkillNodeRow node /* 노드 */)
-        {
-            var parameters = BuildSkillNodeParamValueLookup(model, node.Id);
-            if (string.Equals(node.HandlerId, "EffectDamage", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.EffectKind = SkillMultiEffectKind.Damage;
-                definition.Attribute = GetSkillNodeEnumParam(parameters, "attribute", DamageAttribute.Physical);
-                definition.BaseDamage = GetSkillNodeFloatParam(parameters, "base_damage", 0f);
-                definition.AttackPowerCoefficient = GetSkillNodeFloatParam(parameters, "attack_power_coefficient", 0f);
-                definition.SpellPowerCoefficient = GetSkillNodeFloatParam(parameters, "spell_power_coefficient", 0f);
-                definition.DamageMultiplier = GetSkillNodeFloatParam(parameters, "damage_multiplier", 1f);
-                definition.Radius = GetSkillNodeFloatParam(parameters, "radius", 0f);
-                definition.TickIntervalSeconds = GetSkillNodeFloatParam(parameters, "tick_interval_seconds", 0f);
-            }
-            else if (string.Equals(node.HandlerId, "RecastZone", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.EffectKind = SkillMultiEffectKind.RecastZone;
-                definition.RecastSourceSkillId = GetSkillNodeStringParam(parameters, "source_skill_id");
-                definition.DelaySeconds = GetSkillNodeFloatParam(parameters, "delay_seconds", 0f);
-                definition.RecastDurationSeconds = GetSkillNodeFloatParam(parameters, "duration_seconds", 0f);
-                definition.RecastRadiusMultiplier = GetSkillNodeFloatParam(parameters, "radius_multiplier", 1f);
-                definition.RecastInheritSkillData = GetSkillNodeBoolParam(parameters, "inherit_snapshot", true);
-                definition.RecastMaxGeneration = GetSkillNodeIntParam(parameters, "max_generation", 1);
-            }
-            else if (string.Equals(node.HandlerId, "EffectExtendStatusDuration", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.EffectKind = SkillMultiEffectKind.ExtendStatusDuration;
-                ApplyEffectOwnedStatusParams(definition, parameters);
-            }
-            else if (string.Equals(node.HandlerId, "ApplyShield", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.EffectKind = SkillMultiEffectKind.Status;
-                definition.StatusEffectId = "shield";
-                definition.BaseDamage = GetSkillNodeFloatParam(parameters, "base_damage", 0f);
-                definition.AttackPowerCoefficient = GetSkillNodeFloatParam(parameters, "attack_power_coefficient", 0f);
-                definition.SpellPowerCoefficient = GetSkillNodeFloatParam(parameters, "spell_power_coefficient", 0f);
-                definition.DamageMultiplier = GetSkillNodeFloatParam(parameters, "damage_multiplier", 1f);
-                ApplyEffectOwnedStatusParams(definition, parameters, keepExistingStatusId: true);
-            }
-            else if (string.Equals(node.HandlerId, "StatusModifier", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.EffectKind = SkillMultiEffectKind.Status;
-                definition.StatusEffectId = "passive-buff";
-                ApplyEffectOwnedStatusParams(definition, parameters, keepExistingStatusId: true);
-            }
-            else
-            {
-                definition.EffectKind = SkillMultiEffectKind.Status;
-                ApplyEffectOwnedStatusParams(definition, parameters);
-            }
-        }
 
         /*
          * 계산된 값을 대상 정의에 적용한다.
          */
-        internal static void ApplyEffectOwnedStatusParams(
-            SkillEffectDefinition definition /* 변환하거나 검사할 정의 */,
-            Dictionary<string, string> parameters /* 매개변수 목록 */,
-            bool keepExistingStatusId = false /* 기존 상태 효과 식별자 유지 여부 */)
-        {
-            if (!keepExistingStatusId)
-            {
-                definition.StatusEffectId = GetSkillNodeStringParam(parameters, "status_id");
-            }
-
-            definition.StatusChance = GetSkillNodeFloatParam(parameters, "status_chance", 1f);
-            definition.StatusEffectLabel = GetSkillNodeStringParam(parameters, "status_label");
-            definition.StatusEffectPrefab = LoadPrefab(GetSkillNodeStringParam(parameters, "status_effect_prefab_path"));
-            definition.StatusDurationSeconds = GetSkillNodeFloatParam(parameters, "status_duration_seconds", 0f);
-            definition.StatusMaxStacks = GetSkillNodeIntParam(parameters, "status_max_stacks", 1);
-            definition.StatusStackAmount = GetSkillNodeIntParam(parameters, "status_stack_amount", 1);
-            definition.StatusTargetScope = GetSkillNodeStringParam(parameters, "status_target_scope");
-            definition.StatusMergePolicy = GetSkillNodeStringParam(parameters, "status_merge_policy");
-            definition.ShieldAmountRefreshPolicy = GetSkillNodeStringParam(parameters, "shield_amount_refresh_policy");
-        }
 
         /*
          * 계산된 값을 대상 정의에 적용한다.
          */
-        internal static void ApplyEffectOwnedSkillEffectNode(SourceModel model /* CSV에서 읽은 원본 데이터 */, SkillEffectDefinition definition /* 변환하거나 검사할 정의 */, SkillNodeRow node /* 노드 */)
-        {
-            var parameters = BuildSkillNodeParamValueLookup(model, node.Id);
-            var handlerId = node.HandlerId;
-            if (IsEffectOperationHandler(handlerId))
-            {
-                ApplyEffectOwnedSkillEffectOperationNode(model, definition, node);
-                return;
-            }
-
-            if (string.Equals(handlerId, "EffectTarget", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.TargetSide = GetSkillNodeEnumParam(parameters, "target_side", definition.TargetSide);
-                definition.TargetSelection = GetSkillNodeEnumParam(parameters, "target_selection", definition.TargetSelection);
-                definition.TargetShape = GetSkillNodeEnumParam(parameters, "target_shape", definition.TargetShape);
-                definition.CenterMode = GetSkillNodeEnumParam(parameters, "center_mode", definition.CenterMode);
-                definition.VisualAnchorMode = GetSkillNodeEnumParam(parameters, "visual_anchor_mode", definition.VisualAnchorMode);
-                definition.EffectTiming = GetSkillNodeEnumParam(parameters, "effect_timing", definition.EffectTiming);
-                definition.DelaySeconds = GetSkillNodeFloatParam(parameters, "delay_seconds", definition.DelaySeconds);
-                definition.ApplyOnce = GetSkillNodeBoolParam(parameters, "apply_once", definition.ApplyOnce);
-                definition.CoverAll = GetSkillNodeBoolParam(parameters, "cover_all", definition.CoverAll);
-                return;
-            }
-
-            if (string.Equals(handlerId, "EffectVisual", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.SkillEffectPrefab = LoadPrefab(GetSkillNodeStringParam(parameters, "skill_effect_prefab_path"));
-                return;
-            }
-
-            if (string.Equals(handlerId, "AttachStatusPayload", StringComparison.OrdinalIgnoreCase))
-            {
-                ApplyEffectOwnedStatusParams(definition, parameters);
-                return;
-            }
-
-            if (string.Equals(handlerId, "RequiredSourceStatus", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.RequiredSourceStatusId = GetSkillNodeStringParam(parameters, "status_id");
-                definition.RequiredSourceStatusMinStacks = GetSkillNodeIntParam(parameters, "min_stacks", 1);
-                return;
-            }
-
-            if (string.Equals(handlerId, "StatusRuntimeKindFilter", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.StatusConditionalIncomingSkillRuntimeKinds = GetSkillNodeStringParam(
-                    parameters,
-                    "incoming_skill_runtime_kinds");
-                definition.StatusConditionalOutgoingSkillRuntimeKinds = GetSkillNodeStringParam(
-                    parameters,
-                    "outgoing_skill_runtime_kinds");
-                return;
-            }
-
-            if (string.Equals(handlerId, "RuntimeEffectVisual", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.RuntimeVisual = BuildRuntimeVisual(
-                    GetSkillNodeStringParam(parameters, "runtime_visual_sprite_path"),
-                    GetSkillNodeStringParam(parameters, "runtime_visual_animator_controller_path"),
-                    GetSkillNodeFloatParam(parameters, "runtime_visual_scale", 1f),
-                    0f,
-                    0f,
-                    0f,
-                    GetSkillNodeIntParam(parameters, "runtime_visual_sorting_order", 0),
-                    GetSkillNodeFloatParam(parameters, "runtime_hitbox_size_x", 0f),
-                    GetSkillNodeFloatParam(parameters, "runtime_hitbox_size_y", 0f));
-                return;
-            }
-
-            if (string.Equals(handlerId, "ConditionStatus", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.ConditionStatusId = BuildConditionStatusExpression(parameters);
-                definition.ConditionStatuses = StatusRuntimeCompiler.ParseConditionStatusExpression(
-                    definition.ConditionStatusId);
-                definition.ConditionTargetSide = GetSkillNodeEnumParam(parameters, "target_side", definition.TargetSide);
-                definition.ConditionStatusSourceSkillId = GetSkillNodeStringParam(parameters, "source_skill_id");
-                definition.ConditionStatusSourceSkillIds = StatusRuntimeCompiler.ParseIdList(
-                    definition.ConditionStatusSourceSkillId);
-                return;
-            }
-
-            if (string.Equals(handlerId, "ConditionAnyStatus", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.ConditionStatusId = GetSkillNodeStringParam(parameters, "status_ids");
-                definition.ConditionStatuses = StatusRuntimeCompiler.ParseConditionStatusExpression(
-                    definition.ConditionStatusId);
-                definition.ConditionTargetSide = GetSkillNodeEnumParam(parameters, "target_side", definition.TargetSide);
-                definition.ConditionStatusSourceSkillId = GetSkillNodeStringParam(parameters, "source_skill_id");
-                definition.ConditionStatusSourceSkillIds = StatusRuntimeCompiler.ParseIdList(
-                    definition.ConditionStatusSourceSkillId);
-                return;
-            }
-
-            if (string.Equals(handlerId, "ConditionSkillAttribute", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.ConditionSkillAttribute = GetSkillNodeStringParam(parameters, "attribute");
-                return;
-            }
-
-            if (string.Equals(handlerId, "ConditionHealthRatioMax", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.ConditionHealthRatioMax = GetSkillNodeFloatParam(parameters, "ratio", 0f);
-                return;
-            }
-
-            if (string.Equals(handlerId, "ConditionHitCountMin", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.ConditionHitCountMin = GetSkillNodeIntParam(parameters, "min_targets", 0);
-                return;
-            }
-
-            if (string.Equals(handlerId, "EffectLifetime", StringComparison.OrdinalIgnoreCase))
-            {
-                var duration = GetSkillNodeFloatParam(parameters, "duration_seconds", 0f);
-                if (definition.EffectKind == SkillMultiEffectKind.Damage)
-                {
-                    definition.ActiveDurationSeconds = duration;
-                }
-                else
-                {
-                definition.StatusDurationSeconds = duration;
-            }
-
-            return;
-        }
-
-            var bonus = GetSkillNodeFloatParam(parameters, "bonus", 0f);
-            if (string.Equals(handlerId, "StatusActionSpeedBonus", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.StatusActionSpeedBonus += bonus;
-            }
-            else if (string.Equals(handlerId, "StatusMoveSpeedBonus", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.StatusMoveSpeedBonus += bonus;
-            }
-            else if (string.Equals(handlerId, "StatusAttackPowerBonus", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.StatusAttackPowerBonus += bonus;
-            }
-            else if (string.Equals(handlerId, "StatusSpellPowerBonus", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.StatusSpellPowerBonus += bonus;
-            }
-            else if (string.Equals(handlerId, "StatusDamageBonusRate", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.Attribute = GetSkillNodeEnumParam(parameters, "attribute", definition.Attribute);
-                definition.StatusDamageBonusRate += bonus;
-            }
-            else if (string.Equals(handlerId, "StatusShieldReceivedBonus", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.StatusShieldReceivedBonus += bonus;
-            }
-            else if (string.Equals(handlerId, "StatusDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.StatusDamageTakenBonus += bonus;
-            }
-            else if (string.Equals(handlerId, "StatusFlatElementResistReduction", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.Attribute = GetSkillNodeEnumParam(parameters, "attribute", definition.Attribute);
-                definition.StatusFlatElementResistReduction += bonus;
-            }
-            else if (string.Equals(handlerId, "StatusCriticalChanceBonus", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.StatusCriticalChanceBonus += bonus;
-            }
-            else if (string.Equals(handlerId, "StatusCriticalResistanceBonus", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.StatusCriticalResistanceBonus += bonus;
-            }
-            else if (string.Equals(handlerId, "StatusCriticalDamageBonus", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.StatusCriticalDamageBonus += bonus;
-            }
-            else if (string.Equals(handlerId, "StatusElementResistReduction", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.Attribute = GetSkillNodeEnumParam(parameters, "attribute", definition.Attribute);
-                definition.StatusElementResistReduction += bonus;
-            }
-            else if (string.Equals(handlerId, "StatusOutgoingAdditionalDamage", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.StatusOutgoingAdditionalDamageMultiplier += GetSkillNodeFloatParam(parameters, "multiplier", 0f);
-                definition.StatusOutgoingAdditionalDamageTriggerAttribute = GetSkillNodeEnumParam(
-                    parameters,
-                    "trigger_attribute",
-                    DamageAttribute.Physical);
-                definition.StatusOutgoingAdditionalDamageAttribute = GetSkillNodeEnumParam(
-                    parameters,
-                    "damage_attribute",
-                    DamageAttribute.Physical);
-            }
-            else if (string.Equals(handlerId, "StatusElementDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.Attribute = GetSkillNodeEnumParam(parameters, "attribute", definition.Attribute);
-                definition.StatusElementDamageTakenBonus += bonus;
-            }
-            else if (string.Equals(handlerId, "StatusConditionalStatusChanceBonus", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.StatusConditionalTargetStatusKinds = StatusRuntimeCompiler.ParseStatusKinds(
-                    GetSkillNodeStringParam(parameters, "status_ids"));
-                definition.StatusConditionalStatusChanceBonus += bonus;
-            }
-            else if (string.Equals(handlerId, "DamageMultiplier", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(handlerId, "ShieldAmountMultiplier", StringComparison.OrdinalIgnoreCase))
-            {
-                definition.DamageMultiplier *= GetSkillNodeFloatParam(parameters, "multiplier", 1f);
-            }
-        }
 
         /*
          * 원본 값으로 런타임 자료를 만든다.
@@ -1095,43 +718,19 @@ namespace Pakuri.Data
                     ConditionStatusSourceSkillId = trigger.ConditionStatusSourceSkillId,
                     ConditionStatusSourceSkillIds = StatusRuntimeCompiler.ParseIdList(trigger.ConditionStatusSourceSkillId),
                     TriggerAttribute = trigger.TriggerAttribute,
-                    TriggerAction = trigger.TriggerAction,
                     EventSkillId = trigger.EventSkillId,
                     EventSkillRuntimeKinds = trigger.EventSkillRuntimeKinds,
                     EventSkillRuntimeKindValues = StatusRuntimeCompiler.ParseSkillRuntimeKindConditions(
                         trigger.EventSkillRuntimeKinds),
                     ProcChance = trigger.ProcChance,
                     InternalCooldownSeconds = trigger.InternalCooldownSeconds,
-                    TriggeredSkillId = trigger.TriggeredSkillId,
-                    TargetSkillId = trigger.TargetSkillId,
-                    TriggeredEffectId = ResolveTriggeredEffectId(trigger),
-                    RuntimeKind = trigger.RuntimeKind,
                     SortOrder = trigger.SortOrder,
-                    TargetSide = trigger.TargetSide,
-                    TargetSelection = trigger.TargetSelection,
-                    TargetShape = trigger.TargetShape,
-                    CenterMode = trigger.CenterMode,
-                    Attribute = trigger.Attribute,
-                    BaseDamage = trigger.BaseDamage,
-                    AttackPowerCoefficient = trigger.AttackPowerCoefficient,
-                    SpellPowerCoefficient = trigger.SpellPowerCoefficient,
-                    DamageMultiplier = trigger.DamageMultiplier,
-                    DamageSource = trigger.DamageSource,
-                    DamageSourceMultiplier = trigger.DamageSourceMultiplier,
-                    TrackedAttribute = trigger.TrackedAttribute,
-                    Radius = trigger.Radius,
-                    CoverAll = trigger.CoverAll,
-                    HitTargetCount = trigger.HitTargetCount,
                     RepeatCount = trigger.RepeatCount,
                     RepeatIntervalSeconds = trigger.RepeatIntervalSeconds,
                     TriggerDelaySeconds = trigger.TriggerDelaySeconds,
                     TriggerEveryCount = trigger.TriggerEveryCount,
                     EventSourceScope = trigger.EventSourceScope,
                     RequireEventExecute = trigger.RequireEventExecute,
-                    CooldownRefundRatio = trigger.CooldownRefundRatio,
-                    ReloadReduceRatio = trigger.ReloadReduceRatio,
-                    SkillEffectPrefab = LoadPrefab(trigger.SkillEffectPrefabPath),
-                    RuntimeVisual = BuildRuntimeVisual(trigger),
                     NormalizedNodes = BuildSkillNodeDefinitions(
                         model,
                         SkillNodeOwnerKind.Trigger,
@@ -1171,8 +770,7 @@ namespace Pakuri.Data
                     Summary = skill.Summary,
                     BaseModifierChoices = BuildSkillChoices(model, skill.Id, SkillChoiceGroup.PassiveBase),
                     EnhancementChoices = BuildSkillChoices(model, skill.Id, SkillChoiceGroup.PassiveEnhancement),
-                    PassiveEffects = Array.Empty<SkillEffectDefinition>(),
-                    NormalizedPlanNodes = BuildSkillNodeDefinitions(model, SkillNodeOwnerKind.Passive, skill.Id, skill.Id)
+                    NormalizedNodes = BuildSkillNodeDefinitions(model, SkillNodeOwnerKind.Passive, skill.Id, skill.Id)
                 };
             }
 
@@ -1199,7 +797,7 @@ namespace Pakuri.Data
                 {
                     targetSkillId = choice.SkillId;
                 }
-                var normalizedPlanNodes = BuildSkillNodeDefinitions(
+                var normalizedNodes = BuildSkillNodeDefinitions(
                     model,
                     SkillNodeOwnerKind.Choice,
                     choice.Id,
@@ -1214,12 +812,12 @@ namespace Pakuri.Data
                     ChoiceGroup = choice.ChoiceGroup,
                     Title = choice.Title,
                     SkillIcon = LoadSprite(choice.SkillIconPath),
-                    SkillEffectPrefab = LoadPrefab(GetChoicePlanNodeParam(
-                        normalizedPlanNodes,
+                    SkillEffectPrefab = LoadPrefab(GetChoiceNodeParam(
+                        normalizedNodes,
                         "EffectVisual",
                         "skill_effect_prefab_path")),
                     DescriptionText = choice.DescriptionText,
-                    NormalizedPlanNodes = normalizedPlanNodes
+                    NormalizedNodes = normalizedNodes
                 };
             }
 
@@ -1229,7 +827,7 @@ namespace Pakuri.Data
         /*
          * 계산에 필요한 값을 반환한다.
          */
-        internal static string GetChoicePlanNodeParam(
+        internal static string GetChoiceNodeParam(
             SkillNodeDefinition[] nodes /* 노드 목록 */,
             string handlerId /* 처리기 식별자 */,
             string paramKey /* 매개변수 조회 키 */)
@@ -1422,46 +1020,6 @@ namespace Pakuri.Data
         /*
          * 계산된 값을 대상 정의에 적용한다.
          */
-        internal static void ApplyStatusPayload(SkillEffectDefinition definition /* 변환하거나 검사할 정의 */, StatusPayloadRow payload /* 적용 데이터 */)
-        {
-            if (definition == null || payload == null)
-            {
-                return;
-            }
-
-            definition.StatusEffectId = payload.StatusEffectId;
-            definition.StatusChance = payload.StatusChance;
-            definition.StatusEffectLabel = payload.StatusEffectLabel;
-            definition.StatusEffectPrefab = LoadPrefab(payload.StatusEffectPrefabPath);
-            definition.StatusDurationSeconds = payload.StatusDurationSeconds;
-            definition.StatusMaxStacks = payload.StatusMaxStacks;
-            definition.StatusStackAmount = payload.StatusStackAmount;
-            definition.StatusTargetScope = payload.StatusTargetScope;
-            definition.StatusMergePolicy = payload.StatusMergePolicy;
-            definition.ShieldAmountRefreshPolicy = payload.ShieldAmountRefreshPolicy;
-            definition.StatusActionSpeedBonus = payload.StatusActionSpeedBonus;
-            definition.StatusMoveSpeedBonus = payload.StatusMoveSpeedBonus;
-            definition.StatusAttackPowerBonus = payload.StatusAttackPowerBonus;
-            definition.StatusSpellPowerBonus = payload.StatusSpellPowerBonus;
-            definition.StatusDamageBonusRate = payload.StatusDamageBonusRate;
-            definition.StatusShieldReceivedBonus = payload.StatusShieldReceivedBonus;
-            definition.StatusDamageTakenBonus = payload.StatusDamageTakenBonus;
-            definition.StatusCriticalDamageTakenBonus = payload.StatusCriticalDamageTakenBonus;
-            definition.StatusAilmentResistanceBonus = payload.StatusAilmentResistanceBonus;
-            definition.StatusCriticalChanceBonus = payload.StatusCriticalChanceBonus;
-            definition.StatusCriticalResistanceBonus = payload.StatusCriticalResistanceBonus;
-            definition.StatusElementResistReduction = payload.StatusElementResistReduction;
-            definition.StatusFlatElementResistReduction = payload.StatusFlatElementResistReduction;
-            definition.StatusElementDamageTakenBonus = payload.StatusElementDamageTakenBonus;
-            definition.StatusConditionalStatusChanceBonus = payload.StatusConditionalStatusChanceBonus;
-            definition.StatusConditionalIncomingSkillRuntimeKinds = payload.StatusConditionalIncomingSkillRuntimeKinds;
-            definition.StatusConditionalOutgoingSkillRuntimeKinds = payload.StatusConditionalOutgoingSkillRuntimeKinds;
-            definition.StatusAppliedStatusDurationBonusStatusId = payload.StatusAppliedStatusDurationBonusStatusId;
-            definition.StatusAppliedStatusDurationBonus = payload.StatusAppliedStatusDurationBonus;
-            definition.StatusOutgoingAdditionalDamageMultiplier = payload.StatusOutgoingAdditionalDamageMultiplier;
-            definition.StatusOutgoingAdditionalDamageTriggerAttribute = payload.StatusOutgoingAdditionalDamageTriggerAttribute;
-            definition.StatusOutgoingAdditionalDamageAttribute = payload.StatusOutgoingAdditionalDamageAttribute;
-        }
 
         /*
          * 해당 자료 변환에 필요한 값을 구성한다.
@@ -1517,25 +1075,6 @@ namespace Pakuri.Data
         /*
          * 원본 값으로 런타임 자료를 만든다.
          */
-        internal static RuntimeSkillVisualSpec BuildRuntimeVisual(SkillTriggerRow row /* 스킬 트리거 CSV 행 */)
-        {
-            if (row == null)
-            {
-                throw new ArgumentNullException(nameof(row));
-            }
-
-            return BuildRuntimeVisual(
-                row.RuntimeVisualSpritePath,
-                row.RuntimeVisualAnimatorControllerPath,
-                row.RuntimeVisualScale,
-                0f,
-                0f,
-                0f,
-                row.RuntimeVisualSortingOrder,
-                row.RuntimeHitboxSizeX,
-                row.RuntimeHitboxSizeY,
-                row.RuntimeVisualAnchor);
-        }
 
         /*
          * 원본 값으로 런타임 자료를 만든다.

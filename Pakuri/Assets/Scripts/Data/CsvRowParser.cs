@@ -167,7 +167,6 @@ namespace Pakuri.Data
             public string ConditionStatusId;
             public string ConditionStatusSourceSkillId;
             public string TriggerAttribute;
-            public SkillTriggerActionKind TriggerAction;
             public string EventSkillId;
             public string EventSkillRuntimeKinds;
             public float ProcChance = 1f;
@@ -175,44 +174,10 @@ namespace Pakuri.Data
             public float TriggerDelaySeconds;
             public int TriggerEveryCount;
             public string EventSourceScope;
-            public string TriggeredSkillId;
-            public string TargetSkillId;
-            public string TriggeredEffectId;
-            public SkillNodeOwnerKind TriggeredGraphOwnerKind;
-            public string TriggeredGraphOwnerId;
-            public SkillGraphKind TriggeredGraphKind;
-            public SkillRuntimeKind RuntimeKind;
             public int SortOrder;
-            public SkillMultiEffectTargetSide TargetSide;
-            public SkillMultiEffectTargetSelection TargetSelection;
-            public SkillMultiEffectTargetShape TargetShape;
-            public SkillMultiEffectCenterMode CenterMode;
-            public DamageAttribute Attribute;
-            public float BaseDamage;
-            public float AttackPowerCoefficient;
-            public float SpellPowerCoefficient;
-            public float DamageMultiplier = 1f;
-            public SkillTriggerDamageSource DamageSource;
-            public float DamageSourceMultiplier;
-            public DamageAttribute TrackedAttribute;
-            public float Radius;
-            public bool CoverAll;
-            public string HitTargetCount;
             public int RepeatCount = 1;
             public float RepeatIntervalSeconds;
             public bool RequireEventExecute;
-            public float CooldownRefundRatio;
-            public float ReloadReduceRatio;
-            public string SkillEffectPrefabPath;
-            public string RuntimeVisualSpritePath;
-            public string RuntimeVisualAnimatorControllerPath;
-            public float RuntimeVisualScale = 1f;
-            public int RuntimeVisualSortingOrder;
-            public string RuntimeVisualAnchor;
-            public float RuntimeHitboxSizeX;
-            public float RuntimeHitboxSizeY;
-            public string RuntimeSupportState;
-            public string RuntimeSupportNotes;
         }
 
         /*
@@ -396,56 +361,15 @@ namespace Pakuri.Data
                 ConditionStatusId = ReadOptionalStringIfColumnExists(record, "condition_status_id"),
                 ConditionStatusSourceSkillId = ReadOptionalStringIfColumnExists(record, "condition_status_source_skill_id"),
                 TriggerAttribute = ReadOptionalStringIfColumnExists(record, "trigger_attribute"),
-                TriggerAction = ReadOptionalEnum(record, "trigger_action", SkillTriggerActionKind.Auto),
                 EventSkillId = ReadOptionalStringIfColumnExists(record, "event_skill_id"),
                 EventSkillRuntimeKinds = ReadOptionalStringIfColumnExists(record, "event_skill_runtime_kinds"),
-                TriggeredSkillId = ReadOptionalStringIfColumnExists(record, "triggered_skill_id"),
-                TargetSkillId = ReadOptionalStringIfColumnExists(record, "target_skill_id"),
-                TriggeredEffectId = ReadOptionalStringIfColumnExists(record, "triggered_effect_id"),
-                TriggeredGraphOwnerKind = ReadOptionalEnum(
-                    record,
-                    "triggered_graph_owner_kind",
-                    SkillNodeOwnerKind.Skill),
-                TriggeredGraphOwnerId = ReadOptionalStringIfColumnExists(record, "triggered_graph_owner_id"),
-                TriggeredGraphKind = ReadOptionalEnum(
-                    record,
-                    "triggered_graph_kind",
-                    SkillGraphKind.Effect),
-                RuntimeKind = record.ReadEnum<SkillRuntimeKind>("runtime_kind"),
                 SortOrder = record.ReadInt("sort_order"),
-                TargetSide = record.ReadEnum<SkillMultiEffectTargetSide>("target_side"),
-                TargetSelection = record.ReadEnum<SkillMultiEffectTargetSelection>("target_selection"),
-                TargetShape = record.ReadEnum<SkillMultiEffectTargetShape>("target_shape"),
-                CenterMode = record.ReadEnum<SkillMultiEffectCenterMode>("center_mode"),
-                Attribute = ReadOptionalEnum(record, "attribute", DamageAttribute.Physical),
-                BaseDamage = ReadOptionalFloatIfColumnExists(record, "base_damage"),
-                AttackPowerCoefficient = ReadOptionalFloatIfColumnExists(record, "attack_power_coefficient"),
-                SpellPowerCoefficient = ReadOptionalFloatIfColumnExists(record, "spell_power_coefficient"),
-                DamageMultiplier = ReadOptionalFloatIfColumnExists(record, "damage_multiplier"),
-                DamageSource = record.ReadEnum<SkillTriggerDamageSource>("damage_source"),
-                DamageSourceMultiplier = ReadOptionalFloatIfColumnExists(record, "damage_source_multiplier"),
-                TrackedAttribute = record.ReadEnum<DamageAttribute>("tracked_attribute"),
-                Radius = ReadOptionalFloatIfColumnExists(record, "radius"),
-                CoverAll = ReadOptionalBoolIfColumnExists(record, "cover_all"),
-                HitTargetCount = ReadOptionalStringIfColumnExists(record, "hit_target_count"),
                 RepeatCount = ReadOptionalIntIfColumnExists(record, "repeat_count"),
                 RepeatIntervalSeconds = ReadOptionalFloatIfColumnExists(record, "repeat_interval_seconds"),
                 TriggerDelaySeconds = ReadOptionalFloatIfColumnExists(record, "trigger_delay_seconds"),
                 TriggerEveryCount = ReadOptionalIntIfColumnExists(record, "trigger_every_count"),
                 EventSourceScope = ReadOptionalStringIfColumnExists(record, "event_source_scope"),
-                RequireEventExecute = ReadOptionalBoolIfColumnExists(record, "require_event_execute"),
-                CooldownRefundRatio = ReadOptionalFloatIfColumnExists(record, "cooldown_refund_ratio"),
-                ReloadReduceRatio = ReadOptionalFloatIfColumnExists(record, "reload_reduce_ratio"),
-                SkillEffectPrefabPath = ReadOptionalStringIfColumnExists(record, "skill_effect_prefab_path"),
-                RuntimeVisualSpritePath = ReadOptionalStringIfColumnExists(record, "runtime_visual_sprite_path"),
-                RuntimeVisualAnimatorControllerPath = ReadOptionalStringIfColumnExists(record, "runtime_visual_animator_controller_path"),
-                RuntimeVisualScale = ReadOptionalFloat(record, "runtime_visual_scale", 1f),
-                RuntimeVisualSortingOrder = ReadOptionalIntIfColumnExists(record, "runtime_visual_sorting_order"),
-                RuntimeVisualAnchor = ReadOptionalStringIfColumnExists(record, "runtime_visual_anchor"),
-                RuntimeHitboxSizeX = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_size_x"),
-                RuntimeHitboxSizeY = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_size_y"),
-                RuntimeSupportState = ReadOptionalStringIfColumnExists(record, "runtime_support_state"),
-                RuntimeSupportNotes = ReadOptionalStringIfColumnExists(record, "runtime_support_notes")
+                RequireEventExecute = ReadOptionalBoolIfColumnExists(record, "require_event_execute")
             };
 
             if (TryReadFloatIfColumnExists(record, "proc_chance", out var procChance))
@@ -456,11 +380,6 @@ namespace Pakuri.Data
             if (TryReadFloatIfColumnExists(record, "internal_cooldown_seconds", out var internalCooldownSeconds))
             {
                 row.InternalCooldownSeconds = internalCooldownSeconds;
-            }
-
-            if (row.DamageMultiplier <= 0f)
-            {
-                row.DamageMultiplier = 1f;
             }
 
             if (row.ProcChance <= 0f)
@@ -771,7 +690,6 @@ namespace Pakuri.Data
             public string SourceSkillId;
             public SkillTriggerEvent TriggerEvent;
             public string TriggeredSkillId;
-            public SkillRuntimeKind RuntimeKind;
             public int SortOrder;
             public bool Enabled;
         }
@@ -894,7 +812,6 @@ namespace Pakuri.Data
                 SourceSkillId = record.ReadRequiredString("source_skill_id"),
                 TriggerEvent = record.ReadEnum<SkillTriggerEvent>("trigger_event"),
                 TriggeredSkillId = record.ReadRequiredString("triggered_skill_id"),
-                RuntimeKind = record.ReadEnum<SkillRuntimeKind>("runtime_kind"),
                 SortOrder = record.ReadInt("sort_order"),
                 Enabled = record.ReadBool("enabled")
             };
@@ -963,12 +880,6 @@ namespace Pakuri.Data
                 {
                     errors.Add($"Enemy trigger '{trigger.Id}' references unknown source skill '{trigger.SourceSkillId}'.");
                 }
-                else if (trigger.RuntimeKind != sourceSkill.Skill.RuntimeKind)
-                {
-                    errors.Add(
-                        $"Enemy trigger '{trigger.Id}' runtime_kind '{trigger.RuntimeKind}' does not match source skill kind '{sourceSkill.Skill.RuntimeKind}'.");
-                }
-
                 if (!model.EnemyBaseSkills.ContainsKey(trigger.TriggeredSkillId))
                 {
                     errors.Add($"Enemy trigger '{trigger.Id}' references unknown triggered skill '{trigger.TriggeredSkillId}'.");
@@ -1078,8 +989,7 @@ namespace Pakuri.Data
                 if (trigger.Enabled
                     && trigger.TriggerEvent == SkillTriggerEvent.CombatStart
                     && string.Equals(trigger.SourceSkillId, skillId, StringComparison.OrdinalIgnoreCase)
-                    && string.Equals(trigger.TriggeredSkillId, skillId, StringComparison.OrdinalIgnoreCase)
-                    && trigger.RuntimeKind == runtimeKind)
+                    && string.Equals(trigger.TriggeredSkillId, skillId, StringComparison.OrdinalIgnoreCase))
                 {
                     count++;
                 }

@@ -504,7 +504,10 @@ namespace Pakuri.InGame
             float spellPowerCoefficient,
             float damageMultiplier,
             float radius,
-            float tickIntervalSeconds)
+            float tickIntervalSeconds,
+            NodeDamageValueSource valueSource,
+            float valueSourceMultiplier,
+            DamageAttribute trackedAttribute)
         {
             Attribute = attribute;
             BaseDamage = baseDamage;
@@ -513,6 +516,9 @@ namespace Pakuri.InGame
             DamageMultiplier = damageMultiplier;
             Radius = radius;
             TickIntervalSeconds = tickIntervalSeconds;
+            ValueSource = valueSource;
+            ValueSourceMultiplier = valueSourceMultiplier;
+            TrackedAttribute = trackedAttribute;
         }
 
         public DamageAttribute Attribute { get; }
@@ -522,6 +528,19 @@ namespace Pakuri.InGame
         public float DamageMultiplier { get; }
         public float Radius { get; }
         public float TickIntervalSeconds { get; }
+        public NodeDamageValueSource ValueSource { get; }
+        public float ValueSourceMultiplier { get; }
+        public DamageAttribute TrackedAttribute { get; }
+    }
+
+    public enum NodeDamageValueSource
+    {
+        Fixed,
+        ShieldAppliedAmount,
+        ShieldRemainingAmount,
+        ShieldAbsorbedAmount,
+        TrackedIncomingDamage,
+        EventAppliedDamage
     }
 
     public readonly struct ApplyStatusNodeOp
@@ -688,7 +707,8 @@ namespace Pakuri.InGame
             SkillMultiEffectCenterMode centerMode,
             SkillMultiEffectVisualAnchorMode visualAnchorMode,
             bool applyOnce,
-            bool coverAll)
+            bool coverAll,
+            int maxTargets)
         {
             TargetSide = targetSide;
             TargetSelection = targetSelection;
@@ -697,6 +717,7 @@ namespace Pakuri.InGame
             VisualAnchorMode = visualAnchorMode;
             ApplyOnce = applyOnce;
             CoverAll = coverAll;
+            MaxTargets = maxTargets;
         }
 
         public SkillMultiEffectTargetSide TargetSide { get; }
@@ -706,6 +727,7 @@ namespace Pakuri.InGame
         public SkillMultiEffectVisualAnchorMode VisualAnchorMode { get; }
         public bool ApplyOnce { get; }
         public bool CoverAll { get; }
+        public int MaxTargets { get; }
     }
 
     public readonly struct SetDurationNodeOp

@@ -17,7 +17,9 @@ namespace Pakuri.InGame
             int hitCount,
             SkillExecutionData executionData,
             SkillExecutionContext executionContext = null,
-            string nodeOwnerId = "")
+            string nodeOwnerId = "",
+            StatusRuntimeInstance eventStatus = null,
+            float shieldAbsorbedAmount = 0f)
         {
             Source = source;
             SourceSkillId = sourceSkillId ?? string.Empty;
@@ -28,6 +30,8 @@ namespace Pakuri.InGame
             ExecutionData = executionData;
             ExecutionContext = executionContext;
             NodeOwnerId = nodeOwnerId ?? string.Empty;
+            EventStatus = eventStatus;
+            ShieldAbsorbedAmount = Mathf.Max(0f, shieldAbsorbedAmount);
         }
 
         public UnitCombatState Source { get; }
@@ -45,6 +49,10 @@ namespace Pakuri.InGame
         public SkillExecutionData ExecutionData { get; }
 
         public string NodeOwnerId { get; }
+
+        public StatusRuntimeInstance EventStatus { get; }
+
+        public float ShieldAbsorbedAmount { get; }
 
         internal SkillExecutionContext ExecutionContext { get; }
     }

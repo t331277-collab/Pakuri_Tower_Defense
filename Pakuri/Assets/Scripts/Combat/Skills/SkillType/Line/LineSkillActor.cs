@@ -27,7 +27,6 @@ namespace Pakuri.InGame
         private float damage;
         private DamageAttribute attribute;
         private ProjectileStatusHitSpec statusSpec;
-        private SkillEffectDefinition[] onHitEffects;
         private SkillUseState runtime;
         private SkillExecutionData executionData;
         private UnitCombatState sourceModel;
@@ -37,7 +36,6 @@ namespace Pakuri.InGame
         private float critDamageBonus;
         private bool visualOnly;
         private readonly HashSet<string> appliedBaseStatusTargets = new HashSet<string>();
-        private readonly HashSet<string> appliedEffectStatusTargets = new HashSet<string>();
         private readonly List<Collider2D> lineOverlapResults = new List<Collider2D>(32);
 
         /*
@@ -58,7 +56,6 @@ namespace Pakuri.InGame
             float damagePerTick /* 피해 개별 반복 적용 */,
             DamageAttribute damageAttribute /* 적용할 피해 속성 */,
             ProjectileStatusHitSpec onHitStatus /* 발생 시 적중 상태 효과 */,
-            SkillEffectDefinition[] onHitEffects /* 발생 시 적중 효과 목록 */,
             SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
             SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             UnitCombatState source /* 효과를 발생시킨 유닛 */,
@@ -84,7 +81,6 @@ namespace Pakuri.InGame
             damage = Mathf.Max(0f, damagePerTick);
             attribute = damageAttribute;
             statusSpec = onHitStatus;
-            this.onHitEffects = onHitEffects;
             runtime = sourceRuntime;
             executionData = snapshot;
             sourceModel = source;
@@ -93,7 +89,6 @@ namespace Pakuri.InGame
             critChanceBonus = criticalChanceBonus;
             critDamageBonus = criticalDamageBonus;
             appliedBaseStatusTargets.Clear();
-            appliedEffectStatusTargets.Clear();
 
             ConfigureVisual();
             ApplyLineTick(
@@ -109,7 +104,6 @@ namespace Pakuri.InGame
                 damage,
                 attribute,
                 statusSpec,
-                onHitEffects,
                 runtime,
                 executionData,
                 sourceModel,
@@ -118,7 +112,6 @@ namespace Pakuri.InGame
                 critChanceBonus,
                 critDamageBonus,
                 appliedBaseStatusTargets,
-                appliedEffectStatusTargets,
                 null,
             lineOverlapResults);
         }
@@ -152,7 +145,6 @@ namespace Pakuri.InGame
             float damagePerTick /* 피해 개별 반복 적용 */,
             DamageAttribute damageAttribute /* 적용할 피해 속성 */,
             ProjectileStatusHitSpec onHitStatus /* 발생 시 적중 상태 효과 */,
-            SkillEffectDefinition[] onHitEffects /* 발생 시 적중 효과 목록 */,
             SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
             SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             UnitCombatState source /* 효과를 발생시킨 유닛 */,
@@ -161,7 +153,6 @@ namespace Pakuri.InGame
             float critChanceBonus /* 추가 치명타 확률 */,
             float critDamageBonus /* 추가 치명타 피해 배율 */,
             HashSet<string> baseStatusAppliedTargets = null /* 기본 상태 효과 적용된 대상 목록 */,
-            HashSet<string> effectStatusAppliedTargets = null /* 효과 상태 효과 적용된 대상 목록 */,
             string damageMeterSourceId = null /* 피해량 기록에 사용할 발생 원본 식별자 */,
             List<Collider2D> overlapResults = null /* 겹침 처리 결과 목록 */)
         {
@@ -224,17 +215,6 @@ namespace Pakuri.InGame
                 {
                     var targetKey = TargetKey(target.Model);
                     TryApplyStatus(manager, target.Model, onHitStatus, source, targetKey, baseStatusAppliedTargets);
-                    TryApplyOnHitEffects(
-                        manager,
-                        target,
-                        onHitEffects,
-                        snapshot,
-                        sourceEntry,
-                        unitRoster,
-                        sourceRuntime,
-                        source,
-                        targetKey,
-                        effectStatusAppliedTargets);
                 }
                 LineSkillExecutor.ApplyHitEnhancements(
                     manager,
@@ -279,7 +259,6 @@ namespace Pakuri.InGame
                         damage,
                         attribute,
                         statusSpec,
-                        onHitEffects,
                         runtime,
                         executionData,
                         sourceModel,
@@ -288,7 +267,6 @@ namespace Pakuri.InGame
                         critChanceBonus,
                         critDamageBonus,
                         appliedBaseStatusTargets,
-                        appliedEffectStatusTargets,
                         null,
                         lineOverlapResults);
                 }
@@ -439,89 +417,6 @@ namespace Pakuri.InGame
         /*
          * 적중 효과를 적용하고 성공 여부를 반환한다.
          */
-        private static void TryApplyOnHitEffects(
-            InGameCombatManager manager /* 전투 진행 관리자 */,
-            CombatUnitEntry target /* 효과를 받을 대상 유닛 */,
-            SkillEffectDefinition[] effects /* 실행할 효과 목록 */,
-            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
-            CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */,
-            CombatUnitRegistry unitRoster /* 전투에 등록된 유닛 목록 */,
-            SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
-            UnitCombatState source /* 효과를 발생시킨 유닛 */,
-            string targetKey /* 대상 조회 키 */,
-            HashSet<string> appliedEffects /* 적용된 효과 목록 */)
-        {
-            if (manager == null
-                || target == null
-                || target.Model == null
-                || target.Transform == null
-                || effects == null
-                || effects.Length == 0)
-            {
-                return;
-            }
-
-            for (var i = 0; i < effects.Length; i++)
-            {
-                var effect = effects[i];
-                if (effect == null
-                    || effect.EffectTiming != SkillMultiEffectTiming.OnHit
-                    || !SkillTargeting.MatchesEffectTarget(target.Model, effect))
-                {
-                    continue;
-                }
-
-                var effectKey = BuildEffectTargetKey(effect.EffectId, targetKey);
-                if (appliedEffects != null && !string.IsNullOrWhiteSpace(effectKey) && appliedEffects.Contains(effectKey))
-                {
-                    continue;
-                }
-
-                if (effect.EffectKind == SkillMultiEffectKind.Status)
-                {
-                    var status = SkillStatus.EffectStatusSpec(effect, snapshot);
-                    if (status == null || !status.Enabled)
-                    {
-                        continue;
-                    }
-
-                    if (StatusCombatRules.ApplyStatus(manager, target.Model, status, source)
-                        && appliedEffects != null
-                        && !string.IsNullOrWhiteSpace(effectKey))
-                    {
-                        appliedEffects.Add(effectKey);
-                    }
-
-                    continue;
-                }
-
-                if (effect.EffectKind == SkillMultiEffectKind.Damage)
-                {
-                    var context = new SkillExecutionContext(
-                        manager,
-                        unitRoster,
-                        sourceEntry,
-                        sourceRuntime,
-                        target.Model);
-                    if (LineSkillExecutor.ExecuteAdditionalEffects(
-                            context,
-                            snapshot,
-                            new[] { effect },
-                            target.Transform.position,
-                            true,
-                            SkillMultiEffectTiming.OnHit,
-                            false,
-                            0,
-                            target.Model,
-                            true)
-                        && appliedEffects != null
-                        && !string.IsNullOrWhiteSpace(effectKey))
-                    {
-                        appliedEffects.Add(effectKey);
-                    }
-                }
-            }
-        }
 
         /*
          * 대상 키를 결정한다.
@@ -540,16 +435,5 @@ namespace Pakuri.InGame
         /*
          * 효과 대상 키를 구성한다.
          */
-        private static string BuildEffectTargetKey(string effectId /* 효과 식별자 */, string targetKey /* 대상 조회 키 */)
-        {
-            if (string.IsNullOrWhiteSpace(targetKey))
-            {
-                return string.Empty;
-            }
-
-            return string.IsNullOrWhiteSpace(effectId)
-                ? targetKey
-                : $"{effectId}::{targetKey}";
-        }
     }
 }

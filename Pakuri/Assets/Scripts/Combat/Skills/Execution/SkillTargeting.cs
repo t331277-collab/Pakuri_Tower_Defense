@@ -635,171 +635,18 @@ namespace Pakuri.InGame
         /*
          * 추가 효과 정의를 실행용 대상 설정으로 변환한다.
          */
-        public static SkillTargetingSpec BuildEffectTargeting(SkillEffectDefinition effect /* 적용할 추가 효과 */)
-        {
-            var targetSide = SkillTargetSide.Enemy;
-            if (effect.TargetSide == SkillMultiEffectTargetSide.Self)
-            {
-                targetSide = SkillTargetSide.Self;
-            }
-            else if (effect.TargetSide == SkillMultiEffectTargetSide.AllAllies)
-            {
-                targetSide = SkillTargetSide.AllAllies;
-            }
-
-            var selection = SkillTargetSelection.Nearest;
-            if (effect.TargetSelection == SkillMultiEffectTargetSelection.Owner)
-            {
-                selection = SkillTargetSelection.Owner;
-            }
-
-            var shape = SkillTargetShape.Circle;
-            if (effect.TargetShape == SkillMultiEffectTargetShape.Battlefield)
-            {
-                shape = SkillTargetShape.Battlefield;
-            }
-            else if (effect.TargetShape == SkillMultiEffectTargetShape.Single)
-            {
-                shape = SkillTargetShape.Single;
-            }
-
-            return new SkillTargetingSpec
-            {
-                TargetSide = targetSide,
-                Selection = selection,
-                Shape = shape,
-                Radius = effect.Radius,
-                CoverAll = effect.CoverAll || effect.TargetShape == SkillMultiEffectTargetShape.Battlefield
-            };
-        }
 
         /*
          * 추가 효과가 적용될 중심 위치를 결정한다.
          */
-        public static Vector2 EffectCenter(
-            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillEffectDefinition effect /* 적용할 추가 효과 */,
-            SkillTargetingSpec targeting /* 대상 선택 설정 */,
-            Vector2 defaultCenter /* 기본 중심 위치 */)
-        {
-            if (effect != null)
-            {
-                if (effect.CenterMode == SkillMultiEffectCenterMode.EffectTarget)
-                {
-                    if (context != null && context.EventTarget != null && context.Roster != null)
-                    {
-                        var eventEntry = context.Roster.Find(context.EventTarget);
-                        if (eventEntry != null && eventEntry.Transform != null)
-                        {
-                            return eventEntry.Transform.position;
-                        }
-                    }
-                    return defaultCenter;
-                }
-
-                if (effect.CenterMode == SkillMultiEffectCenterMode.PrimarySkillCenter)
-                {
-                    return defaultCenter;
-                }
-
-                if (effect.CenterMode == SkillMultiEffectCenterMode.Caster)
-                {
-                    if (context != null && context.CasterEntry != null && context.CasterEntry.Transform != null)
-                    {
-                        return context.CasterEntry.Transform.position;
-                    }
-                    return defaultCenter;
-                }
-
-                if (effect.CenterMode == SkillMultiEffectCenterMode.NearestEnemy)
-                {
-                    var enemyTargeting = new SkillTargetingSpec
-                    {
-                        TargetSide = SkillTargetSide.Enemy,
-                        Selection = SkillTargetSelection.Nearest,
-                        Shape = SkillTargetShape.Circle,
-                        Radius = effect.Radius,
-                        CoverAll = false
-                    };
-                    var enemy = FindNearestTarget(context.CasterEntry, context.Roster, enemyTargeting);
-                    if (enemy != null && enemy.Transform != null)
-                    {
-                        return enemy.Transform.position;
-                    }
-                    return defaultCenter;
-                }
-            }
-
-            var target = FindNearestTarget(context.CasterEntry, context.Roster, targeting);
-            if (target != null && target.Transform != null)
-            {
-                return target.Transform.position;
-            }
-            return defaultCenter;
-        }
 
         /*
          * 사건 대상이 지정되면 그 대상만 반환하고 아니면 일반 대상 목록을 반환한다.
          */
-        public static IReadOnlyList<CombatUnitEntry> EffectTargets(
-            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillEffectDefinition effect /* 적용할 추가 효과 */,
-            SkillTargetingSpec targeting /* 대상 선택 설정 */)
-        {
-            if (effect != null
-                && effect.TargetSelection == SkillMultiEffectTargetSelection.EventTarget
-                && context != null
-                && context.EventTarget != null
-                && context.Roster != null)
-            {
-                var eventEntry = context.Roster.Find(context.EventTarget);
-                if (eventEntry != null)
-                {
-                    return new CombatUnitEntry[] { eventEntry };
-                }
-            }
-
-            return TargetList(context.CasterEntry, context.Roster, targeting);
-        }
 
         /*
          * 대상이 추가 효과의 상태, 속성, 체력 조건을 만족하는지 확인한다.
          */
-        public static bool MatchesEffectTarget(UnitCombatState target /* 효과를 받을 대상 */, SkillEffectDefinition effect /* 적용할 추가 효과 */)
-        {
-            if (effect == null)
-            {
-                return true;
-            }
-
-            if (!string.IsNullOrWhiteSpace(effect.ConditionStatusId)
-                && !StatusConditionRules.MatchesConditionStatus(target, effect.ConditionStatuses, effect.ConditionStatusSourceSkillIds))
-            {
-                return false;
-            }
-
-            if (!string.IsNullOrWhiteSpace(effect.ConditionSkillAttribute)
-                && !HasActiveSkillAttribute(target, effect.ConditionSkillAttribute))
-            {
-                return false;
-            }
-
-            if (effect.ConditionHealthRatioMax > 0f)
-            {
-                if (target == null || target.Resources == null || target.Stats == null || target.Stats.MaxHealth <= 0f)
-                {
-                    return false;
-                }
-
-                var healthRatio = target.Resources.CurrentHealth / target.Stats.MaxHealth;
-                if (healthRatio > Mathf.Clamp01(effect.ConditionHealthRatioMax))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
 
         /*
          * 대상이 지정한 속성의 액티브 스킬을 가지고 있는지 확인한다.
@@ -929,48 +776,10 @@ namespace Pakuri.InGame
         /*
          * 추가 효과에 설정된 Choice, 패시브, 시전자 상태 조건을 확인한다.
          */
-        public static bool CanRunEffect(
-            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillEffectDefinition effect /* 검사할 추가 효과 */)
-        {
-            if (effect == null)
-            {
-                return false;
-            }
-            if (!effect.EnabledByDefault && string.IsNullOrWhiteSpace(effect.RequiresActiveChoiceId))
-            {
-                return false;
-            }
-            if (!HasAllActiveChoices(context.Caster, effect.RequiresActiveChoiceId))
-            {
-                return false;
-            }
-            if (HasAnyActiveChoice(context.Caster, effect.ExcludesActiveChoiceId))
-            {
-                return false;
-            }
-            if (!HasAllLearnedPassives(context.Caster, effect.RequiresPassiveSkillId))
-            {
-                return false;
-            }
-            if (HasAnyLearnedPassive(context.Caster, effect.ExcludesPassiveSkillId))
-            {
-                return false;
-            }
-            return HasSourceStatus(context.Caster, effect.RequiredSourceStatusKind, effect.RequiredSourceStatusMinStacks);
-        }
 
         /*
          * 현재 적중 횟수가 추가 효과의 최소 횟수를 만족하는지 확인한다.
          */
-        public static bool MatchesEffectHitCount(SkillEffectDefinition effect /* 검사할 추가 효과 */, int hitCount /* 현재 적중 횟수 */)
-        {
-            if (effect != null && effect.ConditionHitCountMin > 0)
-            {
-                return hitCount >= effect.ConditionHitCountMin;
-            }
-            return true;
-        }
 
         /*
          * 목록에 적힌 모든 Choice가 현재 실행 데이터에 적용되었는지 확인한다.

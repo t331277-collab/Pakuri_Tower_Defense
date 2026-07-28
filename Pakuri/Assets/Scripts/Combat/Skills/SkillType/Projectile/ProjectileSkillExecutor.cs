@@ -19,144 +19,14 @@ namespace Pakuri.InGame
         /*
          * 현재 스킬의 노드 효과 중 요청한 실행 시점에 맞는 효과를 적용한다.
          */
-        internal static bool ExecuteAdditionalEffects(
-            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
-            SkillEffectDefinition[] effects /* 적용할 추가 효과 목록 */,
-            Vector2 defaultCenter /* 기본 효과 중심 */,
-            bool requireTiming /* 특정 실행 시점만 처리할지 여부 */,
-            SkillMultiEffectTiming timing /* 처리할 실행 시점 */,
-            bool scaleStatusDuration /* 상태 지속시간 보정 여부 */,
-            int hitCount = 0 /* 현재 적중 횟수 */,
-            UnitCombatState eventTarget = null /* 현재 적중 대상 */,
-            bool useEventTarget = false /* 적중 대상을 문맥에 넣을지 여부 */)
-        {
-            if (context == null || context.CombatManager == null || effects == null || effects.Length == 0)
-            {
-                return false;
-            }
-
-            var effectContext = context;
-            if (useEventTarget)
-            {
-                effectContext = new SkillExecutionContext(
-                    context.CombatManager,
-                    context.Roster,
-                    context.CasterEntry,
-                    context.Runtime,
-                    eventTarget,
-                    context.HasManualAimDirection,
-                    context.ManualAimDirection,
-                    context.HasManualTargetPoint,
-                    context.ManualTargetPoint,
-                    context.RecastGeneration);
-            }
-
-            var applied = false;
-            for (var i = 0; i < effects.Length; i++)
-            {
-                var effect = effects[i];
-                if (!SkillRequirement.CanRunEffect(effectContext, effect))
-                {
-                    continue;
-                }
-                if (requireTiming)
-                {
-                    if (effect.EffectTiming != timing)
-                    {
-                        continue;
-                    }
-                }
-                else if (effect.EffectTiming == SkillMultiEffectTiming.OnHit
-                    || effect.EffectTiming == SkillMultiEffectTiming.OnDeploymentCast
-                    || effect.EffectTiming == SkillMultiEffectTiming.OnExpire
-                    || effect.EffectTiming == SkillMultiEffectTiming.OnHitCount)
-                {
-                    continue;
-                }
-                if (!SkillRequirement.MatchesEffectHitCount(effect, hitCount))
-                {
-                    continue;
-                }
-
-                if (effect.EffectTiming == SkillMultiEffectTiming.Delayed || effect.DelaySeconds > 0f)
-                {
-                    effectContext.CombatManager.StartCoroutine(ApplyAdditionalEffectAfterDelay(
-                        effectContext,
-                        skillData,
-                        effect,
-                        defaultCenter,
-                        scaleStatusDuration));
-                    applied = true;
-                }
-                else
-                {
-                    applied = ApplyAdditionalEffect(
-                        effectContext,
-                        skillData,
-                        effect,
-                        defaultCenter,
-                        scaleStatusDuration) || applied;
-                }
-            }
-            return applied;
-        }
 
         /*
          * 추가 효과의 지연시간이 지난 뒤 같은 Executor에서 효과를 적용한다.
          */
-        private static IEnumerator ApplyAdditionalEffectAfterDelay(
-            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
-            SkillEffectDefinition effect /* 적용할 추가 효과 */,
-            Vector2 defaultCenter /* 기본 효과 중심 */,
-            bool scaleStatusDuration /* 상태 지속시간 보정 여부 */)
-        {
-            var delay = Mathf.Max(0f, effect.DelaySeconds);
-            if (delay > 0f)
-            {
-                yield return new WaitForSeconds(delay);
-            }
-            else
-            {
-                yield return null;
-            }
-            ApplyAdditionalEffect(context, skillData, effect, defaultCenter, scaleStatusDuration);
-        }
 
         /*
          * 추가 효과 종류에 맞는 실제 적용 기능을 호출한다.
          */
-        private static bool ApplyAdditionalEffect(
-            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
-            SkillEffectDefinition effect /* 적용할 추가 효과 */,
-            Vector2 defaultCenter /* 기본 효과 중심 */,
-            bool scaleStatusDuration /* 상태 지속시간 보정 여부 */)
-        {
-            if (effect == null || context == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null)
-            {
-                return false;
-            }
-
-            if (effect.EffectKind == SkillMultiEffectKind.Damage)
-            {
-                return ZoneSkillExecutor.ApplyAdditionalDamageEffect(context, skillData, effect, defaultCenter);
-            }
-            if (effect.EffectKind == SkillMultiEffectKind.Status)
-            {
-                return SkillStatus.ApplyEffect(context, skillData, effect, defaultCenter, scaleStatusDuration);
-            }
-            if (effect.EffectKind == SkillMultiEffectKind.ExtendStatusDuration)
-            {
-                return SkillStatus.ExtendEffectDuration(context, effect);
-            }
-            if (effect.EffectKind == SkillMultiEffectKind.RecastZone)
-            {
-                return ZoneSkillExecutor.ExecuteRecast(context, skillData, effect, defaultCenter);
-            }
-            return false;
-        }
 
         private static bool applyingHitEnhancement;
 
@@ -193,8 +63,7 @@ namespace Pakuri.InGame
                         primaryBaseDamage,
                         1,
                         skillData,
-                        actionExecutionContext),
-                    legacyEffectActive: false);
+                        actionExecutionContext));
             }
 
             if (manager == null
@@ -331,17 +200,12 @@ namespace Pakuri.InGame
             var hasRuntimeVisual = effects != null && runtimeVisual != null && runtimeVisual.HasVisual();
 
             var baseStatusSpec = SkillStatus.StatusSpec(skill.OnHitStatus, snapshot);
-            var planEffects = skill.MultiEffects;
-            var onHitEffects = TimedEffects(context, snapshot, planEffects, SkillMultiEffectTiming.OnHit);
-            var onExpireEffects = TimedEffects(context, snapshot, planEffects, SkillMultiEffectTiming.OnExpire);
             var projectile = skill.Projectile;
             var burstProjectileCount = projectile != null ? Math.Max(1, projectile.BurstProjectileCount) : 1;
             var requiresProjectileActor = skill.StopOnFirstHit
                 || skill.HasImpactArea
                 || skill.ImpactDelaySeconds > 0f
-                || hasRuntimeVisual
-                || onHitEffects.Length > 0
-                || onExpireEffects.Length > 0;
+                || hasRuntimeVisual;
             if (!hasRuntimeVisual && !requiresProjectileActor)
             {
                 if (target != null)
@@ -457,8 +321,6 @@ namespace Pakuri.InGame
                     statusSpec,
                     branchSpec,
                     SkillStatus.StatusSpec(skill.ImpactStatus, snapshot),
-                    onHitEffects,
-                    onExpireEffects,
                     skill.ContactDamageEnabled,
                     skill.StopOnFirstHit,
                     ImpactDelay(skill, snapshot),
@@ -485,8 +347,6 @@ namespace Pakuri.InGame
                 skill,
                 runtimeVisual,
                 baseStatusSpec,
-                onHitEffects,
-                onExpireEffects,
                 origin,
                 direction,
                 speed,
@@ -631,8 +491,6 @@ namespace Pakuri.InGame
             ProjectileSkillDefinition skill /* 실행하거나 검사할 스킬 */,
             RuntimeSkillVisualSpec runtimeVisual /* 런타임 시각 효과 설정 */,
             ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */,
-            SkillEffectDefinition[] onHitEffects /* 발생 시 적중 효과 목록 */,
-            SkillEffectDefinition[] onExpireEffects /* 발생 시 만료 효과 목록 */,
             Vector2 origin /* 시작 위치 */,
             Vector2 direction /* 진행하거나 발사할 방향 */,
             float speed /* 속도 */,
@@ -663,8 +521,6 @@ namespace Pakuri.InGame
                 skill,
                 runtimeVisual,
                 statusSpec,
-                onHitEffects,
-                onExpireEffects,
                 origin,
                 direction,
                 speed,
@@ -684,8 +540,6 @@ namespace Pakuri.InGame
             ProjectileSkillDefinition skill /* 실행하거나 검사할 스킬 */,
             RuntimeSkillVisualSpec runtimeVisual /* 런타임 시각 효과 설정 */,
             ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */,
-            SkillEffectDefinition[] onHitEffects /* 발생 시 적중 효과 목록 */,
-            SkillEffectDefinition[] onExpireEffects /* 발생 시 만료 효과 목록 */,
             Vector2 origin /* 시작 위치 */,
             Vector2 direction /* 진행하거나 발사할 방향 */,
             float speed /* 속도 */,
@@ -723,8 +577,6 @@ namespace Pakuri.InGame
                     skill,
                     runtimeVisual,
                     statusSpec,
-                    onHitEffects,
-                    onExpireEffects,
                     origin,
                     direction,
                     speed,
@@ -746,8 +598,6 @@ namespace Pakuri.InGame
             ProjectileSkillDefinition skill /* 실행하거나 검사할 스킬 */,
             RuntimeSkillVisualSpec runtimeVisual /* 런타임 시각 효과 설정 */,
             ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */,
-            SkillEffectDefinition[] onHitEffects /* 발생 시 적중 효과 목록 */,
-            SkillEffectDefinition[] onExpireEffects /* 발생 시 만료 효과 목록 */,
             Vector2 origin /* 시작 위치 */,
             Vector2 direction /* 진행하거나 발사할 방향 */,
             float speed /* 속도 */,
@@ -826,8 +676,6 @@ namespace Pakuri.InGame
                 statusSpec,
                 branchSpec,
                 SkillStatus.StatusSpec(skill.ImpactStatus, snapshot),
-                onHitEffects,
-                onExpireEffects,
                 skill.ContactDamageEnabled,
                 skill.StopOnFirstHit,
                 ImpactDelay(skill, snapshot),
@@ -981,33 +829,6 @@ namespace Pakuri.InGame
         /*
          * 시간 기반 효과를 결정한다.
          */
-        private static SkillEffectDefinition[] TimedEffects(
-            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
-            SkillEffectDefinition[] effects /* 실행할 효과 목록 */,
-            SkillMultiEffectTiming timing /* 실행 시점 */)
-        {
-            if (effects == null || effects.Length == 0)
-            {
-                return Array.Empty<SkillEffectDefinition>();
-            }
-
-            var resolved = new List<SkillEffectDefinition>();
-            for (var i = 0; i < effects.Length; i++)
-            {
-                var effect = effects[i];
-                if (effect == null
-                    || effect.EffectTiming != timing
-                    || !SkillRequirement.CanRunEffect(context, effect))
-                {
-                    continue;
-                }
-
-                resolved.Add(effect);
-            }
-
-            return resolved.Count > 0 ? resolved.ToArray() : Array.Empty<SkillEffectDefinition>();
-        }
 
         /*
          * ProjectileLifetime 결과를 계산해 반환한다.

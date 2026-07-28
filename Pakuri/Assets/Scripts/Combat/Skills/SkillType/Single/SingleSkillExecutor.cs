@@ -17,144 +17,14 @@ internal static class SingleSkillExecutor
 	/*
 	 * 현재 스킬의 노드 효과 중 요청한 실행 시점에 맞는 효과를 적용한다.
 	 */
-	internal static bool ExecuteAdditionalEffects(
-	    SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-	    SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
-	    SkillEffectDefinition[] effects /* 적용할 추가 효과 목록 */,
-	    Vector2 defaultCenter /* 기본 효과 중심 */,
-	    bool requireTiming /* 특정 실행 시점만 처리할지 여부 */,
-	    SkillMultiEffectTiming timing /* 처리할 실행 시점 */,
-	    bool scaleStatusDuration /* 상태 지속시간 보정 여부 */,
-	    int hitCount = 0 /* 현재 적중 횟수 */,
-	    UnitCombatState eventTarget = null /* 현재 적중 대상 */,
-	    bool useEventTarget = false /* 적중 대상을 문맥에 넣을지 여부 */)
-	{
-	    if (context == null || context.CombatManager == null || effects == null || effects.Length == 0)
-	    {
-	        return false;
-	    }
-
-	    var effectContext = context;
-	    if (useEventTarget)
-	    {
-	        effectContext = new SkillExecutionContext(
-	            context.CombatManager,
-	            context.Roster,
-	            context.CasterEntry,
-	            context.Runtime,
-	            eventTarget,
-	            context.HasManualAimDirection,
-	            context.ManualAimDirection,
-	            context.HasManualTargetPoint,
-	            context.ManualTargetPoint,
-	            context.RecastGeneration);
-	    }
-
-	    var applied = false;
-	    for (var i = 0; i < effects.Length; i++)
-	    {
-	        var effect = effects[i];
-	        if (!SkillRequirement.CanRunEffect(effectContext, effect))
-	        {
-	            continue;
-	        }
-	        if (requireTiming)
-	        {
-	            if (effect.EffectTiming != timing)
-	            {
-	                continue;
-	            }
-	        }
-	        else if (effect.EffectTiming == SkillMultiEffectTiming.OnHit
-	            || effect.EffectTiming == SkillMultiEffectTiming.OnDeploymentCast
-	            || effect.EffectTiming == SkillMultiEffectTiming.OnExpire
-	            || effect.EffectTiming == SkillMultiEffectTiming.OnHitCount)
-	        {
-	            continue;
-	        }
-	        if (!SkillRequirement.MatchesEffectHitCount(effect, hitCount))
-	        {
-	            continue;
-	        }
-
-	        if (effect.EffectTiming == SkillMultiEffectTiming.Delayed || effect.DelaySeconds > 0f)
-	        {
-	            effectContext.CombatManager.StartCoroutine(ApplyAdditionalEffectAfterDelay(
-	                effectContext,
-	                skillData,
-	                effect,
-	                defaultCenter,
-	                scaleStatusDuration));
-	            applied = true;
-	        }
-	        else
-	        {
-	            applied = ApplyAdditionalEffect(
-	                effectContext,
-	                skillData,
-	                effect,
-	                defaultCenter,
-	                scaleStatusDuration) || applied;
-	        }
-	    }
-	    return applied;
-	}
 
 	/*
 	 * 추가 효과의 지연시간이 지난 뒤 같은 Executor에서 효과를 적용한다.
 	 */
-	private static IEnumerator ApplyAdditionalEffectAfterDelay(
-	    SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-	    SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
-	    SkillEffectDefinition effect /* 적용할 추가 효과 */,
-	    Vector2 defaultCenter /* 기본 효과 중심 */,
-	    bool scaleStatusDuration /* 상태 지속시간 보정 여부 */)
-	{
-	    var delay = Mathf.Max(0f, effect.DelaySeconds);
-	    if (delay > 0f)
-	    {
-	        yield return new WaitForSeconds(delay);
-	    }
-	    else
-	    {
-	        yield return null;
-	    }
-	    ApplyAdditionalEffect(context, skillData, effect, defaultCenter, scaleStatusDuration);
-	}
 
 	/*
 	 * 추가 효과 종류에 맞는 실제 적용 기능을 호출한다.
 	 */
-	private static bool ApplyAdditionalEffect(
-	    SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-	    SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
-	    SkillEffectDefinition effect /* 적용할 추가 효과 */,
-	    Vector2 defaultCenter /* 기본 효과 중심 */,
-	    bool scaleStatusDuration /* 상태 지속시간 보정 여부 */)
-	{
-	    if (effect == null || context == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null)
-	    {
-	        return false;
-	    }
-
-	    if (effect.EffectKind == SkillMultiEffectKind.Damage)
-	    {
-	        return ZoneSkillExecutor.ApplyAdditionalDamageEffect(context, skillData, effect, defaultCenter);
-	    }
-	    if (effect.EffectKind == SkillMultiEffectKind.Status)
-	    {
-	        return SkillStatus.ApplyEffect(context, skillData, effect, defaultCenter, scaleStatusDuration);
-	    }
-	    if (effect.EffectKind == SkillMultiEffectKind.ExtendStatusDuration)
-	    {
-	        return SkillStatus.ExtendEffectDuration(context, effect);
-	    }
-	    if (effect.EffectKind == SkillMultiEffectKind.RecastZone)
-	    {
-	        return ZoneSkillExecutor.ExecuteRecast(context, skillData, effect, defaultCenter);
-	    }
-	    return false;
-	}
 
 	private static bool applyingHitEnhancement;
 
@@ -191,8 +61,7 @@ internal static class SingleSkillExecutor
 	                primaryBaseDamage,
 	                1,
 	                skillData,
-	                actionExecutionContext),
-	            legacyEffectActive: false);
+	                actionExecutionContext));
 	    }
 
 	    if (manager == null
@@ -358,18 +227,18 @@ internal static class SingleSkillExecutor
 
 		public bool IsExecute { get; }
 
-		public int PlannedConsumedStacks { get; }
+		public int PendingConsumedStacks { get; }
 
 		/*
 		 * TargetDamageResolution에 필요한 값을 초기화한다.
 		 */
-		public TargetDamageResolution(float damage /* 적용하거나 전달할 피해량 */, float finalDamageMultiplier /* 방어력 반영 후 적용할 피해 배율 */, float critChanceBonus /* 추가 치명타 확률 */, bool isExecute /* 여부 처형 여부 */, int plannedConsumedStacks /* 예정된 소모된 중첩 수 */)
+		public TargetDamageResolution(float damage /* 적용하거나 전달할 피해량 */, float finalDamageMultiplier /* 방어력 반영 후 적용할 피해 배율 */, float critChanceBonus /* 추가 치명타 확률 */, bool isExecute /* 여부 처형 여부 */, int pendingConsumedStacks /* 예정된 소모된 중첩 수 */)
 		{
 			Damage = damage;
 			FinalDamageMultiplier = finalDamageMultiplier;
 			CritChanceBonus = critChanceBonus;
 			IsExecute = isExecute;
-			PlannedConsumedStacks = plannedConsumedStacks;
+			PendingConsumedStacks = pendingConsumedStacks;
 		}
 	}
 
@@ -528,8 +397,7 @@ internal static class SingleSkillExecutor
 			prefab = null;
 		}
 		SingleExecutionOutcome singleExecutionOutcome = (UsesResolvedDeployments(skill) ? ExecuteResolvedDeployments(context, snapshot, skill, vector, runtimeVisual, prefab) : ExecuteAtCenter(context, snapshot, skill, vector, runtimeVisual, prefab, allowConditionalFollowUp: true));
-		bool flag = ExecuteAdditionalEffects(context, snapshot, skill.MultiEffects, vector, false, SkillMultiEffectTiming.OnCast, false);
-		if (!(singleExecutionOutcome.Routed || flag))
+		if (!singleExecutionOutcome.Routed)
 		{
 			return singleExecutionOutcome.CastCommitted;
 		}
@@ -688,7 +556,6 @@ internal static class SingleSkillExecutor
 			flag = flag || singleExecutionOutcome.Routed;
 			flag2 = flag2 || singleExecutionOutcome.CastCommitted;
 			PublishDeploymentLifecycle(context, snapshot, skill, vector);
-			flag = ExecuteAdditionalEffects(context, snapshot, skill.MultiEffects, vector, true, SkillMultiEffectTiming.OnDeploymentCast, false) || flag;
 			ScheduleRepeatedDeployments(context, snapshot, skill, vector, runtimeVisual, prefab);
 		}
 		return new SingleExecutionOutcome(flag, flag2);
@@ -715,7 +582,6 @@ internal static class SingleSkillExecutor
 			{
 				ExecuteAtCenter(context, snapshot2, skill, center, runtimeVisual, prefab, allowConditionalFollowUp: false);
 				PublishDeploymentLifecycle(context, snapshot2, skill, center);
-				ExecuteAdditionalEffects(context, snapshot2, skill.MultiEffects, center, true, SkillMultiEffectTiming.OnDeploymentCast, false);
 			}
 			else
 			{
@@ -734,7 +600,6 @@ internal static class SingleSkillExecutor
 		{
 			ExecuteAtCenter(context, snapshot, skill, center, runtimeVisual, prefab, allowConditionalFollowUp: false);
 			PublishDeploymentLifecycle(context, snapshot, skill, center);
-			ExecuteAdditionalEffects(context, snapshot, skill.MultiEffects, center, true, SkillMultiEffectTiming.OnDeploymentCast, false);
 		}
 	}
 
@@ -751,8 +616,7 @@ internal static class SingleSkillExecutor
 
 		SkillTrigger.PublishLifecycleEvent(
 			SkillTriggerEvent.OnDeploymentCast,
-			new SkillActionContext(context.Caster, skill.SkillId, null, center, 0f, 0, snapshot, context),
-			legacyEffectActive: false);
+			new SkillActionContext(context.Caster, skill.SkillId, null, center, 0f, 0, snapshot, context));
 	}
 
 	/*
@@ -765,7 +629,6 @@ internal static class SingleSkillExecutor
 		float damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.Damage);
 		DamageAttribute attribute = (skill.Damage != null) ? skill.Damage.Element : skill.Element;
 		ProjectileStatusHitSpec statusSpec = SkillStatus.StatusSpec(skill.OnHitStatus, snapshot);
-		SkillEffectDefinition[] onHitStatusEffects = OnHitStatusEffects(context, snapshot, skill.MultiEffects);
 		float critChanceBonus = snapshot?.CritChanceBonus ?? 0f;
 		float critDamageBonus = snapshot?.CritDamageBonus ?? 0f;
 		int num = EffectiveHitTargetCount(skill, snapshot);
@@ -800,12 +663,12 @@ internal static class SingleSkillExecutor
 				}
 				if (num2 > 0f)
 				{
-					context.CombatManager.StartCoroutine(ApplyPrefabHitboxAfterDelay(context, snapshot, skill, gameObject, num, damage, attribute, statusSpec, onHitStatusEffects, skillRuntimeInstance, skill.Damage != null && skill.Damage.CriticalAllowed, critChanceBonus, critDamageBonus, followUpSpec, followUpTargets, num2, allowConditionalFollowUp));
+					context.CombatManager.StartCoroutine(ApplyPrefabHitboxAfterDelay(context, snapshot, skill, gameObject, num, damage, attribute, statusSpec, skillRuntimeInstance, skill.Damage != null && skill.Damage.CriticalAllowed, critChanceBonus, critDamageBonus, followUpSpec, followUpTargets, num2, allowConditionalFollowUp));
 				}
 				else
 				{
 					Physics2D.SyncTransforms();
-					flag2 = ApplyPrefabHitbox(context.CombatManager, context.CasterEntry, context.Roster, skill, skill.Targeting, gameObject, num, damage, attribute, statusSpec, onHitStatusEffects, context.Caster, skill.SkillId, skillRuntimeInstance, skill.Damage != null && skill.Damage.CriticalAllowed, critChanceBonus, critDamageBonus, snapshot, followUpSpec, followUpTargets);
+					flag2 = ApplyPrefabHitbox(context.CombatManager, context.CasterEntry, context.Roster, skill, skill.Targeting, gameObject, num, damage, attribute, statusSpec, context.Caster, skill.SkillId, skillRuntimeInstance, skill.Damage != null && skill.Damage.CriticalAllowed, critChanceBonus, critDamageBonus, snapshot, followUpSpec, followUpTargets);
 				}
 				float visualLifetime = Mathf.Max(num2 + 0.05f, 1f);
 				SingleSkillActor.Attach(gameObject).InitializeAnimation(effects, visualLifetime);
@@ -825,11 +688,11 @@ internal static class SingleSkillExecutor
 						SingleSkillActor.Attach(visualInstance).InitializeAnimation(effects, visualLifetime);
 					}
 				}
-				context.CombatManager.StartCoroutine(ApplyNonPrefabTargetsAfterDelay(context, snapshot, skill, center, radius, coverAll, num, damage, attribute, statusSpec, onHitStatusEffects, skillRuntimeInstance, skill.Damage != null && skill.Damage.CriticalAllowed, critChanceBonus, critDamageBonus, followUpSpec, followUpTargets, num2, allowConditionalFollowUp));
+				context.CombatManager.StartCoroutine(ApplyNonPrefabTargetsAfterDelay(context, snapshot, skill, center, radius, coverAll, num, damage, attribute, statusSpec, skillRuntimeInstance, skill.Damage != null && skill.Damage.CriticalAllowed, critChanceBonus, critDamageBonus, followUpSpec, followUpTargets, num2, allowConditionalFollowUp));
 			}
 			else
 			{
-				flag2 = ApplyNonPrefabTargets(context, snapshot, skill, center, radius, coverAll, num, damage, attribute, statusSpec, onHitStatusEffects, skillRuntimeInstance, skill.Damage != null && skill.Damage.CriticalAllowed, critChanceBonus, critDamageBonus, followUpSpec, followUpTargets);
+				flag2 = ApplyNonPrefabTargets(context, snapshot, skill, center, radius, coverAll, num, damage, attribute, statusSpec, skillRuntimeInstance, skill.Damage != null && skill.Damage.CriticalAllowed, critChanceBonus, critDamageBonus, followUpSpec, followUpTargets);
 				if (flag2 && effects != null)
 				{
 					var visualInstance = effects.CreateEffect(new EffectCreateRequest(runtimeVisual, prefab, "RuntimeSingleVisual", center, Quaternion.identity, null, 0f, null, false, true, false));
@@ -850,7 +713,7 @@ internal static class SingleSkillExecutor
 	/*
 	 * ApplyNonPrefabTargets 처리를 대상에 적용한다.
 	 */
-	private static bool ApplyNonPrefabTargets(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */, Vector2 center /* 효과가 적용될 중심 위치 */, float radius /* 효과가 적용될 반지름 */, bool coverAll /* 범위 안의 모든 대상 포함 여부 */, int effectiveHitTargetCount /* 실제 적용 적중 대상 개수 */, float damage /* 적용하거나 전달할 피해량 */, DamageAttribute attribute /* 피해 속성 */, ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */, SkillEffectDefinition[] onHitStatusEffects /* 적중 시 적용할 상태 효과 목록 */, SkillUseState onHitRuntime /* 적중 효과를 실행할 스킬 정보 */, bool criticalAllowed /* 치명타 허용 여부 */, float critChanceBonus /* 추가 치명타 확률 */, float critDamageBonus /* 추가 치명타 피해 배율 */, SingleFollowUpSpec? followUpSpec /* 후속 공격 설정 */, List<SingleFollowUpTarget> followUpTargets /* 후속 공격 대상 목록 */)
+	private static bool ApplyNonPrefabTargets(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */, Vector2 center /* 효과가 적용될 중심 위치 */, float radius /* 효과가 적용될 반지름 */, bool coverAll /* 범위 안의 모든 대상 포함 여부 */, int effectiveHitTargetCount /* 실제 적용 적중 대상 개수 */, float damage /* 적용하거나 전달할 피해량 */, DamageAttribute attribute /* 피해 속성 */, ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */, SkillUseState onHitRuntime /* 적중 효과를 실행할 스킬 정보 */, bool criticalAllowed /* 치명타 허용 여부 */, float critChanceBonus /* 추가 치명타 확률 */, float critDamageBonus /* 추가 치명타 피해 배율 */, SingleFollowUpSpec? followUpSpec /* 후속 공격 설정 */, List<SingleFollowUpTarget> followUpTargets /* 후속 공격 대상 목록 */)
 	{
 		if (context == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null || skill == null)
 		{
@@ -858,18 +721,18 @@ internal static class SingleSkillExecutor
 		}
 		if (skill.UsesHitTargetCount && !skill.HitAllTargets)
 		{
-			return ApplyLimitedTargets(context.CombatManager, context.CasterEntry, context.Roster, skill, skill.Targeting, effectiveHitTargetCount, damage, attribute, statusSpec, onHitStatusEffects, context.Caster, skill.SkillId, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, snapshot, center, followUpSpec, followUpTargets);
+			return ApplyLimitedTargets(context.CombatManager, context.CasterEntry, context.Roster, skill, skill.Targeting, effectiveHitTargetCount, damage, attribute, statusSpec, context.Caster, skill.SkillId, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, snapshot, center, followUpSpec, followUpTargets);
 		}
-		return ApplyAreaTargets(context.CombatManager, context.CasterEntry, context.Roster, skill, skill.Targeting, center, radius, coverAll, damage, attribute, statusSpec, onHitStatusEffects, context.Caster, skill.SkillId, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, snapshot, followUpSpec, followUpTargets);
+		return ApplyAreaTargets(context.CombatManager, context.CasterEntry, context.Roster, skill, skill.Targeting, center, radius, coverAll, damage, attribute, statusSpec, context.Caster, skill.SkillId, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, snapshot, followUpSpec, followUpTargets);
 	}
 
 	/*
 	 * ApplyNonPrefabTargetsAfterDelay 처리를 대상에 적용한다.
 	 */
-	private static IEnumerator ApplyNonPrefabTargetsAfterDelay(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */, Vector2 center /* 효과가 적용될 중심 위치 */, float radius /* 효과가 적용될 반지름 */, bool coverAll /* 범위 안의 모든 대상 포함 여부 */, int effectiveHitTargetCount /* 실제 적용 적중 대상 개수 */, float damage /* 적용하거나 전달할 피해량 */, DamageAttribute attribute /* 피해 속성 */, ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */, SkillEffectDefinition[] onHitStatusEffects /* 적중 시 적용할 상태 효과 목록 */, SkillUseState onHitRuntime /* 적중 효과를 실행할 스킬 정보 */, bool criticalAllowed /* 치명타 허용 여부 */, float critChanceBonus /* 추가 치명타 확률 */, float critDamageBonus /* 추가 치명타 피해 배율 */, SingleFollowUpSpec? followUpSpec /* 후속 공격 설정 */, List<SingleFollowUpTarget> followUpTargets /* 후속 공격 대상 목록 */, float delaySeconds /* 실행 전 대기 시간(초) */, bool allowConditionalFollowUp /* 조건부 후속 공격 허용 여부 */)
+	private static IEnumerator ApplyNonPrefabTargetsAfterDelay(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */, Vector2 center /* 효과가 적용될 중심 위치 */, float radius /* 효과가 적용될 반지름 */, bool coverAll /* 범위 안의 모든 대상 포함 여부 */, int effectiveHitTargetCount /* 실제 적용 적중 대상 개수 */, float damage /* 적용하거나 전달할 피해량 */, DamageAttribute attribute /* 피해 속성 */, ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */, SkillUseState onHitRuntime /* 적중 효과를 실행할 스킬 정보 */, bool criticalAllowed /* 치명타 허용 여부 */, float critChanceBonus /* 추가 치명타 확률 */, float critDamageBonus /* 추가 치명타 피해 배율 */, SingleFollowUpSpec? followUpSpec /* 후속 공격 설정 */, List<SingleFollowUpTarget> followUpTargets /* 후속 공격 대상 목록 */, float delaySeconds /* 실행 전 대기 시간(초) */, bool allowConditionalFollowUp /* 조건부 후속 공격 허용 여부 */)
 	{
 		yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
-		ApplyNonPrefabTargets(context, snapshot, skill, center, radius, coverAll, effectiveHitTargetCount, damage, attribute, statusSpec, onHitStatusEffects, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, followUpSpec, followUpTargets);
+		ApplyNonPrefabTargets(context, snapshot, skill, center, radius, coverAll, effectiveHitTargetCount, damage, attribute, statusSpec, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, followUpSpec, followUpTargets);
 		if (allowConditionalFollowUp)
 		{
 			ScheduleConditionalFollowUps(context, snapshot, skill, followUpSpec, followUpTargets);
@@ -879,13 +742,13 @@ internal static class SingleSkillExecutor
 	/*
 	 * ApplyPrefabHitboxAfterDelay 처리를 대상에 적용한다.
 	 */
-	private static IEnumerator ApplyPrefabHitboxAfterDelay(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */, GameObject instance /* 생성된 게임 오브젝트 */, int effectiveHitTargetCount /* 실제 적용 적중 대상 개수 */, float damage /* 적용하거나 전달할 피해량 */, DamageAttribute attribute /* 피해 속성 */, ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */, SkillEffectDefinition[] onHitStatusEffects /* 적중 시 적용할 상태 효과 목록 */, SkillUseState onHitRuntime /* 적중 효과를 실행할 스킬 정보 */, bool criticalAllowed /* 치명타 허용 여부 */, float critChanceBonus /* 추가 치명타 확률 */, float critDamageBonus /* 추가 치명타 피해 배율 */, SingleFollowUpSpec? followUpSpec /* 후속 공격 설정 */, List<SingleFollowUpTarget> followUpTargets /* 후속 공격 대상 목록 */, float delaySeconds /* 실행 전 대기 시간(초) */, bool allowConditionalFollowUp /* 조건부 후속 공격 허용 여부 */)
+	private static IEnumerator ApplyPrefabHitboxAfterDelay(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */, GameObject instance /* 생성된 게임 오브젝트 */, int effectiveHitTargetCount /* 실제 적용 적중 대상 개수 */, float damage /* 적용하거나 전달할 피해량 */, DamageAttribute attribute /* 피해 속성 */, ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */, SkillUseState onHitRuntime /* 적중 효과를 실행할 스킬 정보 */, bool criticalAllowed /* 치명타 허용 여부 */, float critChanceBonus /* 추가 치명타 확률 */, float critDamageBonus /* 추가 치명타 피해 배율 */, SingleFollowUpSpec? followUpSpec /* 후속 공격 설정 */, List<SingleFollowUpTarget> followUpTargets /* 후속 공격 대상 목록 */, float delaySeconds /* 실행 전 대기 시간(초) */, bool allowConditionalFollowUp /* 조건부 후속 공격 허용 여부 */)
 	{
 		yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
 		if (context != null && !(context.CombatManager == null) && context.CasterEntry != null && context.Roster != null && skill != null && !(instance == null))
 		{
 			Physics2D.SyncTransforms();
-			ApplyPrefabHitbox(context.CombatManager, context.CasterEntry, context.Roster, skill, skill.Targeting, instance, effectiveHitTargetCount, damage, attribute, statusSpec, onHitStatusEffects, context.Caster, skill.SkillId, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, snapshot, followUpSpec, followUpTargets);
+			ApplyPrefabHitbox(context.CombatManager, context.CasterEntry, context.Roster, skill, skill.Targeting, instance, effectiveHitTargetCount, damage, attribute, statusSpec, context.Caster, skill.SkillId, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, snapshot, followUpSpec, followUpTargets);
 			if (allowConditionalFollowUp)
 			{
 				ScheduleConditionalFollowUps(context, snapshot, skill, followUpSpec, followUpTargets);
@@ -896,7 +759,7 @@ internal static class SingleSkillExecutor
 	/*
 	 * ApplyPrefabHitbox 처리를 대상에 적용한다.
 	 */
-	private static bool ApplyPrefabHitbox(InGameCombatManager manager /* 전투 진행 관리자 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, CombatUnitRegistry unitRoster /* 전투에 등록된 유닛 목록 */, SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */, GameObject hitboxObject /* 피격 판정 게임 오브젝트 */, int maxTargets /* 처리할 수 있는 최대 대상 수 */, float damage /* 적용하거나 전달할 피해량 */, DamageAttribute attribute /* 피해 속성 */, ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */, SkillEffectDefinition[] onHitStatusEffects /* 적중 시 적용할 상태 효과 목록 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */, SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */, bool criticalAllowed /* 치명타 허용 여부 */, float critChanceBonus /* 추가 치명타 확률 */, float critDamageBonus /* 추가 치명타 피해 배율 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, SingleFollowUpSpec? followUpSpec /* 후속 공격 설정 */, List<SingleFollowUpTarget> followUpTargets /* 후속 공격 대상 목록 */)
+	private static bool ApplyPrefabHitbox(InGameCombatManager manager /* 전투 진행 관리자 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, CombatUnitRegistry unitRoster /* 전투에 등록된 유닛 목록 */, SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */, GameObject hitboxObject /* 피격 판정 게임 오브젝트 */, int maxTargets /* 처리할 수 있는 최대 대상 수 */, float damage /* 적용하거나 전달할 피해량 */, DamageAttribute attribute /* 피해 속성 */, ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */, SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */, bool criticalAllowed /* 치명타 허용 여부 */, float critChanceBonus /* 추가 치명타 확률 */, float critDamageBonus /* 추가 치명타 피해 배율 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, SingleFollowUpSpec? followUpSpec /* 후속 공격 설정 */, List<SingleFollowUpTarget> followUpTargets /* 후속 공격 대상 목록 */)
 	{
 		if (manager == null || sourceEntry == null || unitRoster == null || hitboxObject == null || maxTargets <= 0)
 		{
@@ -921,13 +784,12 @@ internal static class SingleSkillExecutor
 				bool isCoreHit = array.Length != 0 && IsTargetInsideHitbox(array, unitEntry);
 				TargetDamageResolution damageResolution = TargetDamage(source, skill, snapshot, damage, unitEntry.Model, critChanceBonus, isCoreHit);
 				InGameResourceChangeResult result2 = manager.ApplyDamage(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, critDamageBonus, sourceSkillId, suppressOutgoingDamageTriggers: false, damageResolution.IsExecute, finalDamageMultiplier: damageResolution.FinalDamageMultiplier);
-				int consumedStacks = ConsumePlannedTargetStatusStacks(manager, unitEntry.Model, skill, damageResolution);
+				int consumedStacks = ConsumePendingTargetStatusStacks(manager, unitEntry.Model, skill, damageResolution);
 				SingleSkillRules.HandleKillRecovery(sourceRuntime, skill, snapshot, result2, damageResolution.IsExecute);
 				TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry, result2, consumedStacks);
 				if (!result2.IsDead)
 				{
 					TryApplyStatus(manager, unitEntry.Model, statusSpec, source);
-					TryApplyOnHitStatusEffects(manager, unitEntry.Model, onHitStatusEffects, source);
 				}
 				TryApplyCoreOnHitAdditionalDamage(manager, snapshot, source, sourceSkillId, unitEntry, damageResolution.Damage, isCoreHit);
 				SingleSkillExecutor.ApplyHitEnhancements(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry, hitPosition, damageResolution.Damage);
@@ -947,7 +809,7 @@ internal static class SingleSkillExecutor
 	/*
 	 * ApplyLimitedTargets 처리를 대상에 적용한다.
 	 */
-	private static bool ApplyLimitedTargets(InGameCombatManager manager /* 전투 진행 관리자 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, CombatUnitRegistry unitRoster /* 전투에 등록된 유닛 목록 */, SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */, int maxTargets /* 처리할 수 있는 최대 대상 수 */, float damage /* 적용하거나 전달할 피해량 */, DamageAttribute attribute /* 피해 속성 */, ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */, SkillEffectDefinition[] onHitStatusEffects /* 적중 시 적용할 상태 효과 목록 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */, SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */, bool criticalAllowed /* 치명타 허용 여부 */, float critChanceBonus /* 추가 치명타 확률 */, float critDamageBonus /* 추가 치명타 피해 배율 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, Vector2 center /* 효과가 적용될 중심 위치 */, SingleFollowUpSpec? followUpSpec /* 후속 공격 설정 */, List<SingleFollowUpTarget> followUpTargets /* 후속 공격 대상 목록 */)
+	private static bool ApplyLimitedTargets(InGameCombatManager manager /* 전투 진행 관리자 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, CombatUnitRegistry unitRoster /* 전투에 등록된 유닛 목록 */, SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */, int maxTargets /* 처리할 수 있는 최대 대상 수 */, float damage /* 적용하거나 전달할 피해량 */, DamageAttribute attribute /* 피해 속성 */, ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */, SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */, bool criticalAllowed /* 치명타 허용 여부 */, float critChanceBonus /* 추가 치명타 확률 */, float critDamageBonus /* 추가 치명타 피해 배율 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, Vector2 center /* 효과가 적용될 중심 위치 */, SingleFollowUpSpec? followUpSpec /* 후속 공격 설정 */, List<SingleFollowUpTarget> followUpTargets /* 후속 공격 대상 목록 */)
 	{
 		if (manager == null || sourceEntry == null || unitRoster == null || maxTargets <= 0)
 		{
@@ -963,13 +825,12 @@ internal static class SingleSkillExecutor
 			Vector2 hitPosition = ((unitEntry.Transform != null) ? ((Vector2)unitEntry.Transform.position) : center);
 			TargetDamageResolution damageResolution = TargetDamage(source, skill, snapshot, damage, unitEntry.Model, critChanceBonus, isCoreHit: false);
 			InGameResourceChangeResult result2 = manager.ApplyDamage(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, critDamageBonus, sourceSkillId, suppressOutgoingDamageTriggers: false, damageResolution.IsExecute, finalDamageMultiplier: damageResolution.FinalDamageMultiplier);
-			int consumedStacks = ConsumePlannedTargetStatusStacks(manager, unitEntry.Model, skill, damageResolution);
+			int consumedStacks = ConsumePendingTargetStatusStacks(manager, unitEntry.Model, skill, damageResolution);
 			SingleSkillRules.HandleKillRecovery(sourceRuntime, skill, snapshot, result2, damageResolution.IsExecute);
 			TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry, result2, consumedStacks);
 			if (!result2.IsDead)
 			{
 				TryApplyStatus(manager, unitEntry.Model, statusSpec, source);
-				TryApplyOnHitStatusEffects(manager, unitEntry.Model, onHitStatusEffects, source);
 			}
 			SingleSkillExecutor.ApplyHitEnhancements(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry, hitPosition, damageResolution.Damage);
 			result = true;
@@ -987,7 +848,7 @@ internal static class SingleSkillExecutor
 	/*
 	 * ApplyAreaTargets 처리를 대상에 적용한다.
 	 */
-	private static bool ApplyAreaTargets(InGameCombatManager manager /* 전투 진행 관리자 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, CombatUnitRegistry unitRoster /* 전투에 등록된 유닛 목록 */, SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */, Vector2 center /* 효과가 적용될 중심 위치 */, float radius /* 효과가 적용될 반지름 */, bool coverAll /* 범위 안의 모든 대상 포함 여부 */, float damage /* 적용하거나 전달할 피해량 */, DamageAttribute attribute /* 피해 속성 */, ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */, SkillEffectDefinition[] onHitStatusEffects /* 적중 시 적용할 상태 효과 목록 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */, SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */, bool criticalAllowed /* 치명타 허용 여부 */, float critChanceBonus /* 추가 치명타 확률 */, float critDamageBonus /* 추가 치명타 피해 배율 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, SingleFollowUpSpec? followUpSpec /* 후속 공격 설정 */, List<SingleFollowUpTarget> followUpTargets /* 후속 공격 대상 목록 */)
+	private static bool ApplyAreaTargets(InGameCombatManager manager /* 전투 진행 관리자 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, CombatUnitRegistry unitRoster /* 전투에 등록된 유닛 목록 */, SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */, Vector2 center /* 효과가 적용될 중심 위치 */, float radius /* 효과가 적용될 반지름 */, bool coverAll /* 범위 안의 모든 대상 포함 여부 */, float damage /* 적용하거나 전달할 피해량 */, DamageAttribute attribute /* 피해 속성 */, ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */, SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */, bool criticalAllowed /* 치명타 허용 여부 */, float critChanceBonus /* 추가 치명타 확률 */, float critDamageBonus /* 추가 치명타 피해 배율 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, SingleFollowUpSpec? followUpSpec /* 후속 공격 설정 */, List<SingleFollowUpTarget> followUpTargets /* 후속 공격 대상 목록 */)
 	{
 		if (manager == null || sourceEntry == null || unitRoster == null)
 		{
@@ -1005,13 +866,12 @@ internal static class SingleSkillExecutor
 			Vector2 hitPosition = ((unitEntry.Transform != null) ? ((Vector2)unitEntry.Transform.position) : center);
 			TargetDamageResolution damageResolution = TargetDamage(source, skill, snapshot, damage, unitEntry.Model, critChanceBonus, isCoreHit: false);
 			InGameResourceChangeResult result = manager.ApplyDamage(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, critDamageBonus, sourceSkillId, suppressOutgoingDamageTriggers: false, damageResolution.IsExecute, finalDamageMultiplier: damageResolution.FinalDamageMultiplier);
-			int consumedStacks = ConsumePlannedTargetStatusStacks(manager, unitEntry.Model, skill, damageResolution);
+			int consumedStacks = ConsumePendingTargetStatusStacks(manager, unitEntry.Model, skill, damageResolution);
 			SingleSkillRules.HandleKillRecovery(sourceRuntime, skill, snapshot, result, damageResolution.IsExecute);
 			TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry, result, consumedStacks);
 			if (!result.IsDead)
 			{
 				TryApplyStatus(manager, unitEntry.Model, statusSpec, source);
-				TryApplyOnHitStatusEffects(manager, unitEntry.Model, onHitStatusEffects, source);
 			}
 			SingleSkillExecutor.ApplyHitEnhancements(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry, hitPosition, damageResolution.Damage);
 			TryApplyHitCountCooldownRefund(sourceRuntime, snapshot, 1);
@@ -1030,13 +890,12 @@ internal static class SingleSkillExecutor
 				Vector2 hitPosition2 = ((unitEntry2.Transform != null) ? ((Vector2)unitEntry2.Transform.position) : center);
 				TargetDamageResolution damageResolution2 = TargetDamage(source, skill, snapshot, damage, unitEntry2.Model, critChanceBonus, isCoreHit: false);
 				InGameResourceChangeResult result3 = manager.ApplyDamage(unitEntry2.Model, damageResolution2.Damage, attribute, source, criticalAllowed, damageResolution2.CritChanceBonus, critDamageBonus, sourceSkillId, suppressOutgoingDamageTriggers: false, damageResolution2.IsExecute, finalDamageMultiplier: damageResolution2.FinalDamageMultiplier);
-				int consumedStacks2 = ConsumePlannedTargetStatusStacks(manager, unitEntry2.Model, skill, damageResolution2);
+				int consumedStacks2 = ConsumePendingTargetStatusStacks(manager, unitEntry2.Model, skill, damageResolution2);
 				SingleSkillRules.HandleKillRecovery(sourceRuntime, skill, snapshot, result3, damageResolution2.IsExecute);
 				TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry2, result3, consumedStacks2);
 				if (!result3.IsDead)
 				{
 					TryApplyStatus(manager, unitEntry2.Model, statusSpec, source);
-					TryApplyOnHitStatusEffects(manager, unitEntry2.Model, onHitStatusEffects, source);
 				}
 				SingleSkillExecutor.ApplyHitEnhancements(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry2, hitPosition2, damageResolution2.Damage);
 				result2 = true;
@@ -1088,48 +947,10 @@ internal static class SingleSkillExecutor
 	/*
 	 * OnHitStatusEffects 결과를 계산해 반환한다.
 	 */
-	private static SkillEffectDefinition[] OnHitStatusEffects(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, SkillEffectDefinition[] effects /* 실행할 효과 목록 */)
-	{
-		if (effects == null || effects.Length == 0)
-		{
-			return Array.Empty<SkillEffectDefinition>();
-		}
-		List<SkillEffectDefinition> list = new List<SkillEffectDefinition>();
-		foreach (SkillEffectDefinition skillEffectDefinition in effects)
-		{
-			if (skillEffectDefinition != null && skillEffectDefinition.EffectTiming == SkillMultiEffectTiming.OnHit && skillEffectDefinition.EffectKind == SkillMultiEffectKind.Status && skillEffectDefinition.TargetSide == SkillMultiEffectTargetSide.Enemy && SkillRequirement.CanRunEffect(context, skillEffectDefinition))
-			{
-				list.Add(skillEffectDefinition);
-			}
-		}
-		if (list.Count <= 0)
-		{
-			return Array.Empty<SkillEffectDefinition>();
-		}
-		return list.ToArray();
-	}
 
 	/*
 	 * TryApplyOnHitStatusEffects 작업을 시도하고 성공 여부를 반환한다.
 	 */
-	private static void TryApplyOnHitStatusEffects(InGameCombatManager manager /* 전투 진행 관리자 */, UnitCombatState target /* 효과를 받을 대상 유닛 */, SkillEffectDefinition[] effects /* 실행할 효과 목록 */, UnitCombatState source /* 효과를 발생시킨 유닛 */)
-	{
-		if (manager == null || target == null || effects == null || effects.Length == 0)
-		{
-			return;
-		}
-		foreach (SkillEffectDefinition skillEffectDefinition in effects)
-		{
-			if (skillEffectDefinition != null && SkillTargeting.MatchesEffectTarget(target, skillEffectDefinition))
-			{
-				ProjectileStatusHitSpec projectileStatusHitSpec = SkillStatus.EffectStatusSpec(skillEffectDefinition);
-				if (projectileStatusHitSpec != null && projectileStatusHitSpec.Enabled)
-				{
-					StatusCombatRules.ApplyStatus(manager, target, projectileStatusHitSpec, source);
-				}
-			}
-		}
-	}
 
 	/*
 	 * TryApplyCoreOnHitAdditionalDamage 작업을 시도하고 성공 여부를 반환한다.
@@ -1164,17 +985,7 @@ internal static class SingleSkillExecutor
 			var executionContext = new SkillExecutionContext(manager, roster, sourceEntry, sourceRuntime);
 			SkillTrigger.PublishLifecycleEvent(
 				SkillTriggerEvent.OnHitCount,
-				new SkillActionContext(sourceEntry.Model, skill.SkillId, null, center, 0f, hitCount, snapshot, executionContext),
-				legacyEffectActive: false);
-			ExecuteAdditionalEffects(
-				executionContext,
-				snapshot,
-				skill.MultiEffects,
-				center,
-				true,
-				SkillMultiEffectTiming.OnHitCount,
-				false,
-				hitCount);
+				new SkillActionContext(sourceEntry.Model, skill.SkillId, null, center, 0f, hitCount, snapshot, executionContext));
 		}
 	}
 
@@ -1267,7 +1078,7 @@ internal static class SingleSkillExecutor
 			critChanceBonus += SkillExecutionRuleResolver.ConditionalCritChanceBonus(snapshot, target);
 		}
 		bool flag = false;
-		int plannedConsumedStacks = PlannedConsumedStacks(skill, snapshot, target);
+		int pendingConsumedStacks = PendingConsumedStacks(skill, snapshot, target);
 		if (isCoreHit && snapshot != null && snapshot.HasCoreDamageMultiplier)
 		{
 			num2 *= snapshot.CoreDamageMultiplier;
@@ -1276,7 +1087,7 @@ internal static class SingleSkillExecutor
 		num2 = singleDamageModifierState.DamageMultiplier;
 		critChanceBonus = singleDamageModifierState.CritChanceBonus;
 		flag = singleDamageModifierState.IsExecute;
-		return new TargetDamageResolution(Mathf.Max(0f, num), Mathf.Max(0f, num2), critChanceBonus, flag, plannedConsumedStacks);
+		return new TargetDamageResolution(Mathf.Max(0f, num), Mathf.Max(0f, num2), critChanceBonus, flag, pendingConsumedStacks);
 	}
 
 	/*
@@ -1310,9 +1121,9 @@ internal static class SingleSkillExecutor
 	}
 
 	/*
-	 * PlannedConsumedStacks 결과를 계산해 반환한다.
+	 * PendingConsumedStacks 결과를 계산해 반환한다.
 	 */
-	private static int PlannedConsumedStacks(SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, UnitCombatState target /* 효과를 받을 대상 유닛 */)
+	private static int PendingConsumedStacks(SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, UnitCombatState target /* 효과를 받을 대상 유닛 */)
 	{
 		if (skill == null || target == null || skill.ConsumeTargetStatusKind == StatusEffectKind.None)
 		{
@@ -1344,15 +1155,15 @@ internal static class SingleSkillExecutor
 	}
 
 	/*
-	 * ConsumePlannedTargetStatusStacks 작업 결과를 반환한다.
+	 * ConsumePendingTargetStatusStacks 작업 결과를 반환한다.
 	 */
-	private static int ConsumePlannedTargetStatusStacks(InGameCombatManager manager /* 전투 진행 관리자 */, UnitCombatState target /* 효과를 받을 대상 유닛 */, SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */, TargetDamageResolution damageResolution /* 피해 계산 결과 */)
+	private static int ConsumePendingTargetStatusStacks(InGameCombatManager manager /* 전투 진행 관리자 */, UnitCombatState target /* 효과를 받을 대상 유닛 */, SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */, TargetDamageResolution damageResolution /* 피해 계산 결과 */)
 	{
-		if (manager == null || target == null || skill == null || damageResolution.PlannedConsumedStacks <= 0 || skill.ConsumeTargetStatusKind == StatusEffectKind.None)
+		if (manager == null || target == null || skill == null || damageResolution.PendingConsumedStacks <= 0 || skill.ConsumeTargetStatusKind == StatusEffectKind.None)
 		{
 			return 0;
 		}
-		return manager.ConsumeStatusStacks(target, skill.ConsumeTargetStatusKind, damageResolution.PlannedConsumedStacks);
+		return manager.ConsumeStatusStacks(target, skill.ConsumeTargetStatusKind, damageResolution.PendingConsumedStacks);
 	}
 
 	/*

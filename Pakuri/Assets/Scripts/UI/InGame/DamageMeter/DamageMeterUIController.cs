@@ -246,8 +246,7 @@ namespace Pakuri.InGame
             {
                 var trigger = triggers[i];
                 if (trigger == null
-                    || (!string.Equals(trigger.TriggerId, sourceId, StringComparison.OrdinalIgnoreCase)
-                        && !string.Equals(trigger.TriggeredEffectId, sourceId, StringComparison.OrdinalIgnoreCase)))
+                    || !string.Equals(trigger.TriggerId, sourceId, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
@@ -294,37 +293,10 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                if ((string.Equals(trigger.TriggerId, sourceId, StringComparison.OrdinalIgnoreCase)
-                        || string.Equals(trigger.TriggeredEffectId, sourceId, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(trigger.TriggerId, sourceId, StringComparison.OrdinalIgnoreCase)
                     && !string.IsNullOrWhiteSpace(trigger.RequiresActiveChoiceId))
                 {
                     return ResolveChoiceTitle(trigger.RequiresActiveChoiceId);
-                }
-            }
-
-            var activeSkills = monster.ActiveSkills;
-            if (activeSkills == null)
-            {
-                return string.Empty;
-            }
-
-            for (var skillIndex = 0; skillIndex < activeSkills.Length; skillIndex++)
-            {
-                var effects = activeSkills[skillIndex] != null ? activeSkills[skillIndex].MultiEffects : null;
-                if (effects == null)
-                {
-                    continue;
-                }
-
-                for (var effectIndex = 0; effectIndex < effects.Length; effectIndex++)
-                {
-                    var effect = effects[effectIndex];
-                    if (effect != null
-                        && string.Equals(effect.EffectId, sourceId, StringComparison.OrdinalIgnoreCase)
-                        && !string.IsNullOrWhiteSpace(effect.RequiresActiveChoiceId))
-                    {
-                        return ResolveChoiceTitle(effect.RequiresActiveChoiceId);
-                    }
                 }
             }
 

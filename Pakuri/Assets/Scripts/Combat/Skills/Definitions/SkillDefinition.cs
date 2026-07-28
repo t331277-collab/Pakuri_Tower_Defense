@@ -163,8 +163,7 @@ namespace Pakuri.Data
         [TextArea(2, 4)] public string Summary;
         public SkillChoiceDefinition[] EnhancementChoices = Array.Empty<SkillChoiceDefinition>();
         public SkillChoiceDefinition[] MasterSkillChoices = Array.Empty<SkillChoiceDefinition>();
-        public SkillEffectDefinition[] MultiEffects = Array.Empty<SkillEffectDefinition>();
-        public SkillNodeDefinition[] NormalizedPlanNodes = Array.Empty<SkillNodeDefinition>();
+        public SkillNodeDefinition[] NormalizedNodes = Array.Empty<SkillNodeDefinition>();
     }
 
     /*
@@ -185,8 +184,7 @@ namespace Pakuri.Data
         [TextArea(2, 4)] public string Summary;
         public SkillChoiceDefinition[] BaseModifierChoices = Array.Empty<SkillChoiceDefinition>();
         public SkillChoiceDefinition[] EnhancementChoices = Array.Empty<SkillChoiceDefinition>();
-        public SkillEffectDefinition[] PassiveEffects = Array.Empty<SkillEffectDefinition>();
-        public SkillNodeDefinition[] NormalizedPlanNodes = Array.Empty<SkillNodeDefinition>();
+        public SkillNodeDefinition[] NormalizedNodes = Array.Empty<SkillNodeDefinition>();
     }
 }
 
@@ -401,9 +399,8 @@ namespace Pakuri.InGame
         [Header("Choices")]
         public SkillChoice[] EnhancementChoices = Array.Empty<SkillChoice>();
         public SkillChoice[] MasterChoices = Array.Empty<SkillChoice>();
-        public SkillEffectDefinition[] MultiEffects = Array.Empty<SkillEffectDefinition>();
         public SkillTriggerDefinition[] SkillTriggers = Array.Empty<SkillTriggerDefinition>();
-        public SkillNode[] NormalizedPlanNodes = Array.Empty<SkillNode>();
+        public SkillNode[] NormalizedNodes = Array.Empty<SkillNode>();
     }
 
     /*
@@ -653,7 +650,7 @@ namespace Pakuri.Data
         public Sprite SkillIcon;
         public GameObject SkillEffectPrefab;
         [TextArea(2, 5)] public string DescriptionText;
-        public SkillNodeDefinition[] NormalizedPlanNodes = Array.Empty<SkillNodeDefinition>();
+        public SkillNodeDefinition[] NormalizedNodes = Array.Empty<SkillNodeDefinition>();
     }
 }
 
@@ -663,14 +660,6 @@ namespace Pakuri.Data
  */
 namespace Pakuri.Data
 {
-    public enum SkillMultiEffectKind
-    {
-        Damage,
-        Status,
-        ExtendStatusDuration,
-        RecastZone
-    }
-
     /*
      * 추가 효과가 적용될 진영을 구분한다.
      */
@@ -699,19 +688,6 @@ namespace Pakuri.Data
         Single,
         Circle,
         Battlefield
-    }
-
-    /*
-     * 추가 효과가 실행되는 시점을 구분한다.
-     */
-    public enum SkillMultiEffectTiming
-    {
-        OnCast,
-        OnDeploymentCast,
-        Delayed,
-        OnHit,
-        OnExpire,
-        OnHitCount
     }
 
     /*
@@ -747,34 +723,7 @@ namespace Pakuri.Data
     }
 
     /*
-     * Trigger 피해가 기준으로 삼을 값을 구분한다.
-     */
-    public enum SkillTriggerDamageSource
-    {
-        Fixed,
-        ShieldAppliedAmount,
-        ShieldRemainingAmount,
-        ShieldAbsorbedAmount,
-        TrackedIncomingDamage,
-        EventAppliedDamage
-    }
-
-    /*
-     * Trigger가 실행할 결과 동작을 구분한다.
-     */
-    public enum SkillTriggerActionKind
-    {
-        Auto,
-        SingleAttack,
-        LineAttack,
-        TriggeredSkill,
-        Effect,
-        CooldownRefund,
-        ReloadReduce
-    }
-
-    /*
-     * 전투 사건의 조건과 그때 실행할 스킬·효과 정보를 보관한다.
+     * 전투 사건의 활성화 조건과 실행할 Node 목록을 보관한다.
      */
     [Serializable]
     public class SkillTriggerDefinition
@@ -794,8 +743,6 @@ namespace Pakuri.Data
         public string ConditionStatusSourceSkillId;
         public string[] ConditionStatusSourceSkillIds = Array.Empty<string>();
         public string TriggerAttribute;
-        // Trigger 실행 동작과 대상 선택
-        public SkillTriggerActionKind TriggerAction;
         public string EventSkillId;
         public string EventSkillRuntimeKinds;
         public SkillRuntimeKindCondition[] EventSkillRuntimeKindValues = Array.Empty<SkillRuntimeKindCondition>();
@@ -804,137 +751,12 @@ namespace Pakuri.Data
         public float TriggerDelaySeconds;
         public int TriggerEveryCount;
         public string EventSourceScope;
-        public string TriggeredSkillId;
-        public string TargetSkillId;
-        public string TriggeredEffectId;
-        public SkillRuntimeKind RuntimeKind;
         public int SortOrder;
-        public SkillMultiEffectTargetSide TargetSide;
-        public SkillMultiEffectTargetSelection TargetSelection;
-        public SkillMultiEffectTargetShape TargetShape;
-        public SkillMultiEffectCenterMode CenterMode;
-        public DamageAttribute Attribute;
-        public float BaseDamage;
-        public float AttackPowerCoefficient;
-        public float SpellPowerCoefficient;
-        public float DamageMultiplier = 1f;
-        public SkillTriggerDamageSource DamageSource;
-        public float DamageSourceMultiplier;
-        // Trigger 피해 계산
-        public DamageAttribute TrackedAttribute;
-        public float Radius;
-        public bool CoverAll;
-        // 반복 실행과 재사용 대기시간 변경
-        public string HitTargetCount;
         public int RepeatCount = 1;
         public float RepeatIntervalSeconds;
         public bool RequireEventExecute;
-        public float CooldownRefundRatio;
-        public float ReloadReduceRatio;
-        // Trigger 표시와 런타임 지원 상태
-        public GameObject SkillEffectPrefab;
-        public RuntimeSkillVisualSpec RuntimeVisual = new RuntimeSkillVisualSpec();
         public SkillNodeDefinition[] NormalizedNodes = Array.Empty<SkillNodeDefinition>();
         [NonSerialized] public Pakuri.InGame.SkillNode[] Nodes = Array.Empty<Pakuri.InGame.SkillNode>();
-    }
-
-    /*
-     * 기본 스킬에 덧붙일 피해, 상태, 재시전 효과와 실행 조건을 보관한다.
-     */
-    [Serializable]
-    public class SkillEffectDefinition
-    {
-        // 효과 식별과 실행 시점
-        public string EffectId;
-
-        public string RuntimeObjectName(string prefix /* 런타임 오브젝트 이름 앞부분 */)
-        {
-            return prefix + "_" + EffectId;
-        }
-
-        public string SkillId;
-        public int SortOrder;
-        public SkillMultiEffectKind EffectKind;
-        public SkillMultiEffectTargetSide TargetSide;
-        public SkillMultiEffectTargetSelection TargetSelection;
-        public SkillMultiEffectTargetShape TargetShape;
-        public SkillMultiEffectCenterMode CenterMode;
-        public SkillMultiEffectVisualAnchorMode VisualAnchorMode;
-        public SkillMultiEffectTiming EffectTiming;
-        public float DelaySeconds;
-        public bool EnabledByDefault;
-        public string RequiresActiveChoiceId;
-        public string ExcludesActiveChoiceId;
-        public string RequiresPassiveSkillId;
-        public string ExcludesPassiveSkillId;
-        public string RequiredSourceStatusId;
-        public StatusEffectKind RequiredSourceStatusKind;
-        public int RequiredSourceStatusMinStacks;
-        // 선택지·패시브·상태 기반 실행 조건
-        public bool ApplyOnce;
-        public string ConditionStatusId;
-        public StatusConditionGroup[] ConditionStatuses = Array.Empty<StatusConditionGroup>();
-        public string ConditionStatusSourceSkillId;
-        public string[] ConditionStatusSourceSkillIds = Array.Empty<string>();
-        public SkillMultiEffectTargetSide ConditionTargetSide;
-        public string ConditionSkillAttribute;
-        public float ConditionHealthRatioMax;
-        public int ConditionHitCountMin;
-        public DamageAttribute Attribute;
-        public float BaseDamage;
-        public float AttackPowerCoefficient;
-        public float SpellPowerCoefficient;
-        public float DamageMultiplier = 1f;
-        public float Radius;
-        public bool CoverAll;
-        public float ActiveDurationSeconds;
-        // 피해와 범위 설정
-        public float TickIntervalSeconds;
-        // 기존 장판을 다시 생성할 때 사용할 설정
-        public string RecastSourceSkillId;
-        public float RecastDurationSeconds;
-        public float RecastRadiusMultiplier = 1f;
-        public bool RecastInheritSkillData = true;
-        public int RecastMaxGeneration = 1;
-        public string StatusEffectId;
-        public StatusEffectKind StatusKind;
-        public StatusRuntimeData CompiledStatusData;
-        public float StatusChance;
-        public string StatusEffectLabel;
-        public GameObject StatusEffectPrefab;
-        public float StatusDurationSeconds;
-        public int StatusMaxStacks;
-        public int StatusStackAmount;
-        public string StatusTargetScope;
-        public string StatusMergePolicy;
-        public string ShieldAmountRefreshPolicy;
-        public float StatusActionSpeedBonus;
-        public float StatusMoveSpeedBonus;
-        public float StatusAttackPowerBonus;
-        public float StatusSpellPowerBonus;
-        public float StatusDamageBonusRate;
-        // 상태 적용과 상태 능력치 변경
-        public float StatusShieldReceivedBonus;
-        public float StatusDamageTakenBonus;
-        public float StatusCriticalDamageTakenBonus;
-        public float StatusCriticalDamageBonus;
-        public float StatusAilmentResistanceBonus;
-        public float StatusCriticalResistanceBonus;
-        public float StatusElementResistReduction;
-        public float StatusFlatElementResistReduction;
-        public float StatusElementDamageTakenBonus;
-        public float StatusCriticalChanceBonus;
-        public StatusEffectKind[] StatusConditionalTargetStatusKinds = Array.Empty<StatusEffectKind>();
-        public float StatusConditionalStatusChanceBonus;
-        public string StatusConditionalIncomingSkillRuntimeKinds;
-        public string StatusConditionalOutgoingSkillRuntimeKinds;
-        public string StatusAppliedStatusDurationBonusStatusId;
-        public float StatusAppliedStatusDurationBonus;
-        public float StatusOutgoingAdditionalDamageMultiplier;
-        public DamageAttribute StatusOutgoingAdditionalDamageTriggerAttribute;
-        public DamageAttribute StatusOutgoingAdditionalDamageAttribute;
-        public GameObject SkillEffectPrefab;
-        public RuntimeSkillVisualSpec RuntimeVisual = new RuntimeSkillVisualSpec();
     }
 
     /*

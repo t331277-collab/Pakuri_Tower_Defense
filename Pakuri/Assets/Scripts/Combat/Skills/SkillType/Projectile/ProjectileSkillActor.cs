@@ -35,8 +35,6 @@ namespace Pakuri.InGame
         private float critChanceBonus;
         private float critDamageBonus;
         private ProjectileStatusHitSpec impactStatusOnHit;
-        private SkillEffectDefinition[] onHitEffects;
-        private SkillEffectDefinition[] onExpireEffects;
         private bool contactDamageEnabled = true;
         private bool stopOnFirstHit;
         private float impactDelaySeconds;
@@ -49,7 +47,7 @@ namespace Pakuri.InGame
         private Vector2 impactCenter;
         private UnitCombatState impactTarget;
         private bool impactResolved;
-        private bool awaitingExpireEffects;
+        private bool expirePublished;
         private bool visualOnly;
 
         /*
@@ -90,8 +88,6 @@ namespace Pakuri.InGame
             critChanceBonus = 0f;
             critDamageBonus = 0f;
             impactStatusOnHit = null;
-            onHitEffects = System.Array.Empty<SkillEffectDefinition>();
-            onExpireEffects = System.Array.Empty<SkillEffectDefinition>();
             contactDamageEnabled = true;
             stopOnFirstHit = false;
             impactDelaySeconds = 0f;
@@ -104,7 +100,7 @@ namespace Pakuri.InGame
             impactCenter = Vector2.zero;
             impactTarget = null;
             impactResolved = false;
-            awaitingExpireEffects = false;
+            expirePublished = false;
             EnsurePhysicsRelay();
         }
 
@@ -155,8 +151,6 @@ namespace Pakuri.InGame
             ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */,
             ProjectileBranchDamageSpec branchSpec /* 분기 설정 */,
             ProjectileStatusHitSpec impactStatusSpec /* 충돌 상태 효과 설정 */,
-            SkillEffectDefinition[] onHitEffectSpecs /* 발생 시 적중 효과 설정 목록 */,
-            SkillEffectDefinition[] onExpireEffectSpecs /* 발생 시 만료 효과 설정 목록 */,
             bool enableContactDamage /* 활성화 접촉 피해 여부 */,
             bool stopAfterFirstHit /* 중단 이후 첫 번째 적중 여부 */,
             float impactDelay /* 충돌 대기 시간 */,
@@ -187,8 +181,6 @@ namespace Pakuri.InGame
             statusOnHit = statusSpec;
             branchDamageOnHit = branchSpec;
             impactStatusOnHit = impactStatusSpec;
-            onHitEffects = onHitEffectSpecs ?? System.Array.Empty<SkillEffectDefinition>();
-            onExpireEffects = onExpireEffectSpecs ?? System.Array.Empty<SkillEffectDefinition>();
             contactDamageEnabled = enableContactDamage;
             stopOnFirstHit = stopAfterFirstHit;
             impactDelaySeconds = Mathf.Max(0f, impactDelay);
@@ -356,7 +348,6 @@ namespace Pakuri.InGame
             }
 
             TryRunProjectileHitTriggers();
-            TryApplyOnHitEffects(target, hitPosition);
             TryApplyBranchDamage(target, hitPosition, resolvedDamage);
             if (stopOnFirstHit)
             {
@@ -414,31 +405,6 @@ namespace Pakuri.InGame
         /*
          * 적중 효과를 적용하고 성공 여부를 반환한다.
          */
-        private void TryApplyOnHitEffects(CombatUnitEntry target /* 효과를 받을 대상의 등록 정보 */, Vector2 hitPosition /* 적중 위치 */)
-        {
-            if (target == null || onHitEffects == null || onHitEffects.Length == 0)
-            {
-                return;
-            }
-
-            var context = new SkillExecutionContext(
-                combatManager,
-                combatManager != null ? combatManager.UnitRegistry : null,
-                combatManager != null && combatManager.UnitRegistry != null ? combatManager.UnitRegistry.Find(owner) : null,
-                runtime,
-                target.Model);
-            ProjectileSkillExecutor.ExecuteAdditionalEffects(
-                context,
-                executionData,
-                onHitEffects,
-                hitPosition,
-                true,
-                SkillMultiEffectTiming.OnHit,
-                false,
-                0,
-                target.Model,
-                true);
-        }
 
         /*
          * 투사체 적중 트리거를 실행 조건을 확인하고 성공 여부를 반환한다.
@@ -671,7 +637,6 @@ namespace Pakuri.InGame
             }
 
             impactResolved = true;
-            var impactVisualLifetime = 0.05f;
             var effects = combatManager.Effects;
             GameObject instance = null;
             if (effects != null && impactRuntimeVisual != null && impactRuntimeVisual.HasVisual())
@@ -704,7 +669,7 @@ namespace Pakuri.InGame
                     impactActor = instance.AddComponent<ProjectileSkillActor>();
                 }
 
-                impactVisualLifetime = impactActor.InitializeVisualLifetime(effects, 0.1f);
+                impactActor.InitializeVisualLifetime(effects, 0.1f);
             }
 
             if (hasImpactArea)
@@ -730,42 +695,25 @@ namespace Pakuri.InGame
                     executionData);
             }
 
-            if (onExpireEffects != null && onExpireEffects.Length > 0 && combatManager != null)
-            {
-                awaitingExpireEffects = true;
-                combatManager.StartCoroutine(ExecuteOnExpireAfterDelay(impactVisualLifetime));
-                return;
-            }
-
+            TryExecuteOnExpireEffects();
             effects.RemoveEffect(gameObject);
         }
 
         /*
          * 투사체 수명 종료 후 지연 효과를 실행한다.
          */
-        private System.Collections.IEnumerator ExecuteOnExpireAfterDelay(float delaySeconds /* 실행 전 대기 시간(초) */)
-        {
-            var delay = Mathf.Max(0.01f, delaySeconds);
-            if (delay > 0f)
-            {
-                yield return new WaitForSeconds(delay);
-            }
-
-            TryExecuteOnExpireEffects();
-            combatManager.Effects.RemoveEffect(gameObject);
-        }
 
         /*
          * 종료 효과를 실행하고 성공 여부를 반환한다.
          */
         private void TryExecuteOnExpireEffects()
         {
-            if (!awaitingExpireEffects && !impactResolved)
+            if (expirePublished)
             {
                 return;
             }
 
-            var hasLegacyExpireEffect = onExpireEffects != null && onExpireEffects.Length > 0;
+            expirePublished = true;
             if (combatManager != null && combatManager.UnitRegistry != null && owner != null)
             {
                 var lifecycleSourceEntry = combatManager.UnitRegistry.Find(owner);
@@ -785,33 +733,8 @@ namespace Pakuri.InGame
                         0f,
                         0,
                         executionData,
-                        lifecycleContext),
-                    legacyEffectActive: hasLegacyExpireEffect);
+                        lifecycleContext));
             }
-
-            if (onExpireEffects == null || onExpireEffects.Length == 0 || combatManager == null || combatManager.UnitRegistry == null)
-            {
-                onExpireEffects = System.Array.Empty<SkillEffectDefinition>();
-                return;
-            }
-
-            var sourceEntry = combatManager.UnitRegistry.Find(owner);
-            var context = new SkillExecutionContext(
-                combatManager,
-                combatManager.UnitRegistry,
-                sourceEntry,
-                runtime,
-                impactTarget);
-            ProjectileSkillExecutor.ExecuteAdditionalEffects(
-                context,
-                executionData,
-                onExpireEffects,
-                impactCenter,
-                true,
-                SkillMultiEffectTiming.OnExpire,
-                false);
-            onExpireEffects = System.Array.Empty<SkillEffectDefinition>();
-            awaitingExpireEffects = false;
         }
 
         /*
