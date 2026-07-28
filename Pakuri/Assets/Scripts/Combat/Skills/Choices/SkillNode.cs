@@ -526,12 +526,121 @@ namespace Pakuri.InGame
 
     public readonly struct ApplyStatusNodeOp
     {
-        public ApplyStatusNodeOp(StatusEffectKind statusKind)
+        public ApplyStatusNodeOp(
+            StatusEffectKind statusKind,
+            string targetScope = "",
+            string mergePolicy = "")
         {
             StatusKind = statusKind;
+            TargetScope = targetScope ?? string.Empty;
+            MergePolicy = mergePolicy ?? string.Empty;
         }
 
         public StatusEffectKind StatusKind { get; }
+        public string TargetScope { get; }
+        public string MergePolicy { get; }
+    }
+
+    public readonly struct ApplyShieldNodeOp
+    {
+        public ApplyShieldNodeOp(float baseAmount, float spellPowerCoefficient)
+        {
+            BaseAmount = baseAmount;
+            SpellPowerCoefficient = spellPowerCoefficient;
+        }
+
+        public float BaseAmount { get; }
+        public float SpellPowerCoefficient { get; }
+    }
+
+    public enum StatusMutationKind
+    {
+        ActionSpeedBonus,
+        MoveSpeedBonus,
+        AttackPowerBonus,
+        SpellPowerBonus,
+        DamageBonusRate,
+        ShieldReceivedBonus,
+        CriticalChanceBonus,
+        CriticalDamageBonus,
+        CriticalResistanceBonus,
+        DamageTakenBonus,
+        ElementResistReduction,
+        FlatElementResistReduction,
+        ElementDamageTakenBonus,
+        ConditionalStatusChanceBonus,
+        RuntimeKindFilter,
+        OutgoingAdditionalDamage
+    }
+
+    public readonly struct StatusMutationNodeOp
+    {
+        public StatusMutationNodeOp(
+            StatusMutationKind kind,
+            float amount,
+            DamageAttribute attribute,
+            string referenceId = "",
+            DamageAttribute secondaryAttribute = DamageAttribute.Physical)
+        {
+            Kind = kind;
+            Amount = amount;
+            Attribute = attribute;
+            ReferenceId = referenceId ?? string.Empty;
+            SecondaryAttribute = secondaryAttribute;
+        }
+
+        public StatusMutationKind Kind { get; }
+        public float Amount { get; }
+        public DamageAttribute Attribute { get; }
+        public string ReferenceId { get; }
+        public DamageAttribute SecondaryAttribute { get; }
+    }
+
+    public readonly struct StatusConditionNodeOp
+    {
+        public StatusConditionNodeOp(
+            string expression,
+            SkillMultiEffectTargetSide targetSide,
+            string sourceSkillIds)
+        {
+            Expression = expression ?? string.Empty;
+            TargetSide = targetSide;
+            SourceSkillIds = sourceSkillIds ?? string.Empty;
+        }
+
+        public string Expression { get; }
+        public SkillMultiEffectTargetSide TargetSide { get; }
+        public string SourceSkillIds { get; }
+    }
+
+    public readonly struct SkillAttributeConditionNodeOp
+    {
+        public SkillAttributeConditionNodeOp(DamageAttribute attribute)
+        {
+            Attribute = attribute;
+        }
+
+        public DamageAttribute Attribute { get; }
+    }
+
+    public readonly struct HealthRatioConditionNodeOp
+    {
+        public HealthRatioConditionNodeOp(float maximumRatio)
+        {
+            MaximumRatio = maximumRatio;
+        }
+
+        public float MaximumRatio { get; }
+    }
+
+    public readonly struct HitCountConditionNodeOp
+    {
+        public HitCountConditionNodeOp(int minimumHitCount)
+        {
+            MinimumHitCount = minimumHitCount;
+        }
+
+        public int MinimumHitCount { get; }
     }
 
     public readonly struct StatusPayloadNodeOp

@@ -461,7 +461,6 @@ namespace Pakuri.Data
 				}
 				break;
 			case SkillNodeOwnerKind.Trigger:
-				errors.Add("Skill node '" + node.Id + "' uses owner_kind 'Trigger', but trigger-owned normalized nodes are not wired into runtime plans yet.");
 				if (!model.SkillTriggers.ContainsKey(node.OwnerId))
 				{
 					errors.Add("Skill node '" + node.Id + "' references unknown trigger owner '" + node.OwnerId + "'.");

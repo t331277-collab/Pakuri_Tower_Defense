@@ -16,7 +16,8 @@ namespace Pakuri.InGame
             float eventDamage,
             int hitCount,
             SkillExecutionData executionData,
-            SkillExecutionContext executionContext = null)
+            SkillExecutionContext executionContext = null,
+            string nodeOwnerId = "")
         {
             Source = source;
             SourceSkillId = sourceSkillId ?? string.Empty;
@@ -26,6 +27,7 @@ namespace Pakuri.InGame
             HitCount = Mathf.Max(0, hitCount);
             ExecutionData = executionData;
             ExecutionContext = executionContext;
+            NodeOwnerId = nodeOwnerId ?? string.Empty;
         }
 
         public UnitCombatState Source { get; }
@@ -41,6 +43,8 @@ namespace Pakuri.InGame
         public int HitCount { get; }
 
         public SkillExecutionData ExecutionData { get; }
+
+        public string NodeOwnerId { get; }
 
         internal SkillExecutionContext ExecutionContext { get; }
     }

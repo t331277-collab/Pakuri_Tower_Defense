@@ -786,7 +786,8 @@ internal static class SkillTrigger
 			triggerContext.EventAppliedDamage,
 			triggerContext.EventHitCount,
 			executionData,
-			executionContext);
+			executionContext,
+			trigger.TriggerId);
 		SkillNodeExecutor.Execute(trigger.Nodes, actionContext);
 		return true;
 	}

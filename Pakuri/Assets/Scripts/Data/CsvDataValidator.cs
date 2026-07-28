@@ -448,6 +448,7 @@ namespace Pakuri.Data
             }
 
             var triggerAction = trigger.TriggerAction;
+            var hasOwnedNodes = HasOwnedTriggerNodeSource(model, trigger.Id);
             if (triggerAction == SkillTriggerActionKind.Auto)
             {
                 triggerAction = SkillTriggerActionKind.TriggeredSkill;
@@ -457,7 +458,7 @@ namespace Pakuri.Data
                 }
             }
 
-            if (triggerAction == SkillTriggerActionKind.TriggeredSkill)
+            if (!hasOwnedNodes && triggerAction == SkillTriggerActionKind.TriggeredSkill)
             {
                 if (model == null || !model.Skills.TryGetValue(trigger.TriggeredSkillId, out var triggeredSkill))
                 {
@@ -477,7 +478,7 @@ namespace Pakuri.Data
                 }
             }
 
-            if (triggerAction == SkillTriggerActionKind.Effect)
+            if (!hasOwnedNodes && triggerAction == SkillTriggerActionKind.Effect)
             {
                 var resolvedEffectId = ResolveTriggeredEffectId(trigger);
                 if (HasSkillGraphReference(trigger))
@@ -508,7 +509,9 @@ namespace Pakuri.Data
                 }
             }
 
-            if (triggerAction == SkillTriggerActionKind.CooldownRefund || triggerAction == SkillTriggerActionKind.ReloadReduce)
+            if (!hasOwnedNodes
+                && (triggerAction == SkillTriggerActionKind.CooldownRefund
+                    || triggerAction == SkillTriggerActionKind.ReloadReduce))
             {
                 var targetSkillId = trigger.TargetSkillId;
                 if (string.IsNullOrWhiteSpace(targetSkillId))
@@ -530,19 +533,23 @@ namespace Pakuri.Data
                 }
             }
 
-            if (triggerAction == SkillTriggerActionKind.CooldownRefund
+            if (!hasOwnedNodes
+                && triggerAction == SkillTriggerActionKind.CooldownRefund
                 && (trigger.CooldownRefundRatio <= 0f || trigger.CooldownRefundRatio > 1f))
             {
                 errors.Add($"Skill trigger '{trigger.Id}' requires cooldown_refund_ratio in 0..1 for CooldownRefund.");
             }
 
-            if (triggerAction == SkillTriggerActionKind.ReloadReduce
+            if (!hasOwnedNodes
+                && triggerAction == SkillTriggerActionKind.ReloadReduce
                 && (trigger.ReloadReduceRatio <= 0f || trigger.ReloadReduceRatio > 1f))
             {
                 errors.Add($"Skill trigger '{trigger.Id}' requires reload_reduce_ratio in 0..1 for ReloadReduce.");
             }
 
-            if (trigger.RuntimeKind == SkillRuntimeKind.Passive && triggerAction == SkillTriggerActionKind.TriggeredSkill)
+            if (!hasOwnedNodes
+                && trigger.RuntimeKind == SkillRuntimeKind.Passive
+                && triggerAction == SkillTriggerActionKind.TriggeredSkill)
             {
                 errors.Add($"Skill trigger '{trigger.Id}' cannot route runtime_kind Passive.");
             }
@@ -587,8 +594,9 @@ namespace Pakuri.Data
                 errors.Add($"Skill trigger '{trigger.Id}' has negative internal_cooldown_seconds.");
             }
 
-            if (triggerAction == SkillTriggerActionKind.SingleAttack
-                || triggerAction == SkillTriggerActionKind.LineAttack)
+            if (!hasOwnedNodes
+                && (triggerAction == SkillTriggerActionKind.SingleAttack
+                    || triggerAction == SkillTriggerActionKind.LineAttack))
             {
                 if (trigger.DamageSource == SkillTriggerDamageSource.Fixed
                     && !HasPositiveDamagePayload(trigger.BaseDamage, trigger.AttackPowerCoefficient, trigger.SpellPowerCoefficient))
@@ -877,6 +885,30 @@ namespace Pakuri.Data
                     && graph.OwnerKind == trigger.TriggeredGraphOwnerKind
                     && string.Equals(graph.MonsterId, trigger.MonsterId, StringComparison.OrdinalIgnoreCase)
                     && string.Equals(graph.OwnerId, trigger.TriggeredGraphOwnerId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        internal static bool HasOwnedTriggerNodeSource(
+            SourceModel model,
+            string triggerId)
+        {
+            if (model == null || string.IsNullOrWhiteSpace(triggerId))
+            {
+                return false;
+            }
+
+            for (var i = 0; i < model.SkillGraphNodes.Count; i++)
+            {
+                var graph = model.SkillGraphNodes[i];
+                if (graph != null
+                    && !graph.IsLegacySchema
+                    && graph.OwnerKind == SkillNodeOwnerKind.Trigger
+                    && string.Equals(graph.OwnerId, triggerId, StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }

@@ -816,6 +816,19 @@ namespace Pakuri.InGame
 				GetFloatParam(node, "radius", 0f),
 				GetFloatParam(node, "tick_interval_seconds", 0f)));
 		}
+		if (string.Equals(text, "ApplyShield", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new ApplyShieldNodeOp(
+				GetFloatParam(node, "base_damage", 0f),
+				GetFloatParam(node, "spell_power_coefficient", 0f)));
+		}
+		if (string.Equals(text, "StatusModifier", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new ApplyStatusNodeOp(
+				StatusRuntimeCompiler.ParseStatusKind("passive-buff"),
+				GetParam(node, "status_target_scope"),
+				GetParam(node, "status_merge_policy")));
+		}
 		if (string.Equals(text, "ApplyStatus", StringComparison.OrdinalIgnoreCase))
 		{
 			return SkillNode.FromOperation(new ApplyStatusNodeOp(
@@ -859,12 +872,46 @@ namespace Pakuri.InGame
 			return SkillNode.FromOperation(new SetDurationNodeOp(
 				GetFloatParam(node, "duration_seconds", 0f)));
 		}
-		if (string.Equals(text, "ConditionStatus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(text, "ConditionStatus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(text, "ConditionStatusExpression", StringComparison.OrdinalIgnoreCase))
 		{
-			return SkillNode.FromOperation(new RequireStatusNodeOp(
-				StatusRuntimeCompiler.ParseStatusKind(GetParam(node, "status_id")),
+			var expression = GetParam(node, "status_id");
+			var minimumStacks = GetIntParam(node, "min_stacks", 1);
+			if (string.Equals(text, "ConditionStatus", StringComparison.OrdinalIgnoreCase)
+				&& minimumStacks > 1
+				&& !string.IsNullOrWhiteSpace(expression))
+			{
+				expression = string.Concat(
+					expression,
+					":",
+					minimumStacks.ToString(CultureInfo.InvariantCulture));
+			}
+			return SkillNode.FromOperation(new StatusConditionNodeOp(
+				expression,
 				GetEnumParam(node, "target_side", SkillMultiEffectTargetSide.Enemy),
-				GetIntParam(node, "min_stacks", 1)));
+				GetParam(node, "source_skill_id")));
+		}
+		if (string.Equals(text, "ConditionAnyStatus", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new StatusConditionNodeOp(
+				GetParam(node, "status_ids"),
+				GetEnumParam(node, "target_side", SkillMultiEffectTargetSide.Enemy),
+				GetParam(node, "source_skill_id")));
+		}
+		if (string.Equals(text, "ConditionSkillAttribute", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new SkillAttributeConditionNodeOp(
+				GetEnumParam(node, "attribute", DamageAttribute.Physical)));
+		}
+		if (string.Equals(text, "ConditionHealthRatioMax", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new HealthRatioConditionNodeOp(
+				GetFloatParam(node, "ratio", 0f)));
+		}
+		if (string.Equals(text, "ConditionHitCountMin", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new HitCountConditionNodeOp(
+				GetIntParam(node, "min_targets", 0)));
 		}
 		if (string.Equals(text, "EffectVisual", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(text, "RuntimeEffectVisual", StringComparison.OrdinalIgnoreCase)
@@ -901,6 +948,11 @@ namespace Pakuri.InGame
 			return SkillNode.FromOperation(new ReduceReloadNodeOp(
 				GetParam(node, "skill_id"),
 				GetFloatParam(node, "ratio", 0f)));
+		}
+		if (string.Equals(node.OwnerKind, "Trigger", StringComparison.OrdinalIgnoreCase)
+			&& TryMapStatusMutation(node, text, out var statusMutation))
+		{
+			return SkillNode.FromOperation(statusMutation);
 		}
 		if (string.Equals(node.OwnerKind, "Skill", StringComparison.OrdinalIgnoreCase)
 			&& IsSingleBaseFieldHandler(text))
@@ -1115,6 +1167,8 @@ namespace Pakuri.InGame
 	{
 		if (string.Equals(handlerId, "EffectDamage", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "ApplyDamage", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "ApplyShield", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "StatusModifier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "ApplyStatus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "AttachStatusPayload", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "EffectExtendStatusDuration", StringComparison.OrdinalIgnoreCase)
@@ -1124,6 +1178,11 @@ namespace Pakuri.InGame
 			|| string.Equals(handlerId, "EffectLifetime", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "SetDuration", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "ConditionStatus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "ConditionAnyStatus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "ConditionStatusExpression", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "ConditionSkillAttribute", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "ConditionHealthRatioMax", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "ConditionHitCountMin", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "EffectVisual", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "RuntimeEffectVisual", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "ShowVisual", StringComparison.OrdinalIgnoreCase)
@@ -1131,6 +1190,17 @@ namespace Pakuri.InGame
 			|| string.Equals(handlerId, "ExecuteSkill", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "RefundCooldown", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "ReduceReload", StringComparison.OrdinalIgnoreCase))
+		{
+			return true;
+		}
+		if (string.Equals(handlerId, "StatusMoveSpeedBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "StatusSpellPowerBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "StatusCriticalDamageBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "StatusCriticalResistanceBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "StatusElementResistReduction", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "StatusConditionalStatusChanceBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "StatusRuntimeKindFilter", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "StatusOutgoingAdditionalDamage", StringComparison.OrdinalIgnoreCase))
 		{
 			return true;
 		}
@@ -1369,6 +1439,118 @@ namespace Pakuri.InGame
 			return new SkillActionOp(SkillActionOpKind.ConsumeTargetStatusRatioOverride, GetFloatParam(node, "ratio", 0f));
 		}
 		throw new InvalidOperationException("Unsupported skill node handler: " + handlerId);
+	}
+
+	private static bool TryMapStatusMutation(
+		SkillNodeDefinition node,
+		string handlerId,
+		out StatusMutationNodeOp operation)
+	{
+		var amount = GetFloatParam(node, "bonus", 0f);
+		var attribute = GetEnumParam(node, "attribute", DamageAttribute.Physical);
+		if (string.Equals(handlerId, "StatusActionSpeedBonus", StringComparison.OrdinalIgnoreCase))
+		{
+			operation = new StatusMutationNodeOp(
+				StatusMutationKind.ActionSpeedBonus,
+				amount,
+				attribute,
+				GetParam(node, "status_id"));
+			return true;
+		}
+		if (string.Equals(handlerId, "StatusMoveSpeedBonus", StringComparison.OrdinalIgnoreCase))
+		{
+			operation = new StatusMutationNodeOp(StatusMutationKind.MoveSpeedBonus, amount, attribute);
+			return true;
+		}
+		if (string.Equals(handlerId, "StatusAttackPowerBonus", StringComparison.OrdinalIgnoreCase))
+		{
+			operation = new StatusMutationNodeOp(StatusMutationKind.AttackPowerBonus, amount, attribute);
+			return true;
+		}
+		if (string.Equals(handlerId, "StatusSpellPowerBonus", StringComparison.OrdinalIgnoreCase))
+		{
+			operation = new StatusMutationNodeOp(StatusMutationKind.SpellPowerBonus, amount, attribute);
+			return true;
+		}
+		if (string.Equals(handlerId, "StatusDamageBonusRate", StringComparison.OrdinalIgnoreCase))
+		{
+			operation = new StatusMutationNodeOp(StatusMutationKind.DamageBonusRate, amount, attribute);
+			return true;
+		}
+		if (string.Equals(handlerId, "StatusShieldReceivedBonus", StringComparison.OrdinalIgnoreCase))
+		{
+			operation = new StatusMutationNodeOp(StatusMutationKind.ShieldReceivedBonus, amount, attribute);
+			return true;
+		}
+		if (string.Equals(handlerId, "StatusCriticalChanceBonus", StringComparison.OrdinalIgnoreCase))
+		{
+			operation = new StatusMutationNodeOp(StatusMutationKind.CriticalChanceBonus, amount, attribute);
+			return true;
+		}
+		if (string.Equals(handlerId, "StatusCriticalDamageBonus", StringComparison.OrdinalIgnoreCase))
+		{
+			operation = new StatusMutationNodeOp(StatusMutationKind.CriticalDamageBonus, amount, attribute);
+			return true;
+		}
+		if (string.Equals(handlerId, "StatusCriticalResistanceBonus", StringComparison.OrdinalIgnoreCase))
+		{
+			operation = new StatusMutationNodeOp(StatusMutationKind.CriticalResistanceBonus, amount, attribute);
+			return true;
+		}
+		if (string.Equals(handlerId, "StatusDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
+		{
+			operation = new StatusMutationNodeOp(StatusMutationKind.DamageTakenBonus, amount, attribute);
+			return true;
+		}
+		if (string.Equals(handlerId, "StatusElementResistReduction", StringComparison.OrdinalIgnoreCase))
+		{
+			operation = new StatusMutationNodeOp(StatusMutationKind.ElementResistReduction, amount, attribute);
+			return true;
+		}
+		if (string.Equals(handlerId, "StatusFlatElementResistReduction", StringComparison.OrdinalIgnoreCase))
+		{
+			operation = new StatusMutationNodeOp(StatusMutationKind.FlatElementResistReduction, amount, attribute);
+			return true;
+		}
+		if (string.Equals(handlerId, "StatusElementDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
+		{
+			operation = new StatusMutationNodeOp(StatusMutationKind.ElementDamageTakenBonus, amount, attribute);
+			return true;
+		}
+		if (string.Equals(handlerId, "StatusConditionalStatusChanceBonus", StringComparison.OrdinalIgnoreCase))
+		{
+			operation = new StatusMutationNodeOp(
+				StatusMutationKind.ConditionalStatusChanceBonus,
+				amount,
+				attribute,
+				GetParam(node, "status_ids"));
+			return true;
+		}
+		if (string.Equals(handlerId, "StatusRuntimeKindFilter", StringComparison.OrdinalIgnoreCase))
+		{
+			operation = new StatusMutationNodeOp(
+				StatusMutationKind.RuntimeKindFilter,
+				0f,
+				attribute,
+				string.Concat(
+					GetParam(node, "incoming_skill_runtime_kinds"),
+					"|",
+					GetParam(node, "outgoing_skill_runtime_kinds")));
+			return true;
+		}
+		if (string.Equals(handlerId, "StatusOutgoingAdditionalDamage", StringComparison.OrdinalIgnoreCase))
+		{
+			operation = new StatusMutationNodeOp(
+				StatusMutationKind.OutgoingAdditionalDamage,
+				GetFloatParam(node, "multiplier", 0f),
+				GetEnumParam(node, "trigger_attribute", DamageAttribute.Physical),
+				string.Empty,
+				GetEnumParam(node, "damage_attribute", DamageAttribute.Physical));
+			return true;
+		}
+
+		operation = default;
+		return false;
 	}
 
 	/*

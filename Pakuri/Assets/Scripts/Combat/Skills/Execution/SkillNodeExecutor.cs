@@ -30,6 +30,7 @@ namespace Pakuri.InGame
                 if (node != null
                     && (node.GetOperation<ApplyDamageNodeOp>().HasValue
                         || node.GetOperation<ApplyStatusNodeOp>().HasValue
+                        || node.GetOperation<ApplyShieldNodeOp>().HasValue
                         || node.GetOperation<ExtendStatusDurationNodeOp>().HasValue
                         || node.GetOperation<ShowVisualNodeOp>().HasValue
                         || node.GetOperation<RecastZoneNodeOp>().HasValue
@@ -64,6 +65,10 @@ namespace Pakuri.InGame
             try
             {
                 var state = BuildState(nodes);
+                if (!MeetsGlobalRequirements(context, state))
+                {
+                    return;
+                }
                 for (var i = 0; i < nodes.Count; i++)
                 {
                     ExecuteNode(nodes[i], context, state);
@@ -111,6 +116,48 @@ namespace Pakuri.InGame
                     state.Requirements.Add(requirement.Value);
                 }
 
+                var sourceRequirement = node.GetOperation<SourceStatusRequirementOp>();
+                if (sourceRequirement.HasValue)
+                {
+                    state.SourceRequirements.Add(sourceRequirement.Value);
+                }
+
+                var statusCondition = node.GetOperation<StatusConditionNodeOp>();
+                if (statusCondition.HasValue)
+                {
+                    state.StatusConditions.Add(statusCondition.Value);
+                }
+
+                var skillAttribute = node.GetOperation<SkillAttributeConditionNodeOp>();
+                if (skillAttribute.HasValue)
+                {
+                    state.SkillAttributes.Add(skillAttribute.Value);
+                }
+
+                var healthRatio = node.GetOperation<HealthRatioConditionNodeOp>();
+                if (healthRatio.HasValue)
+                {
+                    state.MaximumHealthRatio = healthRatio.Value.MaximumRatio;
+                }
+
+                var hitCount = node.GetOperation<HitCountConditionNodeOp>();
+                if (hitCount.HasValue)
+                {
+                    state.MinimumHitCount = hitCount.Value.MinimumHitCount;
+                }
+
+                var statusMutation = node.GetOperation<StatusMutationNodeOp>();
+                if (statusMutation.HasValue)
+                {
+                    state.StatusMutations.Add(statusMutation.Value);
+                }
+
+                if (node.GetOperation<ApplyStatusNodeOp>().HasValue
+                    || node.GetOperation<ApplyShieldNodeOp>().HasValue)
+                {
+                    state.HasStatusAction = true;
+                }
+
                 var visual = node.GetOperation<ShowVisualNodeOp>();
                 if (visual.HasValue)
                 {
@@ -143,6 +190,13 @@ namespace Pakuri.InGame
             if (status.HasValue)
             {
                 ExecuteStatus(status.Value, context, state);
+                return;
+            }
+
+            var shield = node.GetOperation<ApplyShieldNodeOp>();
+            if (shield.HasValue)
+            {
+                ExecuteShield(shield.Value, context, state);
                 return;
             }
 
@@ -282,6 +336,19 @@ namespace Pakuri.InGame
                 spec.DurationSeconds = state.DurationSeconds;
                 spec.Permanent = false;
             }
+            if (!string.IsNullOrWhiteSpace(operation.TargetScope))
+            {
+                spec.StatusData.TargetScope = StatusRuntimeCompiler.ParseTargetScope(operation.TargetScope);
+            }
+            if (!string.IsNullOrWhiteSpace(operation.MergePolicy))
+            {
+                spec.StatusData.MergePolicy = StatusRuntimeCompiler.ParseMergePolicy(operation.MergePolicy);
+            }
+            ApplyStatusMutations(spec.StatusData, state.StatusMutations);
+            AttachStatusVisual(spec.StatusData, state);
+            spec.StatusData.SourceSkillId = string.IsNullOrWhiteSpace(context.NodeOwnerId)
+                ? context.SourceSkillId
+                : context.NodeOwnerId;
 
             var targets = ResolveTargets(context, state, 0f);
             for (var i = 0; i < targets.Count; i++)
@@ -294,6 +361,73 @@ namespace Pakuri.InGame
                         spec,
                         context.Source);
                 }
+            }
+        }
+
+        private static void ExecuteShield(
+            ApplyShieldNodeOp operation,
+            SkillActionContext context,
+            NodeExecutionState state)
+        {
+            var executionContext = context.ExecutionContext;
+            if (executionContext == null
+                || executionContext.CombatManager == null
+                || context.Source == null)
+            {
+                return;
+            }
+
+            var spec = SkillStatus.CreateDirectStatusSpec(
+                StatusEffectKind.Shield,
+                1,
+                context.ExecutionData);
+            if (spec == null || spec.StatusData == null)
+            {
+                return;
+            }
+
+            if (state.DurationSeconds > 0f)
+            {
+                spec.DurationSeconds = state.DurationSeconds;
+                spec.Permanent = false;
+            }
+            ApplyStatusMutations(spec.StatusData, state.StatusMutations);
+            AttachStatusVisual(spec.StatusData, state);
+            spec.StatusData.SourceSkillId = string.IsNullOrWhiteSpace(context.NodeOwnerId)
+                ? context.SourceSkillId
+                : context.NodeOwnerId;
+
+            var spellPower = 0f;
+            if (context.Source.Stats != null)
+            {
+                spellPower = context.Source.Stats.SpellPower
+                    * StatusCombatRules.SpellPowerMultiplier(context.Source);
+            }
+            var amount = operation.BaseAmount
+                + spellPower * operation.SpellPowerCoefficient;
+            if (context.ExecutionData != null)
+            {
+                amount *= Mathf.Max(0f, context.ExecutionData.ShieldAmountMultiplier);
+            }
+
+            var targets = ResolveTargets(context, state, 0f);
+            for (var i = 0; i < targets.Count; i++)
+            {
+                if (!MatchesRequirements(targets[i].Model, context, state))
+                {
+                    continue;
+                }
+
+                executionContext.CombatManager.ApplyShieldStatus(
+                    targets[i].Model,
+                    spec.StatusData,
+                    Mathf.Max(0f, amount),
+                    spec.DurationSeconds,
+                    spec.Stacks,
+                    spec.MaxStacks,
+                    spec.Permanent,
+                    spec.RefreshDuration,
+                    context.Source);
             }
         }
 
@@ -328,6 +462,11 @@ namespace Pakuri.InGame
             SkillActionContext context,
             NodeExecutionState state)
         {
+            if (state.HasStatusAction)
+            {
+                return;
+            }
+
             SkillExecutionContext executionContext = context.ExecutionContext;
             if (executionContext == null
                 || executionContext.CombatManager == null
@@ -548,7 +687,213 @@ namespace Pakuri.InGame
                 }
             }
 
+            for (var i = 0; i < state.StatusConditions.Count; i++)
+            {
+                var condition = state.StatusConditions[i];
+                var subject = condition.TargetSide == SkillMultiEffectTargetSide.Self
+                    ? context.Source
+                    : target;
+                if (!StatusConditionRules.MatchesConditionStatus(
+                        subject,
+                        StatusRuntimeCompiler.ParseConditionStatusExpression(condition.Expression),
+                        StatusRuntimeCompiler.ParseIdList(condition.SourceSkillIds)))
+                {
+                    return false;
+                }
+            }
+
+            for (var i = 0; i < state.SkillAttributes.Count; i++)
+            {
+                if (!HasActiveSkillAttribute(target, state.SkillAttributes[i].Attribute))
+                {
+                    return false;
+                }
+            }
+
+            if (state.MaximumHealthRatio > 0f)
+            {
+                if (target == null
+                    || target.Resources == null
+                    || target.Stats == null
+                    || target.Stats.MaxHealth <= 0f
+                    || target.Resources.CurrentHealth / target.Stats.MaxHealth
+                        > Mathf.Clamp01(state.MaximumHealthRatio))
+                {
+                    return false;
+                }
+            }
+
             return true;
+        }
+
+        private static bool MeetsGlobalRequirements(
+            SkillActionContext context,
+            NodeExecutionState state)
+        {
+            if (context == null)
+            {
+                return false;
+            }
+            if (state.MinimumHitCount > 0 && context.HitCount < state.MinimumHitCount)
+            {
+                return false;
+            }
+            for (var i = 0; i < state.SourceRequirements.Count; i++)
+            {
+                var requirement = state.SourceRequirements[i].Condition;
+                if (!SkillRequirement.HasSourceStatus(
+                        context.Source,
+                        requirement.StatusKind,
+                        requirement.MinimumStacks))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static bool HasActiveSkillAttribute(
+            UnitCombatState target,
+            DamageAttribute attribute)
+        {
+            if (target == null || target.Skills == null)
+            {
+                return false;
+            }
+
+            var activeSkills = target.SkillState.ActiveSkills;
+            for (var i = 0; i < activeSkills.Count; i++)
+            {
+                var activeSkill = activeSkills[i];
+                if (activeSkill != null
+                    && activeSkill.Data != null
+                    && activeSkill.Data.Element == attribute)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static void AttachStatusVisual(
+            StatusRuntimeData statusData,
+            NodeExecutionState state)
+        {
+            if (statusData == null || !state.HasVisual)
+            {
+                return;
+            }
+
+            if (state.Visual.Prefab != null)
+            {
+                statusData.StatusEffectPrefab = state.Visual.Prefab;
+            }
+            if (state.Visual.RuntimeVisual != null)
+            {
+                statusData.RuntimeVisual = state.Visual.RuntimeVisual;
+            }
+        }
+
+        private static void ApplyStatusMutations(
+            StatusRuntimeData statusData,
+            IReadOnlyList<StatusMutationNodeOp> mutations)
+        {
+            if (statusData == null || mutations == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < mutations.Count; i++)
+            {
+                var mutation = mutations[i];
+                switch (mutation.Kind)
+                {
+                    case StatusMutationKind.ActionSpeedBonus:
+                        statusData.Modifiers.ActionSpeedBonus += mutation.Amount;
+                        break;
+                    case StatusMutationKind.MoveSpeedBonus:
+                        statusData.MoveSpeedBonus += mutation.Amount;
+                        statusData.MovementSlowRate = statusData.MoveSpeedBonus < 0f
+                            ? -statusData.MoveSpeedBonus
+                            : 0f;
+                        break;
+                    case StatusMutationKind.AttackPowerBonus:
+                        statusData.Modifiers.AttackPowerBonus += mutation.Amount;
+                        break;
+                    case StatusMutationKind.SpellPowerBonus:
+                        statusData.Modifiers.SpellPowerBonus += mutation.Amount;
+                        break;
+                    case StatusMutationKind.DamageBonusRate:
+                        statusData.Modifiers.DamageBonusRate += mutation.Amount;
+                        SetElementModifier(statusData, mutation);
+                        break;
+                    case StatusMutationKind.ShieldReceivedBonus:
+                        statusData.Modifiers.ShieldReceivedBonus += mutation.Amount;
+                        break;
+                    case StatusMutationKind.CriticalChanceBonus:
+                        statusData.Modifiers.CritChanceBonusRate += mutation.Amount;
+                        break;
+                    case StatusMutationKind.CriticalDamageBonus:
+                        statusData.Modifiers.CritDamageBonusRate += mutation.Amount;
+                        break;
+                    case StatusMutationKind.CriticalResistanceBonus:
+                        statusData.CriticalResistanceBonus += mutation.Amount;
+                        break;
+                    case StatusMutationKind.DamageTakenBonus:
+                        statusData.DamageTakenBonus += mutation.Amount;
+                        break;
+                    case StatusMutationKind.ElementResistReduction:
+                        statusData.ElementResistReduction += mutation.Amount;
+                        statusData.Modifiers.ResistReduction = statusData.ElementResistReduction;
+                        statusData.Modifiers.ResistReductionElement = mutation.Attribute;
+                        SetElementModifier(statusData, mutation);
+                        break;
+                    case StatusMutationKind.FlatElementResistReduction:
+                        statusData.FlatElementResistReduction += mutation.Amount;
+                        SetElementModifier(statusData, mutation);
+                        break;
+                    case StatusMutationKind.ElementDamageTakenBonus:
+                        statusData.ElementDamageTakenBonus += mutation.Amount;
+                        SetElementModifier(statusData, mutation);
+                        break;
+                    case StatusMutationKind.ConditionalStatusChanceBonus:
+                        statusData.ConditionalTargetStatusKinds =
+                            StatusRuntimeCompiler.ParseStatusKinds(mutation.ReferenceId);
+                        statusData.ConditionalStatusChanceBonus += mutation.Amount;
+                        break;
+                    case StatusMutationKind.RuntimeKindFilter:
+                        ApplyRuntimeKindFilter(statusData, mutation.ReferenceId);
+                        break;
+                    case StatusMutationKind.OutgoingAdditionalDamage:
+                        statusData.OutgoingAdditionalDamageMultiplier += mutation.Amount;
+                        statusData.OutgoingAdditionalDamageTriggerAttribute = mutation.Attribute;
+                        statusData.OutgoingAdditionalDamageAttribute = mutation.SecondaryAttribute;
+                        break;
+                }
+            }
+        }
+
+        private static void SetElementModifier(
+            StatusRuntimeData statusData,
+            StatusMutationNodeOp mutation)
+        {
+            statusData.HasElementModifierTarget = true;
+            statusData.ElementModifierTarget = mutation.Attribute;
+        }
+
+        private static void ApplyRuntimeKindFilter(
+            StatusRuntimeData statusData,
+            string rawValue)
+        {
+            var separator = rawValue == null ? -1 : rawValue.IndexOf('|');
+            var incoming = separator < 0 ? rawValue : rawValue.Substring(0, separator);
+            var outgoing = separator < 0 ? string.Empty : rawValue.Substring(separator + 1);
+            statusData.ConditionalIncomingSkillRuntimeKinds = incoming ?? string.Empty;
+            statusData.ConditionalIncomingSkillRuntimeKindValues =
+                StatusRuntimeCompiler.ParseSkillRuntimeKindConditions(incoming);
+            statusData.ConditionalOutgoingSkillRuntimeKinds = outgoing ?? string.Empty;
+            statusData.ConditionalOutgoingSkillRuntimeKindValues =
+                StatusRuntimeCompiler.ParseSkillRuntimeKindConditions(outgoing);
         }
 
         private sealed class NodeExecutionState
@@ -566,7 +911,14 @@ namespace Pakuri.InGame
             internal StatusPayloadNodeOp StatusPayload;
             internal bool HasVisual;
             internal ShowVisualNodeOp Visual;
+            internal bool HasStatusAction;
+            internal int MinimumHitCount;
+            internal float MaximumHealthRatio;
             internal readonly List<RequireStatusNodeOp> Requirements = new List<RequireStatusNodeOp>();
+            internal readonly List<SourceStatusRequirementOp> SourceRequirements = new List<SourceStatusRequirementOp>();
+            internal readonly List<StatusConditionNodeOp> StatusConditions = new List<StatusConditionNodeOp>();
+            internal readonly List<SkillAttributeConditionNodeOp> SkillAttributes = new List<SkillAttributeConditionNodeOp>();
+            internal readonly List<StatusMutationNodeOp> StatusMutations = new List<StatusMutationNodeOp>();
         }
     }
 }
