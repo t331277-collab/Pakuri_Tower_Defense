@@ -55,7 +55,7 @@ namespace Pakuri.InGame
      */
     public class InGameCombatManager : MonoBehaviour
     {
-        private readonly CombatUnitRegistry unitRegistry = new CombatUnitRegistry();
+        [SerializeField] private UnitSpawnManager unitSpawnManager;
         private EnemyActionController enemyActionController;
         private readonly SkillExecution skillExecution = new SkillExecution();
         [SerializeField] private PlayerCombatInputController playerCombatControl;
@@ -64,11 +64,24 @@ namespace Pakuri.InGame
         [SerializeField] private bool skillExecutionEnabled = true;
         [SerializeField] private EffectManager effectManager;
 
-        public CombatUnitRegistry UnitRegistry => unitRegistry;
+        public UnitSpawnManager Units
+        {
+            get
+            {
+                if (unitSpawnManager == null)
+                {
+                    unitSpawnManager = FindFirstObjectByType<UnitSpawnManager>();
+                }
+
+                return unitSpawnManager != null
+                    ? unitSpawnManager
+                    : throw new InvalidOperationException("UnitSpawnManager is required.");
+            }
+        }
         public EffectManager Effects => effectManager;
         internal SkillExecution SkillExecution => skillExecution;
 
-        public int ActiveEnemyCount => unitRegistry.EnemyCount;
+        public int ActiveEnemyCount => Units.EnemyCount;
         public event Action<AttackRule, InGameResourceChangeResult> DamageApplied;
         public event Action<UnitCombatState> UnitDefeated;
 
@@ -77,8 +90,7 @@ namespace Pakuri.InGame
          */
         private void Awake()
         {
-            enemyActionController = new EnemyActionController(unitRegistry, skillExecution, this);
-            unitRegistry.Clear();
+            enemyActionController = new EnemyActionController(Units, skillExecution, this);
             combatStartDispatchedUnits.Clear();
             SkillTrigger.Reset(this);
         }
@@ -92,11 +104,11 @@ namespace Pakuri.InGame
             {
                 TickSkillStates(Time.deltaTime);
                 skillExecution.TryExecuteAutomaticSkills(
-                    unitRegistry,
+                    Units,
                     this,
-                    (entry, runtime) => playerCombatControl.CanUseAutoSkill(entry, unitRegistry));
+                    (entry, runtime) => playerCombatControl.CanUseAutoSkill(entry, Units));
                 playerCombatControl.HandleManualInput(
-                    unitRegistry,
+                    Units,
                     skillExecution,
                     this);
             }
@@ -114,7 +126,7 @@ namespace Pakuri.InGame
          */
         private void TickSkillStates(float deltaTime /* 이전 갱신 이후 지난 시간 */)
         {
-            var entries = unitRegistry.Entries;
+            var entries = Units.Entries;
             for (var i = 0; i < entries.Count; i++)
             {
                 var entry = entries[i];
@@ -126,50 +138,24 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 플레이어 몬스터를 등록하고 전투 시작 처리를 실행한다.
+         * 등록된 플레이어 몬스터의 입력 설정과 전투 시작 처리를 실행한다.
          */
-        public CombatUnitEntry RegisterPlayerMonster(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, MonsterActor actor /* 화면에서 유닛을 표현하는 컴포넌트 */, Transform hitboxRoot /* 피격 판정의 기준 위치 */)
+        internal void NotifyPlayerUnitRegistered(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {
-            var entry = unitRegistry.Register(model, actor, hitboxRoot);
             if (PlayerCombatInputController.IsSelectedPlayerModel(model))
             {
-                playerCombatControl.ApplyAutoSkillModeToSelectedPlayer(unitRegistry);
+                playerCombatControl.ApplyAutoSkillModeToSelectedPlayer(Units);
             }
 
             DispatchCombatStartOnce(model);
-            return entry;
         }
 
         /*
-         * 적을 등록하고 전투 시작 처리를 실행한다.
+         * 등록된 적의 전투 시작 처리를 실행한다.
          */
-        public CombatUnitEntry RegisterEnemy(EnemyCombatState model /* 처리할 상태 모델 */, EnemyActor actor /* 화면에서 유닛을 표현하는 컴포넌트 */, Transform hitboxRoot /* 피격 판정의 기준 위치 */)
+        internal void NotifyEnemyUnitRegistered(EnemyCombatState model /* 처리할 상태 모델 */)
         {
-            var entry = unitRegistry.Register(model, actor, hitboxRoot);
             DispatchCombatStartOnce(model);
-            return entry;
-        }
-
-        /*
-         * 넥서스를 전투 로스터에 등록한다.
-         */
-        public CombatUnitEntry RegisterNexus(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, NexusActor actor /* 화면에서 유닛을 표현하는 컴포넌트 */, Transform hitboxRoot /* 피격 판정의 기준 위치 */)
-        {
-            var entry = unitRegistry.Register(model, actor, hitboxRoot);
-            return entry;
-        }
-
-        /*
-         * 유닛을 로스터에서 해제하고 연결된 Actor를 제거한다.
-         */
-        public bool DespawnUnit(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
-        {
-            var entry = unitRegistry.Find(model);
-            var actor = entry.Actor;
-            unitRegistry.Unregister(model);
-            Destroy(actor.gameObject);
-
-            return true;
         }
 
         /*
@@ -210,17 +196,17 @@ namespace Pakuri.InGame
             }
             // 통계와 UI에는 실제 자원 변화 결과만 전달한다.
             DamageApplied?.Invoke(attackRule, result);
-            var damagedEntry = unitRegistry.Find(result.Target);
+            var damagedEntry = Units.Find(result.Target);
             damagedEntry.RefreshDisplay();
             damagedEntry.ShowDamage(result.AppliedDamage, result.IsDead);
-            SkillTrigger.ExecuteShieldAbsorbs(this, unitRegistry, target, source, absorbedShields);
-            SkillTrigger.ExecuteExpiredStatuses(this, unitRegistry, target, depletedShields);
+            SkillTrigger.ExecuteShieldAbsorbs(this, Units, target, source, absorbedShields);
+            SkillTrigger.ExecuteExpiredStatuses(this, Units, target, depletedShields);
             DispatchOutgoingDamageTriggers(target, attribute, attackRule, result, baseDamage);
             if (result.IsDead && attackRule.Source != null)
             {
                 SkillTrigger.ExecuteKill(
                     this,
-                    unitRegistry,
+                    Units,
                     attackRule.Source,
                     attackRule.SourceSkillId,
                     target,
@@ -245,7 +231,7 @@ namespace Pakuri.InGame
                 return result;
             }
 
-            unitRegistry.Find(result.Target).RefreshDisplay();
+            Units.Find(result.Target).RefreshDisplay();
             return result;
         }
 
@@ -363,7 +349,7 @@ namespace Pakuri.InGame
                 refreshDuration);
             status.SetSourceUnit(source);
             target.SyncShield();
-            unitRegistry.RefreshDisplay(target);
+            Units.RefreshDisplay(target);
             ShowStatusEffectVisual(target, status);
             return status;
         }
@@ -400,7 +386,7 @@ namespace Pakuri.InGame
                 adjustedShieldAmount);
             status.SetSourceUnit(source);
             target.SyncShield();
-            unitRegistry.RefreshDisplay(target);
+            Units.RefreshDisplay(target);
             ShowStatusEffectVisual(target, status);
             return status;
         }
@@ -426,7 +412,7 @@ namespace Pakuri.InGame
             }
 
             target.SyncShield();
-            unitRegistry.RefreshDisplay(target);
+            Units.RefreshDisplay(target);
 
             var activeStatuses = target.Statuses.ActiveStatuses;
             for (var i = 0; i < activeStatuses.Count; i++)
@@ -451,9 +437,9 @@ namespace Pakuri.InGame
                 status.SourceData.RuntimeVisual,
                 status.SourceData.StatusEffectPrefab,
                 "RuntimeStatusVisual_" + status.SourceSkillId,
-                unitRegistry.Find(target).Transform.position,
+                Units.Find(target).Transform.position,
                 Quaternion.identity,
-                unitRegistry.Find(target).Transform,
+                Units.Find(target).Transform,
                 0f,
                 status,
                 false,
@@ -473,7 +459,7 @@ namespace Pakuri.InGame
             combatStartDispatchedUnits.Clear();
             SkillTrigger.Reset(this);
 
-            var entries = unitRegistry.Entries;
+            var entries = Units.Entries;
             for (var i = 0; i < entries.Count; i++)
             {
                 var entry = entries[i];
@@ -507,7 +493,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            SkillTrigger.ExecuteCombatStart(this, unitRegistry, source);
+            SkillTrigger.ExecuteCombatStart(this, Units, source);
         }
 
         /*
@@ -523,13 +509,13 @@ namespace Pakuri.InGame
             }
 
             target.SyncShield();
-            unitRegistry.RefreshDisplay(target);
+            Units.RefreshDisplay(target);
             for (var i = 0; i < removedStatuses.Count; i++)
             {
                 effectManager.RemoveEffect(null, removedStatuses[i]);
             }
 
-            SkillTrigger.ExecuteExpiredStatuses(this, unitRegistry, target, removedStatuses);
+            SkillTrigger.ExecuteExpiredStatuses(this, Units, target, removedStatuses);
             return true;
         }
 
@@ -551,7 +537,7 @@ namespace Pakuri.InGame
 
             SkillTrigger.ExecuteOutgoingDamage(
                 this,
-                unitRegistry,
+                Units,
                 attackRule.Source,
                 attackRule.SourceSkillId,
                 target,
@@ -624,7 +610,7 @@ namespace Pakuri.InGame
                 }
 
                 target.SyncShield();
-                unitRegistry.RefreshDisplay(target);
+                Units.RefreshDisplay(target);
             }
 
             return consumed;
@@ -640,7 +626,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var entries = unitRegistry.Entries;
+            var entries = Units.Entries;
             for (var i = 0; i < entries.Count; i++)
             {
                 var model = entries[i].Model;
@@ -649,14 +635,14 @@ namespace Pakuri.InGame
                 if (model.Statuses.Tick(deltaTime, removedStatuses))
                 {
                     model.SyncShield();
-                    unitRegistry.RefreshDisplay(model);
+                    Units.RefreshDisplay(model);
                     for (var j = 0; j < removedStatuses.Count; j++)
                     {
                         effectManager.RemoveEffect(null, removedStatuses[j]);
                     }
 
                     // 만료 상태는 일반 만료와 보호막 만료 Trigger에 각각 전달한다.
-                    SkillTrigger.ExecuteExpiredStatuses(this, unitRegistry, model, removedStatuses);
+                    SkillTrigger.ExecuteExpiredStatuses(this, Units, model, removedStatuses);
                 }
             }
         }
@@ -671,9 +657,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var entry = unitRegistry.Find(result.Target);
-            unitRegistry.Unregister(result.Target);
-            entry.HandleDefeat();
+            Units.DefeatUnit(result.Target);
             UnitDefeated?.Invoke(result.Target);
         }
 

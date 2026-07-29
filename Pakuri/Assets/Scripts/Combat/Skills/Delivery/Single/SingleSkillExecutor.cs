@@ -33,7 +33,7 @@ internal static class SingleSkillExecutor
 	 */
 	internal static void ApplyHitEnhancements(
 	    InGameCombatManager manager /* 전투 진행 관리자 */,
-	    CombatUnitRegistry roster /* 전투 유닛 목록 */,
+	    UnitSpawnManager roster /* 전투 유닛 목록 */,
 	    SkillUseState runtime /* 실행 중인 스킬 */,
 	    SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
 	    CombatUnitEntry sourceEntry /* 시전자 등록 정보 */,
@@ -515,7 +515,7 @@ internal static class SingleSkillExecutor
 		{
 			int requiredStatusMinStacks = Mathf.Max(1, skill.DeploymentRequiredTargetStatusMinStacks);
 			CombatUnitEntry casterEntry = null;
-			CombatUnitRegistry roster = null;
+			UnitSpawnManager roster = null;
 			if (context != null)
 			{
 				casterEntry = context.CasterEntry;
@@ -671,7 +671,6 @@ internal static class SingleSkillExecutor
 				}
 				else
 				{
-					Physics2D.SyncTransforms();
 					flag2 = ApplyPrefabHitbox(context.CombatManager, context.CasterEntry, context.Roster, skill, skill.Targeting, gameObject, num, damage, attribute, statusSpec, context.Caster, context.SourceSkillId, skillRuntimeInstance, skill.Damage != null && skill.Damage.CriticalAllowed, critChanceBonus, critDamageBonus, snapshot, followUpSpec, followUpTargets, context.EventTarget, context.LockToEventTarget);
 				}
 				float visualLifetime = Mathf.Max(num2 + 0.05f, 1f);
@@ -751,7 +750,6 @@ internal static class SingleSkillExecutor
 		yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
 		if (context != null && !(context.CombatManager == null) && context.CasterEntry != null && context.Roster != null && skill != null && !(instance == null))
 		{
-			Physics2D.SyncTransforms();
 			ApplyPrefabHitbox(context.CombatManager, context.CasterEntry, context.Roster, skill, skill.Targeting, instance, effectiveHitTargetCount, damage, attribute, statusSpec, context.Caster, context.SourceSkillId, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, snapshot, followUpSpec, followUpTargets, context.EventTarget, context.LockToEventTarget);
 			if (allowConditionalFollowUp)
 			{
@@ -763,7 +761,7 @@ internal static class SingleSkillExecutor
 	/*
 	 * ApplyPrefabHitbox 처리를 대상에 적용한다.
 	 */
-	private static bool ApplyPrefabHitbox(InGameCombatManager manager /* 전투 진행 관리자 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, CombatUnitRegistry unitRoster /* 전투에 등록된 유닛 목록 */, SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */, GameObject hitboxObject /* 피격 판정 게임 오브젝트 */, int maxTargets /* 처리할 수 있는 최대 대상 수 */, float damage /* 적용하거나 전달할 피해량 */, DamageAttribute attribute /* 피해 속성 */, ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */, SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */, bool criticalAllowed /* 치명타 허용 여부 */, float critChanceBonus /* 추가 치명타 확률 */, float critDamageBonus /* 추가 치명타 피해 배율 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, SingleFollowUpSpec? followUpSpec /* 후속 공격 설정 */, List<SingleFollowUpTarget> followUpTargets /* 후속 공격 대상 목록 */, UnitCombatState eventTarget /* 사건 대상 */, bool lockToEventTarget /* 사건 대상 고정 여부 */)
+	private static bool ApplyPrefabHitbox(InGameCombatManager manager /* 전투 진행 관리자 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, UnitSpawnManager unitRoster /* 전투에 등록된 유닛 목록 */, SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */, GameObject hitboxObject /* 피격 판정 게임 오브젝트 */, int maxTargets /* 처리할 수 있는 최대 대상 수 */, float damage /* 적용하거나 전달할 피해량 */, DamageAttribute attribute /* 피해 속성 */, ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */, SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */, bool criticalAllowed /* 치명타 허용 여부 */, float critChanceBonus /* 추가 치명타 확률 */, float critDamageBonus /* 추가 치명타 피해 배율 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, SingleFollowUpSpec? followUpSpec /* 후속 공격 설정 */, List<SingleFollowUpTarget> followUpTargets /* 후속 공격 대상 목록 */, UnitCombatState eventTarget /* 사건 대상 */, bool lockToEventTarget /* 사건 대상 고정 여부 */)
 	{
 		if (manager == null || sourceEntry == null || unitRoster == null || hitboxObject == null || maxTargets <= 0)
 		{
@@ -776,16 +774,23 @@ internal static class SingleSkillExecutor
 		}
 		Collider2D[] array = CoreHitboxColliders(hitboxObject, snapshot);
 		List<CombatUnitEntry> list = SkillTargeting.OrderedTargets(sourceEntry, unitRoster, targetingSpec, eventTarget, lockToEventTarget);
+		List<CombatUnitEntry> collisionTargets = new List<CombatUnitEntry>();
+		List<CombatUnitEntry> coreCollisionTargets = new List<CombatUnitEntry>();
+		UnitCollisionResolver.CollectTargets(unitRoster, list, componentsInChildren, Vector2.zero, collisionTargets);
+		if (array.Length != 0)
+		{
+			UnitCollisionResolver.CollectTargets(unitRoster, list, array, Vector2.zero, coreCollisionTargets);
+		}
 		bool result = false;
 		int num = 0;
-		for (int i = 0; i < list.Count; i++)
+		for (int i = 0; i < collisionTargets.Count; i++)
 		{
-			CombatUnitEntry unitEntry = list[i];
-			if (IsTargetInsideHitbox(componentsInChildren, unitEntry))
+			CombatUnitEntry unitEntry = collisionTargets[i];
+			if (unitEntry != null && unitEntry.Model != null && unitEntry.Transform != null)
 			{
 				RegisterFollowUpTarget(followUpTargets, followUpSpec, unitEntry, (unitEntry != null && unitEntry.Transform != null) ? ((Vector2)unitEntry.Transform.position) : Vector2.zero);
 				Vector2 hitPosition = ((unitEntry.Transform != null) ? ((Vector2)unitEntry.Transform.position) : Vector2.zero);
-				bool isCoreHit = array.Length != 0 && IsTargetInsideHitbox(array, unitEntry);
+				bool isCoreHit = coreCollisionTargets.Contains(unitEntry);
 				TargetDamageResolution damageResolution = TargetDamage(source, skill, snapshot, damage, unitEntry.Model, critChanceBonus, isCoreHit);
 				InGameResourceChangeResult result2 = manager.ApplyDamage(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, critDamageBonus, sourceSkillId, suppressOutgoingDamageTriggers: false, damageResolution.IsExecute, finalDamageMultiplier: damageResolution.FinalDamageMultiplier);
 				int consumedStacks = ConsumePendingTargetStatusStacks(manager, unitEntry.Model, skill, damageResolution);
@@ -813,7 +818,7 @@ internal static class SingleSkillExecutor
 	/*
 	 * ApplyLimitedTargets 처리를 대상에 적용한다.
 	 */
-	private static bool ApplyLimitedTargets(InGameCombatManager manager /* 전투 진행 관리자 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, CombatUnitRegistry unitRoster /* 전투에 등록된 유닛 목록 */, SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */, int maxTargets /* 처리할 수 있는 최대 대상 수 */, float damage /* 적용하거나 전달할 피해량 */, DamageAttribute attribute /* 피해 속성 */, ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */, SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */, bool criticalAllowed /* 치명타 허용 여부 */, float critChanceBonus /* 추가 치명타 확률 */, float critDamageBonus /* 추가 치명타 피해 배율 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, Vector2 center /* 효과가 적용될 중심 위치 */, SingleFollowUpSpec? followUpSpec /* 후속 공격 설정 */, List<SingleFollowUpTarget> followUpTargets /* 후속 공격 대상 목록 */, UnitCombatState eventTarget /* 사건 대상 */, bool lockToEventTarget /* 사건 대상 고정 여부 */)
+	private static bool ApplyLimitedTargets(InGameCombatManager manager /* 전투 진행 관리자 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, UnitSpawnManager unitRoster /* 전투에 등록된 유닛 목록 */, SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */, int maxTargets /* 처리할 수 있는 최대 대상 수 */, float damage /* 적용하거나 전달할 피해량 */, DamageAttribute attribute /* 피해 속성 */, ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */, SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */, bool criticalAllowed /* 치명타 허용 여부 */, float critChanceBonus /* 추가 치명타 확률 */, float critDamageBonus /* 추가 치명타 피해 배율 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, Vector2 center /* 효과가 적용될 중심 위치 */, SingleFollowUpSpec? followUpSpec /* 후속 공격 설정 */, List<SingleFollowUpTarget> followUpTargets /* 후속 공격 대상 목록 */, UnitCombatState eventTarget /* 사건 대상 */, bool lockToEventTarget /* 사건 대상 고정 여부 */)
 	{
 		if (manager == null || sourceEntry == null || unitRoster == null || maxTargets <= 0)
 		{
@@ -852,7 +857,7 @@ internal static class SingleSkillExecutor
 	/*
 	 * ApplyAreaTargets 처리를 대상에 적용한다.
 	 */
-	private static bool ApplyAreaTargets(InGameCombatManager manager /* 전투 진행 관리자 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, CombatUnitRegistry unitRoster /* 전투에 등록된 유닛 목록 */, SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */, Vector2 center /* 효과가 적용될 중심 위치 */, float radius /* 효과가 적용될 반지름 */, bool coverAll /* 범위 안의 모든 대상 포함 여부 */, float damage /* 적용하거나 전달할 피해량 */, DamageAttribute attribute /* 피해 속성 */, ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */, SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */, bool criticalAllowed /* 치명타 허용 여부 */, float critChanceBonus /* 추가 치명타 확률 */, float critDamageBonus /* 추가 치명타 피해 배율 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, SingleFollowUpSpec? followUpSpec /* 후속 공격 설정 */, List<SingleFollowUpTarget> followUpTargets /* 후속 공격 대상 목록 */, UnitCombatState eventTarget /* 사건 대상 */, bool lockToEventTarget /* 사건 대상 고정 여부 */)
+	private static bool ApplyAreaTargets(InGameCombatManager manager /* 전투 진행 관리자 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, UnitSpawnManager unitRoster /* 전투에 등록된 유닛 목록 */, SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */, Vector2 center /* 효과가 적용될 중심 위치 */, float radius /* 효과가 적용될 반지름 */, bool coverAll /* 범위 안의 모든 대상 포함 여부 */, float damage /* 적용하거나 전달할 피해량 */, DamageAttribute attribute /* 피해 속성 */, ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */, SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */, bool criticalAllowed /* 치명타 허용 여부 */, float critChanceBonus /* 추가 치명타 확률 */, float critDamageBonus /* 추가 치명타 피해 배율 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, SingleFollowUpSpec? followUpSpec /* 후속 공격 설정 */, List<SingleFollowUpTarget> followUpTargets /* 후속 공격 대상 목록 */, UnitCombatState eventTarget /* 사건 대상 */, bool lockToEventTarget /* 사건 대상 고정 여부 */)
 	{
 		if (manager == null || sourceEntry == null || unitRoster == null)
 		{
@@ -909,14 +914,6 @@ internal static class SingleSkillExecutor
 		TryApplyHitCountCooldownRefund(sourceRuntime, snapshot, num);
 		TryExecuteOnHitCountEffects(manager, unitRoster, sourceEntry, sourceRuntime, skill, snapshot, num, center);
 		return result2;
-	}
-
-	/*
-	 * IsTargetInsideHitbox 조건을 만족하는지 확인한다.
-	 */
-	private static bool IsTargetInsideHitbox(Collider2D[] hitboxColliders /* 피격 판정 콜라이더 목록 */, CombatUnitEntry target /* 효과를 받을 대상의 등록 정보 */)
-	{
-		return UnitHitboxOverlap.IsTargetInsideHitbox(hitboxColliders, target);
 	}
 
 	/*
@@ -982,7 +979,7 @@ internal static class SingleSkillExecutor
 	/*
 	 * TryExecuteOnHitCountEffects 작업을 시도하고 성공 여부를 반환한다.
 	 */
-	private static void TryExecuteOnHitCountEffects(InGameCombatManager manager /* 전투 진행 관리자 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */, SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, int hitCount /* 적중한 횟수 */, Vector2 center /* 효과가 적용될 중심 위치 */)
+	private static void TryExecuteOnHitCountEffects(InGameCombatManager manager /* 전투 진행 관리자 */, UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */, SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, int hitCount /* 적중한 횟수 */, Vector2 center /* 효과가 적용될 중심 위치 */)
 	{
 		if (!(manager == null) && roster != null && sourceEntry != null && skill != null && hitCount > 0)
 		{
@@ -1178,7 +1175,7 @@ internal static class SingleSkillExecutor
 	/*
 	 * TryRedistributeConsumedStatusOnKill 작업을 시도하고 성공 여부를 반환한다.
 	 */
-	private static void TryRedistributeConsumedStatusOnKill(InGameCombatManager manager /* 전투 진행 관리자 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, CombatUnitEntry defeatedTarget /* 쓰러진 대상 */, InGameResourceChangeResult result /* 처리 결과 */, int consumedStacks /* 소모된 중첩 수 */)
+	private static void TryRedistributeConsumedStatusOnKill(InGameCombatManager manager /* 전투 진행 관리자 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, CombatUnitEntry defeatedTarget /* 쓰러진 대상 */, InGameResourceChangeResult result /* 처리 결과 */, int consumedStacks /* 소모된 중첩 수 */)
 	{
 		if (manager == null || sourceEntry == null || roster == null || source == null || snapshot == null || defeatedTarget == null || defeatedTarget.Transform == null || !result.IsDead || consumedStacks <= 0 || snapshot.RedistributeConsumedStatusRatioOnKill <= 0f || snapshot.RedistributeConsumedStatusKind == StatusEffectKind.None || snapshot.RedistributeConsumedStatusSearchRadius <= 0f)
 		{
@@ -1218,7 +1215,7 @@ internal static class SingleSkillExecutor
 	/*
 	 * RedistributionTargets 결과를 계산해 반환한다.
 	 */
-	private static List<CombatUnitEntry> RedistributionTargets(CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, Vector2 center /* 효과가 적용될 중심 위치 */, float radius /* 효과가 적용될 반지름 */, UnitCombatState excludedModel /* 제외할 상태 모델 */, int maxTargetCount /* 최대 대상 개수 */)
+	private static List<CombatUnitEntry> RedistributionTargets(CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */, Vector2 center /* 효과가 적용될 중심 위치 */, float radius /* 효과가 적용될 반지름 */, UnitCombatState excludedModel /* 제외할 상태 모델 */, int maxTargetCount /* 최대 대상 개수 */)
 	{
 		List<CombatUnitEntry> list = new List<CombatUnitEntry>();
 		if (sourceEntry == null || roster == null || radius <= 0f)

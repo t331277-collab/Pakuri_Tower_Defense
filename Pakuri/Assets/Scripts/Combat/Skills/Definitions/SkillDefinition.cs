@@ -54,6 +54,20 @@ namespace Pakuri.Data
         Passive
     }
 
+    /*
+     * 패시브가 유닛 전투 수치에 적용하는 상시 보정 종류를 구분한다.
+     */
+    public enum PassiveModifierKind
+    {
+        None,
+        DamageUp,
+        DefenseUp,
+        CritChanceUp,
+        CritDamageUp,
+        HealingUp,
+        IncomingDamageDown
+    }
+
 }
 
 /*
@@ -448,6 +462,12 @@ namespace Pakuri.InGame
     {
         public SkillSlot RequiredActiveSlot;
         public bool IsAvailableWithoutActiveRequirement;
+
+        [Header("Unit Modifier")]
+        public PassiveModifierKind ModifierKind;
+        public bool HasModifierAttribute;
+        public DamageAttribute ModifierAttribute;
+        public float ModifierValue;
 
         [Header("Choices")]
         public SkillChoice[] BaseModifierChoices = Array.Empty<SkillChoice>();

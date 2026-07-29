@@ -4,7 +4,7 @@ using UnityEngine;
 
 /*
  * 시전자의 능력치와 스킬 데이터로 원본 피해량을 계산
- * 대상의 방어력, 상태 효과, 치명타와 적 패시브를 반영해 최종 피해량을 반환
+ * 대상의 방어력, 상태 효과, 치명타와 학습한 패시브를 반영해 최종 피해량을 반환
  */
 namespace Pakuri.Combat
 {
@@ -39,6 +39,7 @@ namespace Pakuri.Combat
         {
             var damage = rawDamage;
             var defense = target.Defenses.Get(attribute);
+            defense *= target.SkillState.PassiveDefenseMultiplier(attribute);
             defense -= StatusCombatRules.FlatElementResistReduction(target, attribute);
             defense *= StatusCombatRules.ElementResistMultiplier(target, attribute);
             damage *= 100f / Mathf.Max(0.01f, 100f + defense);
@@ -48,12 +49,9 @@ namespace Pakuri.Combat
                 attackRule.Source,
                 attribute,
                 attackRule.SourceSkillId);
-            // 공격자가 적이면 속성별 패시브 주는 피해 보너스를 합산한다.
-            if (attackRule.Source is EnemyCombatState sourceEnemy)
+            if (attackRule.Source != null)
             {
-                finalDamageBonus += EnemyPassiveModifiers.OutgoingDamageBonus(
-                    sourceEnemy,
-                    attribute);
+                finalDamageBonus += attackRule.Source.SkillState.PassiveOutgoingDamageBonus(attribute);
             }
 
             finalDamageBonus += StatusCombatRules.IncomingDamageBonus(
@@ -61,11 +59,7 @@ namespace Pakuri.Combat
                 attackRule.Source,
                 attribute,
                 attackRule.SourceSkillId);
-            // 대상이 적이면 받는 피해 패시브 보너스를 합산한다.
-            if (target is EnemyCombatState targetEnemy)
-            {
-                finalDamageBonus += EnemyPassiveModifiers.IncomingDamageBonus(targetEnemy);
-            }
+            finalDamageBonus += target.SkillState.PassiveIncomingDamageBonus();
 
             damage *= Mathf.Max(0f, 1f + finalDamageBonus);
 
@@ -74,6 +68,7 @@ namespace Pakuri.Combat
             {
                 var criticalChance = attackRule.Source.Stats.CriticalChance;
                 criticalChance += StatusCombatRules.CriticalChanceBonus(attackRule.Source);
+                criticalChance += attackRule.Source.SkillState.PassiveCriticalChanceBonus();
                 criticalChance += attackRule.CritChanceBonus;
                 criticalChance -= target.Stats.CriticalResistance;
                 criticalChance -= StatusCombatRules.CriticalResistanceBonus(target);
@@ -82,6 +77,7 @@ namespace Pakuri.Combat
                 {
                     var criticalDamage = attackRule.Source.Stats.CriticalDamage;
                     criticalDamage += StatusCombatRules.CriticalDamageBonus(attackRule.Source);
+                    criticalDamage += attackRule.Source.SkillState.PassiveCriticalDamageBonus();
                     criticalDamage += attackRule.CritDamageBonus;
                     criticalDamage += StatusCombatRules.CriticalDamageTakenBonus(target);
                     damage *= criticalDamage;

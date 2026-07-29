@@ -17,7 +17,6 @@ namespace Pakuri.InGame
         [SerializeField] private MonsterPanelSlotView[] monsterSlots = new MonsterPanelSlotView[MaxPartySlots];
         [SerializeField] private StageManager stageManager;
         [SerializeField] private UnitSpawnManager unitSpawnManager;
-        [SerializeField] private InGameCombatManager combatManager;
 
         /*
          * Unity가 컴포넌트를 초기화할 때 필요한 참조와 상태를 준비한다.
@@ -76,9 +75,9 @@ namespace Pakuri.InGame
         {
             var models = new UnitCombatState[MaxPartySlots];
             System.Collections.Generic.IReadOnlyList<CombatUnitEntry> players = null;
-            if (combatManager != null && combatManager.UnitRegistry != null)
+            if (unitSpawnManager != null)
             {
-                players = combatManager.UnitRegistry.Players;
+                players = unitSpawnManager.Players;
             }
 
             if (players != null)
@@ -108,11 +107,6 @@ namespace Pakuri.InGame
                 }
             }
 
-            if (models[0] == null && unitSpawnManager != null)
-            {
-                models[0] = unitSpawnManager.SpawnedPlayerModel;
-            }
-
             return models;
         }
 
@@ -129,11 +123,6 @@ namespace Pakuri.InGame
             if (unitSpawnManager == null)
             {
                 unitSpawnManager = FindSceneObject<UnitSpawnManager>();
-            }
-
-            if (combatManager == null)
-            {
-                combatManager = FindSceneObject<InGameCombatManager>();
             }
         }
 

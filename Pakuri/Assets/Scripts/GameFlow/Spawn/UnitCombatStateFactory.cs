@@ -64,7 +64,23 @@ namespace Pakuri.InGame
                 AutoSkillEnabled = true
             };
 
-            EnemyPassiveModifiers.Apply(model, definition.PassiveSkill);
+            if (definition.ActiveSkills != null)
+            {
+                for (var i = 0; i < definition.ActiveSkills.Length; i++)
+                {
+                    var skill = definition.ActiveSkills[i];
+                    if (skill != null)
+                    {
+                        model.Skills.AddActiveSkill(skill.SkillId);
+                    }
+                }
+            }
+
+            if (definition.PassiveSkill != null)
+            {
+                model.Skills.AddPassiveSkill(definition.PassiveSkill.SkillId);
+            }
+
             return model;
         }
 
@@ -132,7 +148,10 @@ namespace Pakuri.InGame
                 AutoSkillEnabled = true
             };
 
-            ApplyRunState(model.Skills, runState);
+            if (runState != null)
+            {
+                model.Skills = runState.Skills;
+            }
             return model;
         }
 
@@ -167,22 +186,6 @@ namespace Pakuri.InGame
                 Darkness = source.Darkness,
                 Holy = source.Holy
             };
-        }
-
-        /*
-         * ApplyRunState 처리를 대상에 적용한다.
-         */
-        private static void ApplyRunState(UnitSkills target /* 유닛이 보유한 스킬 정보 */, RunSession.RunMonsterState runState /* 게임 진행 상태 */)
-        {
-            if (runState == null)
-            {
-                return;
-            }
-
-            target.ApplyLearnedSkills(
-                runState.LearnedActives,
-                runState.LearnedPassives,
-                runState.ChosenChoiceIds);
         }
 
         /*

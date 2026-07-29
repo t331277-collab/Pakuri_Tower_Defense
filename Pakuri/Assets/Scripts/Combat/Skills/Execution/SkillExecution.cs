@@ -21,7 +21,7 @@ namespace Pakuri.InGame
          */
         public SkillExecutionContext(
             InGameCombatManager combatManager /* 전투 진행 관리자 */,
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
             CombatUnitEntry casterEntry /* 스킬 사용자의 전투 등록 정보 */,
             SkillUseState runtime /* 실행 중인 스킬 정보 */,
             UnitCombatState eventTarget = null /* 사건 대상 */,
@@ -56,7 +56,7 @@ namespace Pakuri.InGame
         }
 
         public InGameCombatManager CombatManager { get; }
-        public CombatUnitRegistry Roster { get; }
+        public UnitSpawnManager Roster { get; }
         public CombatUnitEntry CasterEntry { get; }
         public SkillUseState Runtime { get; }
         public UnitCombatState EventTarget { get; }
@@ -111,7 +111,7 @@ namespace Pakuri.InGame
          * 자동 실행이 허용된 유닛의 액티브 스킬 실행을 요청한다.
          */
         public void TryExecuteAutomaticSkills(
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
             InGameCombatManager combatManager /* 전투 진행 관리자 */,
             SkillAutoRoutePredicate canAutoRoute = null /* 가능 자동 실행 경로 여부 */)
         {
@@ -155,7 +155,7 @@ namespace Pakuri.InGame
         public bool TryExecuteManual(
             CombatUnitEntry entry /* 처리할 등록 정보 */,
             SkillUseState runtime /* 실행 중인 스킬 정보 */,
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
             InGameCombatManager combatManager /* 전투 진행 관리자 */,
             Vector2 aimDirection /* 조준 방향 */,
             Vector2 targetPoint /* 지정한 대상 위치 */)
@@ -180,7 +180,7 @@ namespace Pakuri.InGame
         public bool CanExecuteSelected(
             CombatUnitEntry entry /* 처리할 등록 정보 */,
             SkillUseState runtime /* 실행 중인 스킬 정보 */,
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */)
+            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */)
         {
             if (entry == null
                 || runtime == null
@@ -199,7 +199,7 @@ namespace Pakuri.InGame
         public bool TryExecuteSelected(
             CombatUnitEntry entry /* 처리할 등록 정보 */,
             SkillUseState runtime /* 실행 중인 스킬 정보 */,
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
             InGameCombatManager combatManager /* 전투 진행 관리자 */)
         {
             return TryExecuteSkill(
@@ -220,7 +220,7 @@ namespace Pakuri.InGame
             CombatUnitEntry entry,
             SkillUseState sourceRuntime,
             SkillTriggerDefinition trigger,
-            CombatUnitRegistry roster,
+            UnitSpawnManager roster,
             InGameCombatManager combatManager,
             UnitCombatState eventTarget,
             Vector2 targetPoint,
@@ -298,7 +298,7 @@ namespace Pakuri.InGame
         private bool TryExecuteSkill(
             CombatUnitEntry entry /* 처리할 등록 정보 */,
             SkillUseState runtime /* 실행 중인 스킬 정보 */,
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
             InGameCombatManager combatManager /* 전투 진행 관리자 */,
             bool hasManualAimDirection /* 보유 수동 조준 방향 여부 */,
             Vector2 manualAimDirection /* 수동 조준 방향 */,
@@ -344,7 +344,7 @@ namespace Pakuri.InGame
             SkillUseState runtime,
             SkillDefinition definition,
             SkillExecutionData snapshot,
-            CombatUnitRegistry roster,
+            UnitSpawnManager roster,
             InGameCombatManager combatManager,
             bool hasManualAimDirection,
             Vector2 manualAimDirection,
@@ -448,7 +448,7 @@ namespace Pakuri.InGame
          */
         private static void NotifySkillCastTriggers(
             InGameCombatManager combatManager /* 전투 진행 관리자 */,
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
             CombatUnitEntry entry /* 처리할 등록 정보 */,
             SkillUseState runtime /* 실행 중인 스킬 정보 */,
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
@@ -539,7 +539,6 @@ namespace Pakuri.InGame
                 return;
             }
 
-            owner.SkillState.Clear();
             string monsterId = null;
             if (owner.Identity != null)
             {
@@ -547,42 +546,33 @@ namespace Pakuri.InGame
             }
             if (string.IsNullOrWhiteSpace(monsterId))
             {
+                owner.SkillState.Clear();
                 return;
             }
 
-            var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId);
+            var activeSkills = new List<SkillDefinition>();
             for (var i = 0; i < ActiveSlots.Length; i++)
             {
                 var source = GameDataLoader.CurrentCatalog.GetActiveSkill(monsterId, ActiveSlots[i]);
-                if (source == null)
+                if (source != null)
                 {
-                    continue;
-                }
-
-                if (owner.Skills.HasActiveSkill(source.SkillId))
-                {
-                    owner.SkillState.AddOrReplace(new SkillUseState(owner, source));
+                    activeSkills.Add(source);
                 }
             }
 
-            var passives = GameDataLoader.CurrentCatalog.GetPassiveSkills(monsterId);
-            for (var i = 0; i < passives.Length; i++)
-            {
-                var passive = passives[i];
-                if (owner.Skills.HasPassiveSkill(passive.SkillId))
-                {
-                    owner.SkillState.AddOrReplace(new SkillUseState(owner, passive));
-                }
-            }
+            RebuildLearnedSkillState(
+                owner,
+                activeSkills.ToArray(),
+                GameDataLoader.CurrentCatalog.GetPassiveSkills(monsterId));
         }
 
         /*
-         * 적 정의에 지정된 액티브 스킬의 실행 상태를 다시 만든다.
+         * 전달받은 정의 중 유닛이 학습한 액티브·패시브의 실행 상태를 다시 만든다.
          */
-        public static void RebuildAssignedSkillState(
+        public static void RebuildLearnedSkillState(
             UnitCombatState owner /* 실행 상태를 다시 만들 유닛 */,
-            SkillDefinition[] definitions /* 적에게 지정된 액티브 스킬 정의 목록 */,
-            SkillTriggerDefinition[] triggers /* 적에게 지정된 Trigger 목록 */)
+            SkillDefinition[] activeDefinitions /* 확인할 액티브 스킬 정의 목록 */,
+            PassiveSkillDefinition[] passiveDefinitions /* 확인할 패시브 스킬 정의 목록 */)
         {
             if (owner == null)
             {
@@ -590,14 +580,33 @@ namespace Pakuri.InGame
             }
 
             owner.SkillState.Clear();
-            if (definitions == null)
+            if (owner.Skills == null)
             {
                 return;
             }
 
-            for (var i = 0; i < definitions.Length; i++)
+            if (activeDefinitions != null)
             {
-                owner.SkillState.AddOrReplace(new SkillUseState(owner, definitions[i]));
+                for (var i = 0; i < activeDefinitions.Length; i++)
+                {
+                    var definition = activeDefinitions[i];
+                    if (definition != null && owner.Skills.HasActiveSkill(definition.SkillId))
+                    {
+                        owner.SkillState.AddOrReplace(new SkillUseState(owner, definition));
+                    }
+                }
+            }
+
+            if (passiveDefinitions != null)
+            {
+                for (var i = 0; i < passiveDefinitions.Length; i++)
+                {
+                    var definition = passiveDefinitions[i];
+                    if (definition != null && owner.Skills.HasPassiveSkill(definition.SkillId))
+                    {
+                        owner.SkillState.AddOrReplace(new SkillUseState(owner, definition));
+                    }
+                }
             }
         }
     }
@@ -1146,12 +1155,60 @@ namespace Pakuri.InGame
         public int Count => activeSkills.Count + passiveSkills.Count;
 
         /*
+         * 학습한 패시브가 현재 속성에 더하는 주는 피해 보너스를 반환한다.
+         */
+        public float PassiveOutgoingDamageBonus(DamageAttribute attribute)
+        {
+            return PassiveMultiplier(PassiveModifierKind.DamageUp, attribute, false) - 1f;
+        }
+
+        /*
+         * 학습한 패시브가 현재 속성 방어력에 적용하는 배율을 반환한다.
+         */
+        public float PassiveDefenseMultiplier(DamageAttribute attribute)
+        {
+            return PassiveMultiplier(PassiveModifierKind.DefenseUp, attribute, false);
+        }
+
+        /*
+         * 학습한 패시브가 더하는 치명타 확률을 반환한다.
+         */
+        public float PassiveCriticalChanceBonus()
+        {
+            return PassiveBonus(PassiveModifierKind.CritChanceUp);
+        }
+
+        /*
+         * 학습한 패시브가 더하는 치명타 피해를 반환한다.
+         */
+        public float PassiveCriticalDamageBonus()
+        {
+            return PassiveBonus(PassiveModifierKind.CritDamageUp);
+        }
+
+        /*
+         * 학습한 패시브가 회복량에 적용하는 배율을 반환한다.
+         */
+        public float PassiveHealingMultiplier()
+        {
+            return PassiveMultiplier(PassiveModifierKind.HealingUp, DamageAttribute.Physical, false);
+        }
+
+        /*
+         * 학습한 패시브가 더하는 받는 피해 보너스를 반환한다.
+         */
+        public float PassiveIncomingDamageBonus()
+        {
+            return PassiveMultiplier(PassiveModifierKind.IncomingDamageDown, DamageAttribute.Physical, true) - 1f;
+        }
+
+        /*
          * 현재 학습 상태와 전투 상황을 반영한 스킬 실행 데이터를 만든다.
          */
         public SkillExecutionData CreateExecutionData(
             UnitCombatState owner /* 스킬을 사용하는 유닛 */,
             SkillUseState skill /* 실행할 스킬 상태 */,
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */)
+            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */)
         {
             return BuildExecutionData(owner, skill, roster);
         }
@@ -1281,6 +1338,52 @@ namespace Pakuri.InGame
         }
 
         /*
+         * 지정 종류 패시브의 추가 수치를 합산한다.
+         */
+        private float PassiveBonus(PassiveModifierKind kind)
+        {
+            var bonus = 0f;
+            for (var i = 0; i < passiveSkills.Count; i++)
+            {
+                var passive = passiveSkills[i].Data as PassiveSkillDefinition;
+                if (passive != null && passive.ModifierKind == kind)
+                {
+                    bonus += Mathf.Max(0f, passive.ModifierValue);
+                }
+            }
+
+            return bonus;
+        }
+
+        /*
+         * 지정 종류 패시브의 속성 조건을 확인하고 배율을 누적한다.
+         */
+        private float PassiveMultiplier(
+            PassiveModifierKind kind,
+            DamageAttribute attribute,
+            bool reduction)
+        {
+            var multiplier = 1f;
+            for (var i = 0; i < passiveSkills.Count; i++)
+            {
+                var passive = passiveSkills[i].Data as PassiveSkillDefinition;
+                if (passive == null
+                    || passive.ModifierKind != kind
+                    || (passive.HasModifierAttribute && passive.ModifierAttribute != attribute))
+                {
+                    continue;
+                }
+
+                var value = Mathf.Max(0f, passive.ModifierValue);
+                multiplier *= reduction
+                    ? Mathf.Max(0f, 1f - value)
+                    : 1f + value;
+            }
+
+            return multiplier;
+        }
+
+        /*
          * FindChoice에 해당하는 값을 찾아 반환한다.
          */
         private static SkillChoice FindChoice(SkillDefinition skill /* 실행하거나 검사할 스킬 */, string choiceId /* 스킬 선택지 식별자 */)
@@ -1324,7 +1427,7 @@ namespace Pakuri.InGame
         /*
          * 유닛이 학습한 선택지를 현재 스킬 실행 정보에 적용한다.
          */
-        private SkillExecutionData BuildExecutionData(UnitCombatState owner /* 정보를 소유한 유닛 */, SkillUseState runtime /* 실행 중인 스킬 정보 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */)
+        private SkillExecutionData BuildExecutionData(UnitCombatState owner /* 정보를 소유한 유닛 */, SkillUseState runtime /* 실행 중인 스킬 정보 */, UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */)
         {
             // Base, 패시브, 강화, 마스터를 한 번의 실행 스냅샷으로 조립하는 부분을 구현.
             SkillDefinition skillData = null;
@@ -1354,7 +1457,6 @@ namespace Pakuri.InGame
         {
             if (snapshot == null
                 || owner == null
-                || owner.Identity.Role != UnitRole.Monster
                 || owner.Skills == null
                 || skillData == null
                 || owner.Skills.LearnedPassiveSkillIds.Count == 0)
@@ -1394,7 +1496,7 @@ namespace Pakuri.InGame
             System.Collections.Generic.IReadOnlyCollection<string> chosenChoiceIds /* 선택된 선택지 식별자 목록 */,
             SkillDefinition skillData /* 스킬 실행 데이터 */,
             UnitCombatState owner /* 정보를 소유한 유닛 */,
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */)
+            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */)
         {
             if (snapshot == null || chosenChoiceIds == null || skillData == null)
             {
@@ -1422,7 +1524,7 @@ namespace Pakuri.InGame
             SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             SkillChoice choice /* 적용하거나 검사할 스킬 선택지 */,
             UnitCombatState owner /* 정보를 소유한 유닛 */,
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */)
+            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */)
         {
             if (snapshot == null || choice == null || roster == null)
             {
@@ -1461,7 +1563,7 @@ namespace Pakuri.InGame
         private static void ApplyCountStatusDamageMultiplier(
             SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             UnitCombatState owner /* 정보를 소유한 유닛 */,
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
             SkillMultiEffectTargetSide targetSide /* 대상 진영 */,
             StatusEffectKind statusKind /* 상태 효과 종류 */,
             float amountPerCount /* 수치 개별 개수 */,
@@ -1494,7 +1596,7 @@ namespace Pakuri.InGame
          */
         private static int CountMatchingTargets(
             UnitCombatState owner /* 정보를 소유한 유닛 */,
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
             SkillMultiEffectTargetSide side /* 진영 */,
             StatusEffectKind statusKind /* 상태 효과 종류 */)
         {
@@ -1527,7 +1629,7 @@ namespace Pakuri.InGame
          */
         private static System.Collections.Generic.IReadOnlyList<CombatUnitEntry> CountEntries(
             UnitCombatState owner /* 정보를 소유한 유닛 */,
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
             SkillMultiEffectTargetSide side /* 진영 */)
         {
             if (roster == null || owner == null || owner.Identity == null)

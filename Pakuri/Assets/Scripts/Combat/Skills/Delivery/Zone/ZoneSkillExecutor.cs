@@ -46,7 +46,7 @@ namespace Pakuri.InGame
          */
         internal static void ApplyHitEnhancements(
             InGameCombatManager manager /* 전투 진행 관리자 */,
-            CombatUnitRegistry roster /* 전투 유닛 목록 */,
+            UnitSpawnManager roster /* 전투 유닛 목록 */,
             SkillUseState runtime /* 실행 중인 스킬 */,
             SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
             CombatUnitEntry sourceEntry /* 시전자 등록 정보 */,

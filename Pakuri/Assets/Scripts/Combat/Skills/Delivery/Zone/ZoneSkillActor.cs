@@ -13,7 +13,7 @@ namespace Pakuri.InGame
         // 생성된 지속 범위의 대상 판정, 주기 피해, 상태, 만료 효과를 구현.
         private InGameCombatManager combatManager;
         private CombatUnitEntry casterEntry;
-        private CombatUnitRegistry roster;
+        private UnitSpawnManager roster;
         private SkillTargetingSpec targeting;
         private Vector2 center;
         private float radius;
@@ -41,7 +41,7 @@ namespace Pakuri.InGame
         public void Initialize(
             InGameCombatManager manager /* 전투 진행 관리자 */,
             CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */,
-            CombatUnitRegistry unitRoster /* 전투에 등록된 유닛 목록 */,
+            UnitSpawnManager unitRoster /* 전투에 등록된 유닛 목록 */,
             SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */,
             Vector2 areaCenter /* 범위 중심 위치 */,
             float areaRadius /* 범위 반지름 */,
@@ -95,7 +95,7 @@ namespace Pakuri.InGame
         public static bool ApplyAreaTick(
             InGameCombatManager manager /* 전투 진행 관리자 */,
             CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */,
-            CombatUnitRegistry unitRoster /* 전투에 등록된 유닛 목록 */,
+            UnitSpawnManager unitRoster /* 전투에 등록된 유닛 목록 */,
             SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */,
             Vector2 areaCenter /* 범위 중심 위치 */,
             float areaRadius /* 범위 반지름 */,
@@ -335,7 +335,7 @@ namespace Pakuri.InGame
         internal static bool ApplyColliderAreaTick(
             InGameCombatManager manager /* 전투 진행 관리자 */,
             CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */,
-            CombatUnitRegistry unitRoster /* 전투에 등록된 유닛 목록 */,
+            UnitSpawnManager unitRoster /* 전투에 등록된 유닛 목록 */,
             SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */,
             Collider2D[] hitboxColliders /* 피격 판정 콜라이더 목록 */,
             int maxTargetsPerTick /* 최대 대상 목록 개별 반복 적용 */,
@@ -356,25 +356,13 @@ namespace Pakuri.InGame
             }
 
             var candidates = SkillTargeting.TargetList(sourceEntry, unitRoster, targetingSpec);
-            var hitUnitIds = new HashSet<string>();
             var eligibleTargets = new List<CombatUnitEntry>();
-            for (var i = 0; i < candidates.Count; i++)
-            {
-                var target = candidates[i];
-                var overlapped = UnitHitboxOverlap.IsTargetInsideHitbox(hitboxColliders, target);
-                if (!overlapped)
-                {
-                    continue;
-                }
-
-                var unitId = target.Model.Identity != null ? target.Model.Identity.UnitId : null;
-                if (!string.IsNullOrWhiteSpace(unitId) && !hitUnitIds.Add(unitId))
-                {
-                    continue;
-                }
-
-                eligibleTargets.Add(target);
-            }
+            UnitCollisionResolver.CollectTargets(
+                unitRoster,
+                candidates,
+                hitboxColliders,
+                Vector2.zero,
+                eligibleTargets);
 
             var selectedTargets = SelectTargetsForTick(eligibleTargets, maxTargetsPerTick);
             var routed = ApplyResolvedHits(
@@ -441,7 +429,7 @@ namespace Pakuri.InGame
                 }
                 ZoneSkillExecutor.ApplyHitEnhancements(
                     manager,
-                    sourceRuntime != null ? manager.UnitRegistry : null,
+                    sourceRuntime != null ? manager.Units : null,
                     sourceRuntime,
                     executionData,
                     sourceEntry,

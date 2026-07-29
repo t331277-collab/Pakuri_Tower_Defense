@@ -360,3 +360,49 @@ Implementation and available non-Play-Mode verification complete.
 - 2026-07-29: User approved aligning status data flow with the final skill catalog structure.
 - 2026-07-29: Code Builder moved parse-only functions to `Loading/Parsing/StatusValueParser.cs` and absorbed runtime-data construction into Generation.
 - 2026-07-29: Code Builder completed RuntimeCatalog indexing, Combat direct use, and non-Play-Mode verification.
+
+## Task: 2026-07-30 Enemy Passive Shared Data Contract
+
+### Task title
+
+Generate and register Enemy passives as shared `PassiveSkillDefinition` data.
+
+### Goals
+
+- Replace `EnemyPassiveDefinition` and `EnemyPassiveModifierKind` with the shared passive definition contract.
+- Preserve the existing Enemy passive CSV shape, IDs, values, and attribute rules.
+- Register generated Enemy passives in the common passive lookup.
+
+### Constraints
+
+- Keep the existing five-column Enemy passive CSV and all 16 authored rows.
+- Preserve one semantic validation, one catalog build, and one lookup rebuild.
+- Do not alter Monster passive CSV or reward contracts.
+- Store the edited CSV as UTF-8.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implementation and available non-Play-Mode verification complete.
+
+### Next Actions
+
+- User verifies representative Enemy passive behavior in Play Mode.
+
+### Evidence
+
+- Enemy passive CSV type metadata now names shared `PassiveModifierKind`; all authored rows and values are unchanged.
+- `CsvRowParser` and `CsvDataValidator` parse and validate the shared enum while retaining existing attribute and positive-value rules.
+- `GameDataCatalogBuilder` creates `PassiveSkillDefinition` directly for Enemy passive rows.
+- `GameDataCatalog.RegisterEnemies` registers each generated Enemy passive in the common passive lookup.
+- Unity catalog verification loads 5 monsters, 8 stage-one enemies, and 8 stage-two enemies.
+- `EnemyCatalogBuildsSharedLearnedPassives` verifies all 16 Enemy passives are generated, registered, learned, and rebuilt through the common runtime.
+- Full Unity EditMode tests pass 9/9; Runtime and Editor C# builds complete with zero errors.
+
+### History
+
+- 2026-07-30: User approved replacing the separate Enemy passive data/runtime with shared learned passives assigned at spawn.
+- 2026-07-30: Code Builder migrated parsing, validation, generation, registration, runtime initialization, and verification.

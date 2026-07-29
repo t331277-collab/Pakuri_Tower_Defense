@@ -139,11 +139,12 @@ namespace Pakuri.InGame
                 return;
             }
 
-            if (unitSpawnManager != null
-                && unitSpawnManager.SpawnedPlayerModel != null
-                && unitSpawnManager.SpawnedPlayerModel.Identity != null)
+            var selectedPlayer = unitSpawnManager != null
+                ? unitSpawnManager.FindPlayerMonsterBySlot(0)
+                : null;
+            if (selectedPlayer != null && selectedPlayer.Model.Identity != null)
             {
-                partyMonsterIds[0] = unitSpawnManager.SpawnedPlayerModel.Identity.DefinitionId;
+                partyMonsterIds[0] = selectedPlayer.Model.Identity.DefinitionId;
             }
         }
 

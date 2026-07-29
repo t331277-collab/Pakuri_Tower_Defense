@@ -27,7 +27,7 @@ namespace Pakuri.InGame
          */
         public static List<CombatUnitEntry> OrderedTargets(
             CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */,
-            CombatUnitRegistry unitRoster /* 전투에 등록된 유닛 목록 */,
+            UnitSpawnManager unitRoster /* 전투에 등록된 유닛 목록 */,
             SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */)
         {
             // 시전자와 Targeting 설정을 기준으로 유효 대상을 정렬하는 부분을 구현.
@@ -61,7 +61,7 @@ namespace Pakuri.InGame
 
         public static List<CombatUnitEntry> OrderedTargets(
             CombatUnitEntry sourceEntry,
-            CombatUnitRegistry unitRoster,
+            UnitSpawnManager unitRoster,
             SkillTargetingSpec targetingSpec,
             UnitCombatState eventTarget,
             bool lockToEventTarget)
@@ -96,7 +96,7 @@ namespace Pakuri.InGame
          */
         public static List<CombatUnitEntry> OrderedTargets(
             CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */,
-            CombatUnitRegistry unitRoster /* 전투에 등록된 유닛 목록 */,
+            UnitSpawnManager unitRoster /* 전투에 등록된 유닛 목록 */,
             SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */,
             StatusEffectKind requiredStatusKind /* 필수 상태 효과 종류 여부 */,
             int requiredStatusMinStacks /* 필수 상태 효과 최소 중첩 수 여부 */)
@@ -126,7 +126,7 @@ namespace Pakuri.InGame
          */
         public static CombatUnitEntry FindNearestTarget(
             CombatUnitEntry caster /* 스킬을 사용하는 유닛 */,
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
             SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */)
         {
             if (caster == null || caster.Transform == null || roster == null)
@@ -311,7 +311,7 @@ namespace Pakuri.InGame
          */
         public static IReadOnlyList<CombatUnitEntry> TargetList(
             CombatUnitEntry caster /* 스킬을 사용하는 유닛 */,
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
             SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */)
         {
             return TargetList(caster, roster, targeting, StatusEffectKind.None, 0);
@@ -322,7 +322,7 @@ namespace Pakuri.InGame
          */
         public static IReadOnlyList<CombatUnitEntry> TargetList(
             CombatUnitEntry caster /* 스킬을 사용하는 유닛 */,
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
             SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */,
             StatusEffectKind requiredStatusKind /* 필수 상태 효과 종류 여부 */,
             int requiredStatusMinStacks /* 필수 상태 효과 최소 중첩 수 여부 */)
@@ -746,7 +746,7 @@ namespace Pakuri.InGame
          * 최초 적중 대상과 Nexus를 제외한 반대 진영 유닛을 거리순으로 찾는다.
          */
         public static List<CombatUnitEntry> ChainTargets(
-            CombatUnitRegistry roster /* 전투 유닛 목록 */,
+            UnitSpawnManager roster /* 전투 유닛 목록 */,
             CombatUnitEntry sourceEntry /* 시전자 등록 정보 */,
             UnitCombatState source /* 시전자 */,
             CombatUnitEntry hitTarget /* 최초 적중 대상 */,

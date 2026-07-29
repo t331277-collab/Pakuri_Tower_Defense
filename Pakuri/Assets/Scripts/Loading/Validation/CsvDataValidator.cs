@@ -1191,19 +1191,19 @@ namespace Pakuri.Data
                 errors.Add($"Enemy '{enemy.Id}' passive_id '{passiveId}' must reference an Enemy passive definition.");
             }
 
-            if (passive.PassiveModifierKind == EnemyPassiveModifierKind.None)
+            if (passive.PassiveModifierKind == PassiveModifierKind.None)
             {
                 errors.Add($"Enemy passive '{passiveId}' requires a supported modifier_kind.");
             }
 
-            if (passive.PassiveModifierKind == EnemyPassiveModifierKind.DamageUp
+            if (passive.PassiveModifierKind == PassiveModifierKind.DamageUp
                 && !passive.PassiveHasAttribute)
             {
                 errors.Add($"Enemy passive '{passiveId}' requires attribute for DamageUp.");
             }
 
-            if (passive.PassiveModifierKind != EnemyPassiveModifierKind.DamageUp
-                && passive.PassiveModifierKind != EnemyPassiveModifierKind.DefenseUp
+            if (passive.PassiveModifierKind != PassiveModifierKind.DamageUp
+                && passive.PassiveModifierKind != PassiveModifierKind.DefenseUp
                 && passive.PassiveHasAttribute)
             {
                 errors.Add($"Enemy passive '{passiveId}' cannot use attribute with '{passive.PassiveModifierKind}'.");

@@ -33,7 +33,7 @@ namespace Pakuri.InGame
          */
         internal static void ApplyHitEnhancements(
             InGameCombatManager manager /* 전투 진행 관리자 */,
-            CombatUnitRegistry roster /* 전투 유닛 목록 */,
+            UnitSpawnManager roster /* 전투 유닛 목록 */,
             SkillUseState runtime /* 실행 중인 스킬 */,
             SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
             CombatUnitEntry sourceEntry /* 시전자 등록 정보 */,
@@ -306,35 +306,9 @@ namespace Pakuri.InGame
             {
                 prefab = snapshot.SkillEffectPrefab;
             }
-            var hasEffectVisual = effects != null
-                && ((runtimeVisual != null && runtimeVisual.HasVisual()) || prefab != null);
-
-            if (!hasEffectVisual)
+            if (effects == null)
             {
-                LineSkillActor.ApplyLineTick(
-                    context.CombatManager,
-                    context.CasterEntry,
-                    context.Roster,
-                    skill.Targeting,
-                    origin,
-                    direction,
-                    length,
-                    width,
-                    knockbackDistance,
-                    damage,
-                    attribute,
-                    statusSpec,
-                    context.Runtime,
-                    snapshot,
-                    context.Caster,
-                    skill.SkillId,
-                    skill.DamagePerTick != null && skill.DamagePerTick.CriticalAllowed,
-                    snapshot != null ? snapshot.CritChanceBonus : 0f,
-                    snapshot != null ? snapshot.CritDamageBonus : 0f);
-                SkillTrigger.PublishLifecycleEvent(
-                    SkillTriggerEvent.OnDeploymentCast,
-                    new SkillActionContext(context.Caster, skill.SkillId, null, center, 0f, 0, snapshot, context));
-                return true;
+                return false;
             }
 
             var rotation = EffectVisualBuilder.Rotation(direction);
@@ -354,8 +328,8 @@ namespace Pakuri.InGame
                 0f,
                 null,
                 false,
-                true,
-                false));
+                false,
+                true));
             if (instance == null)
             {
                 return false;

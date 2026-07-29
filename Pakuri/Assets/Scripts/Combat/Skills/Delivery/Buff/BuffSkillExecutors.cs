@@ -119,7 +119,7 @@ namespace Pakuri.InGame
          */
         internal static System.Collections.Generic.IReadOnlyList<CombatUnitEntry> BuffTargets(
             CombatUnitEntry caster /* 스킬을 사용하는 유닛 */,
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
             SkillTargetSide targetMode /* 대상 방식 */)
         {
             if (targetMode == SkillTargetSide.Self)
@@ -315,10 +315,7 @@ namespace Pakuri.InGame
                 + attack * healing.AttackPowerCoefficient
                 + spell * healing.SpellPowerCoefficient;
             amount = Mathf.Max(0f, amount);
-            if (context.Caster is EnemyCombatState enemy)
-            {
-                amount *= Mathf.Max(0f, enemy.PassiveHealingMultiplier);
-            }
+            amount *= context.Caster.SkillState.PassiveHealingMultiplier();
 
             context.CombatManager.Heal(target.Model, amount);
             var effects = context.CombatManager.Effects;

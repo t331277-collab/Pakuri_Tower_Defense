@@ -476,3 +476,200 @@ Implementation and available non-Play-Mode verification complete.
 - 2026-07-29: User approved Code Builder implementation of the status compiler removal and responsibility split.
 - 2026-07-29: Code Builder moved parsing to Loading, final data generation to Generation, and lookup to RuntimeCatalog.
 - 2026-07-29: Code Builder separated Status folders, moved SkillStatus to Skills/Execution, and completed static/build/Unity/EditMode verification.
+
+## Task: 2026-07-29 Field Unit Registry Ownership Consolidation
+
+### Task title
+
+Make `UnitSpawnManager` the sole owner of field-unit registration and removal.
+
+### Goals
+
+- Keep `CombatUnitRegistry` as a hidden helper owned by `UnitSpawnManager`.
+- Route selected monsters, manifested monsters, enemies, and Nexus through one field-unit manager.
+- Replace external Registry access with read/query APIs on `UnitSpawnManager`.
+- Remove the separate selected-player GameObject and model cache.
+
+### Constraints
+
+- Preserve spawning, restoration, targeting, collision lookup, AI, skills, UI display, death, and Nexus behavior.
+- Keep `CombatUnitRegistry.cs` and `CombatUnitEntry`.
+- Do not change CSV, scene, prefab, catalog, saved-run, or gameplay data.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implementation and available non-Play-Mode verification complete.
+
+### Next Actions
+
+- User verifies selected-monster spawn, manifestation, enemy waves, targeting, death, Nexus contact, and next-day party restoration in Play Mode.
+- Run Code Reviewer only after separate explicit user approval.
+
+### Evidence
+
+- `CombatUnitRegistry` is now an internal sealed helper instantiated only by `UnitSpawnManager`.
+- Active C# search finds `CombatUnitRegistry` only in its definition file and the private `UnitSpawnManager.unitRegistry` field.
+- All Registry `Register` and `Unregister` calls now exist only inside `UnitSpawnManager`.
+- External combat, skill, AI, GameFlow, and UI consumers receive or query `UnitSpawnManager`.
+- `spawnedPlayerUnit`, `SpawnedPlayerModel`, `InGameCombatManager.UnitRegistry`, and the former CombatManager register/despawn APIs have zero active C# references.
+- `Assembly-CSharp.csproj` and `Assembly-CSharp-Editor.csproj` build with zero errors and the two existing assembly-reference warnings.
+- Unity script refresh returned idle, Console contained zero errors, and focused script validation reported zero errors.
+- `git diff --check` passed.
+
+### History
+
+- 2026-07-29: User clarified that all current field monsters, manifested monsters, and enemies should be managed through one owner.
+- 2026-07-29: User selected Code Builder and approved `UnitSpawnManager` ownership with `CombatUnitRegistry` retained as a hidden helper.
+- 2026-07-29: Code Builder moved Registry ownership and mutation to `UnitSpawnManager`, migrated external consumers, removed duplicate selected-player state, and completed local verification.
+
+## Task: 2026-07-29 UnitSkills Single Runtime Source
+
+### Task title
+
+Use `UnitSkills` as the sole learned-skill and Choice ownership source.
+
+### Goals
+
+- Keep active, passive, enhancement, and master ownership in `UnitSkills`.
+- Remove session-to-runtime ID copying.
+- Keep `SkillExecutionState` as the separate transient cooldown, cast, magazine, reload, and execution-list state.
+
+### Constraints
+
+- Preserve full learned-skill execution-state rebuilds after post-combat learning and on spawn/restoration.
+- Preserve existing skill, passive, Choice, Trigger, targeting, and delivery behavior.
+- Do not introduce incremental synchronization, a replacement runtime class, or a new production script.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implementation and available non-Play-Mode verification complete.
+
+### Next Actions
+
+- User verifies newly learned active/passive skills and Choice effects in the next Play Mode combat.
+
+### Evidence
+
+- `UnitSkills.AddChoice` now classifies and stores confirmed Choice IDs.
+- `UnitCombatStateFactory` and player restoration assign the exact `RunMonsterState.Skills` instance instead of copying collections.
+- Production `AddActiveSkill`, `AddPassiveSkill`, and `AddChoice` calls exist only in `RunSession`.
+- Removed copy-symbol search returned zero active production references.
+- Runtime and Editor builds completed with zero errors; all five `SkillCatalogRuntimeTests` passed.
+- Unity script compilation returned ready and the post-compile Console contained zero errors or warnings.
+
+### History
+
+- 2026-07-29: User confirmed that learning occurs only during the post-combat reward stage and selected full execution-state rebuilds over incremental synchronization.
+- 2026-07-29: Code Builder retained `SkillExecutionState` behavior and consolidated persistent learned-skill ownership into `UnitSkills`.
+
+## Task: 2026-07-30 Unified Collider Collision Resolution
+
+### Task title
+
+Route all Collider-based skill and Nexus contact hits through one resolver.
+
+### Goals
+
+- Use one collision-result path for Projectile, Line, Zone prefab hitboxes, Single prefab hitboxes, Charge, and enemy-to-Nexus contact.
+- Map every raw physics Collider through `UnitSpawnManager.FindByCollider()`.
+- Use actual target Colliders only, with no Transform-position collision fallback.
+- Give Line a real runtime `BoxCollider2D`.
+
+### Constraints
+
+- Preserve caller-owned targeting filters, target order, damage, status, follow-up, pierce, and tick behavior.
+- Keep direct-target, chain, and radius targeting separate because they are not Collider collision delivery.
+- Preserve the moved Unity script `.meta` GUID.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implementation and available non-Play-Mode verification complete.
+
+### Next Actions
+
+- User verifies Projectile pierce/impact, visual and no-visual Line, Zone/Single prefab hitboxes, Charge contact, and enemy-to-Nexus contact in Play Mode.
+- Confirm that every collision-participating unit prefab has an enabled `Collider2D`; missing Colliders now intentionally produce no hit.
+
+### Evidence
+
+- `UnitHitboxOverlap.cs` was renamed to `UnitCollisionResolver.cs`; GUID `4280db46ec0042e69ea67a44c8b10498` is preserved.
+- `UnitCollisionResolver.CollectTargets()` is the only production caller of `UnitSpawnManager.FindByCollider()`.
+- Projectile, Line, Zone prefab hitbox, Single prefab/core hitbox, Charge, and Nexus contact all call `UnitCollisionResolver.CollectTargets()`.
+- Moving Projectile and Charge use the same resolver with `Collider2D.Cast`; static shapes use `Collider2D.Overlap`.
+- `LineSkillActor` creates and sizes a real runtime `BoxCollider2D`; no-visual Line also creates an empty Actor through `EffectManager`.
+- `CombatUnitEntry.GetHitboxColliders()`, `ResolveTargetPoint()`, Line point fallback, Charge distance fallback, Projectile `OnTriggerEnter2D`, Line `Physics2D.OverlapBox`, Nexus `OverlapPoint`, and Nexus distance fallback are removed.
+- Active production C# search returns zero `UnitHitboxOverlap`, `OnTriggerEnter2D`, `Physics2D.OverlapBox`, `OverlapPoint`, or `Collider2D.Distance(...).isOverlapped` collision paths.
+- `Assembly-CSharp.csproj` and `Assembly-CSharp-Editor.csproj` build with zero errors and the two existing assembly-reference warnings.
+- `git diff --check` passes.
+- Unity EditMode tests pass 6/6; `CollisionResolverUsesOverlapAndMovementCast` verifies both overlap and swept movement detection.
+- Final Unity script refresh is idle and Console reports zero errors.
+
+### History
+
+- 2026-07-29: User required all collision-required skills to use one route and prohibited Transform-position exceptions without approval.
+- 2026-07-30: Code Builder introduced `UnitCollisionResolver`, migrated all inspected Collider delivery paths, removed Transform fallbacks, and completed build, static, Unity, and EditMode verification.
+
+## Task: 2026-07-30 Enemy Passive Shared Learning Runtime
+
+### Task title
+
+Move Enemy passives into the shared learned-skill runtime and remove Enemy-only combat branches.
+
+### Goals
+
+- Make Enemy spawn initialize assigned active and passive IDs through `UnitSkills`.
+- Build Enemy `SkillState` through the same learned-skill reconstruction used by Monster.
+- Resolve passive damage, defense, critical, healing, and incoming-damage modifiers through `SkillExecutionState`.
+- Delete `EnemyPassiveModifiers` and all Enemy-only passive state and combat calculation branches.
+
+### Constraints
+
+- Preserve the six existing Enemy passive modifier behaviors and authored values.
+- Preserve Monster reward learning, Choice, and Trigger behavior.
+- Preserve the user’s existing uncommitted roster and collision refactors in overlapping files.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implementation and available non-Play-Mode verification complete.
+
+### Next Actions
+
+- User verifies representative DamageUp, DefenseUp, HealingUp, and IncomingDamageDown enemies in Play Mode.
+
+### Evidence
+
+- `UnitCombatStateFactory.CreateEnemy` records assigned active and passive IDs in the common `UnitSkills` storage.
+- `SkillExecution.RebuildLearnedSkillState` now accepts resolved active and passive definitions for both Monster and Enemy.
+- `SkillExecutionState` supplies all six passive modifier results to common damage and healing calculations.
+- Passive Trigger dispatch reads each learned passive’s runtime definition instead of loading `MonsterDefinition`.
+- `EnemyPassiveModifiers.cs`, its `.meta`, the empty `Enemy/Passive` folder, and all eight Enemy-only passive fields were removed.
+- Static searches return zero removed Enemy passive types, fields, `RebuildAssignedSkillState`, Monster-only passive role gates, or Enemy branches in damage/healing.
+- Runtime and Editor C# builds complete with zero errors and the two existing assembly-reference warnings.
+- Unity catalog loading retains 5 monsters, 8 stage-one enemies, and 8 stage-two enemies.
+- Full Unity EditMode tests pass 9/9, including shared Enemy spawn, all six modifier kinds, and all 16 catalog Enemy passives.
+- Final Unity script refresh is idle and Console contains no project compile errors.
+
+### History
+
+- 2026-07-30: User rejected the separate Enemy passive runtime and required Enemy spawn to use the Monster learned-skill path.
+- 2026-07-30: User explicitly required deletion of `EnemyPassiveModifiers`, Enemy-only multiplier fields, and Enemy branches in damage and healing.
+- 2026-07-30: Code Builder completed the shared learned-passive migration and non-Play-Mode verification.

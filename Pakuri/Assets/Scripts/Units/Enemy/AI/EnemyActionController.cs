@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
@@ -10,19 +11,21 @@ namespace Pakuri.InGame
 {
     public class EnemyActionController
     {
-        private readonly CombatUnitRegistry registry;
+        private readonly UnitSpawnManager units;
         private readonly SkillExecution skillExecution;
         private readonly InGameCombatManager combatManager;
+        private readonly List<CombatUnitEntry> nexusCandidate = new List<CombatUnitEntry>(1);
+        private readonly List<CombatUnitEntry> collisionTargets = new List<CombatUnitEntry>(1);
 
         /*
          * 적 행동에 필요한 전투 시스템을 연결한다.
          */
         public EnemyActionController(
-            CombatUnitRegistry registry /* 전투 유닛 등록 관리자 */,
+            UnitSpawnManager units /* 필드 전투 유닛 관리자 */,
             SkillExecution skillExecution /* 스킬 실행 */,
             InGameCombatManager combatManager /* 전투 진행 관리자 */)
         {
-            this.registry = registry;
+            this.units = units;
             this.skillExecution = skillExecution;
             this.combatManager = combatManager;
         }
@@ -37,7 +40,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var enemies = registry.Enemies;
+            var enemies = units.Enemies;
             for (var i = 0; i < enemies.Count; i++)
             {
                 TickEnemy(enemies[i], deltaTime);
@@ -63,12 +66,12 @@ namespace Pakuri.InGame
             }
 
             // 돌진 스킬이 행동을 점유한 프레임에는 일반 이동과 스킬 선택을 실행하지 않는다.
-            if (SingleChargeActor.Tick(enemyEntry, registry, combatManager, deltaTime))
+            if (SingleChargeActor.Tick(enemyEntry, units, combatManager, deltaTime))
             {
                 return;
             }
 
-            var target = EnemyCombatDecision.FindNearestPlayerTarget(enemyEntry, registry);
+            var target = EnemyCombatDecision.FindNearestPlayerTarget(enemyEntry, units);
             // 일반 플레이어가 모두 사라진 뒤 선택된 넥서스는 별도 접촉 공격으로 처리한다.
             if (target != null && target.Model.IsNexus)
             {
@@ -82,7 +85,7 @@ namespace Pakuri.InGame
             // 사용 가능한 특수 지원 스킬은 공격 대상과 무관하게 적 아군 대상으로 먼저 시도한다.
             var usedSupportSkill = canUseSpecialSkill
                 && EnemyCombatDecision.IsSupportSkill(specialRuntime)
-                && EnemyCombatDecision.CanExecuteSupportSkill(specialRuntime, registry)
+                && EnemyCombatDecision.CanExecuteSupportSkill(specialRuntime, units)
                 && TryUseSkill(
                     enemyEntry,
                     specialRuntime);
@@ -98,7 +101,7 @@ namespace Pakuri.InGame
                 specialRuntime,
                 canUseSpecialSkill,
                 skillExecution,
-                registry);
+                units);
             if (offensiveRuntime == null)
             {
                 return;
@@ -138,7 +141,7 @@ namespace Pakuri.InGame
             return skillExecution.TryExecuteSelected(
                 enemyEntry,
                 runtime,
-                registry,
+                units,
                 combatManager);
         }
 
@@ -183,7 +186,10 @@ namespace Pakuri.InGame
                     MoveToward(enemyEntry, nexusTarget, enemyModel, deltaTime);
                 }
 
-                return;
+                if (!IsTouchingNexus(enemyEntry, nexusTarget))
+                {
+                    return;
+                }
             }
 
             combatManager.ApplyDamage(
@@ -192,31 +198,23 @@ namespace Pakuri.InGame
                 DamageAttribute.Physical,
                 enemyModel,
                 false);
-            combatManager.DespawnUnit(enemyModel);
+            units.DespawnUnit(enemyModel);
         }
 
         /*
          * IsTouchingNexus 조건을 만족하는지 확인한다.
          */
-        private static bool IsTouchingNexus(CombatUnitEntry enemyEntry /* 적 등록 정보 */, CombatUnitEntry nexusTarget /* 넥서스 대상 */)
+        private bool IsTouchingNexus(CombatUnitEntry enemyEntry /* 적 등록 정보 */, CombatUnitEntry nexusTarget /* 넥서스 대상 */)
         {
-            var enemyPoint = enemyEntry.ResolveTargetPoint();
-            var targetColliders = nexusTarget.GetHitboxColliders();
-            for (var i = 0; i < targetColliders.Length; i++)
-            {
-                var collider = targetColliders[i];
-                if (collider.enabled && collider.OverlapPoint(enemyPoint))
-                {
-                    return true;
-                }
-            }
-
-            if (UnitHitboxOverlap.IsTargetInsideHitbox(enemyEntry.GetHitboxColliders(), nexusTarget))
-            {
-                return true;
-            }
-
-            return Vector2.Distance(enemyEntry.Transform.position, nexusTarget.Transform.position) <= 0.25f;
+            nexusCandidate.Clear();
+            nexusCandidate.Add(nexusTarget);
+            UnitCollisionResolver.CollectTargets(
+                units,
+                nexusCandidate,
+                enemyEntry,
+                Vector2.zero,
+                collisionTargets);
+            return collisionTargets.Count > 0;
         }
 
     }

@@ -23,10 +23,8 @@ namespace Pakuri.InGame
         public class RunMonsterState
         {
             public string MonsterId;
-            public readonly List<string> LearnedActives = new List<string>();
-            public readonly List<string> LearnedPassives = new List<string>();
+            public readonly UnitSkills Skills = new UnitSkills();
             public readonly List<string> ChosenRewardIds = new List<string>();
-            public readonly List<string> ChosenChoiceIds = new List<string>();
         }
 
         private readonly List<RunMonsterState> partyMembers = new List<RunMonsterState>();
@@ -94,19 +92,19 @@ namespace Pakuri.InGame
                 member.ChosenRewardIds.Add(rewardId);
             }
 
-            if (!string.IsNullOrWhiteSpace(linkedChoiceId) && !member.ChosenChoiceIds.Contains(linkedChoiceId))
+            if (!string.IsNullOrWhiteSpace(linkedChoiceId) && !member.Skills.HasChoice(linkedChoiceId))
             {
-                member.ChosenChoiceIds.Add(linkedChoiceId);
+                member.Skills.AddChoice(linkedChoiceId);
             }
 
-            if (!string.IsNullOrWhiteSpace(activeSkillId) && !member.LearnedActives.Contains(activeSkillId))
+            if (!string.IsNullOrWhiteSpace(activeSkillId) && !member.Skills.HasActiveSkill(activeSkillId))
             {
-                member.LearnedActives.Add(activeSkillId);
+                member.Skills.AddActiveSkill(activeSkillId);
             }
 
-            if (!string.IsNullOrWhiteSpace(passiveSkillId) && !member.LearnedPassives.Contains(passiveSkillId))
+            if (!string.IsNullOrWhiteSpace(passiveSkillId) && !member.Skills.HasPassiveSkill(passiveSkillId))
             {
-                member.LearnedPassives.Add(passiveSkillId);
+                member.Skills.AddPassiveSkill(passiveSkillId);
             }
         }
 
@@ -122,17 +120,17 @@ namespace Pakuri.InGame
                 || monster == null
                 || skill == null
                 || string.IsNullOrWhiteSpace(skill.SkillId)
-                || member.LearnedActives.Contains(skill.SkillId))
+                || member.Skills.HasActiveSkill(skill.SkillId))
             {
                 return false;
             }
 
             var defaultActiveSkillId = ResolveDefaultActiveSkillId(monster);
             var additionalCount = 0;
-            for (var i = 0; i < member.LearnedActives.Count; i++)
+            foreach (var learnedActiveSkillId in member.Skills.LearnedActiveSkillIds)
             {
                 if (!string.Equals(
-                    member.LearnedActives[i],
+                    learnedActiveSkillId,
                     defaultActiveSkillId,
                     StringComparison.OrdinalIgnoreCase))
                 {
@@ -155,8 +153,8 @@ namespace Pakuri.InGame
                 || monster == null
                 || passive == null
                 || string.IsNullOrWhiteSpace(passive.SkillId)
-                || member.LearnedPassives.Contains(passive.SkillId)
-                || member.LearnedPassives.Count >= MaxPassiveSkillCount)
+                || member.Skills.HasPassiveSkill(passive.SkillId)
+                || member.Skills.LearnedPassiveSkillIds.Count >= MaxPassiveSkillCount)
             {
                 return false;
             }
@@ -176,7 +174,7 @@ namespace Pakuri.InGame
                 var active = monster.ActiveSkills[i];
                 if (active != null
                     && active.Slot == passive.RequiredActiveSlot
-                    && member.LearnedActives.Contains(active.SkillId))
+                    && member.Skills.HasActiveSkill(active.SkillId))
                 {
                     return true;
                 }
@@ -199,19 +197,19 @@ namespace Pakuri.InGame
             }
 
             if (member.ChosenRewardIds.Contains(reward.RewardId)
-                || member.ChosenChoiceIds.Contains(choice.ChoiceId))
+                || member.Skills.HasChoice(choice.ChoiceId))
             {
                 return false;
             }
 
             if (!string.IsNullOrWhiteSpace(reward.ActiveSkillId)
-                && !member.LearnedActives.Contains(reward.ActiveSkillId))
+                && !member.Skills.HasActiveSkill(reward.ActiveSkillId))
             {
                 return false;
             }
 
             if (!string.IsNullOrWhiteSpace(reward.PassiveSkillId)
-                && !member.LearnedPassives.Contains(reward.PassiveSkillId))
+                && !member.Skills.HasPassiveSkill(reward.PassiveSkillId))
             {
                 return false;
             }
@@ -238,7 +236,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            if (member.ChosenChoiceIds.Contains(choice.ChoiceId))
+            if (member.Skills.HasChoice(choice.ChoiceId))
             {
                 return false;
             }
@@ -309,7 +307,7 @@ namespace Pakuri.InGame
             var defaultActiveSkillId = ResolveDefaultActiveSkillId(monster);
             if (!string.IsNullOrWhiteSpace(defaultActiveSkillId))
             {
-                state.LearnedActives.Add(defaultActiveSkillId);
+                state.Skills.AddActiveSkill(defaultActiveSkillId);
             }
 
             partyMembers.Add(state);
@@ -352,9 +350,11 @@ namespace Pakuri.InGame
             }
 
             var count = 0;
-            for (var i = 0; i < member.ChosenChoiceIds.Count; i++)
+            var choiceIds = group == SkillChoiceGroup.ActiveMaster
+                ? member.Skills.ChosenMasterSkillIds
+                : member.Skills.ChosenEnhancementIds;
+            foreach (var choiceId in choiceIds)
             {
-                var choiceId = member.ChosenChoiceIds[i];
                 if (GameDataLoader.CurrentCatalog.TryGetData(choiceId, out SkillChoice choice)
                     && choice != null
                     && choice.ChoiceGroup == group

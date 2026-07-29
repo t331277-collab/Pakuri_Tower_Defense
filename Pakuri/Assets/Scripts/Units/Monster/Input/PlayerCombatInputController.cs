@@ -26,7 +26,7 @@ namespace Pakuri.InGame
          * 선택 플레이어의 입력을 읽고 실행 가능한 액티브 스킬에 전달한다.
          */
         internal void HandleManualInput(
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
             SkillExecution skillExecution /* 스킬 실행 */,
             InGameCombatManager combatManager /* 전투 진행 관리자 */)
         {
@@ -102,7 +102,7 @@ namespace Pakuri.InGame
          */
         public bool CanUseAutoSkill(
             CombatUnitEntry entry /* 처리할 등록 정보 */,
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */)
+            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */)
         {
             if (entry.Model is EnemyCombatState)
             {
@@ -122,7 +122,7 @@ namespace Pakuri.InGame
         /*
          * 선택 플레이어의 자동 스킬 사용 여부를 전환한다.
          */
-        public void ToggleAutoSkillMode(CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */)
+        public void ToggleAutoSkillMode(UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */)
         {
             autoSkillEnabled = !autoSkillEnabled;
             // 표시 상태와 실제 플레이어 모델의 자동 스킬 설정을 함께 갱신한다.
@@ -132,7 +132,7 @@ namespace Pakuri.InGame
         /*
          * 현재 자동 스킬 설정을 선택 플레이어 모델에 적용한다.
          */
-        public void ApplyAutoSkillModeToSelectedPlayer(CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */)
+        public void ApplyAutoSkillModeToSelectedPlayer(UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */)
         {
             var player = FindSelectedPlayer(roster);
             if (player != null)
@@ -144,7 +144,7 @@ namespace Pakuri.InGame
         /*
          * 플레이어 진영의 첫 번째 몬스터를 선택 플레이어로 찾는다.
          */
-        public CombatUnitEntry FindSelectedPlayer(CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */)
+        public CombatUnitEntry FindSelectedPlayer(UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */)
         {
             var players = roster.Players;
             for (var i = 0; i < players.Count; i++)
@@ -285,7 +285,7 @@ namespace Pakuri.InGame
         /*
          * 화면 안에 살아 있는 적이 있는지 반환한다.
          */
-        private bool HasVisibleEnemy(CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */)
+        private bool HasVisibleEnemy(UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */)
         {
             var enemies = roster.Enemies;
             for (var i = 0; i < enemies.Count; i++)

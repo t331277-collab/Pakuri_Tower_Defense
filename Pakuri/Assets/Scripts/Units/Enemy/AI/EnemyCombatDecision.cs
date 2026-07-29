@@ -13,7 +13,7 @@ namespace Pakuri.InGame
         /*
          * 가장 가까운 일반 플레이어를 찾고 없으면 넥서스를 반환한다.
          */
-        public static CombatUnitEntry FindNearestPlayerTarget(CombatUnitEntry enemyEntry /* 적 등록 정보 */, CombatUnitRegistry registry /* 전투 유닛 등록 관리자 */)
+        public static CombatUnitEntry FindNearestPlayerTarget(CombatUnitEntry enemyEntry /* 적 등록 정보 */, UnitSpawnManager registry /* 전투 유닛 등록 관리자 */)
         {
             var best = FindNearestPlayerTarget(enemyEntry, registry, includeNexus: false);
             if (best != null)
@@ -30,7 +30,7 @@ namespace Pakuri.InGame
          */
         private static CombatUnitEntry FindNearestPlayerTarget(
             CombatUnitEntry enemyEntry /* 적 등록 정보 */,
-            CombatUnitRegistry registry /* 전투 유닛 등록 관리자 */,
+            UnitSpawnManager registry /* 전투 유닛 등록 관리자 */,
             bool includeNexus /* 포함 넥서스 여부 */)
         {
             var players = registry.Players;
@@ -72,7 +72,7 @@ namespace Pakuri.InGame
         /*
          * 체력이 감소한 살아 있는 적 유닛 중 체력 비율이 가장 낮은 아군을 찾는다.
          */
-        public static CombatUnitEntry FindLowestHealthEnemyAlly(CombatUnitRegistry registry /* 전투 유닛 등록 관리자 */)
+        public static CombatUnitEntry FindLowestHealthEnemyAlly(UnitSpawnManager registry /* 전투 유닛 등록 관리자 */)
         {
             var enemies = registry.Enemies;
             CombatUnitEntry best = null;
@@ -118,7 +118,7 @@ namespace Pakuri.InGame
             SkillUseState specialRuntime /* 특수 런타임 */,
             bool canUseSpecialSkill /* 가능 사용 특수 스킬 여부 */,
             SkillExecution skillExecution /* 스킬 실행 */,
-            CombatUnitRegistry registry /* 전투 유닛 등록 관리자 */)
+            UnitSpawnManager registry /* 전투 유닛 등록 관리자 */)
         {
             if (specialRuntime != null
                 && canUseSpecialSkill
@@ -164,7 +164,7 @@ namespace Pakuri.InGame
         /*
          * 회복 스킬은 체력이 감소한 적 아군이 있을 때만 사용한다.
          */
-        public static bool CanExecuteSupportSkill(SkillUseState runtime /* 실행 중인 스킬 정보 */, CombatUnitRegistry registry /* 전투 유닛 등록 관리자 */)
+        public static bool CanExecuteSupportSkill(SkillUseState runtime /* 실행 중인 스킬 정보 */, UnitSpawnManager registry /* 전투 유닛 등록 관리자 */)
         {
             if (runtime.Data is BuffHealSkillDefinition)
             {

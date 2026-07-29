@@ -9,6 +9,7 @@ using Pakuri.Data;
  */
 namespace Pakuri.InGame
 {
+    [Serializable]
     public class UnitSkills
     {
         // 유닛이 학습하거나 선택한 스킬·강화 ID 저장소를 구현.
@@ -23,40 +24,27 @@ namespace Pakuri.InGame
         public IReadOnlyCollection<string> ChosenMasterSkillIds => chosenMasterSkillIds;
 
         /*
-         * 런 세션에서 확정된 학습 스킬과 Choice ID를 저장소에 복사한다.
+         * 선택한 Choice ID를 강화 또는 마스터 저장소에 추가한다.
          */
-        public void ApplyLearnedSkills(
-            IReadOnlyList<string> activeSkillIds,
-            IReadOnlyList<string> passiveSkillIds,
-            IReadOnlyList<string> choiceIds)
+        public void AddChoice(string choiceId /* 선택한 Choice 식별자 */)
         {
-            Clear();
-            for (var i = 0; i < activeSkillIds.Count; i++)
+            if (string.IsNullOrWhiteSpace(choiceId))
             {
-                AddActiveSkill(activeSkillIds[i]);
+                return;
             }
 
-            for (var i = 0; i < passiveSkillIds.Count; i++)
+            if (!GameDataLoader.CurrentCatalog.TryGetData(choiceId, out SkillChoice choice))
             {
-                AddPassiveSkill(passiveSkillIds[i]);
+                throw new InvalidOperationException($"Unknown learned skill choice '{choiceId}'.");
             }
 
-            for (var i = 0; i < choiceIds.Count; i++)
+            if (choice.ChoiceGroup == SkillChoiceGroup.ActiveMaster)
             {
-                var choiceId = choiceIds[i];
-                if (!GameDataLoader.CurrentCatalog.TryGetData(choiceId, out SkillChoice choice))
-                {
-                    throw new InvalidOperationException($"Unknown learned skill choice '{choiceId}'.");
-                }
-
-                if (choice.ChoiceGroup == SkillChoiceGroup.ActiveMaster)
-                {
-                    AddMasterSkill(choiceId);
-                }
-                else
-                {
-                    AddEnhancement(choiceId);
-                }
+                AddMasterSkill(choiceId);
+            }
+            else
+            {
+                AddEnhancement(choiceId);
             }
         }
 

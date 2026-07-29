@@ -207,6 +207,10 @@ namespace Pakuri.Data
                 if (enemy != null && !string.IsNullOrWhiteSpace(enemy.EnemyId))
                 {
                     enemies[enemy.EnemyId] = enemy;
+                    if (enemy.PassiveSkill != null)
+                    {
+                        RegisterPassiveSkills(new[] { enemy.PassiveSkill });
+                    }
                 }
             }
         }

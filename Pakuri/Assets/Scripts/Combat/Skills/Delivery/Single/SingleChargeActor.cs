@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
@@ -12,12 +13,14 @@ namespace Pakuri.InGame
     public static class SingleChargeActor
     {
         // 진행 중인 돌진의 이동, 접촉 판정, 피해와 상태 적용을 구현.
+        private static readonly List<CombatUnitEntry> collisionTargets = new List<CombatUnitEntry>(1);
+
         /*
          * 돌진 이동과 대상 접촉을 갱신하고 돌진 처리 여부를 반환한다.
          */
         public static bool Tick(
             CombatUnitEntry casterEntry /* 스킬 사용자의 전투 등록 정보 */,
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
             InGameCombatManager combatManager /* 전투 진행 관리자 */,
             float deltaTime /* 이전 갱신 이후 지난 시간 */)
         {
@@ -34,7 +37,7 @@ namespace Pakuri.InGame
                 return true;
             }
 
-            if (TryResolveHit(casterEntry, roster, combatManager, caster, charge))
+            if (TryResolveHit(casterEntry, roster, combatManager, caster, charge, Vector2.zero))
             {
                 return true;
             }
@@ -65,13 +68,20 @@ namespace Pakuri.InGame
             var speed = baseSpeed * speedMultiplier * StatusCombatRules.MoveSpeedMultiplier(caster);
             if (speed > 0f && StatusCombatRules.CanMove(caster))
             {
-                casterEntry.Transform.position = Vector3.MoveTowards(
-                    casterEntry.Transform.position,
+                var currentPosition = casterEntry.Transform.position;
+                var nextPosition = Vector3.MoveTowards(
+                    currentPosition,
                     target.Transform.position,
                     speed * Mathf.Max(0f, deltaTime));
+                var movement = (Vector2)(nextPosition - currentPosition);
+                var hitTarget = FindHitTarget(casterEntry, roster, movement);
+                casterEntry.Transform.position = nextPosition;
+                if (hitTarget != null)
+                {
+                    Hit(caster, hitTarget, combatManager, charge);
+                }
             }
 
-            TryResolveHit(casterEntry, roster, combatManager, caster, charge);
             return true;
         }
 
@@ -80,12 +90,13 @@ namespace Pakuri.InGame
          */
         private static bool TryResolveHit(
             CombatUnitEntry casterEntry /* 스킬 사용자의 전투 등록 정보 */,
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
             InGameCombatManager combatManager /* 전투 진행 관리자 */,
             UnitCombatState caster /* 스킬을 사용하는 유닛 */,
-            SingleChargeState charge /* 돌진 */)
+            SingleChargeState charge /* 돌진 */,
+            Vector2 movement /* 이번 판정에서 이동할 거리와 방향 */)
         {
-            var hitTarget = FindHitTarget(casterEntry, roster);
+            var hitTarget = FindHitTarget(casterEntry, roster, movement);
             if (hitTarget == null)
             {
                 return false;
@@ -100,7 +111,7 @@ namespace Pakuri.InGame
          */
         private static CombatUnitEntry FindTargetByUnitId(
             CombatUnitEntry casterEntry /* 스킬 사용자의 전투 등록 정보 */,
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
             string unitId /* 유닛 식별자 */)
         {
             var targets = SkillTargeting.TargetList(
@@ -122,47 +133,22 @@ namespace Pakuri.InGame
         /*
          * 돌진 유닛과 접촉한 첫 적을 찾는다.
          */
-        private static CombatUnitEntry FindHitTarget(CombatUnitEntry casterEntry /* 스킬 사용자의 전투 등록 정보 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */)
+        private static CombatUnitEntry FindHitTarget(
+            CombatUnitEntry casterEntry /* 스킬 사용자의 전투 등록 정보 */,
+            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
+            Vector2 movement /* 이번 판정에서 이동할 거리와 방향 */)
         {
             var targets = SkillTargeting.TargetList(
                 casterEntry,
                 roster,
                 new SkillTargetingSpec { TargetSide = SkillTargetSide.Enemy });
-            var casterColliders = casterEntry.GetHitboxColliders();
-            for (var i = 0; i < targets.Count; i++)
-            {
-                var target = targets[i];
-                if (target != null && target.IsAlive && HasChargeContact(casterEntry, casterColliders, target))
-                {
-                    return target;
-                }
-            }
-
-            return null;
-        }
-
-        /*
-         * 콜라이더 겹침 또는 매우 가까운 거리로 돌진 접촉을 판정한다.
-         */
-        private static bool HasChargeContact(
-            CombatUnitEntry casterEntry /* 스킬 사용자의 전투 등록 정보 */,
-            Collider2D[] casterColliders /* 스킬 사용자 콜라이더 목록 */,
-            CombatUnitEntry target /* 효과를 받을 대상의 등록 정보 */)
-        {
-            if (UnitHitboxOverlap.IsTargetInsideHitbox(casterColliders, target))
-            {
-                return true;
-            }
-
-            if (casterEntry == null
-                || casterEntry.Transform == null
-                || target == null
-                || target.Transform == null)
-            {
-                return false;
-            }
-
-            return ((Vector2)casterEntry.Transform.position - (Vector2)target.Transform.position).sqrMagnitude <= 0.0025f;
+            UnitCollisionResolver.CollectTargets(
+                roster,
+                targets,
+                casterEntry,
+                movement,
+                collisionTargets);
+            return collisionTargets.Count > 0 ? collisionTargets[0] : null;
         }
 
         /*

@@ -8,7 +8,7 @@ using UnityEngine.UI;
 /*
  * 선택 몬스터의 스킬 학습과 선택지 적용을 직접 시험하는 디버그 UI 컴포넌트.
  * 활성·패시브 슬롯과 강화·최종 강화 버튼을 실제 카탈로그 기준으로 구성하고
- * 선택 결과를 RunSession과 현재 전투 모델에 동기화해 런타임 스킬을 다시 만든다.
+ * 선택 결과를 RunSession의 공유 스킬 상태에 기록하고 런타임 스킬을 다시 만든다.
  */
 namespace Pakuri.InGame
 {
@@ -210,15 +210,15 @@ namespace Pakuri.InGame
         /*
          * RefreshRuntimeSkillModels 대상의 현재 상태를 갱신한다.
          */
-        private void RefreshRuntimeSkillModels(RunSession session /* 현재 게임 진행 상태 */)
+        private void RefreshRuntimeSkillModels()
         {
             var manager = ResolveCombatManager();
-            if (session == null || manager == null)
+            if (manager == null)
             {
                 return;
             }
 
-            var players = manager.UnitRegistry.Players;
+            var players = manager.Units.Players;
             for (var i = 0; i < players.Count; i++)
             {
                 var entry = players[i];
@@ -228,43 +228,9 @@ namespace Pakuri.InGame
                 }
 
                 var model = entry.Model;
-                SyncModelStateFromSession(session, model);
                 SkillExecution.RebuildLearnedSkillState(model);
-                manager.UnitRegistry.RefreshDisplay(model);
+                manager.Units.RefreshDisplay(model);
             }
-        }
-
-        /*
-         * SyncModelStateFromSession 대상의 현재 상태를 갱신한다.
-         */
-        private static void SyncModelStateFromSession(RunSession session /* 현재 게임 진행 상태 */, UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
-        {
-            if (session == null || model == null || model.Identity == null)
-            {
-                return;
-            }
-
-            var monsterId = model.Identity.DefinitionId;
-            if (string.IsNullOrWhiteSpace(monsterId))
-            {
-                return;
-            }
-
-            var state = session.GetPartyMemberState(monsterId);
-            if (state == null)
-            {
-                return;
-            }
-
-            if (model.Skills == null)
-            {
-                model.Skills = new UnitSkills();
-            }
-
-            model.Skills.ApplyLearnedSkills(
-                state.LearnedActives,
-                state.LearnedPassives,
-                state.ChosenChoiceIds);
         }
 
         /*
@@ -307,8 +273,8 @@ namespace Pakuri.InGame
                     ? passiveSkill != null && !string.IsNullOrWhiteSpace(passiveSkill.SkillId)
                     : activeSkill != null && !string.IsNullOrWhiteSpace(activeSkill.SkillId);
                 var learned = hasSkill && state != null && (isPassiveSlot
-                    ? state.LearnedPassives.Contains(passiveSkill.SkillId)
-                    : state.LearnedActives.Contains(activeSkill.SkillId));
+                    ? state.Skills.HasPassiveSkill(passiveSkill.SkillId)
+                    : state.Skills.HasActiveSkill(activeSkill.SkillId));
 
                 button.interactable = hasSkill && !learned;
                 if (label != null)
@@ -634,7 +600,7 @@ namespace Pakuri.InGame
                 return null;
             }
 
-            var players = manager.UnitRegistry.Players;
+            var players = manager.Units.Players;
             for (var i = 0; i < players.Count; i++)
             {
                 var identity = players[i].Model.Identity;
@@ -748,7 +714,7 @@ namespace Pakuri.InGame
                 || string.IsNullOrWhiteSpace(sourceSkill.SkillId)
                 || monster == null
                 || state == null
-                || !state.LearnedActives.Contains(sourceSkill.SkillId))
+                || !state.Skills.HasActiveSkill(sourceSkill.SkillId))
             {
                 SetModifiedPanelVisible(false);
                 SetPassiveModifiedPanelVisible(false);
@@ -779,7 +745,7 @@ namespace Pakuri.InGame
                 || string.IsNullOrWhiteSpace(passive.SkillId)
                 || monster == null
                 || state == null
-                || !state.LearnedPassives.Contains(passive.SkillId))
+                || !state.Skills.HasPassiveSkill(passive.SkillId))
             {
                 SetModifiedPanelVisible(false);
                 SetPassiveModifiedPanelVisible(false);
@@ -1124,7 +1090,7 @@ namespace Pakuri.InGame
 
             session.RecordOfferingChoice(state, rewardId, choiceId, activeSkillId, passiveSkillId);
 
-            RefreshRuntimeSkillModels(session);
+            RefreshRuntimeSkillModels();
             RefreshButtonLabels();
             RefreshModifierChoiceButtons();
             monsterPanelUI?.RefreshNow();

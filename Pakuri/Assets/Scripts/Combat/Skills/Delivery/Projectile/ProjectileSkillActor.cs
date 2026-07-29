@@ -12,6 +12,7 @@ namespace Pakuri.InGame
     {
         // 생성된 투사체의 이동, 충돌, 적중 효과, 소멸을 구현.
         private readonly HashSet<string> hitUnitIds = new HashSet<string>();
+        private readonly List<CombatUnitEntry> collisionTargets = new List<CombatUnitEntry>();
 
         private InGameCombatManager combatManager;
         private EffectManager effectManager;
@@ -49,6 +50,7 @@ namespace Pakuri.InGame
         private bool impactResolved;
         private bool expirePublished;
         private bool visualOnly;
+        private Collider2D[] hitboxColliders;
 
         /*
          * 인게임 투사체 실행에 필요한 위치, 대상, 피해 정보를 설정한다.
@@ -101,7 +103,7 @@ namespace Pakuri.InGame
             impactTarget = null;
             impactResolved = false;
             expirePublished = false;
-            EnsurePhysicsRelay();
+            CacheHitboxColliders();
         }
 
         /*
@@ -203,11 +205,11 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 투사체 충돌 처리에 필요한 물리 릴레이를 준비한다.
+         * 투사체 충돌 처리에 사용할 실제 Collider를 준비한다.
          */
         private void Awake()
         {
-            EnsurePhysicsRelay();
+            CacheHitboxColliders();
         }
 
         /*
@@ -229,8 +231,8 @@ namespace Pakuri.InGame
 
             if (!impactArmed)
             {
-                transform.position += (Vector3)(direction * speed * deltaTime);
-                TryHitRosterTargets();
+                var movement = direction * speed * deltaTime;
+                TryHitRosterTargets(movement);
             }
             else if (!impactResolved)
             {
@@ -250,58 +252,27 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 투사체가 충돌한 콜라이더의 유닛에게 적중 처리를 시도한다.
-         */
-        private void OnTriggerEnter2D(Collider2D other /* 다른 */)
-        {
-            if (combatManager == null || other == null || owner == null)
-            {
-                return;
-            }
-
-            var target = combatManager.UnitRegistry.FindByCollider(other);
-            TryHitTarget(target);
-        }
-
-        /*
          * 적중 로스터 대상을 처리 조건을 확인하고 성공 여부를 반환한다.
          */
-        private void TryHitRosterTargets()
+        private void TryHitRosterTargets(Vector2 movement /* 이번 프레임 이동 거리와 방향 */)
         {
-            if (combatManager == null || owner == null)
+            if (combatManager == null || combatManager.Units == null || owner == null)
             {
+                transform.position += (Vector3)movement;
                 return;
             }
 
-            var entries = combatManager.UnitRegistry.Entries;
-            var hasColliderHitbox = false;
-            var selfColliders = GetComponentsInChildren<Collider2D>();
-            if (selfColliders != null)
+            var entries = combatManager.Units.Entries;
+            UnitCollisionResolver.CollectTargets(
+                combatManager.Units,
+                entries,
+                hitboxColliders,
+                movement,
+                collisionTargets);
+            transform.position += (Vector3)movement;
+            for (var i = 0; i < collisionTargets.Count; i++)
             {
-                for (var i = 0; i < selfColliders.Length; i++)
-                {
-                    if (selfColliders[i] != null && selfColliders[i].enabled)
-                    {
-                        hasColliderHitbox = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!hasColliderHitbox)
-            {
-                return;
-            }
-
-            for (var i = 0; i < entries.Count; i++)
-            {
-                var entry = entries[i];
-                if (entry == null)
-                {
-                    continue;
-                }
-
-                if (UnitHitboxOverlap.IsTargetInsideHitbox(selfColliders, entry) && TryHitTarget(entry))
+                if (TryHitTarget(collisionTargets[i]))
                 {
                     return;
                 }
@@ -336,10 +307,10 @@ namespace Pakuri.InGame
                 }
                 ProjectileSkillExecutor.ApplyHitEnhancements(
                     combatManager,
-                    combatManager != null ? combatManager.UnitRegistry : null,
+                    combatManager != null ? combatManager.Units : null,
                     runtime,
                     executionData,
-                    combatManager != null && combatManager.UnitRegistry != null ? combatManager.UnitRegistry.Find(owner) : null,
+                    combatManager != null && combatManager.Units != null ? combatManager.Units.Find(owner) : null,
                     owner,
                     sourceSkillId,
                     target,
@@ -419,7 +390,7 @@ namespace Pakuri.InGame
             magazineLastProjectileTriggerFired = true;
             SkillTrigger.ExecuteProjectileHit(
                 combatManager,
-                combatManager != null ? combatManager.UnitRegistry : null,
+                combatManager != null ? combatManager.Units : null,
                 owner,
                 sourceSkillId,
                 true,
@@ -436,7 +407,7 @@ namespace Pakuri.InGame
         {
             if (impactArmed
                 || combatManager == null
-                || combatManager.UnitRegistry == null
+                || combatManager.Units == null
                 || hitTarget == null
                 || branchDamageOnHit == null
                 || !branchDamageOnHit.Enabled
@@ -450,7 +421,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var candidates = combatManager.UnitRegistry.Entries;
+            var candidates = combatManager.Units.Entries;
             var radiusSq = branchDamageOnHit.SearchRadius * branchDamageOnHit.SearchRadius;
             var selectedTargets = new HashSet<UnitCombatState>();
             var branchDamage = primaryDamage;
@@ -676,8 +647,8 @@ namespace Pakuri.InGame
             {
                 ZoneSkillActor.ApplyAreaTick(
                     combatManager,
-                    combatManager.UnitRegistry != null ? combatManager.UnitRegistry.Find(owner) : null,
-                    combatManager.UnitRegistry,
+                    combatManager.Units != null ? combatManager.Units.Find(owner) : null,
+                    combatManager.Units,
                     BuildImpactTargeting(),
                     impactCenter,
                     impactRadius,
@@ -714,12 +685,12 @@ namespace Pakuri.InGame
             }
 
             expirePublished = true;
-            if (combatManager != null && combatManager.UnitRegistry != null && owner != null)
+            if (combatManager != null && combatManager.Units != null && owner != null)
             {
-                var lifecycleSourceEntry = combatManager.UnitRegistry.Find(owner);
+                var lifecycleSourceEntry = combatManager.Units.Find(owner);
                 var lifecycleContext = new SkillExecutionContext(
                     combatManager,
-                    combatManager.UnitRegistry,
+                    combatManager.Units,
                     lifecycleSourceEntry,
                     runtime,
                     impactTarget);
@@ -753,27 +724,11 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 투사체 충돌을 전달할 물리 릴레이를 준비한다.
+         * 투사체와 자식 오브젝트의 실제 Collider를 캐시한다.
          */
-        private void EnsurePhysicsRelay()
+        private void CacheHitboxColliders()
         {
-            var collider = GetComponent<Collider2D>();
-            if (collider != null)
-            {
-                collider.isTrigger = true;
-            }
-
-            var body = GetComponent<Rigidbody2D>();
-            if (body == null)
-            {
-                body = gameObject.AddComponent<Rigidbody2D>();
-            }
-
-            body.bodyType = RigidbodyType2D.Kinematic;
-            body.gravityScale = 0f;
-            body.simulated = true;
-
-            // 중력 없이 충돌만 감지하도록 물리 설정을 맞춘다.
+            hitboxColliders = GetComponentsInChildren<Collider2D>();
         }
 
         /*

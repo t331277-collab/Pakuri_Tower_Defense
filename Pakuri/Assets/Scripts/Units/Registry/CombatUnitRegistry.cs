@@ -8,8 +8,6 @@ namespace Pakuri.InGame
 {
     public class CombatUnitEntry
     {
-        private Collider2D[] cachedHitboxColliders;
-
         /*
          * CombatUnitEntry에 필요한 값을 초기화한다.
          */
@@ -38,7 +36,6 @@ namespace Pakuri.InGame
                 HitboxRoot = Transform;
             }
 
-            cachedHitboxColliders = null;
         }
 
         /*
@@ -52,34 +49,12 @@ namespace Pakuri.InGame
                 HitboxRoot = Transform;
             }
 
-            cachedHitboxColliders = null;
-        }
-
-        /*
-         * ResolveTargetPoint 결과를 계산해 반환한다.
-         */
-        public Vector3 ResolveTargetPoint()
-        {
-            return HitboxRoot.position;
-        }
-
-        /*
-         * GetHitboxColliders에 해당하는 값을 찾아 반환한다.
-         */
-        public Collider2D[] GetHitboxColliders()
-        {
-            if (cachedHitboxColliders == null)
-            {
-                cachedHitboxColliders = HitboxRoot.GetComponentsInChildren<Collider2D>();
-            }
-
-            return cachedHitboxColliders;
         }
 
         /*
          * ContainsTransform 조건을 만족하는지 확인한다.
          */
-        public bool ContainsTransform(Transform candidate /* 후보 여부 */)
+        internal bool ContainsTransform(Transform candidate /* 후보 여부 */)
         {
             if (candidate == null)
             {
@@ -168,7 +143,7 @@ namespace Pakuri.InGame
         }
     }
 
-    public class CombatUnitRegistry
+    internal sealed class CombatUnitRegistry
     {
         private readonly List<CombatUnitEntry> entries = new List<CombatUnitEntry>();
         private readonly List<CombatUnitEntry> players = new List<CombatUnitEntry>();

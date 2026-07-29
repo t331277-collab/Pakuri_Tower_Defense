@@ -155,7 +155,7 @@ namespace Pakuri.InGame
             }
 
             unitSpawnManager.RestorePlayerPartyFromSession(activeSession);
-            var players = combatManager.UnitRegistry.Players;
+            var players = unitSpawnManager.Players;
 
             for (var i = 0; i < players.Count; i++)
             {
@@ -171,7 +171,7 @@ namespace Pakuri.InGame
                 var stats = model.Stats;
 
                 resources.CurrentHealth = Mathf.Max(0f, stats.MaxHealth);
-                combatManager.UnitRegistry.RefreshDisplay(model);
+                unitSpawnManager.RefreshDisplay(model);
             }
         }
 

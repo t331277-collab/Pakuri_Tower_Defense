@@ -492,7 +492,7 @@ namespace Pakuri.Data
             public string HitTargetCount;
             public float ChargeRampSeconds = 3f;
             public float ChargeMoveSpeedMultiplier = 2.5f;
-            public EnemyPassiveModifierKind PassiveModifierKind;
+            public PassiveModifierKind PassiveModifierKind;
             public bool PassiveHasAttribute;
             public DamageAttribute PassiveAttribute;
             public float PassiveModifierValue;
@@ -584,7 +584,7 @@ namespace Pakuri.Data
 
         internal static EnemyBaseSkillRow ParseEnemyPassiveSkillRow(CsvRecord record )
         {
-            var modifierKind = record.ReadEnum<EnemyPassiveModifierKind>("modifier_kind");
+            var modifierKind = record.ReadEnum<PassiveModifierKind>("modifier_kind");
             var hasAttribute = TryReadDamageAttribute(record, "attribute", out var attribute);
             return new EnemyBaseSkillRow
             {

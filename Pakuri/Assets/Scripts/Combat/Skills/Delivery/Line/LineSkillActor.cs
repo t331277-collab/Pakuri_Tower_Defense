@@ -14,7 +14,7 @@ namespace Pakuri.InGame
         private InGameCombatManager combatManager;
         private EffectManager effectManager;
         private CombatUnitEntry casterEntry;
-        private CombatUnitRegistry roster;
+        private UnitSpawnManager roster;
         private SkillTargetingSpec targeting;
         private Vector2 origin;
         private Vector2 direction = Vector2.right;
@@ -36,7 +36,9 @@ namespace Pakuri.InGame
         private float critDamageBonus;
         private bool visualOnly;
         private readonly HashSet<string> appliedBaseStatusTargets = new HashSet<string>();
-        private readonly List<Collider2D> lineOverlapResults = new List<Collider2D>(32);
+        private readonly List<CombatUnitEntry> collisionTargets = new List<CombatUnitEntry>();
+        private readonly Collider2D[] lineHitboxes = new Collider2D[1];
+        private BoxCollider2D lineHitbox;
 
         /*
          * 인게임 직선 공격 실행에 필요한 위치, 대상, 피해 정보를 설정한다.
@@ -44,7 +46,7 @@ namespace Pakuri.InGame
         public void Initialize(
             InGameCombatManager manager /* 전투 진행 관리자 */,
             CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */,
-            CombatUnitRegistry unitRoster /* 전투에 등록된 유닛 목록 */,
+            UnitSpawnManager unitRoster /* 전투에 등록된 유닛 목록 */,
             SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */,
             Vector2 lineOrigin /* 직선 시작 위치 */,
             Vector2 lineDirection /* 직선 방향 */,
@@ -91,29 +93,8 @@ namespace Pakuri.InGame
             appliedBaseStatusTargets.Clear();
 
             ConfigureVisual();
-            ApplyLineTick(
-                combatManager,
-                casterEntry,
-                roster,
-                targeting,
-                origin,
-                direction,
-                length,
-                width,
-                knockbackDistance,
-                damage,
-                attribute,
-                statusSpec,
-                runtime,
-                executionData,
-                sourceModel,
-                sourceSkillId,
-                criticalAllowed,
-                critChanceBonus,
-                critDamageBonus,
-                appliedBaseStatusTargets,
-                null,
-            lineOverlapResults);
+            ConfigureHitbox();
+            ApplyLineTick();
         }
 
         /*
@@ -132,98 +113,49 @@ namespace Pakuri.InGame
         /*
          * 직선 주기를 적용한다.
          */
-        public static bool ApplyLineTick(
-            InGameCombatManager manager /* 전투 진행 관리자 */,
-            CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */,
-            CombatUnitRegistry unitRoster /* 전투에 등록된 유닛 목록 */,
-            SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */,
-            Vector2 lineOrigin /* 직선 시작 위치 */,
-            Vector2 lineDirection /* 직선 방향 */,
-            float lineLength /* 직선 길이 */,
-            float lineWidth /* 직선 너비 */,
-            float lineKnockbackDistance /* 직선 밀쳐내기 거리 */,
-            float damagePerTick /* 피해 개별 반복 적용 */,
-            DamageAttribute damageAttribute /* 적용할 피해 속성 */,
-            ProjectileStatusHitSpec onHitStatus /* 발생 시 적중 상태 효과 */,
-            SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
-            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
-            UnitCombatState source /* 효과를 발생시킨 유닛 */,
-            string skillId /* 스킬 식별자 */,
-            bool criticalAllowed /* 치명타 허용 여부 */,
-            float critChanceBonus /* 추가 치명타 확률 */,
-            float critDamageBonus /* 추가 치명타 피해 배율 */,
-            HashSet<string> baseStatusAppliedTargets = null /* 기본 상태 효과 적용된 대상 목록 */,
-            string damageMeterSourceId = null /* 피해량 기록에 사용할 발생 원본 식별자 */,
-            List<Collider2D> overlapResults = null /* 겹침 처리 결과 목록 */)
+        private bool ApplyLineTick()
         {
-            if (manager == null || sourceEntry == null || unitRoster == null || lineDirection.sqrMagnitude <= 0.0001f)
+            if (combatManager == null || casterEntry == null || roster == null || lineHitbox == null)
             {
                 return false;
             }
 
-            var normalizedDirection = lineDirection.normalized;
-            var resolvedLength = Mathf.Max(0.1f, lineLength);
-            var resolvedWidth = Mathf.Max(0.1f, lineWidth);
-            var hitboxCenter = lineOrigin + normalizedDirection * (resolvedLength * 0.5f);
-            var hitboxAngle = Mathf.Atan2(normalizedDirection.y, normalizedDirection.x) * Mathf.Rad2Deg;
-            var overlappedColliders = overlapResults ?? new List<Collider2D>(32);
-            overlappedColliders.Clear();
-            Physics2D.SyncTransforms();
-            Physics2D.OverlapBox(
-                hitboxCenter,
-                new Vector2(resolvedLength, resolvedWidth),
-                hitboxAngle,
-                ContactFilter2D.noFilter,
-                overlappedColliders);
-
-            var candidates = SkillTargeting.TargetList(sourceEntry, unitRoster, targetingSpec);
-            var hitUnitIds = new HashSet<string>();
+            var candidates = SkillTargeting.TargetList(casterEntry, roster, targeting);
+            UnitCollisionResolver.CollectTargets(
+                roster,
+                candidates,
+                lineHitboxes,
+                Vector2.zero,
+                collisionTargets);
             var routed = false;
-            for (var i = 0; i < candidates.Count; i++)
+            for (var i = 0; i < collisionTargets.Count; i++)
             {
-                var target = candidates[i];
+                var target = collisionTargets[i];
                 if (target == null || !target.IsAlive || target.Model == null || target.Transform == null)
                 {
                     continue;
                 }
 
-                var unitId = target.Model.Identity != null ? target.Model.Identity.UnitId : null;
-                if (!string.IsNullOrWhiteSpace(unitId) && !hitUnitIds.Add(unitId))
-                {
-                    continue;
-                }
-
-                if (!IsInsideLineHitbox(
-                        overlappedColliders,
-                        target,
-                        lineOrigin,
-                        normalizedDirection,
-                        resolvedLength,
-                        resolvedWidth))
-                {
-                    continue;
-                }
-
-                var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero;
-                var resolvedDamage = Mathf.Max(0f, damagePerTick);
-                var finalDamageMultiplier = snapshot != null
-                    ? Mathf.Max(0f, snapshot.DamageMultiplier) * SkillExecutionRuleResolver.ConditionalDamageMultiplier(snapshot, target.Model)
+                var hitPosition = (Vector2)target.Transform.position;
+                var resolvedDamage = Mathf.Max(0f, damage);
+                var finalDamageMultiplier = executionData != null
+                    ? Mathf.Max(0f, executionData.DamageMultiplier) * SkillExecutionRuleResolver.ConditionalDamageMultiplier(executionData, target.Model)
                     : 1f;
-                var damageResult = manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, skillId, false, false, damageMeterSourceId, finalDamageMultiplier);
-                TryApplyKnockback(target, normalizedDirection, lineKnockbackDistance);
+                var damageResult = combatManager.ApplyDamage(target.Model, resolvedDamage, attribute, sourceModel, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, finalDamageMultiplier: finalDamageMultiplier);
+                TryApplyKnockback(target, direction, knockbackDistance);
                 if (!damageResult.IsDead)
                 {
                     var targetKey = TargetKey(target.Model);
-                    TryApplyStatus(manager, target.Model, onHitStatus, source, targetKey, baseStatusAppliedTargets);
+                    TryApplyStatus(combatManager, target.Model, statusSpec, sourceModel, targetKey, appliedBaseStatusTargets);
                 }
                 LineSkillExecutor.ApplyHitEnhancements(
-                    manager,
-                    unitRoster,
-                    sourceRuntime,
-                    snapshot,
-                    sourceEntry,
-                    source,
-                    skillId,
+                    combatManager,
+                    roster,
+                    runtime,
+                    executionData,
+                    casterEntry,
+                    sourceModel,
+                    sourceSkillId,
                     target,
                     hitPosition,
                     resolvedDamage);
@@ -246,29 +178,7 @@ namespace Pakuri.InGame
                 if (remainingDuration > 0f && tickRemaining <= 0f)
                 {
                     tickRemaining += tickInterval;
-                    ApplyLineTick(
-                        combatManager,
-                        casterEntry,
-                        roster,
-                        targeting,
-                        origin,
-                        direction,
-                        length,
-                        width,
-                        knockbackDistance,
-                        damage,
-                        attribute,
-                        statusSpec,
-                        runtime,
-                        executionData,
-                        sourceModel,
-                        sourceSkillId,
-                        criticalAllowed,
-                        critChanceBonus,
-                        critDamageBonus,
-                        appliedBaseStatusTargets,
-                        null,
-                        lineOverlapResults);
+                    ApplyLineTick();
                 }
             }
 
@@ -307,66 +217,23 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 대상이 직선 공격 히트박스 안에 있는지 확인한다.
+         * 직선 공격의 실제 BoxCollider 크기를 월드 길이와 너비에 맞춘다.
          */
-        private static bool IsInsideLineHitbox(
-            IReadOnlyList<Collider2D> overlappedColliders /* 겹친 콜라이더 목록 */,
-            CombatUnitEntry target /* 효과를 받을 대상의 등록 정보 */,
-            Vector2 lineOrigin /* 직선 시작 위치 */,
-            Vector2 normalizedDirection /* 정규화된 방향 */,
-            float lineLength /* 직선 길이 */,
-            float lineWidth /* 직선 너비 */)
+        private void ConfigureHitbox()
         {
-            if (target == null || target.Model == null || !target.IsAlive)
+            lineHitbox = GetComponent<BoxCollider2D>();
+            if (lineHitbox == null)
             {
-                return false;
+                lineHitbox = gameObject.AddComponent<BoxCollider2D>();
             }
 
-            var targetColliders = target.GetHitboxColliders();
-            var hasEnabledTargetCollider = false;
-            for (var i = 0; targetColliders != null && i < targetColliders.Length; i++)
-            {
-                var targetCollider = targetColliders[i];
-                if (targetCollider == null || !targetCollider.enabled)
-                {
-                    continue;
-                }
-
-                hasEnabledTargetCollider = true;
-                for (var j = 0; overlappedColliders != null && j < overlappedColliders.Count; j++)
-                {
-                    if (overlappedColliders[j] == targetCollider)
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            return !hasEnabledTargetCollider
-                && target.Transform != null
-                && IsPointInsideLine(lineOrigin, normalizedDirection, lineLength, lineWidth, target.Transform.position);
-        }
-
-        /*
-         * 지점이 직선 공격 범위 안에 있는지 확인한다.
-         */
-        private static bool IsPointInsideLine(
-            Vector2 lineOrigin /* 직선 시작 위치 */,
-            Vector2 normalizedDirection /* 정규화된 방향 */,
-            float lineLength /* 직선 길이 */,
-            float lineWidth /* 직선 너비 */,
-            Vector3 targetPosition /* 대상의 위치 */)
-        {
-            var offset = (Vector2)targetPosition - lineOrigin;
-            var projected = Vector2.Dot(offset, normalizedDirection);
-            if (projected < 0f || projected > Mathf.Max(0.1f, lineLength))
-            {
-                return false;
-            }
-
-            var closest = lineOrigin + normalizedDirection * projected;
-            var perpendicularDistance = Vector2.Distance((Vector2)targetPosition, closest);
-            return perpendicularDistance <= Mathf.Max(0.05f, lineWidth * 0.5f);
+            var scale = transform.lossyScale;
+            lineHitbox.size = new Vector2(
+                length / Mathf.Max(0.0001f, Mathf.Abs(scale.x)),
+                width / Mathf.Max(0.0001f, Mathf.Abs(scale.y)));
+            lineHitbox.offset = Vector2.zero;
+            lineHitbox.isTrigger = true;
+            lineHitboxes[0] = lineHitbox;
         }
 
         /*

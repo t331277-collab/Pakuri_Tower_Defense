@@ -1320,32 +1320,31 @@ namespace Pakuri.InGame
         private void RefreshRuntimeSkillModels()
         {
             var combatManager = resolveCombatManager?.Invoke();
-            var session = resolveSession?.Invoke();
-            if (combatManager == null || session == null)
+            var units = combatManager != null ? combatManager.Units : null;
+            if (units == null)
             {
                 return;
             }
 
-            var players = combatManager.UnitRegistry.Players;
+            var players = units.Players;
             for (var i = 0; i < players.Count; i++)
             {
                 var entry = players[i];
                 if (entry != null && entry.Model.Identity.Role == UnitRole.Monster)
                 {
                     var model = entry.Model;
-                    SyncModelStateFromSession(session, model);
                     SkillExecution.RebuildLearnedSkillState(model);
-                    combatManager.UnitRegistry.RefreshDisplay(model);
+                    units.RefreshDisplay(model);
                 }
             }
 
-            RefreshSceneMonsterActorSkillModels(session);
+            RefreshSceneMonsterActorSkillModels();
         }
 
         /*
          * RefreshSceneMonsterActorSkillModels 대상의 현재 상태를 갱신한다.
          */
-        private static void RefreshSceneMonsterActorSkillModels(RunSession session /* 현재 게임 진행 상태 */)
+        private static void RefreshSceneMonsterActorSkillModels()
         {
             var actors = Resources.FindObjectsOfTypeAll<MonsterActor>();
             for (var i = 0; i < actors.Length; i++)
@@ -1362,43 +1361,9 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                SyncModelStateFromSession(session, model);
                 SkillExecution.RebuildLearnedSkillState(model);
                 actor.RefreshDisplay();
             }
-        }
-
-        /*
-         * SyncModelStateFromSession 대상의 현재 상태를 갱신한다.
-         */
-        private static void SyncModelStateFromSession(RunSession session /* 현재 게임 진행 상태 */, UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
-        {
-            if (session == null || model == null || model.Identity == null)
-            {
-                return;
-            }
-
-            var monsterId = model.Identity.DefinitionId;
-            if (string.IsNullOrWhiteSpace(monsterId))
-            {
-                return;
-            }
-
-            var state = session.GetPartyMemberState(monsterId);
-            if (state == null)
-            {
-                return;
-            }
-
-            if (model.Skills == null)
-            {
-                model.Skills = new UnitSkills();
-            }
-
-            model.Skills.ApplyLearnedSkills(
-                state.LearnedActives,
-                state.LearnedPassives,
-                state.ChosenChoiceIds);
         }
 
         /*

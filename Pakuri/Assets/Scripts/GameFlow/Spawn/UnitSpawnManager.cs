@@ -19,6 +19,7 @@ namespace Pakuri.InGame
         private const string SeinMonsterId = "sein";
         private const string VegaMonsterId = "vega";
         private readonly UnitCombatStateFactory unitStateFactory = new UnitCombatStateFactory();
+        private readonly CombatUnitRegistry unitRegistry = new CombatUnitRegistry();
 
         [SerializeField] private InGameCombatManager combatManager;
         [SerializeField] private Transform playerSpawnPoint;
@@ -32,9 +33,10 @@ namespace Pakuri.InGame
         [SerializeField] private GameObject vegaUnitPrefab;
         [SerializeField] private EnemyPrefabBinding[] enemyPrefabBindings = Array.Empty<EnemyPrefabBinding>();
 
-        private GameObject spawnedPlayerUnit;
-
-        public UnitCombatState SpawnedPlayerModel { get; private set; }
+        public IReadOnlyList<CombatUnitEntry> Entries => unitRegistry.Entries;
+        public IReadOnlyList<CombatUnitEntry> Players => unitRegistry.Players;
+        public IReadOnlyList<CombatUnitEntry> Enemies => unitRegistry.Enemies;
+        public int EnemyCount => unitRegistry.EnemyCount;
 
         /*
          * Nexus 상태를 만들고 Actor와 전투 등록소에 연결한다.
@@ -43,7 +45,7 @@ namespace Pakuri.InGame
         {
             var model = unitStateFactory.CreateNexus(actor.MaxHealth);
             actor.Initialize(model);
-            combatManager.RegisterNexus(model, actor, actor.transform);
+            RegisterUnit(model, actor, actor.transform);
         }
 
         /*
@@ -64,17 +66,15 @@ namespace Pakuri.InGame
          */
         public void SpawnSelectedPlayerUnit(RunSession session /* 현재 게임 진행 상태 */)
         {
-            if (spawnedPlayerUnit != null)
+            if (FindPlayerMonsterBySlot(0) != null)
             {
                 return;
             }
 
-            spawnedPlayerUnit = CreateSelectedPlayerUnit(
+            CreateSelectedPlayerUnit(
                 session,
-                out var model,
+                out _,
                 out _);
-
-            SpawnedPlayerModel = model;
         }
 
         /*
@@ -136,56 +136,12 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 기존 세션 상태로 선택 몬스터의 모델과 Actor를 다시 만든다.
-         */
-        private GameObject RespawnSelectedPlayerUnit(
-            RunSession activeSession /* 현재 활성화된 게임 진행 상태 */,
-            out UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */,
-            out MonsterActor actor /* 화면에서 유닛을 표현하는 컴포넌트 */)
-        {
-            var monster = ResolveMonsterDefinition(activeSession.SelectedMonsterId);
-            var prefab = ResolveMonsterPrefab(monster.MonsterId);
-
-            var runState = activeSession.GetPartyMemberState(monster.MonsterId)
-                ?? throw new InvalidOperationException($"Party state '{monster.MonsterId}' is required before respawning.");
-            model = unitStateFactory.CreateSelectedMonster(monster, runState, 0);
-            SkillExecution.RebuildLearnedSkillState(model);
-
-            var spawnPosition = playerSpawnPoint.position;
-            var spawnRotation = playerSpawnPoint.rotation;
-            var spawnedUnit = Instantiate(prefab, spawnPosition, spawnRotation, runtimeMonsterRoot);
-            spawnedUnit.name = $"{prefab.name}_1P";
-            actor = BindMonsterActor(spawnedUnit, model);
-            RegisterPlayer(model, actor, spawnedUnit.transform);
-            return spawnedUnit;
-        }
-
-        /*
          * 세션의 선택 몬스터와 현현 파티를 기존 Actor 또는 새 인스턴스로 복원한다.
          */
         public void RestorePlayerPartyFromSession(RunSession session /* 현재 게임 진행 상태 */)
         {
-            RestorePlayerParty(
-                session,
-                out spawnedPlayerUnit,
-                out var model);
-
-            SpawnedPlayerModel = model;
-        }
-
-        /*
-         * 전달받은 세션 상태로 선택 몬스터와 현현 파티를 복원한다.
-         */
-        private void RestorePlayerParty(
-            RunSession activeSession /* 현재 활성화된 게임 진행 상태 */,
-            out GameObject selectedPlayerUnit /* 선택된 플레이어 유닛 */,
-            out UnitCombatState selectedPlayerModel /* 선택된 플레이어 상태 모델 */)
-        {
-            RestoreSelectedPlayerFromSession(
-                activeSession,
-                out selectedPlayerUnit,
-                out selectedPlayerModel);
-            RestoreAdditionalPlayersFromSession(activeSession);
+            RestoreSelectedPlayerFromSession(session);
+            RestoreAdditionalPlayersFromSession(session);
         }
 
         /*
@@ -208,27 +164,23 @@ namespace Pakuri.InGame
          * 선택 플레이어를 로스터, 기존 Actor, 새 생성 순서로 복원한다.
          */
         private void RestoreSelectedPlayerFromSession(
-            RunSession activeSession /* 현재 활성화된 게임 진행 상태 */,
-            out GameObject selectedPlayerUnit /* 선택된 플레이어 유닛 */,
-            out UnitCombatState selectedPlayerModel /* 선택된 플레이어 상태 모델 */)
+            RunSession activeSession /* 현재 활성화된 게임 진행 상태 */)
         {
             // 등록된 로스터, 씬에 남은 Actor, 새 프리팹 생성 순서로 중복 생성을 피한다.
-            var selectedEntry = FindPlayerEntryBySlot(0);
+            var selectedEntry = FindPlayerMonsterBySlot(0);
             if (selectedEntry != null)
             {
-                CaptureSelectedPlayer(selectedEntry, out selectedPlayerUnit, out selectedPlayerModel);
                 return;
             }
 
-            if (TryReviveExistingPlayerBySlot(activeSession, 0, out selectedEntry))
+            if (TryReviveExistingPlayerBySlot(activeSession, 0, out _))
             {
-                CaptureSelectedPlayer(selectedEntry, out selectedPlayerUnit, out selectedPlayerModel);
                 return;
             }
 
-            selectedPlayerUnit = RespawnSelectedPlayerUnit(
+            CreateSelectedPlayerUnit(
                 activeSession,
-                out selectedPlayerModel,
+                out _,
                 out _);
         }
 
@@ -239,7 +191,7 @@ namespace Pakuri.InGame
         {
             for (var slotIndex = 1; slotIndex < activeSession.PartyMembers.Count; slotIndex++)
             {
-                if (FindPlayerEntryBySlot(slotIndex) != null)
+                if (FindPlayerMonsterBySlot(slotIndex) != null)
                 {
                     continue;
                 }
@@ -258,24 +210,11 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 선택 플레이어 로스터 항목의 GameObject와 모델을 반환한다.
-         */
-        private static void CaptureSelectedPlayer(
-            CombatUnitEntry entry /* 처리할 등록 정보 */,
-            out GameObject selectedPlayerUnit /* 선택된 플레이어 유닛 */,
-            out UnitCombatState selectedPlayerModel /* 선택된 플레이어 상태 모델 */)
-        {
-            var actor = (MonsterActor)entry.Actor;
-            selectedPlayerUnit = actor.gameObject;
-            selectedPlayerModel = entry.Model;
-        }
-
-        /*
          * 플레이어 로스터에서 지정 파티 슬롯의 몬스터를 찾는다.
          */
-        private CombatUnitEntry FindPlayerEntryBySlot(int slotIndex /* 배치할 슬롯 순서 번호 */)
+        public CombatUnitEntry FindPlayerMonsterBySlot(int slotIndex /* 배치할 슬롯 순서 번호 */)
         {
-            var players = combatManager.UnitRegistry.Players;
+            var players = Players;
             for (var i = 0; i < players.Count; i++)
             {
                 var entry = players[i];
@@ -289,6 +228,80 @@ namespace Pakuri.InGame
             }
 
             return null;
+        }
+
+        /*
+         * 모델에 연결된 현재 전투 유닛을 반환한다.
+         */
+        public CombatUnitEntry Find(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        {
+            return unitRegistry.Find(model);
+        }
+
+        /*
+         * 충돌체를 소유한 현재 전투 유닛을 반환한다.
+         */
+        public CombatUnitEntry FindByCollider(Collider2D collider /* 충돌을 검사할 콜라이더 */)
+        {
+            return unitRegistry.FindByCollider(collider);
+        }
+
+        /*
+         * 모델에 연결된 Actor 표시를 현재 상태로 갱신한다.
+         */
+        public bool RefreshDisplay(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        {
+            return unitRegistry.RefreshDisplay(model);
+        }
+
+        /*
+         * 전투 유닛을 내부 목록에 등록한다.
+         */
+        private CombatUnitEntry RegisterUnit(
+            UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */,
+            Component actor /* 화면에서 유닛을 표현하는 컴포넌트 */,
+            Transform hitboxRoot = null /* 피격 판정의 기준 위치 */)
+        {
+            return unitRegistry.Register(model, actor, hitboxRoot);
+        }
+
+        /*
+         * 전투 유닛을 내부 목록에서 해제한다.
+         */
+        private bool UnregisterUnit(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        {
+            return unitRegistry.Unregister(model);
+        }
+
+        /*
+         * 유닛을 현재 필드에서 제거한다.
+         */
+        internal bool DespawnUnit(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        {
+            var entry = Find(model);
+            if (entry == null)
+            {
+                return false;
+            }
+
+            UnregisterUnit(model);
+            Destroy(entry.Actor.gameObject);
+            return true;
+        }
+
+        /*
+         * 쓰러진 유닛을 등록 해제하고 Actor 패배 처리를 실행한다.
+         */
+        internal void DefeatUnit(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        {
+            var entry = Find(model);
+            if (entry == null)
+            {
+                return;
+            }
+
+            UnregisterUnit(model);
+            entry.HandleDefeat();
         }
 
         /*
@@ -311,7 +324,7 @@ namespace Pakuri.InGame
             SyncExistingMonsterModelFromSession(activeSession, model);
             MonsterDayRecovery.Restore(model);
             actor.Revive();
-            revivedEntry = combatManager.RegisterPlayerMonster(model, actor, actor.transform);
+            revivedEntry = RegisterPlayer(model, actor, actor.transform);
             return true;
         }
 
@@ -325,10 +338,7 @@ namespace Pakuri.InGame
             var state = activeSession.GetPartyMemberState(model.Identity.DefinitionId)
                 ?? throw new InvalidOperationException(
                     $"Party state '{model.Identity.DefinitionId}' is required before restoring.");
-            model.Skills.ApplyLearnedSkills(
-                state.LearnedActives,
-                state.LearnedPassives,
-                state.ChosenChoiceIds);
+            model.Skills = state.Skills;
             SkillExecution.RebuildLearnedSkillState(model);
         }
 
@@ -411,8 +421,13 @@ namespace Pakuri.InGame
         {
             var enemy = ResolveEnemyDefinition(enemyId);
             var model = unitStateFactory.CreateEnemy(enemy, slotIndex, isBoss);
-            // 로스터 등록 전에 A/B 스킬과 전투 시작 Trigger 런타임을 완성한다.
-            SkillExecution.RebuildAssignedSkillState(model, enemy.ActiveSkills, enemy.SkillTriggers);
+            // 로스터 등록 전에 스폰 시 학습한 액티브·패시브 실행 상태를 완성한다.
+            SkillExecution.RebuildLearnedSkillState(
+                model,
+                enemy.ActiveSkills,
+                enemy.PassiveSkill == null
+                    ? Array.Empty<PassiveSkillDefinition>()
+                    : new[] { enemy.PassiveSkill });
             return model;
         }
 
@@ -457,17 +472,21 @@ namespace Pakuri.InGame
         /*
          * 몬스터 모델과 Actor를 플레이어 로스터에 등록한다.
          */
-        private void RegisterPlayer(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, MonsterActor actor /* 화면에서 유닛을 표현하는 컴포넌트 */, Transform hitboxRoot /* 피격 판정의 기준 위치 */)
+        private CombatUnitEntry RegisterPlayer(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, MonsterActor actor /* 화면에서 유닛을 표현하는 컴포넌트 */, Transform hitboxRoot /* 피격 판정의 기준 위치 */)
         {
-            combatManager.RegisterPlayerMonster(model, actor, hitboxRoot);
+            var entry = RegisterUnit(model, actor, hitboxRoot);
+            combatManager.NotifyPlayerUnitRegistered(model);
+            return entry;
         }
 
         /*
          * 적 모델과 Actor를 적 로스터에 등록한다.
          */
-        private void RegisterEnemy(EnemyCombatState model /* 처리할 상태 모델 */, EnemyActor actor /* 화면에서 유닛을 표현하는 컴포넌트 */, Transform hitboxRoot /* 피격 판정의 기준 위치 */)
+        private CombatUnitEntry RegisterEnemy(EnemyCombatState model /* 처리할 상태 모델 */, EnemyActor actor /* 화면에서 유닛을 표현하는 컴포넌트 */, Transform hitboxRoot /* 피격 판정의 기준 위치 */)
         {
-            combatManager.RegisterEnemy(model, actor, hitboxRoot);
+            var entry = RegisterUnit(model, actor, hitboxRoot);
+            combatManager.NotifyEnemyUnitRegistered(model);
+            return entry;
         }
 
         /*

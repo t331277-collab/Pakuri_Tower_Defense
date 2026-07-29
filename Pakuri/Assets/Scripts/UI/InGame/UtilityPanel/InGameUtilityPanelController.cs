@@ -152,7 +152,7 @@ namespace Pakuri.InGame
             {
                 var combatManager = FindFirstObjectByType<InGameCombatManager>();
                 playerCombatControl.ToggleAutoSkillMode(
-                    combatManager != null ? combatManager.UnitRegistry : null);
+                    combatManager != null ? combatManager.Units : null);
             }
         }
     }

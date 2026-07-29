@@ -175,7 +175,10 @@ namespace Pakuri.Data
                     enemy.ActiveSkills,
                     statusDefinitions);
                 AttachSkillTriggers(enemy.ActiveSkills, enemy.SkillTriggers);
-                enemy.PassiveSkill = BuildEnemyPassiveDefinition(model, sourceEnemy.PassiveId);
+                enemy.PassiveSkill = BuildEnemyPassiveDefinition(
+                    model,
+                    sourceEnemy.PassiveId,
+                    enemy.SkillTriggers);
                 enemy.NexusDamage = sourceEnemy.NexusDamage;
                 enemies.Add(enemy);
             }
@@ -183,7 +186,10 @@ namespace Pakuri.Data
             return enemies.ToArray();
         }
 
-        private EnemyPassiveDefinition BuildEnemyPassiveDefinition(SourceModel model , string passiveId )
+        private PassiveSkillDefinition BuildEnemyPassiveDefinition(
+            SourceModel model ,
+            string passiveId ,
+            SkillTriggerDefinition[] triggers )
         {
             if (model == null
                 || string.IsNullOrWhiteSpace(passiveId)
@@ -194,14 +200,20 @@ namespace Pakuri.Data
                 return null;
             }
 
-            return new EnemyPassiveDefinition
+            return new PassiveSkillDefinition
             {
-                PassiveId = source.Skill.Id,
-                DisplayName = source.Skill.DisplayName,
+                SkillId = source.Skill.Id,
+                SkillName = source.Skill.DisplayName,
+                Slot = SkillSlot.F,
+                RuntimeKind = SkillRuntimeKind.Passive,
+                ImplementationState = source.Skill.ImplementationState,
+                IsActive = false,
+                IsAvailableWithoutActiveRequirement = true,
                 ModifierKind = source.PassiveModifierKind,
-                HasAttribute = source.PassiveHasAttribute,
-                Attribute = source.PassiveAttribute,
-                ModifierValue = source.PassiveModifierValue
+                HasModifierAttribute = source.PassiveHasAttribute,
+                ModifierAttribute = source.PassiveAttribute,
+                ModifierValue = source.PassiveModifierValue,
+                SkillTriggers = FilterSkillTriggersForSkill(triggers, source.Skill.Id)
             };
         }
 
