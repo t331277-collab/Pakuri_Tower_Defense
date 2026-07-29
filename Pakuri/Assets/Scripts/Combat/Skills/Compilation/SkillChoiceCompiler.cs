@@ -19,7 +19,6 @@ namespace Pakuri.InGame
 			SkillChoiceDefinition skillChoiceDefinition = source[i];
 			array[i] = new SkillChoice
 			{
-				Source = skillChoiceDefinition,
 				ChoiceId = skillChoiceDefinition.ChoiceId,
 				MonsterId = skillChoiceDefinition.MonsterId,
 				SkillId = skillChoiceDefinition.SkillId,

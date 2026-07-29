@@ -37,7 +37,7 @@ public static class SkillDefinitionCompiler
 		for (int i = 0; i < choiceIds.Count; i++)
 		{
 			string choiceId = choiceIds[i];
-			if (!GameDataLoader.CurrentCatalog.TryGetData(choiceId, out SkillChoiceDefinition choice))
+			if (!GameDataLoader.CurrentCatalog.TryGetData(choiceId, out SkillChoice choice))
 			{
 				throw new InvalidOperationException($"Unknown learned skill choice '{choiceId}'.");
 			}

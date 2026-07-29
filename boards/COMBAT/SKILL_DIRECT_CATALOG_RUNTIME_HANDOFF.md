@@ -35,7 +35,7 @@ Designer for this handoff. Code Builder for implementation after explicit role a
 
 ## Status
 
-Code Builder 구현 진행 중. Phase 1 기준선 보호 완료.
+Code Builder 구현 진행 중. Phase 1-4 완료.
 
 ## Implementation log
 
@@ -80,6 +80,19 @@ Code Builder 구현 진행 중. Phase 1 기준선 보호 완료.
 - 기존 `SkillDefinitionCompiler` 호출은 Generation 내부 3곳만 남았고 Combat 호출은 0이다. Phase 5 삭제 전 일회성 조립 helper로만 사용한다.
 - `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore -v:minimal`: 오류 0, 기존 경고 2개
 - `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore -v:minimal`: 오류 0, 기존 경고 3개
+- Unity CSV validation: monsters 5, stage-one enemies 8, stage-two enemies 8 로드
+
+### Phase 4 — Runtime consumes final data directly
+
+- `SkillChoice.Source`, 대상별 runtime Node cache, `GetChoiceRuntimeNodes`를 제거했다.
+- Choice 실행은 Generation이 만든 `SkillChoice.Nodes`와 `SkillNode.TargetSkillId`를 직접 비교·실행한다.
+- `SkillTrigger`는 Choice ID, attribute, event skill ID 배열과 event source scope enum을 직접 비교하며 authored 문자열을 분해하지 않는다.
+- `StatusRules`는 catalog의 최종 `SkillDefinition`과 concrete `SingleSkillDefinition` 값을 직접 사용한다.
+- 호출이 없는 `SkillTargeting`의 문자열 Choice/Passive/attribute 판정 helper 5개를 삭제했다.
+- Runtime Execution/Trigger/StatusRules의 `Split`, `Enum.Parse`, `TryParse` 검색 결과는 0이다.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore -v:minimal`: 오류 0, 기존 경고 2개
+- `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore -v:minimal`: 오류 0, 기존 경고 3개
+- Unity script compilation 완료. project script 오류 0이며 별도 MCP package disposed-object 오류 1개만 존재했다.
 - Unity CSV validation: monsters 5, stage-one enemies 8, stage-two enemies 8 로드
 
 ## Core decision

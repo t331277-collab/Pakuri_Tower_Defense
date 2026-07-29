@@ -753,7 +753,7 @@ namespace Pakuri.InGame
 
             var catalog = GameDataLoader.CurrentCatalog;
             if (catalog == null
-                || !catalog.TryGetData(sourceSkillId, out SkillSourceDefinition skill)
+                || !catalog.TryGetData(sourceSkillId, out SkillDefinition skill)
                 || skill == null)
             {
                 return false;
@@ -821,7 +821,7 @@ namespace Pakuri.InGame
         /*
          * IsAreaLikeSkill 조건을 만족하는지 확인한다.
          */
-        private static bool IsAreaLikeSkill(SkillSourceDefinition skill /* 처리할 스킬 정의 */)
+        private static bool IsAreaLikeSkill(SkillDefinition skill /* 처리할 스킬 정의 */)
         {
             if (skill.RuntimeKind == SkillRuntimeKind.AreaAttack
                 || skill.RuntimeKind == SkillRuntimeKind.Field)
@@ -829,13 +829,13 @@ namespace Pakuri.InGame
                 return true;
             }
 
-            if (skill.RuntimeKind != SkillRuntimeKind.SingleAttack)
+            if (skill.RuntimeKind != SkillRuntimeKind.SingleAttack
+                || !(skill is SingleSkillDefinition single))
             {
                 return false;
             }
 
-            return string.Equals(skill.HitTargetCount, "global", StringComparison.OrdinalIgnoreCase)
-                || skill.Radius > 0f;
+            return single.HitAllTargets || single.Area.CoverAll || single.Area.Radius > 0f;
         }
     }
 

@@ -654,35 +654,6 @@ namespace Pakuri.InGame
          */
 
         /*
-         * 대상이 지정한 속성의 액티브 스킬을 가지고 있는지 확인한다.
-         */
-        private static bool HasActiveSkillAttribute(UnitCombatState target /* 검사할 대상 */, string rawAttribute /* 피해 속성 이름 */)
-        {
-            if (target == null || target.Skills == null || string.IsNullOrWhiteSpace(rawAttribute))
-            {
-                return false;
-            }
-
-            DamageAttribute attribute;
-            if (!Enum.TryParse(rawAttribute.Trim(), true, out attribute))
-            {
-                return false;
-            }
-
-            var activeSkills = target.SkillState.ActiveSkills;
-            for (var i = 0; i < activeSkills.Count; i++)
-            {
-                var activeSkill = activeSkills[i];
-                if (activeSkill != null && activeSkill.Data != null && activeSkill.Data.Element == attribute)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /*
          * 최초 적중 대상과 Nexus를 제외한 반대 진영 유닛을 거리순으로 찾는다.
          */
         public static List<CombatUnitEntry> ChainTargets(
@@ -785,103 +756,6 @@ namespace Pakuri.InGame
         /*
          * 현재 적중 횟수가 추가 효과의 최소 횟수를 만족하는지 확인한다.
          */
-
-        /*
-         * 목록에 적힌 모든 Choice가 현재 실행 데이터에 적용되었는지 확인한다.
-         */
-        public static bool HasAllActiveChoices(UnitCombatState owner /* 스킬을 사용하는 유닛 */, string choiceList /* 선택지 목록 */)
-        {
-            if (string.IsNullOrWhiteSpace(choiceList))
-            {
-                return true;
-            }
-
-            if (owner == null || owner.Skills == null)
-            {
-                return false;
-            }
-
-            var choices = choiceList.Split(';', ',');
-            for (var i = 0; i < choices.Length; i++)
-            {
-                var choiceId = choices[i].Trim();
-                if (choiceId.Length > 0 && !owner.Skills.HasChoice(choiceId))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        /*
-         * 목록에 적힌 Choice 중 하나라도 현재 실행 데이터에 적용되었는지 확인한다.
-         */
-        public static bool HasAnyActiveChoice(UnitCombatState owner /* 스킬을 사용하는 유닛 */, string choiceList /* 선택지 목록 */)
-        {
-            if (string.IsNullOrWhiteSpace(choiceList) || owner == null || owner.Skills == null)
-            {
-                return false;
-            }
-
-            var choices = choiceList.Split(';', ',');
-            for (var i = 0; i < choices.Length; i++)
-            {
-                var choiceId = choices[i].Trim();
-                if (choiceId.Length > 0 && owner.Skills.HasChoice(choiceId))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /*
-         * 목록에 적힌 모든 패시브를 유닛이 학습했는지 확인한다.
-         */
-        public static bool HasAllLearnedPassives(UnitCombatState owner /* 정보를 소유한 유닛 */, string passiveList /* 패시브 목록 */)
-        {
-            if (string.IsNullOrWhiteSpace(passiveList))
-            {
-                return true;
-            }
-
-            var passives = passiveList.Split(';', ',');
-            for (var i = 0; i < passives.Length; i++)
-            {
-                var passiveId = passives[i].Trim();
-                if (passiveId.Length > 0 && !HasLearnedPassive(owner, passiveId))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        /*
-         * 목록에 적힌 패시브 중 하나라도 유닛이 학습했는지 확인한다.
-         */
-        public static bool HasAnyLearnedPassive(UnitCombatState owner /* 정보를 소유한 유닛 */, string passiveList /* 패시브 목록 */)
-        {
-            if (string.IsNullOrWhiteSpace(passiveList))
-            {
-                return false;
-            }
-
-            var passives = passiveList.Split(';', ',');
-            for (var i = 0; i < passives.Length; i++)
-            {
-                var passiveId = passives[i].Trim();
-                if (passiveId.Length > 0 && HasLearnedPassive(owner, passiveId))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
 
         /*
          * 시전자가 지정한 상태 또는 보호막 조건을 만족하는지 확인한다.

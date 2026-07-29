@@ -260,11 +260,11 @@ Designer / Code Builder refactoring handoff
 
 ### Status
 
-Design handoff complete. Implementation not started.
+Code Builder implementation in progress. Phases 1-4 complete.
 
 ### Next Actions
 
-- Code Builder implements Phase 4 direct runtime use and removes remaining Choice/Trigger runtime conversion.
+- Code Builder implements Phase 5 compiler deletion and script moves.
 
 ### Evidence
 
@@ -283,6 +283,9 @@ Design handoff complete. Implementation not started.
 - Phase 3 Monster, Enemy, and RuntimeCatalog storage uses final Definition/Choice types; Combat state rebuild stores those same references without compiling.
 - Generation builds status definitions first and creates status runtime payloads without re-entering `GameDataLoader.CurrentCatalog`.
 - Unity CSV validation loaded 5/8/8 definitions after final catalog generation.
+- Phase 4 removed `SkillChoice.Source`, Choice lazy Node mapping/cache, and runtime Trigger authored-string parsing.
+- Runtime Execution/Trigger/StatusRules search found zero `Split`, `Enum.Parse`, or `TryParse` calls.
+- Runtime and Editor builds completed with zero errors; Unity CSV validation retained 5 monsters and 8/8 enemies.
 
 ### History
 
@@ -292,3 +295,4 @@ Design handoff complete. Implementation not started.
 - 2026-07-29: Code Builder completed Phase 1 baseline protection and recorded the live code, GUID, build, Unity, and CSV evidence.
 - 2026-07-29: Code Builder completed Phase 2 final typed contracts while retaining the old compiler path as a buildable bridge.
 - 2026-07-29: Code Builder completed Phase 3 final catalog generation and direct final-type indexing.
+- 2026-07-29: Code Builder completed Phase 4 final Choice/Trigger/Status direct consumption and removed 239 net C# lines.

@@ -1263,7 +1263,7 @@ namespace Pakuri.InGame
                 for (var i = 0; i < passive.BaseModifierChoices.Length; i++)
                 {
                     var modifier = passive.BaseModifierChoices[i];
-                    if (modifier != null && AppliesToSkill(modifier.Source, skillData))
+                    if (modifier != null && AppliesToSkill(modifier, skillData))
                     {
                         snapshot.ApplyChoiceSpec(modifier);
                     }
@@ -1290,7 +1290,7 @@ namespace Pakuri.InGame
             {
                 var choice = owner.SkillState.FindChoice(choiceId);
                 if (choice != null
-                    && AppliesToSkill(choice.Source, skillData)
+                    && AppliesToSkill(choice, skillData)
                     && SkillExecutionRuleResolver.MeetsSourceStatusRequirements(choice, skillData.SkillId, owner))
                 {
                     snapshot.AddActiveChoiceId(choice.ChoiceId);
@@ -1309,15 +1309,16 @@ namespace Pakuri.InGame
             UnitCombatState owner /* 정보를 소유한 유닛 */,
             CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */)
         {
-            if (snapshot == null || choice == null || choice.Source == null || roster == null)
+            if (snapshot == null || choice == null || roster == null)
             {
                 return;
             }
 
-            SkillNode[] nodes = SkillNodeMapper.GetChoiceRuntimeNodes(choice, snapshot.SkillId);
+            SkillNode[] nodes = choice.Nodes;
             for (int i = 0; i < nodes.Length; i++)
             {
-                if (nodes[i] == null)
+                if (nodes[i] == null
+                    || !string.Equals(nodes[i].TargetSkillId, snapshot.SkillId, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
@@ -1532,18 +1533,27 @@ namespace Pakuri.InGame
         /*
          * 선택지 효과가 현재 스킬에 적용되는지 확인한다.
          */
-        private static bool AppliesToSkill(SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */, SkillDefinition skillData /* 스킬 실행 데이터 */)
+        private static bool AppliesToSkill(SkillChoice choice /* 적용하거나 검사할 스킬 선택지 */, SkillDefinition skillData /* 스킬 실행 데이터 */)
         {
             if (choice == null || skillData == null)
             {
                 return false;
             }
 
-            if (choice.NormalizedNodes != null && choice.NormalizedNodes.Length > 0)
+            if (choice.Nodes != null && choice.Nodes.Length > 0)
             {
-                return SkillNodeMapper.HasSkillNodeForTarget(
-                    choice.NormalizedNodes,
-                    skillData.SkillId);
+                for (var i = 0; i < choice.Nodes.Length; i++)
+                {
+                    if (choice.Nodes[i] != null
+                        && string.Equals(
+                            choice.Nodes[i].TargetSkillId,
+                            skillData.SkillId,
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+                return false;
             }
 
             var targetSkillId = choice.SkillId;
@@ -1605,10 +1615,10 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                var choiceSkillId = choice.Source.SkillId;
-                if (useTargetSkillId && !string.IsNullOrWhiteSpace(choice.Source.TargetSkillId))
+                var choiceSkillId = choice.SkillId;
+                if (useTargetSkillId && !string.IsNullOrWhiteSpace(choice.TargetSkillId))
                 {
-                    choiceSkillId = choice.Source.TargetSkillId;
+                    choiceSkillId = choice.TargetSkillId;
                 }
 
                 if (!string.Equals(choiceSkillId, skillId, System.StringComparison.OrdinalIgnoreCase)

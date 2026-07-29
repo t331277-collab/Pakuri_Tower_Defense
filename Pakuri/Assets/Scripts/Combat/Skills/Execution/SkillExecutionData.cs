@@ -414,7 +414,7 @@ public class SkillExecutionData
 	 */
 	public void ApplyChoiceSpec(SkillChoice spec /* 처리에 사용할 설정 */)
 	{
-		if (spec == null || !HasNormalizedNodes(spec.Source))
+		if (spec == null || spec.Nodes == null || spec.Nodes.Length == 0)
 		{
 			return;
 		}
@@ -444,31 +444,17 @@ public class SkillExecutionData
 	 */
 	private void ApplyNodeBackedChoice(SkillChoice choiceSpec /* 적용하거나 검사할 스킬 선택지 */)
 	{
-		SkillChoiceDefinition choice = choiceSpec.Source;
-		if (choice.SkillEffectPrefab != null)
+		if (choiceSpec.SkillEffectPrefab != null)
 		{
-			SkillEffectPrefab = choice.SkillEffectPrefab;
+			SkillEffectPrefab = choiceSpec.SkillEffectPrefab;
 		}
-		SkillNode[] nodes = SkillNodeMapper.GetChoiceRuntimeNodes(choiceSpec, SkillId);
-		ApplyNodes(nodes);
-	}
-
-	/*
-	 * 선택지에 적용할 정규화 노드가 하나 이상 있는지 확인한다.
-	 */
-	private static bool HasNormalizedNodes(SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */)
-	{
-		if (choice != null && choice.NormalizedNodes != null)
-		{
-			return choice.NormalizedNodes.Length != 0;
-		}
-		return false;
+		ApplyNodes(choiceSpec.Nodes, SkillId);
 	}
 
 	/*
 	 * 선택지 노드의 단순 행동과 복합 행동을 현재 실행 데이터에 적용한다.
 	 */
-	internal void ApplyNodes(IReadOnlyList<SkillNode> nodes /* 노드 목록 */)
+	internal void ApplyNodes(IReadOnlyList<SkillNode> nodes /* 노드 목록 */, string targetSkillId = null /* 적용 대상 스킬 식별자 */)
 	{
 		// SkillNode를 즉시 누적할 수치와 실행 시점에 판정할 규칙으로 나누어 적용하는 부분을 구현.
 		if (nodes == null || nodes.Count == 0)
@@ -477,7 +463,9 @@ public class SkillExecutionData
 		}
 		for (int i = 0; i < nodes.Count; i++)
 		{
-			if (nodes[i] == null)
+			if (nodes[i] == null
+				|| (!string.IsNullOrWhiteSpace(targetSkillId)
+					&& !string.Equals(nodes[i].TargetSkillId, targetSkillId, StringComparison.OrdinalIgnoreCase)))
 			{
 				continue;
 			}

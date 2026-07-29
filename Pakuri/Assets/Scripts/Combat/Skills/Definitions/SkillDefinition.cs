@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
@@ -588,18 +587,13 @@ namespace Pakuri.InGame
 
 
 /*
- * 선택지 원본과 실행용 계산값을 함께 보관한다.
+ * 선택지의 최종 표시값과 실행 노드를 보관한다.
  */
 namespace Pakuri.InGame
 {
     [Serializable]
     public class SkillChoice
     {
-        [NonSerialized]
-        private Dictionary<string, SkillNode[]> runtimeNodesByTarget;
-
-        public SkillChoiceDefinition Source;
-
         public string ChoiceId;
         public string MonsterId;
         public string SkillId;
@@ -610,32 +604,6 @@ namespace Pakuri.InGame
         public GameObject SkillEffectPrefab;
         [TextArea(2, 5)] public string DescriptionText;
         public SkillNode[] Nodes = Array.Empty<SkillNode>();
-
-        /*
-         * 같은 Choice가 같은 대상 스킬에 반복 적용될 때 이미 파싱한 실행 노드를 재사용한다.
-         * 실행 스냅샷은 매 시전마다 새로 만들어지지만, Choice 정의와 그 정규화 노드는 카탈로그 수명 동안
-         * 변하지 않는다. 따라서 문자열 Params를 매번 다시 파싱하지 않고 대상 스킬 ID별 결과를 캐시한다.
-         */
-        internal bool TryGetRuntimeNodes(string targetSkillId /* 적용 대상 스킬 식별자 */, out SkillNode[] nodes /* 컴파일된 실행 노드 */)
-        {
-            nodes = null;
-            return runtimeNodesByTarget != null
-                && runtimeNodesByTarget.TryGetValue(targetSkillId ?? string.Empty, out nodes);
-        }
-
-        /*
-         * SkillNodeMapper가 대상 스킬에 맞춰 만든 불변 실행 계획을 Choice에 기록한다.
-         * 다음 시전부터 같은 Handler 문자열과 Params를 다시 필터링·파싱하지 않는다.
-         */
-        internal void CacheRuntimeNodes(string targetSkillId /* 적용 대상 스킬 식별자 */, SkillNode[] nodes /* 컴파일된 실행 노드 */)
-        {
-            if (runtimeNodesByTarget == null)
-            {
-                runtimeNodesByTarget = new Dictionary<string, SkillNode[]>(StringComparer.OrdinalIgnoreCase);
-            }
-
-            runtimeNodesByTarget[targetSkillId ?? string.Empty] = nodes ?? Array.Empty<SkillNode>();
-        }
     }
 }
 

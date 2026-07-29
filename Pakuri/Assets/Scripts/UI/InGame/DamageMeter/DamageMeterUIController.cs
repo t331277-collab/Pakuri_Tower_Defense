@@ -294,9 +294,10 @@ namespace Pakuri.InGame
                 }
 
                 if (string.Equals(trigger.TriggerId, sourceId, StringComparison.OrdinalIgnoreCase)
-                    && !string.IsNullOrWhiteSpace(trigger.RequiresActiveChoiceId))
+                    && trigger.RequiredActiveChoiceIds != null
+                    && trigger.RequiredActiveChoiceIds.Length > 0)
                 {
-                    return ResolveChoiceTitle(trigger.RequiresActiveChoiceId);
+                    return ResolveChoiceTitle(trigger.RequiredActiveChoiceIds[0]);
                 }
             }
 

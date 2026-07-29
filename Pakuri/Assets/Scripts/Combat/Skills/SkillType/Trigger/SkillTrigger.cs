@@ -383,7 +383,7 @@ internal static class SkillTrigger
 	 */
 	private static bool ShouldRunSourceOwnedTrigger(SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */, SkillTriggerEvent triggerEvent /* 트리거를 발생시킨 사건 종류 */, TriggerExecutionContext triggerContext /* 트리거 실행에 필요한 정보 */)
 	{
-		if (trigger != null && trigger.TriggerEvent == triggerEvent && string.Equals(trigger.SourceSkillId, sourceSkillId, StringComparison.OrdinalIgnoreCase) && MatchesEventSkillId(trigger.EventSkillId, triggerContext.EventSourceSkillId) && StatusConditionRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKindValues, triggerContext.EventSourceSkillId) && (!trigger.RequireEventExecute || triggerContext.EventWasExecute) && HasAllChoices(source, trigger.RequiresActiveChoiceId) && !HasAnyChoice(source, trigger.ExcludesActiveChoiceId))
+		if (trigger != null && trigger.TriggerEvent == triggerEvent && string.Equals(trigger.SourceSkillId, sourceSkillId, StringComparison.OrdinalIgnoreCase) && MatchesEventSkillId(trigger.EventSkillIds, triggerContext.EventSourceSkillId) && StatusConditionRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKindValues, triggerContext.EventSourceSkillId) && (!trigger.RequireEventExecute || triggerContext.EventWasExecute) && HasAllChoices(source, trigger.RequiredActiveChoiceIds) && !HasAnyChoice(source, trigger.ExcludedActiveChoiceIds))
 		{
 			return MeetsSourceStatusRequirement(source, trigger.RequiredSourceStatusKind, trigger.RequiredSourceStatusMinStacks);
 		}
@@ -395,7 +395,7 @@ internal static class SkillTrigger
 	 */
 	private static bool ShouldRunPassiveOwnerTrigger(SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */, UnitCombatState owner /* 정보를 소유한 유닛 */, SkillTriggerEvent triggerEvent /* 트리거를 발생시킨 사건 종류 */, TriggerExecutionContext triggerContext /* 트리거 실행에 필요한 정보 */)
 	{
-		if (trigger == null || owner == null || owner.Skills == null || trigger.TriggerEvent != triggerEvent || string.IsNullOrWhiteSpace(trigger.SourceSkillId) || !owner.Skills.HasPassiveSkill(trigger.SourceSkillId) || !MatchesEventSkillId(trigger.EventSkillId, triggerContext.EventSourceSkillId) || !StatusConditionRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKindValues, triggerContext.EventSourceSkillId) || (trigger.RequireEventExecute && !triggerContext.EventWasExecute) || !HasAllChoices(owner, trigger.RequiresActiveChoiceId) || HasAnyChoice(owner, trigger.ExcludesActiveChoiceId) || !MeetsSourceStatusRequirement(owner, trigger.RequiredSourceStatusKind, trigger.RequiredSourceStatusMinStacks))
+		if (trigger == null || owner == null || owner.Skills == null || trigger.TriggerEvent != triggerEvent || string.IsNullOrWhiteSpace(trigger.SourceSkillId) || !owner.Skills.HasPassiveSkill(trigger.SourceSkillId) || !MatchesEventSkillId(trigger.EventSkillIds, triggerContext.EventSourceSkillId) || !StatusConditionRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKindValues, triggerContext.EventSourceSkillId) || (trigger.RequireEventExecute && !triggerContext.EventWasExecute) || !HasAllChoices(owner, trigger.RequiredActiveChoiceIds) || HasAnyChoice(owner, trigger.ExcludedActiveChoiceIds) || !MeetsSourceStatusRequirement(owner, trigger.RequiredSourceStatusKind, trigger.RequiredSourceStatusMinStacks))
 		{
 			return false;
 		}
@@ -407,9 +407,9 @@ internal static class SkillTrigger
 		{
 			return false;
 		}
-		if (MatchesTriggerAttribute(trigger.TriggerAttribute, triggerContext.EventAttribute))
+		if (MatchesTriggerAttribute(trigger.TriggerAttributes, triggerContext.EventAttribute))
 		{
-			return MatchesEventSourceScope(trigger.EventSourceScope, owner, triggerContext.EventSource);
+			return MatchesEventSourceScope(trigger.EventSourceScopeValue, owner, triggerContext.EventSource);
 		}
 		return false;
 	}
@@ -417,9 +417,9 @@ internal static class SkillTrigger
 	/*
 	 * HasAllChoices 조건을 만족하는지 확인한다.
 	 */
-	private static bool HasAllChoices(UnitCombatState source /* 효과를 발생시킨 유닛 */, string choiceList /* 선택지 목록 */)
+	private static bool HasAllChoices(UnitCombatState source /* 효과를 발생시킨 유닛 */, string[] choiceIds /* 선택지 목록 */)
 	{
-		if (string.IsNullOrWhiteSpace(choiceList))
+		if (choiceIds == null || choiceIds.Length == 0)
 		{
 			return true;
 		}
@@ -427,11 +427,9 @@ internal static class SkillTrigger
 		{
 			return false;
 		}
-		string[] array = choiceList.Split(';', ',');
-		for (int i = 0; i < array.Length; i++)
+		for (int i = 0; i < choiceIds.Length; i++)
 		{
-			string text = ((array[i] != null) ? array[i].Trim() : string.Empty);
-			if (!string.IsNullOrWhiteSpace(text) && !source.Skills.HasChoice(text))
+			if (!source.Skills.HasChoice(choiceIds[i]))
 			{
 				return false;
 			}
@@ -442,17 +440,15 @@ internal static class SkillTrigger
 	/*
 	 * HasAnyChoice 조건을 만족하는지 확인한다.
 	 */
-	private static bool HasAnyChoice(UnitCombatState source /* 효과를 발생시킨 유닛 */, string choiceList /* 선택지 목록 */)
+	private static bool HasAnyChoice(UnitCombatState source /* 효과를 발생시킨 유닛 */, string[] choiceIds /* 선택지 목록 */)
 	{
-		if (string.IsNullOrWhiteSpace(choiceList) || source == null || source.Skills == null)
+		if (choiceIds == null || choiceIds.Length == 0 || source == null || source.Skills == null)
 		{
 			return false;
 		}
-		string[] array = choiceList.Split(';', ',');
-		for (int i = 0; i < array.Length; i++)
+		for (int i = 0; i < choiceIds.Length; i++)
 		{
-			string text = ((array[i] != null) ? array[i].Trim() : string.Empty);
-			if (!string.IsNullOrWhiteSpace(text) && source.Skills.HasChoice(text))
+			if (source.Skills.HasChoice(choiceIds[i]))
 			{
 				return true;
 			}
@@ -499,17 +495,15 @@ internal static class SkillTrigger
 	/*
 	 * MatchesTriggerAttribute 조건을 만족하는지 확인한다.
 	 */
-	private static bool MatchesTriggerAttribute(string rawAttribute /* 변환 전 속성 */, DamageAttribute eventAttribute /* 사건 속성 */)
+	private static bool MatchesTriggerAttribute(DamageAttribute[] attributes /* 허용 속성 목록 */, DamageAttribute eventAttribute /* 사건 속성 */)
 	{
-		if (string.IsNullOrWhiteSpace(rawAttribute))
+		if (attributes == null || attributes.Length == 0)
 		{
 			return true;
 		}
-		string[] array = rawAttribute.Split(';', ',');
-		for (int i = 0; i < array.Length; i++)
+		for (int i = 0; i < attributes.Length; i++)
 		{
-			string text = ((array[i] != null) ? array[i].Trim() : string.Empty);
-			if (!string.IsNullOrWhiteSpace(text) && string.Equals(text, eventAttribute.ToString(), StringComparison.OrdinalIgnoreCase))
+			if (attributes[i] == eventAttribute)
 			{
 				return true;
 			}
@@ -550,9 +544,9 @@ internal static class SkillTrigger
 	/*
 	 * MatchesEventSourceScope 조건을 만족하는지 확인한다.
 	 */
-	private static bool MatchesEventSourceScope(string scope /* 적용 범위 */, UnitCombatState owner /* 정보를 소유한 유닛 */, UnitCombatState eventSource /* 사건 발생 원본 */)
+	private static bool MatchesEventSourceScope(SkillTriggerEventSourceScope scope /* 적용 범위 */, UnitCombatState owner /* 정보를 소유한 유닛 */, UnitCombatState eventSource /* 사건 발생 원본 */)
 	{
-		if (string.IsNullOrWhiteSpace(scope))
+		if (scope == SkillTriggerEventSourceScope.Any)
 		{
 			return true;
 		}
@@ -560,12 +554,11 @@ internal static class SkillTrigger
 		{
 			return false;
 		}
-		string a = scope.Trim();
-		if (string.Equals(a, "owner", StringComparison.OrdinalIgnoreCase))
+		if (scope == SkillTriggerEventSourceScope.Owner)
 		{
 			return IsSameUnit(owner, eventSource);
 		}
-		if (string.Equals(a, "all_allies", StringComparison.OrdinalIgnoreCase))
+		if (scope == SkillTriggerEventSourceScope.AllAllies)
 		{
 			if (owner.Identity != null && eventSource.Identity != null)
 			{
@@ -579,9 +572,9 @@ internal static class SkillTrigger
 	/*
 	 * MatchesEventSkillId 조건을 만족하는지 확인한다.
 	 */
-	private static bool MatchesEventSkillId(string rawSkillIds /* 변환 전 스킬 식별자 목록 */, string eventSkillId /* 사건 스킬 식별자 */)
+	private static bool MatchesEventSkillId(string[] skillIds /* 허용 스킬 식별자 목록 */, string eventSkillId /* 사건 스킬 식별자 */)
 	{
-		if (string.IsNullOrWhiteSpace(rawSkillIds))
+		if (skillIds == null || skillIds.Length == 0)
 		{
 			return true;
 		}
@@ -589,11 +582,9 @@ internal static class SkillTrigger
 		{
 			return false;
 		}
-		string[] array = rawSkillIds.Split(';', ',');
-		for (int i = 0; i < array.Length; i++)
+		for (int i = 0; i < skillIds.Length; i++)
 		{
-			string text = ((array[i] != null) ? array[i].Trim() : string.Empty);
-			if (!string.IsNullOrWhiteSpace(text) && string.Equals(text, eventSkillId, StringComparison.OrdinalIgnoreCase))
+			if (string.Equals(skillIds[i], eventSkillId, StringComparison.OrdinalIgnoreCase))
 			{
 				return true;
 			}

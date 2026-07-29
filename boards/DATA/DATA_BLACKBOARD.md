@@ -207,11 +207,11 @@ Designer / Code Builder refactoring handoff
 
 ### Status
 
-Code Builder implementation in progress. Phases 1-3 complete.
+Code Builder implementation in progress. Phases 1-4 complete.
 
 ### Next Actions
 
-- Code Builder implements Phase 4 direct runtime consumption.
+- Code Builder implements Phase 5 compiler deletion and script moves.
 - Update this board and the COMBAT board together after each phase.
 
 ### Evidence
@@ -226,6 +226,9 @@ Code Builder implementation in progress. Phases 1-3 complete.
 - Phase 2 added the final typed contracts that Generation will populate directly: final Choice Nodes, Node target IDs, typed status conditions, typed Trigger lists, and event source scope.
 - Phase 3 Generation now produces and indexes final active, passive, enemy, Choice, Trigger, and Node data once.
 - Unity CSV validation loaded 5 monsters, 8 stage-one enemies, and 8 stage-two enemies through the final catalog path.
+- Phase 4 runtime consumers use final Choice Nodes, typed Trigger arrays/scope, and final SkillDefinition lookup values directly.
+- Runtime Execution/Trigger/StatusRules search found zero authored `Split`, `Enum.Parse`, or `TryParse` calls.
+- Runtime and Editor builds completed with zero errors; Unity CSV validation retained 5 monsters and 8/8 enemies.
 
 ### History
 
@@ -235,3 +238,4 @@ Code Builder implementation in progress. Phases 1-3 complete.
 - 2026-07-29: Code Builder completed Phase 1 baseline protection before changing the final data contracts.
 - 2026-07-29: Code Builder completed Phase 2 final typed contracts with the current compiler retained only as an intermediate compatibility path.
 - 2026-07-29: Code Builder completed Phase 3 final catalog generation and final-type RuntimeCatalog indexing.
+- 2026-07-29: Code Builder completed Phase 4 final catalog direct runtime consumption.

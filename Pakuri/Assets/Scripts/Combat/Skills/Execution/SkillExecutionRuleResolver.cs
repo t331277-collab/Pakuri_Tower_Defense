@@ -115,15 +115,16 @@ namespace Pakuri.InGame
             string targetSkillId,
             UnitCombatState owner)
         {
-            if (choice == null || choice.Source == null)
+            if (choice == null || choice.Nodes == null)
             {
                 return false;
             }
 
-            SkillNode[] nodes = SkillNodeMapper.GetChoiceRuntimeNodes(choice, targetSkillId);
+            SkillNode[] nodes = choice.Nodes;
             for (var i = 0; i < nodes.Length; i++)
             {
-                if (nodes[i] == null)
+                if (nodes[i] == null
+                    || !string.Equals(nodes[i].TargetSkillId, targetSkillId, System.StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
