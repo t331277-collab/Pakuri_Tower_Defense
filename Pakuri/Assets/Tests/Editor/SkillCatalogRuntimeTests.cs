@@ -87,6 +87,22 @@ public sealed class SkillCatalogRuntimeTests
             Has.Count.EqualTo(22));
         Assert.That(
             triggers.FindAll(trigger =>
+                trigger.Command?.Kind == SkillTriggerCommandKind.RecastZone),
+            Has.Count.EqualTo(1));
+        Assert.That(
+            triggers.FindAll(trigger =>
+                trigger.Command?.Kind == SkillTriggerCommandKind.RefundCooldown),
+            Has.Count.EqualTo(14));
+        Assert.That(
+            triggers.FindAll(trigger =>
+                trigger.Command?.Kind == SkillTriggerCommandKind.ReduceReload),
+            Has.Count.EqualTo(6));
+        Assert.That(
+            triggers.FindAll(trigger =>
+                trigger.Command?.Kind == SkillTriggerCommandKind.ExtendStatusDuration),
+            Has.Count.EqualTo(1));
+        Assert.That(
+            triggers.FindAll(trigger =>
                 trigger.TriggeredSkill == null && trigger.Command == null),
             Has.Count.EqualTo(81));
         Assert.That(

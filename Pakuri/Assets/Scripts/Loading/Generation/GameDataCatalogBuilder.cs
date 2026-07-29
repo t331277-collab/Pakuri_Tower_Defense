@@ -427,7 +427,6 @@ namespace Pakuri.Data
                         }
                     }
                 };
-                var nodes = MapSkillNodes(normalizedNodes);
                 definitions[i] = new SkillTriggerDefinition
                 {
                     TriggerId = row.Id,
@@ -436,8 +435,7 @@ namespace Pakuri.Data
                     TriggerEvent = row.TriggerEvent,
                     SortOrder = row.SortOrder,
                     ProcChance = 1f,
-                    EventSourceScopeValue = SkillTriggerEventSourceScope.Any,
-                    Nodes = nodes
+                    EventSourceScopeValue = SkillTriggerEventSourceScope.Any
                 };
                 BuildTriggerOutcome(
                     definitions[i],
@@ -661,7 +659,6 @@ namespace Pakuri.Data
                     SkillNodeOwnerKind.Trigger,
                     trigger.Id,
                     trigger.SourceSkillId);
-                var nodes = MapSkillNodes(normalizedNodes);
                 definitions[i] = new SkillTriggerDefinition
                 {
                     TriggerId = trigger.Id,
@@ -688,8 +685,7 @@ namespace Pakuri.Data
                     TriggerDelaySeconds = trigger.TriggerDelaySeconds,
                     TriggerEveryCount = trigger.TriggerEveryCount,
                     EventSourceScopeValue = StatusRuntimeCompiler.ParseEventSourceScope(trigger.EventSourceScope),
-                    RequireEventExecute = trigger.RequireEventExecute,
-                    Nodes = nodes
+                    RequireEventExecute = trigger.RequireEventExecute
                 };
                 BuildTriggerOutcome(
                     definitions[i],

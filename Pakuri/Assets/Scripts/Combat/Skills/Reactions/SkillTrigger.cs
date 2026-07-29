@@ -741,10 +741,10 @@ internal static class SkillTrigger
 	 */
 	private static void ExecuteOnce(InGameCombatManager combatManager /* 전투 진행 관리자 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */, TriggerExecutionContext triggerContext /* 트리거 실행에 필요한 정보 */)
 	{
-		TryExecuteOwnedNodes(combatManager, roster, sourceEntry, source, trigger, triggerContext);
+		TryExecuteOutcome(combatManager, roster, sourceEntry, source, trigger, triggerContext);
 	}
 
-	private static bool TryExecuteOwnedNodes(
+	private static bool TryExecuteOutcome(
 		InGameCombatManager combatManager,
 		CombatUnitRegistry roster,
 		CombatUnitEntry sourceEntry,
@@ -801,35 +801,117 @@ internal static class SkillTrigger
 				triggerContext.RecastGeneration);
 		}
 
-		if (!SkillNodeExecutor.HasRuntimeActions(trigger.Nodes))
+		if (trigger.Command != null)
+		{
+			return ExecuteCommand(
+				combatManager,
+				roster,
+				sourceEntry,
+				source,
+				runtime,
+				trigger.Command,
+				triggerContext);
+		}
+
+		return false;
+	}
+
+	private static bool ExecuteCommand(
+		InGameCombatManager combatManager,
+		CombatUnitRegistry roster,
+		CombatUnitEntry sourceEntry,
+		UnitCombatState source,
+		SkillUseState sourceRuntime,
+		SkillTriggerCommand command,
+		TriggerExecutionContext triggerContext)
+	{
+		if (command == null || sourceRuntime == null)
 		{
 			return false;
 		}
 
-		SkillExecutionData executionData = runtime != null
-			? source.SkillState.CreateExecutionData(source, runtime, roster)
-			: null;
-		var executionContext = new SkillExecutionContext(
+		var context = new SkillExecutionContext(
 			combatManager,
 			roster,
 			sourceEntry,
-			runtime,
+			sourceRuntime,
 			triggerContext.EventTarget,
-			recastGeneration: triggerContext.RecastGeneration);
-		var actionContext = new SkillActionContext(
-			source,
-			trigger.SourceSkillId,
-			triggerContext.EventTarget,
-			triggerContext.EventCenter,
-			triggerContext.EventAppliedDamage,
-			triggerContext.EventHitCount,
-			executionData,
-			executionContext,
-			trigger.TriggerId,
-			triggerContext.Status,
-			triggerContext.ShieldAbsorbedAmount);
-		SkillNodeExecutor.Execute(trigger.Nodes, actionContext);
-		return true;
+			recastGeneration: triggerContext.RecastGeneration,
+			lockToEventTarget: command.LockToEventTarget,
+			publishSkillLifecycleEvents: false);
+		if (command.Kind == SkillTriggerCommandKind.RecastZone)
+		{
+			var snapshot = source.SkillState.CreateExecutionData(
+				source,
+				sourceRuntime,
+				roster);
+			return ZoneSkillExecutor.ExecuteRecast(
+				context,
+				snapshot,
+				command,
+				triggerContext.EventCenter);
+		}
+
+		var targets = SkillTargeting.OrderedTargets(context, command.Targeting);
+		var limit = command.Targeting != null
+			&& command.Targeting.Shape == SkillTargetShape.Single
+				? 1
+				: command.MaxTargets > 0
+					? command.MaxTargets
+					: targets.Count;
+		var changed = false;
+		for (var i = 0; i < targets.Count && i < limit; i++)
+		{
+			var target = targets[i] != null ? targets[i].Model : null;
+			if (target == null)
+			{
+				continue;
+			}
+
+			if (command.Kind == SkillTriggerCommandKind.ExtendStatusDuration)
+			{
+				changed |= combatManager.ExtendStatusDuration(
+					target,
+					command.StatusKind,
+					command.DurationSeconds);
+				continue;
+			}
+			if (target.Skills == null)
+			{
+				continue;
+			}
+
+			var runtimes = CommandRuntimes(target, command.TargetId);
+			for (var runtimeIndex = 0; runtimeIndex < runtimes.Count; runtimeIndex++)
+			{
+				var targetRuntime = runtimes[runtimeIndex];
+				if (command.Kind == SkillTriggerCommandKind.RefundCooldown)
+				{
+					changed |= targetRuntime.ReduceCooldownRemaining(
+						targetRuntime.EffectiveCooldownDuration * command.Ratio);
+				}
+				else if (command.Kind == SkillTriggerCommandKind.ReduceReload)
+				{
+					changed |= targetRuntime.ReduceReloadRemaining(
+						targetRuntime.ReloadDuration * command.Ratio);
+				}
+			}
+		}
+		return changed;
+	}
+
+	private static IReadOnlyList<SkillUseState> CommandRuntimes(
+		UnitCombatState target,
+		string skillId)
+	{
+		if (!string.IsNullOrWhiteSpace(skillId))
+		{
+			var runtime = target.SkillState.FindBySkillId(skillId);
+			return runtime != null
+				? new[] { runtime }
+				: Array.Empty<SkillUseState>();
+		}
+		return target.SkillState.ActiveSkills;
 	}
 
 	private static float ResolveTriggeredRawDamage(

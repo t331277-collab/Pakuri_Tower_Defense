@@ -275,12 +275,12 @@ Designer / Code Builder refactoring handoff
 
 ### Status
 
-Phase 3 final Definition runtime consumption complete. Phase 4 Trigger Node payload removal pending.
+Phase 4 final Definition/typed command consumption complete. Phase 5 Trigger-only runtime contract deletion pending.
 
 ### Next Actions
 
-- Execute the 22 generated typed commands through existing runtime APIs.
-- Remove legacy Trigger Node payload generation and consumption.
+- Delete the now-unreferenced Trigger-only runtime operation types and their legacy mapping.
+- Delete `SkillNodeExecutor` and verify final catalog counts and build parity.
 
 ### Evidence
 
@@ -294,6 +294,8 @@ Phase 3 final Definition runtime consumption complete. Phase 4 Trigger Node payl
 - Unity EditMode catalog verification passed 1/1 and both C# builds completed with error 0.
 - Phase 3 consumes 55 final Definitions through the existing family dispatch without catalog registration of hidden Definitions.
 - Runtime/editor builds completed with error 0; `SkillCatalogRuntimeTests` passed 3/3.
+- Phase 4 removes `SkillTriggerDefinition.Nodes`; Generation now stores only the final Definition or typed command on each Trigger.
+- The generated 22 commands are verified as recast 1, cooldown 14, reload 6, and status-duration 1; Unity EditMode tests pass 3/3.
 
 ### History
 
@@ -302,3 +304,4 @@ Phase 3 final Definition runtime consumption complete. Phase 4 Trigger Node payl
 - 2026-07-29: User approved Code Builder implementation; Phase 1 fixed the current owner and build baseline.
 - 2026-07-29: Code Builder completed Phase 2 final outcome Generation and focused catalog verification.
 - 2026-07-29: Code Builder completed Phase 3 runtime consumption with source snapshot, lifecycle, target, and dynamic-value policies.
+- 2026-07-29: Code Builder completed Phase 4 typed command consumption and removed the runtime Trigger Node payload.

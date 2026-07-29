@@ -179,7 +179,7 @@ namespace Pakuri.InGame
         internal static bool ExecuteRecast(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
             SkillExecutionData inheritedData /* 앞 실행에서 이어받은 스킬 강화 정보 */,
-            RecastZoneNodeOp operation /* 재시전 노드 작업 */,
+            SkillTriggerCommand command /* 재시전 명령 */,
             Vector2 center /* 효과가 적용될 중심 위치 */)
         {
             var skill = context != null && context.Runtime != null
@@ -190,23 +190,23 @@ namespace Pakuri.InGame
                 || context.CombatManager.Effects == null
                 || context.CasterEntry == null
                 || context.Roster == null
-                || (!string.IsNullOrWhiteSpace(operation.SourceSkillId)
-                    && !string.Equals(operation.SourceSkillId, skill.SkillId, StringComparison.OrdinalIgnoreCase)))
+                || (!string.IsNullOrWhiteSpace(command.TargetId)
+                    && !string.Equals(command.TargetId, skill.SkillId, StringComparison.OrdinalIgnoreCase)))
             {
                 return false;
             }
 
-            var maxGeneration = Math.Max(1, operation.MaxGeneration);
+            var maxGeneration = Math.Max(1, command.MaxGeneration);
             if (context.RecastGeneration >= maxGeneration)
             {
                 return false;
             }
 
-            var snapshot = operation.InheritSnapshot
+            var snapshot = command.InheritSnapshot
                 ? inheritedData
                 : new SkillExecutionData(skill);
-            var radius = Radius(skill, snapshot) * Mathf.Max(0f, operation.RadiusMultiplier);
-            var duration = Mathf.Max(0.05f, operation.DurationSeconds);
+            var radius = Radius(skill, snapshot) * Mathf.Max(0f, command.RadiusMultiplier);
+            var duration = Mathf.Max(0.05f, command.DurationSeconds);
             var tickInterval = TickInterval(skill, snapshot);
             var hitTargetCount = HitTargetCount(skill, snapshot);
             var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick);
@@ -245,7 +245,7 @@ namespace Pakuri.InGame
                 SkillTargeting.BaseRadius(skill.Targeting, skill.Area),
                 snapshot.RadiusMultiplier,
                 snapshot.RadiusBonus,
-                operation.RadiusMultiplier);
+                command.RadiusMultiplier);
 
             var actor = instance.GetComponent<ZoneSkillActor>();
             if (actor == null)

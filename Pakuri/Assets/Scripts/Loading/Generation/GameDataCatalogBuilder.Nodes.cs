@@ -244,7 +244,8 @@ namespace Pakuri.Data
 					InheritSnapshot = GetBoolParam(node, "inherit_snapshot", true),
 					MaxGeneration = Mathf.Max(1, GetIntParam(node, "max_generation", 1)),
 					Targeting = targeting,
-					LockToEventTarget = trigger.LockToEventTarget
+					LockToEventTarget = trigger.LockToEventTarget,
+					MaxTargets = state.MaxTargets
 				};
 				return;
 			}
@@ -259,7 +260,8 @@ namespace Pakuri.Data
 					TargetId = GetParam(node, "skill_id"),
 					Ratio = Mathf.Clamp01(GetFloatParam(node, "ratio", 0f)),
 					Targeting = targeting,
-					LockToEventTarget = trigger.LockToEventTarget
+					LockToEventTarget = trigger.LockToEventTarget,
+					MaxTargets = state.MaxTargets
 				};
 				return;
 			}
@@ -269,10 +271,12 @@ namespace Pakuri.Data
 				trigger.Command = new SkillTriggerCommand
 				{
 					Kind = SkillTriggerCommandKind.ExtendStatusDuration,
-					TargetId = GetParam(node, "status_id"),
+					StatusKind = StatusRuntimeCompiler.ParseStatusKind(
+						GetParam(node, "status_id")),
 					DurationSeconds = state.DurationSeconds,
 					Targeting = targeting,
-					LockToEventTarget = trigger.LockToEventTarget
+					LockToEventTarget = trigger.LockToEventTarget,
+					MaxTargets = state.MaxTargets
 				};
 				return;
 			}

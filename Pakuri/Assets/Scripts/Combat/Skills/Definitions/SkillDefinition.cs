@@ -597,11 +597,13 @@ namespace Pakuri.Data
     {
         public SkillTriggerCommandKind Kind;
         public string TargetId;
+        public StatusEffectKind StatusKind;
         public float Ratio;
         public float DurationSeconds;
         public Pakuri.InGame.SkillTargetingSpec Targeting =
             new Pakuri.InGame.SkillTargetingSpec();
         public bool LockToEventTarget;
+        public int MaxTargets;
         public float DelaySeconds;
         public float RadiusMultiplier = 1f;
         public bool InheritSnapshot = true;
@@ -647,7 +649,6 @@ namespace Pakuri.Data
         public bool LockToEventTarget;
         public SkillTriggerCenterMode CenterMode;
         public bool PublishSkillLifecycleEvents;
-        public Pakuri.InGame.SkillNode[] Nodes = Array.Empty<Pakuri.InGame.SkillNode>();
     }
 
 }

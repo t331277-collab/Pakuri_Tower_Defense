@@ -32,7 +32,7 @@ Designer for this handoff. Code Builder for implementation after explicit role a
 
 ## Status
 
-설계 보완 및 구현 승인 완료. Code Builder Phase 3 shared Trigger execution 완료, Phase 4 진행 예정.
+설계 보완 및 구현 승인 완료. Code Builder Phase 4 typed command 및 Trigger runtime Node payload 제거 완료, Phase 5 진행 예정.
 
 ## Current inspected evidence
 
@@ -455,10 +455,11 @@ Rollback point: owner 단위로 기존 Node 실행 유지.
 
 ### Phase 4 — Trigger reduction and commands
 
-- `SkillTrigger`를 조건·scheduling·delegation으로 축소한다.
-- cooldown/reload/status-duration은 기존 runtime API로 위임한다.
-- 81 modifier-only owner는 승인된 결론대로 전환한다.
-- Trigger runtime `Nodes` 필드를 제거한다.
+- 완료: `SkillTrigger`를 조건·scheduling·final outcome delegation으로 축소했다.
+- 완료: 1 recast는 기존 `ZoneSkillExecutor`, 14 cooldown·6 reload·1 status-duration 명령은 기존 runtime API로 위임했다.
+- 완료: 81 modifier-only owner는 final Definition과 command가 없는 현재 no-op으로 유지했다.
+- 완료: `SkillTriggerDefinition.Nodes`와 Trigger runtime Node mapping/consumption을 제거했다.
+- 완료: `SkillCatalogRuntimeTests`가 command 종류 `1/14/6/1`과 전체 결과 `55/22/81`을 검증하며 3/3 통과했다.
 
 Rollback point: unmigrated owner만 기존 Node 실행.
 
@@ -557,8 +558,8 @@ Rollback point: Phase 4 commit.
 
 ## Next Actions
 
-- Phase 4에서 22 typed command를 기존 runtime API에 연결한다.
-- `SkillTriggerDefinition.Nodes`와 legacy runtime Node 실행 의존을 제거한다.
+- Phase 5에서 `SkillNodeExecutor.cs`와 `.meta`, Trigger-only runtime operation/mapping을 삭제한다.
+- 삭제 뒤 stale helper/comment 및 duplicate bridge를 정리한다.
 
 ## Evidence
 
@@ -573,6 +574,7 @@ Rollback point: Phase 4 commit.
 - `Pakuri/Assets/Scripts/Loading/Generation/GameDataCatalogBuilder.cs`
 - `Pakuri/Assets/Scripts/Loading/Generation/GameDataCatalogBuilder.Nodes.cs`
 - `Pakuri/Assets/Scripts/Loading/Validation/CsvDataValidator.cs`
+- `Pakuri/Assets/Tests/Editor/SkillCatalogRuntimeTests.cs`
 - `Pakuri/Assets/CSVdata/authoring/monster/skills/triggers/**/*.csv`
 - `Pakuri/Assets/CSVdata/authoring/monster/skills/choices/**/skill_graph_nodes_*.csv`
 
@@ -587,3 +589,4 @@ Rollback point: Phase 4 commit.
 - 2026-07-29: Phase 1 fixed the 158/606/77/81 and 24-script/12,102-line baseline and completed runtime/editor builds with zero errors.
 - 2026-07-29: Phase 2 generated 55 final Definitions and 22 typed commands, preserved 81 no-action owners, and passed the focused Unity EditMode catalog test.
 - 2026-07-29: Phase 3 routed final Definitions through existing family Executors with source snapshots, event-target predicates, lifecycle policy, dynamic damage snapshots, and depth-8 recursion protection.
+- 2026-07-29: Phase 4 removed Trigger runtime Node payloads and routed 22 typed commands through existing Zone/cooldown/reload/status APIs; focused EditMode tests passed 3/3.

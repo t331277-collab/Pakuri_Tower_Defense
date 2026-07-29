@@ -562,7 +562,16 @@ namespace Pakuri.InGame
             ZoneSkillExecutor.ExecuteRecast(
                 context.ExecutionContext,
                 context.ExecutionData,
-                operation,
+                new SkillTriggerCommand
+                {
+                    Kind = SkillTriggerCommandKind.RecastZone,
+                    TargetId = operation.SourceSkillId,
+                    DelaySeconds = operation.DelaySeconds,
+                    DurationSeconds = operation.DurationSeconds,
+                    RadiusMultiplier = operation.RadiusMultiplier,
+                    InheritSnapshot = operation.InheritSnapshot,
+                    MaxGeneration = operation.MaxGeneration
+                },
                 context.EventCenter);
         }
 

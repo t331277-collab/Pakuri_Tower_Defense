@@ -333,12 +333,12 @@ Designer / Code Builder refactoring handoff
 
 ### Status
 
-Phase 3 shared Trigger execution complete. Phase 4 typed command migration pending.
+Phase 4 typed command migration and Trigger runtime Node payload removal complete. Phase 5 legacy executor deletion pending.
 
 ### Next Actions
 
-- Route the 22 typed commands through existing cooldown, reload, status-duration, and Zone recast APIs.
-- Remove Trigger runtime Node payload consumption.
+- Delete `SkillNodeExecutor.cs`, its `.meta`, and Trigger-only runtime operation/mapping contracts.
+- Remove stale bridge code and comments after the deletion.
 
 ### Evidence
 
@@ -354,6 +354,8 @@ Phase 3 shared Trigger execution complete. Phase 4 typed command migration pendi
 - Phase 3 routes all 55 final Definitions through existing family Executors.
 - `BuffSkillExecutor` now uses `StatusCombatRules.ApplyStatus`; lifecycle and source snapshot policies are explicit.
 - Runtime/editor builds completed with error 0 and `SkillCatalogRuntimeTests` passed 3/3.
+- Phase 4 routes 1 recast, 14 cooldown refunds, 6 reload reductions, and 1 status-duration extension through existing APIs.
+- `SkillTriggerDefinition.Nodes` and `SkillTrigger` legacy Node execution are removed; `SkillCatalogRuntimeTests` remains 3/3 and Unity Console reports zero errors/warnings.
 
 ### History
 
@@ -362,3 +364,4 @@ Phase 3 shared Trigger execution complete. Phase 4 typed command migration pendi
 - 2026-07-29: User approved implementation; Code Builder completed the Phase 1 behavior and build baseline.
 - 2026-07-29: Code Builder completed Phase 2 final Trigger outcome Generation and focused catalog verification.
 - 2026-07-29: Code Builder completed Phase 3 shared family execution, status-rule parity, EventTarget filtering, and dynamic event-value snapshots.
+- 2026-07-29: Code Builder completed Phase 4 typed command execution and removed Trigger runtime Node payload consumption.
