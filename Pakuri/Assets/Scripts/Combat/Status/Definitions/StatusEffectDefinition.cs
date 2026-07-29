@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.InGame;
 using UnityEngine;
@@ -47,6 +46,8 @@ namespace Pakuri.Data
         public float ElementDamageTakenBonusPerStack;
         // 상태와 함께 표시할 선택적 프리팹
         public GameObject StatusEffectPrefab;
+        // Generation에서 한 번 만든 전투용 최종 데이터
+        public StatusRuntimeData RuntimeData;
 
         public string Id => StatusEffectId;
         public string DisplayName => StatusEffectLabel;
@@ -96,59 +97,6 @@ namespace Pakuri.Data
     {
         public bool AreaLike;
         public SkillRuntimeKind Kind;
-    }
-
-    public static class StatusEffectLookup
-    {
-        /*
-         * TryParse 작업을 시도하고 성공 여부를 반환한다.
-         */
-        public static bool TryParse(string value /* 처리할 값 */, out StatusEffectKind kind /* 처리할 종류 */)
-        {
-            kind = StatusEffectKind.None;
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                return false;
-            }
-
-            var enumName = value.Trim().Replace("-", string.Empty);
-            if (!Enum.TryParse(enumName, true, out kind))
-            {
-                return false;
-            }
-
-            return kind != StatusEffectKind.None;
-        }
-
-        /*
-         * GetDefinition에 해당하는 값을 찾아 반환한다.
-         */
-        public static StatusEffectDefinition GetDefinition(StatusEffectKind kind /* 처리할 종류 */)
-        {
-            var catalog = GameDataLoader.CurrentCatalog;
-            if (catalog != null)
-            {
-                var definitions = catalog.StatusEffects;
-                for (var i = 0; i < definitions.Length; i++)
-                {
-                    var definition = definitions[i];
-                    if (definition != null && definition.Kind == kind)
-                    {
-                        return definition;
-                    }
-                }
-            }
-
-            throw new KeyNotFoundException($"Status definition '{kind}' is not registered.");
-        }
-
-        /*
-         * ToDisplayName 작업 결과를 반환한다.
-         */
-        public static string ToDisplayName(StatusEffectKind kind /* 처리할 종류 */)
-        {
-            return GetDefinition(kind).DisplayName;
-        }
     }
 
     public class StatusRuntimeData

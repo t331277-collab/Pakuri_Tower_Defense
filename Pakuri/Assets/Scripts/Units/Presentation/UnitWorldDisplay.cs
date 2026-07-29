@@ -258,11 +258,6 @@ namespace Pakuri.InGame
                 }
 
                 var statusName = status.DisplayName;
-                if (string.IsNullOrWhiteSpace(statusName))
-                {
-                    statusName = StatusEffectLookup.ToDisplayName(status.Kind);
-                }
-
                 if (totals.ContainsKey(status.Kind))
                 {
                     totals[status.Kind] += status.Stacks;

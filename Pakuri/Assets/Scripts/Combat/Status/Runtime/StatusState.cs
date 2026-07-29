@@ -478,7 +478,8 @@ namespace Pakuri.InGame
                     return SourceData.StatusName;
                 }
 
-                return StatusEffectLookup.ToDisplayName(Kind);
+                return GameDataLoader.CurrentCatalog?.GetStatusRuntimeData(Kind)?.StatusName
+                    ?? throw new KeyNotFoundException($"Status definition '{Kind}' is not registered.");
             }
         }
 

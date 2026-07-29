@@ -115,7 +115,7 @@ namespace Pakuri.Data
 			}
 			if (string.Equals(handler, "AttachStatusPayload", StringComparison.OrdinalIgnoreCase))
 			{
-				state.StatusKind = StatusRuntimeCompiler.ParseStatusKind(
+				state.StatusKind = StatusValueParser.ParseStatusKind(
 					GetParam(node, "status_id"));
 				state.StatusChance = Mathf.Clamp01(
 					GetFloatParam(node, "status_chance", 1f));
@@ -137,7 +137,7 @@ namespace Pakuri.Data
 			}
 			if (string.Equals(handler, "ConditionStatus", StringComparison.OrdinalIgnoreCase))
 			{
-				if (StatusEffectLookup.TryParse(
+				if (StatusValueParser.TryParseStatusKind(
 					GetParam(node, "status_id"),
 					out var selectionStatusKind))
 				{
@@ -271,7 +271,7 @@ namespace Pakuri.Data
 				trigger.Command = new SkillTriggerCommand
 				{
 					Kind = SkillTriggerCommandKind.ExtendStatusDuration,
-					StatusKind = StatusRuntimeCompiler.ParseStatusKind(
+					StatusKind = StatusValueParser.ParseStatusKind(
 						GetParam(node, "status_id")),
 					DurationSeconds = state.DurationSeconds,
 					Targeting = targeting,
@@ -358,7 +358,7 @@ namespace Pakuri.Data
 	{
 		var kind = state.HasStatusPayload
 			? state.StatusKind
-			: StatusRuntimeCompiler.ParseStatusKind(GetParam(node, "status_id"));
+			: StatusValueParser.ParseStatusKind(GetParam(node, "status_id"));
 		var status = CreateTriggeredStatus(kind, trigger, state, statusDefinitions);
 
 		var skill = new BuffSkillDefinition
@@ -410,9 +410,7 @@ namespace Pakuri.Data
 		TriggerOutcomeBuildState state,
 		StatusEffectDefinition[] statusDefinitions)
 	{
-		var status = statusDefinitions == null
-			? StatusRuntimeCompiler.Create(kind, null)
-			: StatusRuntimeCompiler.Create(kind, null, statusDefinitions);
+		var status = GetStatusRuntimeData(kind, statusDefinitions);
 		status.SourceSkillId = trigger.TriggerId;
 		if (state.HasStatusPayload)
 		{
@@ -744,7 +742,7 @@ namespace Pakuri.Data
 		if (string.Equals(text, "CountStatusDamageMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
 			string statusId = GetParam(node, "status_id");
-			StatusEffectKind statusKind = StatusRuntimeCompiler.ParseStatusKind(statusId);
+			StatusEffectKind statusKind = StatusValueParser.ParseStatusKind(statusId);
 			return SkillNode.FromOperation(new CountStatusDamageActionOp(
 				GetEnumParam(node, "target_side", SkillMultiEffectTargetSide.AllAllies),
 				statusKind,
@@ -768,7 +766,7 @@ namespace Pakuri.Data
 		if (string.Equals(text, "ConditionalDamageMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
 			string statusId = GetParam(node, "status_id");
-			StatusEffectKind statusKind = StatusRuntimeCompiler.ParseStatusKind(statusId);
+			StatusEffectKind statusKind = StatusValueParser.ParseStatusKind(statusId);
 			return SkillNode.FromOperation(new ConditionalDamageActionOp(
 				GetFloatParam(node, "multiplier", 1f),
 				statusKind,
@@ -777,14 +775,14 @@ namespace Pakuri.Data
 		if (string.Equals(text, "StatusConditionalDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			string sourceStatusId = GetParam(node, "source_status_id");
-			StatusEffectKind sourceStatusKind = StatusRuntimeCompiler.ParseStatusKind(sourceStatusId);
+			StatusEffectKind sourceStatusKind = StatusValueParser.ParseStatusKind(sourceStatusId);
 			return SkillNode.FromOperation(new StatusConditionalDamageTakenActionOp(
 				GetFloatParam(node, "bonus", 0f),
 				sourceStatusKind));
 		}
 		if (string.Equals(text, "TargetStatusCritBonus", StringComparison.OrdinalIgnoreCase))
 		{
-			StatusEffectKind statusKind = StatusRuntimeCompiler.ParseStatusKind(GetParam(node, "status_id"));
+			StatusEffectKind statusKind = StatusValueParser.ParseStatusKind(GetParam(node, "status_id"));
 			return SkillNode.FromOperation(new ConditionalCritChanceActionOp(
 				GetFloatParam(node, "crit_chance_bonus", 0f),
 				statusKind,
@@ -811,8 +809,8 @@ namespace Pakuri.Data
 		}
 		if (string.Equals(text, "ThresholdApplyStatus", StringComparison.OrdinalIgnoreCase))
 		{
-			StatusEffectKind sourceStatus = StatusRuntimeCompiler.ParseStatusKind(GetParam(node, "source_status_id"));
-			StatusEffectKind appliedStatus = StatusRuntimeCompiler.ParseStatusKind(GetParam(node, "apply_status_id"));
+			StatusEffectKind sourceStatus = StatusValueParser.ParseStatusKind(GetParam(node, "source_status_id"));
+			StatusEffectKind appliedStatus = StatusValueParser.ParseStatusKind(GetParam(node, "apply_status_id"));
 			return SkillNode.FromOperation(new ThresholdStatusActionOp(
 				sourceStatus,
 				GetIntParam(node, "min_stacks", 0),
@@ -827,7 +825,7 @@ namespace Pakuri.Data
 		}
 		if (string.Equals(text, "RedistributeConsumedStatus", StringComparison.OrdinalIgnoreCase))
 		{
-			StatusEffectKind statusKind = StatusRuntimeCompiler.ParseStatusKind(GetParam(node, "status_id"));
+			StatusEffectKind statusKind = StatusValueParser.ParseStatusKind(GetParam(node, "status_id"));
 			return SkillNode.FromOperation(new RedistributeConsumedStatusActionOp(
 				GetFloatParam(node, "ratio", 0f),
 				statusKind,
@@ -885,7 +883,7 @@ namespace Pakuri.Data
 		}
 		if (string.Equals(text, "RequiredSourceStatus", StringComparison.OrdinalIgnoreCase))
 		{
-			StatusEffectKind statusKind = StatusRuntimeCompiler.ParseStatusKind(GetParam(node, "status_id"));
+			StatusEffectKind statusKind = StatusValueParser.ParseStatusKind(GetParam(node, "status_id"));
 			return SkillNode.FromOperation(new SourceStatusRequirementOp(
 				statusKind,
 				GetIntParam(node, "min_stacks", 1)));
@@ -1269,7 +1267,7 @@ namespace Pakuri.Data
 				TriggerStatusMutationKind.ConditionalStatusChanceBonus,
 				amount,
 				attribute,
-				conditionalStatusKinds: StatusRuntimeCompiler.ParseStatusKinds(GetParam(node, "status_ids")));
+				conditionalStatusKinds: StatusValueParser.ParseStatusKinds(GetParam(node, "status_ids")));
 			return true;
 		}
 		if (string.Equals(handlerId, "StatusRuntimeKindFilter", StringComparison.OrdinalIgnoreCase))
@@ -1278,9 +1276,9 @@ namespace Pakuri.Data
 				TriggerStatusMutationKind.RuntimeKindFilter,
 				0f,
 				attribute,
-				incomingRuntimeKinds: StatusRuntimeCompiler.ParseSkillRuntimeKindConditions(
+				incomingRuntimeKinds: StatusValueParser.ParseSkillRuntimeKindConditions(
 					GetParam(node, "incoming_skill_runtime_kinds")),
-				outgoingRuntimeKinds: StatusRuntimeCompiler.ParseSkillRuntimeKindConditions(
+				outgoingRuntimeKinds: StatusValueParser.ParseSkillRuntimeKindConditions(
 					GetParam(node, "outgoing_skill_runtime_kinds")));
 			return true;
 		}

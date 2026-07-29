@@ -312,3 +312,51 @@ Code Builder Phase 1-6 complete. Final catalog and non-Play-Mode verification pa
 - 2026-07-29: Code Builder completed Phase 4 typed command consumption and removed the runtime Trigger Node payload.
 - 2026-07-29: Code Builder completed Phase 5 Trigger executor/operation deletion and confined remaining authored mutation assembly to Generation.
 - 2026-07-29: Code Builder completed Phase 6 final static/build/Unity/CSV verification.
+
+## Task: 2026-07-29 Final Status Catalog Generation
+
+### Task title
+
+Generate final status runtime data once and index it in `GameDataCatalog`.
+
+### Goals
+
+- Keep status authoring parsing in `Loading/Parsing`.
+- Build each `StatusRuntimeData` from its validated `StatusEffectDefinition` in Generation.
+- Index final status runtime data by `StatusEffectKind` during `GameDataCatalog.RebuildLookup`.
+- Remove Combat-side status compilation and lookup helpers.
+
+### Constraints
+
+- Preserve the existing Parsing -> Validation -> Generation -> RuntimeCatalog order.
+- Keep one validation, one catalog build, and one lookup rebuild.
+- Preserve CSV schema and values.
+- Reuse existing `StatusRuntimeData`, `StatusEffectDefinition`, and `GameDataCatalog` types without a replacement compiler layer.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implementation and available non-Play-Mode verification complete.
+
+### Next Actions
+
+- User verifies representative CSV-authored status behavior in Unity Play Mode.
+
+### Evidence
+
+- `GameDataCatalogBuilder.BuildStatusEffects` now assigns one generated `RuntimeData` value to every status definition.
+- Skill and Trigger Generation clone the generated status template before applying owner-specific overrides.
+- `GameDataCatalog.GetStatusRuntimeData(StatusEffectKind)` returns the indexed final runtime reference.
+- `StatusValueParser` is internal and all of its callers are under `Loading`.
+- `StatusRuntimeCompiler` and `StatusEffectLookup` searches return zero references.
+- EditMode verification passes 4/4 and asserts every status definition owns non-null generated runtime data reused by RuntimeCatalog.
+- Solution build completes with zero errors; final Unity Console contains zero errors/warnings.
+
+### History
+
+- 2026-07-29: User approved aligning status data flow with the final skill catalog structure.
+- 2026-07-29: Code Builder moved parse-only functions to `Loading/Parsing/StatusValueParser.cs` and absorbed runtime-data construction into Generation.
+- 2026-07-29: Code Builder completed RuntimeCatalog indexing, Combat direct use, and non-Play-Mode verification.

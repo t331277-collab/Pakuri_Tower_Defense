@@ -373,3 +373,57 @@ Code Builder Phase 1-6 complete. Non-Play-Mode verification passed; user Play Mo
 - 2026-07-29: Code Builder completed Phase 4 typed command execution and removed Trigger runtime Node payload consumption.
 - 2026-07-29: Code Builder completed Phase 5 legacy executor, operation, mapping, and stale context cleanup.
 - 2026-07-29: Code Builder completed Phase 6 static/build/Unity/CSV verification and recorded final net deletion.
+
+## Task: 2026-07-29 Status Runtime Responsibility Refactor
+
+### Task title
+
+Remove runtime status compilation and separate status definition, execution, runtime, and skill-integration responsibilities.
+
+### Goals
+
+- Delete the `StatusRuntimeCompiler` runtime/compiler responsibility.
+- Generate final `StatusRuntimeData` once in Loading Generation.
+- Make Combat retrieve final status data from `GameDataCatalog`.
+- Move `SkillStatus` to `Combat/Skills/Execution`.
+- Organize `Combat/Status` into `Definitions`, `Execution`, and `Runtime`.
+
+### Constraints
+
+- Preserve current status application, stack, duration, modifier, display, and skill behavior.
+- Preserve moved Unity script `.meta` GUIDs.
+- Keep authored status string parsing inside Loading.
+- Do not add a replacement compiler, factory, or interface.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implementation and available non-Play-Mode verification complete.
+
+### Next Actions
+
+- User verifies representative buff, debuff, shield, stack, duration, and status display behavior in Unity Play Mode.
+- Run Code Reviewer only after separate explicit user approval.
+
+### Evidence
+
+- Baseline worktree was clean at commit `772711c`; `Pakuri/Pakuri.sln` built with zero errors and two existing assembly-reference warnings.
+- `StatusRuntimeCompiler.cs` and the `StatusRuntimeCompiler` symbol are removed.
+- `Combat/Status` now contains `Definitions/StatusEffectDefinition.cs`, `Execution/StatusRules.cs`, and `Runtime/StatusState.cs`.
+- `SkillStatus.cs` now resides under `Combat/Skills/Execution`; all inspected callers remain Skill Delivery executors.
+- All four moved script `.meta` GUID comparisons returned `match=True`.
+- Combat status and SkillStatus searches returned zero authored `Enum.Parse`, `Enum.TryParse`, or `Split` calls.
+- Removed-symbol searches returned zero `StatusRuntimeCompiler` and `StatusEffectLookup` references.
+- `Pakuri/Pakuri.sln` builds with zero errors; Unity Console reports zero errors/warnings after the final refresh.
+- `SkillCatalogRuntimeTests` passes 4/4, including final status-data generation and RuntimeCatalog reference reuse.
+- Production C# diff is 465 additions / 526 deletions: net reduction 61 lines. Tests add 18 lines, making the total C# diff net reduction 43 lines.
+
+### History
+
+- 2026-07-29: User approved Code Builder implementation of the status compiler removal and responsibility split.
+- 2026-07-29: Code Builder moved parsing to Loading, final data generation to Generation, and lookup to RuntimeCatalog.
+- 2026-07-29: Code Builder separated Status folders, moved SkillStatus to Skills/Execution, and completed static/build/Unity/EditMode verification.

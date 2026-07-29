@@ -452,8 +452,8 @@ namespace Pakuri.Data
             var statuses = new List<StatusEffectDefinition>();
             foreach (var row in model.StatusEffects.Values)
             {
-                StatusEffectLookup.TryParse(row.Id, out var kind);
-                statuses.Add(new StatusEffectDefinition
+                var kind = StatusValueParser.ParseStatusKind(row.Id);
+                var definition = new StatusEffectDefinition
                 {
                     StatusEffectId = row.Id,
                     StatusEffectLabel = row.Label,
@@ -477,11 +477,84 @@ namespace Pakuri.Data
                     ElementResistReductionPerStack = row.ElementResistReductionPerStack,
                     ElementDamageTakenBonusPerStack = row.ElementDamageTakenBonusPerStack,
                     StatusEffectPrefab = LoadPrefab(row.StatusEffectPrefabPath)
-                });
+                };
+                definition.RuntimeData = BuildStatusRuntimeData(definition);
+                statuses.Add(definition);
             }
 
             statuses.Sort((left, right) => string.Compare(left.StatusEffectId, right.StatusEffectId, StringComparison.OrdinalIgnoreCase));
             return statuses.ToArray();
+        }
+
+        private static StatusRuntimeData BuildStatusRuntimeData(StatusEffectDefinition definition)
+        {
+            var status = new StatusRuntimeData
+            {
+                Definition = definition,
+                Kind = definition.Kind,
+                StatusTag = definition.Id,
+                StatusName = definition.StatusEffectLabel,
+                Duration = definition.DefaultDurationSeconds,
+                MaxStacks = definition.MaxStacks,
+                IsStackable = definition.MaxStacks != 1,
+                BaseStackAmount = definition.BaseStackAmount,
+                Permanent = definition.IsPermanent && definition.DefaultDurationSeconds <= 0f,
+                CanMove = definition.CanMove,
+                CanAct = definition.CanAct,
+                CanUseSpecialSkill = definition.CanUseSpecialSkill,
+                MoveSpeedBonus = definition.MoveSpeedBonusPerStack,
+                DamageTakenBonus = definition.DamageTakenBonusPerStack,
+                CriticalDamageTakenBonus = definition.CriticalDamageTakenBonusPerStack,
+                CriticalResistanceBonus = definition.CriticalResistanceBonusPerStack,
+                ElementResistReduction = definition.ElementResistReductionPerStack,
+                ElementDamageTakenBonus = definition.ElementDamageTakenBonusPerStack,
+                StatusEffectPrefab = definition.StatusEffectPrefab
+            };
+            if (status.MoveSpeedBonus < 0f)
+            {
+                status.MovementSlowRate = -status.MoveSpeedBonus;
+            }
+
+            status.Modifiers.ActionSpeedBonus = definition.ActionSpeedBonusPerStack;
+            status.Modifiers.AttackPowerBonus = definition.AttackPowerBonusPerStack;
+            if (definition.HasAttribute)
+            {
+                status.HasElementModifierTarget = true;
+                status.ElementModifierTarget = definition.Attribute;
+                status.Modifiers.ResistReductionElement = definition.Attribute;
+            }
+
+            status.Modifiers.ResistReduction = status.ElementResistReduction;
+            status.IsControlEffect = !status.CanMove || !status.CanAct || !status.CanUseSpecialSkill;
+            return status;
+        }
+
+        private static StatusRuntimeData GetStatusRuntimeData(
+            StatusEffectKind kind,
+            StatusEffectDefinition[] definitions,
+            string label = null)
+        {
+            if (definitions != null)
+            {
+                for (var i = 0; i < definitions.Length; i++)
+                {
+                    var definition = definitions[i];
+                    if (definition?.Kind != kind || definition.RuntimeData == null)
+                    {
+                        continue;
+                    }
+
+                    var status = definition.RuntimeData.Clone();
+                    if (!string.IsNullOrWhiteSpace(label))
+                    {
+                        status.StatusName = label;
+                    }
+
+                    return status;
+                }
+            }
+
+            throw new KeyNotFoundException($"Status definition '{kind}' is not registered.");
         }
 
         private MonsterDefinition.RewardChoiceDefinition[] BuildRewardChoices(SourceModel model , string monsterId )
@@ -665,17 +738,17 @@ namespace Pakuri.Data
                     MonsterId = trigger.MonsterId,
                     SourceSkillId = trigger.SourceSkillId,
                     TriggerEvent = trigger.TriggerEvent,
-                    RequiredActiveChoiceIds = StatusRuntimeCompiler.ParseIdList(trigger.RequiresActiveChoiceId),
-                    ExcludedActiveChoiceIds = StatusRuntimeCompiler.ParseIdList(trigger.ExcludesActiveChoiceId),
+                    RequiredActiveChoiceIds = StatusValueParser.ParseIdList(trigger.RequiresActiveChoiceId),
+                    ExcludedActiveChoiceIds = StatusValueParser.ParseIdList(trigger.ExcludesActiveChoiceId),
                     RequiredSourceStatusKind = string.IsNullOrWhiteSpace(trigger.RequiredSourceStatusId)
                         ? StatusEffectKind.None
-                        : StatusRuntimeCompiler.ParseStatusKind(trigger.RequiredSourceStatusId),
+                        : StatusValueParser.ParseStatusKind(trigger.RequiredSourceStatusId),
                     RequiredSourceStatusMinStacks = trigger.RequiredSourceStatusMinStacks,
-                    ConditionStatuses = StatusRuntimeCompiler.ParseConditionStatusExpression(trigger.ConditionStatusId),
-                    ConditionStatusSourceSkillIds = StatusRuntimeCompiler.ParseIdList(trigger.ConditionStatusSourceSkillId),
-                    TriggerAttributes = StatusRuntimeCompiler.ParseDamageAttributes(trigger.TriggerAttribute),
-                    EventSkillIds = StatusRuntimeCompiler.ParseIdList(trigger.EventSkillId),
-                    EventSkillRuntimeKindValues = StatusRuntimeCompiler.ParseSkillRuntimeKindConditions(
+                    ConditionStatuses = StatusValueParser.ParseConditionStatusExpression(trigger.ConditionStatusId),
+                    ConditionStatusSourceSkillIds = StatusValueParser.ParseIdList(trigger.ConditionStatusSourceSkillId),
+                    TriggerAttributes = StatusValueParser.ParseDamageAttributes(trigger.TriggerAttribute),
+                    EventSkillIds = StatusValueParser.ParseIdList(trigger.EventSkillId),
+                    EventSkillRuntimeKindValues = StatusValueParser.ParseSkillRuntimeKindConditions(
                         trigger.EventSkillRuntimeKinds),
                     ProcChance = trigger.ProcChance,
                     InternalCooldownSeconds = trigger.InternalCooldownSeconds,
@@ -684,7 +757,7 @@ namespace Pakuri.Data
                     RepeatIntervalSeconds = trigger.RepeatIntervalSeconds,
                     TriggerDelaySeconds = trigger.TriggerDelaySeconds,
                     TriggerEveryCount = trigger.TriggerEveryCount,
-                    EventSourceScopeValue = StatusRuntimeCompiler.ParseEventSourceScope(trigger.EventSourceScope),
+                    EventSourceScopeValue = StatusValueParser.ParseEventSourceScope(trigger.EventSourceScope),
                     RequireEventExecute = trigger.RequireEventExecute
                 };
                 BuildTriggerOutcome(

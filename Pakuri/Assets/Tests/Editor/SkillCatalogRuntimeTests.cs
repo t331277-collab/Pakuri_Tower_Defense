@@ -134,4 +134,22 @@ public sealed class SkillCatalogRuntimeTests
                 trigger.TriggeredSkill is BuffShieldSkillDefinition),
             Has.Count.EqualTo(3));
     }
+
+    [Test]
+    public void StatusCatalogUsesGeneratedRuntimeData()
+    {
+        GameDataLoader.EnsureInitialized();
+        var catalog = GameDataLoader.CurrentCatalog;
+
+        Assert.That(catalog.StatusEffects, Is.Not.Empty);
+        foreach (var definition in catalog.StatusEffects)
+        {
+            Assert.That(definition.RuntimeData, Is.Not.Null, definition.StatusEffectId);
+            Assert.That(
+                catalog.GetStatusRuntimeData(definition.Kind),
+                Is.SameAs(definition.RuntimeData),
+                definition.StatusEffectId);
+            Assert.That(definition.RuntimeData.Definition, Is.SameAs(definition));
+        }
+    }
 }

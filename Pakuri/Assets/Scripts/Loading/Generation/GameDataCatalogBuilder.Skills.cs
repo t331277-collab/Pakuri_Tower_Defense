@@ -310,7 +310,7 @@ internal sealed partial class GameDataCatalogBuilder
 		skill.Targeting.SelectionStatusId = source.TargetSelectionStatusId;
 		if (!string.IsNullOrWhiteSpace(source.TargetSelectionStatusId))
 		{
-			skill.Targeting.SelectionStatusKind = StatusRuntimeCompiler.ParseStatusKind(
+			skill.Targeting.SelectionStatusKind = StatusValueParser.ParseStatusKind(
 				source.TargetSelectionStatusId);
 		}
 		skill.Targeting.SelectionStatusMinStacks = Mathf.Max(0, source.TargetSelectionStatusMinStacks);
@@ -494,17 +494,17 @@ internal sealed partial class GameDataCatalogBuilder
 			ApplySingleBaseNodes(singleSkillExecutionDefinition, source.Nodes, source.Attribute);
 			if (!string.IsNullOrWhiteSpace(singleSkillExecutionDefinition.DeploymentRequiredTargetStatusId))
 			{
-				singleSkillExecutionDefinition.DeploymentRequiredTargetStatusKind = StatusRuntimeCompiler.ParseStatusKind(
+				singleSkillExecutionDefinition.DeploymentRequiredTargetStatusKind = StatusValueParser.ParseStatusKind(
 					singleSkillExecutionDefinition.DeploymentRequiredTargetStatusId);
 			}
 			if (!string.IsNullOrWhiteSpace(singleSkillExecutionDefinition.TargetStatusStackStatusId))
 			{
-				singleSkillExecutionDefinition.TargetStatusStackStatusKind = StatusRuntimeCompiler.ParseStatusKind(
+				singleSkillExecutionDefinition.TargetStatusStackStatusKind = StatusValueParser.ParseStatusKind(
 					singleSkillExecutionDefinition.TargetStatusStackStatusId);
 			}
 			if (!string.IsNullOrWhiteSpace(singleSkillExecutionDefinition.ConsumeTargetStatusId))
 			{
-				singleSkillExecutionDefinition.ConsumeTargetStatusKind = StatusRuntimeCompiler.ParseStatusKind(
+				singleSkillExecutionDefinition.ConsumeTargetStatusKind = StatusValueParser.ParseStatusKind(
 					singleSkillExecutionDefinition.ConsumeTargetStatusId);
 			}
 			if (!string.IsNullOrWhiteSpace(singleSkillExecutionDefinition.DeploymentRequiredTargetStatusId))
@@ -651,10 +651,9 @@ internal sealed partial class GameDataCatalogBuilder
 		{
 			return null;
 		}
-		StatusEffectKind kind = StatusRuntimeCompiler.ParseStatusKind(source.StatusEffectId);
-		StatusRuntimeData runtimeStatusData = statusDefinitions == null
-			? StatusRuntimeCompiler.Create(kind, source.StatusEffectLabel)
-			: StatusRuntimeCompiler.Create(kind, source.StatusEffectLabel, statusDefinitions);
+		StatusEffectKind kind = StatusValueParser.ParseStatusKind(source.StatusEffectId);
+		StatusRuntimeData runtimeStatusData =
+			GetStatusRuntimeData(kind, statusDefinitions, source.StatusEffectLabel);
 
 		if (source.StatusDurationSeconds > 0f)
 		{
@@ -715,16 +714,16 @@ internal sealed partial class GameDataCatalogBuilder
 		runtimeStatusData.SourceSkillId = source.SkillId;
 		if (!string.IsNullOrWhiteSpace(source.StatusTargetScope))
 		{
-			runtimeStatusData.TargetScope = StatusRuntimeCompiler.ParseTargetScope(source.StatusTargetScope);
+			runtimeStatusData.TargetScope = StatusValueParser.ParseTargetScope(source.StatusTargetScope);
 		}
 		if (!string.IsNullOrWhiteSpace(source.StatusMergePolicy))
 		{
-			runtimeStatusData.MergePolicy = StatusRuntimeCompiler.ParseMergePolicy(source.StatusMergePolicy);
+			runtimeStatusData.MergePolicy = StatusValueParser.ParseMergePolicy(source.StatusMergePolicy);
 		}
 		if (!string.IsNullOrWhiteSpace(source.ShieldAmountRefreshPolicy))
 		{
 			runtimeStatusData.ShieldAmountRefreshPolicy =
-				StatusRuntimeCompiler.ParseShieldRefreshRule(source.ShieldAmountRefreshPolicy);
+				StatusValueParser.ParseShieldRefreshRule(source.ShieldAmountRefreshPolicy);
 		}
 		if (source.StatusEffectPrefab != null)
 		{
@@ -766,7 +765,7 @@ internal sealed partial class GameDataCatalogBuilder
 	 */
 	private static SkillTargetSide MapBuffTarget(ActiveSkillBuildData source /* 변환할 스킬 정의 */)
 	{
-		StatusRuntimeCompiler.TryParseTargetScope(source.StatusTargetScope, out var scope);
+		StatusValueParser.TryParseTargetScope(source.StatusTargetScope, out var scope);
 		if (scope == StatusTargetScope.Self)
 		{
 			return SkillTargetSide.Self;

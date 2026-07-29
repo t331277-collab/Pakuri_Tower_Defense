@@ -12,6 +12,7 @@ namespace Pakuri.Data
         private readonly Dictionary<string, SkillDefinition> activeSkills = new Dictionary<string, SkillDefinition>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, PassiveSkillDefinition> passiveSkills = new Dictionary<string, PassiveSkillDefinition>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, StatusEffectDefinition> statusEffects = new Dictionary<string, StatusEffectDefinition>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<StatusEffectKind, StatusRuntimeData> statusRuntimeData = new Dictionary<StatusEffectKind, StatusRuntimeData>();
         private readonly Dictionary<string, SkillChoice> skillChoices = new Dictionary<string, SkillChoice>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, MonsterDefinition.RewardChoiceDefinition> rewardChoices = new Dictionary<string, MonsterDefinition.RewardChoiceDefinition>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, SkillDefinition[]> activeSkillsByMonster = new Dictionary<string, SkillDefinition[]>(StringComparer.OrdinalIgnoreCase);
@@ -30,6 +31,7 @@ namespace Pakuri.Data
             activeSkills.Clear();
             passiveSkills.Clear();
             statusEffects.Clear();
+            statusRuntimeData.Clear();
             skillChoices.Clear();
             rewardChoices.Clear();
             activeSkillsByMonster.Clear();
@@ -102,6 +104,11 @@ namespace Pakuri.Data
         public MonsterDefinition[] GetMonsters()
         {
             return Monsters;
+        }
+
+        public StatusRuntimeData GetStatusRuntimeData(StatusEffectKind kind)
+        {
+            return statusRuntimeData.TryGetValue(kind, out var status) ? status : null;
         }
 
         public MonsterDefinition GetMonster(string id)
@@ -217,6 +224,10 @@ namespace Pakuri.Data
                 if (status != null && !string.IsNullOrWhiteSpace(status.StatusEffectId))
                 {
                     statusEffects[status.StatusEffectId] = status;
+                    if (status.RuntimeData != null)
+                    {
+                        statusRuntimeData[status.Kind] = status.RuntimeData;
+                    }
                 }
             }
         }

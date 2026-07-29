@@ -2,21 +2,28 @@ using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.InGame;
-using UnityEngine;
 
 /*
- * 검증된 상태 ID와 스킬 설정을 전투에서 바로 사용하는 상태 데이터로 변환한다.
+ * CSV에 작성된 상태 관련 문자열을 강타입 값으로 변환한다.
  */
 namespace Pakuri.Data
 {
-    public static class StatusRuntimeCompiler
+    internal static class StatusValueParser
     {
+        public static bool TryParseStatusKind(string value, out StatusEffectKind kind)
+        {
+            kind = StatusEffectKind.None;
+            return !string.IsNullOrWhiteSpace(value)
+                && Enum.TryParse(value.Trim().Replace("-", string.Empty), true, out kind)
+                && kind != StatusEffectKind.None;
+        }
+
         /*
          * ParseStatusKind에 필요한 데이터를 읽어 변환한다.
          */
         public static StatusEffectKind ParseStatusKind(string value /* 처리할 값 */)
         {
-            if (StatusEffectLookup.TryParse(value, out var kind))
+            if (TryParseStatusKind(value, out var kind))
             {
                 return kind;
             }
@@ -37,87 +44,6 @@ namespace Pakuri.Data
             }
 
             return kinds;
-        }
-
-        /*
-         * Create에 필요한 결과를 만들어 반환한다.
-         */
-        public static StatusRuntimeData Create(StatusEffectKind kind /* 처리할 종류 */, string label /* 표시 문구 */)
-        {
-            return Create(StatusEffectLookup.GetDefinition(kind), kind, label);
-        }
-
-        public static StatusRuntimeData Create(
-            StatusEffectKind kind,
-            string label,
-            StatusEffectDefinition[] definitions)
-        {
-            if (definitions != null)
-            {
-                for (var i = 0; i < definitions.Length; i++)
-                {
-                    var definition = definitions[i];
-                    if (definition != null && definition.Kind == kind)
-                    {
-                        return Create(definition, kind, label);
-                    }
-                }
-            }
-
-            throw new KeyNotFoundException($"Status definition '{kind}' is not registered.");
-        }
-
-        private static StatusRuntimeData Create(
-            StatusEffectDefinition definition,
-            StatusEffectKind kind,
-            string label)
-        {
-            if (kind == StatusEffectKind.None)
-            {
-                throw new InvalidOperationException("StatusEffectKind.None cannot create runtime status data.");
-            }
-
-            var status = new StatusRuntimeData
-            {
-                Definition = definition,
-                Kind = kind,
-                StatusTag = definition.Id,
-                StatusName = string.IsNullOrWhiteSpace(label)
-                    ? definition.StatusEffectLabel
-                    : label,
-                Duration = definition.DefaultDurationSeconds,
-                MaxStacks = definition.MaxStacks,
-                IsStackable = definition.MaxStacks != 1,
-                BaseStackAmount = definition.BaseStackAmount,
-                Permanent = definition.IsPermanent && definition.DefaultDurationSeconds <= 0f,
-                CanMove = definition.CanMove,
-                CanAct = definition.CanAct,
-                CanUseSpecialSkill = definition.CanUseSpecialSkill,
-                MoveSpeedBonus = definition.MoveSpeedBonusPerStack,
-                DamageTakenBonus = definition.DamageTakenBonusPerStack,
-                CriticalDamageTakenBonus = definition.CriticalDamageTakenBonusPerStack,
-                CriticalResistanceBonus = definition.CriticalResistanceBonusPerStack,
-                ElementResistReduction = definition.ElementResistReductionPerStack,
-                ElementDamageTakenBonus = definition.ElementDamageTakenBonusPerStack,
-                StatusEffectPrefab = definition.StatusEffectPrefab
-            };
-            if (status.MoveSpeedBonus < 0f)
-            {
-                status.MovementSlowRate = -status.MoveSpeedBonus;
-            }
-
-            status.Modifiers.ActionSpeedBonus = definition.ActionSpeedBonusPerStack;
-            status.Modifiers.AttackPowerBonus = definition.AttackPowerBonusPerStack;
-            if (definition.HasAttribute)
-            {
-                status.HasElementModifierTarget = true;
-                status.ElementModifierTarget = definition.Attribute;
-                status.Modifiers.ResistReductionElement = definition.Attribute;
-            }
-
-            status.Modifiers.ResistReduction = status.ElementResistReduction;
-            status.IsControlEffect = !status.CanMove || !status.CanAct || !status.CanUseSpecialSkill;
-            return status;
         }
 
         /*
@@ -175,7 +101,7 @@ namespace Pakuri.Data
                         }
                     }
 
-                    if (!StatusEffectLookup.TryParse(statusId, out var kind))
+                    if (!TryParseStatusKind(statusId, out var kind))
                     {
                         groups = Array.Empty<StatusConditionGroup>();
                         return false;

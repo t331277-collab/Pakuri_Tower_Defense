@@ -355,7 +355,7 @@ namespace Pakuri.Data
                 return;
             }
 
-            if (!StatusEffectLookup.TryParse(statusKey, out var kind))
+            if (!StatusValueParser.TryParseStatusKind(statusKey, out var kind))
             {
                 errors.Add($"Skill '{skill.Id}' uses status_effect_id '{statusKey}' that cannot map to StatusEffectKind.");
                 return;
@@ -364,12 +364,12 @@ namespace Pakuri.Data
             if (statusDefinition.Classification == StatusEffectClassification.Buff)
             {
                 if (string.IsNullOrWhiteSpace(targetScope)
-                    && !StatusRuntimeCompiler.TryParseTargetScope(status.StatusTargetScope, out _))
+                    && !StatusValueParser.TryParseTargetScope(status.StatusTargetScope, out _))
                 {
                     errors.Add($"Skill '{skill.Id}' requires supported status_target_scope. Expected self or all_allies.");
                 }
 
-                if (!StatusRuntimeCompiler.TryParseMergePolicy(status.StatusMergePolicy, out _))
+                if (!StatusValueParser.TryParseMergePolicy(status.StatusMergePolicy, out _))
                 {
                     errors.Add($"Skill '{skill.Id}' requires supported status_merge_policy for buff status '{statusKey}'.");
                 }
@@ -377,7 +377,7 @@ namespace Pakuri.Data
 
             if (kind == StatusEffectKind.Shield)
             {
-                if (!StatusRuntimeCompiler.TryParseShieldRefreshRule(status.ShieldAmountRefreshPolicy, out _))
+                if (!StatusValueParser.TryParseShieldRefreshRule(status.ShieldAmountRefreshPolicy, out _))
                 {
                     errors.Add($"Skill '{skill.Id}' requires supported shield_amount_refresh_policy for shield status.");
                 }
@@ -842,7 +842,7 @@ namespace Pakuri.Data
                 return;
             }
 
-            if (!StatusRuntimeCompiler.TryParseConditionStatusExpression(rawValue, out _))
+            if (!StatusValueParser.TryParseConditionStatusExpression(rawValue, out _))
             {
                 errors.Add($"Skill trigger '{ownerId}' uses unsupported condition_status_id '{rawValue}'.");
                 return;
@@ -882,7 +882,7 @@ namespace Pakuri.Data
                 return;
             }
 
-            if (!StatusEffectLookup.TryParse(status.Id, out var kind) || kind == StatusEffectKind.None)
+            if (!StatusValueParser.TryParseStatusKind(status.Id, out var kind) || kind == StatusEffectKind.None)
             {
                 errors.Add($"Status effect '{status.Id}' is not supported by StatusEffectKind.");
             }
