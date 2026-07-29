@@ -32,7 +32,7 @@ Designer for this handoff. Code Builder for implementation after explicit role a
 
 ## Status
 
-설계 보완 및 구현 승인 완료. Code Builder Phase 5 legacy executor/operation 삭제 완료, Phase 6 검증 진행 예정.
+Code Builder Phase 1-6 구현 및 비-Play-Mode 검증 완료. 사용자 Play Mode 확인만 남음.
 
 ## Current inspected evidence
 
@@ -476,10 +476,13 @@ Rollback point: Phase 4 commit.
 
 ### Phase 6 — Full verification
 
-- static search, tests, solution build, Unity compilation, CSV validation 수행
-- Trigger family별 data parity 확인
-- 사용자 Play Mode 검증 항목 전달
-- Phase별 로컬 Git commit을 남긴다.
+- 완료: deleted symbol과 Trigger runtime Node search가 각각 0건이다.
+- 완료: runtime 소비자 authored-string parse search가 0건이다.
+- 완료: `Pakuri.sln` build는 기존 package reference warning 2개, error 0이다.
+- 완료: Unity Console error/warning 0, 전체 EditMode 3/3이다.
+- 완료: CSV source validation은 catalog 5 monsters / 8 stage-one / 8 stage-two enemies를 유지한다.
+- 완료: `Combat/Skills`는 24개에서 23개 C# script로 감소했다.
+- 완료: Phase 1-6 각 단계에 로컬 Git commit을 남겼다.
 
 ## Edge cases
 
@@ -559,8 +562,8 @@ Rollback point: Phase 4 commit.
 
 ## Next Actions
 
-- Phase 6에서 static search, 전체 build, Unity compile/EditMode, CSV/catalog 수량을 최종 검증한다.
-- 최종 script/line 순감소와 Phase별 commit 목록을 기록한다.
+- 사용자가 대표 Trigger Play Mode 항목을 확인한다.
+- Code Reviewer 검토가 필요하면 별도로 명시 승인한다.
 
 ## Evidence
 
@@ -578,6 +581,11 @@ Rollback point: Phase 4 commit.
 - `Pakuri/Assets/Tests/Editor/SkillCatalogRuntimeTests.cs`
 - `Pakuri/Assets/CSVdata/authoring/monster/skills/triggers/**/*.csv`
 - `Pakuri/Assets/CSVdata/authoring/monster/skills/choices/**/skill_graph_nodes_*.csv`
+- Final static search: deleted symbol 0, Trigger runtime Node 0, runtime consumer authored parse 0.
+- Final build/test: solution error 0, Unity Console error/warning 0, EditMode 3/3.
+- Final CSV validation: catalog 5/8/8.
+- Git C# diff from Phase 1 baseline: `Combat/Skills` 579 additions / 1,547 deletions = net -968; all `Assets/Scripts` 1,299 additions / 1,742 deletions = net -443.
+- `Combat/Skills` inventory: 24 -> 23 C# scripts; existing board line-count method 12,102 -> 11,230.
 
 ## History
 
@@ -592,3 +600,4 @@ Rollback point: Phase 4 commit.
 - 2026-07-29: Phase 3 routed final Definitions through existing family Executors with source snapshots, event-target predicates, lifecycle policy, dynamic damage snapshots, and depth-8 recursion protection.
 - 2026-07-29: Phase 4 removed Trigger runtime Node payloads and routed 22 typed commands through existing Zone/cooldown/reload/status APIs; focused EditMode tests passed 3/3.
 - 2026-07-29: Phase 5 deleted `SkillNodeExecutor`, its meta, Trigger-only runtime operations/mapping, and stale bridge fields; focused EditMode tests passed 3/3.
+- 2026-07-29: Phase 6 completed static, solution, Unity EditMode/Console, and CSV catalog verification with Code Builder work complete.

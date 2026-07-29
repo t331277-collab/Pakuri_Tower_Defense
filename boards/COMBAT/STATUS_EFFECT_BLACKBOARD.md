@@ -333,12 +333,12 @@ Designer / Code Builder refactoring handoff
 
 ### Status
 
-Phase 5 legacy executor and Trigger-only operation deletion complete. Phase 6 final verification pending.
+Code Builder Phase 1-6 complete. Non-Play-Mode verification passed; user Play Mode confirmation remains.
 
 ### Next Actions
 
-- Run final static search, runtime/editor builds, Unity compilation/EditMode tests, and catalog validation.
-- Record final Combat/Skills script count and C# net line reduction.
+- User verifies representative Trigger families, commands, delay/repeat/recast, and dynamic damage in Play Mode.
+- Run Code Reviewer only after separate explicit user approval.
 
 ### Evidence
 
@@ -358,6 +358,10 @@ Phase 5 legacy executor and Trigger-only operation deletion complete. Phase 6 fi
 - `SkillTriggerDefinition.Nodes` and `SkillTrigger` legacy Node execution are removed; `SkillCatalogRuntimeTests` remains 3/3 and Unity Console reports zero errors/warnings.
 - Phase 5 deletes `SkillNodeExecutor.cs/.meta`, Trigger-only public operation types, and their legacy mapping; active C# search returns zero deleted symbols.
 - Runtime/editor builds remain error 0 and Unity `SkillCatalogRuntimeTests` passes 3/3 after deletion.
+- Final static search returns zero deleted symbols, Trigger runtime Node payloads, and authored-string parsing in runtime consumers.
+- Solution build error 0, Unity Console error/warning 0, full EditMode 3/3, CSV catalog 5/8/8.
+- `Combat/Skills` is 23 C# scripts; Git diff is 579 additions / 1,547 deletions, net -968 lines.
+- Whole production `Assets/Scripts` Git diff is 1,299 additions / 1,742 deletions, net -443 lines.
 
 ### History
 
@@ -368,3 +372,4 @@ Phase 5 legacy executor and Trigger-only operation deletion complete. Phase 6 fi
 - 2026-07-29: Code Builder completed Phase 3 shared family execution, status-rule parity, EventTarget filtering, and dynamic event-value snapshots.
 - 2026-07-29: Code Builder completed Phase 4 typed command execution and removed Trigger runtime Node payload consumption.
 - 2026-07-29: Code Builder completed Phase 5 legacy executor, operation, mapping, and stale context cleanup.
+- 2026-07-29: Code Builder completed Phase 6 static/build/Unity/CSV verification and recorded final net deletion.

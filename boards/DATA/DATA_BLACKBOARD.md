@@ -275,12 +275,12 @@ Designer / Code Builder refactoring handoff
 
 ### Status
 
-Phase 5 Trigger-only runtime contract deletion complete. Phase 6 final verification pending.
+Code Builder Phase 1-6 complete. Final catalog and non-Play-Mode verification passed.
 
 ### Next Actions
 
-- Run final static searches, builds, Unity compilation/EditMode tests, and catalog count verification.
-- Record the final script count and C# net line reduction.
+- User verifies representative Trigger behavior in Play Mode.
+- Run Code Reviewer only after separate explicit user approval.
 
 ### Evidence
 
@@ -298,6 +298,9 @@ Phase 5 Trigger-only runtime contract deletion complete. Phase 6 final verificat
 - The generated 22 commands are verified as recast 1, cooldown 14, reload 6, and status-duration 1; Unity EditMode tests pass 3/3.
 - Phase 5 deletes the runtime Node executor and Trigger-only public operation/mapping contracts; status mutation assembly remains private to Generation.
 - Runtime/editor builds remain error 0 and final-outcome catalog tests pass 3/3 after deletion.
+- Final static searches return zero deleted symbol, Trigger runtime Node, and runtime consumer authored-parse hits.
+- Solution build error 0, Unity Console error/warning 0, full EditMode 3/3, CSV validation catalog 5/8/8.
+- Git C# diff from the Phase 1 baseline is net -968 lines in `Combat/Skills` and net -443 lines across production `Assets/Scripts`.
 
 ### History
 
@@ -308,3 +311,4 @@ Phase 5 Trigger-only runtime contract deletion complete. Phase 6 final verificat
 - 2026-07-29: Code Builder completed Phase 3 runtime consumption with source snapshot, lifecycle, target, and dynamic-value policies.
 - 2026-07-29: Code Builder completed Phase 4 typed command consumption and removed the runtime Trigger Node payload.
 - 2026-07-29: Code Builder completed Phase 5 Trigger executor/operation deletion and confined remaining authored mutation assembly to Generation.
+- 2026-07-29: Code Builder completed Phase 6 final static/build/Unity/CSV verification.
