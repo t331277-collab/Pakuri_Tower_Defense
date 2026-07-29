@@ -910,5 +910,11 @@ namespace Pakuri.InGame
         /* 실행 값 하나를 SkillNode로 감싼다. */
         public static SkillNode FromOperation<T>(T op) where T : struct => new SkillNode(op);
 
+        /* 실행 값과 적용 대상 스킬을 SkillNode 하나로 만든다. */
+        public static SkillNode FromOperation<T>(T op, string targetSkillId) where T : struct
+        {
+            return new SkillNode(op) { TargetSkillId = targetSkillId ?? string.Empty };
+        }
+
     }
 }

@@ -54,139 +54,6 @@ namespace Pakuri.Data
         Passive
     }
 
-    /*
-     * 액티브 스킬의 실행 종류, 피해, 투사체, 상태, 성장 선택지를 보관한다.
-     */
-    [Serializable]
-    public class SkillSourceDefinition
-    {
-        // 스킬 식별과 표시 정보
-        public string SkillId;
-        public string DisplayName;
-        public SkillSlot Slot;
-        public SkillRuntimeKind RuntimeKind;
-        public SkillImplementationState ImplementationState = SkillImplementationState.DataOnly;
-        public bool IsDefaultLearned;
-        public Sprite SkillIcon;
-        public GameObject SkillEffectPrefab;
-        public RuntimeSkillVisualSpec RuntimeVisual = new RuntimeSkillVisualSpec();
-        public RuntimeSkillVisualSpec ImpactRuntimeVisual = new RuntimeSkillVisualSpec();
-        [TextArea(2, 5)] public string DescriptionText;
-        // 기본 피해와 대상 범위
-        public DamageAttribute Attribute;
-        public float BaseDamage;
-        public float AttackPowerCoefficient;
-        public float SpellPowerCoefficient;
-        public float Radius;
-        public float LineLength;
-        public int CastRepeatCount = 1;
-        public float CastRepeatIntervalSeconds;
-        public float CastRange;
-        public float EffectRadius;
-        public string TargetScope;
-        // 특수 실행 프로필과 전용 수치
-        public string ExecutionProfile;
-        public float FlatValue;
-        public float ProjectileLifetimeSeconds;
-        public float IncomingDamageMultiplier = 1f;
-        public float MoveSpeedMultiplier = 1f;
-        public float OutgoingDamageMultiplier = 1f;
-        public float ChainDamageMultiplier;
-        public float ChainDelaySeconds;
-        public float ChainRadius;
-        public bool ExcludePrimaryTarget;
-        public float TargetMaxHealthRatio;
-        public float ChargeRampSeconds = 3f;
-        public float ChargeMoveSpeedMultiplier = 2.5f;
-        public float KnockbackDistance;
-        public float DamageDelaySeconds;
-        public float ExecuteHealthRatioThreshold;
-        public bool RequireExecuteThresholdToCast;
-        public float ExecuteDamageMultiplier = 1f;
-        public float KillCooldownRefundRatio;
-        public float BossDamageMultiplier = 1f;
-        // 명중 대상 수와 대상 선택
-        public string HitTargetCount;
-        public bool UsePrefabHitbox;
-        public string TargetSelection;
-        public string TargetSelectionStatusId;
-        public int TargetSelectionStatusMinStacks;
-        // 재사용 대기시간과 투사체 동작
-        public float CooldownSeconds;
-        public float ActiveDurationSeconds;
-        public int MagazineCapacity;
-        public float ReloadSeconds;
-        public float ShotIntervalSeconds;
-        public float BurstIntervalSeconds;
-        public int ProjectileBurstCount;
-        public int BurstDamageProjectileIndex;
-        public float BurstDamageMultiplier = 1f;
-        public float ProjectileSpeed;
-        public int PierceCount;
-        public bool CriticalAllowed = true;
-        // 대상 상태 중첩을 이용하는 공격 설정
-        public string DeploymentRequiredTargetStatusId;
-        public int DeploymentRequiredTargetStatusMinStacks;
-        public string TargetStatusStackStatusId;
-        public int TargetStatusStackMaxStacks;
-        public float TargetStatusStackBaseDamage;
-        public float TargetStatusStackAttackPowerCoefficient;
-        public float TargetStatusStackSpellPowerCoefficient;
-        public string ConsumeTargetStatusId;
-        public float ConsumeTargetStatusRatio;
-        public int ConsumeTargetStatusStacks;
-        // 스킬이 적용할 상태와 능력치 변경값
-        public string StatusEffectId;
-        public float StatusChance;
-        public string StatusEffectLabel;
-        public GameObject StatusEffectPrefab;
-        public float StatusDurationSeconds;
-        public int StatusMaxStacks;
-        public int StatusStackAmount;
-        public string StatusTargetScope;
-        public string StatusMergePolicy;
-        public string ShieldAmountRefreshPolicy;
-        public float StatusActionSpeedBonus;
-        public float StatusMoveSpeedBonus;
-        public float StatusAttackPowerBonus;
-        public float StatusSpellPowerBonus;
-        public float StatusDamageBonusRate;
-        public bool StatusPermanent;
-        public float StatusDamageTakenBonus;
-        public float StatusCriticalDamageTakenBonus;
-        public float StatusCriticalDamageBonus;
-        public float StatusAilmentResistanceBonus;
-        public float StatusCriticalResistanceBonus;
-        public float StatusElementResistReduction;
-        public float StatusFlatElementResistReduction;
-        public float StatusElementDamageTakenBonus;
-        // 성장 선택지와 추가 효과 그래프
-        [TextArea(2, 4)] public string Summary;
-        public SkillChoiceDefinition[] EnhancementChoices = Array.Empty<SkillChoiceDefinition>();
-        public SkillChoiceDefinition[] MasterSkillChoices = Array.Empty<SkillChoiceDefinition>();
-        public SkillNodeDefinition[] NormalizedNodes = Array.Empty<SkillNodeDefinition>();
-    }
-
-    /*
-     * 패시브 스킬의 요구 슬롯, 성장 선택지, 효과 그래프를 보관한다.
-     */
-    [Serializable]
-    public class PassiveDefinition
-    {
-        public string PassiveId;
-        public string DisplayName;
-        public SkillSlot Slot;
-        public SkillSlot RequiredActiveSlot;
-        public bool IsAvailableWithoutActiveRequirement;
-        public SkillImplementationState ImplementationState = SkillImplementationState.DataOnly;
-        public Sprite SkillIcon;
-        public GameObject SkillEffectPrefab;
-        [TextArea(2, 5)] public string DescriptionText;
-        [TextArea(2, 4)] public string Summary;
-        public SkillChoiceDefinition[] BaseModifierChoices = Array.Empty<SkillChoiceDefinition>();
-        public SkillChoiceDefinition[] EnhancementChoices = Array.Empty<SkillChoiceDefinition>();
-        public SkillNodeDefinition[] NormalizedNodes = Array.Empty<SkillNodeDefinition>();
-    }
 }
 
 /*
@@ -405,7 +272,7 @@ namespace Pakuri.InGame
         public SkillChoice[] EnhancementChoices = Array.Empty<SkillChoice>();
         public SkillChoice[] MasterChoices = Array.Empty<SkillChoice>();
         public SkillTriggerDefinition[] SkillTriggers = Array.Empty<SkillTriggerDefinition>();
-        public SkillNode[] NormalizedNodes = Array.Empty<SkillNode>();
+        public SkillNode[] Nodes = Array.Empty<SkillNode>();
     }
 
     /*
@@ -621,23 +488,6 @@ namespace Pakuri.Data
         PassiveBase
     }
 
-    /*
-     * 스킬 성장 선택지가 변경할 전투 수치와 조건을 보관한다.
-     */
-    [Serializable]
-    public class SkillChoiceDefinition
-    {
-        public string ChoiceId;
-        public string MonsterId;
-        public string SkillId;
-        public string TargetSkillId;
-        public SkillChoiceGroup ChoiceGroup;
-        public string Title;
-        public Sprite SkillIcon;
-        public GameObject SkillEffectPrefab;
-        [TextArea(2, 5)] public string DescriptionText;
-        public SkillNodeDefinition[] NormalizedNodes = Array.Empty<SkillNodeDefinition>();
-    }
 }
 
 
@@ -726,61 +576,27 @@ namespace Pakuri.Data
         public string MonsterId;
         public string SourceSkillId;
         public SkillTriggerEvent TriggerEvent;
-        public string RequiresActiveChoiceId;
         public string[] RequiredActiveChoiceIds = Array.Empty<string>();
-        public string ExcludesActiveChoiceId;
         public string[] ExcludedActiveChoiceIds = Array.Empty<string>();
-        public string RequiredSourceStatusId;
         public StatusEffectKind RequiredSourceStatusKind;
         public int RequiredSourceStatusMinStacks;
-        public string ConditionStatusId;
         public StatusConditionGroup[] ConditionStatuses = Array.Empty<StatusConditionGroup>();
-        public string ConditionStatusSourceSkillId;
         public string[] ConditionStatusSourceSkillIds = Array.Empty<string>();
-        public string TriggerAttribute;
         public DamageAttribute[] TriggerAttributes = Array.Empty<DamageAttribute>();
-        public string EventSkillId;
         public string[] EventSkillIds = Array.Empty<string>();
-        public string EventSkillRuntimeKinds;
         public SkillRuntimeKindCondition[] EventSkillRuntimeKindValues = Array.Empty<SkillRuntimeKindCondition>();
         public float ProcChance = 1f;
         public float InternalCooldownSeconds;
         public float TriggerDelaySeconds;
         public int TriggerEveryCount;
-        public string EventSourceScope;
         public SkillTriggerEventSourceScope EventSourceScopeValue;
         public int SortOrder;
         public int RepeatCount = 1;
         public float RepeatIntervalSeconds;
         public bool RequireEventExecute;
-        public SkillNodeDefinition[] NormalizedNodes = Array.Empty<SkillNodeDefinition>();
-        [NonSerialized] public Pakuri.InGame.SkillNode[] Nodes = Array.Empty<Pakuri.InGame.SkillNode>();
+        public Pakuri.InGame.SkillNode[] Nodes = Array.Empty<Pakuri.InGame.SkillNode>();
     }
 
-    /*
-     * 그래프 노드에 전달할 매개변수 하나를 보관한다.
-     */
-    [Serializable]
-    public class SkillNodeParamDefinition
-    {
-        public string ParamKey;
-        public string Value;
-    }
-
-    /*
-     * 스킬·선택지·Trigger가 소유하는 실행 그래프 노드를 보관한다.
-     */
-    [Serializable]
-    public class SkillNodeDefinition
-    {
-        public string OwnerKind;
-        public string TargetSkillId;
-        public string HandlerId;
-        public bool EnabledByDefault;
-        public SkillNodeParamDefinition[] Params = Array.Empty<SkillNodeParamDefinition>();
-        public GameObject ResolvedPrefab;
-        public RuntimeSkillVisualSpec ResolvedRuntimeVisual;
-    }
 }
 
 

@@ -35,7 +35,7 @@ Designer for this handoff. Code Builder for implementation after explicit role a
 
 ## Status
 
-Code Builder 구현 진행 중. Phase 1-5 완료.
+Code Builder 구현과 비-Play-Mode 검증 완료. Phase 1-6 완료.
 
 ## Implementation log
 
@@ -43,7 +43,7 @@ Code Builder 구현 진행 중. Phase 1-5 완료.
 
 - 기준 커밋: `565eed5`
 - 시작 작업 트리: clean
-- `Combat/Skills`: C# 27개, 13,997줄
+- `Combat/Skills`: C# 27개, 15,387줄
 - 현재 `Combat/Skills`의 모든 script/folder `.meta` GUID를 명령 출력으로 수집했다.
 - `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore -v:minimal`: 오류 0, 기존 assembly-version 경고 2개
 - `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore -v:minimal`: 오류 0, 기존 assembly-version 경고 2개
@@ -106,6 +106,20 @@ Code Builder 구현 진행 중. Phase 1-5 완료.
 - 이동 스크립트 18개의 이전/현재 `.meta` GUID를 비교했으며 불일치 0건이다.
 - 제거 symbol 검색 결과 `SkillDefinitionCompiler|SkillChoiceCompiler|SkillNodeMapper|CompileActive|CompilePassive|CompileTriggers` 0건이다.
 - runtime/editor build 오류 0, Unity project script 오류 0, CSV validation 5/8/8을 확인했다.
+
+### Phase 6 — Dead contract deletion and full verification
+
+- `SkillSourceDefinition`, `PassiveDefinition`, `SkillChoiceDefinition`, `SkillNodeDefinition`, `SkillNodeParamDefinition`을 final Combat 계약에서 삭제했다.
+- Generation 내부에서만 쓰는 중간 값은 `ActiveSkillBuildData`, `PassiveSkillBuildData`, `SkillChoiceBuildData`, `SkillNodeBuildData`, `SkillNodeParamBuildData`로 한정했다.
+- `NormalizedNodes`와 Trigger/status의 raw enum·목록·조건 문자열 필드를 삭제하고 final `Nodes`와 강타입 배열만 남겼다.
+- 제거 대상 14개 symbol 검색, runtime `StatusRuntimeCompiler.Parse*`/`Split`/`Enum.Parse` 검색, Generation 밖 final Definition 대입 검색 결과가 모두 0이다.
+- 여섯 graph CSV 868행을 다시 집계했으며 multi-target owner는 `vega-c-trait-5`, `vega-c-master-1` 두 개다.
+- EditMode 테스트 2개가 Choice target 필터, catalog 동일 객체 조회, rebuild 시 final Definition 참조 재사용을 검증했고 2/2 통과했다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal`: 오류 0, 기존 assembly-version 경고 2개
+- Unity script compile/Console project 오류 0, CSV validation 5/8/8을 확인했다.
+- 이동된 18개 final-tree script와 Generation으로 흡수된 2개 script의 이전/현재 `.meta` GUID를 비교했으며 불일치 0건이다.
+- `Combat/Skills`는 27개/15,387줄에서 24개/12,102줄로 줄었다. 순감소는 C# 3개와 3,285줄이다.
+- 전체 작업 C# diff는 909줄 추가, 1,069줄 삭제로 순감소 160줄이다.
 
 ## Core decision
 
@@ -826,13 +840,11 @@ Rollback point: file move 전 GUID 목록 기록.
 
 ## Next Actions
 
-- 사용자가 Code Builder 롤을 명시한다.
-- Code Builder가 이 문서를 읽고 현재 코드와 dirty working tree를 다시 확인한다.
-- Phase 1부터 순서대로 구현한다.
+- 사용자가 Unity Play Mode에서 representative active, passive, enhancement, master, Trigger, enemy skill 동작을 확인한다.
 
 ## Evidence
 
-근거는 위 `Current inspected evidence`, 전체 script tree, current responsibility table, 실제 symbol 검색 결과다.
+근거는 위 구현 로그, 전체 script tree, 실제 symbol 검색, C# build, Unity EditMode/Console/CSV validation 결과다.
 
 ### Evidence commands
 
@@ -850,3 +862,4 @@ rg -n "class SkillExecutionContext|class SkillExecution$|class SkillUseState|cla
 - 2026-07-29: Designer inspected all 27 current `Combat/Skills` C# scripts, Loading builder/catalog flow, runtime compiler calls, Run/UI/Status consumers, and multi-target Choice data.
 - 2026-07-29: Designer created this Code Builder handoff without changing C#, CSV, prefab, scene, or asset data.
 - 2026-07-29: Designer expanded the final typed-data contract after code inspection proved that `SkillNodeExecutor` and `SkillTrigger` still parse authored scope, policy, condition, status, runtime-kind, Choice, attribute, event-skill, and event-source strings during execution.
+- 2026-07-29: Code Builder completed Phases 1-6, removed the duplicate/source contracts and runtime authored-string parsing, and finished all available non-Play-Mode verification.

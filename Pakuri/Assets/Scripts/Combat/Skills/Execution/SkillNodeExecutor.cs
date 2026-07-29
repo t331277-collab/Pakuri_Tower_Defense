@@ -983,9 +983,7 @@ namespace Pakuri.InGame
                         statusData.ConditionalStatusChanceBonus += mutation.Amount;
                         break;
                     case StatusMutationKind.RuntimeKindFilter:
-                        statusData.ConditionalIncomingSkillRuntimeKinds = string.Empty;
                         statusData.ConditionalIncomingSkillRuntimeKindValues = mutation.IncomingRuntimeKinds;
-                        statusData.ConditionalOutgoingSkillRuntimeKinds = string.Empty;
                         statusData.ConditionalOutgoingSkillRuntimeKindValues = mutation.OutgoingRuntimeKinds;
                         break;
                     case StatusMutationKind.OutgoingAdditionalDamage:

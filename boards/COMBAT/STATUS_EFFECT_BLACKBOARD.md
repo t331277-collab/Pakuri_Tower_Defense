@@ -260,11 +260,11 @@ Designer / Code Builder refactoring handoff
 
 ### Status
 
-Code Builder implementation in progress. Phases 1-5 complete.
+Code Builder implementation and available non-Play-Mode verification complete. Phases 1-6 complete.
 
 ### Next Actions
 
-- Code Builder implements Phase 6 dead-contract deletion and full regression verification.
+- User verifies representative active, passive, enhancement, master, Trigger, and enemy skill behavior in Unity Play Mode.
 
 ### Evidence
 
@@ -275,7 +275,7 @@ Code Builder implementation in progress. Phases 1-5 complete.
 - `SkillTrigger` splits authored Choice, attribute, and event-skill lists during trigger checks and compares event source scope as a string.
 - Current graph authoring has two Choice owners targeting more than one skill.
 - Full current tree, all script responsibilities, final 24-script tree, data contracts, migration, risks, and verification are recorded in the handoff.
-- Phase 1 started from clean commit `565eed5`; current `Combat/Skills` contains 27 C# files and 13,997 lines.
+- Phase 1 started from clean commit `565eed5`; current `Combat/Skills` contains 27 C# files and 15,387 lines.
 - `Assembly-CSharp.csproj` and `Assembly-CSharp-Editor.csproj` baseline builds completed with zero errors.
 - Unity CSV validation loaded 5 monsters, 8 stage-one enemies, and 8 stage-two enemies; the EditMode test job succeeded.
 - Phase 2 final types now store typed status scope/policy, status conditions, status lists, RuntimeKind filters, Trigger lists/scope, Choice Nodes, and Node target skill IDs.
@@ -289,6 +289,10 @@ Code Builder implementation in progress. Phases 1-5 complete.
 - Phase 5 removed all three compiler/mapper symbols and `CompileTriggers`; Generation owns the integrated Builder logic.
 - `Combat/Skills` now contains the specified 24 scripts under Definitions, Runtime, Execution, Delivery, and Reactions.
 - All 18 moved script GUID pairs matched; runtime/editor builds and Unity CSV validation passed.
+- Phase 6 removed all Source/Definition duplicate contracts, `NormalizedNodes`, and raw final Node/Trigger/status authored-string fields.
+- Removed-symbol, runtime parsing, and Generation-outside Definition-mutation searches all returned zero.
+- EditMode target-filter/reference-reuse tests passed 2/2; solution build and Unity script compilation completed with zero errors; CSV validation retained 5/8/8.
+- `Combat/Skills` changed from 27 scripts/15,387 lines to 24 scripts/12,102 lines: net reduction 3 scripts and 3,285 lines.
 
 ### History
 
@@ -300,3 +304,4 @@ Code Builder implementation in progress. Phases 1-5 complete.
 - 2026-07-29: Code Builder completed Phase 3 final catalog generation and direct final-type indexing.
 - 2026-07-29: Code Builder completed Phase 4 final Choice/Trigger/Status direct consumption and removed 239 net C# lines.
 - 2026-07-29: Code Builder completed Phase 5 compiler deletion and responsibility-folder migration.
+- 2026-07-29: Code Builder completed Phase 6 dead-contract deletion and full non-Play-Mode regression verification.

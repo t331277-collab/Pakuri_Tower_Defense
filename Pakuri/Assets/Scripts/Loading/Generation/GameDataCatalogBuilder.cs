@@ -255,10 +255,10 @@ namespace Pakuri.Data
                 statusDefinitions));
         }
 
-        private SkillSourceDefinition BuildEnemyAssignedSkillDefinition(EnemyBaseSkillRow source , SkillSlot runtimeSlot )
+        private ActiveSkillBuildData BuildEnemyAssignedSkillDefinition(EnemyBaseSkillRow source , SkillSlot runtimeSlot )
         {
             var row = source.Skill;
-            var definition = new SkillSourceDefinition
+            var definition = new ActiveSkillBuildData
             {
                 SkillId = row.Id,
                 DisplayName = row.DisplayName,
@@ -304,7 +304,7 @@ namespace Pakuri.Data
             return definition;
         }
 
-        private void ApplyEnemyExecutionProfile(SkillSourceDefinition definition )
+        private void ApplyEnemyExecutionProfile(ActiveSkillBuildData definition )
         {
             if (definition == null)
             {
@@ -392,7 +392,7 @@ namespace Pakuri.Data
                 var row = rows[i];
                 var normalizedNodes = new[]
                 {
-                    new SkillNodeDefinition
+                    new SkillNodeBuildData
                     {
                         OwnerKind = SkillNodeOwnerKind.Trigger.ToString(),
                         TargetSkillId = row.SourceSkillId,
@@ -400,12 +400,12 @@ namespace Pakuri.Data
                         EnabledByDefault = true,
                         Params = new[]
                         {
-                            new SkillNodeParamDefinition
+                            new SkillNodeParamBuildData
                             {
                                 ParamKey = "skill_id",
                                 Value = row.TriggeredSkillId
                             },
-                            new SkillNodeParamDefinition
+                            new SkillNodeParamBuildData
                             {
                                 ParamKey = "damage_multiplier",
                                 Value = "1"
@@ -422,8 +422,7 @@ namespace Pakuri.Data
                     SortOrder = row.SortOrder,
                     ProcChance = 1f,
                     EventSourceScopeValue = SkillTriggerEventSourceScope.Any,
-                    NormalizedNodes = normalizedNodes,
-                    Nodes = MapSkillNodeDefinitions(normalizedNodes)
+                    Nodes = MapSkillNodes(normalizedNodes)
                 };
             }
 
@@ -505,7 +504,7 @@ namespace Pakuri.Data
             for (var i = 0; i < skills.Count; i++)
             {
                 var skill = skills[i];
-                var definition = new SkillSourceDefinition
+                var definition = new ActiveSkillBuildData
                 {
                     SkillId = skill.Id,
                     DisplayName = skill.DisplayName,
@@ -563,7 +562,7 @@ namespace Pakuri.Data
                     Summary = skill.Summary,
                     EnhancementChoices = BuildSkillChoices(model, skill.Id, SkillChoiceGroup.ActiveEnhancement),
                     MasterSkillChoices = BuildSkillChoices(model, skill.Id, SkillChoiceGroup.ActiveMaster),
-                    NormalizedNodes = BuildSkillNodeDefinitions(model, SkillNodeOwnerKind.Skill, skill.Id, skill.Id)
+                    Nodes = BuildSkillNodes(model, SkillNodeOwnerKind.Skill, skill.Id, skill.Id)
                 };
 
                 ApplyStatusPayload(definition, skill.Status);
@@ -633,7 +632,7 @@ namespace Pakuri.Data
             for (var i = 0; i < triggers.Count; i++)
             {
                 var trigger = triggers[i];
-                var normalizedNodes = BuildSkillNodeDefinitions(
+                var normalizedNodes = BuildSkillNodes(
                     model,
                     SkillNodeOwnerKind.Trigger,
                     trigger.Id,
@@ -644,24 +643,16 @@ namespace Pakuri.Data
                     MonsterId = trigger.MonsterId,
                     SourceSkillId = trigger.SourceSkillId,
                     TriggerEvent = trigger.TriggerEvent,
-                    RequiresActiveChoiceId = trigger.RequiresActiveChoiceId,
                     RequiredActiveChoiceIds = StatusRuntimeCompiler.ParseIdList(trigger.RequiresActiveChoiceId),
-                    ExcludesActiveChoiceId = trigger.ExcludesActiveChoiceId,
                     ExcludedActiveChoiceIds = StatusRuntimeCompiler.ParseIdList(trigger.ExcludesActiveChoiceId),
-                    RequiredSourceStatusId = trigger.RequiredSourceStatusId,
                     RequiredSourceStatusKind = string.IsNullOrWhiteSpace(trigger.RequiredSourceStatusId)
                         ? StatusEffectKind.None
                         : StatusRuntimeCompiler.ParseStatusKind(trigger.RequiredSourceStatusId),
                     RequiredSourceStatusMinStacks = trigger.RequiredSourceStatusMinStacks,
-                    ConditionStatusId = trigger.ConditionStatusId,
                     ConditionStatuses = StatusRuntimeCompiler.ParseConditionStatusExpression(trigger.ConditionStatusId),
-                    ConditionStatusSourceSkillId = trigger.ConditionStatusSourceSkillId,
                     ConditionStatusSourceSkillIds = StatusRuntimeCompiler.ParseIdList(trigger.ConditionStatusSourceSkillId),
-                    TriggerAttribute = trigger.TriggerAttribute,
                     TriggerAttributes = StatusRuntimeCompiler.ParseDamageAttributes(trigger.TriggerAttribute),
-                    EventSkillId = trigger.EventSkillId,
                     EventSkillIds = StatusRuntimeCompiler.ParseIdList(trigger.EventSkillId),
-                    EventSkillRuntimeKinds = trigger.EventSkillRuntimeKinds,
                     EventSkillRuntimeKindValues = StatusRuntimeCompiler.ParseSkillRuntimeKindConditions(
                         trigger.EventSkillRuntimeKinds),
                     ProcChance = trigger.ProcChance,
@@ -671,11 +662,9 @@ namespace Pakuri.Data
                     RepeatIntervalSeconds = trigger.RepeatIntervalSeconds,
                     TriggerDelaySeconds = trigger.TriggerDelaySeconds,
                     TriggerEveryCount = trigger.TriggerEveryCount,
-                    EventSourceScope = trigger.EventSourceScope,
                     EventSourceScopeValue = StatusRuntimeCompiler.ParseEventSourceScope(trigger.EventSourceScope),
                     RequireEventExecute = trigger.RequireEventExecute,
-                    NormalizedNodes = normalizedNodes,
-                    Nodes = MapSkillNodeDefinitions(normalizedNodes)
+                    Nodes = MapSkillNodes(normalizedNodes)
                 };
             }
 
@@ -697,7 +686,7 @@ namespace Pakuri.Data
             for (var i = 0; i < skills.Count; i++)
             {
                 var skill = skills[i];
-                var definition = new PassiveDefinition
+                var definition = new PassiveSkillBuildData
                 {
                     PassiveId = skill.Id,
                     DisplayName = skill.DisplayName,
@@ -710,7 +699,7 @@ namespace Pakuri.Data
                     Summary = skill.Summary,
                     BaseModifierChoices = BuildSkillChoices(model, skill.Id, SkillChoiceGroup.PassiveBase),
                     EnhancementChoices = BuildSkillChoices(model, skill.Id, SkillChoiceGroup.PassiveEnhancement),
-                    NormalizedNodes = BuildSkillNodeDefinitions(model, SkillNodeOwnerKind.Passive, skill.Id, skill.Id)
+                    Nodes = BuildSkillNodes(model, SkillNodeOwnerKind.Passive, skill.Id, skill.Id)
                 };
                 definitions[i] = BuildPassiveDefinition(monster, definition);
             }
@@ -718,7 +707,7 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        private SkillChoiceDefinition[] BuildSkillChoices(SourceModel model , string skillId , SkillChoiceGroup choiceGroup )
+        private SkillChoiceBuildData[] BuildSkillChoices(SourceModel model , string skillId , SkillChoiceGroup choiceGroup )
         {
             var choices = FilterAndSort(
                 model.SkillChoices.Values,
@@ -726,7 +715,7 @@ namespace Pakuri.Data
                     && string.Equals(choice.SkillId, skillId, StringComparison.OrdinalIgnoreCase),
                 (left, right) => left.SortOrder.CompareTo(right.SortOrder));
 
-            var definitions = new SkillChoiceDefinition[choices.Count];
+            var definitions = new SkillChoiceBuildData[choices.Count];
             for (var i = 0; i < choices.Count; i++)
             {
                 var choice = choices[i];
@@ -735,13 +724,13 @@ namespace Pakuri.Data
                 {
                     targetSkillId = choice.SkillId;
                 }
-                var normalizedNodes = BuildSkillNodeDefinitions(
+                var normalizedNodes = BuildSkillNodes(
                     model,
                     SkillNodeOwnerKind.Choice,
                     choice.Id,
                     targetSkillId);
 
-                definitions[i] = new SkillChoiceDefinition
+                definitions[i] = new SkillChoiceBuildData
                 {
                     ChoiceId = choice.Id,
                     MonsterId = choice.MonsterId,
@@ -755,7 +744,7 @@ namespace Pakuri.Data
                         "EffectVisual",
                         "skill_effect_prefab_path")),
                     DescriptionText = choice.DescriptionText,
-                    NormalizedNodes = normalizedNodes
+                    Nodes = normalizedNodes
                 };
             }
 
@@ -763,7 +752,7 @@ namespace Pakuri.Data
         }
 
         private string GetChoiceNodeParam(
-            SkillNodeDefinition[] nodes ,
+            SkillNodeBuildData[] nodes ,
             string handlerId ,
             string paramKey )
         {
@@ -802,7 +791,7 @@ namespace Pakuri.Data
             return string.Empty;
         }
 
-        private SkillNodeDefinition[] BuildSkillNodeDefinitions(
+        private SkillNodeBuildData[] BuildSkillNodes(
             SourceModel model ,
             SkillNodeOwnerKind ownerKind ,
             string ownerId ,
@@ -816,10 +805,10 @@ namespace Pakuri.Data
 
             if (nodes.Count == 0)
             {
-                return Array.Empty<SkillNodeDefinition>();
+                return Array.Empty<SkillNodeBuildData>();
             }
 
-            var definitions = new SkillNodeDefinition[nodes.Count];
+            var definitions = new SkillNodeBuildData[nodes.Count];
             for (var i = 0; i < nodes.Count; i++)
             {
                 var node = nodes[i];
@@ -829,13 +818,13 @@ namespace Pakuri.Data
                     targetSkillId = defaultTargetSkillId;
                 }
 
-                var definition = new SkillNodeDefinition
+                var definition = new SkillNodeBuildData
                 {
                     OwnerKind = node.OwnerKind.ToString(),
                     TargetSkillId = targetSkillId,
                     HandlerId = node.HandlerId,
                     EnabledByDefault = node.EnabledByDefault,
-                    Params = BuildSkillNodeParamDefinitions(model, node.Id)
+                    Params = BuildSkillNodeParams(model, node.Id)
                 };
 
                 if (string.Equals(node.HandlerId, "EffectVisual", StringComparison.OrdinalIgnoreCase))
@@ -866,7 +855,7 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        private SkillNodeParamDefinition[] BuildSkillNodeParamDefinitions(SourceModel model , string nodeId )
+        private SkillNodeParamBuildData[] BuildSkillNodeParams(SourceModel model , string nodeId )
         {
             var nodeParams = FilterAndSort(
                 model.SkillNodeParams,
@@ -875,14 +864,14 @@ namespace Pakuri.Data
 
             if (nodeParams.Count == 0)
             {
-                return Array.Empty<SkillNodeParamDefinition>();
+                return Array.Empty<SkillNodeParamBuildData>();
             }
 
-            var definitions = new SkillNodeParamDefinition[nodeParams.Count];
+            var definitions = new SkillNodeParamBuildData[nodeParams.Count];
             for (var i = 0; i < nodeParams.Count; i++)
             {
                 var param = nodeParams[i];
-                definitions[i] = new SkillNodeParamDefinition
+                definitions[i] = new SkillNodeParamBuildData
                 {
                     ParamKey = param.ParamKey,
                     Value = param.Value
@@ -910,7 +899,7 @@ namespace Pakuri.Data
             return filtered;
         }
 
-        private void ApplyStatusPayload(SkillSourceDefinition definition , StatusPayloadRow payload )
+        private void ApplyStatusPayload(ActiveSkillBuildData definition , StatusPayloadRow payload )
         {
             if (definition == null || payload == null)
             {

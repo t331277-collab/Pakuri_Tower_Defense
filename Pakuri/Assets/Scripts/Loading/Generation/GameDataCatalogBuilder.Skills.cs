@@ -11,11 +11,141 @@ using UnityEngine;
 namespace Pakuri.Data
 {
 
+internal sealed class ActiveSkillBuildData
+{
+	public string SkillId;
+	public string DisplayName;
+	public SkillSlot Slot;
+	public SkillRuntimeKind RuntimeKind;
+	public SkillImplementationState ImplementationState = SkillImplementationState.DataOnly;
+	public bool IsDefaultLearned;
+	public Sprite SkillIcon;
+	public GameObject SkillEffectPrefab;
+	public RuntimeSkillVisualSpec RuntimeVisual = new RuntimeSkillVisualSpec();
+	public RuntimeSkillVisualSpec ImpactRuntimeVisual = new RuntimeSkillVisualSpec();
+	public string DescriptionText;
+	public DamageAttribute Attribute;
+	public float BaseDamage;
+	public float AttackPowerCoefficient;
+	public float SpellPowerCoefficient;
+	public float Radius;
+	public float LineLength;
+	public int CastRepeatCount = 1;
+	public float CastRepeatIntervalSeconds;
+	public float CastRange;
+	public float EffectRadius;
+	public string TargetScope;
+	public string ExecutionProfile;
+	public float FlatValue;
+	public float ProjectileLifetimeSeconds;
+	public float IncomingDamageMultiplier = 1f;
+	public float MoveSpeedMultiplier = 1f;
+	public float OutgoingDamageMultiplier = 1f;
+	public float ChainDamageMultiplier;
+	public float ChainDelaySeconds;
+	public float ChainRadius;
+	public bool ExcludePrimaryTarget;
+	public float TargetMaxHealthRatio;
+	public float ChargeRampSeconds = 3f;
+	public float ChargeMoveSpeedMultiplier = 2.5f;
+	public float KnockbackDistance;
+	public float DamageDelaySeconds;
+	public float ExecuteHealthRatioThreshold;
+	public bool RequireExecuteThresholdToCast;
+	public float ExecuteDamageMultiplier = 1f;
+	public float KillCooldownRefundRatio;
+	public float BossDamageMultiplier = 1f;
+	public string HitTargetCount;
+	public bool UsePrefabHitbox;
+	public string TargetSelection;
+	public string TargetSelectionStatusId;
+	public int TargetSelectionStatusMinStacks;
+	public float CooldownSeconds;
+	public float ActiveDurationSeconds;
+	public int MagazineCapacity;
+	public float ReloadSeconds;
+	public float ShotIntervalSeconds;
+	public float BurstIntervalSeconds;
+	public int ProjectileBurstCount;
+	public int BurstDamageProjectileIndex;
+	public float BurstDamageMultiplier = 1f;
+	public float ProjectileSpeed;
+	public int PierceCount;
+	public bool CriticalAllowed = true;
+	public string DeploymentRequiredTargetStatusId;
+	public int DeploymentRequiredTargetStatusMinStacks;
+	public string TargetStatusStackStatusId;
+	public int TargetStatusStackMaxStacks;
+	public float TargetStatusStackBaseDamage;
+	public float TargetStatusStackAttackPowerCoefficient;
+	public float TargetStatusStackSpellPowerCoefficient;
+	public string ConsumeTargetStatusId;
+	public float ConsumeTargetStatusRatio;
+	public int ConsumeTargetStatusStacks;
+	public string StatusEffectId;
+	public float StatusChance;
+	public string StatusEffectLabel;
+	public GameObject StatusEffectPrefab;
+	public float StatusDurationSeconds;
+	public int StatusMaxStacks;
+	public int StatusStackAmount;
+	public string StatusTargetScope;
+	public string StatusMergePolicy;
+	public string ShieldAmountRefreshPolicy;
+	public float StatusActionSpeedBonus;
+	public float StatusMoveSpeedBonus;
+	public float StatusAttackPowerBonus;
+	public float StatusDamageBonusRate;
+	public bool StatusPermanent;
+	public float StatusDamageTakenBonus;
+	public float StatusCriticalDamageTakenBonus;
+	public float StatusCriticalDamageBonus;
+	public float StatusAilmentResistanceBonus;
+	public float StatusCriticalResistanceBonus;
+	public float StatusElementResistReduction;
+	public float StatusFlatElementResistReduction;
+	public float StatusElementDamageTakenBonus;
+	public string Summary;
+	public SkillChoiceBuildData[] EnhancementChoices = Array.Empty<SkillChoiceBuildData>();
+	public SkillChoiceBuildData[] MasterSkillChoices = Array.Empty<SkillChoiceBuildData>();
+	public SkillNodeBuildData[] Nodes = Array.Empty<SkillNodeBuildData>();
+}
+
+internal sealed class PassiveSkillBuildData
+{
+	public string PassiveId;
+	public string DisplayName;
+	public SkillSlot Slot;
+	public SkillSlot RequiredActiveSlot;
+	public bool IsAvailableWithoutActiveRequirement;
+	public SkillImplementationState ImplementationState = SkillImplementationState.DataOnly;
+	public Sprite SkillIcon;
+	public string DescriptionText;
+	public string Summary;
+	public SkillChoiceBuildData[] BaseModifierChoices = Array.Empty<SkillChoiceBuildData>();
+	public SkillChoiceBuildData[] EnhancementChoices = Array.Empty<SkillChoiceBuildData>();
+	public SkillNodeBuildData[] Nodes = Array.Empty<SkillNodeBuildData>();
+}
+
+internal sealed class SkillChoiceBuildData
+{
+	public string ChoiceId;
+	public string MonsterId;
+	public string SkillId;
+	public string TargetSkillId;
+	public SkillChoiceGroup ChoiceGroup;
+	public string Title;
+	public Sprite SkillIcon;
+	public GameObject SkillEffectPrefab;
+	public string DescriptionText;
+	public SkillNodeBuildData[] Nodes = Array.Empty<SkillNodeBuildData>();
+}
+
 internal sealed partial class GameDataCatalogBuilder
 {
 	private static SkillDefinition BuildActiveDefinition(
 		string ownerId,
-		SkillSourceDefinition source,
+		ActiveSkillBuildData source,
 		SkillTriggerDefinition[] triggers,
 		StatusEffectDefinition[] statusDefinitions)
 	{
@@ -28,7 +158,7 @@ internal sealed partial class GameDataCatalogBuilder
 	/*
 	 * 패시브 최종 Definition을 생성한다.
 	 */
-	private static PassiveSkillDefinition BuildPassiveDefinition(MonsterDefinition monster /* 몬스터 */, PassiveDefinition source /* 변환할 패시브 정의 */)
+	private static PassiveSkillDefinition BuildPassiveDefinition(MonsterDefinition monster /* 몬스터 */, PassiveSkillBuildData source /* 변환할 패시브 정의 */)
 	{
 		PassiveSkillDefinition passiveSkillExecutionDefinition = CreateRuntimeData<PassiveSkillDefinition>();
 		passiveSkillExecutionDefinition.SkillId = source.PassiveId;
@@ -47,7 +177,6 @@ internal sealed partial class GameDataCatalogBuilder
 		passiveSkillExecutionDefinition.Description = source.DescriptionText;
 		passiveSkillExecutionDefinition.Summary = source.Summary;
 		passiveSkillExecutionDefinition.Icon = source.SkillIcon;
-		passiveSkillExecutionDefinition.SkillEffectPrefab = source.SkillEffectPrefab;
 		passiveSkillExecutionDefinition.BaseModifierChoices = BuildChoices(source.BaseModifierChoices);
 		passiveSkillExecutionDefinition.EnhancementChoices = BuildChoices(source.EnhancementChoices);
 		passiveSkillExecutionDefinition.MasterChoices = Array.Empty<SkillChoice>();
@@ -57,11 +186,11 @@ internal sealed partial class GameDataCatalogBuilder
 			triggers = monster.SkillTriggers;
 		}
 		passiveSkillExecutionDefinition.SkillTriggers = FilterSkillTriggersForSkill(triggers, source.PassiveId);
-		passiveSkillExecutionDefinition.NormalizedNodes = MapSkillNodeDefinitions(source.NormalizedNodes);
+		passiveSkillExecutionDefinition.Nodes = MapSkillNodes(source.Nodes);
 		return passiveSkillExecutionDefinition;
 	}
 
-	private static SkillChoice[] BuildChoices(SkillChoiceDefinition[] source)
+	private static SkillChoice[] BuildChoices(SkillChoiceBuildData[] source)
 	{
 		var choices = new SkillChoice[source.Length];
 		for (var i = 0; i < source.Length; i++)
@@ -78,7 +207,7 @@ internal sealed partial class GameDataCatalogBuilder
 				SkillIcon = choice.SkillIcon,
 				SkillEffectPrefab = choice.SkillEffectPrefab,
 				DescriptionText = choice.DescriptionText,
-				Nodes = MapSkillNodeDefinitions(choice.NormalizedNodes)
+				Nodes = MapSkillNodes(choice.Nodes)
 			};
 		}
 		return choices;
@@ -87,7 +216,7 @@ internal sealed partial class GameDataCatalogBuilder
 	/*
 	 * CreateConcreteActiveSkill에 필요한 결과를 만들어 반환한다.
 	 */
-	private static SkillDefinition CreateConcreteActiveSkill(SkillSourceDefinition source /* 변환할 스킬 정의 */)
+	private static SkillDefinition CreateConcreteActiveSkill(ActiveSkillBuildData source /* 변환할 스킬 정의 */)
 	{
 		if (MatchesProfile(source, "DamageArea"))
 		{
@@ -143,7 +272,7 @@ internal sealed partial class GameDataCatalogBuilder
 	/*
 	 * MapCommonFields에 필요한 값을 변환해 현재 상태에 반영한다.
 	 */
-	private static void MapCommonFields(SkillDefinition skill /* 실행하거나 검사할 스킬 */, string monsterId /* 몬스터 식별자 */, SkillSourceDefinition source /* 변환할 스킬 정의 */, SkillTriggerDefinition[] monsterTriggers = null /* 몬스터 트리거 목록 */)
+	private static void MapCommonFields(SkillDefinition skill /* 실행하거나 검사할 스킬 */, string monsterId /* 몬스터 식별자 */, ActiveSkillBuildData source /* 변환할 스킬 정의 */, SkillTriggerDefinition[] monsterTriggers = null /* 몬스터 트리거 목록 */)
 	{
 		skill.SkillId = source.SkillId;
 		skill.SkillName = source.DisplayName;
@@ -161,7 +290,7 @@ internal sealed partial class GameDataCatalogBuilder
 		skill.EnhancementChoices = BuildChoices(source.EnhancementChoices);
 		skill.MasterChoices = BuildChoices(source.MasterSkillChoices);
 		skill.SkillTriggers = FilterSkillTriggersForSkill(monsterTriggers, source.SkillId);
-		skill.NormalizedNodes = MapSkillNodeDefinitions(source.NormalizedNodes);
+		skill.Nodes = MapSkillNodes(source.Nodes);
 		skill.Timing.Cooldown = source.CooldownSeconds;
 		skill.Timing.ActiveDuration = source.ActiveDurationSeconds;
 		skill.Timing.TickInterval = source.ShotIntervalSeconds;
@@ -241,7 +370,7 @@ internal sealed partial class GameDataCatalogBuilder
 	private static void MapActiveFields(
 		SkillDefinition skill /* 실행하거나 검사할 스킬 */,
 		MonsterDefinition monster /* 몬스터 */,
-		SkillSourceDefinition source /* 변환할 스킬 정의 */,
+		ActiveSkillBuildData source /* 변환할 스킬 정의 */,
 		StatusEffectDefinition[] statusDefinitions = null)
 	{
 		if (skill is ProjectileSkillDefinition projectileSkillExecutionDefinition)
@@ -362,7 +491,7 @@ internal sealed partial class GameDataCatalogBuilder
 			singleSkillExecutionDefinition.TargetStatusStackDamage.AttackPowerCoefficient = source.TargetStatusStackAttackPowerCoefficient;
 			singleSkillExecutionDefinition.TargetStatusStackDamage.SpellPowerCoefficient = source.TargetStatusStackSpellPowerCoefficient;
 			singleSkillExecutionDefinition.TargetStatusStackDamage.CriticalAllowed = false;
-			ApplySingleBaseNodes(singleSkillExecutionDefinition, source.NormalizedNodes, source.Attribute);
+			ApplySingleBaseNodes(singleSkillExecutionDefinition, source.Nodes, source.Attribute);
 			if (!string.IsNullOrWhiteSpace(singleSkillExecutionDefinition.DeploymentRequiredTargetStatusId))
 			{
 				singleSkillExecutionDefinition.DeploymentRequiredTargetStatusKind = StatusRuntimeCompiler.ParseStatusKind(
@@ -440,7 +569,7 @@ internal sealed partial class GameDataCatalogBuilder
 	/*
 	 * MapDamage에 필요한 값을 변환해 현재 상태에 반영한다.
 	 */
-	private static void MapDamage(SkillDamageSpec damage /* 피해량 계산 설정 */, SkillSourceDefinition source /* 변환할 스킬 정의 */)
+	private static void MapDamage(SkillDamageSpec damage /* 피해량 계산 설정 */, ActiveSkillBuildData source /* 변환할 스킬 정의 */)
 	{
 		damage.SkillId = source.SkillId;
 		damage.Element = source.Attribute;
@@ -473,7 +602,7 @@ internal sealed partial class GameDataCatalogBuilder
 	/*
 	 * MatchesProfile 조건을 만족하는지 확인한다.
 	 */
-	private static bool MatchesProfile(SkillSourceDefinition source /* 변환할 스킬 정의 */, string profile /* 실행 설정 */)
+	private static bool MatchesProfile(ActiveSkillBuildData source /* 변환할 스킬 정의 */, string profile /* 실행 설정 */)
 	{
 		return string.Equals(source.ExecutionProfile, profile, StringComparison.OrdinalIgnoreCase);
 	}
@@ -481,7 +610,7 @@ internal sealed partial class GameDataCatalogBuilder
 	/*
 	 * GetDominantCoefficient에 해당하는 값을 찾아 반환한다.
 	 */
-	private static float GetDominantCoefficient(SkillSourceDefinition source /* 변환할 스킬 정의 */, out StatSource statSource /* 능력치 발생 원본 */)
+	private static float GetDominantCoefficient(ActiveSkillBuildData source /* 변환할 스킬 정의 */, out StatSource statSource /* 능력치 발생 원본 */)
 	{
 		if (Mathf.Abs(source.SpellPowerCoefficient) >= Mathf.Abs(source.AttackPowerCoefficient))
 		{
@@ -496,7 +625,7 @@ internal sealed partial class GameDataCatalogBuilder
 	 * CreateStatusApplication에 필요한 결과를 만들어 반환한다.
 	 */
 	private static StatusApplicationSpec CreateStatusApplication(
-		SkillSourceDefinition source /* 변환할 스킬 정의 */,
+		ActiveSkillBuildData source /* 변환할 스킬 정의 */,
 		StatusEffectDefinition[] statusDefinitions)
 	{
 		StatusApplicationSpec statusApplicationSpec = new StatusApplicationSpec();
@@ -515,7 +644,7 @@ internal sealed partial class GameDataCatalogBuilder
 	 * CreateStatusRuntimeData에 필요한 결과를 만들어 반환한다.
 	 */
 	private static StatusRuntimeData CreateStatusRuntimeData(
-		SkillSourceDefinition source /* 변환할 스킬 정의 */,
+		ActiveSkillBuildData source /* 변환할 스킬 정의 */,
 		StatusEffectDefinition[] statusDefinitions)
 	{
 		if (string.IsNullOrWhiteSpace(source.StatusEffectId))
@@ -523,15 +652,90 @@ internal sealed partial class GameDataCatalogBuilder
 			return null;
 		}
 		StatusEffectKind kind = StatusRuntimeCompiler.ParseStatusKind(source.StatusEffectId);
-		StatusRuntimeData runtimeStatusData = StatusRuntimeCompiler.Create(
-			kind,
-			source.StatusEffectLabel,
-			source,
-			statusDefinitions);
-		if (runtimeStatusData != null && source.StatusEffectPrefab != null)
+		StatusRuntimeData runtimeStatusData = statusDefinitions == null
+			? StatusRuntimeCompiler.Create(kind, source.StatusEffectLabel)
+			: StatusRuntimeCompiler.Create(kind, source.StatusEffectLabel, statusDefinitions);
+
+		if (source.StatusDurationSeconds > 0f)
+		{
+			runtimeStatusData.Duration = source.StatusDurationSeconds;
+			runtimeStatusData.Permanent = false;
+		}
+		if (source.StatusMaxStacks > 0)
+		{
+			runtimeStatusData.MaxStacks = source.StatusMaxStacks;
+			runtimeStatusData.IsStackable = runtimeStatusData.MaxStacks != 1;
+		}
+		if (source.StatusStackAmount > 0)
+		{
+			runtimeStatusData.BaseStackAmount = source.StatusStackAmount;
+		}
+		if (source.StatusPermanent && runtimeStatusData.Duration <= 0f)
+		{
+			runtimeStatusData.Permanent = true;
+		}
+		if (!Mathf.Approximately(source.StatusMoveSpeedBonus, 0f))
+		{
+			runtimeStatusData.MoveSpeedBonus = source.StatusMoveSpeedBonus;
+		}
+		runtimeStatusData.MovementSlowRate = runtimeStatusData.MoveSpeedBonus < 0f
+			? -runtimeStatusData.MoveSpeedBonus
+			: 0f;
+		if (!Mathf.Approximately(source.StatusDamageTakenBonus, 0f))
+		{
+			runtimeStatusData.DamageTakenBonus = source.StatusDamageTakenBonus;
+		}
+		if (!Mathf.Approximately(source.StatusCriticalDamageTakenBonus, 0f))
+		{
+			runtimeStatusData.CriticalDamageTakenBonus = source.StatusCriticalDamageTakenBonus;
+		}
+		runtimeStatusData.AilmentResistanceBonus = source.StatusAilmentResistanceBonus;
+		if (!Mathf.Approximately(source.StatusCriticalResistanceBonus, 0f))
+		{
+			runtimeStatusData.CriticalResistanceBonus = source.StatusCriticalResistanceBonus;
+		}
+		if (!Mathf.Approximately(source.StatusElementResistReduction, 0f))
+		{
+			runtimeStatusData.ElementResistReduction = source.StatusElementResistReduction;
+		}
+		runtimeStatusData.FlatElementResistReduction = source.StatusFlatElementResistReduction;
+		if (!Mathf.Approximately(source.StatusElementDamageTakenBonus, 0f))
+		{
+			runtimeStatusData.ElementDamageTakenBonus = source.StatusElementDamageTakenBonus;
+		}
+		if (!Mathf.Approximately(source.StatusActionSpeedBonus, 0f))
+		{
+			runtimeStatusData.Modifiers.ActionSpeedBonus = source.StatusActionSpeedBonus;
+		}
+		if (!Mathf.Approximately(source.StatusAttackPowerBonus, 0f))
+		{
+			runtimeStatusData.Modifiers.AttackPowerBonus = source.StatusAttackPowerBonus;
+		}
+		runtimeStatusData.Modifiers.DamageBonusRate = source.StatusDamageBonusRate;
+		runtimeStatusData.SourceSkillId = source.SkillId;
+		if (!string.IsNullOrWhiteSpace(source.StatusTargetScope))
+		{
+			runtimeStatusData.TargetScope = StatusRuntimeCompiler.ParseTargetScope(source.StatusTargetScope);
+		}
+		if (!string.IsNullOrWhiteSpace(source.StatusMergePolicy))
+		{
+			runtimeStatusData.MergePolicy = StatusRuntimeCompiler.ParseMergePolicy(source.StatusMergePolicy);
+		}
+		if (!string.IsNullOrWhiteSpace(source.ShieldAmountRefreshPolicy))
+		{
+			runtimeStatusData.ShieldAmountRefreshPolicy =
+				StatusRuntimeCompiler.ParseShieldRefreshRule(source.ShieldAmountRefreshPolicy);
+		}
+		if (source.StatusEffectPrefab != null)
 		{
 			runtimeStatusData.StatusEffectPrefab = source.StatusEffectPrefab;
 		}
+		if (source.RuntimeVisual != null
+			&& source.RuntimeVisual.Anchor == RuntimeSkillVisualAnchor.StatusTarget)
+		{
+			runtimeStatusData.RuntimeVisual = source.RuntimeVisual;
+		}
+		runtimeStatusData.Modifiers.ResistReduction = runtimeStatusData.ElementResistReduction;
 		return runtimeStatusData;
 	}
 
@@ -560,7 +764,7 @@ internal sealed partial class GameDataCatalogBuilder
 	/*
 	 * MapBuffTarget에 필요한 형식으로 변환해 반환한다.
 	 */
-	private static SkillTargetSide MapBuffTarget(SkillSourceDefinition source /* 변환할 스킬 정의 */)
+	private static SkillTargetSide MapBuffTarget(ActiveSkillBuildData source /* 변환할 스킬 정의 */)
 	{
 		StatusRuntimeCompiler.TryParseTargetScope(source.StatusTargetScope, out var scope);
 		if (scope == StatusTargetScope.Self)
@@ -574,7 +778,7 @@ internal sealed partial class GameDataCatalogBuilder
 	/*
 	 * ResolveStatusDuration 결과를 계산해 반환한다.
 	 */
-	private static float ResolveStatusDuration(SkillSourceDefinition source /* 변환할 스킬 정의 */)
+	private static float ResolveStatusDuration(ActiveSkillBuildData source /* 변환할 스킬 정의 */)
 	{
 		if (source.StatusDurationSeconds > 0f)
 		{
@@ -591,9 +795,9 @@ internal sealed partial class GameDataCatalogBuilder
 	/*
 	 * ApplySingleBaseNodes 처리를 대상에 적용한다.
 	 */
-	private static void ApplySingleBaseNodes(SingleSkillDefinition single /* 단일 */, SkillNodeDefinition[] nodes /* 노드 목록 */, DamageAttribute attribute /* 피해 속성 */)
+	private static void ApplySingleBaseNodes(SingleSkillDefinition single /* 단일 */, SkillNodeBuildData[] nodes /* 노드 목록 */, DamageAttribute attribute /* 피해 속성 */)
 	{
-		foreach (SkillNodeDefinition skillNodeDefinition in nodes)
+		foreach (SkillNodeBuildData skillNodeDefinition in nodes)
 		{
 			if (skillNodeDefinition != null && skillNodeDefinition.EnabledByDefault)
 			{

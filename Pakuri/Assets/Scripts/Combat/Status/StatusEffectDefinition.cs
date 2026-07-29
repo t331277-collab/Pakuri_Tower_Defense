@@ -202,13 +202,11 @@ namespace Pakuri.Data
         [Header("Conditional Incoming Damage")]
         public StatusEffectKind ConditionalSourceStatusKind;
         public float ConditionalDamageTakenBonus;
-        public string ConditionalIncomingSkillRuntimeKinds;
         public SkillRuntimeKindCondition[] ConditionalIncomingSkillRuntimeKindValues = Array.Empty<SkillRuntimeKindCondition>();
 
         [Header("Conditional Status Application")]
         public StatusEffectKind[] ConditionalTargetStatusKinds = Array.Empty<StatusEffectKind>();
         public float ConditionalStatusChanceBonus;
-        public string ConditionalOutgoingSkillRuntimeKinds;
         public SkillRuntimeKindCondition[] ConditionalOutgoingSkillRuntimeKindValues = Array.Empty<SkillRuntimeKindCondition>();
 
         [Header("Applied Status Duration Bonus")]

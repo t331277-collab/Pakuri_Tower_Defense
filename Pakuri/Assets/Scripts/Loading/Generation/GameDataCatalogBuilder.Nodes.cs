@@ -6,17 +6,34 @@ using Pakuri.InGame;
 using UnityEngine;
 
 /*
- * 작성 데이터의 SkillNodeDefinition을 전투 실행용 SkillNode로 변환한다.
+ * 작성 데이터의 SkillNodeBuildData을 전투 실행용 SkillNode로 변환한다.
  * 노드 종류와 값을 해석해 SkillNode 전투 실행 값으로 옮긴다.
  */
 namespace Pakuri.Data
 {
+    internal sealed class SkillNodeParamBuildData
+    {
+        public string ParamKey;
+        public string Value;
+    }
+
+    internal sealed class SkillNodeBuildData
+    {
+        public string OwnerKind;
+        public string TargetSkillId;
+        public string HandlerId;
+        public bool EnabledByDefault;
+        public SkillNodeParamBuildData[] Params = Array.Empty<SkillNodeParamBuildData>();
+        public GameObject ResolvedPrefab;
+        public RuntimeSkillVisualSpec ResolvedRuntimeVisual;
+    }
+
     internal sealed partial class GameDataCatalogBuilder
     {
 	/*
-	 * MapSkillNodeDefinitions에 필요한 형식으로 변환해 반환한다.
+	 * MapSkillNodes에 필요한 형식으로 변환해 반환한다.
 	 */
-	public static SkillNode[] MapSkillNodeDefinitions(SkillNodeDefinition[] source /* 변환할 스킬 노드 정의 목록 */)
+	public static SkillNode[] MapSkillNodes(SkillNodeBuildData[] source /* 변환할 스킬 노드 정의 목록 */)
 	{
 		if (source == null || source.Length == 0)
 		{
@@ -25,7 +42,7 @@ namespace Pakuri.Data
 		List<SkillNode> list = new List<SkillNode>(source.Length);
 		for (int i = 0; i < source.Length; i++)
 		{
-			SkillNode skillExecutionNode = MapSkillNodeDefinition(source[i]);
+			SkillNode skillExecutionNode = MapSkillNode(source[i]);
 			if (skillExecutionNode != null)
 			{
 				skillExecutionNode.TargetSkillId = source[i].TargetSkillId ?? string.Empty;
@@ -53,9 +70,9 @@ namespace Pakuri.Data
 	}
 
 	/*
-	 * MapSkillNodeDefinition에 필요한 형식으로 변환해 반환한다.
+	 * MapSkillNode에 필요한 형식으로 변환해 반환한다.
 	 */
-	private static SkillNode MapSkillNodeDefinition(SkillNodeDefinition node /* 노드 */)
+	private static SkillNode MapSkillNode(SkillNodeBuildData node /* 노드 */)
 	{
 		if (node == null || !node.EnabledByDefault)
 		{
@@ -554,7 +571,7 @@ namespace Pakuri.Data
 	/*
 	 * MapSkillActionOp에 필요한 형식으로 변환해 반환한다.
 	 */
-	private static SkillActionOp MapSkillActionOp(SkillNodeDefinition node /* 노드 */, string handlerId /* 처리기 식별자 */)
+	private static SkillActionOp MapSkillActionOp(SkillNodeBuildData node /* 노드 */, string handlerId /* 처리기 식별자 */)
 	{
 		if (string.Equals(handlerId, "DamageMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
@@ -708,7 +725,7 @@ namespace Pakuri.Data
 	}
 
 	private static bool TryMapStatusMutation(
-		SkillNodeDefinition node,
+		SkillNodeBuildData node,
 		string handlerId,
 		out StatusMutationNodeOp operation)
 	{
@@ -836,7 +853,7 @@ namespace Pakuri.Data
 	/*
 	 * GetParam에 해당하는 값을 찾아 반환한다.
 	 */
-	internal static string GetParam(SkillNodeDefinition node /* 노드 */, string key /* 조회 키 */)
+	internal static string GetParam(SkillNodeBuildData node /* 노드 */, string key /* 조회 키 */)
 	{
 		if (node == null || node.Params == null || string.IsNullOrWhiteSpace(key))
 		{
@@ -844,7 +861,7 @@ namespace Pakuri.Data
 		}
 		for (int i = 0; i < node.Params.Length; i++)
 		{
-			SkillNodeParamDefinition skillNodeParamDefinition = node.Params[i];
+			SkillNodeParamBuildData skillNodeParamDefinition = node.Params[i];
 			if (skillNodeParamDefinition != null && string.Equals(skillNodeParamDefinition.ParamKey, key, StringComparison.OrdinalIgnoreCase))
 			{
 				if (skillNodeParamDefinition.Value == null)
@@ -860,7 +877,7 @@ namespace Pakuri.Data
 	/*
 	 * GetFloatParam에 해당하는 값을 찾아 반환한다.
 	 */
-	internal static float GetFloatParam(SkillNodeDefinition node /* 노드 */, string key /* 조회 키 */, float defaultValue /* 값이 없을 때 사용할 기본값 */)
+	internal static float GetFloatParam(SkillNodeBuildData node /* 노드 */, string key /* 조회 키 */, float defaultValue /* 값이 없을 때 사용할 기본값 */)
 	{
 		string param = GetParam(node, key);
 		if (string.IsNullOrWhiteSpace(param) || !float.TryParse(param, NumberStyles.Float, CultureInfo.InvariantCulture, out var result))
@@ -873,7 +890,7 @@ namespace Pakuri.Data
 	/*
 	 * GetIntParam에 해당하는 값을 찾아 반환한다.
 	 */
-	internal static int GetIntParam(SkillNodeDefinition node /* 노드 */, string key /* 조회 키 */, int defaultValue /* 값이 없을 때 사용할 기본값 */)
+	internal static int GetIntParam(SkillNodeBuildData node /* 노드 */, string key /* 조회 키 */, int defaultValue /* 값이 없을 때 사용할 기본값 */)
 	{
 		string param = GetParam(node, key);
 		if (string.IsNullOrWhiteSpace(param) || !int.TryParse(param, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result))
@@ -886,7 +903,7 @@ namespace Pakuri.Data
 	/*
 	 * GetBoolParam에 해당하는 값을 찾아 반환한다.
 	 */
-	internal static bool GetBoolParam(SkillNodeDefinition node /* 노드 */, string key /* 조회 키 */, bool defaultValue /* 값이 없을 때 사용할 기본값 */)
+	internal static bool GetBoolParam(SkillNodeBuildData node /* 노드 */, string key /* 조회 키 */, bool defaultValue /* 값이 없을 때 사용할 기본값 */)
 	{
 		string param = GetParam(node, key);
 		if (string.IsNullOrWhiteSpace(param))
@@ -907,7 +924,7 @@ namespace Pakuri.Data
 	/*
 	 * GetEnumParam에 해당하는 값을 찾아 반환한다.
 	 */
-	internal static T GetEnumParam<T>(SkillNodeDefinition node /* 노드 */, string key /* 조회 키 */, T defaultValue /* 값이 없을 때 사용할 기본값 */) where T : struct
+	internal static T GetEnumParam<T>(SkillNodeBuildData node /* 노드 */, string key /* 조회 키 */, T defaultValue /* 값이 없을 때 사용할 기본값 */) where T : struct
 	{
 		string param = GetParam(node, key);
 		if (string.IsNullOrWhiteSpace(param) || !Enum.TryParse<T>(param, ignoreCase: true, out var result))

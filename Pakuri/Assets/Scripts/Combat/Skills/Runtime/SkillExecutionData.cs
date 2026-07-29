@@ -405,7 +405,7 @@ public class SkillExecutionData
 		if (source != null)
 		{
 			SkillEffectPrefab = source.SkillEffectPrefab;
-			ApplyNodes(source.NormalizedNodes);
+			ApplyNodes(source.Nodes);
 		}
 	}
 

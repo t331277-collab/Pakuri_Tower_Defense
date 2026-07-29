@@ -207,12 +207,11 @@ Designer / Code Builder refactoring handoff
 
 ### Status
 
-Code Builder implementation in progress. Phases 1-5 complete.
+Code Builder implementation and available non-Play-Mode verification complete. Phases 1-6 complete.
 
 ### Next Actions
 
-- Code Builder implements Phase 6 dead-contract deletion and full regression verification.
-- Update this board and the COMBAT board together after each phase.
+- User verifies representative CSV-loaded active, passive, enhancement, master, Trigger, and enemy skill behavior in Unity Play Mode.
 
 ### Evidence
 
@@ -232,6 +231,10 @@ Code Builder implementation in progress. Phases 1-5 complete.
 - Phase 5 integrated final skill/Choice/Node creation into `GameDataCatalogBuilder` partials and removed all compiler/mapper symbols.
 - `UnitSkills` owns learned-ID/Choice application; `StatusRuntimeCompiler.CompileTriggers` was deleted as dead code.
 - All 18 moved script GUID pairs matched; Runtime/Editor builds and Unity CSV validation passed.
+- Phase 6 confined temporary build contracts to Loading/Generation and removed duplicate public Source/Definition contracts from Combat.
+- Removed-symbol, runtime parsing, and Generation-outside Definition-mutation searches all returned zero.
+- EditMode target-filter/reference-reuse tests passed 2/2; solution build and Unity script compilation completed with zero errors; CSV validation retained 5/8/8.
+- Whole-task C# diff is 909 additions and 1,069 deletions: net reduction 160 lines.
 
 ### History
 
@@ -243,3 +246,4 @@ Code Builder implementation in progress. Phases 1-5 complete.
 - 2026-07-29: Code Builder completed Phase 3 final catalog generation and final-type RuntimeCatalog indexing.
 - 2026-07-29: Code Builder completed Phase 4 final catalog direct runtime consumption.
 - 2026-07-29: Code Builder completed Phase 5 Generation ownership integration and Combat skill folder migration.
+- 2026-07-29: Code Builder completed Phase 6 temporary-contract cleanup and full non-Play-Mode verification.
