@@ -573,17 +573,17 @@ namespace Pakuri.InGame
         /* 적용할 상태 종류와 선택적인 대상·병합 정책을 기록한다. */
         public ApplyStatusNodeOp(
             StatusEffectKind statusKind,
-            string targetScope = "",
-            string mergePolicy = "")
+            StatusTargetScope targetScope = StatusTargetScope.Unspecified,
+            StatusMergePolicy mergePolicy = StatusMergePolicy.Unspecified)
         {
             StatusKind = statusKind;
-            TargetScope = targetScope ?? string.Empty;
-            MergePolicy = mergePolicy ?? string.Empty;
+            TargetScope = targetScope;
+            MergePolicy = mergePolicy;
         }
 
         public StatusEffectKind StatusKind { get; }
-        public string TargetScope { get; }
-        public string MergePolicy { get; }
+        public StatusTargetScope TargetScope { get; }
+        public StatusMergePolicy MergePolicy { get; }
     }
 
     public readonly struct ApplyShieldNodeOp
@@ -627,13 +627,19 @@ namespace Pakuri.InGame
             float amount,
             DamageAttribute attribute,
             string referenceId = "",
-            DamageAttribute secondaryAttribute = DamageAttribute.Physical)
+            DamageAttribute secondaryAttribute = DamageAttribute.Physical,
+            StatusEffectKind[] conditionalStatusKinds = null,
+            SkillRuntimeKindCondition[] incomingRuntimeKinds = null,
+            SkillRuntimeKindCondition[] outgoingRuntimeKinds = null)
         {
             Kind = kind;
             Amount = amount;
             Attribute = attribute;
             ReferenceId = referenceId ?? string.Empty;
             SecondaryAttribute = secondaryAttribute;
+            ConditionalStatusKinds = conditionalStatusKinds ?? System.Array.Empty<StatusEffectKind>();
+            IncomingRuntimeKinds = incomingRuntimeKinds ?? System.Array.Empty<SkillRuntimeKindCondition>();
+            OutgoingRuntimeKinds = outgoingRuntimeKinds ?? System.Array.Empty<SkillRuntimeKindCondition>();
         }
 
         public StatusMutationKind Kind { get; }
@@ -641,24 +647,27 @@ namespace Pakuri.InGame
         public DamageAttribute Attribute { get; }
         public string ReferenceId { get; }
         public DamageAttribute SecondaryAttribute { get; }
+        public StatusEffectKind[] ConditionalStatusKinds { get; }
+        public SkillRuntimeKindCondition[] IncomingRuntimeKinds { get; }
+        public SkillRuntimeKindCondition[] OutgoingRuntimeKinds { get; }
     }
 
     public readonly struct StatusConditionNodeOp
     {
         /* 상태 조건식, 검사 대상과 허용할 원본 스킬 목록을 기록한다. */
         public StatusConditionNodeOp(
-            string expression,
+            StatusConditionGroup[] conditions,
             SkillMultiEffectTargetSide targetSide,
-            string sourceSkillIds)
+            string[] sourceSkillIds)
         {
-            Expression = expression ?? string.Empty;
+            Conditions = conditions ?? System.Array.Empty<StatusConditionGroup>();
             TargetSide = targetSide;
-            SourceSkillIds = sourceSkillIds ?? string.Empty;
+            SourceSkillIds = sourceSkillIds ?? System.Array.Empty<string>();
         }
 
-        public string Expression { get; }
+        public StatusConditionGroup[] Conditions { get; }
         public SkillMultiEffectTargetSide TargetSide { get; }
-        public string SourceSkillIds { get; }
+        public string[] SourceSkillIds { get; }
     }
 
     public readonly struct SkillAttributeConditionNodeOp
@@ -880,6 +889,7 @@ namespace Pakuri.InGame
     public class SkillNode
     {
         private readonly object operation;
+        public string TargetSkillId { get; internal set; }
 
         // CSV Graph Handler에서 변환된 강타입 실행 값 하나를 보관하는 부분을 구현.
         private SkillNode(object operation)

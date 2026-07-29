@@ -207,11 +207,11 @@ Designer / Code Builder refactoring handoff
 
 ### Status
 
-Code Builder implementation in progress. Phase 1 baseline and protection complete.
+Code Builder implementation in progress. Phases 1-2 complete.
 
 ### Next Actions
 
-- Code Builder implements Phase 2 final typed data contracts, then Phase 3 direct Generation.
+- Code Builder implements Phase 3 direct Generation.
 - Update this board and the COMBAT board together after each phase.
 
 ### Evidence
@@ -223,6 +223,7 @@ Code Builder implementation in progress. Phase 1 baseline and protection complet
 - Final Loading and Combat contracts are specified in `boards/COMBAT/SKILL_DIRECT_CATALOG_RUNTIME_HANDOFF.md`.
 - Phase 1 baseline `Assembly-CSharp.csproj` and `Assembly-CSharp-Editor.csproj` builds completed with zero errors.
 - Unity CSV validation loaded 5 monsters, 8 stage-one enemies, and 8 stage-two enemies; the EditMode test job succeeded.
+- Phase 2 added the final typed contracts that Generation will populate directly: final Choice Nodes, Node target IDs, typed status conditions, typed Trigger lists, and event source scope.
 
 ### History
 
@@ -230,3 +231,4 @@ Code Builder implementation in progress. Phase 1 baseline and protection complet
 - 2026-07-29: Designer recorded the cross-domain Loading/Combat handoff without changing runtime code or CSV.
 - 2026-07-29: Designer updated the Generation contract so encoded authoring strings are converted once and final runtime consumers receive enum/array values.
 - 2026-07-29: Code Builder completed Phase 1 baseline protection before changing the final data contracts.
+- 2026-07-29: Code Builder completed Phase 2 final typed contracts with the current compiler retained only as an intermediate compatibility path.

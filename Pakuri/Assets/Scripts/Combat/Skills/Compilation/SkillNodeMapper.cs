@@ -28,6 +28,7 @@ namespace Pakuri.InGame
 			SkillNode skillExecutionNode = MapSkillNodeDefinition(source[i]);
 			if (skillExecutionNode != null)
 			{
+				skillExecutionNode.TargetSkillId = source[i].TargetSkillId ?? string.Empty;
 				list.Add(skillExecutionNode);
 			}
 		}
@@ -161,8 +162,8 @@ namespace Pakuri.InGame
 		{
 			return SkillNode.FromOperation(new ApplyStatusNodeOp(
 				StatusRuntimeCompiler.ParseStatusKind("passive-buff"),
-				GetParam(node, "status_target_scope"),
-				GetParam(node, "status_merge_policy")));
+				ParseTargetScope(GetParam(node, "status_target_scope")),
+				ParseMergePolicy(GetParam(node, "status_merge_policy"))));
 		}
 		if (string.Equals(text, "ApplyStatus", StringComparison.OrdinalIgnoreCase))
 		{
@@ -223,16 +224,16 @@ namespace Pakuri.InGame
 					minimumStacks.ToString(CultureInfo.InvariantCulture));
 			}
 			return SkillNode.FromOperation(new StatusConditionNodeOp(
-				expression,
+				StatusRuntimeCompiler.ParseConditionStatusExpression(expression),
 				GetEnumParam(node, "target_side", SkillMultiEffectTargetSide.Enemy),
-				GetParam(node, "source_skill_id")));
+				StatusRuntimeCompiler.ParseIdList(GetParam(node, "source_skill_id"))));
 		}
 		if (string.Equals(text, "ConditionAnyStatus", StringComparison.OrdinalIgnoreCase))
 		{
 			return SkillNode.FromOperation(new StatusConditionNodeOp(
-				GetParam(node, "status_ids"),
+				StatusRuntimeCompiler.ParseConditionStatusExpression(GetParam(node, "status_ids")),
 				GetEnumParam(node, "target_side", SkillMultiEffectTargetSide.Enemy),
-				GetParam(node, "source_skill_id")));
+				StatusRuntimeCompiler.ParseIdList(GetParam(node, "source_skill_id"))));
 		}
 		if (string.Equals(text, "ConditionSkillAttribute", StringComparison.OrdinalIgnoreCase))
 		{
@@ -859,7 +860,7 @@ namespace Pakuri.InGame
 				StatusMutationKind.ConditionalStatusChanceBonus,
 				amount,
 				attribute,
-				GetParam(node, "status_ids"));
+				conditionalStatusKinds: StatusRuntimeCompiler.ParseStatusKinds(GetParam(node, "status_ids")));
 			return true;
 		}
 		if (string.Equals(handlerId, "StatusRuntimeKindFilter", StringComparison.OrdinalIgnoreCase))
@@ -868,9 +869,9 @@ namespace Pakuri.InGame
 				StatusMutationKind.RuntimeKindFilter,
 				0f,
 				attribute,
-				string.Concat(
-					GetParam(node, "incoming_skill_runtime_kinds"),
-					"|",
+				incomingRuntimeKinds: StatusRuntimeCompiler.ParseSkillRuntimeKindConditions(
+					GetParam(node, "incoming_skill_runtime_kinds")),
+				outgoingRuntimeKinds: StatusRuntimeCompiler.ParseSkillRuntimeKindConditions(
 					GetParam(node, "outgoing_skill_runtime_kinds")));
 			return true;
 		}
@@ -887,6 +888,20 @@ namespace Pakuri.InGame
 
 		operation = default;
 		return false;
+	}
+
+	private static StatusTargetScope ParseTargetScope(string value)
+	{
+		return string.IsNullOrWhiteSpace(value)
+			? StatusTargetScope.Unspecified
+			: StatusRuntimeCompiler.ParseTargetScope(value);
+	}
+
+	private static StatusMergePolicy ParseMergePolicy(string value)
+	{
+		return string.IsNullOrWhiteSpace(value)
+			? StatusMergePolicy.Unspecified
+			: StatusRuntimeCompiler.ParseMergePolicy(value);
 	}
 
 	/*

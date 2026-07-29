@@ -19,7 +19,17 @@ namespace Pakuri.InGame
 			SkillChoiceDefinition skillChoiceDefinition = source[i];
 			array[i] = new SkillChoice
 			{
-				Source = skillChoiceDefinition
+				Source = skillChoiceDefinition,
+				ChoiceId = skillChoiceDefinition.ChoiceId,
+				MonsterId = skillChoiceDefinition.MonsterId,
+				SkillId = skillChoiceDefinition.SkillId,
+				TargetSkillId = skillChoiceDefinition.TargetSkillId,
+				ChoiceGroup = skillChoiceDefinition.ChoiceGroup,
+				Title = skillChoiceDefinition.Title,
+				SkillIcon = skillChoiceDefinition.SkillIcon,
+				SkillEffectPrefab = skillChoiceDefinition.SkillEffectPrefab,
+				DescriptionText = skillChoiceDefinition.DescriptionText,
+				Nodes = SkillNodeMapper.MapSkillNodeDefinitions(skillChoiceDefinition.NormalizedNodes)
 			};
 		}
 		return array;

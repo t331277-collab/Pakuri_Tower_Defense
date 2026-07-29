@@ -53,6 +53,21 @@ Code Builder 구현 진행 중. Phase 1 기준선 보호 완료.
 - Console의 project validation 오류는 0이다. 별도 MCP package의 disposed-object 오류 1개는 이 작업 코드 밖에서 발생했다.
 - `Pakuri.NewCore.Runtime.csproj`는 저장소에 없는 구형 source 82개를 참조해 baseline build가 실패했다. 현재 게임 assembly 검증은 실제 파일 목록을 반영하는 `Assembly-CSharp.csproj`와 `Assembly-CSharp-Editor.csproj`를 기준으로 한다.
 
+### Phase 2 — Final data model
+
+- `SkillDefinition`이 RuntimeKind, 구현 상태, 기본 학습 여부, Summary를 직접 보관한다.
+- `PassiveSkillDefinition`이 요구 액티브 슬롯과 독립 사용 가능 여부를 직접 보관한다.
+- `SkillChoice`가 표시/소유/대상 필드와 강타입 `SkillNode[]`를 직접 보관한다. 기존 Source는 중간 빌드 호환용으로만 남겼다.
+- `SkillNode.TargetSkillId`를 추가해 다중 대상 Choice Node의 실제 대상 ID를 보존한다.
+- `ApplyStatusNodeOp`의 target scope/merge policy를 enum으로 바꿨다.
+- `StatusConditionNodeOp`의 조건식/원본 스킬 목록을 `StatusConditionGroup[]`/`string[]`로 바꿨다.
+- `StatusMutationNodeOp`의 조건부 상태 목록과 incoming/outgoing RuntimeKind 목록을 강타입 배열로 바꿨다.
+- `SkillTriggerDefinition`에 Choice, attribute, event skill 목록과 event source scope의 강타입 필드를 추가했다.
+- 기존 compiler/mapper가 새 final 필드를 채우므로 Phase 3 전환 전에도 프로젝트가 빌드된다.
+- `SkillNodeExecutor`의 authored `StatusRuntimeCompiler.Parse*` 호출 검색 결과는 0이다.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore -v:minimal`: 오류 0, 기존 경고 2개
+- Unity script refresh/domain reload 완료, project script 오류 0. 별도 MCP package disposed-object 오류는 이 작업 코드 밖이다.
+
 ## Core decision
 
 `작성 데이터에서 직접 사용한다`의 최종 의미는 다음과 같다.

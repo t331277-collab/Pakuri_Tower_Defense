@@ -36,8 +36,13 @@ namespace Pakuri.Data
 
                 trigger.ConditionStatuses = ParseConditionStatusExpression(trigger.ConditionStatusId);
                 trigger.ConditionStatusSourceSkillIds = ParseIdList(trigger.ConditionStatusSourceSkillId);
+                trigger.RequiredActiveChoiceIds = ParseIdList(trigger.RequiresActiveChoiceId);
+                trigger.ExcludedActiveChoiceIds = ParseIdList(trigger.ExcludesActiveChoiceId);
+                trigger.TriggerAttributes = ParseDamageAttributes(trigger.TriggerAttribute);
+                trigger.EventSkillIds = ParseIdList(trigger.EventSkillId);
                 trigger.EventSkillRuntimeKindValues = ParseSkillRuntimeKindConditions(
                     trigger.EventSkillRuntimeKinds);
+                trigger.EventSourceScopeValue = ParseEventSourceScope(trigger.EventSourceScope);
                 trigger.Nodes = SkillNodeMapper.MapSkillNodeDefinitions(trigger.NormalizedNodes);
             }
         }
@@ -395,6 +400,31 @@ namespace Pakuri.Data
             }
 
             return ids.ToArray();
+        }
+
+        public static DamageAttribute[] ParseDamageAttributes(string rawValue)
+        {
+            var values = ParseIdList(rawValue);
+            var attributes = new DamageAttribute[values.Length];
+            for (var i = 0; i < values.Length; i++)
+            {
+                attributes[i] = (DamageAttribute)Enum.Parse(typeof(DamageAttribute), values[i], true);
+            }
+
+            return attributes;
+        }
+
+        public static SkillTriggerEventSourceScope ParseEventSourceScope(string rawValue)
+        {
+            if (string.IsNullOrWhiteSpace(rawValue))
+            {
+                return SkillTriggerEventSourceScope.Any;
+            }
+
+            return (SkillTriggerEventSourceScope)Enum.Parse(
+                typeof(SkillTriggerEventSourceScope),
+                rawValue,
+                true);
         }
 
         /*

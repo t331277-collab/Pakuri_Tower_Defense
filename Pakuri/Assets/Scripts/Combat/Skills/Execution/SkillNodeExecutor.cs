@@ -390,13 +390,13 @@ namespace Pakuri.InGame
                 spec.DurationSeconds = state.DurationSeconds;
                 spec.Permanent = false;
             }
-            if (!string.IsNullOrWhiteSpace(operation.TargetScope))
+            if (operation.TargetScope != StatusTargetScope.Unspecified)
             {
-                spec.StatusData.TargetScope = StatusRuntimeCompiler.ParseTargetScope(operation.TargetScope);
+                spec.StatusData.TargetScope = operation.TargetScope;
             }
-            if (!string.IsNullOrWhiteSpace(operation.MergePolicy))
+            if (operation.MergePolicy != StatusMergePolicy.Unspecified)
             {
-                spec.StatusData.MergePolicy = StatusRuntimeCompiler.ParseMergePolicy(operation.MergePolicy);
+                spec.StatusData.MergePolicy = operation.MergePolicy;
             }
             ApplyStatusMutations(spec.StatusData, state.StatusMutations);
             AttachStatusVisual(spec.StatusData, state);
@@ -809,8 +809,8 @@ namespace Pakuri.InGame
                     : target;
                 if (!StatusConditionRules.MatchesConditionStatus(
                         subject,
-                        StatusRuntimeCompiler.ParseConditionStatusExpression(condition.Expression),
-                        StatusRuntimeCompiler.ParseIdList(condition.SourceSkillIds)))
+                        condition.Conditions,
+                        condition.SourceSkillIds))
                 {
                     return false;
                 }
@@ -979,11 +979,14 @@ namespace Pakuri.InGame
                         break;
                     case StatusMutationKind.ConditionalStatusChanceBonus:
                         statusData.ConditionalTargetStatusKinds =
-                            StatusRuntimeCompiler.ParseStatusKinds(mutation.ReferenceId);
+                            mutation.ConditionalStatusKinds;
                         statusData.ConditionalStatusChanceBonus += mutation.Amount;
                         break;
                     case StatusMutationKind.RuntimeKindFilter:
-                        ApplyRuntimeKindFilter(statusData, mutation.ReferenceId);
+                        statusData.ConditionalIncomingSkillRuntimeKinds = string.Empty;
+                        statusData.ConditionalIncomingSkillRuntimeKindValues = mutation.IncomingRuntimeKinds;
+                        statusData.ConditionalOutgoingSkillRuntimeKinds = string.Empty;
+                        statusData.ConditionalOutgoingSkillRuntimeKindValues = mutation.OutgoingRuntimeKinds;
                         break;
                     case StatusMutationKind.OutgoingAdditionalDamage:
                         statusData.OutgoingAdditionalDamageMultiplier += mutation.Amount;
@@ -1001,22 +1004,6 @@ namespace Pakuri.InGame
         {
             statusData.HasElementModifierTarget = true;
             statusData.ElementModifierTarget = mutation.Attribute;
-        }
-
-        /* `incoming|outgoing` 문자열을 양방향 스킬 RuntimeKind 필터로 컴파일한다. */
-        private static void ApplyRuntimeKindFilter(
-            StatusRuntimeData statusData,
-            string rawValue)
-        {
-            var separator = rawValue == null ? -1 : rawValue.IndexOf('|');
-            var incoming = separator < 0 ? rawValue : rawValue.Substring(0, separator);
-            var outgoing = separator < 0 ? string.Empty : rawValue.Substring(separator + 1);
-            statusData.ConditionalIncomingSkillRuntimeKinds = incoming ?? string.Empty;
-            statusData.ConditionalIncomingSkillRuntimeKindValues =
-                StatusRuntimeCompiler.ParseSkillRuntimeKindConditions(incoming);
-            statusData.ConditionalOutgoingSkillRuntimeKinds = outgoing ?? string.Empty;
-            statusData.ConditionalOutgoingSkillRuntimeKindValues =
-                StatusRuntimeCompiler.ParseSkillRuntimeKindConditions(outgoing);
         }
 
         /*

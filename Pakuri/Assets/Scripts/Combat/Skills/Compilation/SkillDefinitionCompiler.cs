@@ -99,6 +99,10 @@ public static class SkillDefinitionCompiler
 		passiveSkillExecutionDefinition.SkillId = source.PassiveId;
 		passiveSkillExecutionDefinition.SkillName = source.DisplayName;
 		passiveSkillExecutionDefinition.Slot = source.Slot;
+		passiveSkillExecutionDefinition.RuntimeKind = SkillRuntimeKind.Passive;
+		passiveSkillExecutionDefinition.ImplementationState = source.ImplementationState;
+		passiveSkillExecutionDefinition.RequiredActiveSlot = source.RequiredActiveSlot;
+		passiveSkillExecutionDefinition.IsAvailableWithoutActiveRequirement = source.IsAvailableWithoutActiveRequirement;
 		passiveSkillExecutionDefinition.IsActive = false;
 		passiveSkillExecutionDefinition.Element = DamageAttribute.Physical;
 		if (monster != null)
@@ -106,6 +110,7 @@ public static class SkillDefinitionCompiler
 			passiveSkillExecutionDefinition.Element = monster.PrimaryAttribute;
 		}
 		passiveSkillExecutionDefinition.Description = source.DescriptionText;
+		passiveSkillExecutionDefinition.Summary = source.Summary;
 		passiveSkillExecutionDefinition.Icon = source.SkillIcon;
 		passiveSkillExecutionDefinition.SkillEffectPrefab = source.SkillEffectPrefab;
 		passiveSkillExecutionDefinition.BaseModifierChoices = SkillChoiceCompiler.Compile(source.BaseModifierChoices);
@@ -186,9 +191,13 @@ public static class SkillDefinitionCompiler
 		skill.SkillId = source.SkillId;
 		skill.SkillName = source.DisplayName;
 		skill.Slot = source.Slot;
+		skill.RuntimeKind = source.RuntimeKind;
+		skill.ImplementationState = source.ImplementationState;
+		skill.IsDefaultLearned = source.IsDefaultLearned;
 		skill.IsActive = source.RuntimeKind != SkillRuntimeKind.Passive;
 		skill.Element = source.Attribute;
 		skill.Description = source.DescriptionText;
+		skill.Summary = source.Summary;
 		skill.Icon = source.SkillIcon;
 		skill.SkillEffectPrefab = source.SkillEffectPrefab;
 		skill.RuntimeVisual = source.RuntimeVisual;

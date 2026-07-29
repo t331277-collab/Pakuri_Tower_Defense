@@ -383,9 +383,13 @@ namespace Pakuri.InGame
         public string SkillId;
         public string SkillName;
         public SkillSlot Slot;
+        public SkillRuntimeKind RuntimeKind;
+        public SkillImplementationState ImplementationState = SkillImplementationState.DataOnly;
+        public bool IsDefaultLearned;
         public bool IsActive = true;
         public DamageAttribute Element;
         [TextArea(2, 5)] public string Description;
+        [TextArea(2, 4)] public string Summary;
         public Sprite Icon;
 
         [Header("Runtime Blueprint")]
@@ -574,6 +578,9 @@ namespace Pakuri.InGame
      */
     public class PassiveSkillDefinition : SkillDefinition
     {
+        public SkillSlot RequiredActiveSlot;
+        public bool IsAvailableWithoutActiveRequirement;
+
         [Header("Choices")]
         public SkillChoice[] BaseModifierChoices = Array.Empty<SkillChoice>();
     }
@@ -593,7 +600,16 @@ namespace Pakuri.InGame
 
         public SkillChoiceDefinition Source;
 
-        public string ChoiceId => Source.ChoiceId;
+        public string ChoiceId;
+        public string MonsterId;
+        public string SkillId;
+        public string TargetSkillId;
+        public SkillChoiceGroup ChoiceGroup;
+        public string Title;
+        public Sprite SkillIcon;
+        public GameObject SkillEffectPrefab;
+        [TextArea(2, 5)] public string DescriptionText;
+        public SkillNode[] Nodes = Array.Empty<SkillNode>();
 
         /*
          * 같은 Choice가 같은 대상 스킬에 반복 적용될 때 이미 파싱한 실행 노드를 재사용한다.
@@ -724,6 +740,13 @@ namespace Pakuri.Data
         CombatStart
     }
 
+    public enum SkillTriggerEventSourceScope
+    {
+        Any,
+        Owner,
+        AllAllies
+    }
+
     /*
      * 전투 사건의 활성화 조건과 실행할 Node 목록을 보관한다.
      */
@@ -736,7 +759,9 @@ namespace Pakuri.Data
         public string SourceSkillId;
         public SkillTriggerEvent TriggerEvent;
         public string RequiresActiveChoiceId;
+        public string[] RequiredActiveChoiceIds = Array.Empty<string>();
         public string ExcludesActiveChoiceId;
+        public string[] ExcludedActiveChoiceIds = Array.Empty<string>();
         public string RequiredSourceStatusId;
         public StatusEffectKind RequiredSourceStatusKind;
         public int RequiredSourceStatusMinStacks;
@@ -745,7 +770,9 @@ namespace Pakuri.Data
         public string ConditionStatusSourceSkillId;
         public string[] ConditionStatusSourceSkillIds = Array.Empty<string>();
         public string TriggerAttribute;
+        public DamageAttribute[] TriggerAttributes = Array.Empty<DamageAttribute>();
         public string EventSkillId;
+        public string[] EventSkillIds = Array.Empty<string>();
         public string EventSkillRuntimeKinds;
         public SkillRuntimeKindCondition[] EventSkillRuntimeKindValues = Array.Empty<SkillRuntimeKindCondition>();
         public float ProcChance = 1f;
@@ -753,6 +780,7 @@ namespace Pakuri.Data
         public float TriggerDelaySeconds;
         public int TriggerEveryCount;
         public string EventSourceScope;
+        public SkillTriggerEventSourceScope EventSourceScopeValue;
         public int SortOrder;
         public int RepeatCount = 1;
         public float RepeatIntervalSeconds;
