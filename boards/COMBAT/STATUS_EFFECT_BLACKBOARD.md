@@ -29,7 +29,7 @@ Designer / Code Builder refactoring handoff
 
 ### Status
 
-Design handoff complete. Implementation not started.
+Code Builder implementation in progress. Phase 1 baseline and protection complete.
 
 ### Next Actions
 
@@ -264,8 +264,7 @@ Design handoff complete. Implementation not started.
 
 ### Next Actions
 
-- User explicitly assigns Code Builder.
-- Code Builder implements `boards/COMBAT/SKILL_DIRECT_CATALOG_RUNTIME_HANDOFF.md` from Phase 1.
+- Code Builder implements Phase 2 final typed data contracts while keeping the current compiler path buildable.
 
 ### Evidence
 
@@ -276,9 +275,13 @@ Design handoff complete. Implementation not started.
 - `SkillTrigger` splits authored Choice, attribute, and event-skill lists during trigger checks and compares event source scope as a string.
 - Current graph authoring has two Choice owners targeting more than one skill.
 - Full current tree, all script responsibilities, final 24-script tree, data contracts, migration, risks, and verification are recorded in the handoff.
+- Phase 1 started from clean commit `565eed5`; current `Combat/Skills` contains 27 C# files and 13,997 lines.
+- `Assembly-CSharp.csproj` and `Assembly-CSharp-Editor.csproj` baseline builds completed with zero errors.
+- Unity CSV validation loaded 5 monsters, 8 stage-one enemies, and 8 stage-two enemies; the EditMode test job succeeded.
 
 ### History
 
 - 2026-07-29: User chose final authored-data direct use and requested a Code Builder-ready markdown plus the complete `Combat/Skills` structure.
 - 2026-07-29: Designer created the implementation handoff from inspected current code and data.
 - 2026-07-29: Designer extended the handoff so Generation produces final typed Node and Trigger conditions and runtime code only compares or executes them.
+- 2026-07-29: Code Builder completed Phase 1 baseline protection and recorded the live code, GUID, build, Unity, and CSV evidence.

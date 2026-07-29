@@ -35,7 +35,23 @@ Designer for this handoff. Code Builder for implementation after explicit role a
 
 ## Status
 
-설계 완료. 구현 미시작.
+Code Builder 구현 진행 중. Phase 1 기준선 보호 완료.
+
+## Implementation log
+
+### Phase 1 — Baseline and protection
+
+- 기준 커밋: `565eed5`
+- 시작 작업 트리: clean
+- `Combat/Skills`: C# 27개, 13,997줄
+- 현재 `Combat/Skills`의 모든 script/folder `.meta` GUID를 명령 출력으로 수집했다.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore -v:minimal`: 오류 0, 기존 assembly-version 경고 2개
+- `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore -v:minimal`: 오류 0, 기존 assembly-version 경고 2개
+- Unity `Pakuri/Validate CSV Source Data`: monsters 5, stage-one enemies 8, stage-two enemies 8 로드
+- Unity EditMode test job `bd3daa5759fb49969e135e5aa46e9499`: succeeded
+- Unity Editor는 비-Play Mode, idle, compile/domain reload pending 없음
+- Console의 project validation 오류는 0이다. 별도 MCP package의 disposed-object 오류 1개는 이 작업 코드 밖에서 발생했다.
+- `Pakuri.NewCore.Runtime.csproj`는 저장소에 없는 구형 source 82개를 참조해 baseline build가 실패했다. 현재 게임 assembly 검증은 실제 파일 목록을 반영하는 `Assembly-CSharp.csproj`와 `Assembly-CSharp-Editor.csproj`를 기준으로 한다.
 
 ## Core decision
 

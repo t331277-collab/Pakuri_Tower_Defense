@@ -207,12 +207,12 @@ Designer / Code Builder refactoring handoff
 
 ### Status
 
-Design handoff complete. Implementation not started.
+Code Builder implementation in progress. Phase 1 baseline and protection complete.
 
 ### Next Actions
 
-- Code Builder follows `boards/COMBAT/SKILL_DIRECT_CATALOG_RUNTIME_HANDOFF.md`.
-- Update this board and the COMBAT board together during implementation.
+- Code Builder implements Phase 2 final typed data contracts, then Phase 3 direct Generation.
+- Update this board and the COMBAT board together after each phase.
 
 ### Evidence
 
@@ -221,9 +221,12 @@ Design handoff complete. Implementation not started.
 - Combat compiler scripts perform a second static conversion during unit state rebuild or first Choice use.
 - `SkillNodeExecutor` and `SkillTrigger` still parse authored scope, policy, condition, status, runtime-kind, Choice, attribute, event-skill, and event-source values during execution.
 - Final Loading and Combat contracts are specified in `boards/COMBAT/SKILL_DIRECT_CATALOG_RUNTIME_HANDOFF.md`.
+- Phase 1 baseline `Assembly-CSharp.csproj` and `Assembly-CSharp-Editor.csproj` builds completed with zero errors.
+- Unity CSV validation loaded 5 monsters, 8 stage-one enemies, and 8 stage-two enemies; the EditMode test job succeeded.
 
 ### History
 
 - 2026-07-29: User approved direct use of final authored skill data and requested a Code Builder-ready design.
 - 2026-07-29: Designer recorded the cross-domain Loading/Combat handoff without changing runtime code or CSV.
 - 2026-07-29: Designer updated the Generation contract so encoded authoring strings are converted once and final runtime consumers receive enum/array values.
+- 2026-07-29: Code Builder completed Phase 1 baseline protection before changing the final data contracts.
