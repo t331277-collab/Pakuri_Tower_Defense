@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Pakuri.InGame;
 using UnityEngine;
 
 namespace Pakuri.Data
@@ -8,13 +9,13 @@ namespace Pakuri.Data
     {
         private readonly Dictionary<string, MonsterDefinition> monsters = new Dictionary<string, MonsterDefinition>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, EnemyDefinition> enemies = new Dictionary<string, EnemyDefinition>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, SkillSourceDefinition> activeSkills = new Dictionary<string, SkillSourceDefinition>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, PassiveDefinition> passiveSkills = new Dictionary<string, PassiveDefinition>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, SkillDefinition> activeSkills = new Dictionary<string, SkillDefinition>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, PassiveSkillDefinition> passiveSkills = new Dictionary<string, PassiveSkillDefinition>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, StatusEffectDefinition> statusEffects = new Dictionary<string, StatusEffectDefinition>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, SkillChoiceDefinition> skillChoices = new Dictionary<string, SkillChoiceDefinition>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, SkillChoice> skillChoices = new Dictionary<string, SkillChoice>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, MonsterDefinition.RewardChoiceDefinition> rewardChoices = new Dictionary<string, MonsterDefinition.RewardChoiceDefinition>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, SkillSourceDefinition[]> activeSkillsByMonster = new Dictionary<string, SkillSourceDefinition[]>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, PassiveDefinition[]> passiveSkillsByMonster = new Dictionary<string, PassiveDefinition[]>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, SkillDefinition[]> activeSkillsByMonster = new Dictionary<string, SkillDefinition[]>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, PassiveSkillDefinition[]> passiveSkillsByMonster = new Dictionary<string, PassiveSkillDefinition[]>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, MonsterDefinition.RewardChoiceDefinition[]> rewardChoicesByMonster = new Dictionary<string, MonsterDefinition.RewardChoiceDefinition[]>(StringComparer.OrdinalIgnoreCase);
 
         public MonsterDefinition[] Monsters = Array.Empty<MonsterDefinition>();
@@ -68,12 +69,12 @@ namespace Pakuri.Data
                 enemies.TryGetValue(id, out var enemy);
                 resolved = enemy;
             }
-            else if (targetType == typeof(SkillSourceDefinition))
+            else if (targetType == typeof(SkillDefinition))
             {
                 activeSkills.TryGetValue(id, out var activeSkill);
                 resolved = activeSkill;
             }
-            else if (targetType == typeof(PassiveDefinition))
+            else if (targetType == typeof(PassiveSkillDefinition))
             {
                 passiveSkills.TryGetValue(id, out var passiveSkill);
                 resolved = passiveSkill;
@@ -83,7 +84,7 @@ namespace Pakuri.Data
                 statusEffects.TryGetValue(id, out var statusEffect);
                 resolved = statusEffect;
             }
-            else if (targetType == typeof(SkillChoiceDefinition))
+            else if (targetType == typeof(SkillChoice))
             {
                 skillChoices.TryGetValue(id, out var choice);
                 resolved = choice;
@@ -108,12 +109,12 @@ namespace Pakuri.Data
             return GetData<MonsterDefinition>(id);
         }
 
-        public SkillSourceDefinition[] GetActiveSkills(string monsterId)
+        public SkillDefinition[] GetActiveSkills(string monsterId)
         {
             return GetRegistered(activeSkillsByMonster, monsterId);
         }
 
-        public PassiveDefinition[] GetPassiveSkills(string monsterId)
+        public PassiveSkillDefinition[] GetPassiveSkills(string monsterId)
         {
             return GetRegistered(passiveSkillsByMonster, monsterId);
         }
@@ -123,7 +124,7 @@ namespace Pakuri.Data
             return GetRegistered(rewardChoicesByMonster, monsterId);
         }
 
-        public SkillSourceDefinition GetActiveSkill(string monsterId, SkillSlot slot)
+        public SkillDefinition GetActiveSkill(string monsterId, SkillSlot slot)
         {
             var skills = GetActiveSkills(monsterId);
             for (var i = 0; i < skills.Length; i++)
@@ -137,7 +138,7 @@ namespace Pakuri.Data
             return null;
         }
 
-        public PassiveDefinition ResolvePassiveSkill(string monsterId, SkillSlot slot)
+        public PassiveSkillDefinition ResolvePassiveSkill(string monsterId, SkillSlot slot)
         {
             var passives = GetPassiveSkills(monsterId);
             for (var i = 0; i < passives.Length; i++)
@@ -176,8 +177,8 @@ namespace Pakuri.Data
                 }
 
                 monsters[monster.MonsterId] = monster;
-                activeSkillsByMonster[monster.MonsterId] = monster.ActiveSkills ?? Array.Empty<SkillSourceDefinition>();
-                passiveSkillsByMonster[monster.MonsterId] = monster.PassiveSkills ?? Array.Empty<PassiveDefinition>();
+                activeSkillsByMonster[monster.MonsterId] = monster.ActiveSkills ?? Array.Empty<SkillDefinition>();
+                passiveSkillsByMonster[monster.MonsterId] = monster.PassiveSkills ?? Array.Empty<PassiveSkillDefinition>();
                 rewardChoicesByMonster[monster.MonsterId] = monster.InitialRewardChoices ?? Array.Empty<MonsterDefinition.RewardChoiceDefinition>();
 
                 RegisterActiveSkills(monster.ActiveSkills);
@@ -220,7 +221,7 @@ namespace Pakuri.Data
             }
         }
 
-        private void RegisterActiveSkills(SkillSourceDefinition[] skills)
+        private void RegisterActiveSkills(SkillDefinition[] skills)
         {
             if (skills == null)
             {
@@ -237,11 +238,11 @@ namespace Pakuri.Data
 
                 activeSkills[skill.SkillId] = skill;
                 RegisterSkillChoices(skill.EnhancementChoices);
-                RegisterSkillChoices(skill.MasterSkillChoices);
+                RegisterSkillChoices(skill.MasterChoices);
             }
         }
 
-        private void RegisterPassiveSkills(PassiveDefinition[] passives)
+        private void RegisterPassiveSkills(PassiveSkillDefinition[] passives)
         {
             if (passives == null)
             {
@@ -251,12 +252,13 @@ namespace Pakuri.Data
             for (var i = 0; i < passives.Length; i++)
             {
                 var passive = passives[i];
-                if (passive == null || string.IsNullOrWhiteSpace(passive.PassiveId))
+                if (passive == null || string.IsNullOrWhiteSpace(passive.SkillId))
                 {
                     continue;
                 }
 
-                passiveSkills[passive.PassiveId] = passive;
+                passiveSkills[passive.SkillId] = passive;
+                RegisterSkillChoices(passive.BaseModifierChoices);
                 RegisterSkillChoices(passive.EnhancementChoices);
             }
         }
@@ -278,7 +280,7 @@ namespace Pakuri.Data
             }
         }
 
-        private void RegisterSkillChoices(SkillChoiceDefinition[] choices)
+        private void RegisterSkillChoices(SkillChoice[] choices)
         {
             if (choices == null)
             {

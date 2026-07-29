@@ -29,7 +29,7 @@ Designer / Code Builder refactoring handoff
 
 ### Status
 
-Code Builder implementation in progress. Phases 1-2 complete.
+Code Builder implementation in progress. Phases 1-3 complete.
 
 ### Next Actions
 
@@ -264,7 +264,7 @@ Design handoff complete. Implementation not started.
 
 ### Next Actions
 
-- Code Builder implements Phase 3 direct final-object Generation.
+- Code Builder implements Phase 4 direct runtime use and removes remaining Choice/Trigger runtime conversion.
 
 ### Evidence
 
@@ -280,6 +280,9 @@ Design handoff complete. Implementation not started.
 - Unity CSV validation loaded 5 monsters, 8 stage-one enemies, and 8 stage-two enemies; the EditMode test job succeeded.
 - Phase 2 final types now store typed status scope/policy, status conditions, status lists, RuntimeKind filters, Trigger lists/scope, Choice Nodes, and Node target skill IDs.
 - `SkillNodeExecutor` contains zero authored `StatusRuntimeCompiler.Parse*` calls; the runtime/editor assembly builds with zero errors.
+- Phase 3 Monster, Enemy, and RuntimeCatalog storage uses final Definition/Choice types; Combat state rebuild stores those same references without compiling.
+- Generation builds status definitions first and creates status runtime payloads without re-entering `GameDataLoader.CurrentCatalog`.
+- Unity CSV validation loaded 5/8/8 definitions after final catalog generation.
 
 ### History
 
@@ -288,3 +291,4 @@ Design handoff complete. Implementation not started.
 - 2026-07-29: Designer extended the handoff so Generation produces final typed Node and Trigger conditions and runtime code only compares or executes them.
 - 2026-07-29: Code Builder completed Phase 1 baseline protection and recorded the live code, GUID, build, Unity, and CSV evidence.
 - 2026-07-29: Code Builder completed Phase 2 final typed contracts while retaining the old compiler path as a buildable bridge.
+- 2026-07-29: Code Builder completed Phase 3 final catalog generation and direct final-type indexing.

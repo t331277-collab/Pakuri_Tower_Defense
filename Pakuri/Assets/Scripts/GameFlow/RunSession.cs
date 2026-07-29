@@ -116,7 +116,7 @@ namespace Pakuri.InGame
         public bool CanLearnActive(
             RunMonsterState member /* 스킬을 학습할 파티원 상태 */,
             MonsterDefinition monster /* 스킬을 학습할 몬스터 */,
-            SkillSourceDefinition skill /* 학습 후보 액티브 스킬 */)
+            SkillDefinition skill /* 학습 후보 액티브 스킬 */)
         {
             if (member == null
                 || monster == null
@@ -149,13 +149,13 @@ namespace Pakuri.InGame
         public bool CanLearnPassive(
             RunMonsterState member /* 스킬을 학습할 파티원 상태 */,
             MonsterDefinition monster /* 스킬을 학습할 몬스터 */,
-            PassiveDefinition passive /* 학습 후보 패시브 스킬 */)
+            PassiveSkillDefinition passive /* 학습 후보 패시브 스킬 */)
         {
             if (member == null
                 || monster == null
                 || passive == null
-                || string.IsNullOrWhiteSpace(passive.PassiveId)
-                || member.LearnedPassives.Contains(passive.PassiveId)
+                || string.IsNullOrWhiteSpace(passive.SkillId)
+                || member.LearnedPassives.Contains(passive.SkillId)
                 || member.LearnedPassives.Count >= MaxPassiveSkillCount)
             {
                 return false;
@@ -191,7 +191,7 @@ namespace Pakuri.InGame
         public bool CanChooseSkillChoice(
             RunMonsterState member /* Choice를 선택할 파티원 상태 */,
             MonsterDefinition.RewardChoiceDefinition reward /* Choice와 연결된 보상 */,
-            SkillChoiceDefinition choice /* 선택 후보 강화 효과 */)
+            SkillChoice choice /* 선택 후보 강화 효과 */)
         {
             if (member == null || reward == null || choice == null)
             {
@@ -231,7 +231,7 @@ namespace Pakuri.InGame
         public bool CanChooseSkillChoice(
             RunMonsterState member /* Choice를 선택할 파티원 상태 */,
             string sourceSkillId /* Choice가 연결된 원본 스킬 식별자 */,
-            SkillChoiceDefinition choice /* 선택 후보 강화 효과 */)
+            SkillChoice choice /* 선택 후보 강화 효과 */)
         {
             if (member == null || choice == null || string.IsNullOrWhiteSpace(choice.ChoiceId))
             {
@@ -355,7 +355,7 @@ namespace Pakuri.InGame
             for (var i = 0; i < member.ChosenChoiceIds.Count; i++)
             {
                 var choiceId = member.ChosenChoiceIds[i];
-                if (GameDataLoader.CurrentCatalog.TryGetData(choiceId, out SkillChoiceDefinition choice)
+                if (GameDataLoader.CurrentCatalog.TryGetData(choiceId, out SkillChoice choice)
                     && choice != null
                     && choice.ChoiceGroup == group
                     && string.Equals(
@@ -374,7 +374,7 @@ namespace Pakuri.InGame
          * Choice가 적용될 스킬 ID를 명시값과 대체값 순서로 찾는다.
          */
         private static string ResolveChoiceTargetSkillId(
-            SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */,
+            SkillChoice choice /* 적용하거나 검사할 스킬 선택지 */,
             string fallbackSkillId /* Choice에 대상이 없을 때 사용할 스킬 식별자 */)
         {
             if (choice == null)

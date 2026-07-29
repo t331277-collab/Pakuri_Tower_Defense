@@ -68,6 +68,20 @@ Code Builder 구현 진행 중. Phase 1 기준선 보호 완료.
 - `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore -v:minimal`: 오류 0, 기존 경고 2개
 - Unity script refresh/domain reload 완료, project script 오류 0. 별도 MCP package disposed-object 오류는 이 작업 코드 밖이다.
 
+### Phase 3 — Generation produces final catalog data
+
+- `GameDataCatalogBuilder`가 Generation 안에서 active/passive/enemy 스킬을 최종 concrete Definition으로 한 번 생성한다.
+- Monster/Enemy는 `SkillDefinition[]`과 `PassiveSkillDefinition[]`을 직접 보관한다.
+- `GameDataCatalog`의 ID/monster lookup은 `SkillDefinition`, `PassiveSkillDefinition`, `SkillChoice`를 직접 색인한다.
+- Trigger의 상태 조건, Choice 목록, attribute 목록, event skill 목록, RuntimeKind 목록, event source scope, Node를 Generation에서 강타입 값으로 채운다.
+- status definition을 스킬보다 먼저 만들고 Generation에 직접 전달해 `CurrentCatalog` 재진입 없이 StatusRuntimeData를 생성한다.
+- `all_allies` authored scope는 Generation의 명시 매핑으로 `AllAllies`가 된다.
+- 전투 `RebuildLearnedSkillState`와 적 `RebuildAssignedSkillState`는 최종 Definition 참조를 그대로 `SkillUseState`에 넣는다.
+- 기존 `SkillDefinitionCompiler` 호출은 Generation 내부 3곳만 남았고 Combat 호출은 0이다. Phase 5 삭제 전 일회성 조립 helper로만 사용한다.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore -v:minimal`: 오류 0, 기존 경고 2개
+- `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore -v:minimal`: 오류 0, 기존 경고 3개
+- Unity CSV validation: monsters 5, stage-one enemies 8, stage-two enemies 8 로드
+
 ## Core decision
 
 `작성 데이터에서 직접 사용한다`의 최종 의미는 다음과 같다.

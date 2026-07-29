@@ -444,17 +444,16 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                var skillData = SkillDefinitionCompiler.CompileActive(monster, source);
-                if (owner.Skills.HasActiveSkill(skillData.SkillId))
+                if (owner.Skills.HasActiveSkill(source.SkillId))
                 {
-                    owner.SkillState.AddOrReplace(new SkillUseState(owner, skillData));
+                    owner.SkillState.AddOrReplace(new SkillUseState(owner, source));
                 }
             }
 
             var passives = GameDataLoader.CurrentCatalog.GetPassiveSkills(monsterId);
             for (var i = 0; i < passives.Length; i++)
             {
-                var passive = SkillDefinitionCompiler.CompilePassive(monster, passives[i]);
+                var passive = passives[i];
                 if (owner.Skills.HasPassiveSkill(passive.SkillId))
                 {
                     owner.SkillState.AddOrReplace(new SkillUseState(owner, passive));
@@ -467,7 +466,7 @@ namespace Pakuri.InGame
          */
         public static void RebuildAssignedSkillState(
             UnitCombatState owner /* 실행 상태를 다시 만들 유닛 */,
-            SkillSourceDefinition[] definitions /* 적에게 지정된 액티브 스킬 정의 목록 */,
+            SkillDefinition[] definitions /* 적에게 지정된 액티브 스킬 정의 목록 */,
             SkillTriggerDefinition[] triggers /* 적에게 지정된 Trigger 목록 */)
         {
             if (owner == null)
@@ -481,15 +480,9 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var ownerId = string.Empty;
-            if (owner.Identity != null)
-            {
-                ownerId = owner.Identity.DefinitionId;
-            }
             for (var i = 0; i < definitions.Length; i++)
             {
-                var data = SkillDefinitionCompiler.CompileActive(ownerId, definitions[i], triggers);
-                owner.SkillState.AddOrReplace(new SkillUseState(owner, data));
+                owner.SkillState.AddOrReplace(new SkillUseState(owner, definitions[i]));
             }
         }
     }

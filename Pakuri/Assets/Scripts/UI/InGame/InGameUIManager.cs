@@ -1071,10 +1071,10 @@ namespace Pakuri.InGame
                     MonsterId = state.MonsterId,
                     ActiveSkillId = skill.SkillId,
                     Summary = monster.DisplayName,
-                    SkillName = ResolveChoiceDisplayName(skill.DisplayName, skill.SkillId),
-                    Title = $"{monster.DisplayName} · {ResolveChoiceDisplayName(skill.DisplayName, skill.SkillId)}",
-                    Description = ResolveDescription(skill.Summary, skill.DescriptionText, skill.SkillId),
-                    Icon = skill.SkillIcon
+                    SkillName = ResolveChoiceDisplayName(skill.SkillName, skill.SkillId),
+                    Title = $"{monster.DisplayName} · {ResolveChoiceDisplayName(skill.SkillName, skill.SkillId)}",
+                    Description = ResolveDescription(skill.Summary, skill.Description, skill.SkillId),
+                    Icon = skill.Icon
                 });
             }
         }
@@ -1101,12 +1101,12 @@ namespace Pakuri.InGame
                 offeringChoices.Add(new OfferingChoiceView
                 {
                     MonsterId = state.MonsterId,
-                    PassiveSkillId = passive.PassiveId,
+                    PassiveSkillId = passive.SkillId,
                     Summary = monster.DisplayName,
-                    SkillName = ResolveChoiceDisplayName(passive.DisplayName, passive.PassiveId),
-                    Title = $"{monster.DisplayName} · {ResolveChoiceDisplayName(passive.DisplayName, passive.PassiveId)}",
-                    Description = ResolveDescription(passive.Summary, passive.DescriptionText, passive.PassiveId),
-                    Icon = passive.SkillIcon
+                    SkillName = ResolveChoiceDisplayName(passive.SkillName, passive.SkillId),
+                    Title = $"{monster.DisplayName} · {ResolveChoiceDisplayName(passive.SkillName, passive.SkillId)}",
+                    Description = ResolveDescription(passive.Summary, passive.Description, passive.SkillId),
+                    Icon = passive.Icon
                 });
             }
         }
@@ -1159,7 +1159,7 @@ namespace Pakuri.InGame
         /*
          * ResolveChoice 결과를 계산해 반환한다.
          */
-        private static SkillChoiceDefinition ResolveChoice(string choiceId /* 스킬 선택지 식별자 */)
+        private static SkillChoice ResolveChoice(string choiceId /* 스킬 선택지 식별자 */)
         {
             if (string.IsNullOrWhiteSpace(choiceId))
             {
@@ -1167,7 +1167,7 @@ namespace Pakuri.InGame
             }
 
             var manager = GameDataLoader.CurrentCatalog;
-            if (manager == null || !manager.TryGetData(choiceId, out SkillChoiceDefinition choice))
+            if (manager == null || !manager.TryGetData(choiceId, out SkillChoice choice))
             {
                 return null;
             }
@@ -1178,7 +1178,7 @@ namespace Pakuri.InGame
         /*
          * ResolveChoiceIcon 결과를 계산해 반환한다.
          */
-        private static Sprite ResolveChoiceIcon(SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */)
+        private static Sprite ResolveChoiceIcon(SkillChoice choice /* 적용하거나 검사할 스킬 선택지 */)
         {
             if (choice == null)
             {
@@ -1196,14 +1196,14 @@ namespace Pakuri.InGame
                 return null;
             }
 
-            if (manager.TryGetData(choice.SkillId, out SkillSourceDefinition activeSkill) && activeSkill != null)
+            if (manager.TryGetData(choice.SkillId, out SkillDefinition activeSkill) && activeSkill != null)
             {
-                return activeSkill.SkillIcon;
+                return activeSkill.Icon;
             }
 
-            if (manager.TryGetData(choice.SkillId, out PassiveDefinition passiveSkill) && passiveSkill != null)
+            if (manager.TryGetData(choice.SkillId, out PassiveSkillDefinition passiveSkill) && passiveSkill != null)
             {
-                return passiveSkill.SkillIcon;
+                return passiveSkill.Icon;
             }
 
             return null;
@@ -1215,7 +1215,7 @@ namespace Pakuri.InGame
         private static string BuildEnhancementSkillName(
             MonsterDefinition monster /* 몬스터 */,
             MonsterDefinition.RewardChoiceDefinition reward /* 보상 */,
-            SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */)
+            SkillChoice choice /* 적용하거나 검사할 스킬 선택지 */)
         {
             var sourceName = ResolveLinkedSkillDisplayName(monster, reward, choice);
             var choiceTitle = choice != null && !string.IsNullOrWhiteSpace(choice.Title)
@@ -1238,7 +1238,7 @@ namespace Pakuri.InGame
         private static string ResolveLinkedSkillDisplayName(
             MonsterDefinition monster /* 몬스터 */,
             MonsterDefinition.RewardChoiceDefinition reward /* 보상 */,
-            SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */)
+            SkillChoice choice /* 적용하거나 검사할 스킬 선택지 */)
         {
             var targetSkillId = choice != null ? choice.TargetSkillId : string.Empty;
             var choiceSkillId = choice != null ? choice.SkillId : string.Empty;
@@ -1272,7 +1272,7 @@ namespace Pakuri.InGame
                     var skill = monster.ActiveSkills[i];
                     if (skill != null && string.Equals(skill.SkillId, skillId, StringComparison.OrdinalIgnoreCase))
                     {
-                        return ResolveChoiceDisplayName(skill.DisplayName, skill.SkillId);
+                        return ResolveChoiceDisplayName(skill.SkillName, skill.SkillId);
                     }
                 }
             }
@@ -1282,9 +1282,9 @@ namespace Pakuri.InGame
                 for (var i = 0; i < monster.PassiveSkills.Length; i++)
                 {
                     var passive = monster.PassiveSkills[i];
-                    if (passive != null && string.Equals(passive.PassiveId, skillId, StringComparison.OrdinalIgnoreCase))
+                    if (passive != null && string.Equals(passive.SkillId, skillId, StringComparison.OrdinalIgnoreCase))
                     {
-                        return ResolveChoiceDisplayName(passive.DisplayName, passive.PassiveId);
+                        return ResolveChoiceDisplayName(passive.SkillName, passive.SkillId);
                     }
                 }
             }
@@ -1292,14 +1292,14 @@ namespace Pakuri.InGame
             var manager = GameDataLoader.CurrentCatalog;
             if (manager != null)
             {
-                if (manager.TryGetData(skillId, out SkillSourceDefinition activeSkill) && activeSkill != null)
+                if (manager.TryGetData(skillId, out SkillDefinition activeSkill) && activeSkill != null)
                 {
-                    return ResolveChoiceDisplayName(activeSkill.DisplayName, activeSkill.SkillId);
+                    return ResolveChoiceDisplayName(activeSkill.SkillName, activeSkill.SkillId);
                 }
 
-                if (manager.TryGetData(skillId, out PassiveDefinition passiveSkill) && passiveSkill != null)
+                if (manager.TryGetData(skillId, out PassiveSkillDefinition passiveSkill) && passiveSkill != null)
                 {
-                    return ResolveChoiceDisplayName(passiveSkill.DisplayName, passiveSkill.PassiveId);
+                    return ResolveChoiceDisplayName(passiveSkill.SkillName, passiveSkill.SkillId);
                 }
             }
 

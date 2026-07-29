@@ -80,45 +80,70 @@ namespace Pakuri.Data
          */
         public static StatusRuntimeData Create(StatusEffectKind kind /* 처리할 종류 */, string label /* 표시 문구 */)
         {
+            return Create(StatusEffectLookup.GetDefinition(kind), kind, label);
+        }
+
+        public static StatusRuntimeData Create(
+            StatusEffectKind kind,
+            string label,
+            StatusEffectDefinition[] definitions)
+        {
+            if (definitions != null)
+            {
+                for (var i = 0; i < definitions.Length; i++)
+                {
+                    var definition = definitions[i];
+                    if (definition != null && definition.Kind == kind)
+                    {
+                        return Create(definition, kind, label);
+                    }
+                }
+            }
+
+            throw new KeyNotFoundException($"Status definition '{kind}' is not registered.");
+        }
+
+        private static StatusRuntimeData Create(
+            StatusEffectDefinition definition,
+            StatusEffectKind kind,
+            string label)
+        {
             if (kind == StatusEffectKind.None)
             {
                 throw new InvalidOperationException("StatusEffectKind.None cannot create runtime status data.");
             }
 
-            var definition = StatusEffectLookup.GetDefinition(kind);
-            var status = new StatusRuntimeData();
-            status.Definition = definition;
-            status.Kind = kind;
-            status.StatusTag = definition.Id;
-            status.StatusName = definition.StatusEffectLabel;
-            if (!string.IsNullOrWhiteSpace(label))
+            var status = new StatusRuntimeData
             {
-                status.StatusName = label;
-            }
-
-            status.Duration = definition.DefaultDurationSeconds;
-            status.MaxStacks = definition.MaxStacks;
-            status.IsStackable = definition.MaxStacks != 1;
-            status.BaseStackAmount = definition.BaseStackAmount;
-            status.Permanent = definition.IsPermanent && status.Duration <= 0f;
-            status.CanMove = definition.CanMove;
-            status.CanAct = definition.CanAct;
-            status.CanUseSpecialSkill = definition.CanUseSpecialSkill;
-            status.MoveSpeedBonus = definition.MoveSpeedBonusPerStack;
+                Definition = definition,
+                Kind = kind,
+                StatusTag = definition.Id,
+                StatusName = string.IsNullOrWhiteSpace(label)
+                    ? definition.StatusEffectLabel
+                    : label,
+                Duration = definition.DefaultDurationSeconds,
+                MaxStacks = definition.MaxStacks,
+                IsStackable = definition.MaxStacks != 1,
+                BaseStackAmount = definition.BaseStackAmount,
+                Permanent = definition.IsPermanent && definition.DefaultDurationSeconds <= 0f,
+                CanMove = definition.CanMove,
+                CanAct = definition.CanAct,
+                CanUseSpecialSkill = definition.CanUseSpecialSkill,
+                MoveSpeedBonus = definition.MoveSpeedBonusPerStack,
+                DamageTakenBonus = definition.DamageTakenBonusPerStack,
+                CriticalDamageTakenBonus = definition.CriticalDamageTakenBonusPerStack,
+                CriticalResistanceBonus = definition.CriticalResistanceBonusPerStack,
+                ElementResistReduction = definition.ElementResistReductionPerStack,
+                ElementDamageTakenBonus = definition.ElementDamageTakenBonusPerStack,
+                StatusEffectPrefab = definition.StatusEffectPrefab
+            };
             if (status.MoveSpeedBonus < 0f)
             {
                 status.MovementSlowRate = -status.MoveSpeedBonus;
             }
 
-            status.DamageTakenBonus = definition.DamageTakenBonusPerStack;
-            status.CriticalDamageTakenBonus = definition.CriticalDamageTakenBonusPerStack;
-            status.CriticalResistanceBonus = definition.CriticalResistanceBonusPerStack;
-            status.ElementResistReduction = definition.ElementResistReductionPerStack;
-            status.ElementDamageTakenBonus = definition.ElementDamageTakenBonusPerStack;
             status.Modifiers.ActionSpeedBonus = definition.ActionSpeedBonusPerStack;
             status.Modifiers.AttackPowerBonus = definition.AttackPowerBonusPerStack;
-            status.StatusEffectPrefab = definition.StatusEffectPrefab;
-
             if (definition.HasAttribute)
             {
                 status.HasElementModifierTarget = true;
@@ -134,9 +159,15 @@ namespace Pakuri.Data
         /*
          * Create에 필요한 결과를 만들어 반환한다.
          */
-        public static StatusRuntimeData Create(StatusEffectKind kind /* 처리할 종류 */, string label /* 표시 문구 */, SkillSourceDefinition source /* 변환할 스킬 정의 */)
+        public static StatusRuntimeData Create(
+            StatusEffectKind kind /* 처리할 종류 */,
+            string label /* 표시 문구 */,
+            SkillSourceDefinition source /* 변환할 스킬 정의 */,
+            StatusEffectDefinition[] definitions = null)
         {
-            var status = Create(kind, label);
+            var status = definitions == null
+                ? Create(kind, label)
+                : Create(kind, label, definitions);
             if (source == null)
             {
                 return status;
@@ -421,10 +452,18 @@ namespace Pakuri.Data
                 return SkillTriggerEventSourceScope.Any;
             }
 
-            return (SkillTriggerEventSourceScope)Enum.Parse(
-                typeof(SkillTriggerEventSourceScope),
-                rawValue,
-                true);
+            switch (rawValue.Trim().ToLowerInvariant())
+            {
+                case "owner":
+                    return SkillTriggerEventSourceScope.Owner;
+                case "all_allies":
+                    return SkillTriggerEventSourceScope.AllAllies;
+                case "any":
+                    return SkillTriggerEventSourceScope.Any;
+                default:
+                    throw new InvalidOperationException(
+                        $"Unsupported trigger event source scope '{rawValue}'.");
+            }
         }
 
         /*

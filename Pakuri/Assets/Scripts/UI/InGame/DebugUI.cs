@@ -193,7 +193,7 @@ namespace Pakuri.InGame
             var passive = GameDataLoader.CurrentCatalog.ResolvePassiveSkill(
                 monster.MonsterId,
                 DebugSlots[slotIndex]);
-            if (passive == null || string.IsNullOrWhiteSpace(passive.PassiveId))
+            if (passive == null || string.IsNullOrWhiteSpace(passive.SkillId))
             {
                 return;
             }
@@ -204,7 +204,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            CommitDebugOfferingChoice(session, catalog, monster, null, string.Empty, passive.PassiveId);
+            CommitDebugOfferingChoice(session, catalog, monster, null, string.Empty, passive.SkillId);
         }
 
         /*
@@ -305,17 +305,17 @@ namespace Pakuri.InGame
                     ? GameDataLoader.CurrentCatalog.ResolvePassiveSkill(monster.MonsterId, slot)
                     : null;
                 var hasSkill = isPassiveSlot
-                    ? passiveSkill != null && !string.IsNullOrWhiteSpace(passiveSkill.PassiveId)
+                    ? passiveSkill != null && !string.IsNullOrWhiteSpace(passiveSkill.SkillId)
                     : activeSkill != null && !string.IsNullOrWhiteSpace(activeSkill.SkillId);
                 var learned = hasSkill && state != null && (isPassiveSlot
-                    ? state.LearnedPassives.Contains(passiveSkill.PassiveId)
+                    ? state.LearnedPassives.Contains(passiveSkill.SkillId)
                     : state.LearnedActives.Contains(activeSkill.SkillId));
 
                 button.interactable = hasSkill && !learned;
                 if (label != null)
                 {
                     label.text = hasSkill
-                        ? string.Format("{0}\n{1}", slot, learned ? "Learned" : isPassiveSlot ? passiveSkill.DisplayName : activeSkill.DisplayName)
+                        ? string.Format("{0}\n{1}", slot, learned ? "Learned" : isPassiveSlot ? passiveSkill.SkillName : activeSkill.SkillName)
                         : string.Format("{0}\nNone", slot);
                 }
 
@@ -777,10 +777,10 @@ namespace Pakuri.InGame
 
             var state = monster != null ? session.GetPartyMemberState(monster.MonsterId) : null;
             if (passive == null
-                || string.IsNullOrWhiteSpace(passive.PassiveId)
+                || string.IsNullOrWhiteSpace(passive.SkillId)
                 || monster == null
                 || state == null
-                || !state.LearnedPassives.Contains(passive.PassiveId))
+                || !state.LearnedPassives.Contains(passive.SkillId))
             {
                 SetModifiedPanelVisible(false);
                 SetPassiveModifiedPanelVisible(false);
@@ -810,7 +810,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var choices = masterChoice ? sourceSkill.MasterSkillChoices : sourceSkill.EnhancementChoices;
+            var choices = masterChoice ? sourceSkill.MasterChoices : sourceSkill.EnhancementChoices;
             if (choices == null || choiceIndex < 0 || choiceIndex >= choices.Length)
             {
                 return;
@@ -838,7 +838,7 @@ namespace Pakuri.InGame
             }
 
             var state = session.GetPartyMemberState(monster.MonsterId);
-            if (state == null || passive == null || string.IsNullOrWhiteSpace(passive.PassiveId))
+            if (state == null || passive == null || string.IsNullOrWhiteSpace(passive.SkillId))
             {
                 return;
             }
@@ -850,12 +850,12 @@ namespace Pakuri.InGame
             }
 
             var choice = choices[choiceIndex];
-            if (!session.CanChooseSkillChoice(state, passive.PassiveId, choice))
+            if (!session.CanChooseSkillChoice(state, passive.SkillId, choice))
             {
                 return;
             }
 
-            CommitDebugOfferingChoice(session, ResolveCatalog(), monster, choice, string.Empty, passive.PassiveId);
+            CommitDebugOfferingChoice(session, ResolveCatalog(), monster, choice, string.Empty, passive.SkillId);
             RefreshModifierChoiceButtons();
         }
 
@@ -895,10 +895,10 @@ namespace Pakuri.InGame
 
             var enhancementChoices = sourceSkill != null && sourceSkill.EnhancementChoices != null
                 ? sourceSkill.EnhancementChoices
-                : Array.Empty<SkillChoiceDefinition>();
-            var masterChoices = sourceSkill != null && sourceSkill.MasterSkillChoices != null
-                ? sourceSkill.MasterSkillChoices
-                : Array.Empty<SkillChoiceDefinition>();
+                : Array.Empty<SkillChoice>();
+            var masterChoices = sourceSkill != null && sourceSkill.MasterChoices != null
+                ? sourceSkill.MasterChoices
+                : Array.Empty<SkillChoice>();
 
             BindModifierChoiceButtons(traitButtons, enhancementChoices, session, state, sourceSkill.SkillId);
             BindModifierChoiceButtons(masterButtons, masterChoices, session, state, sourceSkill.SkillId);
@@ -935,9 +935,9 @@ namespace Pakuri.InGame
 
             var enhancementChoices = passive != null && passive.EnhancementChoices != null
                 ? passive.EnhancementChoices
-                : Array.Empty<SkillChoiceDefinition>();
+                : Array.Empty<SkillChoice>();
 
-            BindModifierChoiceButtons(passiveTraitButtons, enhancementChoices, session, state, passive.PassiveId);
+            BindModifierChoiceButtons(passiveTraitButtons, enhancementChoices, session, state, passive.SkillId);
             SetModifierButtonsInactive(traitButtons);
             SetModifierButtonsInactive(masterButtons);
         }
@@ -947,7 +947,7 @@ namespace Pakuri.InGame
          */
         private static void BindModifierChoiceButtons(
             Button[] buttons /* 버튼 목록 */,
-            SkillChoiceDefinition[] choices /* 선택지 목록 */,
+            SkillChoice[] choices /* 선택지 목록 */,
             RunSession session /* 현재 게임 진행 상태 */,
             RunSession.RunMonsterState state /* 상태 */,
             string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */)
@@ -980,7 +980,7 @@ namespace Pakuri.InGame
         /*
          * BuildModifierButtonLabel에 필요한 결과를 만들어 반환한다.
          */
-        private static string BuildModifierButtonLabel(SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */)
+        private static string BuildModifierButtonLabel(SkillChoice choice /* 적용하거나 검사할 스킬 선택지 */)
         {
             if (choice == null)
             {
@@ -1017,7 +1017,7 @@ namespace Pakuri.InGame
         private bool TryResolveModifierContext(
             int slotIndex /* 배치할 슬롯 순서 번호 */,
             out RunSession session /* 현재 게임 진행 상태 */,
-            out SkillSourceDefinition sourceSkill /* 발생 원본 스킬 */,
+            out SkillDefinition sourceSkill /* 발생 원본 스킬 */,
             out MonsterDefinition monster /* 몬스터 */)
         {
             session = ResolveSession();
@@ -1059,7 +1059,7 @@ namespace Pakuri.InGame
         private bool TryResolvePassiveModifierContext(
             int slotIndex /* 배치할 슬롯 순서 번호 */,
             out RunSession session /* 현재 게임 진행 상태 */,
-            out PassiveDefinition passive /* 패시브 */,
+            out PassiveSkillDefinition passive /* 패시브 */,
             out MonsterDefinition monster /* 몬스터 */)
         {
             session = ResolveSession();
@@ -1102,7 +1102,7 @@ namespace Pakuri.InGame
             RunSession session /* 현재 게임 진행 상태 */,
             GameDataCatalog catalog /* 불러온 게임 데이터 목록 */,
             MonsterDefinition monster /* 몬스터 */,
-            SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */,
+            SkillChoice choice /* 적용하거나 검사할 스킬 선택지 */,
             string activeSkillId /* 액티브 스킬 식별자 */,
             string passiveSkillId /* 패시브 스킬 식별자 */)
         {
@@ -1136,7 +1136,7 @@ namespace Pakuri.InGame
          */
         private static string ResolveRewardId(
             MonsterDefinition monster /* 몬스터 */,
-            SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */,
+            SkillChoice choice /* 적용하거나 검사할 스킬 선택지 */,
             string activeSkillId /* 액티브 스킬 식별자 */,
             string passiveSkillId /* 패시브 스킬 식별자 */)
         {

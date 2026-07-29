@@ -84,9 +84,18 @@ public static class SkillDefinitionCompiler
 	 */
 	public static SkillDefinition CompileActive(string ownerId /* 소유자 식별자 */, SkillSourceDefinition source /* 변환할 스킬 정의 */, SkillTriggerDefinition[] triggers /* 트리거 목록 */)
 	{
+		return CompileActive(ownerId, source, triggers, null);
+	}
+
+	internal static SkillDefinition CompileActive(
+		string ownerId,
+		SkillSourceDefinition source,
+		SkillTriggerDefinition[] triggers,
+		StatusEffectDefinition[] statusDefinitions)
+	{
 		SkillDefinition skillRuntimeData = CreateConcreteActiveSkill(source);
 		MapCommonFields(skillRuntimeData, ownerId, source, triggers);
-		MapActiveFields(skillRuntimeData, null, source);
+		MapActiveFields(skillRuntimeData, null, source, statusDefinitions);
 		return skillRuntimeData;
 	}
 
@@ -282,7 +291,11 @@ public static class SkillDefinitionCompiler
 	/*
 	 * MapActiveFields에 필요한 값을 변환해 현재 상태에 반영한다.
 	 */
-	private static void MapActiveFields(SkillDefinition skill /* 실행하거나 검사할 스킬 */, MonsterDefinition monster /* 몬스터 */, SkillSourceDefinition source /* 변환할 스킬 정의 */)
+	private static void MapActiveFields(
+		SkillDefinition skill /* 실행하거나 검사할 스킬 */,
+		MonsterDefinition monster /* 몬스터 */,
+		SkillSourceDefinition source /* 변환할 스킬 정의 */,
+		StatusEffectDefinition[] statusDefinitions = null)
 	{
 		if (skill is ProjectileSkillDefinition projectileSkillExecutionDefinition)
 		{
@@ -313,8 +326,8 @@ public static class SkillDefinitionCompiler
 			projectileSkillExecutionDefinition.ImpactArea.CoverAll = false;
 			MapDamage(projectileSkillExecutionDefinition.Damage, source);
 			MapDamage(projectileSkillExecutionDefinition.ImpactDamage, source);
-			projectileSkillExecutionDefinition.OnHitStatus = CreateStatusApplication(source);
-			projectileSkillExecutionDefinition.ImpactStatus = CreateStatusApplication(source);
+			projectileSkillExecutionDefinition.OnHitStatus = CreateStatusApplication(source, statusDefinitions);
+			projectileSkillExecutionDefinition.ImpactStatus = CreateStatusApplication(source, statusDefinitions);
 		}
 		else if (skill is LineSkillDefinition lineSkillExecutionDefinition)
 		{
@@ -324,7 +337,7 @@ public static class SkillDefinitionCompiler
 			lineSkillExecutionDefinition.LineWidth = source.Radius;
 			lineSkillExecutionDefinition.KnockbackDistance = source.KnockbackDistance;
 			MapDamage(lineSkillExecutionDefinition.DamagePerTick, source);
-			lineSkillExecutionDefinition.OnHitStatus = CreateStatusApplication(source);
+			lineSkillExecutionDefinition.OnHitStatus = CreateStatusApplication(source, statusDefinitions);
 		}
 		else if (skill is ZoneSkillDefinition zoneSkillExecutionDefinition)
 		{
@@ -347,7 +360,7 @@ public static class SkillDefinitionCompiler
 			}
 			zoneSkillExecutionDefinition.Area.CoverAll = hitAllTargets;
 			MapDamage(zoneSkillExecutionDefinition.DamagePerTick, source);
-			zoneSkillExecutionDefinition.OnTickStatus = CreateStatusApplication(source);
+			zoneSkillExecutionDefinition.OnTickStatus = CreateStatusApplication(source, statusDefinitions);
 		}
 		else if (skill is SingleSkillDefinition singleSkillExecutionDefinition)
 		{
@@ -423,7 +436,7 @@ public static class SkillDefinitionCompiler
 				singleSkillExecutionDefinition.UsePrefabHitbox = true;
 				singleSkillExecutionDefinition.UseMultiDeployment = true;
 			}
-			singleSkillExecutionDefinition.OnHitStatus = CreateStatusApplication(source);
+			singleSkillExecutionDefinition.OnHitStatus = CreateStatusApplication(source, statusDefinitions);
 		}
 		else if (skill is SingleChainSkillDefinition singleChainSkillExecutionDefinition)
 		{
@@ -446,7 +459,7 @@ public static class SkillDefinitionCompiler
 			{
 				singleChargeSkillExecutionDefinition.MaxMoveSpeedMultiplier = source.MoveSpeedMultiplier;
 			}
-			singleChargeSkillExecutionDefinition.OnHitStatus = CreateStatusApplication(source);
+			singleChargeSkillExecutionDefinition.OnHitStatus = CreateStatusApplication(source, statusDefinitions);
 		}
 		else if (skill is BuffHealSkillDefinition buffHealSkillExecutionDefinition)
 		{
@@ -462,7 +475,7 @@ public static class SkillDefinitionCompiler
 			buffSkillExecutionDefinition.HasAttachedDamage = source.BaseDamage > 0f;
 			MapDamage(buffSkillExecutionDefinition.AttachedDamage, source);
 			buffSkillExecutionDefinition.AttachedDamageRadius = source.Radius;
-			buffSkillExecutionDefinition.AttachedStatus = CreateStatusApplication(source);
+			buffSkillExecutionDefinition.AttachedStatus = CreateStatusApplication(source, statusDefinitions);
 		}
 		else if (skill is BuffShieldSkillDefinition buffShieldSkillExecutionDefinition)
 		{
@@ -473,7 +486,7 @@ public static class SkillDefinitionCompiler
 			buffShieldSkillExecutionDefinition.ShieldCoefficient = GetDominantCoefficient(source, out var statSource2);
 			buffShieldSkillExecutionDefinition.ShieldStatSource = statSource2;
 			buffShieldSkillExecutionDefinition.ShieldDuration = ResolveStatusDuration(source);
-			buffShieldSkillExecutionDefinition.ShieldStatus = CreateStatusRuntimeData(source);
+			buffShieldSkillExecutionDefinition.ShieldStatus = CreateStatusRuntimeData(source, statusDefinitions);
 		}
 	}
 
@@ -535,10 +548,12 @@ public static class SkillDefinitionCompiler
 	/*
 	 * CreateStatusApplication에 필요한 결과를 만들어 반환한다.
 	 */
-	private static StatusApplicationSpec CreateStatusApplication(SkillSourceDefinition source /* 변환할 스킬 정의 */)
+	private static StatusApplicationSpec CreateStatusApplication(
+		SkillSourceDefinition source /* 변환할 스킬 정의 */,
+		StatusEffectDefinition[] statusDefinitions)
 	{
 		StatusApplicationSpec statusApplicationSpec = new StatusApplicationSpec();
-		StatusRuntimeData runtimeStatusData = (statusApplicationSpec.Status = CreateStatusRuntimeData(source));
+		StatusRuntimeData runtimeStatusData = (statusApplicationSpec.Status = CreateStatusRuntimeData(source, statusDefinitions));
 		statusApplicationSpec.Chance = Mathf.Clamp01(source.StatusChance);
 		statusApplicationSpec.Stacks = 1;
 		if (runtimeStatusData != null)
@@ -552,14 +567,20 @@ public static class SkillDefinitionCompiler
 	/*
 	 * CreateStatusRuntimeData에 필요한 결과를 만들어 반환한다.
 	 */
-	private static StatusRuntimeData CreateStatusRuntimeData(SkillSourceDefinition source /* 변환할 스킬 정의 */)
+	private static StatusRuntimeData CreateStatusRuntimeData(
+		SkillSourceDefinition source /* 변환할 스킬 정의 */,
+		StatusEffectDefinition[] statusDefinitions)
 	{
 		if (string.IsNullOrWhiteSpace(source.StatusEffectId))
 		{
 			return null;
 		}
 		StatusEffectKind kind = StatusRuntimeCompiler.ParseStatusKind(source.StatusEffectId);
-		StatusRuntimeData runtimeStatusData = StatusRuntimeCompiler.Create(kind, source.StatusEffectLabel, source);
+		StatusRuntimeData runtimeStatusData = StatusRuntimeCompiler.Create(
+			kind,
+			source.StatusEffectLabel,
+			source,
+			statusDefinitions);
 		if (runtimeStatusData != null && source.StatusEffectPrefab != null)
 		{
 			runtimeStatusData.StatusEffectPrefab = source.StatusEffectPrefab;

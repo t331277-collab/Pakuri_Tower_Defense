@@ -199,7 +199,7 @@ namespace Pakuri.InGame
                 }
             }
 
-            var choice = manager.GetData<SkillChoiceDefinition>(sourceId);
+            var choice = manager.GetData<SkillChoice>(sourceId);
             if (choice != null && !string.IsNullOrWhiteSpace(choice.Title))
             {
                 return choice.Title;
@@ -308,7 +308,7 @@ namespace Pakuri.InGame
          */
         private static string ResolveChoiceTitle(string choiceId /* 스킬 선택지 식별자 */)
         {
-            var choice = GameDataLoader.CurrentCatalog.GetData<SkillChoiceDefinition>(choiceId);
+            var choice = GameDataLoader.CurrentCatalog.GetData<SkillChoice>(choiceId);
             return choice != null ? choice.Title : string.Empty;
         }
 
@@ -328,7 +328,7 @@ namespace Pakuri.InGame
                 var skill = activeSkills[i];
                 if (skill != null && string.Equals(skill.SkillId, sourceId, StringComparison.OrdinalIgnoreCase))
                 {
-                    return skill.DisplayName;
+                    return skill.SkillName;
                 }
             }
 
@@ -349,9 +349,9 @@ namespace Pakuri.InGame
             for (var i = 0; i < passives.Length; i++)
             {
                 var passive = passives[i];
-                if (passive != null && string.Equals(passive.PassiveId, sourceId, StringComparison.OrdinalIgnoreCase))
+                if (passive != null && string.Equals(passive.SkillId, sourceId, StringComparison.OrdinalIgnoreCase))
                 {
-                    return passive.DisplayName;
+                    return passive.SkillName;
                 }
             }
 

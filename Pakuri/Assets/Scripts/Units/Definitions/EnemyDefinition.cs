@@ -73,7 +73,7 @@ namespace Pakuri.Data
 
         [Header("Shared Runtime Skills")]
         // 공용 스킬 런타임으로 전달할 액티브 스킬과 Trigger
-        public SkillSourceDefinition[] ActiveSkills = Array.Empty<SkillSourceDefinition>();
+        public SkillDefinition[] ActiveSkills = Array.Empty<SkillDefinition>();
         public SkillTriggerDefinition[] SkillTriggers = Array.Empty<SkillTriggerDefinition>();
 
         [Header("Passive")]

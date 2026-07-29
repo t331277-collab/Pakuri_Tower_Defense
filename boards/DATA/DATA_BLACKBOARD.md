@@ -207,11 +207,11 @@ Designer / Code Builder refactoring handoff
 
 ### Status
 
-Code Builder implementation in progress. Phases 1-2 complete.
+Code Builder implementation in progress. Phases 1-3 complete.
 
 ### Next Actions
 
-- Code Builder implements Phase 3 direct Generation.
+- Code Builder implements Phase 4 direct runtime consumption.
 - Update this board and the COMBAT board together after each phase.
 
 ### Evidence
@@ -224,6 +224,8 @@ Code Builder implementation in progress. Phases 1-2 complete.
 - Phase 1 baseline `Assembly-CSharp.csproj` and `Assembly-CSharp-Editor.csproj` builds completed with zero errors.
 - Unity CSV validation loaded 5 monsters, 8 stage-one enemies, and 8 stage-two enemies; the EditMode test job succeeded.
 - Phase 2 added the final typed contracts that Generation will populate directly: final Choice Nodes, Node target IDs, typed status conditions, typed Trigger lists, and event source scope.
+- Phase 3 Generation now produces and indexes final active, passive, enemy, Choice, Trigger, and Node data once.
+- Unity CSV validation loaded 5 monsters, 8 stage-one enemies, and 8 stage-two enemies through the final catalog path.
 
 ### History
 
@@ -232,3 +234,4 @@ Code Builder implementation in progress. Phases 1-2 complete.
 - 2026-07-29: Designer updated the Generation contract so encoded authoring strings are converted once and final runtime consumers receive enum/array values.
 - 2026-07-29: Code Builder completed Phase 1 baseline protection before changing the final data contracts.
 - 2026-07-29: Code Builder completed Phase 2 final typed contracts with the current compiler retained only as an intermediate compatibility path.
+- 2026-07-29: Code Builder completed Phase 3 final catalog generation and final-type RuntimeCatalog indexing.
