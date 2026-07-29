@@ -32,7 +32,7 @@ Designer for this handoff. Code Builder for implementation after explicit role a
 
 ## Status
 
-설계 보완 및 구현 승인 완료. Code Builder Phase 1 기준선 완료, Phase 2 진행 예정.
+설계 보완 및 구현 승인 완료. Code Builder Phase 2 Generation final outcome 완료, Phase 3 진행 예정.
 
 ## Current inspected evidence
 
@@ -432,6 +432,9 @@ Phase 1 evidence:
 - current authored Trigger Node를 final triggered Definition 또는 typed state command로 생성한다.
 - 기존 runtime Node 경로를 유지한 채 새 final 결과와 parity를 비교한다.
 - event-derived damage와 target center snapshot을 final contract에 추가한다.
+- 완료: 55 final Definition, 22 typed command, 81 current no-action owner로 생성된다.
+- 완료: 직접 delivery 51개는 hidden Definition, 기존 `ExecuteSkill` 4개는 catalog Definition 참조를 사용한다.
+- 완료: Unity EditMode 집계 검증 1/1 pass, runtime/editor build error 0.
 
 Rollback point: Trigger는 기존 Nodes를 계속 실행 가능.
 
@@ -550,8 +553,8 @@ Rollback point: Phase 4 commit.
 
 ## Next Actions
 
-- Code Builder가 보완된 계약을 Phase 1 기준선으로 커밋한다.
-- Phase 2부터 final outcome Generation을 구현한다.
+- Phase 3에서 final Definition을 `SkillExecution.TryExecuteTriggered`와 기존 family Executor에 연결한다.
+- lifecycle, 임시 runtime/source snapshot, EventTarget, dynamic raw damage parity를 구현한다.
 
 ## Evidence
 
@@ -578,3 +581,4 @@ Rollback point: Phase 4 commit.
 - 2026-07-29: Review added one-shot Single mapping, exact EventTarget, per-target predicates, shared status rules, temporary runtime/source snapshot separation, lifecycle policy, runtime recursion, seven dynamic damage cases, and current Circle radius parity.
 - 2026-07-29: User approved the corrected document and assigned Code Builder implementation with Ponytail Ultra and one local Git commit per phase.
 - 2026-07-29: Phase 1 fixed the 158/606/77/81 and 24-script/12,102-line baseline and completed runtime/editor builds with zero errors.
+- 2026-07-29: Phase 2 generated 55 final Definitions and 22 typed commands, preserved 81 no-action owners, and passed the focused Unity EditMode catalog test.

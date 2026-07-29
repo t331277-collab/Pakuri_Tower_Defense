@@ -333,12 +333,12 @@ Designer / Code Builder refactoring handoff
 
 ### Status
 
-Phase 1 baseline complete. Phase 2 Generation final outcome implementation pending.
+Phase 2 Generation final outcome implementation complete. Phase 3 shared Trigger execution pending.
 
 ### Next Actions
 
-- Build final Trigger delivery/command contracts while retaining the legacy Node path for parity.
-- Keep 81 current no-action owners inactive.
+- Route the 55 generated final Definitions through `SkillExecution.TryExecuteTriggered`.
+- Preserve shared status rules, per-target conditions, EventTarget, lifecycle policy, and source snapshot parity.
 
 ### Evidence
 
@@ -349,9 +349,12 @@ Phase 1 baseline complete. Phase 2 Generation final outcome implementation pendi
 - Full contracts, migration phases, edge cases, acceptance criteria, and verification are recorded in the handoff.
 - Phase 1 confirmed 158 Triggers, 606 owned Nodes, 77 action owners, 81 no-action owners, 24 Combat/Skills scripts, and 12,102 lines.
 - Runtime and Editor builds completed with zero errors before implementation.
+- Phase 2 generated 55 final Definitions, 22 typed commands, and 81 inactive owners.
+- Focused Unity EditMode catalog test passed 1/1; runtime/editor builds remained error 0.
 
 ### History
 
 - 2026-07-29: User selected condition-only Trigger orchestration, existing Executor reuse, and `SkillNodeExecutor` deletion.
 - 2026-07-29: Designer replaced the obsolete direct Node-dispatch design with the executor-reuse handoff.
 - 2026-07-29: User approved implementation; Code Builder completed the Phase 1 behavior and build baseline.
+- 2026-07-29: Code Builder completed Phase 2 final Trigger outcome Generation and focused catalog verification.

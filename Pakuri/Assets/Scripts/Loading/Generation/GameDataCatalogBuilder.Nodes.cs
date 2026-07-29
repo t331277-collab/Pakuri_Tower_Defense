@@ -56,6 +56,567 @@ namespace Pakuri.Data
 		return Array.Empty<SkillNode>();
 	}
 
+	private static void BuildTriggerOutcome(
+		SkillTriggerDefinition trigger,
+		SkillNodeBuildData[] nodes,
+		SkillDefinition[] activeSkills,
+		StatusEffectDefinition[] statusDefinitions)
+	{
+		if (trigger == null || nodes == null)
+		{
+			return;
+		}
+
+		var state = new TriggerOutcomeBuildState();
+		var outcomeCount = 0;
+		for (var i = 0; i < nodes.Length; i++)
+		{
+			var node = nodes[i];
+			if (node == null || !node.EnabledByDefault)
+			{
+				continue;
+			}
+
+			var handler = node.HandlerId ?? string.Empty;
+			if (IsTriggerOutcomeHandler(handler))
+			{
+				outcomeCount++;
+			}
+			if (string.Equals(handler, "EffectTarget", StringComparison.OrdinalIgnoreCase)
+				|| string.Equals(handler, "SelectTargets", StringComparison.OrdinalIgnoreCase))
+			{
+				state.TargetSide = GetEnumParam(
+					node,
+					"target_side",
+					SkillMultiEffectTargetSide.Enemy);
+				state.TargetSelection = GetEnumParam(
+					node,
+					"target_selection",
+					SkillMultiEffectTargetSelection.Nearest);
+				state.TargetShape = GetEnumParam(
+					node,
+					"target_shape",
+					SkillMultiEffectTargetShape.Single);
+				state.CenterMode = GetEnumParam(
+					node,
+					"center_mode",
+					SkillMultiEffectCenterMode.PrimarySkillCenter);
+				state.CoverAll = GetBoolParam(node, "cover_all", false);
+				state.MaxTargets = GetIntParam(node, "max_targets", 0);
+				continue;
+			}
+			if (string.Equals(handler, "EffectLifetime", StringComparison.OrdinalIgnoreCase)
+				|| string.Equals(handler, "SetDuration", StringComparison.OrdinalIgnoreCase))
+			{
+				state.DurationSeconds = Mathf.Max(
+					0f,
+					GetFloatParam(node, "duration_seconds", 0f));
+				continue;
+			}
+			if (string.Equals(handler, "AttachStatusPayload", StringComparison.OrdinalIgnoreCase))
+			{
+				state.StatusKind = StatusRuntimeCompiler.ParseStatusKind(
+					GetParam(node, "status_id"));
+				state.StatusChance = Mathf.Clamp01(
+					GetFloatParam(node, "status_chance", 1f));
+				state.StatusStacks = Mathf.Max(
+					1,
+					GetIntParam(node, "status_stack_amount", 1));
+				state.StatusDurationSeconds = Mathf.Max(
+					0f,
+					GetFloatParam(node, "status_duration_seconds", 0f));
+				state.StatusMaxStacks = Mathf.Max(
+					1,
+					GetIntParam(node, "status_max_stacks", 1));
+				state.RefreshDuration = !string.Equals(
+					GetParam(node, "status_merge_policy"),
+					"StackDuration",
+					StringComparison.OrdinalIgnoreCase);
+				state.HasStatusPayload = true;
+				continue;
+			}
+			if (string.Equals(handler, "ConditionStatus", StringComparison.OrdinalIgnoreCase))
+			{
+				if (StatusEffectLookup.TryParse(
+					GetParam(node, "status_id"),
+					out var selectionStatusKind))
+				{
+					state.SelectionStatusKind = selectionStatusKind;
+					state.SelectionStatusMinStacks = Mathf.Max(
+						1,
+						GetIntParam(node, "min_stacks", 1));
+				}
+				continue;
+			}
+			if (string.Equals(handler, "ConditionSkillAttribute", StringComparison.OrdinalIgnoreCase))
+			{
+				state.HasSelectionSkillAttribute = true;
+				state.SelectionSkillAttribute = GetEnumParam(
+					node,
+					"attribute",
+					DamageAttribute.Physical);
+				continue;
+			}
+			if (string.Equals(handler, "EffectVisual", StringComparison.OrdinalIgnoreCase)
+				|| string.Equals(handler, "RuntimeEffectVisual", StringComparison.OrdinalIgnoreCase)
+				|| string.Equals(handler, "ShowVisual", StringComparison.OrdinalIgnoreCase))
+			{
+				state.Prefab = node.ResolvedPrefab;
+				state.RuntimeVisual = node.ResolvedRuntimeVisual;
+				continue;
+			}
+			if (TryMapStatusMutation(node, handler, out var mutation))
+			{
+				state.StatusMutations.Add(mutation);
+			}
+		}
+		if (outcomeCount > 1)
+		{
+			throw new InvalidOperationException(
+				"Trigger has more than one runtime outcome: " + trigger.TriggerId);
+		}
+
+		var targeting = BuildTriggerTargeting(state);
+		trigger.LockToEventTarget =
+			state.TargetSelection == SkillMultiEffectTargetSelection.EventTarget;
+		trigger.CenterMode = state.CenterMode == SkillMultiEffectCenterMode.Caster
+			? SkillTriggerCenterMode.Caster
+			: state.CenterMode == SkillMultiEffectCenterMode.EffectTarget
+				? SkillTriggerCenterMode.EventTarget
+				: SkillTriggerCenterMode.EventCenter;
+
+		for (var i = 0; i < nodes.Length; i++)
+		{
+			var node = nodes[i];
+			if (node == null || !node.EnabledByDefault)
+			{
+				continue;
+			}
+
+			var handler = node.HandlerId ?? string.Empty;
+			if (string.Equals(handler, "EffectDamage", StringComparison.OrdinalIgnoreCase)
+				|| string.Equals(handler, "ApplyDamage", StringComparison.OrdinalIgnoreCase))
+			{
+				BuildTriggeredDamage(trigger, node, state, targeting);
+				return;
+			}
+			if (string.Equals(handler, "ApplyStatus", StringComparison.OrdinalIgnoreCase))
+			{
+				BuildTriggeredStatus(
+					trigger,
+					node,
+					state,
+					targeting,
+					statusDefinitions);
+				return;
+			}
+			if (string.Equals(handler, "ApplyShield", StringComparison.OrdinalIgnoreCase))
+			{
+				BuildTriggeredShield(
+					trigger,
+					node,
+					state,
+					targeting,
+					statusDefinitions);
+				return;
+			}
+			if (string.Equals(handler, "ExecuteSkill", StringComparison.OrdinalIgnoreCase))
+			{
+				trigger.TriggeredSkill = FindSkill(
+					activeSkills,
+					GetParam(node, "skill_id"));
+				trigger.UsesExistingSkillRuntime = true;
+				trigger.TriggeredDamageMultiplier = Mathf.Max(
+					0f,
+					GetFloatParam(node, "damage_multiplier", 1f));
+				trigger.PublishSkillLifecycleEvents = true;
+				return;
+			}
+			if (string.Equals(handler, "RecastZone", StringComparison.OrdinalIgnoreCase))
+			{
+				trigger.Command = new SkillTriggerCommand
+				{
+					Kind = SkillTriggerCommandKind.RecastZone,
+					TargetId = GetParam(node, "source_skill_id"),
+					DelaySeconds = Mathf.Max(0f, GetFloatParam(node, "delay_seconds", 0f)),
+					DurationSeconds = Mathf.Max(0f, GetFloatParam(node, "duration_seconds", 0f)),
+					RadiusMultiplier = Mathf.Max(0f, GetFloatParam(node, "radius_multiplier", 1f)),
+					InheritSnapshot = GetBoolParam(node, "inherit_snapshot", true),
+					MaxGeneration = Mathf.Max(1, GetIntParam(node, "max_generation", 1)),
+					Targeting = targeting,
+					LockToEventTarget = trigger.LockToEventTarget
+				};
+				return;
+			}
+			if (string.Equals(handler, "RefundCooldown", StringComparison.OrdinalIgnoreCase)
+				|| string.Equals(handler, "ReduceReload", StringComparison.OrdinalIgnoreCase))
+			{
+				trigger.Command = new SkillTriggerCommand
+				{
+					Kind = string.Equals(handler, "RefundCooldown", StringComparison.OrdinalIgnoreCase)
+						? SkillTriggerCommandKind.RefundCooldown
+						: SkillTriggerCommandKind.ReduceReload,
+					TargetId = GetParam(node, "skill_id"),
+					Ratio = Mathf.Clamp01(GetFloatParam(node, "ratio", 0f)),
+					Targeting = targeting,
+					LockToEventTarget = trigger.LockToEventTarget
+				};
+				return;
+			}
+			if (string.Equals(handler, "EffectExtendStatusDuration", StringComparison.OrdinalIgnoreCase)
+				|| string.Equals(handler, "ExtendStatusDuration", StringComparison.OrdinalIgnoreCase))
+			{
+				trigger.Command = new SkillTriggerCommand
+				{
+					Kind = SkillTriggerCommandKind.ExtendStatusDuration,
+					TargetId = GetParam(node, "status_id"),
+					DurationSeconds = state.DurationSeconds,
+					Targeting = targeting,
+					LockToEventTarget = trigger.LockToEventTarget
+				};
+				return;
+			}
+		}
+	}
+
+	internal static bool IsTriggerOutcomeHandler(string handler)
+	{
+		return string.Equals(handler, "EffectDamage", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handler, "ApplyDamage", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handler, "ApplyStatus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handler, "ApplyShield", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handler, "ExecuteSkill", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handler, "RecastZone", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handler, "RefundCooldown", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handler, "ReduceReload", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handler, "EffectExtendStatusDuration", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handler, "ExtendStatusDuration", StringComparison.OrdinalIgnoreCase);
+	}
+
+	private static void BuildTriggeredDamage(
+		SkillTriggerDefinition trigger,
+		SkillNodeBuildData node,
+		TriggerOutcomeBuildState state,
+		SkillTargetingSpec targeting)
+	{
+		var multiplier = Mathf.Max(
+			0f,
+			GetFloatParam(node, "damage_multiplier", 1f));
+		var shape = targeting.Shape;
+		var maxTargets = shape == SkillTargetShape.Single
+			? 1
+			: state.MaxTargets;
+		var damage = new SingleSkillDefinition
+		{
+			Area =
+			{
+				Radius = Mathf.Max(0f, GetFloatParam(node, "radius", 0f)),
+				Duration = state.DurationSeconds,
+				CoverAll = shape != SkillTargetShape.Single || state.CoverAll
+			},
+			UsesHitTargetCount = true,
+			HitAllTargets = shape != SkillTargetShape.Single && maxTargets <= 0,
+			HitTargetCount = maxTargets > 0 ? maxTargets : int.MaxValue
+		};
+		MapTriggeredCommon(damage, trigger, targeting, state);
+		damage.RuntimeKind = SkillRuntimeKind.SingleAttack;
+		damage.Element = GetEnumParam(node, "attribute", DamageAttribute.Physical);
+		damage.Damage.SkillId = trigger.SourceSkillId;
+		damage.Damage.Element = damage.Element;
+		damage.Damage.BaseDamage =
+			GetFloatParam(node, "base_damage", 0f) * multiplier;
+		damage.Damage.AttackPowerCoefficient =
+			GetFloatParam(node, "attack_power_coefficient", 0f) * multiplier;
+		damage.Damage.SpellPowerCoefficient =
+			GetFloatParam(node, "spell_power_coefficient", 0f) * multiplier;
+		damage.Damage.CriticalAllowed = false;
+
+		trigger.TriggeredSkill = damage;
+		trigger.DamageValueSource = GetEnumParam(
+			node,
+			"value_source",
+			SkillTriggerDamageValueSource.Fixed);
+		trigger.DamageValueMultiplier =
+			Mathf.Max(0f, GetFloatParam(node, "value_source_multiplier", 1f))
+			* multiplier;
+		trigger.TrackedDamageAttribute = GetEnumParam(
+			node,
+			"tracked_attribute",
+			DamageAttribute.Physical);
+	}
+
+	private static void BuildTriggeredStatus(
+		SkillTriggerDefinition trigger,
+		SkillNodeBuildData node,
+		TriggerOutcomeBuildState state,
+		SkillTargetingSpec targeting,
+		StatusEffectDefinition[] statusDefinitions)
+	{
+		var kind = state.HasStatusPayload
+			? state.StatusKind
+			: StatusRuntimeCompiler.ParseStatusKind(GetParam(node, "status_id"));
+		var status = CreateTriggeredStatus(kind, trigger, state, statusDefinitions);
+
+		var skill = new BuffSkillDefinition
+		{
+			UseConfiguredTargeting = true,
+			AttachedStatus =
+			{
+				Status = status,
+				Chance = state.HasStatusPayload ? state.StatusChance : 1f,
+				Stacks = state.HasStatusPayload ? state.StatusStacks : 1,
+				RefreshDuration = !state.HasStatusPayload || state.RefreshDuration
+			}
+		};
+		MapTriggeredCommon(skill, trigger, targeting, state);
+		skill.RuntimeKind = SkillRuntimeKind.Buff;
+		skill.BuffDuration = status.Duration;
+		trigger.TriggeredSkill = skill;
+	}
+
+	private static void BuildTriggeredShield(
+		SkillTriggerDefinition trigger,
+		SkillNodeBuildData node,
+		TriggerOutcomeBuildState state,
+		SkillTargetingSpec targeting,
+		StatusEffectDefinition[] statusDefinitions)
+	{
+		var status = CreateTriggeredStatus(
+			StatusEffectKind.Shield,
+			trigger,
+			state,
+			statusDefinitions);
+		var skill = new BuffShieldSkillDefinition
+		{
+			UseConfiguredTargeting = true,
+			ShieldBase = GetFloatParam(node, "base_damage", 0f),
+			ShieldCoefficient = GetFloatParam(node, "spell_power_coefficient", 0f),
+			ShieldStatSource = StatSource.Intelligence,
+			ShieldDuration = status.Duration,
+			ShieldStatus = status
+		};
+		MapTriggeredCommon(skill, trigger, targeting, state);
+		skill.RuntimeKind = SkillRuntimeKind.Shield;
+		trigger.TriggeredSkill = skill;
+	}
+
+	private static StatusRuntimeData CreateTriggeredStatus(
+		StatusEffectKind kind,
+		SkillTriggerDefinition trigger,
+		TriggerOutcomeBuildState state,
+		StatusEffectDefinition[] statusDefinitions)
+	{
+		var status = statusDefinitions == null
+			? StatusRuntimeCompiler.Create(kind, null)
+			: StatusRuntimeCompiler.Create(kind, null, statusDefinitions);
+		status.SourceSkillId = trigger.TriggerId;
+		if (state.HasStatusPayload)
+		{
+			status.BaseStackAmount = state.StatusStacks;
+			status.MaxStacks = state.StatusMaxStacks;
+			status.IsStackable = status.MaxStacks != 1;
+			if (state.StatusDurationSeconds > 0f)
+			{
+				status.Duration = state.StatusDurationSeconds;
+				status.Permanent = false;
+			}
+		}
+		if (state.DurationSeconds > 0f)
+		{
+			status.Duration = state.DurationSeconds;
+			status.Permanent = false;
+		}
+		if (state.Prefab != null)
+		{
+			status.StatusEffectPrefab = state.Prefab;
+		}
+		if (state.RuntimeVisual != null)
+		{
+			status.RuntimeVisual = state.RuntimeVisual;
+		}
+		ApplyTriggeredStatusMutations(status, state.StatusMutations);
+		return status;
+	}
+
+	private static void MapTriggeredCommon(
+		SkillDefinition skill,
+		SkillTriggerDefinition trigger,
+		SkillTargetingSpec targeting,
+		TriggerOutcomeBuildState state)
+	{
+		skill.SkillId = trigger.TriggerId + "@delivery";
+		skill.SkillName = trigger.TriggerId;
+		skill.ImplementationState = SkillImplementationState.RuntimeImplemented;
+		skill.IsDefaultLearned = false;
+		skill.IsActive = true;
+		skill.Targeting = targeting;
+		skill.SkillEffectPrefab = state.Prefab;
+		skill.RuntimeVisual = state.RuntimeVisual ?? new RuntimeSkillVisualSpec();
+		trigger.PublishSkillLifecycleEvents = false;
+	}
+
+	private static SkillTargetingSpec BuildTriggerTargeting(
+		TriggerOutcomeBuildState state)
+	{
+		var targeting = new SkillTargetingSpec
+		{
+			TargetSide = state.TargetSide == SkillMultiEffectTargetSide.Self
+				? SkillTargetSide.Self
+				: state.TargetSide == SkillMultiEffectTargetSide.AllAllies
+					? SkillTargetSide.AllAllies
+					: SkillTargetSide.Enemy,
+			Selection = state.TargetSelection == SkillMultiEffectTargetSelection.Owner
+				? SkillTargetSelection.Owner
+				: SkillTargetSelection.Nearest,
+			Shape = state.TargetShape == SkillMultiEffectTargetShape.Single
+				? SkillTargetShape.Single
+				: state.TargetShape == SkillMultiEffectTargetShape.Battlefield
+					? SkillTargetShape.Battlefield
+					: SkillTargetShape.Circle,
+			CoverAll = state.CoverAll
+				|| state.TargetShape == SkillMultiEffectTargetShape.Battlefield,
+			SelectionStatusKind = state.SelectionStatusKind,
+			SelectionStatusMinStacks = state.SelectionStatusMinStacks,
+			HasSelectionSkillAttribute = state.HasSelectionSkillAttribute,
+			SelectionSkillAttribute = state.SelectionSkillAttribute
+		};
+		return targeting;
+	}
+
+	private static SkillDefinition FindSkill(
+		SkillDefinition[] skills,
+		string skillId)
+	{
+		if (skills != null)
+		{
+			for (var i = 0; i < skills.Length; i++)
+			{
+				if (skills[i] != null
+					&& string.Equals(
+						skills[i].SkillId,
+						skillId,
+						StringComparison.OrdinalIgnoreCase))
+				{
+					return skills[i];
+				}
+			}
+		}
+		throw new InvalidOperationException(
+			"Triggered skill is not registered: " + skillId);
+	}
+
+	private static void ApplyTriggeredStatusMutations(
+		StatusRuntimeData status,
+		IReadOnlyList<StatusMutationNodeOp> mutations)
+	{
+		for (var i = 0; status != null && mutations != null && i < mutations.Count; i++)
+		{
+			var mutation = mutations[i];
+			switch (mutation.Kind)
+			{
+				case StatusMutationKind.ActionSpeedBonus:
+					status.Modifiers.ActionSpeedBonus += mutation.Amount;
+					break;
+				case StatusMutationKind.MoveSpeedBonus:
+					status.MoveSpeedBonus += mutation.Amount;
+					status.MovementSlowRate = status.MoveSpeedBonus < 0f
+						? -status.MoveSpeedBonus
+						: 0f;
+					break;
+				case StatusMutationKind.AttackPowerBonus:
+					status.Modifiers.AttackPowerBonus += mutation.Amount;
+					break;
+				case StatusMutationKind.SpellPowerBonus:
+					status.Modifiers.SpellPowerBonus += mutation.Amount;
+					break;
+				case StatusMutationKind.DamageBonusRate:
+					status.Modifiers.DamageBonusRate += mutation.Amount;
+					SetTriggeredElementModifier(status, mutation);
+					break;
+				case StatusMutationKind.ShieldReceivedBonus:
+					status.Modifiers.ShieldReceivedBonus += mutation.Amount;
+					break;
+				case StatusMutationKind.CriticalChanceBonus:
+					status.Modifiers.CritChanceBonusRate += mutation.Amount;
+					break;
+				case StatusMutationKind.CriticalDamageBonus:
+					status.Modifiers.CritDamageBonusRate += mutation.Amount;
+					break;
+				case StatusMutationKind.CriticalResistanceBonus:
+					status.CriticalResistanceBonus += mutation.Amount;
+					break;
+				case StatusMutationKind.DamageTakenBonus:
+					status.DamageTakenBonus += mutation.Amount;
+					break;
+				case StatusMutationKind.ElementResistReduction:
+					status.ElementResistReduction += mutation.Amount;
+					status.Modifiers.ResistReduction = status.ElementResistReduction;
+					status.Modifiers.ResistReductionElement = mutation.Attribute;
+					SetTriggeredElementModifier(status, mutation);
+					break;
+				case StatusMutationKind.FlatElementResistReduction:
+					status.FlatElementResistReduction += mutation.Amount;
+					SetTriggeredElementModifier(status, mutation);
+					break;
+				case StatusMutationKind.ElementDamageTakenBonus:
+					status.ElementDamageTakenBonus += mutation.Amount;
+					SetTriggeredElementModifier(status, mutation);
+					break;
+				case StatusMutationKind.ConditionalStatusChanceBonus:
+					status.ConditionalTargetStatusKinds = mutation.ConditionalStatusKinds;
+					status.ConditionalStatusChanceBonus += mutation.Amount;
+					break;
+				case StatusMutationKind.RuntimeKindFilter:
+					status.ConditionalIncomingSkillRuntimeKindValues = mutation.IncomingRuntimeKinds;
+					status.ConditionalOutgoingSkillRuntimeKindValues = mutation.OutgoingRuntimeKinds;
+					break;
+				case StatusMutationKind.OutgoingAdditionalDamage:
+					status.OutgoingAdditionalDamageMultiplier += mutation.Amount;
+					status.OutgoingAdditionalDamageTriggerAttribute = mutation.Attribute;
+					status.OutgoingAdditionalDamageAttribute = mutation.SecondaryAttribute;
+					break;
+			}
+		}
+	}
+
+	private static void SetTriggeredElementModifier(
+		StatusRuntimeData status,
+		StatusMutationNodeOp mutation)
+	{
+		status.HasElementModifierTarget = true;
+		status.ElementModifierTarget = mutation.Attribute;
+	}
+
+	private sealed class TriggerOutcomeBuildState
+	{
+		internal SkillMultiEffectTargetSide TargetSide =
+			SkillMultiEffectTargetSide.Enemy;
+		internal SkillMultiEffectTargetSelection TargetSelection =
+			SkillMultiEffectTargetSelection.Nearest;
+		internal SkillMultiEffectTargetShape TargetShape =
+			SkillMultiEffectTargetShape.Single;
+		internal SkillMultiEffectCenterMode CenterMode =
+			SkillMultiEffectCenterMode.PrimarySkillCenter;
+		internal bool CoverAll;
+		internal int MaxTargets;
+		internal float DurationSeconds;
+		internal bool HasStatusPayload;
+		internal StatusEffectKind StatusKind;
+		internal float StatusChance = 1f;
+		internal int StatusStacks = 1;
+		internal float StatusDurationSeconds;
+		internal int StatusMaxStacks = 1;
+		internal bool RefreshDuration = true;
+		internal StatusEffectKind SelectionStatusKind;
+		internal int SelectionStatusMinStacks;
+		internal bool HasSelectionSkillAttribute;
+		internal DamageAttribute SelectionSkillAttribute;
+		internal GameObject Prefab;
+		internal RuntimeSkillVisualSpec RuntimeVisual;
+		internal readonly List<StatusMutationNodeOp> StatusMutations =
+			new List<StatusMutationNodeOp>();
+	}
+
 	/*
 	 * CanProcessNode 조건을 만족하는지 확인한다.
 	 */

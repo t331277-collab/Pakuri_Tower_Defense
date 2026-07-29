@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using NUnit.Framework;
 using Pakuri.Data;
 using Pakuri.InGame;
@@ -64,5 +65,48 @@ public sealed class SkillCatalogRuntimeTests
             UnityEngine.Object.DestroyImmediate(monster);
             UnityEngine.Object.DestroyImmediate(catalog);
         }
+    }
+
+    [Test]
+    public void TriggerNodesGenerateFinalRuntimeOutcomes()
+    {
+        GameDataLoader.EnsureInitialized();
+        var catalog = GameDataLoader.CurrentCatalog;
+        var triggers = new List<SkillTriggerDefinition>();
+        foreach (var monster in catalog.Monsters)
+        {
+            triggers.AddRange(monster.SkillTriggers);
+        }
+
+        Assert.That(triggers, Has.Count.EqualTo(158));
+        Assert.That(
+            triggers.FindAll(trigger => trigger.TriggeredSkill != null),
+            Has.Count.EqualTo(55));
+        Assert.That(
+            triggers.FindAll(trigger => trigger.Command != null),
+            Has.Count.EqualTo(22));
+        Assert.That(
+            triggers.FindAll(trigger =>
+                trigger.TriggeredSkill == null && trigger.Command == null),
+            Has.Count.EqualTo(81));
+        Assert.That(
+            triggers.FindAll(trigger =>
+                trigger.DamageValueSource != SkillTriggerDamageValueSource.Fixed),
+            Has.Count.EqualTo(7));
+        Assert.That(
+            triggers.FindAll(trigger => trigger.UsesExistingSkillRuntime),
+            Has.Count.EqualTo(4));
+        Assert.That(
+            triggers.FindAll(trigger =>
+                trigger.TriggeredSkill is SingleSkillDefinition),
+            Has.Count.EqualTo(27));
+        Assert.That(
+            triggers.FindAll(trigger =>
+                trigger.TriggeredSkill is BuffSkillDefinition),
+            Has.Count.EqualTo(21));
+        Assert.That(
+            triggers.FindAll(trigger =>
+                trigger.TriggeredSkill is BuffShieldSkillDefinition),
+            Has.Count.EqualTo(3));
     }
 }

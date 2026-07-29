@@ -275,12 +275,12 @@ Designer / Code Builder refactoring handoff
 
 ### Status
 
-Phase 1 baseline complete. Phase 2 final outcome Generation pending.
+Phase 2 final outcome Generation complete. Phase 3 runtime consumption pending.
 
 ### Next Actions
 
-- Generate final concrete Definitions or typed commands beside the retained legacy Node path.
-- Verify owner classification remains 77 action and 81 current no-action owners.
+- Consume generated final Definitions through the existing family Executor dispatch.
+- Keep the legacy Node path only until Phase 4 parity is complete.
 
 ### Evidence
 
@@ -290,9 +290,12 @@ Phase 1 baseline complete. Phase 2 final outcome Generation pending.
 - Event-derived damage uses shield-applied, shield-absorbed, or event-applied damage snapshots.
 - The full Generation mapping and validation rules are recorded in the handoff.
 - Phase 1 confirmed 158 Trigger rows and 606 Trigger-owned Node rows with runtime/editor build error 0.
+- Phase 2 generated 55 final Definitions and 22 typed commands while retaining 81 current no-action owners.
+- Unity EditMode catalog verification passed 1/1 and both C# builds completed with error 0.
 
 ### History
 
 - 2026-07-29: User selected existing Executor reuse instead of runtime Trigger Node effect dispatch.
 - 2026-07-29: Designer recorded the corresponding final Generation outcome contract.
 - 2026-07-29: User approved Code Builder implementation; Phase 1 fixed the current owner and build baseline.
+- 2026-07-29: Code Builder completed Phase 2 final outcome Generation and focused catalog verification.

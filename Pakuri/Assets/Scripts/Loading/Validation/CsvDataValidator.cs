@@ -209,6 +209,7 @@ namespace Pakuri.Data
 
             ValidateNormalizedSkillAuthoringRows(model, assetCatalog, errors);
             ValidateSkillNodeHandlers(model, errors);
+            ValidateTriggerOutcomes(model, errors);
 
             ValidateUnitRuntimeValues(model, errors);
             ValidateEnemyRows(model, errors);
@@ -981,6 +982,35 @@ namespace Pakuri.Data
 
                 errors.Add(
                     $"Skill graph '{BuildSkillGraphKey(graph)}' node '{graph.NodeOrder}' uses handler '{nodeType.HandlerId}' without a combat conversion route.");
+            }
+        }
+
+        private static void ValidateTriggerOutcomes(
+            SourceModel model ,
+            List<string> errors )
+        {
+            var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (var node in model.SkillNodes.Values)
+            {
+                if (node == null
+                    || !node.EnabledByDefault
+                    || node.OwnerKind != SkillNodeOwnerKind.Trigger
+                    || !GameDataCatalogBuilder.IsTriggerOutcomeHandler(node.HandlerId))
+                {
+                    continue;
+                }
+
+                counts.TryGetValue(node.OwnerId, out var count);
+                counts[node.OwnerId] = count + 1;
+            }
+
+            foreach (var pair in counts)
+            {
+                if (pair.Value > 1)
+                {
+                    errors.Add(
+                        $"Skill trigger '{pair.Key}' has {pair.Value} runtime outcomes; expected at most one.");
+                }
             }
         }
 

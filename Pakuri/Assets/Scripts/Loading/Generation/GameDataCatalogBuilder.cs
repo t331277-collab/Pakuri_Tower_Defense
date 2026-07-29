@@ -75,12 +75,17 @@ namespace Pakuri.Data
                     Holy = sourceMonster.HolyDefense
                 };
                 monster.InitialRewardChoices = BuildRewardChoices(model, sourceMonster.Id);
-                monster.SkillTriggers = BuildSkillTriggers(model, sourceMonster.Id);
                 monster.ActiveSkills = BuildActiveSkills(
                     model,
                     sourceMonster.Id,
-                    monster.SkillTriggers,
+                    Array.Empty<SkillTriggerDefinition>(),
                     catalog.StatusEffects);
+                monster.SkillTriggers = BuildSkillTriggers(
+                    model,
+                    sourceMonster.Id,
+                    monster.ActiveSkills,
+                    catalog.StatusEffects);
+                AttachSkillTriggers(monster.ActiveSkills, monster.SkillTriggers);
                 monster.PassiveSkills = BuildPassiveSkills(model, monster);
                 monsters.Add(monster);
             }
@@ -159,12 +164,17 @@ namespace Pakuri.Data
                     Darkness = sourceEnemy.DarknessDefense,
                     Holy = sourceEnemy.HolyDefense
                 };
-                enemy.SkillTriggers = BuildEnemyAssignedSkillTriggers(model, sourceEnemy.Id);
                 enemy.ActiveSkills = BuildEnemyAssignedActiveSkills(
                     model,
                     sourceEnemy.Id,
-                    enemy.SkillTriggers,
+                    Array.Empty<SkillTriggerDefinition>(),
                     statusDefinitions);
+                enemy.SkillTriggers = BuildEnemyAssignedSkillTriggers(
+                    model,
+                    sourceEnemy.Id,
+                    enemy.ActiveSkills,
+                    statusDefinitions);
+                AttachSkillTriggers(enemy.ActiveSkills, enemy.SkillTriggers);
                 enemy.PassiveSkill = BuildEnemyPassiveDefinition(model, sourceEnemy.PassiveId);
                 enemy.NexusDamage = sourceEnemy.NexusDamage;
                 enemies.Add(enemy);
@@ -367,7 +377,11 @@ namespace Pakuri.Data
             return selection;
         }
 
-        private SkillTriggerDefinition[] BuildEnemyAssignedSkillTriggers(SourceModel model , string enemyId )
+        private SkillTriggerDefinition[] BuildEnemyAssignedSkillTriggers(
+            SourceModel model ,
+            string enemyId ,
+            SkillDefinition[] activeSkills ,
+            StatusEffectDefinition[] statusDefinitions )
         {
             if (model == null
                 || string.IsNullOrWhiteSpace(enemyId)
@@ -413,6 +427,7 @@ namespace Pakuri.Data
                         }
                     }
                 };
+                var nodes = MapSkillNodes(normalizedNodes);
                 definitions[i] = new SkillTriggerDefinition
                 {
                     TriggerId = row.Id,
@@ -422,8 +437,13 @@ namespace Pakuri.Data
                     SortOrder = row.SortOrder,
                     ProcChance = 1f,
                     EventSourceScopeValue = SkillTriggerEventSourceScope.Any,
-                    Nodes = MapSkillNodes(normalizedNodes)
+                    Nodes = nodes
                 };
+                BuildTriggerOutcome(
+                    definitions[i],
+                    normalizedNodes,
+                    activeSkills,
+                    statusDefinitions);
             }
 
             return definitions;
@@ -621,7 +641,11 @@ namespace Pakuri.Data
             return int.Parse(value, NumberStyles.Integer, CultureInfo.InvariantCulture);
         }
 
-        private SkillTriggerDefinition[] BuildSkillTriggers(SourceModel model , string monsterId )
+        private SkillTriggerDefinition[] BuildSkillTriggers(
+            SourceModel model ,
+            string monsterId ,
+            SkillDefinition[] activeSkills ,
+            StatusEffectDefinition[] statusDefinitions )
         {
             var triggers = FilterAndSort(
                 model.SkillTriggers.Values,
@@ -637,6 +661,7 @@ namespace Pakuri.Data
                     SkillNodeOwnerKind.Trigger,
                     trigger.Id,
                     trigger.SourceSkillId);
+                var nodes = MapSkillNodes(normalizedNodes);
                 definitions[i] = new SkillTriggerDefinition
                 {
                     TriggerId = trigger.Id,
@@ -664,11 +689,36 @@ namespace Pakuri.Data
                     TriggerEveryCount = trigger.TriggerEveryCount,
                     EventSourceScopeValue = StatusRuntimeCompiler.ParseEventSourceScope(trigger.EventSourceScope),
                     RequireEventExecute = trigger.RequireEventExecute,
-                    Nodes = MapSkillNodes(normalizedNodes)
+                    Nodes = nodes
                 };
+                BuildTriggerOutcome(
+                    definitions[i],
+                    normalizedNodes,
+                    activeSkills,
+                    statusDefinitions);
             }
 
             return definitions;
+        }
+
+        private static void AttachSkillTriggers(
+            SkillDefinition[] skills ,
+            SkillTriggerDefinition[] triggers )
+        {
+            if (skills == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < skills.Length; i++)
+            {
+                if (skills[i] != null)
+                {
+                    skills[i].SkillTriggers = FilterSkillTriggersForSkill(
+                        triggers,
+                        skills[i].SkillId);
+                }
+            }
         }
 
         private PassiveSkillDefinition[] BuildPassiveSkills(

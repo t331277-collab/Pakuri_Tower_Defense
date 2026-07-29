@@ -159,6 +159,8 @@ namespace Pakuri.InGame
         public string SelectionStatusId;
         public StatusEffectKind SelectionStatusKind;
         public int SelectionStatusMinStacks;
+        public bool HasSelectionSkillAttribute;
+        public DamageAttribute SelectionSkillAttribute;
         public SkillTargetShape Shape = SkillTargetShape.Single;
         [Tooltip("Deprecated. InGame skills target the whole battlefield; runtime ignores this value.")]
         public float Range;
@@ -565,6 +567,47 @@ namespace Pakuri.Data
         AllAllies
     }
 
+    public enum SkillTriggerDamageValueSource
+    {
+        Fixed,
+        ShieldAppliedAmount,
+        ShieldRemainingAmount,
+        ShieldAbsorbedAmount,
+        TrackedIncomingDamage,
+        EventAppliedDamage
+    }
+
+    public enum SkillTriggerCenterMode
+    {
+        EventCenter,
+        EventTarget,
+        Caster
+    }
+
+    public enum SkillTriggerCommandKind
+    {
+        RecastZone,
+        RefundCooldown,
+        ReduceReload,
+        ExtendStatusDuration
+    }
+
+    [Serializable]
+    public class SkillTriggerCommand
+    {
+        public SkillTriggerCommandKind Kind;
+        public string TargetId;
+        public float Ratio;
+        public float DurationSeconds;
+        public Pakuri.InGame.SkillTargetingSpec Targeting =
+            new Pakuri.InGame.SkillTargetingSpec();
+        public bool LockToEventTarget;
+        public float DelaySeconds;
+        public float RadiusMultiplier = 1f;
+        public bool InheritSnapshot = true;
+        public int MaxGeneration = 1;
+    }
+
     /*
      * 전투 사건의 활성화 조건과 실행할 Node 목록을 보관한다.
      */
@@ -594,6 +637,16 @@ namespace Pakuri.Data
         public int RepeatCount = 1;
         public float RepeatIntervalSeconds;
         public bool RequireEventExecute;
+        public Pakuri.InGame.SkillDefinition TriggeredSkill;
+        public SkillTriggerCommand Command;
+        public bool UsesExistingSkillRuntime;
+        public float TriggeredDamageMultiplier = 1f;
+        public SkillTriggerDamageValueSource DamageValueSource;
+        public float DamageValueMultiplier = 1f;
+        public DamageAttribute TrackedDamageAttribute;
+        public bool LockToEventTarget;
+        public SkillTriggerCenterMode CenterMode;
+        public bool PublishSkillLifecycleEvents;
         public Pakuri.InGame.SkillNode[] Nodes = Array.Empty<Pakuri.InGame.SkillNode>();
     }
 
