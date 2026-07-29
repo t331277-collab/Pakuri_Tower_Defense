@@ -4,26 +4,31 @@ using System.Globalization;
 using Pakuri.Combat;
 using Pakuri.InGame;
 using UnityEngine;
-using static Pakuri.Data.GameDataLoader;
 using static Pakuri.Data.CsvParser;
 using static Pakuri.Data.CsvRowParser;
 using static Pakuri.Data.CsvSourceModel;
 using static Pakuri.Data.SkillGraphParser;
 
-
-/*
- * 검증된 SourceModel을 게임이 직접 사용하는 GameDataCatalog로 변환한다.
- * 몬스터·적·상태·스킬·선택지 정의를 만들고 노드, 효과, 트리거, 상태 부가값을 연결하며
- * 각 정의가 참조하는 스프라이트, 프리팹, 애니메이터 자산도 함께 해석한다.
- */
 namespace Pakuri.Data
 {
-    internal static class GameDataCatalogBuilder
+    internal sealed class GameDataCatalogBuilder
     {
-        /*
-         * CSV 원본 모델을 런타임 게임 데이터 카탈로그로 만든다.
-         */
-        internal static GameDataCatalog BuildRuntimeCatalog(SourceModel model /* CSV에서 읽은 원본 데이터 */)
+
+        private readonly CsvRuntimeCatalog assetCatalog;
+
+        private GameDataCatalogBuilder(CsvRuntimeCatalog assetCatalog )
+        {
+            this.assetCatalog = assetCatalog ?? throw new ArgumentNullException(nameof(assetCatalog));
+        }
+
+        internal static GameDataCatalog BuildRuntimeCatalog(
+            SourceModel model ,
+            CsvRuntimeCatalog assetCatalog )
+        {
+            return new GameDataCatalogBuilder(assetCatalog).Build(model);
+        }
+
+        private GameDataCatalog Build(SourceModel model )
         {
             var catalog = ScriptableObject.CreateInstance<GameDataCatalog>();
 
@@ -82,14 +87,11 @@ namespace Pakuri.Data
             return catalog;
         }
 
-        /*
-         * 현재 조건에 맞는 값을 결정한다.
-         */
-        internal static string ResolveMonsterSkillDisplayName(
-            SourceModel model /* CSV에서 읽은 원본 데이터 */,
-            string monsterId /* 몬스터 식별자 */,
-            PakuriCsvSkillKind skillKind /* 스킬 종류 */,
-            SkillSlot slot /* 스킬이나 유닛이 배치될 슬롯 */)
+        private string ResolveMonsterSkillDisplayName(
+            SourceModel model ,
+            string monsterId ,
+            PakuriCsvSkillKind skillKind ,
+            SkillSlot slot )
         {
             if (model != null && model.Skills != null)
             {
@@ -108,12 +110,9 @@ namespace Pakuri.Data
                 $"Monster '{monsterId}' has no '{skillKind}' skill in slot '{slot}'.");
         }
 
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
-        internal static EnemyDefinition[] BuildEnemies(
-            SourceModel model /* CSV에서 읽은 원본 데이터 */,
-            string stageId /* 스테이지 식별자 */)
+        private EnemyDefinition[] BuildEnemies(
+            SourceModel model ,
+            string stageId )
         {
             var enemies = new List<EnemyDefinition>();
             var sourceEnemies = FilterAndSort(
@@ -165,10 +164,7 @@ namespace Pakuri.Data
             return enemies.ToArray();
         }
 
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
-        internal static EnemyPassiveDefinition BuildEnemyPassiveDefinition(SourceModel model /* CSV에서 읽은 원본 데이터 */, string passiveId /* 패시브 식별자 */)
+        private EnemyPassiveDefinition BuildEnemyPassiveDefinition(SourceModel model , string passiveId )
         {
             if (model == null
                 || string.IsNullOrWhiteSpace(passiveId)
@@ -190,10 +186,7 @@ namespace Pakuri.Data
             };
         }
 
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
-        internal static SkillSourceDefinition[] BuildEnemyAssignedActiveSkills(SourceModel model /* CSV에서 읽은 원본 데이터 */, string enemyId /* 적 식별자 */)
+        private SkillSourceDefinition[] BuildEnemyAssignedActiveSkills(SourceModel model , string enemyId )
         {
             if (model == null
                 || string.IsNullOrWhiteSpace(enemyId)
@@ -209,14 +202,11 @@ namespace Pakuri.Data
             return definitions.ToArray();
         }
 
-        /*
-         * 조건을 만족하는 항목만 추가한다.
-         */
-        internal static void TryAddEnemyAssignedSkillDefinition(
-            SourceModel model /* CSV에서 읽은 원본 데이터 */,
-            string skillId /* 스킬 식별자 */,
-            SkillSlot runtimeSlot /* 런타임 슬롯 */,
-            List<SkillSourceDefinition> definitions /* 정의 목록 */)
+        private void TryAddEnemyAssignedSkillDefinition(
+            SourceModel model ,
+            string skillId ,
+            SkillSlot runtimeSlot ,
+            List<SkillSourceDefinition> definitions )
         {
             if (model == null
                 || definitions == null
@@ -231,10 +221,7 @@ namespace Pakuri.Data
             definitions.Add(BuildEnemyAssignedSkillDefinition(source, runtimeSlot));
         }
 
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
-        internal static SkillSourceDefinition BuildEnemyAssignedSkillDefinition(EnemyBaseSkillRow source /* 효과를 발생시킨 원본 */, SkillSlot runtimeSlot /* 런타임 슬롯 */)
+        private SkillSourceDefinition BuildEnemyAssignedSkillDefinition(EnemyBaseSkillRow source , SkillSlot runtimeSlot )
         {
             var row = source.Skill;
             var definition = new SkillSourceDefinition
@@ -283,10 +270,7 @@ namespace Pakuri.Data
             return definition;
         }
 
-        /*
-         * 계산된 값을 대상 정의에 적용한다.
-         */
-        internal static void ApplyEnemyExecutionProfile(SkillSourceDefinition definition /* 변환하거나 검사할 정의 */)
+        private void ApplyEnemyExecutionProfile(SkillSourceDefinition definition )
         {
             if (definition == null)
             {
@@ -318,10 +302,7 @@ namespace Pakuri.Data
             }
         }
 
-        /*
-         * 원본 값을 런타임 형식으로 바꾼다.
-         */
-        internal static string MapEnemyTargetSelection(string selection /* 선택 방식 */)
+        private string MapEnemyTargetSelection(string selection )
         {
             if (string.Equals(selection, "FarthestHostile", StringComparison.OrdinalIgnoreCase))
             {
@@ -352,10 +333,7 @@ namespace Pakuri.Data
             return selection;
         }
 
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
-        internal static SkillTriggerDefinition[] BuildEnemyAssignedSkillTriggers(SourceModel model /* CSV에서 읽은 원본 데이터 */, string enemyId /* 적 식별자 */)
+        private SkillTriggerDefinition[] BuildEnemyAssignedSkillTriggers(SourceModel model , string enemyId )
         {
             if (model == null
                 || string.IsNullOrWhiteSpace(enemyId)
@@ -415,10 +393,7 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
-        internal static StatusEffectDefinition[] BuildStatusEffects(SourceModel model /* CSV에서 읽은 원본 데이터 */)
+        private StatusEffectDefinition[] BuildStatusEffects(SourceModel model )
         {
             var statuses = new List<StatusEffectDefinition>();
             foreach (var row in model.StatusEffects.Values)
@@ -455,10 +430,7 @@ namespace Pakuri.Data
             return statuses.ToArray();
         }
 
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
-        internal static MonsterDefinition.RewardChoiceDefinition[] BuildRewardChoices(SourceModel model /* CSV에서 읽은 원본 데이터 */, string monsterId /* 몬스터 식별자 */)
+        private MonsterDefinition.RewardChoiceDefinition[] BuildRewardChoices(SourceModel model , string monsterId )
         {
             var rewards = FilterAndSort(
                 model.RewardChoices.Values,
@@ -480,10 +452,7 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
-        internal static SkillSourceDefinition[] BuildActiveSkills(SourceModel model /* CSV에서 읽은 원본 데이터 */, string monsterId /* 몬스터 식별자 */)
+        private SkillSourceDefinition[] BuildActiveSkills(SourceModel model , string monsterId )
         {
             var skills = FilterAndSort(
                 model.Skills.Values,
@@ -563,49 +532,7 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
-
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
-
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
-
-        /*
-         * 계산된 값을 대상 정의에 적용한다.
-         */
-
-        /*
-         * 계산된 값을 대상 정의에 적용한다.
-         */
-
-        /*
-         * 계산된 값을 대상 정의에 적용한다.
-         */
-
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
-        internal static string BuildConditionStatusExpression(Dictionary<string, string> parameters /* 매개변수 목록 */)
-        {
-            var statusId = GetSkillNodeStringParam(parameters, "status_id");
-            var minStacks = GetSkillNodeIntParam(parameters, "min_stacks", 1);
-            if (string.IsNullOrWhiteSpace(statusId) || minStacks <= 1)
-            {
-                return statusId;
-            }
-
-            return string.Concat(statusId, ":", minStacks.ToString(CultureInfo.InvariantCulture));
-        }
-
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
-        internal static Dictionary<string, string> BuildSkillNodeParamValueLookup(SourceModel model /* CSV에서 읽은 원본 데이터 */, string nodeId /* 노드 식별자 */)
+        private Dictionary<string, string> BuildSkillNodeParamValueLookup(SourceModel model , string nodeId )
         {
             var parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             for (var i = 0; i < model.SkillNodeParams.Count; i++)
@@ -620,10 +547,7 @@ namespace Pakuri.Data
             return parameters;
         }
 
-        /*
-         * 계산에 필요한 값을 반환한다.
-         */
-        internal static string GetSkillNodeStringParam(Dictionary<string, string> parameters /* 매개변수 목록 */, string key /* 조회 키 */)
+        private string GetSkillNodeStringParam(Dictionary<string, string> parameters , string key )
         {
             if (parameters.TryGetValue(key, out var value))
             {
@@ -633,10 +557,7 @@ namespace Pakuri.Data
             return string.Empty;
         }
 
-        /*
-         * 계산에 필요한 값을 반환한다.
-         */
-        internal static float GetSkillNodeFloatParam(Dictionary<string, string> parameters /* 매개변수 목록 */, string key /* 조회 키 */, float defaultValue /* 값이 없을 때 사용할 기본값 */)
+        private float GetSkillNodeFloatParam(Dictionary<string, string> parameters , string key , float defaultValue )
         {
             if (!parameters.TryGetValue(key, out var value) || string.IsNullOrWhiteSpace(value))
             {
@@ -646,10 +567,7 @@ namespace Pakuri.Data
             return float.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
         }
 
-        /*
-         * 계산에 필요한 값을 반환한다.
-         */
-        internal static int GetSkillNodeIntParam(Dictionary<string, string> parameters /* 매개변수 목록 */, string key /* 조회 키 */, int defaultValue /* 값이 없을 때 사용할 기본값 */)
+        private int GetSkillNodeIntParam(Dictionary<string, string> parameters , string key , int defaultValue )
         {
             if (!parameters.TryGetValue(key, out var value) || string.IsNullOrWhiteSpace(value))
             {
@@ -659,40 +577,7 @@ namespace Pakuri.Data
             return int.Parse(value, NumberStyles.Integer, CultureInfo.InvariantCulture);
         }
 
-        /*
-         * 계산에 필요한 값을 반환한다.
-         */
-        internal static bool GetSkillNodeBoolParam(Dictionary<string, string> parameters /* 매개변수 목록 */, string key /* 조회 키 */, bool defaultValue /* 값이 없을 때 사용할 기본값 */)
-        {
-            if (!parameters.TryGetValue(key, out var value) || string.IsNullOrWhiteSpace(value))
-            {
-                return defaultValue;
-            }
-
-            return bool.Parse(value);
-        }
-
-        /*
-         * 계산에 필요한 값을 반환한다.
-         */
-        internal static TEnum GetSkillNodeEnumParam<TEnum>(
-            Dictionary<string, string> parameters /* 매개변수 목록 */,
-            string key /* 조회 키 */,
-            TEnum defaultValue /* 값이 없을 때 사용할 기본값 */)
-            where TEnum : struct
-        {
-            if (!parameters.TryGetValue(key, out var value) || string.IsNullOrWhiteSpace(value))
-            {
-                return defaultValue;
-            }
-
-            return (TEnum)Enum.Parse(typeof(TEnum), value, true);
-        }
-
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
-        internal static SkillTriggerDefinition[] BuildSkillTriggers(SourceModel model /* CSV에서 읽은 원본 데이터 */, string monsterId /* 몬스터 식별자 */)
+        private SkillTriggerDefinition[] BuildSkillTriggers(SourceModel model , string monsterId )
         {
             var triggers = FilterAndSort(
                 model.SkillTriggers.Values,
@@ -742,10 +627,7 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
-        internal static PassiveDefinition[] BuildPassiveSkills(SourceModel model /* CSV에서 읽은 원본 데이터 */, string monsterId /* 몬스터 식별자 */)
+        private PassiveDefinition[] BuildPassiveSkills(SourceModel model , string monsterId )
         {
             var skills = FilterAndSort(
                 model.Skills.Values,
@@ -777,10 +659,7 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
-        internal static SkillChoiceDefinition[] BuildSkillChoices(SourceModel model /* CSV에서 읽은 원본 데이터 */, string skillId /* 스킬 식별자 */, SkillChoiceGroup choiceGroup /* 선택지 그룹 */)
+        private SkillChoiceDefinition[] BuildSkillChoices(SourceModel model , string skillId , SkillChoiceGroup choiceGroup )
         {
             var choices = FilterAndSort(
                 model.SkillChoices.Values,
@@ -824,13 +703,10 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        /*
-         * 계산에 필요한 값을 반환한다.
-         */
-        internal static string GetChoiceNodeParam(
-            SkillNodeDefinition[] nodes /* 노드 목록 */,
-            string handlerId /* 처리기 식별자 */,
-            string paramKey /* 매개변수 조회 키 */)
+        private string GetChoiceNodeParam(
+            SkillNodeDefinition[] nodes ,
+            string handlerId ,
+            string paramKey )
         {
             if (nodes == null || string.IsNullOrWhiteSpace(handlerId) || string.IsNullOrWhiteSpace(paramKey))
             {
@@ -867,14 +743,11 @@ namespace Pakuri.Data
             return string.Empty;
         }
 
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
-        internal static SkillNodeDefinition[] BuildSkillNodeDefinitions(
-            SourceModel model /* CSV에서 읽은 원본 데이터 */,
-            SkillNodeOwnerKind ownerKind /* 소유자 종류 */,
-            string ownerId /* 소유자 식별자 */,
-            string defaultTargetSkillId /* 기본 대상 스킬 식별자 */)
+        private SkillNodeDefinition[] BuildSkillNodeDefinitions(
+            SourceModel model ,
+            SkillNodeOwnerKind ownerKind ,
+            string ownerId ,
+            string defaultTargetSkillId )
         {
             var nodes = FilterAndSort(
                 model.SkillNodes.Values,
@@ -934,10 +807,7 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
-        internal static SkillNodeParamDefinition[] BuildSkillNodeParamDefinitions(SourceModel model /* CSV에서 읽은 원본 데이터 */, string nodeId /* 노드 식별자 */)
+        private SkillNodeParamDefinition[] BuildSkillNodeParamDefinitions(SourceModel model , string nodeId )
         {
             var nodeParams = FilterAndSort(
                 model.SkillNodeParams,
@@ -963,13 +833,10 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        /*
-         * 조건에 맞는 항목만 정렬해 반환한다.
-         */
-        internal static List<T> FilterAndSort<T>(
-            IEnumerable<T> source /* 효과를 발생시킨 원본 */,
-            Predicate<T> predicate /* 판정 조건 */,
-            Comparison<T> comparison /* 비교 방식 */)
+        private List<T> FilterAndSort<T>(
+            IEnumerable<T> source ,
+            Predicate<T> predicate ,
+            Comparison<T> comparison )
         {
             var filtered = new List<T>();
             foreach (var item in source)
@@ -984,10 +851,7 @@ namespace Pakuri.Data
             return filtered;
         }
 
-        /*
-         * 계산된 값을 대상 정의에 적용한다.
-         */
-        internal static void ApplyStatusPayload(SkillSourceDefinition definition /* 변환하거나 검사할 정의 */, StatusPayloadRow payload /* 적용 데이터 */)
+        private void ApplyStatusPayload(SkillSourceDefinition definition , StatusPayloadRow payload )
         {
             if (definition == null || payload == null)
             {
@@ -1017,31 +881,21 @@ namespace Pakuri.Data
             definition.StatusElementDamageTakenBonus = payload.StatusElementDamageTakenBonus;
         }
 
-        /*
-         * 계산된 값을 대상 정의에 적용한다.
-         */
-
-        /*
-         * 해당 자료 변환에 필요한 값을 구성한다.
-         */
-        internal static IEnumerable<CatalogEntryRow> SortCatalogEntries(Dictionary<string, CatalogEntryRow> entries /* 등록 정보 목록 */)
+        private IEnumerable<CatalogEntryRow> SortCatalogEntries(Dictionary<string, CatalogEntryRow> entries )
         {
             var list = new List<CatalogEntryRow>(entries.Values);
             list.Sort((left, right) => left.SortOrder.CompareTo(right.SortOrder));
             return list;
         }
 
-        /*
-         * 필요한 CSV 또는 자산을 불러온다.
-         */
-        internal static Sprite LoadSprite(string assetPath /* 에셋 경로 */)
+        private Sprite LoadSprite(string assetPath )
         {
             if (string.IsNullOrWhiteSpace(assetPath))
             {
                 return null;
             }
 
-            if (runtimeCsvCatalog != null && runtimeCsvCatalog.TryGetSprite(assetPath, out var sprite))
+            if (assetCatalog != null && assetCatalog.TryGetSprite(assetPath, out var sprite))
             {
                 return sprite;
             }
@@ -1049,10 +903,7 @@ namespace Pakuri.Data
             throw new CsvFatalException($"Runtime sprite asset is missing: '{assetPath}'.");
         }
 
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
-        internal static RuntimeSkillVisualSpec BuildRuntimeVisual(SkillRow row /* 스킬 CSV 행 */)
+        private RuntimeSkillVisualSpec BuildRuntimeVisual(SkillRow row )
         {
             if (row == null)
             {
@@ -1072,14 +923,7 @@ namespace Pakuri.Data
                 row.RuntimeVisualAnchor);
         }
 
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
-
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
-        internal static RuntimeSkillVisualSpec BuildImpactRuntimeVisual(SkillRow row /* 스킬 CSV 행 */)
+        private RuntimeSkillVisualSpec BuildImpactRuntimeVisual(SkillRow row )
         {
             if (row == null)
             {
@@ -1098,20 +942,17 @@ namespace Pakuri.Data
                 0f);
         }
 
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
-        internal static RuntimeSkillVisualSpec BuildRuntimeVisual(
-            string spritePath /* 스프라이트 경로 */,
-            string animatorControllerPath /* 애니메이터 제어기 경로 */,
-            float scale /* 크기 배율 */,
-            float scaleX /* 크기 배율 X축 */,
-            float scaleY /* 크기 배율 Y축 */,
-            float scaleZ /* 크기 배율 Z축 */,
-            int sortingOrder /* 시각 효과의 정렬 순서 */,
-            float hitboxSizeX /* 피격 판정 크기 X축 */,
-            float hitboxSizeY /* 피격 판정 크기 Y축 */,
-            string visualAnchor = null /* 시각 효과를 배치할 기준점 */)
+        private RuntimeSkillVisualSpec BuildRuntimeVisual(
+            string spritePath ,
+            string animatorControllerPath ,
+            float scale ,
+            float scaleX ,
+            float scaleY ,
+            float scaleZ ,
+            int sortingOrder ,
+            float hitboxSizeX ,
+            float hitboxSizeY ,
+            string visualAnchor = null )
         {
             var anchor = RuntimeSkillVisualAnchor.Skill;
             if (!string.IsNullOrWhiteSpace(visualAnchor))
@@ -1155,17 +996,14 @@ namespace Pakuri.Data
             };
         }
 
-        /*
-         * 필요한 CSV 또는 자산을 불러온다.
-         */
-        internal static RuntimeAnimatorController LoadAnimatorController(string assetPath /* 에셋 경로 */)
+        private RuntimeAnimatorController LoadAnimatorController(string assetPath )
         {
             if (string.IsNullOrWhiteSpace(assetPath))
             {
                 return null;
             }
 
-            if (runtimeCsvCatalog != null && runtimeCsvCatalog.TryGetAnimatorController(assetPath, out var animatorController))
+            if (assetCatalog != null && assetCatalog.TryGetAnimatorController(assetPath, out var animatorController))
             {
                 return animatorController;
             }
@@ -1173,17 +1011,14 @@ namespace Pakuri.Data
             throw new CsvFatalException($"Runtime animator controller asset is missing: '{assetPath}'.");
         }
 
-        /*
-         * 필요한 CSV 또는 자산을 불러온다.
-         */
-        internal static GameObject LoadPrefab(string assetPath /* 에셋 경로 */)
+        private GameObject LoadPrefab(string assetPath )
         {
             if (string.IsNullOrWhiteSpace(assetPath))
             {
                 return null;
             }
 
-            if (runtimeCsvCatalog != null && runtimeCsvCatalog.TryGetPrefab(assetPath, out var prefab))
+            if (assetCatalog != null && assetCatalog.TryGetPrefab(assetPath, out var prefab))
             {
                 return prefab;
             }

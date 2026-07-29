@@ -5,8 +5,10 @@ using Pakuri.Data;
 using UnityEngine;
 
 /*
- * 스킬 슬롯, 기본 정의, 상태 적용, 실행 계획을 포함한 스킬 정의 형식을 제공
- CSV에서 만들어진 스킬을 런타임이 이해하는 형식으로 제공 모든 스킬 종류(투사체, 장판, 단일 공격등.. 여러 스킬 정의)
+ * 스킬 슬롯, 작성 원본, 공통 실행 설정과 계열별 런타임 Definition 형식을 제공한다.
+ * Pakuri.Data 영역은 카탈로그·Choice·Trigger·Node 작성 계약을,
+ * Pakuri.InGame 영역은 Projectile·Line·Single·Zone·Buff·Passive 실행 설계도를 보관한다.
+ * 이 파일은 값을 정의할 뿐 대상 선택, 피해 적용, Trigger 발동이나 Node 실행은 담당하지 않는다.
  */
 namespace Pakuri.Data
 {

@@ -5,7 +5,9 @@ using Pakuri.Data;
 using UnityEngine;
 
 /*
- * 자동·수동·Trigger 스킬 요청을 받고, 스킬 종류에 맞는 Executor로 보냄
+ * 자동·수동·Trigger 스킬 요청의 공통 진입점과 스킬별 사용 상태를 제공한다.
+ * 시전 가능 여부와 실행 스냅샷을 확정한 뒤 Definition의 실제 계열에 맞는 Executor로 전달하며,
+ * 시전 전후 lifecycle 사건은 SkillActionContext로 Trigger 시스템에 발행한다.
  */
 namespace Pakuri.InGame
 {
@@ -68,6 +70,7 @@ namespace Pakuri.InGame
 
     /*
      * 자동·수동·Trigger 실행 요청을 판정하고 준비된 정보를 스킬 종류별 실행기로 전달한다.
+     * 계열별 피해·대상·Actor 생성은 직접 구현하지 않고 각 전용 Executor에 위임한다.
      */
     public class SkillExecution
     {
@@ -545,6 +548,7 @@ namespace Pakuri.InGame
         public int EffectiveBurstProjectileCount => effectiveBurstProjectileCount;
         public bool UsesMagazine => MaxMagazineSize > 0;
         public bool HasMagazine => !UsesMagazine || MagazineRemaining > 0;
+        /* 강화 스냅샷을 만들지 않은 기본 상태에서 현재 시전 가능 여부를 반환한다. */
         public bool CanCast => CanCastWithData(null);
 
         /*

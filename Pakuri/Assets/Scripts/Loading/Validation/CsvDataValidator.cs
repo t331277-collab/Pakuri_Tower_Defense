@@ -9,19 +9,12 @@ using static Pakuri.Data.CsvRowParser;
 using static Pakuri.Data.CsvSourceModel;
 using static Pakuri.Data.SkillGraphParser;
 
-
-/*
- * CSV 파싱 직후 원본 행, 참조 관계, 실행 수치, Unity 자산 경로를 한 번 검사한다.
- * 전투 실행 코드는 이 검사를 통과한 데이터만 받는다.
- */
 namespace Pakuri.Data
 {
     internal static class CsvDataValidator
     {
-        /*
-         * 입력값과 참조 관계가 올바른지 검사한다.
-         */
-        internal static void ValidateSourceModelOrThrow(SourceModel model /* CSV에서 읽은 원본 데이터 */, CsvRuntimeCatalog assetCatalog /* 검사할 에셋 목록 */)
+
+        internal static void ValidateSourceModelOrThrow(SourceModel model , CsvRuntimeCatalog assetCatalog )
         {
             var errors = new List<string>();
 
@@ -302,14 +295,11 @@ namespace Pakuri.Data
             }
         }
 
-        /*
-         * 입력값과 참조 관계가 올바른지 검사한다.
-         */
         internal static void ValidateRuntimeStatusColumns(
-            SkillRow skill /* 검사할 스킬 CSV 행 */,
-            Dictionary<string, StatusEffectRow> statusEffects /* 상태 효과 정의 목록 */,
-            string targetScope /* 대상 적용 범위 */,
-            List<string> errors /* 검증 오류를 모을 목록 */)
+            SkillRow skill ,
+            Dictionary<string, StatusEffectRow> statusEffects ,
+            string targetScope ,
+            List<string> errors )
         {
             if (skill == null)
             {
@@ -398,13 +388,10 @@ namespace Pakuri.Data
             }
         }
 
-        /*
-         * 입력값과 참조 관계가 올바른지 검사한다.
-         */
         internal static void ValidateSkillTriggerRow(
-            SkillTriggerRow trigger /* 실행하거나 검사할 트리거 */,
-            SourceModel model /* CSV에서 읽은 원본 데이터 */,
-            List<string> errors /* 검증 오류를 모을 목록 */)
+            SkillTriggerRow trigger ,
+            SourceModel model ,
+            List<string> errors )
         {
             if (trigger == null)
             {
@@ -491,10 +478,7 @@ namespace Pakuri.Data
             ValidateSkillIdList(trigger.EventSkillId, trigger, model, "event_skill_id", errors);
         }
 
-        /*
-         * 입력값과 참조 관계가 올바른지 검사한다.
-         */
-        internal static bool ValidateSkillRuntimeKindList(string rawValue /* 변환 전 원본 문자열 */)
+        internal static bool ValidateSkillRuntimeKindList(string rawValue )
         {
             if (string.IsNullOrWhiteSpace(rawValue))
             {
@@ -529,25 +513,12 @@ namespace Pakuri.Data
             return true;
         }
 
-        /*
-         * 필요한 조건을 만족하는지 확인한다.
-         */
-        internal static bool HasPositiveDamagePayload(float baseDamage /* 방어 계산 전 기본 피해량 */, float attackPowerCoefficient /* 공격력 계수 */, float spellPowerCoefficient /* 주문력 계수 */)
-        {
-            return baseDamage > 0f
-                || attackPowerCoefficient > 0f
-                || spellPowerCoefficient > 0f;
-        }
-
-        /*
-         * 입력값과 참조 관계가 올바른지 검사한다.
-         */
         internal static void ValidateSkillIdList(
-            string rawSkillIds /* 변환 전 스킬 식별자 목록 */,
-            SkillTriggerRow trigger /* 실행하거나 검사할 트리거 */,
-            SourceModel model /* CSV에서 읽은 원본 데이터 */,
-            string columnName /* 읽거나 검사할 CSV 열 이름 */,
-            List<string> errors /* 검증 오류를 모을 목록 */)
+            string rawSkillIds ,
+            SkillTriggerRow trigger ,
+            SourceModel model ,
+            string columnName ,
+            List<string> errors )
         {
             if (string.IsNullOrWhiteSpace(rawSkillIds))
             {
@@ -574,10 +545,7 @@ namespace Pakuri.Data
             }
         }
 
-        /*
-         * 유닛 생성과 적 행동에 필요한 필수 수치를 로딩 경계에서 검사한다.
-         */
-        private static void ValidateUnitRuntimeValues(SourceModel model /* CSV에서 읽은 원본 데이터 */, List<string> errors /* 검증 오류를 모을 목록 */)
+        private static void ValidateUnitRuntimeValues(SourceModel model , List<string> errors )
         {
             foreach (var monster in model.Monsters.Values)
             {
@@ -614,10 +582,7 @@ namespace Pakuri.Data
             }
         }
 
-        /*
-         * 스킬 행이 공용 실행기로 변환될 수 있는 종류와 필수 수치를 검사한다.
-         */
-        internal static void ValidateSkillRuntimeValues(SkillRow skill /* 검사할 스킬 CSV 행 */, List<string> errors /* 검증 오류를 모을 목록 */)
+        internal static void ValidateSkillRuntimeValues(SkillRow skill , List<string> errors )
         {
             if (!string.IsNullOrWhiteSpace(skill.RuntimeVisualAnchor)
                 && !Enum.TryParse<RuntimeSkillVisualAnchor>(skill.RuntimeVisualAnchor, true, out _))
@@ -706,14 +671,6 @@ namespace Pakuri.Data
             }
         }
 
-        /*
-         * 필요한 조건을 만족하는지 확인한다.
-         */
-
-        /*
-         * 필요한 조건을 만족하는지 확인한다.
-         */
-
         internal static bool HasOwnedTriggerNodeSource(
             SourceModel model,
             string triggerId)
@@ -737,10 +694,7 @@ namespace Pakuri.Data
             return false;
         }
 
-        /*
-         * 입력값과 참조 관계가 올바른지 검사한다.
-         */
-        internal static bool ValidateEventSourceScope(string rawValue /* 변환 전 원본 문자열 */)
+        internal static bool ValidateEventSourceScope(string rawValue )
         {
             if (string.IsNullOrWhiteSpace(rawValue))
             {
@@ -752,10 +706,7 @@ namespace Pakuri.Data
                 || string.Equals(normalized, "all_allies", StringComparison.OrdinalIgnoreCase);
         }
 
-        /*
-         * 입력값과 참조 관계가 올바른지 검사한다.
-         */
-        internal static bool ValidateTriggerAttributes(string rawValue /* 변환 전 원본 문자열 */)
+        internal static bool ValidateTriggerAttributes(string rawValue )
         {
             if (string.IsNullOrWhiteSpace(rawValue))
             {
@@ -784,10 +735,7 @@ namespace Pakuri.Data
             return true;
         }
 
-        /*
-         * 필요한 조건을 만족하는지 확인한다.
-         */
-        internal static bool IsSupportedHitTargetCount(string rawValue /* 변환 전 원본 문자열 */)
+        internal static bool IsSupportedHitTargetCount(string rawValue )
         {
             if (string.IsNullOrWhiteSpace(rawValue))
             {
@@ -804,15 +752,12 @@ namespace Pakuri.Data
             return int.TryParse(normalized, out var count) && count > 0;
         }
 
-        /*
-         * 입력값과 참조 관계가 올바른지 검사한다.
-         */
         internal static void ValidateTriggerChoiceReference(
-            string choiceId /* 스킬 선택지 식별자 */,
-            SkillTriggerRow trigger /* 실행하거나 검사할 트리거 */,
-            SourceModel model /* CSV에서 읽은 원본 데이터 */,
-            string columnName /* 읽거나 검사할 CSV 열 이름 */,
-            List<string> errors /* 검증 오류를 모을 목록 */)
+            string choiceId ,
+            SkillTriggerRow trigger ,
+            SourceModel model ,
+            string columnName ,
+            List<string> errors )
         {
             if (string.IsNullOrWhiteSpace(choiceId))
             {
@@ -845,10 +790,7 @@ namespace Pakuri.Data
             }
         }
 
-        /*
-         * 선택지가 해당 스킬에 적용되는지 확인한다.
-         */
-        internal static bool ChoiceAppliesToSkillId(SkillChoiceRow choice /* 적용하거나 검사할 스킬 선택지 */, string skillId /* 스킬 식별자 */)
+        internal static bool ChoiceAppliesToSkillId(SkillChoiceRow choice , string skillId )
         {
             if (choice == null || string.IsNullOrWhiteSpace(skillId))
             {
@@ -863,14 +805,11 @@ namespace Pakuri.Data
             return string.Equals(choice.TargetSkillId, skillId, StringComparison.OrdinalIgnoreCase);
         }
 
-        /*
-         * ValidateStatusIdList 데이터가 올바른지 검사한다.
-         */
         internal static void ValidateStatusIdList(
-            string ownerId /* 소유자 식별자 */,
-            string rawValue /* 변환 전 원본 문자열 */,
-            SourceModel model /* CSV에서 읽은 원본 데이터 */,
-            List<string> errors /* 검증 오류를 모을 목록 */)
+            string ownerId ,
+            string rawValue ,
+            SourceModel model ,
+            List<string> errors )
         {
             if (string.IsNullOrWhiteSpace(rawValue))
             {
@@ -891,14 +830,11 @@ namespace Pakuri.Data
             }
         }
 
-        /*
-         * ValidateStatusConditionExpression 데이터가 올바른지 검사한다.
-         */
         private static void ValidateStatusConditionExpression(
-            string ownerId /* 소유자 식별자 */,
-            string rawValue /* 변환 전 원본 문자열 */,
-            SourceModel model /* CSV에서 읽은 원본 데이터 */,
-            List<string> errors /* 검증 오류를 모을 목록 */)
+            string ownerId ,
+            string rawValue ,
+            SourceModel model ,
+            List<string> errors )
         {
             if (string.IsNullOrWhiteSpace(rawValue))
             {
@@ -938,10 +874,7 @@ namespace Pakuri.Data
             }
         }
 
-        /*
-         * 입력값과 참조 관계가 올바른지 검사한다.
-         */
-        internal static void ValidateStatusEffectRow(StatusEffectRow status /* 검사할 상태 효과 CSV 행 */, List<string> errors /* 검증 오류를 모을 목록 */)
+        internal static void ValidateStatusEffectRow(StatusEffectRow status , List<string> errors )
         {
             if (status == null)
             {
@@ -970,13 +903,10 @@ namespace Pakuri.Data
             }
         }
 
-        /*
-         * 입력값과 참조 관계가 올바른지 검사한다.
-         */
         internal static void ValidateReferencedAssetCoverage(
-            SourceModel model /* CSV에서 읽은 원본 데이터 */,
-            CsvRuntimeCatalog assetCatalog /* 검사할 에셋 목록 */,
-            List<string> errors /* 검증 오류를 모을 목록 */)
+            SourceModel model ,
+            CsvRuntimeCatalog assetCatalog ,
+            List<string> errors )
         {
             if (assetCatalog == null)
             {
@@ -1001,14 +931,11 @@ namespace Pakuri.Data
             }
         }
 
-        /*
-         * 입력값과 참조 관계가 올바른지 검사한다.
-         */
         internal static void ValidateSpritePath(
-            CsvRuntimeCatalog assetCatalog /* 검사할 에셋 목록 */,
-            string assetPath /* 에셋 경로 */,
-            string ownerLabel /* 소유자 표시 문구 */,
-            List<string> errors /* 검증 오류를 모을 목록 */)
+            CsvRuntimeCatalog assetCatalog ,
+            string assetPath ,
+            string ownerLabel ,
+            List<string> errors )
         {
             if (string.IsNullOrWhiteSpace(assetPath))
             {
@@ -1021,14 +948,11 @@ namespace Pakuri.Data
             }
         }
 
-        /*
-         * 입력값과 참조 관계가 올바른지 검사한다.
-         */
         internal static void ValidatePrefabPath(
-            CsvRuntimeCatalog assetCatalog /* 검사할 에셋 목록 */,
-            string assetPath /* 에셋 경로 */,
-            string ownerLabel /* 소유자 표시 문구 */,
-            List<string> errors /* 검증 오류를 모을 목록 */)
+            CsvRuntimeCatalog assetCatalog ,
+            string assetPath ,
+            string ownerLabel ,
+            List<string> errors )
         {
             if (string.IsNullOrWhiteSpace(assetPath))
             {
@@ -1041,10 +965,7 @@ namespace Pakuri.Data
             }
         }
 
-        /*
-         * 각 노드 handler가 실제 전투 변환 경로를 가지는지 검사한다.
-         */
-        private static void ValidateSkillNodeHandlers(SourceModel model /* CSV에서 읽은 원본 데이터 */, List<string> errors /* 검증 오류를 모을 목록 */)
+        private static void ValidateSkillNodeHandlers(SourceModel model , List<string> errors )
         {
             for (var i = 0; i < model.SkillGraphNodes.Count; i++)
             {
@@ -1063,14 +984,11 @@ namespace Pakuri.Data
             }
         }
 
-        /*
-         * 입력값과 참조 관계가 올바른지 검사한다.
-         */
         internal static void ValidateAnimatorControllerPath(
-            CsvRuntimeCatalog assetCatalog /* 검사할 에셋 목록 */,
-            string assetPath /* 에셋 경로 */,
-            string ownerLabel /* 소유자 표시 문구 */,
-            List<string> errors /* 검증 오류를 모을 목록 */)
+            CsvRuntimeCatalog assetCatalog ,
+            string assetPath ,
+            string ownerLabel ,
+            List<string> errors )
         {
             if (string.IsNullOrWhiteSpace(assetPath))
             {
@@ -1083,177 +1001,215 @@ namespace Pakuri.Data
             }
         }
 
-    }
-}
-
-
-/*
- * CSV가 참조하는 Sprite, Prefab, Animator 경로를 수집하고 중복을 정리한다.
- */
-namespace Pakuri.Data
-{
-    internal static class CsvAssetReferenceCollector
-    {
-        internal readonly struct ReferencedAssetPath
+        internal static void ValidateCatalogEntries<T>(
+            Dictionary<string, CatalogEntryRow> entries ,
+            Dictionary<string, T> targetLookup ,
+            string tableName ,
+            List<string> errors )
         {
-            /*
-             * 참조 자산 경로를 구성한다.
-             */
-            public ReferencedAssetPath(string assetPath /* 에셋 경로 */, string ownerLabel /* 소유자 표시 문구 */)
+            if (entries.Count == 0)
             {
-                AssetPath = assetPath;
-                OwnerLabel = ownerLabel;
+                errors.Add($"{tableName} has no rows.");
+                return;
             }
 
-            public string AssetPath { get; }
-            public string OwnerLabel { get; }
-        }
-
-        /*
-         * 종류별 자산 경로와 중복 확인용 경로 집합을 보관한다.
-         */
-        internal class ReferencedAssetSet
-        {
-            internal readonly HashSet<string> spritePathLookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            internal readonly HashSet<string> prefabPathLookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            internal readonly HashSet<string> animatorControllerPathLookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            public List<ReferencedAssetPath> SpritePaths { get; } = new List<ReferencedAssetPath>();
-            public List<ReferencedAssetPath> PrefabPaths { get; } = new List<ReferencedAssetPath>();
-            public List<ReferencedAssetPath> AnimatorControllerPaths { get; } = new List<ReferencedAssetPath>();
-
-            /*
-             * 항목을 대상 목록에 추가한다.
-             */
-            public void AddSprite(string assetPath /* 에셋 경로 */, string ownerLabel /* 소유자 표시 문구 */)
+            foreach (var entry in entries.Values)
             {
-                Add(assetPath, ownerLabel, spritePathLookup, SpritePaths);
-            }
-
-            /*
-             * 항목을 대상 목록에 추가한다.
-             */
-            public void AddPrefab(string assetPath /* 에셋 경로 */, string ownerLabel /* 소유자 표시 문구 */)
-            {
-                Add(assetPath, ownerLabel, prefabPathLookup, PrefabPaths);
-            }
-
-            /*
-             * 항목을 대상 목록에 추가한다.
-             */
-            public void AddAnimatorController(string assetPath /* 에셋 경로 */, string ownerLabel /* 소유자 표시 문구 */)
-            {
-                Add(assetPath, ownerLabel, animatorControllerPathLookup, AnimatorControllerPaths);
-            }
-
-            /*
-             * 항목을 대상 목록에 추가한다.
-             */
-            internal static void Add(
-                string assetPath /* 에셋 경로 */,
-                string ownerLabel /* 소유자 표시 문구 */,
-                HashSet<string> lookup /* 조회표 */,
-                List<ReferencedAssetPath> paths /* 경로 목록 */)
-            {
-                if (string.IsNullOrWhiteSpace(assetPath))
+                if (!targetLookup.ContainsKey(entry.RefId))
                 {
-                    return;
-                }
-
-                var normalizedPath = assetPath.Trim().Replace('\\', '/');
-                if (lookup.Add(normalizedPath))
-                {
-                    paths.Add(new ReferencedAssetPath(normalizedPath, ownerLabel));
+                    errors.Add($"{tableName} entry '{entry.Id}' references unknown id '{entry.RefId}'.");
                 }
             }
         }
 
-        /*
-         * 원본 모델이 사용하는 Sprite, Prefab, Animator 참조를 모은다.
-         */
-        internal static ReferencedAssetSet CollectReferencedAssets(SourceModel model /* CSV에서 읽은 원본 데이터 */)
+        internal static void ValidateExpectedSlots(
+            string monsterId ,
+            HashSet<SkillSlot> slots ,
+            SkillSlot first ,
+            SkillSlot last ,
+            string kindLabel ,
+            List<string> errors )
         {
-            var assets = new ReferencedAssetSet();
-            if (model == null)
+            for (var slot = first; slot <= last; slot++)
             {
-                return assets;
-            }
-
-            foreach (var skill in model.Skills.Values)
-            {
-                assets.AddSprite(skill.SkillIconPath, $"Skill '{skill.Id}' skill_icon_path");
-                assets.AddPrefab(skill.SkillEffectPrefabPath, $"Skill '{skill.Id}' skill_effect_prefab_path");
-                assets.AddPrefab(skill.Status.StatusEffectPrefabPath, $"Skill '{skill.Id}' status_effect_prefab_path");
-                assets.AddSprite(skill.RuntimeVisualSpritePath, $"Skill '{skill.Id}' runtime_visual_sprite_path");
-                assets.AddAnimatorController(
-                    skill.RuntimeVisualAnimatorControllerPath,
-                    $"Skill '{skill.Id}' runtime_visual_animator_controller_path");
-                assets.AddSprite(
-                    skill.RuntimeImpactVisualSpritePath,
-                    $"Skill '{skill.Id}' runtime_impact_visual_sprite_path");
-                assets.AddAnimatorController(
-                    skill.RuntimeImpactVisualAnimatorControllerPath,
-                    $"Skill '{skill.Id}' runtime_impact_visual_animator_controller_path");
-            }
-
-            foreach (var enemySkill in model.EnemyBaseSkills.Values)
-            {
-                SkillRow skill = null;
-                if (enemySkill != null)
+                if (!slots.Contains(slot))
                 {
-                    skill = enemySkill.Skill;
+                    errors.Add($"Monster '{monsterId}' is missing {kindLabel} slot '{slot}'.");
                 }
-                if (skill == null)
+            }
+        }
+
+        internal static void ValidateEnemyRows(SourceModel model , List<string> errors )
+        {
+            var referencedActiveSkillIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var referencedPassiveIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var stageSortKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var enemy in model.Enemies.Values)
+            {
+                if (!string.Equals(enemy.StageId, "stage_one", StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(enemy.StageId, "stage_two", StringComparison.OrdinalIgnoreCase))
+                {
+                    errors.Add($"Enemy '{enemy.Id}' has unsupported stage_id '{enemy.StageId}'.");
+                }
+
+                if (enemy.SortOrder < 0)
+                {
+                    errors.Add($"Enemy '{enemy.Id}' has negative sort_order '{enemy.SortOrder}'.");
+                }
+                else if (!stageSortKeys.Add(enemy.StageId + ":" + enemy.SortOrder))
+                {
+                    errors.Add($"Enemy stage '{enemy.StageId}' has duplicate sort_order '{enemy.SortOrder}'.");
+                }
+
+                if (enemy.NexusDamage <= 0f)
+                {
+                    errors.Add($"Enemy '{enemy.Id}' requires positive nexus_damage.");
+                }
+
+                ValidateEnemySkillSlot(model, enemy, enemy.SkillSlotAId, SkillSlot.A, referencedActiveSkillIds, errors);
+                ValidateEnemySkillSlot(model, enemy, enemy.SkillSlotBId, SkillSlot.B, referencedActiveSkillIds, errors);
+                ValidateEnemyPassive(model, enemy, referencedPassiveIds, errors);
+            }
+
+            foreach (var baseSkill in model.EnemyBaseSkills.Values)
+            {
+                if (baseSkill == null || baseSkill.Skill == null)
                 {
                     continue;
                 }
 
-                assets.AddSprite(skill.RuntimeVisualSpritePath, $"Enemy base skill '{skill.Id}' runtime_visual_sprite_path");
-                assets.AddAnimatorController(
-                    skill.RuntimeVisualAnimatorControllerPath,
-                    $"Enemy base skill '{skill.Id}' runtime_visual_animator_controller_path");
-            }
-
-            foreach (var choice in model.SkillChoices.Values)
-            {
-                assets.AddSprite(choice.SkillIconPath, $"Skill choice '{choice.Id}' skill_icon_path");
-            }
-
-            foreach (var param in model.SkillNodeParams)
-            {
-                if (param == null || param.ValueType != SkillNodeValueType.AssetPath)
+                if (baseSkill.Skill.SkillKind == PakuriCsvSkillKind.Passive)
                 {
-                    continue;
+                    if (!referencedPassiveIds.Contains(baseSkill.Skill.Id))
+                    {
+                        errors.Add($"Enemy passive skill '{baseSkill.Skill.Id}' is not referenced by enemies.csv passive_id.");
+                    }
                 }
-
-                if (param.ParamKey != null
-                    && param.ParamKey.IndexOf("sprite", StringComparison.OrdinalIgnoreCase) >= 0)
+                else if (!referencedActiveSkillIds.Contains(baseSkill.Skill.Id))
                 {
-                    assets.AddSprite(param.Value, $"Skill node param '{param.NodeId}.{param.ParamKey}'");
-                }
-                else if (param.ParamKey != null
-                    && param.ParamKey.IndexOf("animator", StringComparison.OrdinalIgnoreCase) >= 0
-                    && param.ParamKey.IndexOf("controller", StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    assets.AddAnimatorController(param.Value, $"Skill node param '{param.NodeId}.{param.ParamKey}'");
-                }
-                else
-                {
-                    assets.AddPrefab(param.Value, $"Skill node param '{param.NodeId}.{param.ParamKey}'");
+                    errors.Add($"Enemy base skill '{baseSkill.Skill.Id}' is not referenced by an Enemy A/B skill slot.");
                 }
             }
 
-            foreach (var status in model.StatusEffects.Values)
+            foreach (var trigger in model.EnemyTriggers.Values)
             {
-                assets.AddPrefab(status.StatusEffectPrefabPath, $"Status effect '{status.Id}' status_effect_prefab_path");
+                if (!model.EnemyBaseSkills.TryGetValue(trigger.SourceSkillId, out var sourceSkill)
+                    || sourceSkill == null
+                    || sourceSkill.Skill == null)
+                {
+                    errors.Add($"Enemy trigger '{trigger.Id}' references unknown source skill '{trigger.SourceSkillId}'.");
+                }
+                if (!model.EnemyBaseSkills.ContainsKey(trigger.TriggeredSkillId))
+                {
+                    errors.Add($"Enemy trigger '{trigger.Id}' references unknown triggered skill '{trigger.TriggeredSkillId}'.");
+                }
             }
 
-            foreach (var monster in model.Monsters.Values)
-            {
-                assets.AddSprite(monster.MonsterIconImagePath, $"Monster '{monster.Id}' MonsterIconImage");
-            }
-
-            return assets;
+            ValidateEnemyCombatStartTrigger(model, "OpeningCharge", SkillRuntimeKind.Buff, errors);
+            ValidateEnemyCombatStartTrigger(model, "Intimidation", SkillRuntimeKind.Buff, errors);
         }
+
+        internal static void ValidateEnemySkillSlot(
+            SourceModel model ,
+            EnemyRow enemy ,
+            string skillId ,
+            SkillSlot slot ,
+            HashSet<string> referencedSkillIds ,
+            List<string> errors )
+        {
+            if (!model.EnemyBaseSkills.TryGetValue(skillId, out var skill)
+                || skill == null
+                || skill.Skill == null)
+            {
+                errors.Add($"Enemy '{enemy.Id}' slot '{slot}' references unknown base skill '{skillId}'.");
+                return;
+            }
+
+            if (skill.Skill.SkillKind != PakuriCsvSkillKind.Active
+                || skill.Skill.RuntimeKind == SkillRuntimeKind.Passive)
+            {
+                errors.Add($"Enemy '{enemy.Id}' slot '{slot}' must reference an active skill, but '{skillId}' is passive.");
+                return;
+            }
+
+            referencedSkillIds.Add(skillId);
+        }
+
+        internal static void ValidateEnemyPassive(
+            SourceModel model ,
+            EnemyRow enemy ,
+            HashSet<string> referencedPassiveIds ,
+            List<string> errors )
+        {
+            var passiveId = string.Empty;
+            if (enemy.PassiveId != null)
+            {
+                passiveId = enemy.PassiveId.Trim();
+            }
+            if (!model.EnemyBaseSkills.TryGetValue(passiveId, out var passive)
+                || passive == null
+                || passive.Skill == null)
+            {
+                errors.Add($"Enemy '{enemy.Id}' references unknown passive_id '{passiveId}'.");
+                return;
+            }
+
+            if (passive.Skill.SkillKind != PakuriCsvSkillKind.Passive
+                || passive.Skill.RuntimeKind != SkillRuntimeKind.Passive
+                || passive.Skill.Slot != SkillSlot.F)
+            {
+                errors.Add($"Enemy '{enemy.Id}' passive_id '{passiveId}' must reference an Enemy passive definition.");
+            }
+
+            if (passive.PassiveModifierKind == EnemyPassiveModifierKind.None)
+            {
+                errors.Add($"Enemy passive '{passiveId}' requires a supported modifier_kind.");
+            }
+
+            if (passive.PassiveModifierKind == EnemyPassiveModifierKind.DamageUp
+                && !passive.PassiveHasAttribute)
+            {
+                errors.Add($"Enemy passive '{passiveId}' requires attribute for DamageUp.");
+            }
+
+            if (passive.PassiveModifierKind != EnemyPassiveModifierKind.DamageUp
+                && passive.PassiveModifierKind != EnemyPassiveModifierKind.DefenseUp
+                && passive.PassiveHasAttribute)
+            {
+                errors.Add($"Enemy passive '{passiveId}' cannot use attribute with '{passive.PassiveModifierKind}'.");
+            }
+
+            if (passive.PassiveModifierValue <= 0f)
+            {
+                errors.Add($"Enemy passive '{passiveId}' requires a positive modifier_value.");
+            }
+
+            referencedPassiveIds.Add(passiveId);
+        }
+
+        internal static void ValidateEnemyCombatStartTrigger(
+            SourceModel model ,
+            string skillId ,
+            SkillRuntimeKind runtimeKind ,
+            List<string> errors )
+        {
+            var count = 0;
+            foreach (var trigger in model.EnemyTriggers.Values)
+            {
+                if (trigger.Enabled
+                    && trigger.TriggerEvent == SkillTriggerEvent.CombatStart
+                    && string.Equals(trigger.SourceSkillId, skillId, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(trigger.TriggeredSkillId, skillId, StringComparison.OrdinalIgnoreCase))
+                {
+                    count++;
+                }
+            }
+
+            if (count != 1)
+            {
+                errors.Add($"Enemy skill '{skillId}' requires exactly one enabled CombatStart trigger; found '{count}'.");
+            }
+        }
+
     }
 }

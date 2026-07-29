@@ -1,4 +1,4 @@
-﻿#if UNITY_EDITOR
+#if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,62 +7,49 @@ using UnityEngine;
 using static Pakuri.Data.CsvAssetReferenceCollector;
 using static Pakuri.Data.GameDataLoader;
 using static Pakuri.Data.CsvParser;
-using static Pakuri.Data.CsvRowParser;
+using static Pakuri.Data.CsvSourceLoader;
 using static Pakuri.Data.CsvSourceModel;
 using static Pakuri.Data.SkillGraphParser;
 
-
-/*
- * Unity Editor에서 authoring CSV를 런타임 카탈로그 자산으로 동기화한다.
- * CSV TextAsset을 수집해 원본·자산 참조 카탈로그를 갱신하고
- * Sprite, Prefab, Animator 참조를 다시 구성한 뒤 검증과 재초기화를 실행한다.
- */
 namespace Pakuri.Data
 {
     public static class CsvCatalogEditor
     {
-        /*
-         * 가져온 CSV 원본으로 런타임 카탈로그 자산을 갱신한다.
-         */
+
         public static void SyncImportedSourceCatalogsForEditor()
         {
-            SyncRuntimeCatalogAssetsFromImportedSource();
+            SyncRuntimeCatalogAssetsFromImportedSource(out _);
             ResetRuntimeState();
         }
 
-        /*
-         * 에디터에서 CSV 원본과 런타임 카탈로그를 동기화하고 검증한다.
-         */
         public static void SyncAndValidateCsvRuntimeCatalogsForEditor()
         {
-            SyncImportedSourceCatalogsForEditor();
-            var catalog = LoadAndValidateRuntimeCatalog();
+            var sourceModel = SyncRuntimeCatalogAssetsFromImportedSource(out var sourceCatalog);
+            ResetRuntimeState();
+            var catalog = BuildValidatedRuntimeCatalog(sourceCatalog, sourceModel);
             Debug.Log(FormatRuntimeCatalogSummary(catalog));
             Debug.Log(
-                $"Pakuri CSV runtime catalogs synced and validated from '{AuthoringSourceAssetRoot}' to '{RuntimeResourcesFolderAssetPath}'.");
+                $"Pakuri CSV runtime catalogs synced and validated from '{AuthoringCsvAssetRoot}' to '{RuntimeResourcesFolderAssetPath}'.");
         }
 
         [MenuItem("Pakuri/Sync CSV Runtime Catalog Assets")]
-        /*
-         * Unity 메뉴에서 런타임 카탈로그 자산 동기화를 실행한다.
-         */
+
         internal static void SyncRuntimeCatalogAssetsMenu()
         {
             SyncImportedSourceCatalogsForEditor();
             Debug.Log(
-                $"Pakuri CSV runtime catalogs synced from '{AuthoringSourceAssetRoot}' to '{RuntimeResourcesFolderAssetPath}'.");
+                $"Pakuri CSV runtime catalogs synced from '{AuthoringCsvAssetRoot}' to '{RuntimeResourcesFolderAssetPath}'.");
         }
 
         [MenuItem("Pakuri/Validate CSV Source Data")]
-        /*
-         * Unity 메뉴에서 CSV 원본 검증을 실행한다.
-         */
+
         internal static void ValidateSourceDataMenu()
         {
             try
             {
-                SyncImportedSourceCatalogsForEditor();
-                var catalog = LoadAndValidateRuntimeCatalog();
+                var sourceModel = SyncRuntimeCatalogAssetsFromImportedSource(out var sourceCatalog);
+                ResetRuntimeState();
+                var catalog = BuildValidatedRuntimeCatalog(sourceCatalog, sourceModel);
                 Debug.Log(FormatRuntimeCatalogSummary(catalog));
             }
             catch (CsvFatalException exception)
@@ -76,15 +63,13 @@ namespace Pakuri.Data
             }
         }
 
-        /*
-         * 원본 CSV와 런타임 자산을 동기화한다.
-         */
-        internal static void SyncRuntimeCatalogAssetsFromImportedSource()
+        internal static SourceModel SyncRuntimeCatalogAssetsFromImportedSource(
+            out CsvRuntimeCatalog sourceCatalog )
         {
             EnsureRuntimeResourcesFolderExists();
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
 
-            var sourceCatalog = LoadOrCreateAsset<CsvRuntimeCatalog>(RuntimeCatalogAssetPath);
+            sourceCatalog = LoadOrCreateAsset<CsvRuntimeCatalog>(RuntimeCatalogAssetPath);
             sourceCatalog.CatalogMonsters = LoadImportedSourceTextAssetOrThrow(CatalogMonstersFileName);
             sourceCatalog.Monsters = LoadImportedSourceTextAssetOrThrow(MonstersFileName);
             sourceCatalog.MonsterRewardChoices = LoadImportedSourceTextAssetOrThrow(MonsterRewardChoicesFileName);
@@ -157,11 +142,9 @@ namespace Pakuri.Data
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+            return sourceModel;
         }
 
-        /*
-         * 작업에 필요한 상태를 준비한다.
-         */
         internal static void EnsureRuntimeResourcesFolderExists()
         {
             var resourceFolder = Path.Combine(Application.dataPath, "Resources");
@@ -172,9 +155,6 @@ namespace Pakuri.Data
             Directory.CreateDirectory(csvFolder);
         }
 
-        /*
-         * 필요한 CSV 또는 자산을 불러온다.
-         */
         internal static T LoadOrCreateAsset<T>(string assetPath)
             where T : ScriptableObject
         {
@@ -189,20 +169,14 @@ namespace Pakuri.Data
             return asset;
         }
 
-        /*
-         * 필요한 CSV 또는 자산을 불러온다.
-         */
         internal static TextAsset LoadImportedSourceTextAssetOrThrow(string fileName)
         {
-            var assetPath = GetImportedSourceAssetPath(fileName);
+            var assetPath = GetAuthoringSourceAssetPath(fileName);
             return LoadTextAssetOrThrow(
                 assetPath,
                 "Import the source CSV into Assets/CSVdata/authoring before validation.");
         }
 
-        /*
-         * 필요한 CSV 또는 자산을 불러온다.
-         */
         internal static TextAsset[] LoadImportedSourceTextAssetsBySuffix(string folderAssetPath, string fileNameSuffix)
         {
             var absoluteFolderPath = GetAbsoluteAssetPath(folderAssetPath);
@@ -242,9 +216,6 @@ namespace Pakuri.Data
             return assets.ToArray();
         }
 
-        /*
-         * 필요한 CSV 또는 자산을 불러온다.
-         */
         internal static TextAsset[] LoadImportedSourceTextAssetsByPrefix(string folderAssetPath, string fileNamePrefix)
         {
             var absoluteFolderPath = GetAbsoluteAssetPath(folderAssetPath);
@@ -284,9 +255,6 @@ namespace Pakuri.Data
             return assets.ToArray();
         }
 
-        /*
-         * 필요한 CSV 또는 자산을 불러온다.
-         */
         internal static TextAsset LoadTextAssetOrThrow(string assetPath, string instruction)
         {
             var asset = AssetDatabase.LoadAssetAtPath<TextAsset>(assetPath);
@@ -306,9 +274,6 @@ namespace Pakuri.Data
             return asset;
         }
 
-        /*
-         * 해당 자료 변환에 필요한 값을 구성한다.
-         */
         internal static void TryImportTextAsset(string assetPath)
         {
             if (string.IsNullOrWhiteSpace(assetPath))
@@ -328,9 +293,6 @@ namespace Pakuri.Data
                 ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
         }
 
-        /*
-         * 계산에 필요한 값을 반환한다.
-         */
         internal static string GetAbsoluteAssetPath(string assetPath)
         {
             const string assetsPrefix = "Assets/";
@@ -343,9 +305,6 @@ namespace Pakuri.Data
             return Path.Combine(Application.dataPath, relativePath);
         }
 
-        /*
-         * 계산에 필요한 값을 반환한다.
-         */
         internal static string GetAssetPathFromAbsolutePath(string absolutePath)
         {
             var fullPath = Path.GetFullPath(absolutePath).Replace('\\', '/');
@@ -358,9 +317,6 @@ namespace Pakuri.Data
             return "Assets/" + fullPath.Substring(assetsRoot.Length + 1);
         }
 
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
         internal static CsvRuntimeCatalog.SpriteEntry[] BuildSpriteEntries(SourceModel sourceModel)
         {
             var entries = new List<CsvRuntimeCatalog.SpriteEntry>();
@@ -383,9 +339,6 @@ namespace Pakuri.Data
             return entries.ToArray();
         }
 
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
         internal static CsvRuntimeCatalog.PrefabEntry[] BuildPrefabEntries(SourceModel sourceModel)
         {
             var entries = new List<CsvRuntimeCatalog.PrefabEntry>();
@@ -408,9 +361,6 @@ namespace Pakuri.Data
             return entries.ToArray();
         }
 
-        /*
-         * 원본 값으로 런타임 자료를 만든다.
-         */
         internal static CsvRuntimeCatalog.AnimatorControllerEntry[] BuildAnimatorControllerEntries(SourceModel sourceModel)
         {
             var entries = new List<CsvRuntimeCatalog.AnimatorControllerEntry>();
@@ -433,40 +383,27 @@ namespace Pakuri.Data
             return entries.ToArray();
         }
 
-        /*
-         * 에디터 동기화 뒤 런타임 캐시를 초기화한다.
-         */
         internal static void ResetRuntimeState()
         {
             initialized = false;
             failed = false;
             runtimeCatalog = null;
-            runtimeCsvCatalog = null;
         }
     }
 }
 
-/*
- * Unity Editor에서 CSV 변경을 감지하고 런타임 카탈로그 동기화를 예약한다.
- */
 namespace Pakuri.Data
 {
     class CsvCatalogPostprocessor : AssetPostprocessor
     {
         private static bool syncQueued;
 
-        /*
-         * Editor가 스크립트를 불러온 뒤 최초 카탈로그 동기화를 예약한다.
-         */
         [InitializeOnLoadMethod]
         private static void QueueInitialSync()
         {
             QueueSync();
         }
 
-        /*
-         * 가져오기, 삭제, 이동된 자산에 CSV 원본이 포함되면 동기화를 예약한다.
-         */
         private static void OnPostprocessAllAssets(
             string[] importedAssets,
             string[] deletedAssets,
@@ -484,9 +421,6 @@ namespace Pakuri.Data
             QueueSync();
         }
 
-        /*
-         * 변경된 자산 경로에 관리 중인 CSV 원본이 있는지 확인한다.
-         */
         private static bool TouchesImportedSource(string[] assetPaths)
         {
             if (assetPaths == null)
@@ -511,9 +445,6 @@ namespace Pakuri.Data
             return false;
         }
 
-        /*
-         * 같은 Editor 갱신 구간에 동기화 요청이 중복 등록되지 않게 예약한다.
-         */
         private static void QueueSync()
         {
             if (syncQueued)
@@ -525,9 +456,6 @@ namespace Pakuri.Data
             EditorApplication.delayCall += RunQueuedSync;
         }
 
-        /*
-         * 컴파일과 자산 갱신이 끝난 시점에 런타임 카탈로그를 동기화한다.
-         */
         private static void RunQueuedSync()
         {
             syncQueued = false;

@@ -3,12 +3,14 @@ using Pakuri.Combat;
 using Pakuri.Data;
 
 /*
- * 스킬의 주체가 지금 발사 가능한가? 를 계산
+ * SkillExecutionData에 보관된 조건부 Node 규칙을 현재 대상·투사체 순번·시전자 상태에 대입한다.
+ * Node는 조건값만 보관하고, 실제 전투 상태 조회와 최종 보정 계산은 이 Resolver가 담당한다.
  */
 namespace Pakuri.InGame
 {
     internal static class SkillExecutionRuleResolver
     {
+        /* 대상의 현재 상태 중첩 조건을 만족하는 모든 피해 배율을 곱해 반환한다. */
         internal static float ConditionalDamageMultiplier(
             SkillExecutionData data,
             UnitCombatState target)
@@ -33,6 +35,7 @@ namespace Pakuri.InGame
             return multiplier;
         }
 
+        /* 대상의 현재 상태 중첩 조건을 만족하는 치명타 확률 보너스를 합산한다. */
         internal static float ConditionalCritChanceBonus(
             SkillExecutionData data,
             UnitCombatState target)
@@ -56,6 +59,7 @@ namespace Pakuri.InGame
             return bonus;
         }
 
+        /* 현재 투사체 순번에 일치하는 연속 발사 피해 배율을 곱해 반환한다. */
         internal static float BurstDamageMultiplier(
             SkillExecutionData data,
             int projectileIndex,
@@ -80,6 +84,7 @@ namespace Pakuri.InGame
             return multiplier;
         }
 
+        /* 현재 투사체 순번에 일치하는 상태 중첩 보너스를 합산한다. */
         internal static int BurstStatusStacksBonus(
             SkillExecutionData data,
             int projectileIndex,
@@ -141,6 +146,7 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /* 보호막을 포함해 대상이 요구 상태의 최소 중첩을 현재 만족하는지 확인한다. */
         private static bool HasRequiredStacks(UnitCombatState target, StatusStackCondition condition)
         {
             if (target == null || condition.StatusKind == StatusEffectKind.None || condition.MinimumStacks <= 0)

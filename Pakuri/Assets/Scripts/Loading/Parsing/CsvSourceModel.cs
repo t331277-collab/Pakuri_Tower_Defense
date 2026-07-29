@@ -1,14 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
 using static Pakuri.Data.CsvParser;
 using static Pakuri.Data.CsvRowParser;
 using static Pakuri.Data.SkillGraphParser;
 
-
-/*
- * 파싱된 CSV 행 형식과 카탈로그 생성 전 원본 데이터 모음을 정의한다.
- */
 namespace Pakuri.Data
 {
     internal enum PakuriCsvSkillKind
@@ -17,14 +13,9 @@ namespace Pakuri.Data
         Passive
     }
 
-    /*
-     * CSV 원본 행과 로딩 중간 모델을 정의한다.
-     */
     internal static class CsvSourceModel
     {
-        /*
-         * 각 CSV에서 읽은 행을 종류별 조회 표로 모으는 중간 모델이다.
-         */
+
         internal class SourceModel
         {
             public readonly Dictionary<string, CatalogEntryRow> CatalogMonsters = new Dictionary<string, CatalogEntryRow>(StringComparer.OrdinalIgnoreCase);
@@ -44,9 +35,6 @@ namespace Pakuri.Data
             public readonly Dictionary<string, EnemyTriggerRow> EnemyTriggers = new Dictionary<string, EnemyTriggerRow>(StringComparer.OrdinalIgnoreCase);
         }
 
-        /*
-         * 카탈로그 표시 순서와 실제 정의 ID의 연결을 보관한다.
-         */
         internal class CatalogEntryRow
         {
             public string Id;
@@ -54,10 +42,7 @@ namespace Pakuri.Data
             public int SortOrder;
         }
 
-        /*
-         * CSV 행을 실행에 사용할 자료로 변환한다.
-         */
-        internal static CatalogEntryRow ParseCatalogEntry(CsvRecord record /* 읽을 CSV 행 */, string refColumnName /* 참조 열 이름 */)
+        internal static CatalogEntryRow ParseCatalogEntry(CsvRecord record , string refColumnName )
         {
             return new CatalogEntryRow
             {
@@ -67,33 +52,6 @@ namespace Pakuri.Data
             };
         }
 
-        /*
-         * 입력값과 참조 관계가 올바른지 검사한다.
-         */
-        internal static void ValidateCatalogEntries<T>(
-            Dictionary<string, CatalogEntryRow> entries /* 등록 정보 목록 */,
-            Dictionary<string, T> targetLookup /* 대상 조회표 */,
-            string tableName /* CSV 표 이름 */,
-            List<string> errors /* 검증 오류를 모을 목록 */)
-        {
-            if (entries.Count == 0)
-            {
-                errors.Add($"{tableName} has no rows.");
-                return;
-            }
-
-            foreach (var entry in entries.Values)
-            {
-                if (!targetLookup.ContainsKey(entry.RefId))
-                {
-                    errors.Add($"{tableName} entry '{entry.Id}' references unknown id '{entry.RefId}'.");
-                }
-            }
-        }
-
-        /*
-         * 상태 효과 CSV 한 행의 동작과 능력치 변경값을 보관한다.
-         */
         internal class StatusEffectRow
         {
             public string Id;
@@ -119,10 +77,7 @@ namespace Pakuri.Data
             public string StatusEffectPrefabPath;
         }
 
-        /*
-         * CSV 행을 실행에 사용할 자료로 변환한다.
-         */
-        internal static StatusEffectRow ParseStatusEffectRow(CsvRecord record /* 읽을 CSV 행 */)
+        internal static StatusEffectRow ParseStatusEffectRow(CsvRecord record )
         {
             return new StatusEffectRow
             {
@@ -150,10 +105,7 @@ namespace Pakuri.Data
             };
         }
 
-        /*
-         * 열이 존재하고 값이 있으면 CSV 값을 읽는다.
-         */
-        internal static bool TryReadDamageAttribute(CsvRecord record /* 읽을 CSV 행 */, string columnName /* 읽거나 검사할 CSV 열 이름 */, out DamageAttribute attribute /* 피해 속성 */)
+        internal static bool TryReadDamageAttribute(CsvRecord record , string columnName , out DamageAttribute attribute )
         {
             attribute = default;
             var value = record.ReadString(columnName);
@@ -166,9 +118,6 @@ namespace Pakuri.Data
             return true;
         }
 
-        /*
-         * 스킬이 적용할 상태 효과 값과 적용 규칙을 보관한다.
-         */
         internal class StatusPayloadRow
         {
             public string StatusEffectId;
@@ -197,22 +146,12 @@ namespace Pakuri.Data
             public float StatusElementDamageTakenBonus;
             public float StatusCriticalChanceBonus;
             public float StatusConditionalStatusChanceBonus;
-            public string StatusConditionalIncomingSkillRuntimeKinds;
-            public string StatusConditionalOutgoingSkillRuntimeKinds;
-            public string StatusAppliedStatusDurationBonusStatusId;
-            public float StatusAppliedStatusDurationBonus;
-            public float StatusOutgoingAdditionalDamageMultiplier;
-            public DamageAttribute StatusOutgoingAdditionalDamageTriggerAttribute;
-            public DamageAttribute StatusOutgoingAdditionalDamageAttribute;
         }
 
-        /*
-         * CSV 행에서 필요한 값을 읽는다.
-         */
         internal static StatusPayloadRow ReadStatusPayload(
-            CsvRecord record /* 읽을 CSV 행 */,
-            bool includeEffectOnlyModifiers /* 포함 효과 한정 보정 목록 여부 */,
-            bool allowMissingColumns = false /* 허용 누락된 열 목록 여부 */)
+            CsvRecord record ,
+            bool includeEffectOnlyModifiers ,
+            bool allowMissingColumns = false )
         {
             var payload = new StatusPayloadRow
             {
@@ -246,22 +185,12 @@ namespace Pakuri.Data
                 payload.StatusCriticalChanceBonus = ReadStatusFloat(record, "status_critical_chance_bonus", allowMissingColumns);
                 payload.StatusCriticalDamageBonus = ReadOptionalFloatIfColumnExists(record, "status_critical_damage_bonus");
                 payload.StatusConditionalStatusChanceBonus = ReadStatusFloat(record, "status_conditional_status_chance_bonus", allowMissingColumns);
-                payload.StatusConditionalIncomingSkillRuntimeKinds = ReadOptionalStringIfColumnExists(record, "status_conditional_incoming_skill_runtime_kinds");
-                payload.StatusConditionalOutgoingSkillRuntimeKinds = ReadOptionalStringIfColumnExists(record, "status_conditional_outgoing_skill_runtime_kinds");
-                payload.StatusAppliedStatusDurationBonusStatusId = ReadStatusString(record, "status_applied_status_duration_bonus_status_id", allowMissingColumns);
-                payload.StatusAppliedStatusDurationBonus = ReadStatusFloat(record, "status_applied_status_duration_bonus", allowMissingColumns);
-                payload.StatusOutgoingAdditionalDamageMultiplier = ReadStatusFloat(record, "status_outgoing_additional_damage_multiplier", allowMissingColumns);
-                payload.StatusOutgoingAdditionalDamageTriggerAttribute = ReadOptionalEnum(record, "status_outgoing_additional_damage_trigger_attribute", DamageAttribute.Physical);
-                payload.StatusOutgoingAdditionalDamageAttribute = ReadOptionalEnum(record, "status_outgoing_additional_damage_attribute", DamageAttribute.Physical);
             }
 
             return payload;
         }
 
-        /*
-         * CSV 행에서 필요한 값을 읽는다.
-         */
-        internal static string ReadStatusString(CsvRecord record /* 읽을 CSV 행 */, string columnName /* 읽거나 검사할 CSV 열 이름 */, bool allowMissingColumns /* 허용 누락된 열 목록 여부 */)
+        internal static string ReadStatusString(CsvRecord record , string columnName , bool allowMissingColumns )
         {
             if (allowMissingColumns)
             {
@@ -271,10 +200,7 @@ namespace Pakuri.Data
             return record.ReadString(columnName);
         }
 
-        /*
-         * CSV 행에서 필요한 값을 읽는다.
-         */
-        internal static float ReadStatusFloat(CsvRecord record /* 읽을 CSV 행 */, string columnName /* 읽거나 검사할 CSV 열 이름 */, bool allowMissingColumns /* 허용 누락된 열 목록 여부 */)
+        internal static float ReadStatusFloat(CsvRecord record , string columnName , bool allowMissingColumns )
         {
             if (allowMissingColumns)
             {
@@ -284,10 +210,7 @@ namespace Pakuri.Data
             return record.ReadFloat(columnName);
         }
 
-        /*
-         * CSV 행에서 필요한 값을 읽는다.
-         */
-        internal static int ReadStatusInt(CsvRecord record /* 읽을 CSV 행 */, string columnName /* 읽거나 검사할 CSV 열 이름 */, bool allowMissingColumns /* 허용 누락된 열 목록 여부 */)
+        internal static int ReadStatusInt(CsvRecord record , string columnName , bool allowMissingColumns )
         {
             if (allowMissingColumns)
             {

@@ -1,0 +1,153 @@
+using System;
+using System.Collections.Generic;
+using static Pakuri.Data.CsvRowParser;
+using static Pakuri.Data.CsvSourceModel;
+using static Pakuri.Data.SkillGraphParser;
+
+namespace Pakuri.Data
+{
+    internal static class CsvAssetReferenceCollector
+    {
+        internal readonly struct ReferencedAssetPath
+        {
+
+            public ReferencedAssetPath(string assetPath , string ownerLabel )
+            {
+                AssetPath = assetPath;
+                OwnerLabel = ownerLabel;
+            }
+
+            public string AssetPath { get; }
+            public string OwnerLabel { get; }
+        }
+
+        internal class ReferencedAssetSet
+        {
+            internal readonly HashSet<string> spritePathLookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            internal readonly HashSet<string> prefabPathLookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            internal readonly HashSet<string> animatorControllerPathLookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            public List<ReferencedAssetPath> SpritePaths { get; } = new List<ReferencedAssetPath>();
+            public List<ReferencedAssetPath> PrefabPaths { get; } = new List<ReferencedAssetPath>();
+            public List<ReferencedAssetPath> AnimatorControllerPaths { get; } = new List<ReferencedAssetPath>();
+
+            public void AddSprite(string assetPath , string ownerLabel )
+            {
+                Add(assetPath, ownerLabel, spritePathLookup, SpritePaths);
+            }
+
+            public void AddPrefab(string assetPath , string ownerLabel )
+            {
+                Add(assetPath, ownerLabel, prefabPathLookup, PrefabPaths);
+            }
+
+            public void AddAnimatorController(string assetPath , string ownerLabel )
+            {
+                Add(assetPath, ownerLabel, animatorControllerPathLookup, AnimatorControllerPaths);
+            }
+
+            internal static void Add(
+                string assetPath ,
+                string ownerLabel ,
+                HashSet<string> lookup ,
+                List<ReferencedAssetPath> paths )
+            {
+                if (string.IsNullOrWhiteSpace(assetPath))
+                {
+                    return;
+                }
+
+                var normalizedPath = assetPath.Trim().Replace('\\', '/');
+                if (lookup.Add(normalizedPath))
+                {
+                    paths.Add(new ReferencedAssetPath(normalizedPath, ownerLabel));
+                }
+            }
+        }
+
+        internal static ReferencedAssetSet CollectReferencedAssets(SourceModel model )
+        {
+            var assets = new ReferencedAssetSet();
+            if (model == null)
+            {
+                return assets;
+            }
+
+            foreach (var skill in model.Skills.Values)
+            {
+                assets.AddSprite(skill.SkillIconPath, $"Skill '{skill.Id}' skill_icon_path");
+                assets.AddPrefab(skill.SkillEffectPrefabPath, $"Skill '{skill.Id}' skill_effect_prefab_path");
+                assets.AddPrefab(skill.Status.StatusEffectPrefabPath, $"Skill '{skill.Id}' status_effect_prefab_path");
+                assets.AddSprite(skill.RuntimeVisualSpritePath, $"Skill '{skill.Id}' runtime_visual_sprite_path");
+                assets.AddAnimatorController(
+                    skill.RuntimeVisualAnimatorControllerPath,
+                    $"Skill '{skill.Id}' runtime_visual_animator_controller_path");
+                assets.AddSprite(
+                    skill.RuntimeImpactVisualSpritePath,
+                    $"Skill '{skill.Id}' runtime_impact_visual_sprite_path");
+                assets.AddAnimatorController(
+                    skill.RuntimeImpactVisualAnimatorControllerPath,
+                    $"Skill '{skill.Id}' runtime_impact_visual_animator_controller_path");
+            }
+
+            foreach (var enemySkill in model.EnemyBaseSkills.Values)
+            {
+                SkillRow skill = null;
+                if (enemySkill != null)
+                {
+                    skill = enemySkill.Skill;
+                }
+                if (skill == null)
+                {
+                    continue;
+                }
+
+                assets.AddSprite(skill.RuntimeVisualSpritePath, $"Enemy base skill '{skill.Id}' runtime_visual_sprite_path");
+                assets.AddAnimatorController(
+                    skill.RuntimeVisualAnimatorControllerPath,
+                    $"Enemy base skill '{skill.Id}' runtime_visual_animator_controller_path");
+            }
+
+            foreach (var choice in model.SkillChoices.Values)
+            {
+                assets.AddSprite(choice.SkillIconPath, $"Skill choice '{choice.Id}' skill_icon_path");
+            }
+
+            foreach (var param in model.SkillNodeParams)
+            {
+                if (param == null || param.ValueType != SkillNodeValueType.AssetPath)
+                {
+                    continue;
+                }
+
+                if (param.ParamKey != null
+                    && param.ParamKey.IndexOf("sprite", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    assets.AddSprite(param.Value, $"Skill node param '{param.NodeId}.{param.ParamKey}'");
+                }
+                else if (param.ParamKey != null
+                    && param.ParamKey.IndexOf("animator", StringComparison.OrdinalIgnoreCase) >= 0
+                    && param.ParamKey.IndexOf("controller", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    assets.AddAnimatorController(param.Value, $"Skill node param '{param.NodeId}.{param.ParamKey}'");
+                }
+                else
+                {
+                    assets.AddPrefab(param.Value, $"Skill node param '{param.NodeId}.{param.ParamKey}'");
+                }
+            }
+
+            foreach (var status in model.StatusEffects.Values)
+            {
+                assets.AddPrefab(status.StatusEffectPrefabPath, $"Status effect '{status.Id}' status_effect_prefab_path");
+            }
+
+            foreach (var monster in model.Monsters.Values)
+            {
+                assets.AddSprite(monster.MonsterIconImagePath, $"Monster '{monster.Id}' MonsterIconImage");
+            }
+
+            return assets;
+        }
+    }
+}

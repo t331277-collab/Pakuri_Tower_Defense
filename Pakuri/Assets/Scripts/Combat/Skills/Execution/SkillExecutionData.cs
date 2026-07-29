@@ -13,6 +13,7 @@ namespace Pakuri.InGame
 /*
  * 원본 스킬과 선택한 강화 노드를 합쳐 한 번의 스킬 실행에 사용할 값을 만든다.
  * 실행기는 이 객체에 저장된 최종 수치와 선택한 SkillNode를 읽어 같은 강화 결과를 사용한다.
+ * 즉시 누적 가능한 수치와 실제 대상·투사체 순번이 있어야 판정할 규칙을 분리해 보관한다.
  */
 public class SkillExecutionData
 {
@@ -808,6 +809,7 @@ public class SkillExecutionData
 		}
 	}
 
+	/* 대상 상태 조건과 치명타 확률 보너스가 유효한 경우 실행 시점 판정 목록에 등록한다. */
 	private void ApplyConditionalCritChanceAction(ConditionalCritChanceActionOp action)
 	{
 		if (action.Condition.StatusKind != StatusEffectKind.None
@@ -818,6 +820,7 @@ public class SkillExecutionData
 		}
 	}
 
+	/* 지정 투사체 순번의 피해 배율이 유효한 경우 연속 발사 판정 목록에 등록한다. */
 	private void ApplyBurstDamageAction(BurstDamageActionOp action)
 	{
 		if (action.DamageMultiplier > 0f)
@@ -826,6 +829,7 @@ public class SkillExecutionData
 		}
 	}
 
+	/* 지정 투사체 순번의 상태 중첩 보너스가 0이 아니면 판정 목록에 등록한다. */
 	private void ApplyBurstStatusAction(BurstStatusActionOp action)
 	{
 		if (action.StacksBonus != 0)
@@ -844,6 +848,7 @@ public class SkillExecutionData
 		StatusConditionalSourceStatusKind = action.RequiredSourceStatus;
 	}
 
+	/* 유효한 후속 투사체 개수와 지연·피해 배율을 이번 시전 스냅샷에 기록한다. */
 	private void ApplyFollowUpProjectileAction(FollowUpProjectileActionOp action)
 	{
 		if (action.Count <= 0)
@@ -856,6 +861,7 @@ public class SkillExecutionData
 		FollowUpProjectileDamageMultiplier = Mathf.Max(0f, action.DamageMultiplier);
 	}
 
+	/* 시전자 상태 임계치와 임계치 달성 시 적용할 상태를 스냅샷에 기록한다. */
 	private void ApplyThresholdStatusAction(ThresholdStatusActionOp action)
 	{
 		if (action.Condition.StatusKind == StatusEffectKind.None
@@ -870,6 +876,7 @@ public class SkillExecutionData
 		ThresholdApplyStatusKind = action.AppliedStatus;
 	}
 
+	/* 대상별 추가 반복 횟수와 반복 간격·피해 배율을 누적한다. */
 	private void ApplyRepeatPerTargetAction(RepeatPerTargetActionOp action)
 	{
 		if (action.Count <= 0)
@@ -885,6 +892,7 @@ public class SkillExecutionData
 		}
 	}
 
+	/* 처치 시 소비 상태를 주변에 재분배하기 위한 비율·상태·탐색 범위를 기록한다. */
 	private void ApplyRedistributeConsumedStatusAction(RedistributeConsumedStatusActionOp action)
 	{
 		if (action.Ratio <= 0f || action.StatusKind == StatusEffectKind.None || action.SearchRadius <= 0f)
@@ -898,6 +906,7 @@ public class SkillExecutionData
 		RedistributeConsumedStatusTargetCount = Mathf.Max(0, action.TargetCount);
 	}
 
+	/* 명중 시 확률적으로 발생할 추가 피해 설정을 스냅샷에 기록한다. */
 	private void ApplyAdditionalDamageAction(AdditionalDamageActionOp action)
 	{
 		HasOnHitAdditionalDamage = true;
@@ -907,6 +916,7 @@ public class SkillExecutionData
 		OnHitAdditionalDamageTarget = action.Target;
 	}
 
+	/* 핵심 히트박스 이름과 해당 부위의 피해 배율을 누적한다. */
 	private void ApplyCoreDamageAction(CoreDamageActionOp action)
 	{
 		CoreHitboxName = action.HitboxName;
@@ -914,6 +924,7 @@ public class SkillExecutionData
 		CoreDamageMultiplier *= action.Multiplier;
 	}
 
+	/* 핵심 히트박스에 귀속되는 추가 피해 확률·배율·속성을 기록한다. */
 	private void ApplyCoreAdditionalDamageAction(CoreAdditionalDamageActionOp action)
 	{
 		CoreHitboxName = action.HitboxName;
@@ -923,6 +934,7 @@ public class SkillExecutionData
 		CoreOnHitAdditionalDamageAttribute = action.Attribute;
 	}
 
+	/* 일정 명중 주기마다 발생할 연쇄 피해의 대상 수·범위·배율을 기록한다. */
 	private void ApplyHitChainDamageAction(HitChainDamageActionOp action)
 	{
 		if (action.HitPeriod <= 0)
@@ -937,6 +949,7 @@ public class SkillExecutionData
 		OnHitChainDamageAttribute = action.Attribute;
 	}
 
+	/* 최소 명중 대상 수 달성 시 지정 스킬에 적용할 쿨다운 반환 규칙을 기록한다. */
 	private void ApplyHitCountCooldownRefundAction(HitCountCooldownRefundActionOp action)
 	{
 		if (string.IsNullOrWhiteSpace(action.TargetSkillId))
@@ -949,6 +962,7 @@ public class SkillExecutionData
 		HitCountCooldownRefundRatio = action.Ratio;
 	}
 
+	/* 명중마다 지정 스킬에서 줄일 재장전 시간을 누적한다. */
 	private void ApplyReloadReducePerHitAction(ReloadReducePerHitActionOp action)
 	{
 		if (string.IsNullOrWhiteSpace(action.TargetSkillId))

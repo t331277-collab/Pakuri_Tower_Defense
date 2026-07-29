@@ -7,8 +7,8 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
     /*
-     * Trigger가 선택한 컴파일 Node를 작성 순서대로 실행한다.
-     * Phase 1에서는 기존 Effect 경로를 유지하며 실행 데이터용 modifier Node만 전달한다.
+     * Trigger가 선택한 컴파일 Node를 작성 순서대로 해석하고 공용 전투 API로 실행한다.
+     * Trigger는 발동 시점만 결정하며, 이 클래스는 대상·조건·지속시간을 조립한 뒤 실제 행동을 분배한다.
      */
     public static class SkillNodeExecutor
     {
@@ -17,6 +17,7 @@ namespace Pakuri.InGame
         [ThreadStatic]
         private static int executionDepth;
 
+        /* Node 목록에 즉시 전투 상태를 바꾸는 runtime 행동이 하나라도 있는지 확인한다. */
         internal static bool HasRuntimeActions(IReadOnlyList<SkillNode> nodes)
         {
             if (nodes == null)
@@ -45,6 +46,10 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * modifier Node를 실행 스냅샷에 먼저 반영하고, runtime Node를 작성 순서대로 실행한다.
+         * ExecuteSkill·RecastZone의 순환 호출은 스레드별 실행 깊이 제한으로 차단한다.
+         */
         public static void Execute(
             IReadOnlyList<SkillNode> nodes,
             SkillActionContext context)
@@ -80,6 +85,10 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 대상 선택·지속시간·상태 payload·조건·Visual처럼 여러 행동이 공유할 Node 값을 한 번 수집한다.
+         * 실제 피해나 상태 적용은 하지 않고 이번 Node 묶음의 공통 실행 상태만 만든다.
+         */
         private static NodeExecutionState BuildState(IReadOnlyList<SkillNode> nodes)
         {
             var state = new NodeExecutionState();
@@ -169,6 +178,7 @@ namespace Pakuri.InGame
             return state;
         }
 
+        /* operation 타입을 식별해 대응하는 단일 runtime 행동으로 분배한다. */
         private static void ExecuteNode(
             SkillNode node,
             SkillActionContext context,
@@ -242,6 +252,7 @@ namespace Pakuri.InGame
             }
         }
 
+        /* Node 피해식을 계산하고 공통 조건을 만족하는 대상들에게 피해 API를 호출한다. */
         private static void ExecuteDamage(
             ApplyDamageNodeOp operation,
             SkillActionContext context,
@@ -284,6 +295,10 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 고정 피해식 또는 사건에서 추적된 보호막·피해 값을 Node의 원시 피해로 변환한다.
+         * 값 출처가 사건 기반일 때는 SkillActionContext가 보관한 당시 스냅샷을 사용한다.
+         */
         private static float ResolveRawDamage(
             ApplyDamageNodeOp operation,
             SkillActionContext context)
@@ -331,6 +346,7 @@ namespace Pakuri.InGame
             return Mathf.Max(0f, value) * Mathf.Max(0f, operation.ValueSourceMultiplier);
         }
 
+        /* 상태 payload·지속시간·Mutation·Visual을 조립해 조건을 만족하는 대상에게 상태를 적용한다. */
         private static void ExecuteStatus(
             ApplyStatusNodeOp operation,
             SkillActionContext context,
@@ -402,6 +418,7 @@ namespace Pakuri.InGame
             }
         }
 
+        /* 시전자의 주문력과 스냅샷 보정을 반영한 보호막을 조건 대상에게 적용한다. */
         private static void ExecuteShield(
             ApplyShieldNodeOp operation,
             SkillActionContext context,
@@ -469,6 +486,7 @@ namespace Pakuri.InGame
             }
         }
 
+        /* SetDuration으로 수집한 양의 시간을 지정 상태의 남은 지속시간에 더한다. */
         private static void ExecuteStatusDurationExtension(
             ExtendStatusDurationNodeOp operation,
             SkillActionContext context,
@@ -495,6 +513,10 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 상태 적용에 귀속되지 않은 독립 Visual을 사건 중심에 생성한다.
+         * 상태 행동과 함께 있는 Visual은 AttachStatusVisual에서 상태 수명에 귀속하므로 여기서는 중복 생성하지 않는다.
+         */
         private static void ExecuteVisual(
             ShowVisualNodeOp operation,
             SkillActionContext context,
@@ -529,6 +551,7 @@ namespace Pakuri.InGame
                 false));
         }
 
+        /* 현재 사건 중심과 재시전 세대를 유지한 채 Zone 계열 재시전을 요청한다. */
         private static void ExecuteRecast(RecastZoneNodeOp operation, SkillActionContext context)
         {
             if (context.ExecutionContext == null)
@@ -543,6 +566,7 @@ namespace Pakuri.InGame
                 context.EventCenter);
         }
 
+        /* 지정 스킬의 runtime을 찾아 Trigger 시전 경로로 실행한다. */
         private static void ExecuteSkill(ExecuteSkillNodeOp operation, SkillActionContext context)
         {
             SkillExecutionContext executionContext = context.ExecutionContext;
@@ -571,6 +595,7 @@ namespace Pakuri.InGame
                 triggerSourceSkillId: context.SourceSkillId);
         }
 
+        /* 대상 스킬 runtime들의 전체 쿨다운 기준 비율만큼 남은 쿨다운을 반환한다. */
         private static void RefundCooldown(
             RefundCooldownNodeOp operation,
             SkillActionContext context,
@@ -584,6 +609,7 @@ namespace Pakuri.InGame
             }
         }
 
+        /* 대상 스킬 runtime들의 전체 재장전시간 기준 비율만큼 남은 재장전을 줄인다. */
         private static void ReduceReload(
             ReduceReloadNodeOp operation,
             SkillActionContext context,
@@ -597,6 +623,10 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 대상 선택 결과에서 조작할 SkillUseState를 수집한다.
+         * skillId가 비어 있으면 각 대상의 모든 액티브 스킬을 선택한다.
+         */
         private static List<SkillUseState> ResolveRuntimes(
             string skillId,
             SkillActionContext context,
@@ -640,6 +670,10 @@ namespace Pakuri.InGame
             return runtimes;
         }
 
+        /*
+         * EventTarget 우선 규칙 또는 SelectTargets 설정으로 실제 전투 등록 대상을 결정한다.
+         * Single과 MaxTargets 제한은 정렬된 결과의 앞부분을 유지한다.
+         */
         private static IReadOnlyList<CombatUnitEntry> ResolveTargets(
             SkillActionContext context,
             NodeExecutionState state,
@@ -684,6 +718,7 @@ namespace Pakuri.InGame
             return targets;
         }
 
+        /* Node 전용 대상 enum을 공용 SkillTargetingSpec으로 변환한다. */
         private static SkillTargetingSpec BuildTargeting(SelectTargetsNodeOp operation, float radius)
         {
             var side = SkillTargetSide.Enemy;
@@ -713,6 +748,7 @@ namespace Pakuri.InGame
             };
         }
 
+        /* Node 중심 규칙에 따라 시전자·사건 대상·기본 사건 중심 중 하나를 선택한다. */
         private static Vector2 ResolveCenter(
             SkillActionContext context,
             NodeExecutionState state)
@@ -741,6 +777,10 @@ namespace Pakuri.InGame
             return context.EventCenter;
         }
 
+        /*
+         * 개별 대상에 적용되는 상태·상태식·스킬 속성·체력 비율 조건을 모두 검사한다.
+         * Self 조건은 현재 대상 대신 사건 시전자를 검사한다.
+         */
         private static bool MatchesRequirements(
             UnitCombatState target,
             SkillActionContext context,
@@ -800,6 +840,7 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /* 대상 선택 전에 판정 가능한 최소 명중 수와 시전자 상태 요구사항을 검사한다. */
         private static bool MeetsGlobalRequirements(
             SkillActionContext context,
             NodeExecutionState state)
@@ -826,6 +867,7 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /* 대상이 지정 속성을 가진 액티브 스킬을 하나 이상 보유하는지 확인한다. */
         private static bool HasActiveSkillAttribute(
             UnitCombatState target,
             DamageAttribute attribute)
@@ -849,6 +891,7 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /* 상태 적용 Node와 함께 작성된 Visual을 상태 데이터에 연결해 상태 수명을 따르게 한다. */
         private static void AttachStatusVisual(
             StatusRuntimeData statusData,
             NodeExecutionState state)
@@ -868,6 +911,10 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * StatusMutation Node들을 작성 순서대로 상태 runtime 데이터에 누적한다.
+         * 속성 한정 Mutation은 공용 필드와 속성 대상 표시를 함께 갱신한다.
+         */
         private static void ApplyStatusMutations(
             StatusRuntimeData statusData,
             IReadOnlyList<StatusMutationNodeOp> mutations)
@@ -947,6 +994,7 @@ namespace Pakuri.InGame
             }
         }
 
+        /* 상태 보정이 특정 피해 속성에 한정됨을 runtime 데이터에 표시한다. */
         private static void SetElementModifier(
             StatusRuntimeData statusData,
             StatusMutationNodeOp mutation)
@@ -955,6 +1003,7 @@ namespace Pakuri.InGame
             statusData.ElementModifierTarget = mutation.Attribute;
         }
 
+        /* `incoming|outgoing` 문자열을 양방향 스킬 RuntimeKind 필터로 컴파일한다. */
         private static void ApplyRuntimeKindFilter(
             StatusRuntimeData statusData,
             string rawValue)
@@ -970,6 +1019,10 @@ namespace Pakuri.InGame
                 StatusRuntimeCompiler.ParseSkillRuntimeKindConditions(outgoing);
         }
 
+        /*
+         * 한 Node 묶음에서 모든 행동이 공유하는 대상·조건·상태·Visual 설정을 보관한다.
+         * SkillActionContext가 사건 입력이라면 이 상태는 Node 목록을 해석한 실행 계획이다.
+         */
         private sealed class NodeExecutionState
         {
             internal SelectTargetsNodeOp Targets = new SelectTargetsNodeOp(

@@ -1,10 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/*
- * 런타임 카탈로그 생성에 필요한 CSV와 Unity 자산 참조를 함께 보관한다.
- */
 namespace Pakuri.Data
 {
     public class CsvRuntimeCatalog : ScriptableObject
@@ -64,65 +61,41 @@ namespace Pakuri.Data
         private Dictionary<string, GameObject> prefabLookup;
         private Dictionary<string, RuntimeAnimatorController> animatorControllerLookup;
 
-        /*
-         * TryGetSprite 작업을 시도하고 성공 여부를 반환한다.
-         */
-        public bool TryGetSprite(string assetPath /* 에셋 경로 */, out Sprite sprite /* 스프라이트 */)
+        public bool TryGetSprite(string assetPath , out Sprite sprite )
         {
             EnsureLookups();
             return spriteLookup.TryGetValue(Normalize(assetPath), out sprite);
         }
 
-        /*
-         * TryGetPrefab 작업을 시도하고 성공 여부를 반환한다.
-         */
-        public bool TryGetPrefab(string assetPath /* 에셋 경로 */, out GameObject prefab /* 생성할 프리팹 */)
+        public bool TryGetPrefab(string assetPath , out GameObject prefab )
         {
             EnsureLookups();
             return prefabLookup.TryGetValue(Normalize(assetPath), out prefab);
         }
 
-        /*
-         * TryGetAnimatorController 작업을 시도하고 성공 여부를 반환한다.
-         */
         public bool TryGetAnimatorController(
-            string assetPath /* 에셋 경로 */,
-            out RuntimeAnimatorController animatorController /* 애니메이터 제어기 */)
+            string assetPath ,
+            out RuntimeAnimatorController animatorController )
         {
             EnsureLookups();
             return animatorControllerLookup.TryGetValue(Normalize(assetPath), out animatorController);
         }
 
-        /*
-         * HasSprite 조건을 만족하는지 확인한다.
-         */
-        public bool HasSprite(string assetPath /* 에셋 경로 */)
+        public bool HasSprite(string assetPath )
         {
-            EnsureLookups();
-            return spriteLookup.ContainsKey(Normalize(assetPath));
+            return TryGetSprite(assetPath, out _);
         }
 
-        /*
-         * HasPrefab 조건을 만족하는지 확인한다.
-         */
-        public bool HasPrefab(string assetPath /* 에셋 경로 */)
+        public bool HasPrefab(string assetPath )
         {
-            EnsureLookups();
-            return prefabLookup.ContainsKey(Normalize(assetPath));
+            return TryGetPrefab(assetPath, out _);
         }
 
-        /*
-         * HasAnimatorController 조건을 만족하는지 확인한다.
-         */
-        public bool HasAnimatorController(string assetPath /* 에셋 경로 */)
+        public bool HasAnimatorController(string assetPath )
         {
-            EnsureLookups();
-            return animatorControllerLookup.ContainsKey(Normalize(assetPath));
+            return TryGetAnimatorController(assetPath, out _);
         }
 
-        /*
-         * ResetLookups 작업을 수행한다.
-         */
         public void ResetLookups()
         {
             spriteLookup = null;
@@ -130,17 +103,11 @@ namespace Pakuri.Data
             animatorControllerLookup = null;
         }
 
-        /*
-         * 컴포넌트가 활성화될 때 이벤트와 표시 상태를 연결한다.
-         */
         private void OnEnable()
         {
             ResetLookups();
         }
 
-        /*
-         * EnsureLookups에 필요한 상태가 준비되어 있는지 확인하고 구성한다.
-         */
         private void EnsureLookups()
         {
             if (spriteLookup != null && prefabLookup != null && animatorControllerLookup != null)
@@ -161,14 +128,11 @@ namespace Pakuri.Data
                 entry => entry.Asset);
         }
 
-        /*
-         * AddEntries 작업을 수행한다.
-         */
         private static void AddEntries<TEntry, TAsset>(
-            TEntry[] entries /* 등록 정보 목록 */,
-            Dictionary<string, TAsset> lookup /* 조회표 */,
-            Func<TEntry, string> getPath /* 가져오기 경로 */,
-            Func<TEntry, TAsset> getAsset /* 가져오기 에셋 */)
+            TEntry[] entries ,
+            Dictionary<string, TAsset> lookup ,
+            Func<TEntry, string> getPath ,
+            Func<TEntry, TAsset> getAsset )
             where TAsset : UnityEngine.Object
         {
             if (entries == null)
@@ -189,10 +153,7 @@ namespace Pakuri.Data
             }
         }
 
-        /*
-         * Normalize 작업 결과를 반환한다.
-         */
-        private static string Normalize(string assetPath /* 에셋 경로 */)
+        private static string Normalize(string assetPath )
         {
             if (string.IsNullOrWhiteSpace(assetPath))
             {

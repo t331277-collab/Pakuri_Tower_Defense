@@ -5,7 +5,8 @@ using Pakuri.Data;
 using UnityEngine;
 
 /*
- * 스킬 대상 지정 계산과 변환 기능을 제공한다.
+ * 스킬과 Node가 공유하는 대상 후보, 정렬, 범위 중심, 반경과 반복 배치 계산을 제공한다.
+ * 전투 등록 정보는 조회하지만 피해·상태·Visual을 직접 적용하지 않는 순수 선택 경계다.
  */
 namespace Pakuri.InGame
 {
@@ -17,6 +18,10 @@ namespace Pakuri.InGame
 
     internal static class SkillTargeting
     {
+        /*
+         * 모든 계열 Executor가 같은 진영·생존·상태 필터와 정렬 규칙을 사용하도록 대상 계산을 집중한다.
+         * 수동 조준 정보가 있으면 이를 우선하고, 없으면 설정된 선택 규칙으로 대체 중심과 대상을 찾는다.
+         */
         /*
          * OrderedTargets 결과를 계산해 반환한다.
          */

@@ -89,3 +89,141 @@ Complete except user-owned Play Mode verification.
 
 - 2026-07-29: User required explicit data duration and prohibited a runtime zero-duration fallback.
 - 2026-07-29: Code Builder restored the ten missing lifetime Nodes from reference intent and pre-migration one-second behavior.
+
+## Task: 2026-07-29 CSV Loading Pipeline Responsibility Refactor
+
+### Task title
+
+Reorganize CSV loading into one ordered pipeline with four responsibility folders.
+
+### Goals
+
+- Implement the approved Parsing, Validation, Generation, and RuntimeCatalog structure.
+- Keep one parsed `SourceModel`, one semantic validation pass, one catalog build, and one lookup rebuild.
+- Remove duplicate ownership and implicit static builder dependencies.
+
+### Constraints
+
+- Preserve current CSV, serialized asset, runtime catalog, public API, ordering, and gameplay behavior.
+- Preserve existing `.meta` GUIDs and the runtime Resources path.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implementation and non-Play-Mode verification complete.
+
+### Next Actions
+
+- User verifies representative gameplay flows in Unity Play Mode.
+
+### Evidence
+
+- The approved handoff records current file ownership, target paths, stage contracts, the single-validation rule, and compatibility gates.
+- Baseline runtime and editor C# builds completed with zero errors before implementation.
+- Loading now has explicit Parsing, Validation, Generation, and RuntimeCatalog folders; combat skill compilation moved to `Combat/Skills/Compilation`.
+- Static search found one semantic-validation call, one catalog-build call, and one lookup-rebuild call in the ordered loader path.
+- Static search found zero references to the removed `runtimeCsvCatalog` loader state.
+- All moved scripts retain their original GUIDs, and all new scripts have `.meta` files.
+- `Assembly-CSharp.csproj` built with zero errors; Unity compiled without project errors.
+- Unity CSV validation loaded 5 monsters, 8 stage-one enemies, and 8 stage-two enemies.
+
+### History
+
+- 2026-07-29: User selected Code Builder, required the handoff MD first, and authorized implementation from that MD.
+- 2026-07-29: User prohibited unnecessary duplicate structure and repeat validation of an already validated source model.
+- 2026-07-29: Code Builder completed the handoff implementation and all available non-Play-Mode checks.
+
+## Task: 2026-07-29 Ponytail Loading Pipeline Simplification
+
+### Task title
+
+Delete dead CSV-loading code and merge duplicate lookup and handler ownership.
+
+### Goals
+
+- Keep the Parsing -> Validation -> Generation -> RuntimeCatalog pipeline behavior.
+- Delete unused parser, DTO, validator, builder, and skill-handler metadata.
+- Merge runtime lookup storage into `GameDataCatalog`.
+
+### Constraints
+
+- Ponytail leads the implementation; existing markdown is reference material only.
+- Preserve active CSV contracts, serialized fields, public lookup APIs, and gameplay behavior.
+- Preserve unrelated pre-existing working-tree changes.
+
+### Role Owner
+
+Code Builder, ponytail-led
+
+### Status
+
+Implementation and available non-Play-Mode verification complete.
+
+### Next Actions
+
+- User verifies representative CSV loading and skill execution in Unity Play Mode.
+
+### Evidence
+
+- `Loading` changed from 13 C# files and 7,084 lines to 12 C# files and 5,718 lines: net reduction 1,366 lines.
+- `GameDataLookup.cs` and its `.meta` were removed; lookup registration and queries now live in `GameDataCatalog.cs`.
+- Static search found zero remaining removed-symbol or block-comment matches and retained the single ordered validation, build, and lookup-rebuild calls.
+- Every remaining Loading C# file has a `.meta` file.
+- Runtime and Editor `dotnet build` checks completed with zero errors; the Unity EditMode test passed 1/1.
+- Unity finished script compilation idle and ready with zero `Assets/Scripts/Loading` console errors; one separate MCP package transport error was present.
+
+### History
+
+- 2026-07-29: User assigned Code Builder and required ponytail-led deletion, consolidation, and a final net-line-reduction report.
+- 2026-07-29: Code Builder removed dead data and helpers, deleted duplicate handler metadata, merged lookup ownership, and completed static, build, EditMode, and Unity console checks.
+
+## Task: 2026-07-29 Final Skill Catalog Generation Design
+
+### Task title
+
+Make Loading Generation produce final typed skill data once.
+
+### Goals
+
+- Make `GameDataCatalogBuilder` directly create final active, passive, Choice, Trigger, and Node data.
+- Parse Node and Trigger enum/list/condition authoring strings into final typed values exactly once in Generation.
+- Make `GameDataCatalog` index final data instead of Source Definition wrappers.
+- Prevent repeated validation, Definition compilation, Trigger compilation, and Choice Node parsing.
+
+### Constraints
+
+- Keep the existing Parsing -> Validation -> Generation -> RuntimeCatalog order.
+- Keep exactly one semantic validation, one build, and one lookup rebuild.
+- Preserve CSV schemas, values, IDs, ordering, asset paths, and runtime behavior.
+- Avoid duplicate handler-support lists between Validator and Builder.
+
+### Role Owner
+
+Designer / Code Builder refactoring handoff
+
+### Status
+
+Design handoff complete. Implementation not started.
+
+### Next Actions
+
+- Code Builder follows `boards/COMBAT/SKILL_DIRECT_CATALOG_RUNTIME_HANDOFF.md`.
+- Update this board and the COMBAT board together during implementation.
+
+### Evidence
+
+- `GameDataLoader.BuildValidatedRuntimeCatalog` currently calls validation, catalog build, and lookup rebuild once each.
+- `GameDataCatalogBuilder` currently stops at Source Definition and string-param Node Definition creation.
+- Combat compiler scripts perform a second static conversion during unit state rebuild or first Choice use.
+- `SkillNodeExecutor` and `SkillTrigger` still parse authored scope, policy, condition, status, runtime-kind, Choice, attribute, event-skill, and event-source values during execution.
+- Final Loading and Combat contracts are specified in `boards/COMBAT/SKILL_DIRECT_CATALOG_RUNTIME_HANDOFF.md`.
+
+### History
+
+- 2026-07-29: User approved direct use of final authored skill data and requested a Code Builder-ready design.
+- 2026-07-29: Designer recorded the cross-domain Loading/Combat handoff without changing runtime code or CSV.
+- 2026-07-29: Designer updated the Generation contract so encoded authoring strings are converted once and final runtime consumers receive enum/array values.

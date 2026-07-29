@@ -1,22 +1,16 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
 using UnityEngine;
 using static Pakuri.Data.CsvDataValidator;
 using static Pakuri.Data.CsvParser;
-using static Pakuri.Data.CsvRowParser;
+using static Pakuri.Data.CsvSourceLoader;
 using static Pakuri.Data.CsvSourceModel;
 using static Pakuri.Data.GameDataCatalogBuilder;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
-
-/*
- * 씬을 불러오기 전에 CSV 런타임 데이터를 한 번 초기화하는 진입점.
- * Resources 원본을 읽고 카탈로그 조회를 등록한 뒤 참조와 스킬 변환 결과를
- * 한 번 검증해 완성된 GameDataCatalog를 전역 조회 대상으로 제공한다.
- */
 namespace Pakuri.Data
 {
     public static class GameDataLoader
@@ -35,7 +29,6 @@ namespace Pakuri.Data
         internal const string AuthoringEnemySkillBaseCsvAssetRoot = AuthoringEnemySkillCsvAssetRoot + "/base";
         internal const string AuthoringEnemySkillTriggerCsvAssetRoot = AuthoringEnemySkillCsvAssetRoot + "/triggers";
         internal const string AuthoringStatusCsvAssetRoot = AuthoringCsvAssetRoot + "/status";
-        internal const string AuthoringSourceAssetRoot = AuthoringCsvAssetRoot;
         internal const string RuntimeResourcesFolderAssetPath = "Assets/Resources/Pakuri/CSVRuntime";
         internal const string RuntimeCatalogAssetPath = RuntimeResourcesFolderAssetPath + "/CsvRuntimeCatalog.asset";
         internal const string RuntimeCatalogResourcesPath = "Pakuri/CSVRuntime/CsvRuntimeCatalog";
@@ -63,7 +56,6 @@ namespace Pakuri.Data
         internal static bool initialized;
         internal static bool failed;
         internal static GameDataCatalog runtimeCatalog;
-        internal static CsvRuntimeCatalog runtimeCsvCatalog;
 
         public static GameDataCatalog CurrentCatalog
         {
@@ -84,18 +76,7 @@ namespace Pakuri.Data
             }
         }
 
-        /*
-         * 계산에 필요한 값을 반환한다.
-         */
-        public static string GetImportedSourceAssetPath(string fileName /* 파일 이름 */)
-        {
-            return GetAuthoringSourceAssetPath(fileName);
-        }
-
-        /*
-         * 계산에 필요한 값을 반환한다.
-         */
-        public static string GetAuthoringSourceAssetPath(string fileName /* 파일 이름 */)
+        public static string GetAuthoringSourceAssetPath(string fileName )
         {
             switch (fileName)
             {
@@ -132,10 +113,7 @@ namespace Pakuri.Data
             }
         }
 
-        /*
-         * 필요한 조건을 만족하는지 확인한다.
-         */
-        public static bool IsAuthoringCsvSourceAssetPath(string assetPath /* 에셋 경로 */)
+        public static bool IsAuthoringCsvSourceAssetPath(string assetPath )
         {
             if (string.IsNullOrWhiteSpace(assetPath))
             {
@@ -147,18 +125,12 @@ namespace Pakuri.Data
                 && normalized.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
         }
 
-        /*
-         * Scene 로드 전에 CSV 런타임 데이터를 초기화한다.
-         */
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         internal static void InitializeBeforeSceneLoad()
         {
             EnsureInitialized();
         }
 
-        /*
-         * CSV 런타임 데이터가 한 번만 초기화되도록 한다.
-         */
         public static void EnsureInitialized()
         {
             if (initialized || failed)
@@ -184,25 +156,26 @@ namespace Pakuri.Data
             }
         }
 
-        /*
-         * 원본 CSV를 읽고 검증한 뒤 런타임 카탈로그를 등록한다.
-         */
         internal static GameDataCatalog LoadAndValidateRuntimeCatalog()
         {
-            runtimeCsvCatalog = LoadRuntimeCatalogOrThrow();
-            var source = LoadSourceModel(runtimeCsvCatalog);
-            ValidateSourceModelOrThrow(source, runtimeCsvCatalog);
-            var catalog = BuildRuntimeCatalog(source);
+            var sourceCatalog = LoadRuntimeCatalogOrThrow();
+            var source = LoadSourceModel(sourceCatalog);
+            return BuildValidatedRuntimeCatalog(sourceCatalog, source);
+        }
+
+        internal static GameDataCatalog BuildValidatedRuntimeCatalog(
+            CsvRuntimeCatalog sourceCatalog ,
+            SourceModel source )
+        {
+            ValidateSourceModelOrThrow(source, sourceCatalog);
+            var catalog = BuildRuntimeCatalog(source, sourceCatalog);
             catalog.RebuildLookup();
             runtimeCatalog = catalog;
             initialized = true;
             return catalog;
         }
 
-        /*
-         * 로그에 사용할 설명 문자열을 만든다.
-         */
-        internal static string FormatRuntimeCatalogSummary(GameDataCatalog catalog /* 불러온 게임 데이터 목록 */)
+        internal static string FormatRuntimeCatalogSummary(GameDataCatalog catalog )
         {
             return
                 $"GameDataLoader loaded runtime catalog from resource source '{RuntimeCatalogResourcesPath}' " +
@@ -210,10 +183,7 @@ namespace Pakuri.Data
                 $"and {catalog.StageTwoEnemies.Length} stage-two enemies.";
         }
 
-        /*
-         * 치명적인 CSV 오류를 기록하고 실행을 종료한다.
-         */
-        internal static void FailAndQuit(string message /* 메시지 */, List<string> errors /* 검증 오류를 모을 목록 */)
+        internal static void FailAndQuit(string message , List<string> errors )
         {
             failed = true;
             Debug.LogError(message);
@@ -235,9 +205,6 @@ namespace Pakuri.Data
             Application.Quit();
         }
 
-        /*
-         * 필요한 CSV 또는 자산을 불러온다.
-         */
         internal static CsvRuntimeCatalog LoadRuntimeCatalogOrThrow()
         {
             var sourceCatalog = Resources.Load<CsvRuntimeCatalog>(RuntimeCatalogResourcesPath);
@@ -252,98 +219,37 @@ namespace Pakuri.Data
             }
 
             var missingAssets = new List<string>();
-            if (sourceCatalog.CatalogMonsters == null)
+            void Require(bool present, string name)
             {
-                missingAssets.Add(CatalogMonstersFileName);
+                if (!present)
+                {
+                    missingAssets.Add(name);
+                }
             }
-            if (sourceCatalog.Monsters == null)
-            {
-                missingAssets.Add(MonstersFileName);
-            }
-            if (sourceCatalog.MonsterRewardChoices == null)
-            {
-                missingAssets.Add(MonsterRewardChoicesFileName);
-            }
-            if (sourceCatalog.MonsterSkillsProjectileFiles == null || sourceCatalog.MonsterSkillsProjectileFiles.Length == 0)
-            {
-                missingAssets.Add(MonsterSkillsProjectileFileName);
-            }
-            if (sourceCatalog.MonsterSkillsLineAttackFiles == null || sourceCatalog.MonsterSkillsLineAttackFiles.Length == 0)
-            {
-                missingAssets.Add(MonsterSkillsLineAttackFileName);
-            }
-            if (sourceCatalog.MonsterSkillsAreaAttackFiles == null || sourceCatalog.MonsterSkillsAreaAttackFiles.Length == 0)
-            {
-                missingAssets.Add(MonsterSkillsAreaAttackFileName);
-            }
-            if (sourceCatalog.MonsterSkillsSingleAttackFiles == null || sourceCatalog.MonsterSkillsSingleAttackFiles.Length == 0)
-            {
-                missingAssets.Add(MonsterSkillsSingleAttackFileName);
-            }
-            if (sourceCatalog.MonsterSkillsBuffFiles == null || sourceCatalog.MonsterSkillsBuffFiles.Length == 0)
-            {
-                missingAssets.Add(MonsterSkillsBuffFileName);
-            }
-            if (sourceCatalog.MonsterSkillsPassiveFiles == null || sourceCatalog.MonsterSkillsPassiveFiles.Length == 0)
-            {
-                missingAssets.Add(MonsterSkillsPassiveFileName);
-            }
-            if (sourceCatalog.MonsterSkillTriggerFiles == null || sourceCatalog.MonsterSkillTriggerFiles.Length == 0)
-            {
-                missingAssets.Add(MonsterSkillTriggersFileName);
-            }
-            if (sourceCatalog.MonsterSkillNodeDefinitions == null)
-            {
-                missingAssets.Add(MonsterSkillNodeDefinitionsFileName);
-            }
-            if (sourceCatalog.MonsterSkillNodeDefinitionParams == null)
-            {
-                missingAssets.Add(MonsterSkillNodeDefinitionParamsFileName);
-            }
-            if (sourceCatalog.MonsterSkillGraphNodeFiles == null || sourceCatalog.MonsterSkillGraphNodeFiles.Length == 0)
-            {
-                missingAssets.Add("skill_graph_nodes_*.csv");
-            }
-            if (sourceCatalog.MonsterSkillChoicesProjectileFiles == null || sourceCatalog.MonsterSkillChoicesProjectileFiles.Length == 0)
-            {
-                missingAssets.Add(MonsterSkillChoicesProjectileFileName);
-            }
-            if (sourceCatalog.MonsterSkillChoicesLineAttackFiles == null || sourceCatalog.MonsterSkillChoicesLineAttackFiles.Length == 0)
-            {
-                missingAssets.Add(MonsterSkillChoicesLineAttackFileName);
-            }
-            if (sourceCatalog.MonsterSkillChoicesAreaAttackFiles == null || sourceCatalog.MonsterSkillChoicesAreaAttackFiles.Length == 0)
-            {
-                missingAssets.Add(MonsterSkillChoicesAreaAttackFileName);
-            }
-            if (sourceCatalog.MonsterSkillChoicesSingleAttackFiles == null || sourceCatalog.MonsterSkillChoicesSingleAttackFiles.Length == 0)
-            {
-                missingAssets.Add(MonsterSkillChoicesSingleAttackFileName);
-            }
-            if (sourceCatalog.MonsterSkillChoicesBuffFiles == null || sourceCatalog.MonsterSkillChoicesBuffFiles.Length == 0)
-            {
-                missingAssets.Add(MonsterSkillChoicesBuffFileName);
-            }
-            if (sourceCatalog.MonsterSkillChoicesPassiveFiles == null || sourceCatalog.MonsterSkillChoicesPassiveFiles.Length == 0)
-            {
-                missingAssets.Add(MonsterSkillChoicesPassiveFileName);
-            }
-            if (sourceCatalog.StatusEffects == null)
-            {
-                missingAssets.Add(StatusEffectsFileName);
-            }
-            if (sourceCatalog.Enemies == null)
-            {
-                missingAssets.Add(EnemiesFileName);
-            }
-            if (sourceCatalog.EnemySkillBaseFiles == null || sourceCatalog.EnemySkillBaseFiles.Length == 0)
-            {
-                missingAssets.Add("enemy/skills/base/**/skills_*.csv");
-            }
-            if (sourceCatalog.EnemySkillTriggerFiles == null || sourceCatalog.EnemySkillTriggerFiles.Length == 0)
-            {
-                missingAssets.Add("enemy/skills/triggers/**/*_skill_triger.csv");
-            }
+
+            Require(sourceCatalog.CatalogMonsters != null, CatalogMonstersFileName);
+            Require(sourceCatalog.Monsters != null, MonstersFileName);
+            Require(sourceCatalog.MonsterRewardChoices != null, MonsterRewardChoicesFileName);
+            Require(sourceCatalog.MonsterSkillsProjectileFiles?.Length > 0, MonsterSkillsProjectileFileName);
+            Require(sourceCatalog.MonsterSkillsLineAttackFiles?.Length > 0, MonsterSkillsLineAttackFileName);
+            Require(sourceCatalog.MonsterSkillsAreaAttackFiles?.Length > 0, MonsterSkillsAreaAttackFileName);
+            Require(sourceCatalog.MonsterSkillsSingleAttackFiles?.Length > 0, MonsterSkillsSingleAttackFileName);
+            Require(sourceCatalog.MonsterSkillsBuffFiles?.Length > 0, MonsterSkillsBuffFileName);
+            Require(sourceCatalog.MonsterSkillsPassiveFiles?.Length > 0, MonsterSkillsPassiveFileName);
+            Require(sourceCatalog.MonsterSkillTriggerFiles?.Length > 0, MonsterSkillTriggersFileName);
+            Require(sourceCatalog.MonsterSkillNodeDefinitions != null, MonsterSkillNodeDefinitionsFileName);
+            Require(sourceCatalog.MonsterSkillNodeDefinitionParams != null, MonsterSkillNodeDefinitionParamsFileName);
+            Require(sourceCatalog.MonsterSkillGraphNodeFiles?.Length > 0, "skill_graph_nodes_*.csv");
+            Require(sourceCatalog.MonsterSkillChoicesProjectileFiles?.Length > 0, MonsterSkillChoicesProjectileFileName);
+            Require(sourceCatalog.MonsterSkillChoicesLineAttackFiles?.Length > 0, MonsterSkillChoicesLineAttackFileName);
+            Require(sourceCatalog.MonsterSkillChoicesAreaAttackFiles?.Length > 0, MonsterSkillChoicesAreaAttackFileName);
+            Require(sourceCatalog.MonsterSkillChoicesSingleAttackFiles?.Length > 0, MonsterSkillChoicesSingleAttackFileName);
+            Require(sourceCatalog.MonsterSkillChoicesBuffFiles?.Length > 0, MonsterSkillChoicesBuffFileName);
+            Require(sourceCatalog.MonsterSkillChoicesPassiveFiles?.Length > 0, MonsterSkillChoicesPassiveFileName);
+            Require(sourceCatalog.StatusEffects != null, StatusEffectsFileName);
+            Require(sourceCatalog.Enemies != null, EnemiesFileName);
+            Require(sourceCatalog.EnemySkillBaseFiles?.Length > 0, "enemy/skills/baseskills_*.csv");
+            Require(sourceCatalog.EnemySkillTriggerFiles?.Length > 0, "enemy/skills/triggers*_skill_triger.csv");
 
             if (missingAssets.Count > 0)
             {

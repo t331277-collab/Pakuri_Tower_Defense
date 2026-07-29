@@ -5,27 +5,10 @@ using System.Linq;
 using Pakuri.Combat;
 using Pakuri.InGame;
 
-/*
- * 스킬 노드와 그래프 CSV를 파싱하고 참조를 검증한 뒤 원본 모델에 정규화한다.
- */
 namespace Pakuri.Data
 {
 	internal static class SkillGraphParser
 	{
-		/*
-		 * CSV 실행 그래프 노드의 역할을 구분한다.
-		 */
-		internal enum SkillNodeKind
-		{
-			CastCondition,
-			Action,
-			DamageModifier,
-			CritModifier,
-			OnHitAction,
-			OnKillAction,
-			OnExpireAction
-		}
-
 		internal enum SkillNodeOwnerKind
 		{
 			Skill,
@@ -60,8 +43,6 @@ namespace Pakuri.Data
 
 			public string TargetSkillId;
 
-			public SkillNodeKind NodeKind;
-
 			public string HandlerId;
 
 			public int SortOrder;
@@ -76,9 +57,6 @@ namespace Pakuri.Data
 
 			public string ExcludesPassiveSkillId;
 
-			public string RuntimeSupportState;
-
-			public string RuntimeSupportNotes;
 		}
 
 		internal class SkillNodeParamRow
@@ -100,11 +78,6 @@ namespace Pakuri.Data
 
 			public string HandlerId;
 
-			public SkillNodeKind NodeKind;
-
-			public string RuntimeSupportState;
-
-			public string RuntimeSupportNotes;
 		}
 
 		internal class SkillNodeTypeParamRow
@@ -141,42 +114,16 @@ namespace Pakuri.Data
 			public string ExcludesActiveChoiceId;
 		}
 
-		internal class SkillNodeHandlerSchema
-		{
-			public string HandlerId { get; }
-			public SkillNodeKind NodeKind { get; }
-
-			/*
-			 * SkillNodeHandlerSchema에 필요한 값을 초기화한다.
-			 */
-			public SkillNodeHandlerSchema(string handlerId /* 처리기 식별자 */, SkillNodeKind nodeKind /* 노드 종류 */)
-			{
-				HandlerId = handlerId;
-				NodeKind = nodeKind;
-			}
-		}
-
-		internal static readonly Dictionary<string, SkillNodeHandlerSchema> SkillNodeHandlerSchemas = BuildSkillNodeHandlerSchemas();
-
-		/*
-		 * ParseSkillNodeTypeRow에 필요한 데이터를 읽어 변환한다.
-		 */
-		internal static SkillNodeTypeRow ParseSkillNodeTypeRow(CsvParser.CsvRecord record /* 읽을 CSV 행 */)
+		internal static SkillNodeTypeRow ParseSkillNodeTypeRow(CsvParser.CsvRecord record )
 		{
 			return new SkillNodeTypeRow
 			{
 				Id = record.ReadRequiredString("node_type_id"),
-				HandlerId = record.ReadRequiredString("handler_id"),
-				NodeKind = record.ReadEnum<SkillNodeKind>("node_kind"),
-				RuntimeSupportState = CsvRowParser.ReadOptionalStringIfColumnExists(record, "runtime_support_state"),
-				RuntimeSupportNotes = CsvRowParser.ReadOptionalStringIfColumnExists(record, "runtime_support_notes")
+				HandlerId = record.ReadRequiredString("handler_id")
 			};
 		}
 
-		/*
-		 * ParseSkillNodeTypeParamRow에 필요한 데이터를 읽어 변환한다.
-		 */
-		internal static SkillNodeTypeParamRow ParseSkillNodeTypeParamRow(CsvParser.CsvRecord record /* 읽을 CSV 행 */)
+		internal static SkillNodeTypeParamRow ParseSkillNodeTypeParamRow(CsvParser.CsvRecord record )
 		{
 			return new SkillNodeTypeParamRow
 			{
@@ -189,10 +136,7 @@ namespace Pakuri.Data
 			};
 		}
 
-		/*
-		 * ParseSkillGraphNodeRow에 필요한 데이터를 읽어 변환한다.
-		 */
-		internal static SkillGraphNodeRow ParseSkillGraphNodeRow(CsvParser.CsvRecord record /* 읽을 CSV 행 */)
+		internal static SkillGraphNodeRow ParseSkillGraphNodeRow(CsvParser.CsvRecord record )
 		{
 			SkillGraphNodeRow skillGraphNodeRow = new SkillGraphNodeRow
 			{
@@ -211,10 +155,7 @@ namespace Pakuri.Data
 			return skillGraphNodeRow;
 		}
 
-		/*
-		 * ParseSkillNodeValueType에 필요한 데이터를 읽어 변환한다.
-		 */
-		internal static SkillNodeValueType ParseSkillNodeValueType(string rawValue /* 변환 전 원본 문자열 */, CsvParser.CsvRecord record /* 읽을 CSV 행 */)
+		internal static SkillNodeValueType ParseSkillNodeValueType(string rawValue , CsvParser.CsvRecord record )
 		{
 			return rawValue.Trim().Replace("-", "_").ToLowerInvariant() switch
 			{
@@ -231,135 +172,7 @@ namespace Pakuri.Data
 			};
 		}
 
-		/*
-		 * BuildSkillNodeHandlerSchemas에 필요한 결과를 만들어 반환한다.
-		 */
-		internal static Dictionary<string, SkillNodeHandlerSchema> BuildSkillNodeHandlerSchemas()
-		{
-			Dictionary<string, SkillNodeHandlerSchema> dictionary = new Dictionary<string, SkillNodeHandlerSchema>(StringComparer.OrdinalIgnoreCase);
-			AddSkillNodeHandler(dictionary, "TargetHealthRatioCondition", SkillNodeKind.CastCondition);
-			AddSkillNodeHandler(dictionary, "ExecuteDamageMultiplier", SkillNodeKind.DamageModifier);
-			AddSkillNodeHandler(dictionary, "TargetPredicateDamageMultiplier", SkillNodeKind.DamageModifier);
-			AddSkillNodeHandler(dictionary, "CooldownRefund", SkillNodeKind.OnKillAction);
-			AddSkillNodeHandler(dictionary, "DamageMultiplier", SkillNodeKind.DamageModifier);
-			AddSkillNodeHandler(dictionary, "ShieldAmountMultiplier", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "CountStatusDamageMultiplier", SkillNodeKind.DamageModifier);
-			AddSkillNodeHandler(dictionary, "CooldownMultiplier", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "CritChanceBonus", SkillNodeKind.CritModifier);
-			AddSkillNodeHandler(dictionary, "CritDamageBonus", SkillNodeKind.CritModifier);
-			AddSkillNodeHandler(dictionary, "MagazineBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "ReloadTimeMultiplier", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "PierceBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "HitTargetCountBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "LineCastRepeatCountBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "RadiusMultiplier", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "RadiusBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "BeamWidthBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "KnockbackDistanceMultiplier", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "ReloadReducePerHit", SkillNodeKind.OnHitAction);
-			AddSkillNodeHandler(dictionary, "CoreDamageMultiplier", SkillNodeKind.DamageModifier);
-			AddSkillNodeHandler(dictionary, "CoreAdditionalDamage", SkillNodeKind.OnHitAction);
-			AddSkillNodeHandler(dictionary, "HitCountCooldownRefund", SkillNodeKind.OnHitAction);
-			AddSkillNodeHandler(dictionary, "DurationBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "DurationMultiplier", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "DamageDelayMultiplier", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "AdditionalProjectileBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "ShotIntervalMultiplier", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "ConsecutiveHitDamageBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "BurstDamageRule", SkillNodeKind.DamageModifier);
-			AddSkillNodeHandler(dictionary, "FollowUpProjectile", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "ThresholdApplyStatus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "TargetStatusStackDamageMultiplier", SkillNodeKind.DamageModifier);
-			AddSkillNodeHandler(dictionary, "ConsumeTargetStatusRatioOverride", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "BurstStatusStacksBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "StatusStackAmountBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "StatusStackAmountSet", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "StatusMaxStacksBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "ConditionalDamageMultiplier", SkillNodeKind.DamageModifier);
-			AddSkillNodeHandler(dictionary, "TargetStatusStackDamageRateBonus", SkillNodeKind.DamageModifier);
-			AddSkillNodeHandler(dictionary, "TriggerProcChanceBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "StatusActionSpeedBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "StatusAttackPowerBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "StatusMoveSpeedBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "StatusAilmentResistanceBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "StatusDamageBonusRate", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "StatusShieldReceivedBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "StatusCriticalChanceBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "StatusDamageTakenBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "StatusFlatElementResistReduction", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "StatusDurationBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "StatusConditionalDamageTakenBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "StatusElementDamageTakenBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "StatusConditionalStatusChanceBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "StatusCriticalDamageTakenBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "StatusCriticalDamageBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "StatusElementResistReduction", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "StatusOutgoingAdditionalDamage", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "StatusSpellPowerBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "ApplyStatus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "ApplyShield", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "StatusModifier", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "EffectStatus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "EffectDamage", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "ApplyDamage", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "EffectExtendStatusDuration", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "ExtendStatusDuration", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "RecastZone", SkillNodeKind.OnExpireAction);
-			AddSkillNodeHandler(dictionary, "EffectTarget", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "SelectTargets", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "EffectVisual", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "AttachStatusPayload", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "RequiredSourceStatus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "StatusRuntimeKindFilter", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "StatusCriticalResistanceBonus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "RuntimeEffectVisual", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "ShowVisual", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "ConditionStatus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "ConditionAnyStatus", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "ConditionSkillAttribute", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "ConditionHealthRatioMax", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "ConditionHitCountMin", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "EffectLifetime", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "SetDuration", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "ExecuteSkill", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "RefundCooldown", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "ReduceReload", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "DelayedDamage", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "RequiredTargetStatus", SkillNodeKind.CastCondition);
-			AddSkillNodeHandler(dictionary, "TargetStatusStackDamage", SkillNodeKind.DamageModifier);
-			AddSkillNodeHandler(dictionary, "StatusFilteredDeployment", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "ConsumeTargetStatus", SkillNodeKind.OnHitAction);
-			AddSkillNodeHandler(dictionary, "CooldownReset", SkillNodeKind.OnKillAction);
-			AddSkillNodeHandler(dictionary, "AdditionalDamage", SkillNodeKind.OnHitAction);
-			AddSkillNodeHandler(dictionary, "EveryNthHitChainDamage", SkillNodeKind.OnHitAction);
-			AddSkillNodeHandler(dictionary, "RepeatPerTarget", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "TargetStatusCritBonus", SkillNodeKind.CritModifier);
-			AddSkillNodeHandler(dictionary, "RedistributeConsumedStatus", SkillNodeKind.OnKillAction);
-			AddSkillNodeHandler(dictionary, "TargetHealthRatioThresholdBonus", SkillNodeKind.CastCondition);
-			AddSkillNodeHandler(dictionary, "ExecuteCritChanceBonus", SkillNodeKind.CritModifier);
-			AddSkillNodeHandler(dictionary, "CooldownRefundBonus", SkillNodeKind.OnKillAction);
-			AddSkillNodeHandler(dictionary, "BranchDamage", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "SpawnProjectile", SkillNodeKind.Action);
-			AddSkillNodeHandler(dictionary, "BossDamageMultiplier", SkillNodeKind.DamageModifier);
-			AddSkillNodeHandler(dictionary, "CooldownResetOnKill", SkillNodeKind.OnKillAction);
-			return dictionary;
-		}
-
-		/*
-		 * AddSkillNodeHandler 작업을 수행한다.
-		 */
-		internal static void AddSkillNodeHandler(
-			Dictionary<string, SkillNodeHandlerSchema> schemas /* 형식 목록 */,
-			string handlerId /* 처리기 식별자 */,
-			SkillNodeKind nodeKind /* 노드 종류 */)
-		{
-			schemas.Add(handlerId, new SkillNodeHandlerSchema(handlerId, nodeKind));
-		}
-
-		/*
-		 * ValidateNormalizedSkillAuthoringRows 데이터가 올바른지 검사한다.
-		 */
-		internal static void ValidateNormalizedSkillAuthoringRows(CsvSourceModel.SourceModel model /* 처리할 상태 모델 */, CsvRuntimeCatalog assetCatalog /* 검사할 에셋 목록 */, List<string> errors /* 검증 오류를 모을 목록 */)
+		internal static void ValidateNormalizedSkillAuthoringRows(CsvSourceModel.SourceModel model , CsvRuntimeCatalog assetCatalog , List<string> errors )
 		{
 			if (model == null)
 			{
@@ -391,27 +204,10 @@ namespace Pakuri.Data
 			{
 				ValidateSkillNodeOwner(value4, model, errors);
 				ValidateSkillNodeGateReferences(value4, model, errors);
-				if (string.IsNullOrWhiteSpace(value4.HandlerId))
-				{
-					errors.Add("Skill node '" + value4.Id + "' requires handler_id.");
-					continue;
-				}
-				if (!SkillNodeHandlerSchemas.TryGetValue(value4.HandlerId, out var value2))
-				{
-					errors.Add("Skill node '" + value4.Id + "' uses unregistered handler_id '" + value4.HandlerId + "'.");
-					continue;
-				}
-				if (value4.NodeKind != value2.NodeKind)
-				{
-					errors.Add($"Skill node '{value4.Id}' handler '{value4.HandlerId}' requires node_kind '{value2.NodeKind}' but row uses '{value4.NodeKind}'.");
-				}
 			}
 		}
 
-		/*
-		 * ValidateSkillNodeOwner 데이터가 올바른지 검사한다.
-		 */
-		internal static void ValidateSkillNodeOwner(SkillNodeRow node /* 노드 */, CsvSourceModel.SourceModel model /* 처리할 상태 모델 */, List<string> errors /* 검증 오류를 모을 목록 */)
+		internal static void ValidateSkillNodeOwner(SkillNodeRow node , CsvSourceModel.SourceModel model , List<string> errors )
 		{
 			switch (node.OwnerKind)
 			{
@@ -461,10 +257,7 @@ namespace Pakuri.Data
 			}
 		}
 
-		/*
-		 * ValidateSkillNodeGateReferences 데이터가 올바른지 검사한다.
-		 */
-		internal static void ValidateSkillNodeGateReferences(SkillNodeRow node /* 노드 */, CsvSourceModel.SourceModel model /* 처리할 상태 모델 */, List<string> errors /* 검증 오류를 모을 목록 */)
+		internal static void ValidateSkillNodeGateReferences(SkillNodeRow node , CsvSourceModel.SourceModel model , List<string> errors )
 		{
 			ValidateChoiceGate(node.Id, "requires_active_choice_id", node.RequiresActiveChoiceId, model, errors);
 			ValidateChoiceGate(node.Id, "excludes_active_choice_id", node.ExcludesActiveChoiceId, model, errors);
@@ -472,10 +265,7 @@ namespace Pakuri.Data
 			ValidatePassiveGate(node.Id, "excludes_passive_skill_id", node.ExcludesPassiveSkillId, model, errors);
 		}
 
-		/*
-		 * ValidateChoiceGate 데이터가 올바른지 검사한다.
-		 */
-		internal static void ValidateChoiceGate(string nodeId /* 노드 식별자 */, string columnName /* 읽거나 검사할 CSV 열 이름 */, string choiceId /* 스킬 선택지 식별자 */, CsvSourceModel.SourceModel model /* 처리할 상태 모델 */, List<string> errors /* 검증 오류를 모을 목록 */)
+		internal static void ValidateChoiceGate(string nodeId , string columnName , string choiceId , CsvSourceModel.SourceModel model , List<string> errors )
 		{
 			if (!string.IsNullOrWhiteSpace(choiceId) && !model.SkillChoices.ContainsKey(choiceId))
 			{
@@ -483,10 +273,7 @@ namespace Pakuri.Data
 			}
 		}
 
-		/*
-		 * ValidatePassiveGate 데이터가 올바른지 검사한다.
-		 */
-		internal static void ValidatePassiveGate(string nodeId /* 노드 식별자 */, string columnName /* 읽거나 검사할 CSV 열 이름 */, string passiveId /* 패시브 식별자 */, CsvSourceModel.SourceModel model /* 처리할 상태 모델 */, List<string> errors /* 검증 오류를 모을 목록 */)
+		internal static void ValidatePassiveGate(string nodeId , string columnName , string passiveId , CsvSourceModel.SourceModel model , List<string> errors )
 		{
 			if (!string.IsNullOrWhiteSpace(passiveId) && (!model.Skills.TryGetValue(passiveId, out var value) || value.SkillKind != PakuriCsvSkillKind.Passive))
 			{
@@ -494,10 +281,7 @@ namespace Pakuri.Data
 			}
 		}
 
-		/*
-		 * ValidateSkillNodeParamValue 데이터가 올바른지 검사한다.
-		 */
-		internal static void ValidateSkillNodeParamValue(SkillNodeParamRow param /* 매개변수 */, CsvSourceModel.SourceModel model /* 처리할 상태 모델 */, CsvRuntimeCatalog assetCatalog /* 검사할 에셋 목록 */, List<string> errors /* 검증 오류를 모을 목록 */)
+		internal static void ValidateSkillNodeParamValue(SkillNodeParamRow param , CsvSourceModel.SourceModel model , CsvRuntimeCatalog assetCatalog , List<string> errors )
 		{
 			string text = string.Empty;
 			if (param.Value != null)
@@ -571,10 +355,7 @@ namespace Pakuri.Data
 			}
 		}
 
-		/*
-		 * ValidateSkillNodeEnumParam 데이터가 올바른지 검사한다.
-		 */
-		internal static void ValidateSkillNodeEnumParam(SkillNodeParamRow param /* 매개변수 */, string value /* 처리할 값 */, List<string> errors /* 검증 오류를 모을 목록 */)
+		internal static void ValidateSkillNodeEnumParam(SkillNodeParamRow param , string value , List<string> errors )
 		{
 			if (string.IsNullOrWhiteSpace(value))
 			{
@@ -582,10 +363,7 @@ namespace Pakuri.Data
 			}
 		}
 
-		/*
-		 * MaterializeSkillGraphRows 작업을 수행한다.
-		 */
-		internal static void MaterializeSkillGraphRows(CsvSourceModel.SourceModel model /* 처리할 상태 모델 */)
+		internal static void MaterializeSkillGraphRows(CsvSourceModel.SourceModel model )
 		{
 			if (model == null || model.SkillGraphNodes.Count == 0)
 			{
@@ -593,7 +371,6 @@ namespace Pakuri.Data
 			}
 			List<string> list = new List<string>();
 			Dictionary<string, List<SkillNodeTypeParamRow>> dictionary = BuildSkillNodeTypeParamLookup(model, list);
-			ValidateSkillNodeTypeDefinitions(model, list);
 			ValidateContiguousNodeOrder(model.SkillGraphNodes, list);
 			List<SkillNodeRow> list2 = new List<SkillNodeRow>(model.SkillGraphNodes.Count);
 			List<SkillNodeParamRow> list3 = new List<SkillNodeParamRow>();
@@ -618,11 +395,6 @@ namespace Pakuri.Data
 					list.Add("Skill graph node '" + text2 + "' references unknown node_type_id '" + skillGraphNodeRow.NodeTypeId + "'.");
 					continue;
 				}
-				if (!SkillNodeHandlerSchemas.TryGetValue(value.HandlerId, out var _))
-				{
-					list.Add("Skill graph node '" + text2 + "' uses unregistered handler_id '" + value.HandlerId + "'.");
-					continue;
-				}
 				string text3 = ResolveSkillGraphTargetSkillId(model, skillGraphNodeRow, list);
 				if (!string.IsNullOrWhiteSpace(text3) && model.Skills.TryGetValue(text3, out var value3) && !string.Equals(value3.MonsterId, skillGraphNodeRow.MonsterId, StringComparison.OrdinalIgnoreCase))
 				{
@@ -641,16 +413,13 @@ namespace Pakuri.Data
 					OwnerKind = skillGraphNodeRow.OwnerKind,
 					OwnerId = skillGraphNodeRow.OwnerId,
 					TargetSkillId = text3,
-					NodeKind = value.NodeKind,
 					HandlerId = value.HandlerId,
 					SortOrder = skillGraphNodeRow.NodeOrder,
 					EnabledByDefault = true,
 					RequiresActiveChoiceId = string.Empty,
 					ExcludesActiveChoiceId = skillGraphNodeRow.ExcludesActiveChoiceId,
 					RequiresPassiveSkillId = string.Empty,
-					ExcludesPassiveSkillId = string.Empty,
-					RuntimeSupportState = value.RuntimeSupportState,
-					RuntimeSupportNotes = value.RuntimeSupportNotes
+					ExcludesPassiveSkillId = string.Empty
 				});
 				dictionary.TryGetValue(skillGraphNodeRow.NodeTypeId, out var value5);
 				if (value5 == null)
@@ -700,10 +469,7 @@ namespace Pakuri.Data
 			model.SkillNodeParams.AddRange(list3);
 		}
 
-		/*
-		 * BuildSkillNodeTypeParamLookup에 필요한 결과를 만들어 반환한다.
-		 */
-		internal static Dictionary<string, List<SkillNodeTypeParamRow>> BuildSkillNodeTypeParamLookup(CsvSourceModel.SourceModel model /* 처리할 상태 모델 */, List<string> errors /* 검증 오류를 모을 목록 */)
+		internal static Dictionary<string, List<SkillNodeTypeParamRow>> BuildSkillNodeTypeParamLookup(CsvSourceModel.SourceModel model , List<string> errors )
 		{
 			Dictionary<string, List<SkillNodeTypeParamRow>> dictionary = new Dictionary<string, List<SkillNodeTypeParamRow>>(StringComparer.OrdinalIgnoreCase);
 			HashSet<string> hashSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -743,33 +509,9 @@ namespace Pakuri.Data
 			return dictionary;
 		}
 
-		/*
-		 * ValidateSkillNodeTypeDefinitions 데이터가 올바른지 검사한다.
-		 */
-		internal static void ValidateSkillNodeTypeDefinitions(
-			CsvSourceModel.SourceModel model /* 처리할 상태 모델 */,
-			List<string> errors /* 검증 오류를 모을 목록 */)
+		internal static string ResolveSkillGraphTargetSkillId(CsvSourceModel.SourceModel model , SkillGraphNodeRow graph , List<string> errors )
 		{
-			foreach (SkillNodeTypeRow value3 in model.SkillNodeTypes.Values)
-			{
-				if (!SkillNodeHandlerSchemas.TryGetValue(value3.HandlerId, out var value))
-				{
-					errors.Add("Skill node type '" + value3.Id + "' uses unregistered handler_id '" + value3.HandlerId + "'.");
-					continue;
-				}
-				if (value3.NodeKind != value.NodeKind)
-				{
-					errors.Add($"Skill node type '{value3.Id}' handler '{value3.HandlerId}' requires node_kind '{value.NodeKind}', not '{value3.NodeKind}'.");
-				}
-			}
-		}
-
-		/*
-		 * ResolveSkillGraphTargetSkillId 결과를 계산해 반환한다.
-		 */
-		internal static string ResolveSkillGraphTargetSkillId(CsvSourceModel.SourceModel model /* 처리할 상태 모델 */, SkillGraphNodeRow graph /* 그래프 */, List<string> errors /* 검증 오류를 모을 목록 */)
-		{
-			string text2 = ResolveAuthoredOwnerId(graph);
+			string text2 = graph?.OwnerId ?? string.Empty;
 			string text;
 			switch (graph.OwnerKind)
 			{
@@ -834,14 +576,7 @@ namespace Pakuri.Data
 			return text;
 		}
 
-		/*
-		 * ResolveGeneratedEffectPassiveSkillId 결과를 계산해 반환한다.
-		 */
-
-		/*
-		 * ValidateSkillGraphAllowedValue 데이터가 올바른지 검사한다.
-		 */
-		internal static void ValidateSkillGraphAllowedValue(string graphNodeKey /* 그래프 노드 조회 키 */, SkillNodeTypeParamRow param /* 매개변수 */, string value /* 처리할 값 */, List<string> errors /* 검증 오류를 모을 목록 */)
+		internal static void ValidateSkillGraphAllowedValue(string graphNodeKey , SkillNodeTypeParamRow param , string value , List<string> errors )
 		{
 			if (string.IsNullOrWhiteSpace(param.AllowedValues))
 			{
@@ -857,28 +592,6 @@ namespace Pakuri.Data
 			}
 			errors.Add("Skill graph node '" + graphNodeKey + "' param '" + param.ParamKey + "' has invalid value '" + value + "'. Allowed: " + param.AllowedValues + ".");
 		}
-
-		/*
-		 * IsEffectOperationHandler 조건을 만족하는지 확인한다.
-		 */
-		internal static bool IsEffectOperationHandler(string handlerId /* 처리기 식별자 */)
-		{
-			return string.Equals(handlerId, "ApplyStatus", StringComparison.OrdinalIgnoreCase)
-				|| string.Equals(handlerId, "ApplyShield", StringComparison.OrdinalIgnoreCase)
-				|| string.Equals(handlerId, "StatusModifier", StringComparison.OrdinalIgnoreCase)
-				|| string.Equals(handlerId, "EffectStatus", StringComparison.OrdinalIgnoreCase)
-				|| string.Equals(handlerId, "EffectDamage", StringComparison.OrdinalIgnoreCase)
-				|| string.Equals(handlerId, "RecastZone", StringComparison.OrdinalIgnoreCase)
-				|| string.Equals(handlerId, "EffectExtendStatusDuration", StringComparison.OrdinalIgnoreCase);
-		}
-
-		/*
-		 * 효과 그래프에서만 허용하는 핸들러인지 확인한다.
-		 */
-
-		/*
-		 * Effect 그래프의 노드 순서에서 각 Effect의 순번을 만든다.
-		 */
 
 		internal static void ValidateContiguousNodeOrder(
 			IReadOnlyList<SkillGraphNodeRow> rows,
@@ -908,34 +621,18 @@ namespace Pakuri.Data
 			}
 		}
 
-		/*
-		 * BuildSkillGraphKey에 필요한 결과를 만들어 반환한다.
-		 */
-		internal static string BuildSkillGraphKey(SkillGraphNodeRow graph /* 그래프 */)
+		internal static string BuildSkillGraphKey(SkillGraphNodeRow graph )
 		{
 			return graph == null
 				? string.Empty
 				: $"{graph.MonsterId}:{graph.OwnerKind}:{graph.OwnerId}:{graph.TargetSkillId}";
 		}
 
-		/*
-		 * BuildGeneratedSkillGraphNodeId에 필요한 결과를 만들어 반환한다.
-		 */
-		internal static string BuildGeneratedSkillGraphNodeId(SkillGraphNodeRow graph /* 그래프 */)
+		internal static string BuildGeneratedSkillGraphNodeId(SkillGraphNodeRow graph )
 		{
 			return graph == null
 				? string.Empty
 				: $"{graph.OwnerKind}:{graph.OwnerId}:{graph.TargetSkillId}:{graph.NodeOrder}";
-		}
-
-		internal static string ResolveAuthoredOwnerId(SkillGraphNodeRow graph)
-		{
-			if (graph == null)
-			{
-				return string.Empty;
-			}
-
-			return graph.OwnerId;
 		}
 
 	}

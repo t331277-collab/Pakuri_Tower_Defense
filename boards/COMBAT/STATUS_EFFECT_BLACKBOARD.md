@@ -143,3 +143,142 @@ Runtime correction and local non-Play-Mode verification complete. User Play Mode
 - 2026-07-29: Designer found an ID mismatch in current authoring and a recast-generation loss introduced in the Trigger-to-Node execution path.
 - 2026-07-29: User confirmed `eve-e-master-1` and authorized Code Builder correction plus cross-skill verification.
 - 2026-07-29: Code Builder restored recast-generation propagation in the common Trigger execution path and verified every authored `RecastZone`.
+
+## Task: 2026-07-29 Skill Runtime Responsibility Comments
+
+### Task title
+
+Document method-level behavior and core responsibility boundaries in the shared skill runtime.
+
+### Goals
+
+- Add Korean method-level comments to previously undocumented constructors, snapshot helpers, conditional rule resolvers, and runtime Node execution helpers.
+- Clarify the top-level responsibility of the Definition, execution routing, execution snapshot, targeting, and Node dispatch files.
+- Correct the stale `SkillExecutionRuleResolver` header so it describes its actual conditional runtime-rule responsibility.
+
+### Constraints
+
+- Limit changes to comments in the eight user-specified C# files.
+- Preserve every type, method signature, field, operation, condition, execution order, and player-facing behavior.
+- Do not change CSV, catalog, prefab, scene, asset, or runtime data contracts.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Comment implementation and non-Play-Mode verification complete.
+
+### Next Actions
+
+- User may review the new responsibility comments while implementing future Base, Enhancement, Master, Passive, and Trigger skills.
+
+### Evidence
+
+- Method-comment coverage scan reported zero undocumented method or constructor declarations in all eight target files.
+- Removing comments and whitespace from each changed file produced code text identical to its `HEAD` version (`ALL_CODE_EQUAL=True`).
+- `git diff --check` completed without whitespace errors.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal` completed with zero errors and the two existing assembly-version conflict warnings.
+- Unity script refresh and domain reload completed; editor state returned idle/ready and Console contained zero errors.
+
+### History
+
+- 2026-07-29: User requested method-level and core-responsibility comments across the shared skill runtime.
+- 2026-07-29: Code Builder added comment-only documentation to the eight specified files and verified that executable code remained unchanged.
+
+## Task: 2026-07-29 Skill Compilation Placement Refactor
+
+### Task title
+
+Move post-catalog skill compilation out of the Loading pipeline.
+
+### Goals
+
+- Move `SkillDefinitionCompiler` to `Combat/Skills/Compilation`.
+- Split `SkillNodeMapper` and `SkillChoiceCompiler` into their own files.
+- Preserve every compilation and runtime Node behavior.
+
+### Constraints
+
+- File organization and ownership only; no skill, Trigger, Node, status, damage, timing, or gameplay behavior changes.
+- Preserve `Pakuri.InGame` namespaces and all public method signatures.
+- Preserve the existing compiler script `.meta` GUID.
+- Do not modify the user-owned comment changes already present in the eight combat runtime files.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implementation and non-Play-Mode verification complete.
+
+### Next Actions
+
+- User verifies representative compiled skills in Unity Play Mode.
+
+### Evidence
+
+- `SkillDefinitionCompiler` is not called by `GameDataLoader.LoadAndValidateRuntimeCatalog`.
+- Inspected compiler consumers are combat `SkillExecution`, spawn state construction, and UI/run learned-skill application.
+- The current source file contains three separate classes: `SkillDefinitionCompiler`, `SkillNodeMapper`, and `SkillChoiceCompiler`.
+- `SkillDefinitionCompiler`, `SkillNodeMapper`, and `SkillChoiceCompiler` now reside in separate files under `Combat/Skills/Compilation`.
+- The compiler script retains its original Unity GUID and the extracted files have generated `.meta` files.
+- Existing namespaces and method signatures compile through `Assembly-CSharp.csproj` and Unity with zero errors.
+
+### History
+
+- 2026-07-29: User approved the four-stage Loading structure and Code Builder implementation.
+- 2026-07-29: Code Builder recorded this separate combat-boundary task before moving compilation code.
+- 2026-07-29: Code Builder moved and split the compilation classes without modifying the eight pre-existing user-owned combat runtime files.
+
+## Task: 2026-07-29 Final Skill Catalog Direct-Use Design
+
+### Task title
+
+Generate final typed skill data once and use it directly from `GameDataCatalog`.
+
+### Goals
+
+- Remove runtime Source-to-Definition and Node compilation.
+- Remove authored Node and Trigger string parsing from runtime execution.
+- Remove the three `Combat/Skills/Compilation` scripts.
+- Reorganize all current `Combat/Skills` scripts into Definition, Runtime, Execution, Delivery, and Reaction responsibilities.
+
+### Constraints
+
+- Preserve every current combat behavior, CSV value, ID, order, and asset reference.
+- Keep one semantic validation call and one final catalog build.
+- Keep per-cast `SkillExecutionData` and per-unit `SkillUseState`.
+- Preserve moved script `.meta` GUIDs.
+- Designer changes documentation only.
+
+### Role Owner
+
+Designer / Code Builder refactoring handoff
+
+### Status
+
+Design handoff complete. Implementation not started.
+
+### Next Actions
+
+- User explicitly assigns Code Builder.
+- Code Builder implements `boards/COMBAT/SKILL_DIRECT_CATALOG_RUNTIME_HANDOFF.md` from Phase 1.
+
+### Evidence
+
+- Current `Combat/Skills` contains 27 C# scripts and 15,387 lines.
+- `SkillExecution.RebuildLearnedSkillState` calls `CompileActive` and `CompilePassive`.
+- `SkillNodeMapper.GetChoiceRuntimeNodes` performs first-use Choice Node mapping and caching.
+- `SkillNodeExecutor` reparses authored scope, merge policy, condition, status-list, and runtime-kind strings during execution.
+- `SkillTrigger` splits authored Choice, attribute, and event-skill lists during trigger checks and compares event source scope as a string.
+- Current graph authoring has two Choice owners targeting more than one skill.
+- Full current tree, all script responsibilities, final 24-script tree, data contracts, migration, risks, and verification are recorded in the handoff.
+
+### History
+
+- 2026-07-29: User chose final authored-data direct use and requested a Code Builder-ready markdown plus the complete `Combat/Skills` structure.
+- 2026-07-29: Designer created the implementation handoff from inspected current code and data.
+- 2026-07-29: Designer extended the handoff so Generation produces final typed Node and Trigger conditions and runtime code only compares or executes them.
