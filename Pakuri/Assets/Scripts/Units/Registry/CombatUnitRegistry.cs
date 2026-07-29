@@ -1,17 +1,20 @@
+/*
+ * 역할: 비공개 런타임 유닛 Registry 보조.
+ * 책임: UnitSpawnManager 조회와 표시 전달에 쓰이는 모델·Actor·Transform·Collider 연결을 보관한다.
+ */
+
 using System.Collections.Generic;
 using UnityEngine;
 
-/*
- * 전투 유닛의 모델과 Actor를 한 항목으로 연결하고 등록된 아군·적 목록을 관리한다.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>CombatUnitEntry</c> 한 항목의 런타임 모델과 씬 참조를 연결한다.</summary>
     public class CombatUnitEntry
     {
-        /*
-         * CombatUnitEntry에 필요한 값을 초기화한다.
-         */
-        public CombatUnitEntry(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, Component actor /* 화면에서 유닛을 표현하는 컴포넌트 */, Transform hitboxRoot = null /* 피격 판정의 기준 위치 */)
+
+        /// <summary><c>CombatUnitEntry</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+        public CombatUnitEntry(UnitCombatState model, Component actor, Transform hitboxRoot = null)
         {
             Model = model;
             SetActor(actor);
@@ -24,10 +27,8 @@ namespace Pakuri.InGame
         public Transform HitboxRoot { get; private set; }
         public bool IsAlive => Model.Resources.CurrentHealth > 0f;
 
-        /*
-         * SetActor에 필요한 값을 설정한다.
-         */
-        internal void SetActor(Component actor /* 화면에서 유닛을 표현하는 컴포넌트 */)
+        /// <summary>전달된 <c>actor</c> 값을 사용해 <c>Actor</c>를 갱신한다.</summary>
+        internal void SetActor(Component actor)
         {
             Actor = actor;
             Transform = actor.transform;
@@ -38,10 +39,8 @@ namespace Pakuri.InGame
 
         }
 
-        /*
-         * SetHitboxRoot에 필요한 값을 설정한다.
-         */
-        internal void SetHitboxRoot(Transform hitboxRoot /* 피격 판정의 기준 위치 */)
+        /// <summary>전달된 <c>hitboxRoot</c> 값을 사용해 <c>HitboxRoot</c>를 갱신한다.</summary>
+        internal void SetHitboxRoot(Transform hitboxRoot)
         {
             HitboxRoot = hitboxRoot;
             if (HitboxRoot == null)
@@ -51,10 +50,8 @@ namespace Pakuri.InGame
 
         }
 
-        /*
-         * ContainsTransform 조건을 만족하는지 확인한다.
-         */
-        internal bool ContainsTransform(Transform candidate /* 후보 여부 */)
+        /// <summary>전달된 <c>candidate</c> 값을 사용해 소유한 컬렉션에 <c>Transform</c>가 있는지 반환한다.</summary>
+        internal bool ContainsTransform(Transform candidate)
         {
             if (candidate == null)
             {
@@ -69,10 +66,8 @@ namespace Pakuri.InGame
             return candidate == HitboxRoot || candidate.IsChildOf(HitboxRoot);
         }
 
-        /*
-         * ShowDamage 작업을 수행한다.
-         */
-        internal void ShowDamage(float damageAmount /* 표시하거나 적용할 피해량 */, bool isDead /* 여부 사망 여부 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Damage</c>를 표시한다.</summary>
+        internal void ShowDamage(float damageAmount, bool isDead)
         {
             if (damageAmount <= 0f)
             {
@@ -96,9 +91,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * RefreshDisplay 대상의 현재 상태를 갱신하고 결과를 반환한다.
-         */
+        /// <summary><c>Display</c>를 현재 런타임 모델을 기준으로 갱신한다.</summary>
         internal bool RefreshDisplay()
         {
             if (Actor is MonsterActor monster)
@@ -122,9 +115,7 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /*
-         * HandleDefeat 작업을 수행한다.
-         */
+        /// <summary><c>Defeat</c>를 처리한다.</summary>
         internal void HandleDefeat()
         {
             if (Actor is NexusActor nexus)
@@ -143,6 +134,7 @@ namespace Pakuri.InGame
         }
     }
 
+    /// <summary>UnitSpawnManager가 사용하는 유닛 모델·Actor·Transform·Collider 연결 정보를 보관한다.</summary>
     internal sealed class CombatUnitRegistry
     {
         private readonly List<CombatUnitEntry> entries = new List<CombatUnitEntry>();
@@ -154,10 +146,8 @@ namespace Pakuri.InGame
         public IReadOnlyList<CombatUnitEntry> Enemies => enemies;
         public int EnemyCount => enemies.Count;
 
-        /*
-         * Register 작업 결과를 반환한다.
-         */
-        public CombatUnitEntry Register(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, Component actor /* 화면에서 유닛을 표현하는 컴포넌트 */, Transform hitboxRoot = null /* 피격 판정의 기준 위치 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>요청값</c>를 소유 런타임 Registry에 등록한다.</summary>
+        public CombatUnitEntry Register(UnitCombatState model, Component actor, Transform hitboxRoot = null)
         {
             var existing = Find(model, actor);
             if (existing != null)
@@ -182,10 +172,8 @@ namespace Pakuri.InGame
             return entry;
         }
 
-        /*
-         * Unregister 작업 결과를 반환한다.
-         */
-        public bool Unregister(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        /// <summary>전달된 <c>model</c> 값을 사용해 <c>요청값</c>를 소유 런타임 Registry에서 등록 해제한다.</summary>
+        public bool Unregister(UnitCombatState model)
         {
             var entry = Find(model, null);
             if (entry == null)
@@ -199,9 +187,7 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /*
-         * Clear 작업을 수행한다.
-         */
+        /// <summary><c>소유한 모든 런타임 값</c>를 소유한 런타임 상태에서 비운다.</summary>
         public void Clear()
         {
             entries.Clear();
@@ -209,18 +195,14 @@ namespace Pakuri.InGame
             enemies.Clear();
         }
 
-        /*
-         * Find에 해당하는 값을 찾아 반환한다.
-         */
-        public CombatUnitEntry Find(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        /// <summary>전달된 <c>model</c> 값을 사용해 <c>요청값</c>를 찾는다.</summary>
+        public CombatUnitEntry Find(UnitCombatState model)
         {
             return Find(model, null);
         }
 
-        /*
-         * FindByCollider에 해당하는 값을 찾아 반환한다.
-         */
-        public CombatUnitEntry FindByCollider(Collider2D collider /* 충돌을 검사할 콜라이더 */)
+        /// <summary>전달된 <c>collider</c> 값을 사용해 <c>ByCollider</c>를 찾는다.</summary>
+        public CombatUnitEntry FindByCollider(Collider2D collider)
         {
             for (var i = 0; i < entries.Count; i++)
             {
@@ -234,10 +216,8 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /*
-         * RefreshDisplay 대상의 현재 상태를 갱신하고 결과를 반환한다.
-         */
-        public bool RefreshDisplay(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        /// <summary>전달된 <c>model</c> 값을 사용해 <c>Display</c>를 현재 런타임 모델을 기준으로 갱신한다.</summary>
+        public bool RefreshDisplay(UnitCombatState model)
         {
             var entry = Find(model);
             if (entry == null)
@@ -248,10 +228,8 @@ namespace Pakuri.InGame
             return entry.RefreshDisplay();
         }
 
-        /*
-         * Find에 해당하는 값을 찾아 반환한다.
-         */
-        private CombatUnitEntry Find(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, Component actor /* 화면에서 유닛을 표현하는 컴포넌트 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>요청값</c>를 찾는다.</summary>
+        private CombatUnitEntry Find(UnitCombatState model, Component actor)
         {
             var unitId = model.Identity.UnitId;
             for (var i = 0; i < entries.Count; i++)

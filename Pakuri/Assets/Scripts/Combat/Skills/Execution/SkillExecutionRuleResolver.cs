@@ -1,21 +1,25 @@
+/*
+ * 역할: 확정 스킬 규칙 계산.
+ * 책임: 스킬 정의·학습 선택·패시브 배율·실행 문맥을 결합해 실행 가능한 값을 만든다.
+ */
+
 using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
 
-/*
- * SkillExecutionData에 보관된 조건부 Node 규칙을 현재 대상·투사체 순번·시전자 상태에 대입한다.
- * Node는 조건값만 보관하고, 실제 전투 상태 조회와 최종 보정 계산은 이 Resolver가 담당한다.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>SkillExecutionRuleResolver</c> 처리에 필요한 런타임 규칙 또는 대상을 결정한다.</summary>
     internal static class SkillExecutionRuleResolver
     {
-        /* 대상의 현재 상태 중첩 조건을 만족하는 모든 피해 배율을 곱해 반환한다. */
+
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ConditionalDamageMultiplier</c> 결과값을 생성해 반환한다.</summary>
         internal static float ConditionalDamageMultiplier(
             SkillExecutionData data,
             UnitCombatState target)
         {
-            // SkillNode가 보관한 상태 중첩 조건을 현재 대상 상태와 비교하는 부분을 구현.
+
             if (data == null || target == null)
             {
                 return 1f;
@@ -35,7 +39,7 @@ namespace Pakuri.InGame
             return multiplier;
         }
 
-        /* 대상의 현재 상태 중첩 조건을 만족하는 치명타 확률 보너스를 합산한다. */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ConditionalCritChanceBonus</c> 결과값을 생성해 반환한다.</summary>
         internal static float ConditionalCritChanceBonus(
             SkillExecutionData data,
             UnitCombatState target)
@@ -59,7 +63,7 @@ namespace Pakuri.InGame
             return bonus;
         }
 
-        /* 현재 투사체 순번에 일치하는 연속 발사 피해 배율을 곱해 반환한다. */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>BurstDamageMultiplier</c> 결과값을 생성해 반환한다.</summary>
         internal static float BurstDamageMultiplier(
             SkillExecutionData data,
             int projectileIndex,
@@ -84,7 +88,7 @@ namespace Pakuri.InGame
             return multiplier;
         }
 
-        /* 현재 투사체 순번에 일치하는 상태 중첩 보너스를 합산한다. */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>BurstStatusStacksBonus</c> 결과값을 생성해 반환한다.</summary>
         internal static int BurstStatusStacksBonus(
             SkillExecutionData data,
             int projectileIndex,
@@ -109,7 +113,7 @@ namespace Pakuri.InGame
             return bonus;
         }
 
-        /* Choice 정의 필드와 Node 조건을 모두 만족해야 해당 강화가 적용된다. */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>MeetsSourceStatusRequirements</c> 조건을 평가하고 결과를 반환한다.</summary>
         internal static bool MeetsSourceStatusRequirements(
             SkillChoice choice,
             string targetSkillId,
@@ -147,7 +151,7 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /* 보호막을 포함해 대상이 요구 상태의 최소 중첩을 현재 만족하는지 확인한다. */
+        /// <summary>전달된 런타임 입력값을 사용해 소유한 런타임 상태에 <c>RequiredStacks</c>가 있는지 반환한다.</summary>
         private static bool HasRequiredStacks(UnitCombatState target, StatusStackCondition condition)
         {
             if (target == null || condition.StatusKind == StatusEffectKind.None || condition.MinimumStacks <= 0)
@@ -164,7 +168,7 @@ namespace Pakuri.InGame
                 && target.Statuses.GetStacks(condition.StatusKind) >= condition.MinimumStacks;
         }
 
-        /* 설정값 0은 기존 데이터 계약대로 연속 발사의 마지막 투사체를 의미한다. */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>MatchesBurstProjectileIndex</c> 조건을 평가하고 결과를 반환한다.</summary>
         private static bool MatchesBurstProjectileIndex(
             int configuredIndex,
             int projectileIndex,

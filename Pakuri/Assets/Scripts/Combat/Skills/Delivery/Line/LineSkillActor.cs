@@ -1,16 +1,20 @@
+/*
+ * 역할: 런타임 Line Hit Actor 동작.
+ * 책임: Line Hitbox를 이동·조절하고 Collider 접촉을 판정해 유효 적중을 스킬 실행에 전달한다.
+ */
+
 using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
-/*
- * 인게임 직선 공격의 위치, 충돌, 수명 주기를 처리한다.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>LineSkillActor</c> 런타임 오브젝트를 나타내며 모델과 Unity 컴포넌트를 연결한다.</summary>
     public class LineSkillActor : MonoBehaviour
     {
-        // 생성된 직선 공격의 충돌 판정, 주기 피해, 상태, 수명을 구현.
+
         private InGameCombatManager combatManager;
         private EffectManager effectManager;
         private CombatUnitEntry casterEntry;
@@ -40,31 +44,29 @@ namespace Pakuri.InGame
         private readonly Collider2D[] lineHitboxes = new Collider2D[1];
         private BoxCollider2D lineHitbox;
 
-        /*
-         * 인게임 직선 공격 실행에 필요한 위치, 대상, 피해 정보를 설정한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>소유한 런타임 상태</c>를 초기화한다.</summary>
         public void Initialize(
-            InGameCombatManager manager /* 전투 진행 관리자 */,
-            CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */,
-            UnitSpawnManager unitRoster /* 전투에 등록된 유닛 목록 */,
-            SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */,
-            Vector2 lineOrigin /* 직선 시작 위치 */,
-            Vector2 lineDirection /* 직선 방향 */,
-            float lineLength /* 직선 길이 */,
-            float lineWidth /* 직선 너비 */,
-            float lineKnockbackDistance /* 직선 밀쳐내기 거리 */,
-            float durationSeconds /* 지속 시간(초) */,
-            float tickIntervalSeconds /* 반복 적용 간격(초) */,
-            float damagePerTick /* 피해 개별 반복 적용 */,
-            DamageAttribute damageAttribute /* 적용할 피해 속성 */,
-            ProjectileStatusHitSpec onHitStatus /* 발생 시 적중 상태 효과 */,
-            SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
-            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
-            UnitCombatState source /* 효과를 발생시킨 유닛 */,
-            string skillId /* 스킬 식별자 */,
-            bool allowCritical /* 허용 치명타 여부 */,
-            float criticalChanceBonus /* 치명타 확률 추가값 */,
-            float criticalDamageBonus /* 치명타 피해 추가값 */)
+            InGameCombatManager manager,
+            CombatUnitEntry sourceEntry,
+            UnitSpawnManager unitRoster,
+            SkillTargetingSpec targetingSpec,
+            Vector2 lineOrigin,
+            Vector2 lineDirection,
+            float lineLength,
+            float lineWidth,
+            float lineKnockbackDistance,
+            float durationSeconds,
+            float tickIntervalSeconds,
+            float damagePerTick,
+            DamageAttribute damageAttribute,
+            ProjectileStatusHitSpec onHitStatus,
+            SkillUseState sourceRuntime,
+            SkillExecutionData snapshot,
+            UnitCombatState source,
+            string skillId,
+            bool allowCritical,
+            float criticalChanceBonus,
+            float criticalDamageBonus)
         {
             combatManager = manager;
             effectManager = manager.Effects;
@@ -97,12 +99,10 @@ namespace Pakuri.InGame
             ApplyLineTick();
         }
 
-        /*
-         * 피해 처리가 없는 직선 비주얼의 지정 수명을 설정하고 반환한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>VisualLifetime</c>를 초기화한다.</summary>
         public float InitializeVisualLifetime(
-            EffectManager manager /* 효과 생성과 제거를 담당하는 관리자 */,
-            float durationSeconds /* 지속 시간(초) */)
+            EffectManager manager,
+            float durationSeconds)
         {
             effectManager = manager;
             visualOnly = true;
@@ -110,9 +110,7 @@ namespace Pakuri.InGame
             return remainingDuration;
         }
 
-        /*
-         * 직선 주기를 적용한다.
-         */
+        /// <summary><c>LineTick</c>를 적용한다.</summary>
         private bool ApplyLineTick()
         {
             if (combatManager == null || casterEntry == null || roster == null || lineHitbox == null)
@@ -165,9 +163,7 @@ namespace Pakuri.InGame
             return routed;
         }
 
-        /*
-         * 인게임 직선 공격의 이동, 수명, 주기 처리를 매 프레임 갱신한다.
-         */
+        /// <summary>현재 Unity 프레임에서 <c>Update</c> 갱신 동작을 진행한다.</summary>
         private void Update()
         {
             var deltaTime = Time.deltaTime;
@@ -188,9 +184,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * 직선 공격 비주얼과 히트박스 크기를 설정한다.
-         */
+        /// <summary><c>ConfigureVisual</c> 작업을 수행한다.</summary>
         private void ConfigureVisual()
         {
             transform.position = origin + direction * (length * 0.5f);
@@ -216,9 +210,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * 직선 공격의 실제 BoxCollider 크기를 월드 길이와 너비에 맞춘다.
-         */
+        /// <summary><c>ConfigureHitbox</c> 작업을 수행한다.</summary>
         private void ConfigureHitbox()
         {
             lineHitbox = GetComponent<BoxCollider2D>();
@@ -236,10 +228,8 @@ namespace Pakuri.InGame
             lineHitboxes[0] = lineHitbox;
         }
 
-        /*
-         * 밀쳐내기를 적용하고 성공 여부를 반환한다.
-         */
-        private static void TryApplyKnockback(CombatUnitEntry target /* 효과를 받을 대상의 등록 정보 */, Vector2 normalizedDirection /* 정규화된 방향 */, float distance /* 거리 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ApplyKnockback</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
+        private static void TryApplyKnockback(CombatUnitEntry target, Vector2 normalizedDirection, float distance)
         {
             if (target == null
                 || target.Transform == null
@@ -252,16 +242,14 @@ namespace Pakuri.InGame
             target.Transform.position += (Vector3)(normalizedDirection.normalized * distance);
         }
 
-        /*
-         * 상태를 적용하고 성공 여부를 반환한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ApplyStatus</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
         private static void TryApplyStatus(
-            InGameCombatManager manager /* 전투 진행 관리자 */,
-            UnitCombatState target /* 효과를 받을 대상 유닛 */,
-            ProjectileStatusHitSpec status /* 적용하거나 검사할 상태 효과 */,
-            UnitCombatState source /* 효과를 발생시킨 유닛 */,
-            string targetKey /* 대상 조회 키 */,
-            HashSet<string> appliedTargets /* 적용된 대상 목록 */)
+            InGameCombatManager manager,
+            UnitCombatState target,
+            ProjectileStatusHitSpec status,
+            UnitCombatState source,
+            string targetKey,
+            HashSet<string> appliedTargets)
         {
             if (status == null || !status.Enabled)
             {
@@ -281,14 +269,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * 적중 효과를 적용하고 성공 여부를 반환한다.
-         */
-
-        /*
-         * 대상 키를 결정한다.
-         */
-        private static string TargetKey(UnitCombatState target /* 효과를 받을 대상 유닛 */)
+        /// <summary>전달된 <c>target</c> 값을 사용해 <c>TargetKey</c> 결과값을 생성해 반환한다.</summary>
+        private static string TargetKey(UnitCombatState target)
         {
             var unitId = target != null && target.Identity != null ? target.Identity.UnitId : null;
             if (!string.IsNullOrWhiteSpace(unitId))
@@ -299,8 +281,5 @@ namespace Pakuri.InGame
             return target != null ? target.GetHashCode().ToString() : string.Empty;
         }
 
-        /*
-         * 효과 대상 키를 구성한다.
-         */
     }
 }

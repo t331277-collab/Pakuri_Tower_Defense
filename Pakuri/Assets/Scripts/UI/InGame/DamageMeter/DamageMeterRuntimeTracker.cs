@@ -1,12 +1,16 @@
+/*
+ * 역할: 런타임 Damage Meter 집계.
+ * 책임: 발생원별 플레이어 피해를 누적하고 정렬된 Snapshot을 InGame Damage Meter에 제공한다.
+ */
+
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/*
- * 전투 피해 이벤트를 받아 몬스터와 스킬별 누적 피해량을 기록하는 컴포넌트.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>DamageMeterRuntimeTracker</c>에 해당하는 누적 런타임 데이터를 추적한다.</summary>
     public class DamageMeterRuntimeTracker : MonoBehaviour
     {
         private readonly Dictionary<string, MonsterDamageRecord> records = new Dictionary<string, MonsterDamageRecord>(StringComparer.OrdinalIgnoreCase);
@@ -16,18 +20,14 @@ namespace Pakuri.InGame
         public static DamageMeterRuntimeTracker Active { get; private set; }
         public int Version { get; private set; }
 
-        /*
-         * Unity가 컴포넌트를 초기화할 때 필요한 참조와 상태를 준비한다.
-         */
+        /// <summary>Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.</summary>
         private void Awake()
         {
             Active = this;
             ResetMeter();
         }
 
-        /*
-         * 컴포넌트가 활성화될 때 이벤트와 표시 상태를 연결한다.
-         */
+        /// <summary>Unity가 컴포넌트를 활성화할 때 구독과 활성 상태를 복원한다.</summary>
         private void OnEnable()
         {
             Active = this;
@@ -39,9 +39,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * 컴포넌트가 비활성화될 때 연결된 이벤트를 해제한다.
-         */
+        /// <summary>Unity가 컴포넌트를 비활성화할 때 구독과 임시 상태를 중단한다.</summary>
         private void OnDisable()
         {
             if (combatManager != null)
@@ -55,9 +53,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * ResolveCombatManager에 필요한 값을 계산해 현재 상태에 반영한다.
-         */
+        /// <summary><c>CombatManager</c>를 결정한다.</summary>
         private void ResolveCombatManager()
         {
             if (combatManager == null)
@@ -66,19 +62,15 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * ResetMeter 작업을 수행한다.
-         */
+        /// <summary><c>Meter</c>를 초기 런타임 상태로 되돌린다.</summary>
         public void ResetMeter()
         {
             records.Clear();
             Version++;
         }
 
-        /*
-         * TryGetRecord 작업을 시도하고 성공 여부를 반환한다.
-         */
-        public bool TryGetRecord(string monsterId /* 몬스터 식별자 */, out MonsterDamageRecord record /* 읽거나 갱신할 기록 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Record</c> 조회를 시도하고 값이 있는지 반환한다.</summary>
+        public bool TryGetRecord(string monsterId, out MonsterDamageRecord record)
         {
             if (string.IsNullOrWhiteSpace(monsterId))
             {
@@ -89,12 +81,10 @@ namespace Pakuri.InGame
             return records.TryGetValue(monsterId, out record);
         }
 
-        /*
-         * Record 작업을 수행한다.
-         */
-        private void Record(AttackRule attackRule /* 처리에 사용할 공격 규칙 */, InGameResourceChangeResult result /* 처리 결과 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Record</c> 작업을 수행한다.</summary>
+        private void Record(AttackRule attackRule, InGameResourceChangeResult result)
         {
-            // 피해 통계는 전투 결과 이벤트를 받아 이 기록기가 저장한다.
+
             var source = attackRule.Source;
             var identity = source != null ? source.Identity : null;
             if (identity == null
@@ -127,21 +117,19 @@ namespace Pakuri.InGame
                 records.Add(identity.DefinitionId, record);
             }
 
-            // 표시명은 UI가 sourceId로 찾으므로 여기에는 피해량만 저장한다.
             record.AddDamage(sourceId, actualDamage);
             Version++;
         }
     }
 
+    /// <summary><c>MonsterDamageRecord</c>가 나타내는 런타임 값을 보관한다.</summary>
     public class MonsterDamageRecord
     {
         private readonly Dictionary<string, SkillDamageRecord> sources = new Dictionary<string, SkillDamageRecord>(StringComparer.OrdinalIgnoreCase);
         private readonly List<SkillDamageRecord> orderedSources = new List<SkillDamageRecord>();
 
-        /*
-         * MonsterDamageRecord에 필요한 값을 초기화한다.
-         */
-        public MonsterDamageRecord(string monsterId /* 몬스터 식별자 */)
+        /// <summary><c>MonsterDamageRecord</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+        public MonsterDamageRecord(string monsterId)
         {
             MonsterId = monsterId;
         }
@@ -150,10 +138,8 @@ namespace Pakuri.InGame
         public float TotalDamage { get; private set; }
         public IReadOnlyList<SkillDamageRecord> OrderedSources => orderedSources;
 
-        /*
-         * AddDamage 작업을 수행한다.
-         */
-        public void AddDamage(string sourceId /* 효과를 발생시킨 대상의 식별자 */, float amount /* 적용할 수치 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Damage</c>를 소유한 런타임 상태에 추가한다.</summary>
+        public void AddDamage(string sourceId, float amount)
         {
             if (!sources.TryGetValue(sourceId, out var source))
             {
@@ -167,12 +153,12 @@ namespace Pakuri.InGame
         }
     }
 
+    /// <summary><c>SkillDamageRecord</c>가 나타내는 런타임 값을 보관한다.</summary>
     public class SkillDamageRecord
     {
-        /*
-         * SkillDamageRecord에 필요한 값을 초기화한다.
-         */
-        public SkillDamageRecord(string sourceId /* 효과를 발생시킨 대상의 식별자 */)
+
+        /// <summary><c>SkillDamageRecord</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+        public SkillDamageRecord(string sourceId)
         {
             SourceId = sourceId;
         }
@@ -180,10 +166,8 @@ namespace Pakuri.InGame
         public string SourceId { get; }
         public float Damage { get; private set; }
 
-        /*
-         * AddDamage 작업을 수행한다.
-         */
-        public void AddDamage(float amount /* 적용할 수치 */)
+        /// <summary>전달된 <c>amount</c> 값을 사용해 <c>Damage</c>를 소유한 런타임 상태에 추가한다.</summary>
+        public void AddDamage(float amount)
         {
             Damage += amount;
         }

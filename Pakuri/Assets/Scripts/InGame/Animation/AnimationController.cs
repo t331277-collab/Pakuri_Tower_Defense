@@ -1,13 +1,15 @@
+/*
+ * 역할: 유닛 애니메이션 재생.
+ * 책임: Animator Parameter를 확인하고 Idle·스킬·피격·패배·부활 전이를 재생한다.
+ */
+
 using System.Collections;
 using UnityEngine;
 
-/*
- * 몬스터 유닛의 애니메이터를 제어하는 컴포넌트.
- * 대기, 공격, 피격, 사망, 부활 애니메이션을 재생하고
- * 사망 애니메이션이 끝나면 마지막 프레임을 유지한다.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>AnimationController</c>가 담당하는 입력 또는 표시 흐름을 조정하고 관련 런타임 상태를 갱신한다.</summary>
     public class AnimationController : MonoBehaviour
     {
         private const string AttackTriggerName = "Attack";
@@ -23,20 +25,14 @@ namespace Pakuri.InGame
         private bool dead;
         private Coroutine deathFreezeRoutine;
 
-        /*
-         * Unity가 컴포넌트를 초기화할 때 호출한다.
-         * 같은 GameObject의 Animator를 저장하고 대기 애니메이션을 시작한다.
-         */
+        /// <summary>Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.</summary>
         private void Awake()
         {
             animator = GetComponent<Animator>();
             PlayIdle();
         }
 
-        /*
-         * 설정된 공격 개수 안에서 무작위 공격 인덱스를 선택하고
-         * Animator의 공격 Trigger를 실행한다.
-         */
+        /// <summary><c>PlayRandomAttack</c> 작업을 수행한다.</summary>
         public void PlayRandomAttack()
         {
             if (dead)
@@ -45,16 +41,13 @@ namespace Pakuri.InGame
             }
 
             animator.speed = 1f;
-            // AttackIndex는 0부터 공격 상태 개수 직전까지의 Animator 분기를 선택한다.
+
             animator.SetInteger(AttackIndexParameterName, Random.Range(0, Mathf.Max(1, attackStateCount)));
             animator.ResetTrigger(HitTriggerName);
             animator.SetTrigger(AttackTriggerName);
         }
 
-        /*
-         * 진행 중인 공격 Trigger를 해제하고 피격 애니메이션을 실행한다.
-         * 사망 상태에서는 실행하지 않는다.
-         */
+        /// <summary><c>PlayHit</c> 작업을 수행한다.</summary>
         public void PlayHit()
         {
             if (dead)
@@ -67,10 +60,7 @@ namespace Pakuri.InGame
             animator.SetTrigger(HitTriggerName);
         }
 
-        /*
-         * 사망 상태를 기록하고 사망 애니메이션을 실행한다.
-         * 클립 재생 시간이 지나면 마지막 프레임을 유지하는 코루틴을 시작한다.
-         */
+        /// <summary><c>PlayDeath</c> 작업을 수행한다.</summary>
         public void PlayDeath()
         {
             if (dead)
@@ -79,7 +69,7 @@ namespace Pakuri.InGame
             }
 
             dead = true;
-            // Trigger 실행 전에 클립 길이를 확보해 사망 연출이 끝나는 시점을 계산한다.
+
             var deathLength = ResolveClipLength(deadState);
             animator.speed = 1f;
             animator.ResetTrigger(AttackTriggerName);
@@ -94,10 +84,7 @@ namespace Pakuri.InGame
             deathFreezeRoutine = StartCoroutine(FreezeDeathOnLastFrame(deathLength));
         }
 
-        /*
-         * 설정된 대기 상태를 처음부터 재생한다.
-         * 사망 상태에서는 사망 애니메이션을 보존하기 위해 실행하지 않는다.
-         */
+        /// <summary><c>PlayIdle</c> 작업을 수행한다.</summary>
         public void PlayIdle()
         {
             if (dead)
@@ -108,10 +95,7 @@ namespace Pakuri.InGame
             PlayState(idleState);
         }
 
-        /*
-         * 사망 프레임 고정 코루틴을 중단하고 사망 상태를 해제한다.
-         * Animator 속도를 복구한 뒤 대기 애니메이션으로 돌아간다.
-         */
+        /// <summary><c>ReviveToIdle</c> 작업을 수행한다.</summary>
         public void ReviveToIdle()
         {
             if (deathFreezeRoutine != null)
@@ -126,11 +110,8 @@ namespace Pakuri.InGame
             PlayIdle();
         }
 
-        /*
-         * 전달받은 Animator 상태를 0번 레이어의 첫 프레임부터 재생한다.
-         * 상태 이름이 비어 있으면 실행하지 않는다.
-         */
-        private void PlayState(string stateName /* 상태 이름 */)
+        /// <summary>전달된 <c>stateName</c> 값을 사용해 <c>PlayState</c> 작업을 수행한다.</summary>
+        private void PlayState(string stateName)
         {
             if (string.IsNullOrWhiteSpace(stateName))
             {
@@ -141,11 +122,8 @@ namespace Pakuri.InGame
             animator.Play(stateName, 0, 0f);
         }
 
-        /*
-         * 사망 클립 길이만큼 기다린 뒤 사망 상태의 마지막 프레임으로 이동한다.
-         * Animator 속도를 0으로 설정해 해당 포즈를 유지한다.
-         */
-        private IEnumerator FreezeDeathOnLastFrame(float deathLength /* 사망 길이 */)
+        /// <summary>전달된 <c>deathLength</c> 값을 사용해 <c>FreezeDeathOnLastFrame</c> 결과값을 생성해 반환한다.</summary>
+        private IEnumerator FreezeDeathOnLastFrame(float deathLength)
         {
             yield return new WaitForSeconds(Mathf.Max(0.01f, deathLength));
             if (string.IsNullOrWhiteSpace(deadState))
@@ -153,17 +131,14 @@ namespace Pakuri.InGame
                 yield break;
             }
 
-            // 마지막 정규화 프레임으로 이동한 뒤 Animator 속도를 멈춰 사망 포즈를 유지한다.
             animator.Play(deadState, 0, 0.999f);
             animator.Update(0f);
             animator.speed = 0f;
             deathFreezeRoutine = null;
         }
 
-        /*
-         * RuntimeAnimatorController에서 지정된 이름의 AnimationClip 길이를 찾는다.
-         */
-        private float ResolveClipLength(string stateName /* 상태 이름 */)
+        /// <summary>전달된 <c>stateName</c> 값을 사용해 <c>ClipLength</c>를 결정한다.</summary>
+        private float ResolveClipLength(string stateName)
         {
             var clips = animator.runtimeAnimatorController.animationClips;
             for (var i = 0; i < clips.Length; i++)

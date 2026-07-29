@@ -1,3 +1,8 @@
+/*
+ * 역할: CSV 원본 획득.
+ * 책임: 필수 CSV TextAsset을 로드하고 검증에 사용할 전체 원본 모델을 생성한다.
+ */
+
 using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
@@ -10,10 +15,13 @@ using static Pakuri.Data.SkillGraphParser;
 
 namespace Pakuri.Data
 {
+
+    /// <summary><c>CsvSourceLoader</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
     internal static class CsvSourceLoader
     {
 
-        internal static SourceModel LoadSourceModel(CsvRuntimeCatalog sourceCatalog )
+        /// <summary>전달된 <c>sourceCatalog</c> 값을 사용해 <c>SourceModel</c>를 불러온다.</summary>
+        internal static SourceModel LoadSourceModel(CsvRuntimeCatalog sourceCatalog)
         {
             var model = new SourceModel();
 
@@ -183,11 +191,12 @@ namespace Pakuri.Data
             return model;
         }
 
+        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillRows</c>를 불러온다.</summary>
         internal static void LoadSkillRows(
-            SourceModel model ,
-            TextAsset[] skillAssets ,
-            PakuriCsvSkillKind skillKind ,
-            params SkillRuntimeKind[] allowedRuntimeKinds )
+            SourceModel model,
+            TextAsset[] skillAssets,
+            PakuriCsvSkillKind skillKind,
+            params SkillRuntimeKind[] allowedRuntimeKinds)
         {
             for (var assetIndex = 0; assetIndex < skillAssets.Length; assetIndex++)
             {
@@ -201,12 +210,13 @@ namespace Pakuri.Data
             }
         }
 
+        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillRows</c>를 불러온다.</summary>
         internal static void LoadSkillRows(
-            SourceModel model ,
-            TextAsset skillAsset ,
-            string tableName ,
-            PakuriCsvSkillKind skillKind ,
-            params SkillRuntimeKind[] allowedRuntimeKinds )
+            SourceModel model,
+            TextAsset skillAsset,
+            string tableName,
+            PakuriCsvSkillKind skillKind,
+            params SkillRuntimeKind[] allowedRuntimeKinds)
         {
             var skillTable = CsvTable.Load(skillAsset, tableName);
             foreach (var record in skillTable.Records)
@@ -226,10 +236,11 @@ namespace Pakuri.Data
             }
         }
 
+        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillChoiceRows</c>를 불러온다.</summary>
         internal static void LoadSkillChoiceRows(
-            SourceModel model ,
-            TextAsset[] choiceAssets ,
-            params SkillRuntimeKind[] allowedOwnerRuntimeKinds )
+            SourceModel model,
+            TextAsset[] choiceAssets,
+            params SkillRuntimeKind[] allowedOwnerRuntimeKinds)
         {
             for (var assetIndex = 0; assetIndex < choiceAssets.Length; assetIndex++)
             {
@@ -242,11 +253,12 @@ namespace Pakuri.Data
             }
         }
 
+        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillChoiceRows</c>를 불러온다.</summary>
         internal static void LoadSkillChoiceRows(
-            SourceModel model ,
-            TextAsset choiceAsset ,
-            string tableName ,
-            params SkillRuntimeKind[] allowedOwnerRuntimeKinds )
+            SourceModel model,
+            TextAsset choiceAsset,
+            string tableName,
+            params SkillRuntimeKind[] allowedOwnerRuntimeKinds)
         {
             var choiceTable = CsvTable.Load(choiceAsset, tableName);
             foreach (var record in choiceTable.Records)
@@ -276,14 +288,16 @@ namespace Pakuri.Data
             }
         }
 
+        /// <summary>전달된 런타임 입력값을 사용해 <c>AllowedSkillRuntimeKind</c> 조건 충족 여부를 반환한다.</summary>
         internal static bool IsAllowedSkillRuntimeKind(
-            SkillRuntimeKind runtimeKind ,
-            SkillRuntimeKind[] allowedRuntimeKinds )
+            SkillRuntimeKind runtimeKind,
+            SkillRuntimeKind[] allowedRuntimeKinds)
         {
             return Array.IndexOf(allowedRuntimeKinds, runtimeKind) >= 0;
         }
 
-        internal static string GetTextAssetCsvTableName(TextAsset asset )
+        /// <summary>전달된 <c>asset</c> 값을 사용해 <c>TextAssetCsvTableName</c>를 반환한다.</summary>
+        internal static string GetTextAssetCsvTableName(TextAsset asset)
         {
             if (asset == null)
             {
@@ -303,7 +317,8 @@ namespace Pakuri.Data
             return asset.name + ".csv";
         }
 
-        internal static void AddUnique<T>(Dictionary<string, T> dictionary , string id , T value , CsvRecord record )
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Unique</c>를 소유한 런타임 상태에 추가한다.</summary>
+        internal static void AddUnique<T>(Dictionary<string, T> dictionary, string id, T value, CsvRecord record)
         {
             if (string.IsNullOrWhiteSpace(id))
             {

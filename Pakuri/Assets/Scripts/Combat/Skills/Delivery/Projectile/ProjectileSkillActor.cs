@@ -1,16 +1,20 @@
+/*
+ * 역할: 런타임 투사체 이동과 충돌.
+ * 책임: 투사체를 이동시키고 Collider 접촉·적중 제한·충돌·수명 종료를 처리한다.
+ */
+
 using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
-/*
- * 인게임 투사체의 위치, 충돌, 수명 주기를 처리한다.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>ProjectileSkillActor</c> 런타임 오브젝트를 나타내며 모델과 Unity 컴포넌트를 연결한다.</summary>
     public class ProjectileSkillActor : MonoBehaviour
     {
-        // 생성된 투사체의 이동, 충돌, 적중 효과, 소멸을 구현.
+
         private readonly HashSet<string> hitUnitIds = new HashSet<string>();
         private readonly List<CombatUnitEntry> collisionTargets = new List<CombatUnitEntry>();
 
@@ -52,19 +56,17 @@ namespace Pakuri.InGame
         private bool visualOnly;
         private Collider2D[] hitboxColliders;
 
-        /*
-         * 인게임 투사체 실행에 필요한 위치, 대상, 피해 정보를 설정한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>소유한 런타임 상태</c>를 초기화한다.</summary>
         public void Initialize(
-            InGameCombatManager manager /* 전투 진행 관리자 */,
-            UnitCombatState source /* 효과를 발생시킨 유닛 */,
-            Vector2 fireDirection /* 발사 방향 */,
-            float projectileSpeed /* 투사체 속도 */,
-            float baseDamage /* 방어 계산 전 기본 피해량 */,
-            DamageAttribute attribute /* 피해 속성 */,
-            int pierceCount /* 관통 개수 */,
-            float boundaryX /* 경계 X축 */,
-            float lifetimeSeconds /* 유지 시간 초 */)
+            InGameCombatManager manager,
+            UnitCombatState source,
+            Vector2 fireDirection,
+            float projectileSpeed,
+            float baseDamage,
+            DamageAttribute attribute,
+            int pierceCount,
+            float boundaryX,
+            float lifetimeSeconds)
         {
             hitUnitIds.Clear();
             combatManager = manager;
@@ -106,12 +108,10 @@ namespace Pakuri.InGame
             CacheHitboxColliders();
         }
 
-        /*
-         * 피해 처리가 없는 투사체 비주얼의 지정 수명을 설정하고 반환한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>VisualLifetime</c>를 초기화한다.</summary>
         public float InitializeVisualLifetime(
-            EffectManager manager /* 효과 생성과 제거를 담당하는 관리자 */,
-            float durationSeconds /* 지속 시간(초) */)
+            EffectManager manager,
+            float durationSeconds)
         {
             effectManager = manager;
             visualOnly = true;
@@ -119,14 +119,12 @@ namespace Pakuri.InGame
             return maxLifetime;
         }
 
-        /*
-         * 투사체가 사라질 좌우 경계 위치를 결정한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>DestroyBoundaryX</c> 결과값을 생성해 반환한다.</summary>
         internal static float DestroyBoundaryX(
-            Vector2 origin /* 시작 위치 */,
-            Vector2 fireDirection /* 발사 방향 */,
-            float projectileSpeed /* 투사체 속도 */,
-            float lifetimeSeconds /* 유지 시간 초 */)
+            Vector2 origin,
+            Vector2 fireDirection,
+            float projectileSpeed,
+            float lifetimeSeconds)
         {
             var normalizedDirection = fireDirection.sqrMagnitude > 0.0001f
                 ? fireDirection.normalized
@@ -137,37 +135,35 @@ namespace Pakuri.InGame
             return origin.x + normalizedDirection.x * maxTravelDistance;
         }
 
-        /*
-         * 인게임 투사체 실행에 필요한 위치, 대상, 피해 정보를 설정한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>소유한 런타임 상태</c>를 초기화한다.</summary>
         public void Initialize(
-            InGameCombatManager manager /* 전투 진행 관리자 */,
-            UnitCombatState source /* 효과를 발생시킨 유닛 */,
-            Vector2 fireDirection /* 발사 방향 */,
-            float projectileSpeed /* 투사체 속도 */,
-            float baseDamage /* 방어 계산 전 기본 피해량 */,
-            DamageAttribute attribute /* 피해 속성 */,
-            int pierceCount /* 관통 개수 */,
-            float boundaryX /* 경계 X축 */,
-            float lifetimeSeconds /* 유지 시간 초 */,
-            ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */,
-            ProjectileBranchDamageSpec branchSpec /* 분기 설정 */,
-            ProjectileStatusHitSpec impactStatusSpec /* 충돌 상태 효과 설정 */,
-            bool enableContactDamage /* 활성화 접촉 피해 여부 */,
-            bool stopAfterFirstHit /* 중단 이후 첫 번째 적중 여부 */,
-            float impactDelay /* 충돌 대기 시간 */,
-            RuntimeSkillVisualSpec runtimeImpactVisual /* 충돌 시 사용할 런타임 시각 효과 */,
-            bool enableImpactArea /* 활성화 충돌 범위 여부 */,
-            float impactAreaRadius /* 충돌 범위 반지름 */,
-            float delayedImpactDamage /* 지연 충돌 피해 */,
-            SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
-            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
-            string ignoredUnitId = null /* 무시할 유닛 식별자 */,
-            string skillId = null /* 스킬 식별자 */,
-            bool magazineLastProjectile = false /* 탄창 마지막 투사체 여부 */,
-            bool allowCritical = false /* 허용 치명타 여부 */,
-            float criticalChanceBonus = 0f /* 치명타 확률 추가값 */,
-            float criticalDamageBonus = 0f /* 치명타 피해 추가값 */)
+            InGameCombatManager manager,
+            UnitCombatState source,
+            Vector2 fireDirection,
+            float projectileSpeed,
+            float baseDamage,
+            DamageAttribute attribute,
+            int pierceCount,
+            float boundaryX,
+            float lifetimeSeconds,
+            ProjectileStatusHitSpec statusSpec,
+            ProjectileBranchDamageSpec branchSpec,
+            ProjectileStatusHitSpec impactStatusSpec,
+            bool enableContactDamage,
+            bool stopAfterFirstHit,
+            float impactDelay,
+            RuntimeSkillVisualSpec runtimeImpactVisual,
+            bool enableImpactArea,
+            float impactAreaRadius,
+            float delayedImpactDamage,
+            SkillUseState sourceRuntime,
+            SkillExecutionData snapshot,
+            string ignoredUnitId = null,
+            string skillId = null,
+            bool magazineLastProjectile = false,
+            bool allowCritical = false,
+            float criticalChanceBonus = 0f,
+            float criticalDamageBonus = 0f)
         {
             Initialize(
                 manager,
@@ -204,17 +200,13 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * 투사체 충돌 처리에 사용할 실제 Collider를 준비한다.
-         */
+        /// <summary>Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.</summary>
         private void Awake()
         {
             CacheHitboxColliders();
         }
 
-        /*
-         * 인게임 투사체의 이동, 수명, 주기 처리를 매 프레임 갱신한다.
-         */
+        /// <summary>현재 Unity 프레임에서 <c>Update</c> 갱신 동작을 진행한다.</summary>
         private void Update()
         {
             var deltaTime = Time.deltaTime;
@@ -251,10 +243,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * 적중 로스터 대상을 처리 조건을 확인하고 성공 여부를 반환한다.
-         */
-        private void TryHitRosterTargets(Vector2 movement /* 이번 프레임 이동 거리와 방향 */)
+        /// <summary>전달된 <c>movement</c> 값을 사용해 <c>HitRosterTargets</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
+        private void TryHitRosterTargets(Vector2 movement)
         {
             if (combatManager == null || combatManager.Units == null || owner == null)
             {
@@ -279,10 +269,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * 적중 대상을 처리 조건을 확인하고 성공 여부를 반환한다.
-         */
-        private bool TryHitTarget(CombatUnitEntry target /* 효과를 받을 대상의 등록 정보 */)
+        /// <summary>전달된 <c>target</c> 값을 사용해 <c>HitTarget</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
+        private bool TryHitTarget(CombatUnitEntry target)
         {
             if (target == null || target.Model == null || !target.IsAlive || IsSameSide(target.Model))
             {
@@ -336,18 +324,14 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /*
-         * 적중 피해를 결정한다.
-         */
+        /// <summary><c>HitDamage</c> 결과값을 생성해 반환한다.</summary>
         private float HitDamage()
         {
             return Mathf.Max(0f, damage);
         }
 
-        /*
-         * 방어력 반영 후 적용할 적중 배율을 결정한다.
-         */
-        private float HitDamageMultiplier(UnitCombatState target /* 효과를 받을 대상 유닛 */)
+        /// <summary>전달된 <c>target</c> 값을 사용해 <c>HitDamageMultiplier</c> 결과값을 생성해 반환한다.</summary>
+        private float HitDamageMultiplier(UnitCombatState target)
         {
             var multiplier = executionData != null
                 ? Mathf.Max(0f, executionData.DamageMultiplier)
@@ -365,21 +349,13 @@ namespace Pakuri.InGame
             return Mathf.Max(0f, multiplier);
         }
 
-        /*
-         * 상태를 적용하고 성공 여부를 반환한다.
-         */
-        private void TryApplyStatus(UnitCombatState target /* 효과를 받을 대상 유닛 */)
+        /// <summary>전달된 <c>target</c> 값을 사용해 <c>ApplyStatus</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
+        private void TryApplyStatus(UnitCombatState target)
         {
             StatusCombatRules.ApplyStatus(combatManager, target, statusOnHit, owner);
         }
 
-        /*
-         * 적중 효과를 적용하고 성공 여부를 반환한다.
-         */
-
-        /*
-         * 투사체 적중 트리거를 실행 조건을 확인하고 성공 여부를 반환한다.
-         */
+        /// <summary><c>RunProjectileHitTriggers</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
         private void TryRunProjectileHitTriggers()
         {
             if (!isMagazineLastProjectile || magazineLastProjectileTriggerFired)
@@ -397,13 +373,11 @@ namespace Pakuri.InGame
                 transform.position);
         }
 
-        /*
-         * 분기 피해를 적용하고 성공 여부를 반환한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ApplyBranchDamage</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
         private void TryApplyBranchDamage(
-            CombatUnitEntry hitTarget /* 적중 대상 */,
-            Vector2 hitPosition /* 적중 위치 */,
-            float primaryDamage /* 주 대상 피해 */)
+            CombatUnitEntry hitTarget,
+            Vector2 hitPosition,
+            float primaryDamage)
         {
             if (impactArmed
                 || combatManager == null
@@ -455,15 +429,13 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * 가장 가까운 분기 대상을 찾는다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>NearestBranchTarget</c>를 찾는다.</summary>
         private CombatUnitEntry FindNearestBranchTarget(
-            IReadOnlyList<CombatUnitEntry> candidates /* 후보 목록 여부 */,
-            CombatUnitEntry hitTarget /* 적중 대상 */,
-            Vector2 origin /* 시작 위치 */,
-            float radiusSq /* 반지름 제곱값 */,
-            HashSet<UnitCombatState> selectedTargets /* 선택된 대상 목록 */)
+            IReadOnlyList<CombatUnitEntry> candidates,
+            CombatUnitEntry hitTarget,
+            Vector2 origin,
+            float radiusSq,
+            HashSet<UnitCombatState> selectedTargets)
         {
             CombatUnitEntry best = null;
             var bestDistanceSq = float.MaxValue;
@@ -499,10 +471,8 @@ namespace Pakuri.InGame
             return best;
         }
 
-        /*
-         * 분기 피해 직선을 생성한다.
-         */
-        private void SpawnBranchDamageLine(Vector2 origin /* 시작 위치 */, Vector2 target /* 효과가 도착할 위치 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>BranchDamageLine</c>를 런타임 씬 오브젝트로 생성하고 등록한다.</summary>
+        private void SpawnBranchDamageLine(Vector2 origin, Vector2 target)
         {
             var shader = Shader.Find("Sprites/Default");
             if (shader == null || combatManager.Effects == null)
@@ -549,10 +519,8 @@ namespace Pakuri.InGame
             lineActor.InitializeVisualLifetime(combatManager.Effects, durationSeconds);
         }
 
-        /*
-         * 두 유닛이 같은 진영인지 확인한다.
-         */
-        private bool IsSameSide(UnitCombatState target /* 효과를 받을 대상 유닛 */)
+        /// <summary>전달된 <c>target</c> 값을 사용해 <c>SameSide</c> 조건 충족 여부를 반환한다.</summary>
+        private bool IsSameSide(UnitCombatState target)
         {
             var ownerIdentity = owner.Identity;
             var targetIdentity = target != null ? target.Identity : null;
@@ -561,9 +529,7 @@ namespace Pakuri.InGame
                 && ownerIdentity.Side == targetIdentity.Side;
         }
 
-        /*
-         * 투사체가 제거 경계를 통과했는지 확인한다.
-         */
+        /// <summary>소유한 런타임 상태에 <c>PassedDestroyBoundary</c>가 있는지 반환한다.</summary>
         private bool HasPassedDestroyBoundary()
         {
             if (impactArmed)
@@ -576,10 +542,8 @@ namespace Pakuri.InGame
                 : transform.position.x < destroyBeyondX;
         }
 
-        /*
-         * 충돌을 후속 처리를 준비한다.
-         */
-        private void ArmImpact(CombatUnitEntry target /* 효과를 받을 대상의 등록 정보 */, Vector2 hitPosition /* 적중 위치 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ArmImpact</c> 작업을 수행한다.</summary>
+        private void ArmImpact(CombatUnitEntry target, Vector2 hitPosition)
         {
             impactArmed = true;
             impactDelayRemaining = impactDelaySeconds;
@@ -597,9 +561,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * 충돌을 결정한다.
-         */
+        /// <summary><c>Impact</c> 작업을 수행한다.</summary>
         private void Impact()
         {
             if (impactResolved || combatManager == null)
@@ -670,13 +632,7 @@ namespace Pakuri.InGame
             effects.RemoveEffect(gameObject);
         }
 
-        /*
-         * 투사체 수명 종료 후 지연 효과를 실행한다.
-         */
-
-        /*
-         * 종료 효과를 실행하고 성공 여부를 반환한다.
-         */
+        /// <summary><c>ExecuteOnExpireEffects</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
         private void TryExecuteOnExpireEffects()
         {
             if (expirePublished)
@@ -708,9 +664,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * 충돌 대상 지정을 구성한다.
-         */
+        /// <summary><c>ImpactTargeting</c>를 구성한다.</summary>
         private SkillTargetingSpec BuildImpactTargeting()
         {
             return new SkillTargetingSpec
@@ -723,18 +677,14 @@ namespace Pakuri.InGame
             };
         }
 
-        /*
-         * 투사체와 자식 오브젝트의 실제 Collider를 캐시한다.
-         */
+        /// <summary><c>CacheHitboxColliders</c> 작업을 수행한다.</summary>
         private void CacheHitboxColliders()
         {
             hitboxColliders = GetComponentsInChildren<Collider2D>();
         }
 
-        /*
-         * 회전을 결정한다.
-         */
-        private static Quaternion Rotation(Vector3 direction /* 진행하거나 발사할 방향 */)
+        /// <summary>전달된 <c>direction</c> 값을 사용해 <c>Rotation</c> 결과값을 생성해 반환한다.</summary>
+        private static Quaternion Rotation(Vector3 direction)
         {
             if (direction.sqrMagnitude <= 0.0001f)
             {
@@ -746,9 +696,7 @@ namespace Pakuri.InGame
         }
     }
 
-    /*
-     * 투사체 상태 적중 설정에 필요한 값을 보관한다.
-     */
+    /// <summary><c>ProjectileStatusHitSpec</c>을 설명하는 설정값을 묶는다.</summary>
     public class ProjectileStatusHitSpec
     {
         public bool Enabled;
@@ -765,9 +713,7 @@ namespace Pakuri.InGame
         public ProjectileStatusHitSpec ThresholdStatusSpec;
     }
 
-    /*
-     * 투사체 분기 피해 설정에 필요한 값을 보관한다.
-     */
+    /// <summary><c>ProjectileBranchDamageSpec</c>을 설명하는 설정값을 묶는다.</summary>
     public class ProjectileBranchDamageSpec
     {
         public bool Enabled;

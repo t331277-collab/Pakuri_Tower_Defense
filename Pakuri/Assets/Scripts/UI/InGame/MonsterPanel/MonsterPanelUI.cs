@@ -1,13 +1,17 @@
+/*
+ * 역할: 몬스터 목록 및 상세 표시.
+ * 책임: 몬스터 Card를 생성하고 선택을 추적하며 유닛 능력치·스킬·체력·활성 상태를 표시한다.
+ */
+
 using Pakuri.Data;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/*
- * 전투 중 파티 몬스터의 초상화와 체력, 활성 스킬 상태를 표시하는 컴포넌트.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>MonsterPanelUI</c> 상태를 Unity UI 또는 월드 오브젝트로 표시한다.</summary>
     public class MonsterPanelUI : MonoBehaviour
     {
         private const int MaxPartySlots = 5;
@@ -18,9 +22,7 @@ namespace Pakuri.InGame
         [SerializeField] private StageManager stageManager;
         [SerializeField] private UnitSpawnManager unitSpawnManager;
 
-        /*
-         * Unity가 컴포넌트를 초기화할 때 필요한 참조와 상태를 준비한다.
-         */
+        /// <summary>Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.</summary>
         private void Awake()
         {
             ResolveReferences();
@@ -28,26 +30,20 @@ namespace Pakuri.InGame
             SetPanelVisible(true);
         }
 
-        /*
-         * 컴포넌트가 활성화될 때 이벤트와 표시 상태를 연결한다.
-         */
+        /// <summary>Unity가 컴포넌트를 활성화할 때 구독과 활성 상태를 복원한다.</summary>
         private void OnEnable()
         {
             RefreshNow();
         }
 
-        /*
-         * 매 프레임 현재 상태를 갱신한다.
-         */
+        /// <summary>현재 Unity 프레임에서 <c>Update</c> 갱신 동작을 진행한다.</summary>
         private void Update()
         {
             ResolveReferences();
             RefreshNow();
         }
 
-        /*
-         * RefreshNow 대상의 현재 상태를 갱신한다.
-         */
+        /// <summary><c>Now</c>를 현재 런타임 모델을 기준으로 갱신한다.</summary>
         public void RefreshNow()
         {
             ResolveReferences();
@@ -68,9 +64,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * ResolvePlayerModelsBySlot 결과를 계산해 반환한다.
-         */
+        /// <summary><c>PlayerModelsBySlot</c>를 결정한다.</summary>
         private UnitCombatState[] ResolvePlayerModelsBySlot()
         {
             var models = new UnitCombatState[MaxPartySlots];
@@ -110,9 +104,7 @@ namespace Pakuri.InGame
             return models;
         }
 
-        /*
-         * ResolveReferences에 필요한 값을 계산해 현재 상태에 반영한다.
-         */
+        /// <summary><c>References</c>를 결정한다.</summary>
         private void ResolveReferences()
         {
             if (stageManager == null)
@@ -126,9 +118,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * ResolveSceneUi에 필요한 값을 계산해 현재 상태에 반영한다.
-         */
+        /// <summary><c>SceneUi</c>를 결정한다.</summary>
         private void ResolveSceneUi()
         {
             if (monsterPanelRoot == null)
@@ -151,10 +141,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * ResolveMonsterSlot에 필요한 값을 계산해 현재 상태에 반영한다.
-         */
-        private void ResolveMonsterSlot(int slotIndex /* 배치할 슬롯 순서 번호 */)
+        /// <summary>전달된 <c>slotIndex</c> 값을 사용해 <c>MonsterSlot</c>를 결정한다.</summary>
+        private void ResolveMonsterSlot(int slotIndex)
         {
             if (slotIndex < 0 || slotIndex >= monsterSlots.Length || monsterPanelRoot == null)
             {
@@ -182,9 +170,7 @@ namespace Pakuri.InGame
             existing.Bind(slotRoot);
         }
 
-        /*
-         * EnsureMonsterSlotArray에 필요한 상태가 준비되어 있는지 확인하고 구성한다.
-         */
+        /// <summary><c>EnsureMonsterSlotArray</c> 작업을 수행한다.</summary>
         private void EnsureMonsterSlotArray()
         {
             if (monsterSlots == null || monsterSlots.Length != MaxPartySlots)
@@ -193,27 +179,21 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * ResolveCatalog 결과를 계산해 반환한다.
-         */
+        /// <summary><c>Catalog</c>를 결정한다.</summary>
         private GameDataCatalog ResolveCatalog()
         {
             return GameDataLoader.CurrentCatalog;
         }
 
-        /*
-         * FindImage에 해당하는 값을 찾아 반환한다.
-         */
-        private static Image FindImage(Transform root /* 검색이나 배치의 기준 오브젝트 */, string path /* 불러오거나 검사할 경로 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Image</c>를 찾는다.</summary>
+        private static Image FindImage(Transform root, string path)
         {
             var child = root != null ? root.Find(path) : null;
             return child != null ? child.GetComponent<Image>() : null;
         }
 
-        /*
-         * SetPanelVisible에 필요한 값을 설정한다.
-         */
-        private void SetPanelVisible(bool visible /* 화면 표시 여부 */)
+        /// <summary>전달된 <c>visible</c> 값을 사용해 <c>PanelVisible</c>를 갱신한다.</summary>
+        private void SetPanelVisible(bool visible)
         {
             if (monsterPanelRoot != null)
             {
@@ -221,9 +201,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * FindSceneObject에 해당하는 값을 찾아 반환한다.
-         */
+        /// <summary><c>SceneObject</c>를 찾는다.</summary>
         private static T FindSceneObject<T>() where T : UnityEngine.Object
         {
             var objects = Resources.FindObjectsOfTypeAll<T>();
@@ -239,6 +217,7 @@ namespace Pakuri.InGame
             return null;
         }
 
+        /// <summary><c>MonsterPanelSlotView</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
         [System.Serializable]
         private class MonsterPanelSlotView
         {
@@ -250,18 +229,14 @@ namespace Pakuri.InGame
 
             public bool IsBound => root != null;
 
-            /*
-             * MonsterPanelSlotView에 필요한 값을 초기화한다.
-             */
-            public MonsterPanelSlotView(Transform rootTransform /* 기준 오브젝트 위치 정보 */)
+            /// <summary><c>MonsterPanelSlotView</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+            public MonsterPanelSlotView(Transform rootTransform)
             {
                 Bind(rootTransform);
             }
 
-            /*
-             * Bind에 필요한 값을 설정한다.
-             */
-            public void Bind(Transform rootTransform /* 기준 오브젝트 위치 정보 */)
+            /// <summary>전달된 <c>rootTransform</c> 값을 사용해 <c>요청값</c>를 런타임 사건 또는 씬 대상에 연결한다.</summary>
+            public void Bind(Transform rootTransform)
             {
                 root = rootTransform != null ? rootTransform.gameObject : null;
                 monsterImage = null;
@@ -270,10 +245,8 @@ namespace Pakuri.InGame
                 ResolveChildren();
             }
 
-            /*
-             * SetRuntime에 필요한 값을 설정한다.
-             */
-            public void SetRuntime(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, GameDataCatalog catalog /* 불러온 게임 데이터 목록 */)
+            /// <summary>전달된 런타임 입력값을 사용해 <c>Runtime</c>를 갱신한다.</summary>
+            public void SetRuntime(UnitCombatState model, GameDataCatalog catalog)
             {
                 ResolveChildren();
                 if (root == null)
@@ -298,10 +271,8 @@ namespace Pakuri.InGame
                 RefreshActiveSlots(model);
             }
 
-            /*
-             * RefreshMonsterImage 대상의 현재 상태를 갱신한다.
-             */
-            private void RefreshMonsterImage(string monsterId /* 몬스터 식별자 */, GameDataCatalog catalog /* 불러온 게임 데이터 목록 */)
+            /// <summary>전달된 런타임 입력값을 사용해 <c>MonsterImage</c>를 현재 런타임 모델을 기준으로 갱신한다.</summary>
+            private void RefreshMonsterImage(string monsterId, GameDataCatalog catalog)
             {
                 if (monsterImage == null || string.Equals(lastMonsterId, monsterId, System.StringComparison.OrdinalIgnoreCase))
                 {
@@ -321,10 +292,8 @@ namespace Pakuri.InGame
                 monsterImage.enabled = false;
             }
 
-            /*
-             * RefreshActiveSlots 대상의 현재 상태를 갱신한다.
-             */
-            private void RefreshActiveSlots(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+            /// <summary>전달된 <c>model</c> 값을 사용해 <c>ActiveSlots</c>를 현재 런타임 모델을 기준으로 갱신한다.</summary>
+            private void RefreshActiveSlots(UnitCombatState model)
             {
                 System.Collections.Generic.IReadOnlyList<SkillUseState> runtimes = null;
                 if (model != null && model.Skills != null)
@@ -355,10 +324,8 @@ namespace Pakuri.InGame
                 }
             }
 
-            /*
-             * SetSlotsActive에 필요한 값을 설정한다.
-             */
-            private void SetSlotsActive(int count /* 처리할 개수 */)
+            /// <summary>전달된 <c>count</c> 값을 사용해 <c>SlotsActive</c>를 갱신한다.</summary>
+            private void SetSlotsActive(int count)
             {
                 for (var i = 0; i < activeSlots.Length; i++)
                 {
@@ -369,10 +336,8 @@ namespace Pakuri.InGame
                 }
             }
 
-            /*
-             * SetVisible에 필요한 값을 설정한다.
-             */
-            private void SetVisible(bool visible /* 화면 표시 여부 */)
+            /// <summary>전달된 <c>visible</c> 값을 사용해 <c>Visible</c>를 갱신한다.</summary>
+            private void SetVisible(bool visible)
             {
                 if (root != null)
                 {
@@ -380,9 +345,7 @@ namespace Pakuri.InGame
                 }
             }
 
-            /*
-             * ResolveChildren에 필요한 값을 계산해 현재 상태에 반영한다.
-             */
+            /// <summary><c>Children</c>를 결정한다.</summary>
             private void ResolveChildren()
             {
                 if (root == null)
@@ -401,10 +364,8 @@ namespace Pakuri.InGame
                 ResolveSlot(2, "Active3");
             }
 
-            /*
-             * ResolveSlot에 필요한 값을 계산해 현재 상태에 반영한다.
-             */
-            private void ResolveSlot(int index /* 목록에서의 순서 번호 */, string childName /* 자식 오브젝트 이름 */)
+            /// <summary>전달된 런타임 입력값을 사용해 <c>Slot</c>를 결정한다.</summary>
+            private void ResolveSlot(int index, string childName)
             {
                 if (index < 0 || index >= activeSlots.Length || root == null)
                 {
@@ -432,9 +393,7 @@ namespace Pakuri.InGame
                 existing.Bind(slotRoot.gameObject);
             }
 
-            /*
-             * EnsureSlotArray에 필요한 상태가 준비되어 있는지 확인하고 구성한다.
-             */
+            /// <summary><c>EnsureSlotArray</c> 작업을 수행한다.</summary>
             private void EnsureSlotArray()
             {
                 if (activeSlots == null || activeSlots.Length != MaxVisibleActiveSlots)
@@ -444,6 +403,7 @@ namespace Pakuri.InGame
             }
         }
 
+        /// <summary><c>ActiveSkillSlotView</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
         [System.Serializable]
         private class ActiveSkillSlotView
         {
@@ -454,18 +414,14 @@ namespace Pakuri.InGame
 
             public bool IsBound => root != null;
 
-            /*
-             * ActiveSkillSlotView에 필요한 값을 초기화한다.
-             */
-            public ActiveSkillSlotView(GameObject root /* 검색이나 배치의 기준 오브젝트 */)
+            /// <summary><c>ActiveSkillSlotView</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+            public ActiveSkillSlotView(GameObject root)
             {
                 Bind(root);
             }
 
-            /*
-             * Bind에 필요한 값을 설정한다.
-             */
-            public void Bind(GameObject root /* 검색이나 배치의 기준 오브젝트 */)
+            /// <summary>전달된 <c>root</c> 값을 사용해 <c>요청값</c>를 런타임 사건 또는 씬 대상에 연결한다.</summary>
+            public void Bind(GameObject root)
             {
                 this.root = root;
                 skillImage = null;
@@ -474,10 +430,8 @@ namespace Pakuri.InGame
                 ResolveChildren();
             }
 
-            /*
-             * SetRuntime에 필요한 값을 설정한다.
-             */
-            public void SetRuntime(SkillUseState runtime /* 실행 중인 스킬 정보 */)
+            /// <summary>전달된 <c>runtime</c> 값을 사용해 <c>Runtime</c>를 갱신한다.</summary>
+            public void SetRuntime(SkillUseState runtime)
             {
                 ResolveChildren();
 
@@ -497,10 +451,8 @@ namespace Pakuri.InGame
                 RefreshCooldownOverlay(runtime);
             }
 
-            /*
-             * SetVisible에 필요한 값을 설정한다.
-             */
-            public void SetVisible(bool visible /* 화면 표시 여부 */)
+            /// <summary>전달된 <c>visible</c> 값을 사용해 <c>Visible</c>를 갱신한다.</summary>
+            public void SetVisible(bool visible)
             {
                 if (root != null)
                 {
@@ -508,10 +460,8 @@ namespace Pakuri.InGame
                 }
             }
 
-            /*
-             * RefreshLabel 대상의 현재 상태를 갱신한다.
-             */
-            private void RefreshLabel(SkillUseState runtime /* 실행 중인 스킬 정보 */)
+            /// <summary>전달된 <c>runtime</c> 값을 사용해 <c>Label</c>를 현재 런타임 모델을 기준으로 갱신한다.</summary>
+            private void RefreshLabel(SkillUseState runtime)
             {
                 if (label == null)
                 {
@@ -529,10 +479,8 @@ namespace Pakuri.InGame
                 label.gameObject.SetActive(false);
             }
 
-            /*
-             * RefreshCooldownOverlay 대상의 현재 상태를 갱신한다.
-             */
-            private void RefreshCooldownOverlay(SkillUseState runtime /* 실행 중인 스킬 정보 */)
+            /// <summary>전달된 <c>runtime</c> 값을 사용해 <c>CooldownOverlay</c>를 현재 런타임 모델을 기준으로 갱신한다.</summary>
+            private void RefreshCooldownOverlay(SkillUseState runtime)
             {
                 if (cooldownOverlay == null)
                 {
@@ -568,9 +516,7 @@ namespace Pakuri.InGame
                 cooldownOverlay.fillAmount = remainingRatio;
             }
 
-            /*
-             * ResolveChildren에 필요한 값을 계산해 현재 상태에 반영한다.
-             */
+            /// <summary><c>Children</c>를 결정한다.</summary>
             private void ResolveChildren()
             {
                 if (root == null)

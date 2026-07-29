@@ -1,3 +1,8 @@
+/*
+ * 역할: CSV 에셋 참조 수집.
+ * 책임: 런타임 카탈로그가 제공해야 하는 Sprite·Prefab·AnimatorController 경로를 모두 수집한다.
+ */
+
 using System;
 using System.Collections.Generic;
 using static Pakuri.Data.CsvRowParser;
@@ -6,12 +11,17 @@ using static Pakuri.Data.SkillGraphParser;
 
 namespace Pakuri.Data
 {
+
+    /// <summary><c>CsvAssetReferenceCollector</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
     internal static class CsvAssetReferenceCollector
     {
+
+        /// <summary><c>ReferencedAssetPath</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
         internal readonly struct ReferencedAssetPath
         {
 
-            public ReferencedAssetPath(string assetPath , string ownerLabel )
+            /// <summary><c>ReferencedAssetPath</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+            public ReferencedAssetPath(string assetPath, string ownerLabel)
             {
                 AssetPath = assetPath;
                 OwnerLabel = ownerLabel;
@@ -21,6 +31,7 @@ namespace Pakuri.Data
             public string OwnerLabel { get; }
         }
 
+        /// <summary><c>ReferencedAssetSet</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
         internal class ReferencedAssetSet
         {
             internal readonly HashSet<string> spritePathLookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -31,26 +42,30 @@ namespace Pakuri.Data
             public List<ReferencedAssetPath> PrefabPaths { get; } = new List<ReferencedAssetPath>();
             public List<ReferencedAssetPath> AnimatorControllerPaths { get; } = new List<ReferencedAssetPath>();
 
-            public void AddSprite(string assetPath , string ownerLabel )
+            /// <summary>전달된 런타임 입력값을 사용해 <c>Sprite</c>를 소유한 런타임 상태에 추가한다.</summary>
+            public void AddSprite(string assetPath, string ownerLabel)
             {
                 Add(assetPath, ownerLabel, spritePathLookup, SpritePaths);
             }
 
-            public void AddPrefab(string assetPath , string ownerLabel )
+            /// <summary>전달된 런타임 입력값을 사용해 <c>Prefab</c>를 소유한 런타임 상태에 추가한다.</summary>
+            public void AddPrefab(string assetPath, string ownerLabel)
             {
                 Add(assetPath, ownerLabel, prefabPathLookup, PrefabPaths);
             }
 
-            public void AddAnimatorController(string assetPath , string ownerLabel )
+            /// <summary>전달된 런타임 입력값을 사용해 <c>AnimatorController</c>를 소유한 런타임 상태에 추가한다.</summary>
+            public void AddAnimatorController(string assetPath, string ownerLabel)
             {
                 Add(assetPath, ownerLabel, animatorControllerPathLookup, AnimatorControllerPaths);
             }
 
+            /// <summary>전달된 런타임 입력값을 사용해 <c>요청값</c>를 소유한 런타임 상태에 추가한다.</summary>
             internal static void Add(
-                string assetPath ,
-                string ownerLabel ,
-                HashSet<string> lookup ,
-                List<ReferencedAssetPath> paths )
+                string assetPath,
+                string ownerLabel,
+                HashSet<string> lookup,
+                List<ReferencedAssetPath> paths)
             {
                 if (string.IsNullOrWhiteSpace(assetPath))
                 {
@@ -65,7 +80,8 @@ namespace Pakuri.Data
             }
         }
 
-        internal static ReferencedAssetSet CollectReferencedAssets(SourceModel model )
+        /// <summary>전달된 <c>model</c> 값을 사용해 <c>ReferencedAssets</c>를 결과 컬렉션에 수집한다.</summary>
+        internal static ReferencedAssetSet CollectReferencedAssets(SourceModel model)
         {
             var assets = new ReferencedAssetSet();
             if (model == null)

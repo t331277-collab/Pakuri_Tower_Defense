@@ -1,41 +1,40 @@
+/*
+ * 역할: 전투 상태 생성.
+ * 책임: 카탈로그 정의와 학습 스킬 상태에서 플레이어·적·Nexus 전투 모델을 생성한다.
+ */
+
 using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
 
-/*
- * 정의 데이터와 런 상태를 이용해 아군·적 런타임 모델을 만든다
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>UnitCombatStateFactory</c> 런타임 객체를 검증된 원본 데이터에서 생성한다.</summary>
     public class UnitCombatStateFactory
     {
-        /*
-         * CreateSelectedMonster에 필요한 결과를 만들어 반환한다.
-         */
+
+        /// <summary>전달된 런타임 입력값을 사용해 <c>SelectedMonster</c>를 생성한다.</summary>
         public UnitCombatState CreateSelectedMonster(
-            MonsterDefinition definition /* 변환하거나 검사할 정의 */,
-            RunSession.RunMonsterState runState = null /* 게임 진행 상태 */,
-            int slotIndex = 0 /* 배치할 슬롯 순서 번호 */)
+            MonsterDefinition definition,
+            RunSession.RunMonsterState runState = null,
+            int slotIndex = 0)
         {
             return CreateMonster(definition, UnitSide.Player, UnitRole.Monster, slotIndex, "player", runState);
         }
 
-        /*
-         * CreateManifestedMonster에 필요한 결과를 만들어 반환한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ManifestedMonster</c>를 생성한다.</summary>
         public UnitCombatState CreateManifestedMonster(
-            MonsterDefinition definition /* 변환하거나 검사할 정의 */,
-            RunSession.RunMonsterState runState /* 게임 진행 상태 */,
-            int slotIndex /* 배치할 슬롯 순서 번호 */)
+            MonsterDefinition definition,
+            RunSession.RunMonsterState runState,
+            int slotIndex)
         {
             return CreateMonster(definition, UnitSide.Player, UnitRole.Monster, slotIndex, "party", runState);
         }
 
-        /*
-         * CreateEnemy에 필요한 결과를 만들어 반환한다.
-         */
-        public EnemyCombatState CreateEnemy(EnemyDefinition definition /* 변환하거나 검사할 정의 */, int slotIndex = 0 /* 배치할 슬롯 순서 번호 */, bool isBoss = false /* 여부 보스 여부 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Enemy</c>를 생성한다.</summary>
+        public EnemyCombatState CreateEnemy(EnemyDefinition definition, int slotIndex = 0, bool isBoss = false)
         {
             var stats = definition.Stats;
             var maxHealth = stats.MaxHealth;
@@ -84,10 +83,8 @@ namespace Pakuri.InGame
             return model;
         }
 
-        /*
-         * 전투에서 사용하는 Nexus 기본 상태를 만든다.
-         */
-        public UnitCombatState CreateNexus(float maxHealth /* 최대 체력 */)
+        /// <summary>전달된 <c>maxHealth</c> 값을 사용해 <c>Nexus</c>를 생성한다.</summary>
+        public UnitCombatState CreateNexus(float maxHealth)
         {
             return new UnitCombatState
             {
@@ -114,16 +111,14 @@ namespace Pakuri.InGame
             };
         }
 
-        /*
-         * CreateMonster에 필요한 결과를 만들어 반환한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Monster</c>를 생성한다.</summary>
         private static UnitCombatState CreateMonster(
-            MonsterDefinition definition /* 변환하거나 검사할 정의 */,
-            UnitSide side /* 진영 */,
-            UnitRole role /* 역할 */,
-            int slotIndex /* 배치할 슬롯 순서 번호 */,
-            string unitIdPrefix /* 유닛 식별자 접두어 */,
-            RunSession.RunMonsterState runState /* 게임 진행 상태 */)
+            MonsterDefinition definition,
+            UnitSide side,
+            UnitRole role,
+            int slotIndex,
+            string unitIdPrefix,
+            RunSession.RunMonsterState runState)
         {
             var maxHealth = definition.BaseStats.MaxHealth;
             var model = new UnitCombatState
@@ -155,10 +150,8 @@ namespace Pakuri.InGame
             return model;
         }
 
-        /*
-         * MapStats에 필요한 형식으로 변환해 반환한다.
-         */
-        private static UnitCombatStats MapStats(UnitCombatStats source /* 복사할 전투 능력치 */, float maxHealth /* 최대 체력 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Stats</c>를 대응시킨다.</summary>
+        private static UnitCombatStats MapStats(UnitCombatStats source, float maxHealth)
         {
             return new UnitCombatStats
             {
@@ -172,10 +165,8 @@ namespace Pakuri.InGame
             };
         }
 
-        /*
-         * 정의 데이터와 분리된 런타임 방어력을 만든다.
-         */
-        private static UnitDefenseStats CreateRuntimeDefenses(UnitDefenseStats source /* 원본 방어력 */)
+        /// <summary>전달된 <c>source</c> 값을 사용해 <c>RuntimeDefenses</c>를 생성한다.</summary>
+        private static UnitDefenseStats CreateRuntimeDefenses(UnitDefenseStats source)
         {
             return new UnitDefenseStats
             {
@@ -188,10 +179,8 @@ namespace Pakuri.InGame
             };
         }
 
-        /*
-         * BuildUnitId에 필요한 결과를 만들어 반환한다.
-         */
-        private static string BuildUnitId(string prefix /* 접두어 */, string definitionId /* 정의 식별자 */, int slotIndex /* 배치할 슬롯 순서 번호 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>UnitId</c>를 구성한다.</summary>
+        private static string BuildUnitId(string prefix, string definitionId, int slotIndex)
         {
             return $"{prefix}-{definitionId}-{slotIndex}";
         }

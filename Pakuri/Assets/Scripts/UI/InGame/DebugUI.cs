@@ -1,3 +1,8 @@
+/*
+ * 역할: InGame 개발자 제어 및 진단.
+ * 책임: 런타임 상태를 표시하고 전투·Stage·스킬·상태·스폰 유닛 Debug 동작을 제공한다.
+ */
+
 using System;
 using Pakuri.Data;
 using TMPro;
@@ -5,13 +10,10 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-/*
- * 선택 몬스터의 스킬 학습과 선택지 적용을 직접 시험하는 디버그 UI 컴포넌트.
- * 활성·패시브 슬롯과 강화·최종 강화 버튼을 실제 카탈로그 기준으로 구성하고
- * 선택 결과를 RunSession의 공유 스킬 상태에 기록하고 런타임 스킬을 다시 만든다.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>DebugUI</c> 상태를 Unity UI 또는 월드 오브젝트로 표시한다.</summary>
     public class DebugUI : MonoBehaviour
     {
         private const int TraitButtonCount = 5;
@@ -53,9 +55,7 @@ namespace Pakuri.InGame
         private int activeModifierSlotIndex = -1;
         private bool activeModifierIsPassive;
 
-        /*
-         * Unity가 컴포넌트를 초기화할 때 필요한 참조와 상태를 준비한다.
-         */
+        /// <summary>Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.</summary>
         private void Awake()
         {
             ResolveReferences();
@@ -67,9 +67,7 @@ namespace Pakuri.InGame
             SetPassiveModifiedPanelVisible(false);
         }
 
-        /*
-         * 컴포넌트가 활성화될 때 이벤트와 표시 상태를 연결한다.
-         */
+        /// <summary>Unity가 컴포넌트를 활성화할 때 구독과 활성 상태를 복원한다.</summary>
         private void OnEnable()
         {
             ResolveReferences();
@@ -78,9 +76,7 @@ namespace Pakuri.InGame
             monsterPanelUI?.RefreshNow();
         }
 
-        /*
-         * 매 프레임 현재 상태를 갱신한다.
-         */
+        /// <summary>현재 Unity 프레임에서 <c>Update</c> 갱신 동작을 진행한다.</summary>
         private void Update()
         {
             ResolveReferences();
@@ -93,9 +89,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * Open 작업을 수행한다.
-         */
+        /// <summary><c>Open</c> 작업을 수행한다.</summary>
         public void Open()
         {
             SetPanelVisible(true);
@@ -103,19 +97,15 @@ namespace Pakuri.InGame
             RefreshButtonLabels();
         }
 
-        /*
-         * Close 작업을 수행한다.
-         */
+        /// <summary><c>Close</c> 작업을 수행한다.</summary>
         public void Close()
         {
             SetPanelVisible(false);
             CloseModifiedPanel();
         }
 
-        /*
-         * TryLearnSlot 작업을 시도하고 성공 여부를 반환한다.
-         */
-        private void TryLearnSlot(int slotIndex /* 배치할 슬롯 순서 번호 */)
+        /// <summary>전달된 <c>slotIndex</c> 값을 사용해 <c>LearnSlot</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
+        private void TryLearnSlot(int slotIndex)
         {
             if (slotIndex < 0 || slotIndex >= DebugSlots.Length)
             {
@@ -165,10 +155,8 @@ namespace Pakuri.InGame
             CommitDebugOfferingChoice(session, catalog, monster, null, sourceSkill.SkillId, string.Empty);
         }
 
-        /*
-         * TryLearnPassiveSlot 작업을 시도하고 성공 여부를 반환한다.
-         */
-        private void TryLearnPassiveSlot(int slotIndex /* 배치할 슬롯 순서 번호 */)
+        /// <summary>전달된 <c>slotIndex</c> 값을 사용해 <c>LearnPassiveSlot</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
+        private void TryLearnPassiveSlot(int slotIndex)
         {
             var session = ResolveSession();
             var catalog = ResolveCatalog();
@@ -207,9 +195,7 @@ namespace Pakuri.InGame
             CommitDebugOfferingChoice(session, catalog, monster, null, string.Empty, passive.SkillId);
         }
 
-        /*
-         * RefreshRuntimeSkillModels 대상의 현재 상태를 갱신한다.
-         */
+        /// <summary><c>RuntimeSkillModels</c>를 현재 런타임 모델을 기준으로 갱신한다.</summary>
         private void RefreshRuntimeSkillModels()
         {
             var manager = ResolveCombatManager();
@@ -233,9 +219,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * RefreshButtonLabels 대상의 현재 상태를 갱신한다.
-         */
+        /// <summary><c>ButtonLabels</c>를 현재 런타임 모델을 기준으로 갱신한다.</summary>
         private void RefreshButtonLabels()
         {
             var session = ResolveSession();
@@ -292,9 +276,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * ResolveReferences에 필요한 값을 계산해 현재 상태에 반영한다.
-         */
+        /// <summary><c>References</c>를 결정한다.</summary>
         private void ResolveReferences()
         {
             if (stageManager == null)
@@ -318,9 +300,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * ResolveSceneUi에 필요한 값을 계산해 현재 상태에 반영한다.
-         */
+        /// <summary><c>SceneUi</c>를 결정한다.</summary>
         private void ResolveSceneUi()
         {
             if (debugRootPanel == null)
@@ -398,10 +378,8 @@ namespace Pakuri.InGame
             ResolvePassiveTraitButton(2, "DebugPanel/DebugPassiveModifiedUI/Trait3", "DebugPanel/DebugPassiveModifiedUI/trait3");
         }
 
-        /*
-         * ResolveSkillButton에 필요한 값을 계산해 현재 상태에 반영한다.
-         */
-        private void ResolveSkillButton(int index /* 목록에서의 순서 번호 */, string primaryPath /* 주 대상 경로 */, string fallbackPath /* 대상을 찾지 못했을 때 사용할 경로 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillButton</c>를 결정한다.</summary>
+        private void ResolveSkillButton(int index, string primaryPath, string fallbackPath)
         {
             if (index < 0 || index >= skillButtons.Length || skillButtons[index] != null)
             {
@@ -411,9 +389,7 @@ namespace Pakuri.InGame
             skillButtons[index] = FindButton(primaryPath) ?? FindButton(fallbackPath);
         }
 
-        /*
-         * EnsureSkillButtonArray에 필요한 상태가 준비되어 있는지 확인하고 구성한다.
-         */
+        /// <summary><c>EnsureSkillButtonArray</c> 작업을 수행한다.</summary>
         private void EnsureSkillButtonArray()
         {
             if (skillButtons == null || skillButtons.Length != DebugSlots.Length)
@@ -422,10 +398,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * ResolveModifierOpenButton에 필요한 값을 계산해 현재 상태에 반영한다.
-         */
-        private void ResolveModifierOpenButton(int index /* 목록에서의 순서 번호 */, string primaryPath /* 주 대상 경로 */, string fallbackPath /* 대상을 찾지 못했을 때 사용할 경로 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ModifierOpenButton</c>를 결정한다.</summary>
+        private void ResolveModifierOpenButton(int index, string primaryPath, string fallbackPath)
         {
             if (index < 0 || index >= modifierOpenButtons.Length || modifierOpenButtons[index] != null)
             {
@@ -435,9 +409,7 @@ namespace Pakuri.InGame
             modifierOpenButtons[index] = FindButton(primaryPath) ?? FindButton(fallbackPath);
         }
 
-        /*
-         * EnsureModifierOpenButtonArray에 필요한 상태가 준비되어 있는지 확인하고 구성한다.
-         */
+        /// <summary><c>EnsureModifierOpenButtonArray</c> 작업을 수행한다.</summary>
         private void EnsureModifierOpenButtonArray()
         {
             if (modifierOpenButtons == null || modifierOpenButtons.Length != DebugSlots.Length)
@@ -446,10 +418,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * ResolveTraitButton에 필요한 값을 계산해 현재 상태에 반영한다.
-         */
-        private void ResolveTraitButton(int index /* 목록에서의 순서 번호 */, string primaryPath /* 주 대상 경로 */, string fallbackPath /* 대상을 찾지 못했을 때 사용할 경로 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>TraitButton</c>를 결정한다.</summary>
+        private void ResolveTraitButton(int index, string primaryPath, string fallbackPath)
         {
             if (index < 0 || index >= traitButtons.Length || traitButtons[index] != null)
             {
@@ -459,9 +429,7 @@ namespace Pakuri.InGame
             traitButtons[index] = FindButton(primaryPath) ?? FindButton(fallbackPath);
         }
 
-        /*
-         * EnsureTraitButtonArray에 필요한 상태가 준비되어 있는지 확인하고 구성한다.
-         */
+        /// <summary><c>EnsureTraitButtonArray</c> 작업을 수행한다.</summary>
         private void EnsureTraitButtonArray()
         {
             if (traitButtons == null || traitButtons.Length != TraitButtonCount)
@@ -470,10 +438,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * ResolveMasterButton에 필요한 값을 계산해 현재 상태에 반영한다.
-         */
-        private void ResolveMasterButton(int index /* 목록에서의 순서 번호 */, string primaryPath /* 주 대상 경로 */, string fallbackPath /* 대상을 찾지 못했을 때 사용할 경로 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>MasterButton</c>를 결정한다.</summary>
+        private void ResolveMasterButton(int index, string primaryPath, string fallbackPath)
         {
             if (index < 0 || index >= masterButtons.Length || masterButtons[index] != null)
             {
@@ -483,9 +449,7 @@ namespace Pakuri.InGame
             masterButtons[index] = FindButton(primaryPath) ?? FindButton(fallbackPath);
         }
 
-        /*
-         * EnsureMasterButtonArray에 필요한 상태가 준비되어 있는지 확인하고 구성한다.
-         */
+        /// <summary><c>EnsureMasterButtonArray</c> 작업을 수행한다.</summary>
         private void EnsureMasterButtonArray()
         {
             if (masterButtons == null || masterButtons.Length != MasterButtonCount)
@@ -494,10 +458,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * ResolvePassiveTraitButton에 필요한 값을 계산해 현재 상태에 반영한다.
-         */
-        private void ResolvePassiveTraitButton(int index /* 목록에서의 순서 번호 */, string primaryPath /* 주 대상 경로 */, string fallbackPath /* 대상을 찾지 못했을 때 사용할 경로 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>PassiveTraitButton</c>를 결정한다.</summary>
+        private void ResolvePassiveTraitButton(int index, string primaryPath, string fallbackPath)
         {
             if (index < 0 || index >= passiveTraitButtons.Length || passiveTraitButtons[index] != null)
             {
@@ -507,9 +469,7 @@ namespace Pakuri.InGame
             passiveTraitButtons[index] = FindButton(primaryPath) ?? FindButton(fallbackPath);
         }
 
-        /*
-         * EnsurePassiveTraitButtonArray에 필요한 상태가 준비되어 있는지 확인하고 구성한다.
-         */
+        /// <summary><c>EnsurePassiveTraitButtonArray</c> 작업을 수행한다.</summary>
         private void EnsurePassiveTraitButtonArray()
         {
             if (passiveTraitButtons == null || passiveTraitButtons.Length != PassiveTraitButtonCount)
@@ -518,9 +478,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * BindButtons에 필요한 값을 설정한다.
-         */
+        /// <summary><c>Buttons</c>를 런타임 사건 또는 씬 대상에 연결한다.</summary>
         private void BindButtons()
         {
             BindButton(openButton, Open);
@@ -564,34 +522,26 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * ResolveSession 결과를 계산해 반환한다.
-         */
+        /// <summary><c>Session</c>를 결정한다.</summary>
         private RunSession ResolveSession()
         {
             return stageManager != null ? stageManager.ActiveSession : null;
         }
 
-        /*
-         * ResolveCatalog 결과를 계산해 반환한다.
-         */
+        /// <summary><c>Catalog</c>를 결정한다.</summary>
         private GameDataCatalog ResolveCatalog()
         {
             return GameDataLoader.CurrentCatalog;
         }
 
-        /*
-         * ResolveCombatManager 결과를 계산해 반환한다.
-         */
+        /// <summary><c>CombatManager</c>를 결정한다.</summary>
         private InGameCombatManager ResolveCombatManager()
         {
             ResolveReferences();
             return combatManager;
         }
 
-        /*
-         * ResolveSelectedPlayerEntry 결과를 계산해 반환한다.
-         */
+        /// <summary><c>SelectedPlayerEntry</c>를 결정한다.</summary>
         private CombatUnitEntry ResolveSelectedPlayerEntry()
         {
             var manager = ResolveCombatManager();
@@ -613,10 +563,8 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /*
-         * ResolveMonsterId 결과를 계산해 반환한다.
-         */
-        private static string ResolveMonsterId(RunSession session /* 현재 게임 진행 상태 */, UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>MonsterId</c>를 결정한다.</summary>
+        private static string ResolveMonsterId(RunSession session, UnitCombatState model)
         {
             if (model != null && model.Identity != null && !string.IsNullOrWhiteSpace(model.Identity.DefinitionId))
             {
@@ -631,10 +579,8 @@ namespace Pakuri.InGame
             return string.Empty;
         }
 
-        /*
-         * SetDebugRootPanelVisible에 필요한 값을 설정한다.
-         */
-        private void SetDebugRootPanelVisible(bool visible /* 화면 표시 여부 */)
+        /// <summary>전달된 <c>visible</c> 값을 사용해 <c>DebugRootPanelVisible</c>를 갱신한다.</summary>
+        private void SetDebugRootPanelVisible(bool visible)
         {
             if (debugRootPanel != null)
             {
@@ -642,10 +588,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * SetPanelVisible에 필요한 값을 설정한다.
-         */
-        private void SetPanelVisible(bool visible /* 화면 표시 여부 */)
+        /// <summary>전달된 <c>visible</c> 값을 사용해 <c>PanelVisible</c>를 갱신한다.</summary>
+        private void SetPanelVisible(bool visible)
         {
             if (debugPanel != null)
             {
@@ -653,10 +597,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * SetModifiedPanelVisible에 필요한 값을 설정한다.
-         */
-        private void SetModifiedPanelVisible(bool visible /* 화면 표시 여부 */)
+        /// <summary>전달된 <c>visible</c> 값을 사용해 <c>ModifiedPanelVisible</c>를 갱신한다.</summary>
+        private void SetModifiedPanelVisible(bool visible)
         {
             if (debugModifiedPanel != null)
             {
@@ -664,10 +606,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * SetPassiveModifiedPanelVisible에 필요한 값을 설정한다.
-         */
-        private void SetPassiveModifiedPanelVisible(bool visible /* 화면 표시 여부 */)
+        /// <summary>전달된 <c>visible</c> 값을 사용해 <c>PassiveModifiedPanelVisible</c>를 갱신한다.</summary>
+        private void SetPassiveModifiedPanelVisible(bool visible)
         {
             if (debugPassiveModifiedPanel != null)
             {
@@ -675,9 +615,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * CloseModifiedPanel 작업을 수행한다.
-         */
+        /// <summary><c>CloseModifiedPanel</c> 작업을 수행한다.</summary>
         private void CloseModifiedPanel()
         {
             activeModifierSlotIndex = -1;
@@ -686,10 +624,8 @@ namespace Pakuri.InGame
             SetPassiveModifiedPanelVisible(false);
         }
 
-        /*
-         * OpenModifiedPanelForSlot 작업을 수행한다.
-         */
-        private void OpenModifiedPanelForSlot(int slotIndex /* 배치할 슬롯 순서 번호 */)
+        /// <summary>전달된 <c>slotIndex</c> 값을 사용해 <c>OpenModifiedPanelForSlot</c> 작업을 수행한다.</summary>
+        private void OpenModifiedPanelForSlot(int slotIndex)
         {
             if (slotIndex < 0 || slotIndex >= DebugSlots.Length)
             {
@@ -728,10 +664,8 @@ namespace Pakuri.InGame
             RefreshModifierChoiceButtons();
         }
 
-        /*
-         * OpenPassiveModifiedPanelForSlot 작업을 수행한다.
-         */
-        private void OpenPassiveModifiedPanelForSlot(int slotIndex /* 배치할 슬롯 순서 번호 */)
+        /// <summary>전달된 <c>slotIndex</c> 값을 사용해 <c>OpenPassiveModifiedPanelForSlot</c> 작업을 수행한다.</summary>
+        private void OpenPassiveModifiedPanelForSlot(int slotIndex)
         {
             if (!TryResolvePassiveModifierContext(slotIndex, out var session, out var passive, out var monster))
             {
@@ -759,10 +693,8 @@ namespace Pakuri.InGame
             RefreshModifierChoiceButtons();
         }
 
-        /*
-         * ApplyModifierChoice 처리를 대상에 적용한다.
-         */
-        private void ApplyModifierChoice(bool masterChoice /* 마스터 선택지 여부 */, int choiceIndex /* 선택지 순서 번호 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ModifierChoice</c>를 적용한다.</summary>
+        private void ApplyModifierChoice(bool masterChoice, int choiceIndex)
         {
             if (!TryResolveModifierContext(activeModifierSlotIndex, out var session, out var sourceSkill, out var monster))
             {
@@ -792,10 +724,8 @@ namespace Pakuri.InGame
             RefreshModifierChoiceButtons();
         }
 
-        /*
-         * ApplyPassiveModifierChoice 처리를 대상에 적용한다.
-         */
-        private void ApplyPassiveModifierChoice(int choiceIndex /* 선택지 순서 번호 */)
+        /// <summary>전달된 <c>choiceIndex</c> 값을 사용해 <c>PassiveModifierChoice</c>를 적용한다.</summary>
+        private void ApplyPassiveModifierChoice(int choiceIndex)
         {
             if (!TryResolvePassiveModifierContext(activeModifierSlotIndex, out var session, out var passive, out var monster))
             {
@@ -824,9 +754,7 @@ namespace Pakuri.InGame
             RefreshModifierChoiceButtons();
         }
 
-        /*
-         * RefreshModifierChoiceButtons 대상의 현재 상태를 갱신한다.
-         */
+        /// <summary><c>ModifierChoiceButtons</c>를 현재 런타임 모델을 기준으로 갱신한다.</summary>
         private void RefreshModifierChoiceButtons()
         {
             if (activeModifierIsPassive)
@@ -870,9 +798,7 @@ namespace Pakuri.InGame
             SetModifierButtonsInactive(passiveTraitButtons);
         }
 
-        /*
-         * RefreshPassiveModifierChoiceButtons 대상의 현재 상태를 갱신한다.
-         */
+        /// <summary><c>PassiveModifierChoiceButtons</c>를 현재 런타임 모델을 기준으로 갱신한다.</summary>
         private void RefreshPassiveModifierChoiceButtons()
         {
             if (!TryResolvePassiveModifierContext(activeModifierSlotIndex, out var session, out var passive, out var monster))
@@ -907,15 +833,13 @@ namespace Pakuri.InGame
             SetModifierButtonsInactive(masterButtons);
         }
 
-        /*
-         * BindModifierChoiceButtons에 필요한 값을 설정한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ModifierChoiceButtons</c>를 런타임 사건 또는 씬 대상에 연결한다.</summary>
         private static void BindModifierChoiceButtons(
-            Button[] buttons /* 버튼 목록 */,
-            SkillChoice[] choices /* 선택지 목록 */,
-            RunSession session /* 현재 게임 진행 상태 */,
-            RunSession.RunMonsterState state /* 상태 */,
-            string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */)
+            Button[] buttons,
+            SkillChoice[] choices,
+            RunSession session,
+            RunSession.RunMonsterState state,
+            string sourceSkillId)
         {
             if (buttons == null)
             {
@@ -942,10 +866,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * BuildModifierButtonLabel에 필요한 결과를 만들어 반환한다.
-         */
-        private static string BuildModifierButtonLabel(SkillChoice choice /* 적용하거나 검사할 스킬 선택지 */)
+        /// <summary>전달된 <c>choice</c> 값을 사용해 <c>ModifierButtonLabel</c>를 구성한다.</summary>
+        private static string BuildModifierButtonLabel(SkillChoice choice)
         {
             if (choice == null)
             {
@@ -957,10 +879,8 @@ namespace Pakuri.InGame
                 : string.Format("{0}\n{1}", choice.Title, choice.DescriptionText);
         }
 
-        /*
-         * SetModifierButtonsInactive에 필요한 값을 설정한다.
-         */
-        private static void SetModifierButtonsInactive(Button[] buttons /* 버튼 목록 */)
+        /// <summary>전달된 <c>buttons</c> 값을 사용해 <c>ModifierButtonsInactive</c>를 갱신한다.</summary>
+        private static void SetModifierButtonsInactive(Button[] buttons)
         {
             if (buttons == null)
             {
@@ -976,14 +896,12 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * TryResolveModifierContext 작업을 시도하고 성공 여부를 반환한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ResolveModifierContext</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
         private bool TryResolveModifierContext(
-            int slotIndex /* 배치할 슬롯 순서 번호 */,
-            out RunSession session /* 현재 게임 진행 상태 */,
-            out SkillDefinition sourceSkill /* 발생 원본 스킬 */,
-            out MonsterDefinition monster /* 몬스터 */)
+            int slotIndex,
+            out RunSession session,
+            out SkillDefinition sourceSkill,
+            out MonsterDefinition monster)
         {
             session = ResolveSession();
             sourceSkill = null;
@@ -1018,14 +936,12 @@ namespace Pakuri.InGame
             return sourceSkill != null;
         }
 
-        /*
-         * TryResolvePassiveModifierContext 작업을 시도하고 성공 여부를 반환한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ResolvePassiveModifierContext</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
         private bool TryResolvePassiveModifierContext(
-            int slotIndex /* 배치할 슬롯 순서 번호 */,
-            out RunSession session /* 현재 게임 진행 상태 */,
-            out PassiveSkillDefinition passive /* 패시브 */,
-            out MonsterDefinition monster /* 몬스터 */)
+            int slotIndex,
+            out RunSession session,
+            out PassiveSkillDefinition passive,
+            out MonsterDefinition monster)
         {
             session = ResolveSession();
             passive = null;
@@ -1060,16 +976,14 @@ namespace Pakuri.InGame
             return passive != null;
         }
 
-        /*
-         * CommitDebugOfferingChoice 작업을 수행한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>CommitDebugOfferingChoice</c> 작업을 수행한다.</summary>
         private void CommitDebugOfferingChoice(
-            RunSession session /* 현재 게임 진행 상태 */,
-            GameDataCatalog catalog /* 불러온 게임 데이터 목록 */,
-            MonsterDefinition monster /* 몬스터 */,
-            SkillChoice choice /* 적용하거나 검사할 스킬 선택지 */,
-            string activeSkillId /* 액티브 스킬 식별자 */,
-            string passiveSkillId /* 패시브 스킬 식별자 */)
+            RunSession session,
+            GameDataCatalog catalog,
+            MonsterDefinition monster,
+            SkillChoice choice,
+            string activeSkillId,
+            string passiveSkillId)
         {
             if (session == null || monster == null)
             {
@@ -1096,14 +1010,12 @@ namespace Pakuri.InGame
             monsterPanelUI?.RefreshNow();
         }
 
-        /*
-         * ResolveRewardId 결과를 계산해 반환한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>RewardId</c>를 결정한다.</summary>
         private static string ResolveRewardId(
-            MonsterDefinition monster /* 몬스터 */,
-            SkillChoice choice /* 적용하거나 검사할 스킬 선택지 */,
-            string activeSkillId /* 액티브 스킬 식별자 */,
-            string passiveSkillId /* 패시브 스킬 식별자 */)
+            MonsterDefinition monster,
+            SkillChoice choice,
+            string activeSkillId,
+            string passiveSkillId)
         {
             if (choice == null)
             {
@@ -1135,54 +1047,42 @@ namespace Pakuri.InGame
             return choiceId;
         }
 
-        /*
-         * IsPassiveSlot 조건을 만족하는지 확인한다.
-         */
-        private static bool IsPassiveSlot(int slotIndex /* 배치할 슬롯 순서 번호 */)
+        /// <summary>전달된 <c>slotIndex</c> 값을 사용해 <c>PassiveSlot</c> 조건 충족 여부를 반환한다.</summary>
+        private static bool IsPassiveSlot(int slotIndex)
         {
             return slotIndex >= 0
                 && slotIndex < DebugSlots.Length
                 && DebugSlots[slotIndex] >= SkillSlot.F;
         }
 
-        /*
-         * ResolveModifierButtonName 결과를 계산해 반환한다.
-         */
-        private static string ResolveModifierButtonName(SkillSlot slot /* 스킬이나 유닛이 배치될 슬롯 */)
+        /// <summary>전달된 <c>slot</c> 값을 사용해 <c>ModifierButtonName</c>를 결정한다.</summary>
+        private static string ResolveModifierButtonName(SkillSlot slot)
         {
             return slot >= SkillSlot.E ? "EmodifierBtn" : $"{slot}modifierBtn";
         }
 
-        /*
-         * FindChildObject에 해당하는 값을 찾아 반환한다.
-         */
-        private GameObject FindChildObject(string path /* 불러오거나 검사할 경로 */)
+        /// <summary>전달된 <c>path</c> 값을 사용해 <c>ChildObject</c>를 찾는다.</summary>
+        private GameObject FindChildObject(string path)
         {
             var child = FindChild(path);
             return child != null ? child.gameObject : null;
         }
 
-        /*
-         * FindChild에 해당하는 값을 찾아 반환한다.
-         */
-        private Transform FindChild(string path /* 불러오거나 검사할 경로 */)
+        /// <summary>전달된 <c>path</c> 값을 사용해 <c>Child</c>를 찾는다.</summary>
+        private Transform FindChild(string path)
         {
             return transform.Find(path);
         }
 
-        /*
-         * FindButton에 해당하는 값을 찾아 반환한다.
-         */
-        private Button FindButton(string path /* 불러오거나 검사할 경로 */)
+        /// <summary>전달된 <c>path</c> 값을 사용해 <c>Button</c>를 찾는다.</summary>
+        private Button FindButton(string path)
         {
             var child = FindChild(path);
             return child != null ? child.GetComponent<Button>() : null;
         }
 
-        /*
-         * BindButton에 필요한 값을 설정한다.
-         */
-        private static void BindButton(Button button /* 연결하거나 갱신할 버튼 */, UnityEngine.Events.UnityAction action /* 동작 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Button</c>를 런타임 사건 또는 씬 대상에 연결한다.</summary>
+        private static void BindButton(Button button, UnityEngine.Events.UnityAction action)
         {
             if (button == null || action == null)
             {
@@ -1193,9 +1093,7 @@ namespace Pakuri.InGame
             button.onClick.AddListener(action);
         }
 
-        /*
-         * FindSceneObject에 해당하는 값을 찾아 반환한다.
-         */
+        /// <summary><c>SceneObject</c>를 찾는다.</summary>
         private static T FindSceneObject<T>() where T : UnityEngine.Object
         {
             var objects = Resources.FindObjectsOfTypeAll<T>();

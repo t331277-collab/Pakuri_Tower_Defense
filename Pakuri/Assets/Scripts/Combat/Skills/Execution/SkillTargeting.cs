@@ -1,39 +1,39 @@
+/*
+ * 역할: 공통 스킬 대상 선택.
+ * 책임: 진영·형태·거리·가시성·선택 규칙으로 등록 유닛을 필터링·정렬·선택한다.
+ */
+
 using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
-/*
- * 스킬과 Node가 공유하는 대상 후보, 정렬, 범위 중심, 반경과 반복 배치 계산을 제공한다.
- * 전투 등록 정보는 조회하지만 피해·상태·Visual을 직접 적용하지 않는 순수 선택 경계다.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>SkillDeploymentRepeatMode</c>에서 지원하는 값의 종류를 정의한다.</summary>
     internal enum SkillDeploymentRepeatMode
     {
         RepeatNearest,
         RandomExisting
     }
 
+    /// <summary>대상 진영·거리·형태·정렬 규칙에 따라 등록된 전투 유닛을 선택한다.</summary>
     internal static class SkillTargeting
     {
-        /*
-         * 모든 계열 Executor가 같은 진영·생존·상태 필터와 정렬 규칙을 사용하도록 대상 계산을 집중한다.
-         * 수동 조준 정보가 있으면 이를 우선하고, 없으면 설정된 선택 규칙으로 대체 중심과 대상을 찾는다.
-         */
-        /*
-         * OrderedTargets 결과를 계산해 반환한다.
-         */
+
+        /// <summary>전달된 런타임 입력값을 사용해 <c>OrderedTargets</c> 결과값을 생성해 반환한다.</summary>
         public static List<CombatUnitEntry> OrderedTargets(
-            CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */,
-            UnitSpawnManager unitRoster /* 전투에 등록된 유닛 목록 */,
-            SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */)
+            CombatUnitEntry sourceEntry,
+            UnitSpawnManager unitRoster,
+            SkillTargetingSpec targetingSpec)
         {
-            // 시전자와 Targeting 설정을 기준으로 유효 대상을 정렬하는 부분을 구현.
+
             return OrderedTargets(sourceEntry, unitRoster, targetingSpec, StatusEffectKind.None, 0);
         }
 
+        /// <summary>전달된 런타임 입력값을 사용해 <c>OrderedTargets</c> 결과값을 생성해 반환한다.</summary>
         public static List<CombatUnitEntry> OrderedTargets(
             SkillExecutionContext context,
             SkillTargetingSpec targetingSpec)
@@ -59,6 +59,7 @@ namespace Pakuri.InGame
                 true);
         }
 
+        /// <summary>전달된 런타임 입력값을 사용해 <c>OrderedTargets</c> 결과값을 생성해 반환한다.</summary>
         public static List<CombatUnitEntry> OrderedTargets(
             CombatUnitEntry sourceEntry,
             UnitSpawnManager unitRoster,
@@ -91,15 +92,13 @@ namespace Pakuri.InGame
             return new List<CombatUnitEntry>();
         }
 
-        /*
-         * OrderedTargets 결과를 계산해 반환한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>OrderedTargets</c> 결과값을 생성해 반환한다.</summary>
         public static List<CombatUnitEntry> OrderedTargets(
-            CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */,
-            UnitSpawnManager unitRoster /* 전투에 등록된 유닛 목록 */,
-            SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */,
-            StatusEffectKind requiredStatusKind /* 필수 상태 효과 종류 여부 */,
-            int requiredStatusMinStacks /* 필수 상태 효과 최소 중첩 수 여부 */)
+            CombatUnitEntry sourceEntry,
+            UnitSpawnManager unitRoster,
+            SkillTargetingSpec targetingSpec,
+            StatusEffectKind requiredStatusKind,
+            int requiredStatusMinStacks)
         {
             var candidates = TargetList(
                 sourceEntry,
@@ -121,13 +120,12 @@ namespace Pakuri.InGame
             targets.Sort((left, right) => CompareTargets(sourceEntry, targetingSpec, selection, left, right));
             return targets;
         }
-        /*
-         * 가장 가까운 대상을 찾는다.
-         */
+
+        /// <summary>전달된 런타임 입력값을 사용해 <c>NearestTarget</c>를 찾는다.</summary>
         public static CombatUnitEntry FindNearestTarget(
-            CombatUnitEntry caster /* 스킬을 사용하는 유닛 */,
-            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
-            SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */)
+            CombatUnitEntry caster,
+            UnitSpawnManager roster,
+            SkillTargetingSpec targeting)
         {
             if (caster == null || caster.Transform == null || roster == null)
             {
@@ -291,10 +289,8 @@ namespace Pakuri.InGame
             return best;
         }
 
-        /*
-         * 대상을 방향을 계산한다.
-         */
-        public static Vector2 DirectionToTarget(Vector3 origin /* 시작 위치 */, CombatUnitEntry target /* 효과를 받을 대상의 등록 정보 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>DirectionToTarget</c> 결과값을 생성해 반환한다.</summary>
+        public static Vector2 DirectionToTarget(Vector3 origin, CombatUnitEntry target)
         {
             if (target == null || target.Transform == null)
             {
@@ -306,26 +302,22 @@ namespace Pakuri.InGame
             return direction;
         }
 
-        /*
-         * 대상 목록을 결정한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>TargetList</c> 결과값을 생성해 반환한다.</summary>
         public static IReadOnlyList<CombatUnitEntry> TargetList(
-            CombatUnitEntry caster /* 스킬을 사용하는 유닛 */,
-            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
-            SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */)
+            CombatUnitEntry caster,
+            UnitSpawnManager roster,
+            SkillTargetingSpec targeting)
         {
             return TargetList(caster, roster, targeting, StatusEffectKind.None, 0);
         }
 
-        /*
-         * 대상 목록을 결정한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>TargetList</c> 결과값을 생성해 반환한다.</summary>
         public static IReadOnlyList<CombatUnitEntry> TargetList(
-            CombatUnitEntry caster /* 스킬을 사용하는 유닛 */,
-            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
-            SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */,
-            StatusEffectKind requiredStatusKind /* 필수 상태 효과 종류 여부 */,
-            int requiredStatusMinStacks /* 필수 상태 효과 최소 중첩 수 여부 */)
+            CombatUnitEntry caster,
+            UnitSpawnManager roster,
+            SkillTargetingSpec targeting,
+            StatusEffectKind requiredStatusKind,
+            int requiredStatusMinStacks)
         {
             if (caster == null || roster == null)
             {
@@ -402,6 +394,7 @@ namespace Pakuri.InGame
             return filtered;
         }
 
+        /// <summary>전달된 런타임 입력값을 사용해 소유한 런타임 상태에 <c>ActiveSkillAttribute</c>가 있는지 반환한다.</summary>
         private static bool HasActiveSkillAttribute(
             UnitCombatState target,
             DamageAttribute attribute)
@@ -424,13 +417,11 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /*
-         * 조준 정보와 대상 설정으로 범위 중심점을 결정한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>AreaCenter</c> 결과값을 생성해 반환한다.</summary>
         public static Vector2 AreaCenter(
-            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */,
-            AreaBlueprintSpec area /* 범위 */)
+            SkillExecutionContext context,
+            SkillTargetingSpec targeting,
+            AreaBlueprintSpec area)
         {
             var origin = context.CasterEntry.Transform != null
                 ? context.CasterEntry.Transform.position
@@ -455,10 +446,8 @@ namespace Pakuri.InGame
             return origin;
         }
 
-        /*
-         * 대상 설정에 기록된 기본 반경을 결정한다.
-         */
-        public static float BaseRadius(SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */, AreaBlueprintSpec area /* 범위 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>BaseRadius</c> 결과값을 생성해 반환한다.</summary>
+        public static float BaseRadius(SkillTargetingSpec targeting, AreaBlueprintSpec area)
         {
             if (area != null && area.Radius > 0f)
             {
@@ -468,25 +457,21 @@ namespace Pakuri.InGame
             return targeting != null ? targeting.Radius : 0f;
         }
 
-        /*
-         * 선택지의 반경 배율과 추가값을 적용한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Radius</c> 결과값을 생성해 반환한다.</summary>
         public static float Radius(
-            float baseRadius /* 기본 반지름 */,
-            float radiusMultiplier /* 적용할 반지름 배율 */,
-            float radiusBonus /* 추가할 반지름 */)
+            float baseRadius,
+            float radiusMultiplier,
+            float radiusBonus)
         {
             var radius = baseRadius * Mathf.Max(0f, radiusMultiplier) + radiusBonus;
             return Mathf.Max(0f, radius);
         }
 
-        /*
-         * 반경 변화에 맞는 프리팹 크기 배율을 결정한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>PrefabScaleFactor</c> 결과값을 생성해 반환한다.</summary>
         public static float PrefabScaleFactor(
-            float baseRadius /* 기본 반지름 */,
-            float radiusMultiplier /* 적용할 반지름 배율 */,
-            float radiusBonus /* 추가할 반지름 */)
+            float baseRadius,
+            float radiusMultiplier,
+            float radiusBonus)
         {
             if (baseRadius <= 0.0001f)
             {
@@ -496,16 +481,14 @@ namespace Pakuri.InGame
             return Mathf.Max(0.01f, Radius(baseRadius, radiusMultiplier, radiusBonus) / baseRadius);
         }
 
-        /*
-         * 반복 배치 횟수만큼 서로 다른 대상 위치를 우선 선택한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>TargetAnchoredCenters</c> 결과값을 생성해 반환한다.</summary>
         public static List<Vector2> TargetAnchoredCenters(
-            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */,
-            Vector2 primaryCenter /* 주 대상 중심 위치 */,
-            int deploymentCount /* 배치 개수 */,
-            bool coverAll /* 범위 안의 모든 대상 포함 여부 */,
-            SkillDeploymentRepeatMode repeatMode /* 반복 방식 */)
+            SkillExecutionContext context,
+            SkillTargetingSpec targeting,
+            Vector2 primaryCenter,
+            int deploymentCount,
+            bool coverAll,
+            SkillDeploymentRepeatMode repeatMode)
         {
             var centers = new List<Vector2> { primaryCenter };
             if (deploymentCount <= 1 || coverAll)
@@ -577,10 +560,8 @@ namespace Pakuri.InGame
             return centers;
         }
 
-        /*
-         * 넥서스 대상을 포함하는지 확인한다.
-         */
-        private static bool ContainsNexusTarget(IReadOnlyList<CombatUnitEntry> targets /* 처리할 대상 목록 */)
+        /// <summary>전달된 <c>targets</c> 값을 사용해 소유한 컬렉션에 <c>NexusTarget</c>가 있는지 반환한다.</summary>
+        private static bool ContainsNexusTarget(IReadOnlyList<CombatUnitEntry> targets)
         {
             for (var i = 0; targets != null && i < targets.Count; i++)
             {
@@ -593,15 +574,13 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /*
-         * CompareTargets 작업 결과를 반환한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>CompareTargets</c> 결과값을 생성해 반환한다.</summary>
         private static int CompareTargets(
-            CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */,
-            SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */,
-            SkillTargetSelection selection /* 선택 방식 */,
-            CombatUnitEntry left /* 왼쪽 */,
-            CombatUnitEntry right /* 오른쪽 */)
+            CombatUnitEntry sourceEntry,
+            SkillTargetingSpec targetingSpec,
+            SkillTargetSelection selection,
+            CombatUnitEntry left,
+            CombatUnitEntry right)
         {
             if (left == right)
             {
@@ -655,10 +634,8 @@ namespace Pakuri.InGame
             return leftDistance.CompareTo(rightDistance);
         }
 
-        /*
-         * DistanceSquared 결과를 계산해 반환한다.
-         */
-        private static float DistanceSquared(CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, CombatUnitEntry target /* 효과를 받을 대상의 등록 정보 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>DistanceSquared</c> 결과값을 생성해 반환한다.</summary>
+        private static float DistanceSquared(CombatUnitEntry sourceEntry, CombatUnitEntry target)
         {
             if (sourceEntry == null || sourceEntry.Transform == null || target == null || target.Transform == null)
             {
@@ -670,19 +647,15 @@ namespace Pakuri.InGame
             return offset.sqrMagnitude;
         }
 
-        /*
-         * 유닛이 현재 스킬의 대상으로 지정될 수 있는지 확인한다.
-         */
-        private static bool IsSkillTargetable(CombatUnitEntry entry /* 처리할 등록 정보 */)
+        /// <summary>전달된 <c>entry</c> 값을 사용해 <c>SkillTargetable</c> 조건 충족 여부를 반환한다.</summary>
+        private static bool IsSkillTargetable(CombatUnitEntry entry)
         {
             var identity = entry != null && entry.Model != null ? entry.Model.Identity : null;
             return identity == null || identity.Role != UnitRole.Nexus;
         }
 
-        /*
-         * 필수 상태를 보유하고 있는지 확인한다.
-         */
-        private static bool HasRequiredStatus(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, StatusEffectKind kind /* 처리할 종류 */, int minimumStacks /* 최소 중첩 수 */)
+        /// <summary>전달된 런타임 입력값을 사용해 소유한 런타임 상태에 <c>RequiredStatus</c>가 있는지 반환한다.</summary>
+        private static bool HasRequiredStatus(UnitCombatState model, StatusEffectKind kind, int minimumStacks)
         {
             if (model == null || kind == StatusEffectKind.None)
             {
@@ -698,10 +671,8 @@ namespace Pakuri.InGame
             return model.Statuses != null && model.Statuses.GetStacks(kind) >= minStacks;
         }
 
-        /*
-         * 상태 중첩을 결정한다.
-         */
-        private static int StatusStacks(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, StatusEffectKind kind /* 처리할 종류 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>StatusStacks</c> 결과값을 생성해 반환한다.</summary>
+        private static int StatusStacks(UnitCombatState model, StatusEffectKind kind)
         {
             if (model == null || kind == StatusEffectKind.None)
             {
@@ -726,32 +697,14 @@ namespace Pakuri.InGame
             return 0;
         }
 
-        /*
-         * 추가 효과 정의를 실행용 대상 설정으로 변환한다.
-         */
-
-        /*
-         * 추가 효과가 적용될 중심 위치를 결정한다.
-         */
-
-        /*
-         * 사건 대상이 지정되면 그 대상만 반환하고 아니면 일반 대상 목록을 반환한다.
-         */
-
-        /*
-         * 대상이 추가 효과의 상태, 속성, 체력 조건을 만족하는지 확인한다.
-         */
-
-        /*
-         * 최초 적중 대상과 Nexus를 제외한 반대 진영 유닛을 거리순으로 찾는다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ChainTargets</c> 결과값을 생성해 반환한다.</summary>
         public static List<CombatUnitEntry> ChainTargets(
-            UnitSpawnManager roster /* 전투 유닛 목록 */,
-            CombatUnitEntry sourceEntry /* 시전자 등록 정보 */,
-            UnitCombatState source /* 시전자 */,
-            CombatUnitEntry hitTarget /* 최초 적중 대상 */,
-            Vector2 hitPosition /* 최초 적중 위치 */,
-            float searchRadius /* 검색 반지름 */)
+            UnitSpawnManager roster,
+            CombatUnitEntry sourceEntry,
+            UnitCombatState source,
+            CombatUnitEntry hitTarget,
+            Vector2 hitPosition,
+            float searchRadius)
         {
             var resolved = new List<CombatUnitEntry>();
             if (roster == null || source == null || searchRadius <= 0f)
@@ -830,26 +783,15 @@ namespace Pakuri.InGame
     }
 }
 
-/*
- * 스킬 실행 전에 필요한 Choice, 패시브, 시전자 상태 조건을 판정한다.
- * SkillExecution과 각 Executor가 같은 사전 조건 판정을 공유하도록 한다.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>SkillRequirement</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
     static class SkillRequirement
     {
-        /*
-         * 추가 효과에 설정된 Choice, 패시브, 시전자 상태 조건을 확인한다.
-         */
 
-        /*
-         * 현재 적중 횟수가 추가 효과의 최소 횟수를 만족하는지 확인한다.
-         */
-
-        /*
-         * 시전자가 지정한 상태 또는 보호막 조건을 만족하는지 확인한다.
-         */
-        public static bool HasSourceStatus(UnitCombatState owner /* 정보를 소유한 유닛 */, StatusEffectKind statusKind /* 상태 효과 종류 */, int minimumStacks /* 최소 중첩 수 */)
+        /// <summary>전달된 런타임 입력값을 사용해 소유한 런타임 상태에 <c>SourceStatus</c>가 있는지 반환한다.</summary>
+        public static bool HasSourceStatus(UnitCombatState owner, StatusEffectKind statusKind, int minimumStacks)
         {
             if (statusKind == StatusEffectKind.None)
             {
@@ -866,10 +808,8 @@ namespace Pakuri.InGame
                 && owner.Statuses.GetStacks(statusKind) >= Mathf.Max(1, minimumStacks);
         }
 
-        /*
-         * 유닛의 학습한 패시브 목록에 지정한 ID가 있는지 확인한다.
-         */
-        private static bool HasLearnedPassive(UnitCombatState owner /* 정보를 소유한 유닛 */, string passiveId /* 패시브 식별자 */)
+        /// <summary>전달된 런타임 입력값을 사용해 소유한 런타임 상태에 <c>LearnedPassive</c>가 있는지 반환한다.</summary>
+        private static bool HasLearnedPassive(UnitCombatState owner, string passiveId)
         {
             return owner != null
                 && owner.Skills != null

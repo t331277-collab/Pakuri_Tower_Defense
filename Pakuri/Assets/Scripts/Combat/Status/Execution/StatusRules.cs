@@ -1,26 +1,28 @@
+/*
+ * 역할: 상태 효과 변경 규칙.
+ * 책임: 병합·갱신·중첩·보호막·지속 시간·소비·제거 정책을 적용한다.
+ */
+
 using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
-/*
- * 상태 적용 규칙, 전투 수치 반영, 타입으로 변환된 상태 조건 판정을 담당한다.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>StatusCombatRules</c>에 공통으로 적용되는 런타임 규칙을 구현한다.</summary>
     public static class StatusCombatRules
     {
         private const float MinimumActionMultiplier = 0.05f;
 
-        /*
-         * 상태 적용 확률과 지속시간을 계산해 대상에게 적용한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Status</c>를 적용한다.</summary>
         public static bool ApplyStatus(
-            InGameCombatManager manager /* 전투 진행 관리자 */,
-            UnitCombatState target /* 효과를 받을 대상 유닛 */,
-            ProjectileStatusHitSpec status /* 적용하거나 검사할 상태 효과 */,
-            UnitCombatState source = null /* 효과를 발생시킨 유닛 */)
+            InGameCombatManager manager,
+            UnitCombatState target,
+            ProjectileStatusHitSpec status,
+            UnitCombatState source = null)
         {
             if (manager == null || target == null || status == null || !status.Enabled)
             {
@@ -57,13 +59,11 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /*
-         * ApplicationChance 결과를 계산해 반환한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ApplicationChance</c> 결과값을 생성해 반환한다.</summary>
         public static float ApplicationChance(
-            UnitCombatState target /* 효과를 받을 대상 유닛 */,
-            ProjectileStatusHitSpec status /* 적용하거나 검사할 상태 효과 */,
-            UnitCombatState source = null /* 효과를 발생시킨 유닛 */)
+            UnitCombatState target,
+            ProjectileStatusHitSpec status,
+            UnitCombatState source = null)
         {
             if (status == null || !status.Enabled)
             {
@@ -80,10 +80,8 @@ namespace Pakuri.InGame
             return Mathf.Clamp01(chance - AilmentResistanceBonus(target));
         }
 
-        /*
-         * DurationSeconds 결과를 계산해 반환한다.
-         */
-        private static float DurationSeconds(ProjectileStatusHitSpec status /* 적용하거나 검사할 상태 효과 */, UnitCombatState source /* 효과를 발생시킨 유닛 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>DurationSeconds</c> 결과값을 생성해 반환한다.</summary>
+        private static float DurationSeconds(ProjectileStatusHitSpec status, UnitCombatState source)
         {
             var duration = Mathf.Max(0f, status.DurationSeconds);
             var statusId = status.StatusData.StatusTag;
@@ -96,22 +94,18 @@ namespace Pakuri.InGame
             return duration;
         }
 
-        /*
-         * IsDebuff 조건을 만족하는지 확인한다.
-         */
-        private static bool IsDebuff(StatusRuntimeData statusData /* 상태 효과 실행 데이터 */)
+        /// <summary>전달된 <c>statusData</c> 값을 사용해 <c>Debuff</c> 조건 충족 여부를 반환한다.</summary>
+        private static bool IsDebuff(StatusRuntimeData statusData)
         {
             return statusData.Definition.Classification == StatusEffectClassification.Debuff;
         }
 
-        /*
-         * ApplyThresholdStatus 처리를 대상에 적용한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ThresholdStatus</c>를 적용한다.</summary>
         private static void ApplyThresholdStatus(
-            InGameCombatManager manager /* 전투 진행 관리자 */,
-            UnitCombatState target /* 효과를 받을 대상 유닛 */,
-            ProjectileStatusHitSpec status /* 적용하거나 검사할 상태 효과 */,
-            UnitCombatState source /* 효과를 발생시킨 유닛 */)
+            InGameCombatManager manager,
+            UnitCombatState target,
+            ProjectileStatusHitSpec status,
+            UnitCombatState source)
         {
             if (target.Statuses == null
                 || status.ThresholdStatusSpec == null
@@ -139,15 +133,12 @@ namespace Pakuri.InGame
                 source);
         }
 
-        /*
-         * 주는 추가 피해 설정에 필요한 값을 보관한다.
-         */
+        /// <summary><c>OutgoingAdditionalDamageSpec</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
         internal readonly struct OutgoingAdditionalDamageSpec
         {
-            /*
-             * 주는 추가 피해 설정에 필요한 값을 초기화한다.
-             */
-            public OutgoingAdditionalDamageSpec(float multiplier /* 값에 곱할 배율 */, DamageAttribute triggerAttribute /* 트리거 속성 */, DamageAttribute damageAttribute /* 적용할 피해 속성 */)
+
+            /// <summary><c>OutgoingAdditionalDamageSpec</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+            public OutgoingAdditionalDamageSpec(float multiplier, DamageAttribute triggerAttribute, DamageAttribute damageAttribute)
             {
                 Multiplier = multiplier;
                 TriggerAttribute = triggerAttribute;
@@ -159,10 +150,8 @@ namespace Pakuri.InGame
             public DamageAttribute DamageAttribute { get; }
         }
 
-        /*
-         * 기본 보정값과 상태 중첩을 합쳐 최종 보정량을 계산한다.
-         */
-        public static float ComputeModifierMagnitude(StatusRuntimeData data /* 처리할 실행 데이터 */)
+        /// <summary>전달된 <c>data</c> 값을 사용해 <c>ModifierMagnitude</c>를 계산한다.</summary>
+        public static float ComputeModifierMagnitude(StatusRuntimeData data)
         {
             if (data == null)
             {
@@ -188,90 +177,68 @@ namespace Pakuri.InGame
                 + Mathf.Abs(data.OutgoingAdditionalDamageMultiplier);
         }
 
-        /*
-         * 이동을 가능한 상태인지 확인한다.
-         */
-        public static bool CanMove(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        /// <summary>전달된 <c>model</c> 값을 사용해 <c>Move</c> 실행 가능 여부를 반환한다.</summary>
+        public static bool CanMove(UnitCombatState model)
         {
             return !HasAnyStatus(model, data => !data.CanMove);
         }
 
-        /*
-         * 현재 상태에서 행동할 수 있는지 확인한다.
-         */
-        public static bool CanAct(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        /// <summary>전달된 <c>model</c> 값을 사용해 <c>Act</c> 실행 가능 여부를 반환한다.</summary>
+        public static bool CanAct(UnitCombatState model)
         {
             return !HasAnyStatus(model, data => !data.CanAct);
         }
 
-        /*
-         * 현재 상태에서 특수 스킬을 사용할 수 있는지 확인한다.
-         */
-        public static bool CanUseSpecialSkill(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        /// <summary>전달된 <c>model</c> 값을 사용해 <c>UseSpecialSkill</c> 실행 가능 여부를 반환한다.</summary>
+        public static bool CanUseSpecialSkill(UnitCombatState model)
         {
             return !HasAnyStatus(model, data => !data.CanUseSpecialSkill);
         }
 
-        /*
-         * 행동 속도 배율을 결정한다.
-         */
-        public static float ActionSpeedMultiplier(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        /// <summary>전달된 <c>model</c> 값을 사용해 <c>ActionSpeedMultiplier</c> 결과값을 생성해 반환한다.</summary>
+        public static float ActionSpeedMultiplier(UnitCombatState model)
         {
             return Mathf.Max(MinimumActionMultiplier, 1f + SumStacked(model, data => data.Modifiers.ActionSpeedBonus));
         }
 
-        /*
-         * 이동 속도 배율을 결정한다.
-         */
-        public static float MoveSpeedMultiplier(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        /// <summary>전달된 <c>model</c> 값을 사용해 <c>SpeedMultiplier</c>를 이동시킨다.</summary>
+        public static float MoveSpeedMultiplier(UnitCombatState model)
         {
             return Mathf.Max(0f, 1f + SumStacked(model, data => data.MoveSpeedBonus));
         }
 
-        /*
-         * 공격 능력치 배율을 결정한다.
-         */
-        public static float AttackPowerMultiplier(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        /// <summary>전달된 <c>model</c> 값을 사용해 <c>AttackPowerMultiplier</c> 결과값을 생성해 반환한다.</summary>
+        public static float AttackPowerMultiplier(UnitCombatState model)
         {
             return Mathf.Max(0f, 1f + SumStacked(model, data => data.Modifiers.AttackPowerBonus));
         }
 
-        /*
-         * 주문 능력치 배율을 결정한다.
-         */
-        public static float SpellPowerMultiplier(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        /// <summary>전달된 <c>model</c> 값을 사용해 <c>SpellPowerMultiplier</c> 결과값을 생성해 반환한다.</summary>
+        public static float SpellPowerMultiplier(UnitCombatState model)
         {
             return Mathf.Max(0f, 1f + SumStacked(model, data => data.Modifiers.SpellPowerBonus));
         }
 
-        /*
-         * 보호막 받는 배율을 결정한다.
-         */
-        public static float ShieldReceivedMultiplier(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        /// <summary>전달된 <c>model</c> 값을 사용해 <c>ShieldReceivedMultiplier</c> 결과값을 생성해 반환한다.</summary>
+        public static float ShieldReceivedMultiplier(UnitCombatState model)
         {
             return Mathf.Max(0f, 1f + SumStacked(model, data => data.Modifiers.ShieldReceivedBonus));
         }
 
-        /*
-         * 치명타 확률 보너스를 결정한다.
-         */
-        public static float CriticalChanceBonus(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        /// <summary>전달된 <c>model</c> 값을 사용해 <c>CriticalChanceBonus</c> 결과값을 생성해 반환한다.</summary>
+        public static float CriticalChanceBonus(UnitCombatState model)
         {
             return SumStacked(model, data => data.Modifiers.CritChanceBonusRate);
         }
 
-        /*
-         * 치명타 피해 보너스를 결정한다.
-         */
-        public static float CriticalDamageBonus(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        /// <summary>전달된 <c>model</c> 값을 사용해 <c>CriticalDamageBonus</c> 결과값을 생성해 반환한다.</summary>
+        public static float CriticalDamageBonus(UnitCombatState model)
         {
             return SumStacked(model, data => data.Modifiers.CritDamageBonusRate);
         }
 
-        /*
-         * 주는 피해 보너스를 결정한다.
-         */
-        public static float OutgoingDamageBonus(UnitCombatState source /* 효과를 발생시킨 유닛 */, DamageAttribute attribute /* 피해 속성 */, string sourceSkillId = null /* 효과를 발생시킨 스킬 식별자 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>OutgoingDamageBonus</c> 결과값을 생성해 반환한다.</summary>
+        public static float OutgoingDamageBonus(UnitCombatState source, DamageAttribute attribute, string sourceSkillId = null)
         {
             return SumStacked(source, data =>
             {
@@ -287,10 +254,8 @@ namespace Pakuri.InGame
             });
         }
 
-        /*
-         * 주는 추가 피해 설정을 결정한다.
-         */
-        internal static List<OutgoingAdditionalDamageSpec> OutgoingAdditionalDamageSpecs(UnitCombatState source /* 효과를 발생시킨 유닛 */, DamageAttribute triggerAttribute /* 트리거 속성 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>OutgoingAdditionalDamageSpecs</c> 결과값을 생성해 반환한다.</summary>
+        internal static List<OutgoingAdditionalDamageSpec> OutgoingAdditionalDamageSpecs(UnitCombatState source, DamageAttribute triggerAttribute)
         {
             var results = new List<OutgoingAdditionalDamageSpec>();
             IReadOnlyList<StatusRuntimeInstance> statuses = null;
@@ -328,10 +293,8 @@ namespace Pakuri.InGame
             return results;
         }
 
-        /*
-         * 받는 피해 보너스를 결정한다.
-         */
-        public static float IncomingDamageBonus(UnitCombatState target /* 효과를 받을 대상 유닛 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, DamageAttribute attribute /* 피해 속성 */, string sourceSkillId = null /* 효과를 발생시킨 스킬 식별자 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>IncomingDamageBonus</c> 결과값을 생성해 반환한다.</summary>
+        public static float IncomingDamageBonus(UnitCombatState target, UnitCombatState source, DamageAttribute attribute, string sourceSkillId = null)
         {
             return SumStacked(target, data =>
             {
@@ -355,10 +318,8 @@ namespace Pakuri.InGame
             });
         }
 
-        /*
-         * 원소 저항 감소를 각 상태별 곱연산 배율로 결정한다.
-         */
-        public static float ElementResistMultiplier(UnitCombatState target /* 효과를 받을 대상 유닛 */, DamageAttribute attribute /* 피해 속성 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ElementResistMultiplier</c> 결과값을 생성해 반환한다.</summary>
+        public static float ElementResistMultiplier(UnitCombatState target, DamageAttribute attribute)
         {
             if (target == null || target.Statuses == null)
             {
@@ -391,10 +352,8 @@ namespace Pakuri.InGame
             return multiplier;
         }
 
-        /*
-         * 고정 원소 저항 감소를 결정한다.
-         */
-        public static float FlatElementResistReduction(UnitCombatState target /* 효과를 받을 대상 유닛 */, DamageAttribute attribute /* 피해 속성 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>FlatElementResistReduction</c> 결과값을 생성해 반환한다.</summary>
+        public static float FlatElementResistReduction(UnitCombatState target, DamageAttribute attribute)
         {
             return Mathf.Max(0f, SumStacked(target, data =>
             {
@@ -407,34 +366,26 @@ namespace Pakuri.InGame
             }));
         }
 
-        /*
-         * 치명타 피해 받는 보너스를 결정한다.
-         */
-        public static float CriticalDamageTakenBonus(UnitCombatState target /* 효과를 받을 대상 유닛 */)
+        /// <summary>전달된 <c>target</c> 값을 사용해 <c>CriticalDamageTakenBonus</c> 결과값을 생성해 반환한다.</summary>
+        public static float CriticalDamageTakenBonus(UnitCombatState target)
         {
             return SumStacked(target, data => data.CriticalDamageTakenBonus);
         }
 
-        /*
-         * 상태 이상 저항 보너스를 결정한다.
-         */
-        public static float AilmentResistanceBonus(UnitCombatState target /* 효과를 받을 대상 유닛 */)
+        /// <summary>전달된 <c>target</c> 값을 사용해 <c>AilmentResistanceBonus</c> 결과값을 생성해 반환한다.</summary>
+        public static float AilmentResistanceBonus(UnitCombatState target)
         {
             return Mathf.Clamp01(SumStacked(target, data => data.AilmentResistanceBonus));
         }
 
-        /*
-         * 치명타 저항 보너스를 결정한다.
-         */
-        public static float CriticalResistanceBonus(UnitCombatState target /* 효과를 받을 대상 유닛 */)
+        /// <summary>전달된 <c>target</c> 값을 사용해 <c>CriticalResistanceBonus</c> 결과값을 생성해 반환한다.</summary>
+        public static float CriticalResistanceBonus(UnitCombatState target)
         {
             return SumStacked(target, data => data.CriticalResistanceBonus);
         }
 
-        /*
-         * 조건부 상태 확률 보너스를 결정한다.
-         */
-        public static float ConditionalStatusChanceBonus(UnitCombatState source /* 효과를 발생시킨 유닛 */, UnitCombatState target /* 효과를 받을 대상 유닛 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ConditionalStatusChanceBonus</c> 결과값을 생성해 반환한다.</summary>
+        public static float ConditionalStatusChanceBonus(UnitCombatState source, UnitCombatState target)
         {
             return SumStacked(source, data =>
             {
@@ -447,10 +398,8 @@ namespace Pakuri.InGame
             });
         }
 
-        /*
-         * 적용된 상태 지속시간 보너스를 결정한다.
-         */
-        public static float AppliedStatusDurationBonus(UnitCombatState source /* 효과를 발생시킨 유닛 */, string statusId /* 상태 효과 식별자 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>AppliedStatusDurationBonus</c> 결과값을 생성해 반환한다.</summary>
+        public static float AppliedStatusDurationBonus(UnitCombatState source, string statusId)
         {
             if (string.IsNullOrWhiteSpace(statusId))
             {
@@ -471,10 +420,8 @@ namespace Pakuri.InGame
             });
         }
 
-        /*
-         * 하나 이상의 상태를 보유하고 있는지 확인한다.
-         */
-        private static bool HasAnyStatus(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, System.Func<StatusRuntimeData, bool> predicate /* 판정 조건 */)
+        /// <summary>전달된 런타임 입력값을 사용해 소유한 런타임 상태에 <c>AnyStatus</c>가 있는지 반환한다.</summary>
+        private static bool HasAnyStatus(UnitCombatState model, System.Func<StatusRuntimeData, bool> predicate)
         {
             IReadOnlyList<StatusRuntimeInstance> statuses = null;
             if (model != null && model.Statuses != null)
@@ -504,10 +451,8 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /*
-         * 조건에 맞는 상태 보정값을 중첩 수만큼 합산한다.
-         */
-        private static float SumStacked(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, System.Func<StatusRuntimeData, float> selector /* 선택 함수 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>SumStacked</c> 결과값을 생성해 반환한다.</summary>
+        private static float SumStacked(UnitCombatState model, System.Func<StatusRuntimeData, float> selector)
         {
             IReadOnlyList<StatusRuntimeInstance> statuses = null;
             if (model != null && model.Statuses != null)
@@ -540,10 +485,8 @@ namespace Pakuri.InGame
             return total;
         }
 
-        /*
-         * 런타임 데이터를 결정한다.
-         */
-        private static StatusRuntimeData RuntimeData(StatusRuntimeInstance runtime /* 실행 중인 스킬 정보 */)
+        /// <summary>전달된 <c>runtime</c> 값을 사용해 <c>RuntimeData</c> 결과값을 생성해 반환한다.</summary>
+        private static StatusRuntimeData RuntimeData(StatusRuntimeInstance runtime)
         {
             if (runtime == null)
             {
@@ -553,18 +496,14 @@ namespace Pakuri.InGame
             return runtime.SourceData;
         }
 
-        /*
-         * 피해 속성이 상태 효과 조건과 일치하는지 확인한다.
-         */
-        private static bool MatchesAttribute(StatusRuntimeData data /* 처리할 실행 데이터 */, DamageAttribute attribute /* 피해 속성 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>MatchesAttribute</c> 조건을 평가하고 결과를 반환한다.</summary>
+        private static bool MatchesAttribute(StatusRuntimeData data, DamageAttribute attribute)
         {
             return data != null && data.HasElementModifierTarget && (DamageAttribute)(int)data.ElementModifierTarget == attribute;
         }
 
-        /*
-         * 출처 유닛의 상태가 조건을 만족하는지 확인한다.
-         */
-        private static bool MatchesConditionalSourceStatus(UnitCombatState source /* 효과를 발생시킨 유닛 */, StatusRuntimeData data /* 처리할 실행 데이터 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>MatchesConditionalSourceStatus</c> 조건을 평가하고 결과를 반환한다.</summary>
+        private static bool MatchesConditionalSourceStatus(UnitCombatState source, StatusRuntimeData data)
         {
             if (data == null || data.ConditionalSourceStatusKind == StatusEffectKind.None)
             {
@@ -584,10 +523,8 @@ namespace Pakuri.InGame
             return source.Statuses != null && source.Statuses.Has(data.ConditionalSourceStatusKind);
         }
 
-        /*
-         * 대상 유닛의 상태가 조건을 만족하는지 확인한다.
-         */
-        private static bool MatchesConditionalTargetStatus(UnitCombatState target /* 효과를 받을 대상 유닛 */, StatusRuntimeData data /* 처리할 실행 데이터 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>MatchesConditionalTargetStatus</c> 조건을 평가하고 결과를 반환한다.</summary>
+        private static bool MatchesConditionalTargetStatus(UnitCombatState target, StatusRuntimeData data)
         {
             if (data == null
                 || data.ConditionalTargetStatusKinds == null
@@ -624,18 +561,15 @@ namespace Pakuri.InGame
         }
     }
 
-    /*
-     * 변환된 상태 조건과 스킬 실행 종류 조건이 현재 전투 상태와 맞는지 확인한다.
-     */
+    /// <summary><c>StatusConditionRules</c>에 공통으로 적용되는 런타임 규칙을 구현한다.</summary>
     static class StatusConditionRules
     {
-        /*
-         * MatchesConditionStatus 조건을 만족하는지 확인한다.
-         */
+
+        /// <summary>전달된 런타임 입력값을 사용해 <c>MatchesConditionStatus</c> 조건을 평가하고 결과를 반환한다.</summary>
         public static bool MatchesConditionStatus(
-            UnitCombatState target /* 효과를 받을 대상 유닛 */,
-            StatusConditionGroup[] groups /* 그룹 목록 */,
-            string[] requiredSourceSkillIds /* 필수 발생 원본 스킬 식별자 목록 여부 */)
+            UnitCombatState target,
+            StatusConditionGroup[] groups,
+            string[] requiredSourceSkillIds)
         {
             if (groups == null || groups.Length == 0)
             {
@@ -684,22 +618,18 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /*
-         * MatchesConditionStatus 조건을 만족하는지 확인한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>MatchesConditionStatus</c> 조건을 평가하고 결과를 반환한다.</summary>
         public static bool MatchesConditionStatus(
-            UnitCombatState target /* 효과를 받을 대상 유닛 */,
-            StatusConditionGroup[] groups /* 그룹 목록 */)
+            UnitCombatState target,
+            StatusConditionGroup[] groups)
         {
             return MatchesConditionStatus(target, groups, Array.Empty<string>());
         }
 
-        /*
-         * MatchesConditionStatus 조건을 만족하는지 확인한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>MatchesConditionStatus</c> 조건을 평가하고 결과를 반환한다.</summary>
         public static bool MatchesConditionStatus(
-            StatusRuntimeInstance status /* 실행 중인 상태 효과 */,
-            StatusConditionGroup[] groups /* 그룹 목록 */)
+            StatusRuntimeInstance status,
+            StatusConditionGroup[] groups)
         {
             if (groups == null || groups.Length == 0)
             {
@@ -734,12 +664,10 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /*
-         * MatchesSkillRuntimeKinds 조건을 만족하는지 확인한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>MatchesSkillRuntimeKinds</c> 조건을 평가하고 결과를 반환한다.</summary>
         public static bool MatchesSkillRuntimeKinds(
-            SkillRuntimeKindCondition[] conditions /* 조건 목록 */,
-            string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */)
+            SkillRuntimeKindCondition[] conditions,
+            string sourceSkillId)
         {
             if (conditions == null || conditions.Length == 0)
             {
@@ -776,13 +704,11 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /*
-         * MatchesRequiredSourceSkill 조건을 만족하는지 확인한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>MatchesRequiredSourceSkill</c> 조건을 평가하고 결과를 반환한다.</summary>
         private static bool MatchesRequiredSourceSkill(
-            UnitCombatState target /* 효과를 받을 대상 유닛 */,
-            StatusEffectKind kind /* 처리할 종류 */,
-            string[] requiredSourceSkillIds /* 필수 발생 원본 스킬 식별자 목록 여부 */)
+            UnitCombatState target,
+            StatusEffectKind kind,
+            string[] requiredSourceSkillIds)
         {
             if (requiredSourceSkillIds == null || requiredSourceSkillIds.Length == 0)
             {
@@ -818,10 +744,8 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /*
-         * IsAreaLikeSkill 조건을 만족하는지 확인한다.
-         */
-        private static bool IsAreaLikeSkill(SkillDefinition skill /* 처리할 스킬 정의 */)
+        /// <summary>전달된 <c>skill</c> 값을 사용해 <c>AreaLikeSkill</c> 조건 충족 여부를 반환한다.</summary>
+        private static bool IsAreaLikeSkill(SkillDefinition skill)
         {
             if (skill.RuntimeKind == SkillRuntimeKind.AreaAttack
                 || skill.RuntimeKind == SkillRuntimeKind.Field)

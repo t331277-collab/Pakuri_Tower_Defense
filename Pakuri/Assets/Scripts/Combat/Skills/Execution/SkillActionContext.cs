@@ -1,14 +1,18 @@
+/*
+ * 역할: 불변 스킬 사건 문맥.
+ * 책임: 지연 반응에서 사용할 발생원·대상·위치·피해·적중 수·확정 실행 데이터를 보관한다.
+ */
+
 using UnityEngine;
 
 namespace Pakuri.InGame
 {
-    /* 스킬 lifecycle Trigger에 전달할 사건 값을 불변 형태로 보관한다. */
+
+    /// <summary><c>SkillActionContext</c> 처리에 필요한 불변 실행 문맥을 전달한다.</summary>
     public sealed class SkillActionContext
     {
-        /*
-         * 한 사건에서 고정된 시전자·대상·위치·피해·상태 값을 묶는다.
-         * 지연 Trigger도 발생 당시 값을 유지하도록 생성 이후에는 변경하지 않는다.
-         */
+
+        /// <summary><c>SkillActionContext</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public SkillActionContext(
             UnitCombatState source,
             string sourceSkillId,

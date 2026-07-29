@@ -1,20 +1,24 @@
+/*
+ * 역할: 공통 유닛 전투 모델.
+ * 책임: 유닛 식별·진영·역할·능력치·방어·자원·스킬·상태·적 확장을 정의한다.
+ */
+
 using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
 using UnityEngine;
 
-/*
- * 모든 전투 유닛의 식별, 능력치, 자원, 방어력과 스킬 진행 상태를 한곳에 정의한다.
- * 적 전용 상태만 EnemyCombatState에 추가하고 몬스터와 Nexus는 역할 값으로 구분한다.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>UnitSide</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum UnitSide
     {
         Player,
         Enemy
     }
 
+    /// <summary><c>UnitRole</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum UnitRole
     {
         Monster,
@@ -22,6 +26,7 @@ namespace Pakuri.InGame
         Nexus
     }
 
+    /// <summary><c>UnitIdentity</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
     [Serializable]
     public class UnitIdentity
     {
@@ -33,6 +38,7 @@ namespace Pakuri.InGame
         public int SlotIndex;
     }
 
+    /// <summary><c>UnitCombatStats</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
     [Serializable]
     public class UnitCombatStats
     {
@@ -45,6 +51,7 @@ namespace Pakuri.InGame
         public float CriticalResistance;
     }
 
+    /// <summary><c>UnitDefenseStats</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
     [Serializable]
     public class UnitDefenseStats
     {
@@ -55,10 +62,8 @@ namespace Pakuri.InGame
         public float Darkness;
         public float Holy;
 
-        /*
-         * 피해 속성에 해당하는 방어력을 반환한다.
-         */
-        public float Get(DamageAttribute attribute /* 피해 속성 */)
+        /// <summary>전달된 <c>attribute</c> 값을 사용해 <c>요청값</c>를 반환한다.</summary>
+        public float Get(DamageAttribute attribute)
         {
             switch (attribute)
             {
@@ -80,6 +85,7 @@ namespace Pakuri.InGame
         }
     }
 
+    /// <summary><c>UnitCombatResources</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
     [Serializable]
     public class UnitCombatResources
     {
@@ -88,6 +94,7 @@ namespace Pakuri.InGame
         public float DirectShield;
     }
 
+    /// <summary><c>UnitCombatState</c>의 변경 가능한 런타임 상태를 보관한다.</summary>
     public class UnitCombatState
     {
         public UnitIdentity Identity = new UnitIdentity();
@@ -104,9 +111,7 @@ namespace Pakuri.InGame
 
         public bool IsNexus => Identity.Role == UnitRole.Nexus;
 
-        /*
-         * 직접 보호막과 활성 상태 보호막의 총량을 반환한다.
-         */
+        /// <summary><c>TotalShield</c>를 반환한다.</summary>
         public float GetTotalShield()
         {
             var directShield = Mathf.Max(0f, Resources.DirectShield);
@@ -114,9 +119,7 @@ namespace Pakuri.InGame
             return Mathf.Round(Mathf.Max(0f, directShield + statusShield));
         }
 
-        /*
-         * 직접 보호막과 상태 보호막의 합계를 현재 자원 값에 반영한다.
-         */
+        /// <summary><c>Shield</c>를 현재 원본 상태와 동기화한다.</summary>
         public void SyncShield()
         {
             Resources.DirectShield = Mathf.Round(Mathf.Max(0f, Resources.DirectShield));
@@ -124,6 +127,7 @@ namespace Pakuri.InGame
         }
     }
 
+    /// <summary><c>EnemyCombatState</c>의 변경 가능한 런타임 상태를 보관한다.</summary>
     public class EnemyCombatState : UnitCombatState
     {
         public DamageAttribute Attribute;

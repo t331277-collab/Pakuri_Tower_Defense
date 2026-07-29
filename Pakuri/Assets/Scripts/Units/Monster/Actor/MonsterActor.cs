@@ -1,11 +1,14 @@
+/*
+ * 역할: 플레이어 몬스터 씬과 모델 연결.
+ * 책임: 전투 모델을 월드 표시·애니메이션·패배·부활·대상 Collider 상태에 연결한다.
+ */
+
 using UnityEngine;
 
-/*
- * 아군 Monster GameObject와 전투 상태, 전투 애니메이션을 연결한다.
- * 공통 월드 표시는 UnitWorldDisplay에 맡긴다.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>MonsterActor</c> 런타임 오브젝트를 나타내며 모델과 Unity 컴포넌트를 연결한다.</summary>
     public class MonsterActor : MonoBehaviour
     {
         [SerializeField] private AnimationController animationController;
@@ -16,10 +19,8 @@ namespace Pakuri.InGame
         public UnitCombatState Model { get; private set; }
         public bool IsDefeated => defeated;
 
-        /*
-         * Initialize에 필요한 값을 설정한다.
-         */
-        public void Initialize(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        /// <summary>전달된 <c>model</c> 값을 사용해 <c>소유한 런타임 상태</c>를 초기화한다.</summary>
+        public void Initialize(UnitCombatState model)
         {
             Model = model;
             display = new UnitWorldDisplay(this);
@@ -27,17 +28,13 @@ namespace Pakuri.InGame
             RefreshDisplay();
         }
 
-        /*
-         * ShowDamage 작업을 수행한다.
-         */
-        public void ShowDamage(float damageAmount /* 표시하거나 적용할 피해량 */)
+        /// <summary>전달된 <c>damageAmount</c> 값을 사용해 <c>Damage</c>를 표시한다.</summary>
+        public void ShowDamage(float damageAmount)
         {
             display.ShowDamage(damageAmount);
         }
 
-        /*
-         * TryPlayActiveSkillAnimation 작업을 시도하고 성공 여부를 반환한다.
-         */
+        /// <summary><c>PlayActiveSkillAnimation</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
         public void TryPlayActiveSkillAnimation()
         {
             if (defeated)
@@ -48,9 +45,7 @@ namespace Pakuri.InGame
             ResolveAnimationController()?.PlayRandomAttack();
         }
 
-        /*
-         * TryPlayHitAnimation 작업을 시도하고 성공 여부를 반환한다.
-         */
+        /// <summary><c>PlayHitAnimation</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
         public void TryPlayHitAnimation()
         {
             if (defeated)
@@ -61,9 +56,7 @@ namespace Pakuri.InGame
             ResolveAnimationController()?.PlayHit();
         }
 
-        /*
-         * Defeat 작업을 수행한다.
-         */
+        /// <summary><c>Defeat</c> 작업을 수행한다.</summary>
         public void Defeat()
         {
             if (defeated)
@@ -76,9 +69,7 @@ namespace Pakuri.InGame
             ResolveAnimationController()?.PlayDeath();
         }
 
-        /*
-         * Revive 작업을 수행한다.
-         */
+        /// <summary><c>Revive</c> 작업을 수행한다.</summary>
         public void Revive()
         {
             defeated = false;
@@ -87,17 +78,13 @@ namespace Pakuri.InGame
             RefreshDisplay();
         }
 
-        /*
-         * RefreshDisplay 대상의 현재 상태를 갱신한다.
-         */
+        /// <summary><c>Display</c>를 현재 런타임 모델을 기준으로 갱신한다.</summary>
         public void RefreshDisplay()
         {
             display.Refresh(Model);
         }
 
-        /*
-         * ResolveAnimationController 결과를 계산해 반환한다.
-         */
+        /// <summary><c>AnimationController</c>를 결정한다.</summary>
         private AnimationController ResolveAnimationController()
         {
             if (animationController == null)
@@ -108,10 +95,8 @@ namespace Pakuri.InGame
             return animationController;
         }
 
-        /*
-         * SetTargetCollidersEnabled에 필요한 값을 설정한다.
-         */
-        private void SetTargetCollidersEnabled(bool enabled /* 기능 활성화 여부 */)
+        /// <summary>전달된 <c>enabled</c> 값을 사용해 <c>TargetCollidersEnabled</c>를 갱신한다.</summary>
+        private void SetTargetCollidersEnabled(bool enabled)
         {
             var colliders = GetComponentsInChildren<Collider2D>();
             for (var i = 0; i < colliders.Length; i++)

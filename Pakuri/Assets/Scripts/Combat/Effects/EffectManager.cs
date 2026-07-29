@@ -1,27 +1,32 @@
+/*
+ * 역할: 런타임 스킬 효과 오브젝트 소유.
+ * 책임: 전투 결과와 분리하여 효과 GameObject를 생성·부착·추적·제거·일괄 정리한다.
+ */
+
 using System.Collections.Generic;
 using Pakuri.Data;
 using UnityEngine;
 
-/*
- * 전투 효과 오브젝트의 생성, 상태 비주얼 연결, 제거를 한곳에서 관리한다.
- * 대상 부착 효과는 대상의 자식으로 연결하고, 각 스킬 Actor는 수명이 끝나면 제거를 요청한다.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>EffectCreateRequest</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct EffectCreateRequest
     {
+
+        /// <summary><c>EffectCreateRequest</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public EffectCreateRequest(
-            RuntimeSkillVisualSpec visual /* 런타임 시각 효과 설정 */,
-            GameObject prefab /* 생성할 프리팹 */,
-            string objectName /* 게임 오브젝트 이름 */,
-            Vector3 position /* 배치할 위치 */,
-            Quaternion rotation /* 배치할 회전값 */,
-            Transform targetTransform /* 비주얼을 붙일 대상 */,
-            float durationSeconds /* 표시 시간 */,
-            StatusRuntimeInstance persistentStatus /* 중복을 막고 수명을 소유할 상태 */,
-            bool hitboxIsTrigger /* 피격 판정 트리거 여부 */,
-            bool includeHitbox /* 피격 판정 포함 여부 */,
-            bool createEmptyActor /* 비주얼 없이 Actor를 붙일 빈 오브젝트 생성 여부 */)
+            RuntimeSkillVisualSpec visual,
+            GameObject prefab,
+            string objectName,
+            Vector3 position,
+            Quaternion rotation,
+            Transform targetTransform,
+            float durationSeconds,
+            StatusRuntimeInstance persistentStatus,
+            bool hitboxIsTrigger,
+            bool includeHitbox,
+            bool createEmptyActor)
         {
             Visual = visual;
             Prefab = prefab;
@@ -49,27 +54,26 @@ namespace Pakuri.InGame
         public bool CreateEmptyActor { get; }
     }
 
+    /// <summary><c>EffectManager</c>가 담당하는 작업을 조정하고 공유 런타임 상태를 소유한다.</summary>
     public class EffectManager : MonoBehaviour
     {
         [SerializeField] private Transform runtimeSkillRoot;
         private readonly Dictionary<StatusRuntimeInstance, GameObject> statusEffectVisuals = new Dictionary<StatusRuntimeInstance, GameObject>();
         private readonly HashSet<GameObject> targetAttachedEffects = new HashSet<GameObject>();
 
-        /*
-         * 런타임 비주얼 또는 프리팹으로 효과 오브젝트만 생성
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Object</c>를 생성한다.</summary>
         private GameObject CreateObject(
-            EffectCreateRequest request /* 효과 생성 요청 */,
-            Vector3 position /* 생성 위치 */)
+            EffectCreateRequest request,
+            Vector3 position)
         {
-            if (request.Visual != null && request.Visual.HasVisual()) // 런타임 비주얼 생성
+            if (request.Visual != null && request.Visual.HasVisual())
             {
                 var instance = CreateRuntimeObject(request.ObjectName, position, request.Rotation);
                 EffectVisualBuilder.Configure(instance, request.Visual, request.HitboxIsTrigger, request.IncludeHitbox);
                 return instance;
             }
 
-            if (request.Prefab != null) // 프리팹 생성 Rin - D, E 전용
+            if (request.Prefab != null)
             {
                 return Instantiate(request.Prefab, position, request.Rotation, runtimeSkillRoot);
             }
@@ -82,21 +86,17 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /*
-         * 생성한 비주얼(버프, 상태이상)을 대상에 자식으로 붙인다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>VisualToTarget</c>를 연결한다.</summary>
         private static void AttachVisualToTarget(GameObject instance, Transform targetTransform)
         {
             instance.transform.SetParent(targetTransform, true);
         }
 
-        /*
-         * 비주얼이나 프리팹이 없을 때 스킬 Actor를 붙일 빈 오브젝트를 생성
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>RuntimeObject</c>를 생성한다.</summary>
         private GameObject CreateRuntimeObject(
-            string objectName /* 게임 오브젝트 이름 */,
-            Vector3 position /* 배치할 위치 */,
-            Quaternion rotation /* 배치할 회전값 */)
+            string objectName,
+            Vector3 position,
+            Quaternion rotation)
         {
             var instance = new GameObject(objectName);
             instance.transform.SetParent(runtimeSkillRoot, false);
@@ -104,10 +104,8 @@ namespace Pakuri.InGame
             return instance;
         }
 
-        /*
-         * 이펙트 생성기
-         */
-        public GameObject CreateEffect(EffectCreateRequest request /* 효과 생성 요청 */)
+        /// <summary>전달된 <c>request</c> 값을 사용해 <c>Effect</c>를 생성한다.</summary>
+        public GameObject CreateEffect(EffectCreateRequest request)
         {
             GameObject instance = null;
             var created = false;
@@ -159,12 +157,10 @@ namespace Pakuri.InGame
             return instance;
         }
 
-        /*
-         * 효과 등록을 해제하고 오브젝트를 삭제한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Effect</c>를 소유한 런타임 상태에서 제거한다.</summary>
         public void RemoveEffect(
-            GameObject instance /* 제거할 효과 오브젝트 */,
-            StatusRuntimeInstance status = null /* 연결된 상태 효과 */)
+            GameObject instance,
+            StatusRuntimeInstance status = null)
         {
             if (status != null)
             {
@@ -185,9 +181,7 @@ namespace Pakuri.InGame
             Destroy(instance);
         }
 
-        /*
-         * 스킬 루트 아래의 모든 효과를 RemoveEffect를 통해 정리한다.
-         */
+        /// <summary><c>Effects</c>를 소유한 런타임 상태에서 비운다.</summary>
         public void ClearEffects()
         {
             var attachedEffects = new List<GameObject>(targetAttachedEffects);

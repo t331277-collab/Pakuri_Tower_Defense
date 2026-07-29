@@ -1,19 +1,21 @@
+/*
+ * 역할: 적 대상 및 스킬 판단.
+ * 책임: 플레이어 또는 아군 대상을 선택하고 유효한 공격·지원·전투 시작 스킬을 결정한다.
+ */
+
 using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
-/*
- * 적이 공격할 대상과 사용할 스킬을 결정한다.
- * 실제 이동과 스킬 실행은 하지 않고 선택 결과만 반환한다.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>EnemyCombatDecision</c>가 담당하는 런타임 판단을 결정한다.</summary>
     internal static class EnemyCombatDecision
     {
-        /*
-         * 가장 가까운 일반 플레이어를 찾고 없으면 넥서스를 반환한다.
-         */
-        public static CombatUnitEntry FindNearestPlayerTarget(CombatUnitEntry enemyEntry /* 적 등록 정보 */, UnitSpawnManager registry /* 전투 유닛 등록 관리자 */)
+
+        /// <summary>전달된 런타임 입력값을 사용해 <c>NearestPlayerTarget</c>를 찾는다.</summary>
+        public static CombatUnitEntry FindNearestPlayerTarget(CombatUnitEntry enemyEntry, UnitSpawnManager registry)
         {
             var best = FindNearestPlayerTarget(enemyEntry, registry, includeNexus: false);
             if (best != null)
@@ -21,17 +23,14 @@ namespace Pakuri.InGame
                 return best;
             }
 
-            // 일반 플레이어가 없을 때만 넥서스를 대상으로 선택한다.
             return FindNearestPlayerTarget(enemyEntry, registry, includeNexus: true);
         }
 
-        /*
-         * 넥서스 포함 여부가 일치하는 살아 있는 플레이어 중 가장 가까운 대상을 찾는다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>NearestPlayerTarget</c>를 찾는다.</summary>
         private static CombatUnitEntry FindNearestPlayerTarget(
-            CombatUnitEntry enemyEntry /* 적 등록 정보 */,
-            UnitSpawnManager registry /* 전투 유닛 등록 관리자 */,
-            bool includeNexus /* 포함 넥서스 여부 */)
+            CombatUnitEntry enemyEntry,
+            UnitSpawnManager registry,
+            bool includeNexus)
         {
             var players = registry.Players;
             CombatUnitEntry best = null;
@@ -46,16 +45,16 @@ namespace Pakuri.InGame
                 }
 
                 var isNexus = candidate.Model.IsNexus;
-                // 1차 검색은 일반 플레이어만, 2차 검색은 넥서스만 통과시킨다.
+
                 if (isNexus != includeNexus)
                 {
                     continue;
                 }
 
                 var offset = candidate.Transform.position - origin;
-                // 전투 거리는 XY 평면만 사용한다.
+
                 offset.z = 0f;
-                // 제곱 거리는 제곱근 계산 없이 같은 근접 순서를 비교할 수 있다.
+
                 var distanceSq = offset.sqrMagnitude;
                 if (distanceSq >= bestDistanceSq)
                 {
@@ -69,10 +68,8 @@ namespace Pakuri.InGame
             return best;
         }
 
-        /*
-         * 체력이 감소한 살아 있는 적 유닛 중 체력 비율이 가장 낮은 아군을 찾는다.
-         */
-        public static CombatUnitEntry FindLowestHealthEnemyAlly(UnitSpawnManager registry /* 전투 유닛 등록 관리자 */)
+        /// <summary>전달된 <c>registry</c> 값을 사용해 <c>LowestHealthEnemyAlly</c>를 찾는다.</summary>
+        public static CombatUnitEntry FindLowestHealthEnemyAlly(UnitSpawnManager registry)
         {
             var enemies = registry.Enemies;
             CombatUnitEntry best = null;
@@ -88,15 +85,14 @@ namespace Pakuri.InGame
 
                 var resources = candidate.Model.Resources;
                 var stats = candidate.Model.Stats;
-                // 최대 체력이 없는 유닛은 비율 비교에서 제외한다.
+
                 if (stats.MaxHealth <= 0f)
                 {
                     continue;
                 }
 
                 var healthRatio = Mathf.Clamp01(resources.CurrentHealth / stats.MaxHealth);
-                // 체력이 가득 찼거나 현재 후보보다 건강한 유닛은 제외한다.
-                // 같은 체력 비율이면 등록소에서 먼저 발견한 유닛을 유지한다.
+
                 if (healthRatio >= 1f || healthRatio >= bestHealthRatio)
                 {
                     continue;
@@ -109,16 +105,14 @@ namespace Pakuri.InGame
             return best;
         }
 
-        /*
-         * 실행 가능한 특수 공격을 우선하고, 없으면 기본 공격을 선택한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>OffensiveSkill</c>를 결정한다.</summary>
         public static SkillUseState ResolveOffensiveSkill(
-            CombatUnitEntry enemyEntry /* 적 등록 정보 */,
-            EnemyCombatState enemyModel /* 적 상태 모델 */,
-            SkillUseState specialRuntime /* 특수 런타임 */,
-            bool canUseSpecialSkill /* 가능 사용 특수 스킬 여부 */,
-            SkillExecution skillExecution /* 스킬 실행 */,
-            UnitSpawnManager registry /* 전투 유닛 등록 관리자 */)
+            CombatUnitEntry enemyEntry,
+            EnemyCombatState enemyModel,
+            SkillUseState specialRuntime,
+            bool canUseSpecialSkill,
+            SkillExecution skillExecution,
+            UnitSpawnManager registry)
         {
             if (specialRuntime != null
                 && canUseSpecialSkill
@@ -139,10 +133,8 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /*
-         * 지정 슬롯의 스킬을 찾고 전투 시작 전용 스킬은 일반 행동에서 제외한다.
-         */
-        public static SkillUseState ResolveSelectableSkill(EnemyCombatState enemyModel /* 적 상태 모델 */, SkillSlot slot /* 스킬이나 유닛이 배치될 슬롯 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>SelectableSkill</c>를 결정한다.</summary>
+        public static SkillUseState ResolveSelectableSkill(EnemyCombatState enemyModel, SkillSlot slot)
         {
             var runtime = enemyModel.SkillState.FindBySlot(slot);
             if (HasCombatStartTrigger(runtime))
@@ -153,18 +145,14 @@ namespace Pakuri.InGame
             return runtime;
         }
 
-        /*
-         * IsSupportSkill 조건을 만족하는지 확인한다.
-         */
-        public static bool IsSupportSkill(SkillUseState runtime /* 실행 중인 스킬 정보 */)
+        /// <summary>전달된 <c>runtime</c> 값을 사용해 <c>SupportSkill</c> 조건 충족 여부를 반환한다.</summary>
+        public static bool IsSupportSkill(SkillUseState runtime)
         {
             return runtime != null && runtime.Data.Targeting.TargetSide != SkillTargetSide.Enemy;
         }
 
-        /*
-         * 회복 스킬은 체력이 감소한 적 아군이 있을 때만 사용한다.
-         */
-        public static bool CanExecuteSupportSkill(SkillUseState runtime /* 실행 중인 스킬 정보 */, UnitSpawnManager registry /* 전투 유닛 등록 관리자 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ExecuteSupportSkill</c> 실행 가능 여부를 반환한다.</summary>
+        public static bool CanExecuteSupportSkill(SkillUseState runtime, UnitSpawnManager registry)
         {
             if (runtime.Data is BuffHealSkillDefinition)
             {
@@ -174,10 +162,8 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /*
-         * HasCombatStartTrigger 조건을 만족하는지 확인한다.
-         */
-        private static bool HasCombatStartTrigger(SkillUseState runtime /* 실행 중인 스킬 정보 */)
+        /// <summary>전달된 <c>runtime</c> 값을 사용해 소유한 런타임 상태에 <c>CombatStartTrigger</c>가 있는지 반환한다.</summary>
+        private static bool HasCombatStartTrigger(SkillUseState runtime)
         {
             if (runtime == null)
             {

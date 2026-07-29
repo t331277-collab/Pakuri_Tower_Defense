@@ -1,3 +1,8 @@
+/*
+ * 역할: Line 스킬 전달 조정.
+ * 책임: Line 시전을 확정하고 Actor와 비주얼을 생성해 공통 충돌 규칙으로 적중을 전달한다.
+ */
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -5,43 +10,27 @@ using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
-/*
- * 직선 공격을 준비하고 생성한 오브젝트의 처리를 LineSkillActor에 맡긴다.
- */
 namespace Pakuri.InGame
 {
 
+    /// <summary><c>LineSkillExecutor</c>에 해당하는 런타임 동작을 실행한다.</summary>
     internal static class LineSkillExecutor
     {
-        // 직선 공격의 방향, 길이, 폭, 지속시간을 조립하고 Actor 생성을 구현.
-        /*
-         * 현재 스킬의 노드 효과 중 요청한 실행 시점에 맞는 효과를 적용한다.
-         */
-
-        /*
-         * 추가 효과의 지연시간이 지난 뒤 같은 Executor에서 효과를 적용한다.
-         */
-
-        /*
-         * 추가 효과 종류에 맞는 실제 적용 기능을 호출한다.
-         */
 
         private static bool applyingHitEnhancement;
 
-        /*
-         * 적중 후 추가 피해, 연쇄 피해, 재장전 감소 강화 효과를 적용한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>HitEnhancements</c>를 적용한다.</summary>
         internal static void ApplyHitEnhancements(
-            InGameCombatManager manager /* 전투 진행 관리자 */,
-            UnitSpawnManager roster /* 전투 유닛 목록 */,
-            SkillUseState runtime /* 실행 중인 스킬 */,
-            SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
-            CombatUnitEntry sourceEntry /* 시전자 등록 정보 */,
-            UnitCombatState source /* 시전자 */,
-            string sourceSkillId /* 원본 스킬 식별자 */,
-            CombatUnitEntry hitTarget /* 최초 적중 대상 */,
-            Vector2 hitPosition /* 최초 적중 위치 */,
-            float primaryBaseDamage /* 최초 적중 기본 피해 */)
+            InGameCombatManager manager,
+            UnitSpawnManager roster,
+            SkillUseState runtime,
+            SkillExecutionData skillData,
+            CombatUnitEntry sourceEntry,
+            UnitCombatState source,
+            string sourceSkillId,
+            CombatUnitEntry hitTarget,
+            Vector2 hitPosition,
+            float primaryBaseDamage)
         {
             if (manager != null && roster != null && source != null && hitTarget != null && hitTarget.Model != null)
             {
@@ -160,13 +149,11 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * 요청받은 Line 스킬을 실행한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>설정된 런타임 작업</c>를 실행한다.</summary>
         internal static bool Execute(
-            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
-            LineSkillDefinition skill /* 실행하거나 검사할 스킬 */)
+            SkillExecutionContext context,
+            SkillExecutionData snapshot,
+            LineSkillDefinition skill)
         {
             var origin = context.CasterEntry.Transform != null
                 ? context.CasterEntry.Transform.position
@@ -197,16 +184,14 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /*
-         * 같은 시전에서 예약된 추가 직선 공격을 순서대로 실행한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>RepeatedLineCasts</c>를 실행한다.</summary>
         private static IEnumerator ExecuteRepeatedLineCasts(
-            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
-            LineSkillDefinition skill /* 실행하거나 검사할 스킬 */,
-            Vector2 origin /* 직선 시작 위치 */,
-            IReadOnlyList<Vector2> directions /* 반복별 직선 진행 방향 */,
-            float repeatIntervalSeconds /* 반복 간격 */)
+            SkillExecutionContext context,
+            SkillExecutionData snapshot,
+            LineSkillDefinition skill,
+            Vector2 origin,
+            IReadOnlyList<Vector2> directions,
+            float repeatIntervalSeconds)
         {
             for (var i = 1; i < directions.Count; i++)
             {
@@ -224,15 +209,12 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * 자동 시전은 반복 수만큼 가까운 서로 다른 대상 방향을 만들고,
-         * 수동 조준은 입력한 방향을 모든 반복에 유지한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>CastDirections</c> 결과값을 생성해 반환한다.</summary>
         private static List<Vector2> CastDirections(
-            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            LineSkillDefinition skill /* 실행하거나 검사할 스킬 */,
-            Vector2 origin /* 직선 시작 위치 */,
-            int repeatCount /* 한 번의 시전에서 실행할 총 횟수 */)
+            SkillExecutionContext context,
+            LineSkillDefinition skill,
+            Vector2 origin,
+            int repeatCount)
         {
             var directions = new List<Vector2>(repeatCount);
             if (context.HasManualAimDirection)
@@ -280,15 +262,13 @@ namespace Pakuri.InGame
             return directions;
         }
 
-        /*
-         * 한 번의 직선 공격을 실행한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Once</c>를 실행한다.</summary>
         private static bool ExecuteOnce(
-            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
-            LineSkillDefinition skill /* 실행하거나 검사할 스킬 */,
-            Vector2 origin /* 직선 시작 위치 */,
-            Vector2 direction /* 직선 진행 방향 */)
+            SkillExecutionContext context,
+            SkillExecutionData snapshot,
+            LineSkillDefinition skill,
+            Vector2 origin,
+            Vector2 direction)
         {
             var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick);
             var attribute = skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element;
@@ -369,36 +349,28 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /*
-         * Line 길이를 결정한다.
-         */
-        private static float LineLength(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */)
+        /// <summary>전달된 <c>skill</c> 값을 사용해 <c>LineLength</c> 결과값을 생성해 반환한다.</summary>
+        private static float LineLength(LineSkillDefinition skill)
         {
             return Mathf.Max(0.1f, skill != null ? skill.LineLength : 0f);
         }
 
-        /*
-         * 한 번의 시전에서 실행할 직선 공격 횟수를 결정한다.
-         */
-        private static int CastRepeatCount(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>CastRepeatCount</c> 결과값을 생성해 반환한다.</summary>
+        private static int CastRepeatCount(LineSkillDefinition skill, SkillExecutionData snapshot)
         {
             var baseCount = skill != null ? skill.CastRepeatCount : 1;
             var bonus = snapshot != null ? snapshot.LineCastRepeatCountBonus : 0;
             return Mathf.Max(1, baseCount + bonus);
         }
 
-        /*
-         * 직선 공격 반복 간격을 결정한다.
-         */
-        private static float CastRepeatInterval(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */)
+        /// <summary>전달된 <c>skill</c> 값을 사용해 <c>CastRepeatInterval</c> 결과값을 생성해 반환한다.</summary>
+        private static float CastRepeatInterval(LineSkillDefinition skill)
         {
             return Mathf.Max(0f, skill != null ? skill.CastRepeatIntervalSeconds : 0f);
         }
 
-        /*
-         * 지속시간을 결정한다.
-         */
-        private static float Duration(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Duration</c> 결과값을 생성해 반환한다.</summary>
+        private static float Duration(LineSkillDefinition skill, SkillExecutionData snapshot)
         {
             var timing = skill != null ? skill.Timing : null;
             var duration = timing != null && timing.ActiveDuration > 0f
@@ -412,10 +384,8 @@ namespace Pakuri.InGame
             return Mathf.Max(0.05f, duration);
         }
 
-        /*
-         * Line 너비를 결정한다.
-         */
-        private static float LineWidth(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>LineWidth</c> 결과값을 생성해 반환한다.</summary>
+        private static float LineWidth(LineSkillDefinition skill, SkillExecutionData snapshot)
         {
             var width = skill != null ? skill.LineWidth : 0f;
             if (snapshot != null)
@@ -426,10 +396,8 @@ namespace Pakuri.InGame
             return Mathf.Max(0.1f, width);
         }
 
-        /*
-         * 밀쳐내기 거리를 결정한다.
-         */
-        private static float KnockbackDistance(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>KnockbackDistance</c> 결과값을 생성해 반환한다.</summary>
+        private static float KnockbackDistance(LineSkillDefinition skill, SkillExecutionData snapshot)
         {
             var distance = skill != null ? Mathf.Max(0f, skill.KnockbackDistance) : 0f;
             if (snapshot != null)
@@ -440,20 +408,16 @@ namespace Pakuri.InGame
             return Mathf.Max(0f, distance);
         }
 
-        /*
-         * Line 비주얼 너비 크기를 결정한다.
-         */
-        private static float LineVisualWidthScale(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        /// <summary>전달된 <c>snapshot</c> 값을 사용해 <c>LineVisualWidthScale</c> 결과값을 생성해 반환한다.</summary>
+        private static float LineVisualWidthScale(SkillExecutionData snapshot)
         {
             return snapshot != null
                 ? Mathf.Max(0.01f, 1f + snapshot.BeamWidthBonus)
                 : 1f;
         }
 
-        /*
-         * 주기 간격을 결정한다.
-         */
-        private static float TickInterval(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Interval</c>를 경과 시간 기준으로 갱신한다.</summary>
+        private static float TickInterval(LineSkillDefinition skill, SkillExecutionData snapshot)
         {
             var interval = TickInterval(skill);
             if (snapshot != null)
@@ -464,10 +428,8 @@ namespace Pakuri.InGame
             return Mathf.Max(0.05f, interval);
         }
 
-        /*
-         * 주기 간격을 결정한다.
-         */
-        private static float TickInterval(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */)
+        /// <summary>전달된 <c>skill</c> 값을 사용해 <c>Interval</c>를 경과 시간 기준으로 갱신한다.</summary>
+        private static float TickInterval(LineSkillDefinition skill)
         {
             var timing = skill != null ? skill.Timing : null;
             return timing != null && timing.TickInterval > 0f
@@ -475,12 +437,5 @@ namespace Pakuri.InGame
                 : 0.1f;
         }
 
-        /*
-         * 적중 상태 효과를 결정한다.
-         */
-
-        /*
-         * 시전 효과를 결정한다.
-         */
     }
 }

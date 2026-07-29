@@ -1,19 +1,23 @@
+/*
+ * 역할: 몬스터 및 보상 저작 정의.
+ * 책임: 플레이 가능 몬스터의 표시·능력치·에셋·스킬·보상 선택지 데이터를 보관한다.
+ */
+
 using System;
 using Pakuri.Combat;
 using Pakuri.InGame;
 using UnityEngine;
 
-/*
- * CSV에서 구성되는 플레이어 몬스터의 능력치, 외형, 스킬 정보를 보관한다.
- */
 namespace Pakuri.Data
 {
+
+    /// <summary><c>MonsterDefinition</c>의 저작 데이터와 런타임 설정을 정의한다.</summary>
     public class MonsterDefinition : ScriptableObject
     {
+
+        /// <summary><c>RewardChoiceDefinition</c>의 저작 데이터와 런타임 설정을 정의한다.</summary>
         [Serializable]
-        /*
-         * 초기 보상에서 연결할 액티브·패시브 스킬 ID를 보관한다.
-         */
+
         public class RewardChoiceDefinition
         {
             public string RewardId = "reward-id";
@@ -21,7 +25,6 @@ namespace Pakuri.Data
             public string PassiveSkillId = string.Empty;
         }
 
-        // 몬스터 식별과 표시 정보
         public string MonsterId = "monster-id";
         public string DisplayName = "Monster";
         [TextArea(2, 4)] public string RoleSummary = "Role summary.";
@@ -40,15 +43,14 @@ namespace Pakuri.Data
         };
         public UnitDefenseStats Defenses = new UnitDefenseStats();
 
-        // 런 선택 화면에 표시할 전투력
         public float PowerStat = 30f;
 
         [Header("Initial Reward Loop")]
-        // 전투 시작 시 제시할 보상 선택지
+
         public RewardChoiceDefinition[] InitialRewardChoices = Array.Empty<RewardChoiceDefinition>();
 
         [Header("Full Skill Data")]
-        // 공용 스킬 런타임으로 전달할 전체 스킬과 Trigger
+
         public SkillDefinition[] ActiveSkills = Array.Empty<SkillDefinition>();
         public PassiveSkillDefinition[] PassiveSkills = Array.Empty<PassiveSkillDefinition>();
         public SkillTriggerDefinition[] SkillTriggers = Array.Empty<SkillTriggerDefinition>();

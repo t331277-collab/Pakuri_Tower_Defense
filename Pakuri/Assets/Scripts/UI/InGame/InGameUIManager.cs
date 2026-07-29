@@ -1,3 +1,8 @@
+/*
+ * 역할: 주 InGame UI 조정.
+ * 책임: 씬 Control을 연결하고 스킬 Slot·자원·Stage·보상·선택·Panel을 갱신한다.
+ */
+
 using System;
 using System.Collections.Generic;
 using Pakuri.Data;
@@ -5,13 +10,10 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/*
- * 인게임 진행과 보상 선택 화면을 한 흐름으로 연결하는 UI 컴포넌트.
- * 스테이지·재화·감옥 파티 정보를 갱신하고 전투 보상 버튼을 구성하며
- * Offering의 스킬·강화 선택과 포로 Menifest 결과를 RunSession과 전투 모델에 반영한다.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>InGameUIManager</c>가 담당하는 작업을 조정하고 공유 런타임 상태를 소유한다.</summary>
     public class InGameUIManager : MonoBehaviour
     {
         private const int PrisonPartySlotCount = 5;
@@ -57,9 +59,7 @@ namespace Pakuri.InGame
         private OfferingUI offeringUI;
         private MenifestUI menifestUI;
 
-        /*
-         * Unity가 컴포넌트를 초기화할 때 필요한 참조와 상태를 준비한다.
-         */
+        /// <summary>Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.</summary>
         private void Awake()
         {
             ResolveReferences();
@@ -68,9 +68,7 @@ namespace Pakuri.InGame
             HideTransientPanels();
         }
 
-        /*
-         * 매 프레임 현재 상태를 갱신한다.
-         */
+        /// <summary>현재 Unity 프레임에서 <c>Update</c> 갱신 동작을 진행한다.</summary>
         private void Update()
         {
             ResolveReferences();
@@ -89,9 +87,7 @@ namespace Pakuri.InGame
             ShowRewardPanel();
         }
 
-        /*
-         * ShowRewardPanel 작업을 수행한다.
-         */
+        /// <summary><c>RewardPanel</c>를 표시한다.</summary>
         private void ShowRewardPanel()
         {
             shownStage = stageManager.CurrentStage;
@@ -141,10 +137,8 @@ namespace Pakuri.InGame
             RefreshInfo();
         }
 
-        /*
-         * OpenPrisonPanel 작업을 수행한다.
-         */
-        private void OpenPrisonPanel(RewardButtonView view /* 화면 요소 */)
+        /// <summary>전달된 <c>view</c> 값을 사용해 <c>OpenPrisonPanel</c> 작업을 수행한다.</summary>
+        private void OpenPrisonPanel(RewardButtonView view)
         {
             if (view == null || view.Consumed)
             {
@@ -158,10 +152,8 @@ namespace Pakuri.InGame
             RefreshPrisonPanel();
         }
 
-        /*
-         * ClaimMaterialReward 작업을 수행한다.
-         */
-        private void ClaimMaterialReward(RewardButtonView view /* 화면 요소 */, int gold /* 골드 */, int darkTrace /* 어둠 흔적 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ClaimMaterialReward</c> 작업을 수행한다.</summary>
+        private void ClaimMaterialReward(RewardButtonView view, int gold, int darkTrace)
         {
             if (view == null || view.Consumed)
             {
@@ -179,9 +171,7 @@ namespace Pakuri.InGame
             RefreshInfo();
         }
 
-        /*
-         * ContinueToNextDay 작업을 수행한다.
-         */
+        /// <summary><c>ContinueToNextDay</c> 작업을 수행한다.</summary>
         private void ContinueToNextDay()
         {
             HideTransientPanels();
@@ -196,9 +186,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * RefreshInfo 대상의 현재 상태를 갱신한다.
-         */
+        /// <summary><c>Info</c>를 현재 런타임 모델을 기준으로 갱신한다.</summary>
         private void RefreshInfo()
         {
             var session = ResolveSession();
@@ -240,9 +228,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * ResolveReferences에 필요한 값을 계산해 현재 상태에 반영한다.
-         */
+        /// <summary><c>References</c>를 결정한다.</summary>
         private void ResolveReferences()
         {
             if (stageManager == null)
@@ -261,9 +247,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * ResolveSceneUi에 필요한 값을 계산해 현재 상태에 반영한다.
-         */
+        /// <summary><c>SceneUi</c>를 결정한다.</summary>
         private void ResolveSceneUi()
         {
             rewardPanel = FindChildObject("RewardPanel");
@@ -319,9 +303,7 @@ namespace Pakuri.InGame
             darkInfoText = FindText("Info/Darkinfo");
         }
 
-        /*
-         * ResolvePrisonPanelUi에 필요한 값을 계산해 현재 상태에 반영한다.
-         */
+        /// <summary><c>PrisonPanelUi</c>를 결정한다.</summary>
         private void ResolvePrisonPanelUi()
         {
             prisonPanel = FindChildObject("PrisonPanel");
@@ -343,9 +325,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * RefreshPrisonPanel 대상의 현재 상태를 갱신한다.
-         */
+        /// <summary><c>PrisonPanel</c>를 현재 런타임 모델을 기준으로 갱신한다.</summary>
         private void RefreshPrisonPanel()
         {
             RefreshInfo();
@@ -369,14 +349,12 @@ namespace Pakuri.InGame
             RefreshSelectedPrisoner();
         }
 
-        /*
-         * RefreshPrisonPartySlot 대상의 현재 상태를 갱신한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>PrisonPartySlot</c>를 현재 런타임 모델을 기준으로 갱신한다.</summary>
         private void RefreshPrisonPartySlot(
-            PrisonPartySlotView slot /* 스킬이나 유닛이 배치될 슬롯 */,
-            string monsterId /* 몬스터 식별자 */,
-            bool isOccupied /* 여부 사용 중인 여부 */,
-            bool isNextManifestSlot /* 여부 다음 현현 슬롯 여부 */)
+            PrisonPartySlotView slot,
+            string monsterId,
+            bool isOccupied,
+            bool isNextManifestSlot)
         {
             if (slot == null)
             {
@@ -414,9 +392,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * RefreshSelectedPrisoner 대상의 현재 상태를 갱신한다.
-         */
+        /// <summary><c>SelectedPrisoner</c>를 현재 런타임 모델을 기준으로 갱신한다.</summary>
         private void RefreshSelectedPrisoner()
         {
             var prisonerId = activePrisonerButton != null ? activePrisonerButton.PrisonerId : string.Empty;
@@ -434,10 +410,8 @@ namespace Pakuri.InGame
 
         }
 
-        /*
-         * ResolveMonsterPortrait 결과를 계산해 반환한다.
-         */
-        private Sprite ResolveMonsterPortrait(string monsterId /* 몬스터 식별자 */, MonsterDefinition monster /* 몬스터 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>MonsterPortrait</c>를 결정한다.</summary>
+        private Sprite ResolveMonsterPortrait(string monsterId, MonsterDefinition monster)
         {
             if (string.Equals(monsterId, "ariel", StringComparison.OrdinalIgnoreCase))
             {
@@ -472,9 +446,7 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /*
-         * BindStaticButtons에 필요한 값을 설정한다.
-         */
+        /// <summary><c>StaticButtons</c>를 런타임 사건 또는 씬 대상에 연결한다.</summary>
         private void BindStaticButtons()
         {
             BindButton(nextButton, ContinueToNextDay);
@@ -486,10 +458,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * ActivatePrisonPartySlot 작업을 수행한다.
-         */
-        private void ActivatePrisonPartySlot(int slotIndex /* 배치할 슬롯 순서 번호 */)
+        /// <summary>전달된 <c>slotIndex</c> 값을 사용해 <c>ActivatePrisonPartySlot</c> 작업을 수행한다.</summary>
+        private void ActivatePrisonPartySlot(int slotIndex)
         {
             if (slotIndex < 0 || slotIndex >= prisonPartySlots.Length)
             {
@@ -519,9 +489,7 @@ namespace Pakuri.InGame
             SetActive(prisonPanel, false);
         }
 
-        /*
-         * CompletePrisonAction 작업을 수행한다.
-         */
+        /// <summary><c>PrisonAction</c>를 완료한다.</summary>
         private void CompletePrisonAction()
         {
             SetActive(prisonPanel, false);
@@ -532,9 +500,7 @@ namespace Pakuri.InGame
             RefreshInfo();
         }
 
-        /*
-         * HideTransientPanels 작업을 수행한다.
-         */
+        /// <summary><c>TransientPanels</c>를 숨긴다.</summary>
         private void HideTransientPanels()
         {
             SetActive(rewardPanel, false);
@@ -544,10 +510,8 @@ namespace Pakuri.InGame
             menifestUI?.Hide();
         }
 
-        /*
-         * CreateRewardButton에 필요한 결과를 만들어 반환한다.
-         */
-        private Button CreateRewardButton(Button template /* 원본 틀 */, string namePrefix /* 이름 접두어 */, int order /* 순서 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>RewardButton</c>를 생성한다.</summary>
+        private Button CreateRewardButton(Button template, string namePrefix, int order)
         {
             if (template == null || rewardButtonContainer == null)
             {
@@ -562,20 +526,16 @@ namespace Pakuri.InGame
             return button;
         }
 
-        /*
-         * RegisterRewardButton 작업 결과를 반환한다.
-         */
-        private RewardButtonView RegisterRewardButton(Button button /* 연결하거나 갱신할 버튼 */, RewardKind kind /* 처리할 종류 */, int amount /* 적용할 수치 */, string prisonerId /* 수감자 식별자 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>RewardButton</c>를 소유 런타임 Registry에 등록한다.</summary>
+        private RewardButtonView RegisterRewardButton(Button button, RewardKind kind, int amount, string prisonerId)
         {
             var view = new RewardButtonView(button, kind, amount, prisonerId);
             rewardButtons.Add(view);
             return view;
         }
 
-        /*
-         * ArrangeRewardButton 작업을 수행한다.
-         */
-        private void ArrangeRewardButton(Button button /* 연결하거나 갱신할 버튼 */, int order /* 순서 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ArrangeRewardButton</c> 작업을 수행한다.</summary>
+        private void ArrangeRewardButton(Button button, int order)
         {
             var rect = button != null ? button.transform as RectTransform : null;
             var baseRect = prisonerTemplateButton != null ? prisonerTemplateButton.transform as RectTransform : null;
@@ -596,9 +556,7 @@ namespace Pakuri.InGame
             rect.anchoredPosition = new Vector2(x, y);
         }
 
-        /*
-         * ClearClonedRewardButtons 작업을 수행한다.
-         */
+        /// <summary><c>ClonedRewardButtons</c>를 소유한 런타임 상태에서 비운다.</summary>
         private void ClearClonedRewardButtons()
         {
             for (var i = 0; i < rewardButtons.Count; i++)
@@ -617,9 +575,7 @@ namespace Pakuri.InGame
             SetTemplateActive(darkTemplateButton, false);
         }
 
-        /*
-         * ConsumePrisonerButton 작업을 수행한다.
-         */
+        /// <summary><c>PrisonerButton</c>를 현재 런타임 상태에서 소비한다.</summary>
         private void ConsumePrisonerButton()
         {
             if (activePrisonerButton != null)
@@ -628,26 +584,20 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * ResolveSession 결과를 계산해 반환한다.
-         */
+        /// <summary><c>Session</c>를 결정한다.</summary>
         private RunSession ResolveSession()
         {
             return stageManager != null ? stageManager.ActiveSession : null;
         }
 
-        /*
-         * ResolveCatalog 결과를 계산해 반환한다.
-         */
+        /// <summary><c>Catalog</c>를 결정한다.</summary>
         private GameDataCatalog ResolveCatalog()
         {
             return GameDataLoader.CurrentCatalog;
         }
 
-        /*
-         * ResolvePrisonerDisplayName 결과를 계산해 반환한다.
-         */
-        private string ResolvePrisonerDisplayName(string prisonerId /* 수감자 식별자 */)
+        /// <summary>전달된 <c>prisonerId</c> 값을 사용해 <c>PrisonerDisplayName</c>를 결정한다.</summary>
+        private string ResolvePrisonerDisplayName(string prisonerId)
         {
             var enemy = GameDataLoader.CurrentCatalog.GetData<EnemyDefinition>(prisonerId);
             if (enemy != null && !string.IsNullOrWhiteSpace(enemy.DisplayName))
@@ -658,81 +608,63 @@ namespace Pakuri.InGame
             return string.IsNullOrWhiteSpace(prisonerId) ? "Unknown" : prisonerId;
         }
 
-        /*
-         * ResolveCombatManager 결과를 계산해 반환한다.
-         */
+        /// <summary><c>CombatManager</c>를 결정한다.</summary>
         private InGameCombatManager ResolveCombatManager()
         {
             ResolveReferences();
             return combatManager;
         }
 
-        /*
-         * ResolveStageManager 결과를 계산해 반환한다.
-         */
+        /// <summary><c>StageManager</c>를 결정한다.</summary>
         private StageManager ResolveStageManager()
         {
             ResolveReferences();
             return stageManager;
         }
 
-        /*
-         * ResolveUnitSpawnManager 결과를 계산해 반환한다.
-         */
+        /// <summary><c>UnitSpawnManager</c>를 결정한다.</summary>
         private UnitSpawnManager ResolveUnitSpawnManager()
         {
             ResolveReferences();
             return unitSpawnManager;
         }
 
-        /*
-         * FindChildObject에 해당하는 값을 찾아 반환한다.
-         */
-        private GameObject FindChildObject(string path /* 불러오거나 검사할 경로 */)
+        /// <summary>전달된 <c>path</c> 값을 사용해 <c>ChildObject</c>를 찾는다.</summary>
+        private GameObject FindChildObject(string path)
         {
             var found = FindChild(path);
             return found != null ? found.gameObject : null;
         }
 
-        /*
-         * FindChild에 해당하는 값을 찾아 반환한다.
-         */
-        private Transform FindChild(string path /* 불러오거나 검사할 경로 */)
+        /// <summary>전달된 <c>path</c> 값을 사용해 <c>Child</c>를 찾는다.</summary>
+        private Transform FindChild(string path)
         {
             return transform.Find(path);
         }
 
-        /*
-         * FindButton에 해당하는 값을 찾아 반환한다.
-         */
-        private Button FindButton(string path /* 불러오거나 검사할 경로 */)
+        /// <summary>전달된 <c>path</c> 값을 사용해 <c>Button</c>를 찾는다.</summary>
+        private Button FindButton(string path)
         {
             var child = FindChild(path);
             return child != null ? child.GetComponent<Button>() : null;
         }
 
-        /*
-         * FindText에 해당하는 값을 찾아 반환한다.
-         */
-        private TMP_Text FindText(string path /* 불러오거나 검사할 경로 */)
+        /// <summary>전달된 <c>path</c> 값을 사용해 <c>Text</c>를 찾는다.</summary>
+        private TMP_Text FindText(string path)
         {
             var child = FindChild(path);
             return child != null ? child.GetComponent<TMP_Text>() : null;
         }
 
-        /*
-         * FindImage에 해당하는 값을 찾아 반환한다.
-         */
-        private Image FindImage(string path /* 불러오거나 검사할 경로 */)
+        /// <summary>전달된 <c>path</c> 값을 사용해 <c>Image</c>를 찾는다.</summary>
+        private Image FindImage(string path)
         {
             var child = FindChild(path);
             return child != null ? child.GetComponent<Image>() : null;
         }
 
-        /*
-         * BindButton에 필요한 값을 설정한다.
-         */
-        private static void BindButton(Button button /* 연결하거나 갱신할 버튼 */, UnityEngine.Events.UnityAction action /* 동작 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Button</c>를 런타임 사건 또는 씬 대상에 연결한다.</summary>
+        private static void BindButton(Button button, UnityEngine.Events.UnityAction action)
         {
             if (button == null)
             {
@@ -743,10 +675,8 @@ namespace Pakuri.InGame
             button.onClick.AddListener(action);
         }
 
-        /*
-         * SetButtonLabel에 필요한 값을 설정한다.
-         */
-        private static void SetButtonLabel(Button button /* 연결하거나 갱신할 버튼 */, string text /* 텍스트 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ButtonLabel</c>를 갱신한다.</summary>
+        private static void SetButtonLabel(Button button, string text)
         {
             if (button == null)
             {
@@ -760,10 +690,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * SetTemplateActive에 필요한 값을 설정한다.
-         */
-        private static void SetTemplateActive(Button button /* 연결하거나 갱신할 버튼 */, bool active /* 대상 활성화 여부 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>TemplateActive</c>를 갱신한다.</summary>
+        private static void SetTemplateActive(Button button, bool active)
         {
             if (button != null)
             {
@@ -771,10 +699,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * SetActive에 필요한 값을 설정한다.
-         */
-        private static void SetActive(GameObject target /* 활성화하거나 변경할 게임 오브젝트 */, bool active /* 대상 활성화 여부 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Active</c>를 갱신한다.</summary>
+        private static void SetActive(GameObject target, bool active)
         {
             if (target != null)
             {
@@ -782,9 +708,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * FindSceneObject에 해당하는 값을 찾아 반환한다.
-         */
+        /// <summary><c>SceneObject</c>를 찾는다.</summary>
         private static T FindSceneObject<T>() where T : UnityEngine.Object
         {
             var objects = Resources.FindObjectsOfTypeAll<T>();
@@ -800,17 +724,17 @@ namespace Pakuri.InGame
             return null;
         }
 
+        /// <summary><c>PrisonPartySlotView</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
         private class PrisonPartySlotView
         {
-            /*
-             * PrisonPartySlotView에 필요한 값을 초기화한다.
-             */
+
+            /// <summary><c>PrisonPartySlotView</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
             public PrisonPartySlotView(
-                Image image /* 이미지 */,
-                TMP_Text nameText /* 이름 텍스트 */,
-                Button button /* 연결하거나 갱신할 버튼 */,
-                GameObject reinforcementLabel /* 증원 표시 문구 */,
-                GameObject menifestedLabel /* 현현 상태 표시 문구 */)
+                Image image,
+                TMP_Text nameText,
+                Button button,
+                GameObject reinforcementLabel,
+                GameObject menifestedLabel)
             {
                 Image = image;
                 NameText = nameText;
@@ -826,14 +750,13 @@ namespace Pakuri.InGame
             public GameObject MenifestedLabel { get; }
         }
 
+        /// <summary><c>RewardButtonView</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
         internal class RewardButtonView
         {
             private readonly Color originalColor;
 
-            /*
-             * RewardButtonView에 필요한 값을 초기화한다.
-             */
-            public RewardButtonView(Button button /* 연결하거나 갱신할 버튼 */, RewardKind kind /* 처리할 종류 */, int amount /* 적용할 수치 */, string prisonerId /* 수감자 식별자 */)
+            /// <summary><c>RewardButtonView</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+            public RewardButtonView(Button button, RewardKind kind, int amount, string prisonerId)
             {
                 Button = button;
                 Kind = kind;
@@ -848,9 +771,7 @@ namespace Pakuri.InGame
             public string PrisonerId { get; }
             public bool Consumed { get; private set; }
 
-            /*
-             * SetConsumed에 필요한 값을 설정한다.
-             */
+            /// <summary><c>Consumed</c>를 갱신한다.</summary>
             public void SetConsumed()
             {
                 Consumed = true;
@@ -867,6 +788,7 @@ namespace Pakuri.InGame
             }
         }
 
+        /// <summary><c>RewardKind</c>에서 지원하는 값의 종류를 정의한다.</summary>
         internal enum RewardKind
         {
             Prisoner,
@@ -875,6 +797,7 @@ namespace Pakuri.InGame
         }
     }
 
+    /// <summary><c>OfferingUI</c> 상태를 Unity UI 또는 월드 오브젝트로 표시한다.</summary>
     internal class OfferingUI
     {
         private const int MaxOfferingChoices = 3;
@@ -892,19 +815,17 @@ namespace Pakuri.InGame
         private readonly Action completePrisonAction;
         private readonly Action refreshInfo;
 
-        /*
-         * OfferingUI에 필요한 값을 초기화한다.
-         */
+        /// <summary><c>OfferingUI</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public OfferingUI(
-            GameObject offeringPanel /* 공물 패널 */,
-            Button[] offeringChoiceButtons /* 공물 선택지 버튼 목록 */,
-            Func<RunSession> resolveSession /* 찾기 게임 진행 상태 */,
-            Func<GameDataCatalog> resolveCatalog /* 찾기 데이터 목록 */,
-            Func<InGameCombatManager> resolveCombatManager /* 찾기 전투 관리자 */,
-            Func<InGameUIManager.RewardButtonView> resolveActivePrisonerButton /* 찾기 활성 수감자 버튼 */,
-            Action consumePrisonerButton /* 소모 수감자 버튼 */,
-            Action completePrisonAction /* 완료 감옥 동작 */,
-            Action refreshInfo /* 갱신 정보 */)
+            GameObject offeringPanel,
+            Button[] offeringChoiceButtons,
+            Func<RunSession> resolveSession,
+            Func<GameDataCatalog> resolveCatalog,
+            Func<InGameCombatManager> resolveCombatManager,
+            Func<InGameUIManager.RewardButtonView> resolveActivePrisonerButton,
+            Action consumePrisonerButton,
+            Action completePrisonAction,
+            Action refreshInfo)
         {
             this.offeringPanel = offeringPanel;
             this.offeringChoiceButtons = offeringChoiceButtons ?? Array.Empty<Button>();
@@ -918,10 +839,8 @@ namespace Pakuri.InGame
             this.refreshInfo = refreshInfo;
         }
 
-        /*
-         * OpenOfferingPanel 작업 결과를 반환한다.
-         */
-        public bool OpenOfferingPanel(string monsterId /* 몬스터 식별자 */)
+        /// <summary>전달된 <c>monsterId</c> 값을 사용해 <c>OpenOfferingPanel</c> 조건을 평가하고 결과를 반환한다.</summary>
+        public bool OpenOfferingPanel(string monsterId)
         {
             var activePrisonerButton = resolveActivePrisonerButton?.Invoke();
             if (activePrisonerButton == null
@@ -967,18 +886,14 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /*
-         * Hide 작업을 수행한다.
-         */
+        /// <summary><c>요청값</c>를 숨긴다.</summary>
         public void Hide()
         {
             SetActive(offeringPanel, false);
         }
 
-        /*
-         * CommitOfferingChoice 작업을 수행한다.
-         */
-        private void CommitOfferingChoice(int choiceIndex /* 선택지 순서 번호 */)
+        /// <summary>전달된 <c>choiceIndex</c> 값을 사용해 <c>CommitOfferingChoice</c> 작업을 수행한다.</summary>
+        private void CommitOfferingChoice(int choiceIndex)
         {
             var session = resolveSession?.Invoke();
             var activePrisonerButton = resolveActivePrisonerButton?.Invoke();
@@ -1012,10 +927,8 @@ namespace Pakuri.InGame
             completePrisonAction?.Invoke();
         }
 
-        /*
-         * BuildOfferingChoices에 필요한 결과를 구성한다.
-         */
-        private void BuildOfferingChoices(string monsterId /* 몬스터 식별자 */)
+        /// <summary>전달된 <c>monsterId</c> 값을 사용해 <c>OfferingChoices</c>를 구성한다.</summary>
+        private void BuildOfferingChoices(string monsterId)
         {
             offeringChoices.Clear();
             var session = resolveSession?.Invoke();
@@ -1047,10 +960,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * AddActiveSkillChoices 작업을 수행한다.
-         */
-        private void AddActiveSkillChoices(RunSession session /* 현재 게임 진행 상태 */, MonsterDefinition monster /* 몬스터 */, RunSession.RunMonsterState state /* 상태 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ActiveSkillChoices</c>를 소유한 런타임 상태에 추가한다.</summary>
+        private void AddActiveSkillChoices(RunSession session, MonsterDefinition monster, RunSession.RunMonsterState state)
         {
             if (monster == null || state == null)
             {
@@ -1079,10 +990,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * AddPassiveSkillChoices 작업을 수행한다.
-         */
-        private void AddPassiveSkillChoices(RunSession session /* 현재 게임 진행 상태 */, MonsterDefinition monster /* 몬스터 */, RunSession.RunMonsterState state /* 상태 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>PassiveSkillChoices</c>를 소유한 런타임 상태에 추가한다.</summary>
+        private void AddPassiveSkillChoices(RunSession session, MonsterDefinition monster, RunSession.RunMonsterState state)
         {
             if (monster == null || state == null)
             {
@@ -1111,10 +1020,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * AddEnhancementChoices 작업을 수행한다.
-         */
-        private void AddEnhancementChoices(RunSession session /* 현재 게임 진행 상태 */, MonsterDefinition monster /* 몬스터 */, RunSession.RunMonsterState state /* 상태 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>EnhancementChoices</c>를 소유한 런타임 상태에 추가한다.</summary>
+        private void AddEnhancementChoices(RunSession session, MonsterDefinition monster, RunSession.RunMonsterState state)
         {
             if (monster == null || state == null)
             {
@@ -1156,10 +1063,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * ResolveChoice 결과를 계산해 반환한다.
-         */
-        private static SkillChoice ResolveChoice(string choiceId /* 스킬 선택지 식별자 */)
+        /// <summary>전달된 <c>choiceId</c> 값을 사용해 <c>Choice</c>를 결정한다.</summary>
+        private static SkillChoice ResolveChoice(string choiceId)
         {
             if (string.IsNullOrWhiteSpace(choiceId))
             {
@@ -1175,10 +1080,8 @@ namespace Pakuri.InGame
             return choice;
         }
 
-        /*
-         * ResolveChoiceIcon 결과를 계산해 반환한다.
-         */
-        private static Sprite ResolveChoiceIcon(SkillChoice choice /* 적용하거나 검사할 스킬 선택지 */)
+        /// <summary>전달된 <c>choice</c> 값을 사용해 <c>ChoiceIcon</c>를 결정한다.</summary>
+        private static Sprite ResolveChoiceIcon(SkillChoice choice)
         {
             if (choice == null)
             {
@@ -1209,13 +1112,11 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /*
-         * BuildEnhancementSkillName에 필요한 결과를 만들어 반환한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>EnhancementSkillName</c>를 구성한다.</summary>
         private static string BuildEnhancementSkillName(
-            MonsterDefinition monster /* 몬스터 */,
-            MonsterDefinition.RewardChoiceDefinition reward /* 보상 */,
-            SkillChoice choice /* 적용하거나 검사할 스킬 선택지 */)
+            MonsterDefinition monster,
+            MonsterDefinition.RewardChoiceDefinition reward,
+            SkillChoice choice)
         {
             var sourceName = ResolveLinkedSkillDisplayName(monster, reward, choice);
             var choiceTitle = choice != null && !string.IsNullOrWhiteSpace(choice.Title)
@@ -1232,13 +1133,11 @@ namespace Pakuri.InGame
             return string.IsNullOrWhiteSpace(choiceTitle) ? sourceName : $"{sourceName}·{choiceTitle}";
         }
 
-        /*
-         * ResolveLinkedSkillDisplayName 결과를 계산해 반환한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>LinkedSkillDisplayName</c>를 결정한다.</summary>
         private static string ResolveLinkedSkillDisplayName(
-            MonsterDefinition monster /* 몬스터 */,
-            MonsterDefinition.RewardChoiceDefinition reward /* 보상 */,
-            SkillChoice choice /* 적용하거나 검사할 스킬 선택지 */)
+            MonsterDefinition monster,
+            MonsterDefinition.RewardChoiceDefinition reward,
+            SkillChoice choice)
         {
             var targetSkillId = choice != null ? choice.TargetSkillId : string.Empty;
             var choiceSkillId = choice != null ? choice.SkillId : string.Empty;
@@ -1255,10 +1154,8 @@ namespace Pakuri.InGame
             return ResolveSkillDisplayName(monster, id);
         }
 
-        /*
-         * ResolveSkillDisplayName 결과를 계산해 반환한다.
-         */
-        private static string ResolveSkillDisplayName(MonsterDefinition monster /* 몬스터 */, string skillId /* 스킬 식별자 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillDisplayName</c>를 결정한다.</summary>
+        private static string ResolveSkillDisplayName(MonsterDefinition monster, string skillId)
         {
             if (string.IsNullOrWhiteSpace(skillId))
             {
@@ -1306,17 +1203,13 @@ namespace Pakuri.InGame
             return skillId;
         }
 
-        /*
-         * ResolveChoiceDisplayName 결과를 계산해 반환한다.
-         */
-        private static string ResolveChoiceDisplayName(string displayName /* 표시 이름 */, string fallback /* 기본 결과가 없을 때 사용할 값 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ChoiceDisplayName</c>를 결정한다.</summary>
+        private static string ResolveChoiceDisplayName(string displayName, string fallback)
         {
             return string.IsNullOrWhiteSpace(displayName) ? fallback : displayName.Trim();
         }
 
-        /*
-         * RefreshRuntimeSkillModels 대상의 현재 상태를 갱신한다.
-         */
+        /// <summary><c>RuntimeSkillModels</c>를 현재 런타임 모델을 기준으로 갱신한다.</summary>
         private void RefreshRuntimeSkillModels()
         {
             var combatManager = resolveCombatManager?.Invoke();
@@ -1341,9 +1234,7 @@ namespace Pakuri.InGame
             RefreshSceneMonsterActorSkillModels();
         }
 
-        /*
-         * RefreshSceneMonsterActorSkillModels 대상의 현재 상태를 갱신한다.
-         */
+        /// <summary><c>SceneMonsterActorSkillModels</c>를 현재 런타임 모델을 기준으로 갱신한다.</summary>
         private static void RefreshSceneMonsterActorSkillModels()
         {
             var actors = Resources.FindObjectsOfTypeAll<MonsterActor>();
@@ -1366,9 +1257,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * ShuffleOfferingChoices 작업을 수행한다.
-         */
+        /// <summary><c>ShuffleOfferingChoices</c> 작업을 수행한다.</summary>
         private void ShuffleOfferingChoices()
         {
             for (var i = offeringChoices.Count - 1; i > 0; i--)
@@ -1380,10 +1269,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * ResolveDescription 결과를 계산해 반환한다.
-         */
-        private static string ResolveDescription(string summary /* 요약 */, string description /* 설명 */, string fallback /* 기본 결과가 없을 때 사용할 값 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Description</c>를 결정한다.</summary>
+        private static string ResolveDescription(string summary, string description, string fallback)
         {
             if (!string.IsNullOrWhiteSpace(description))
             {
@@ -1393,10 +1280,8 @@ namespace Pakuri.InGame
             return string.IsNullOrWhiteSpace(summary) ? fallback : summary;
         }
 
-        /*
-         * ResolveButtonViews 결과를 계산해 반환한다.
-         */
-        private static OfferingButtonView[] ResolveButtonViews(Button[] buttons /* 버튼 목록 */)
+        /// <summary>전달된 <c>buttons</c> 값을 사용해 <c>ButtonViews</c>를 결정한다.</summary>
+        private static OfferingButtonView[] ResolveButtonViews(Button[] buttons)
         {
             if (buttons == null || buttons.Length == 0)
             {
@@ -1412,10 +1297,8 @@ namespace Pakuri.InGame
             return views;
         }
 
-        /*
-         * BindChoiceButton에 필요한 값을 설정한다.
-         */
-        private static void BindChoiceButton(OfferingButtonView view /* 화면 요소 */, OfferingChoiceView choice /* 적용하거나 검사할 스킬 선택지 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ChoiceButton</c>를 런타임 사건 또는 씬 대상에 연결한다.</summary>
+        private static void BindChoiceButton(OfferingButtonView view, OfferingChoiceView choice)
         {
             if (view == null || view.Button == null || choice == null)
             {
@@ -1458,10 +1341,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * SetActive에 필요한 값을 설정한다.
-         */
-        private static void SetActive(GameObject target /* 활성화하거나 변경할 게임 오브젝트 */, bool active /* 대상 활성화 여부 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Active</c>를 갱신한다.</summary>
+        private static void SetActive(GameObject target, bool active)
         {
             if (target != null)
             {
@@ -1469,6 +1350,7 @@ namespace Pakuri.InGame
             }
         }
 
+        /// <summary><c>OfferingChoiceView</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
         private class OfferingChoiceView
         {
             public string MonsterId;
@@ -1483,6 +1365,7 @@ namespace Pakuri.InGame
             public Sprite Icon;
         }
 
+        /// <summary><c>OfferingButtonView</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
         private class OfferingButtonView
         {
             public Button Button;
@@ -1493,10 +1376,8 @@ namespace Pakuri.InGame
             public TMP_Text FallbackLabel;
             public Image IconImage;
 
-            /*
-             * FromButton 작업 결과를 반환한다.
-             */
-            public static OfferingButtonView FromButton(Button button /* 연결하거나 갱신할 버튼 */)
+            /// <summary>전달된 <c>button</c> 값을 사용해 <c>FromButton</c> 결과값을 생성해 반환한다.</summary>
+            public static OfferingButtonView FromButton(Button button)
             {
                 if (button == null)
                 {
@@ -1516,10 +1397,8 @@ namespace Pakuri.InGame
                 return view;
             }
 
-            /*
-             * FindChildComponent에 해당하는 값을 찾아 반환한다.
-             */
-            private static T FindChildComponent<T>(Transform root /* 검색이나 배치의 기준 오브젝트 */, string childName /* 자식 오브젝트 이름 */)
+            /// <summary>전달된 런타임 입력값을 사용해 <c>ChildComponent</c>를 찾는다.</summary>
+            private static T FindChildComponent<T>(Transform root, string childName)
                 where T : Component
             {
                 if (root == null || string.IsNullOrWhiteSpace(childName))
@@ -1547,6 +1426,7 @@ namespace Pakuri.InGame
         }
     }
 
+    /// <summary><c>MenifestUI</c> 상태를 Unity UI 또는 월드 오브젝트로 표시한다.</summary>
     internal class MenifestUI
     {
         private readonly GameObject manifestedFailPopUp;
@@ -1568,26 +1448,24 @@ namespace Pakuri.InGame
 
         private MonsterDefinition pendingManifestMonster;
 
-        /*
-         * MenifestUI에 필요한 값을 초기화한다.
-         */
+        /// <summary><c>MenifestUI</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public MenifestUI(
-            GameObject manifestedFailPopUp /* 현현 실패 알림창 */,
-            Button manifestedFailBackButton /* 현현 실패 화면의 뒤로 가기 버튼 */,
-            GameObject manifestedSuccessPopUp /* 현현된 성공 제거 후속 */,
-            Button dontChoiceButton /* 선택하지 않음 버튼 */,
-            Button choiceButton /* 선택지 버튼 */,
-            TMP_Text monsterNameText /* 몬스터 이름 텍스트 */,
-            TMP_Text monsterDescText /* 몬스터 설명 텍스트 */,
-            Image monsterImage /* 몬스터 이미지 */,
-            Func<RunSession> resolveSession /* 찾기 게임 진행 상태 */,
-            Func<GameDataCatalog> resolveCatalog /* 찾기 데이터 목록 */,
-            Func<StageManager> resolveStageManager /* 찾기 스테이지 관리자 */,
-            Func<UnitSpawnManager> resolveUnitSpawnManager /* 찾기 유닛 생성 관리자 */,
-            Func<InGameUIManager.RewardButtonView> resolveActivePrisonerButton /* 찾기 활성 수감자 버튼 */,
-            Action consumePrisonerButton /* 소모 수감자 버튼 */,
-            Action completePrisonAction /* 완료 감옥 동작 */,
-            Action refreshInfo /* 갱신 정보 */)
+            GameObject manifestedFailPopUp,
+            Button manifestedFailBackButton,
+            GameObject manifestedSuccessPopUp,
+            Button dontChoiceButton,
+            Button choiceButton,
+            TMP_Text monsterNameText,
+            TMP_Text monsterDescText,
+            Image monsterImage,
+            Func<RunSession> resolveSession,
+            Func<GameDataCatalog> resolveCatalog,
+            Func<StageManager> resolveStageManager,
+            Func<UnitSpawnManager> resolveUnitSpawnManager,
+            Func<InGameUIManager.RewardButtonView> resolveActivePrisonerButton,
+            Action consumePrisonerButton,
+            Action completePrisonAction,
+            Action refreshInfo)
         {
             this.manifestedFailPopUp = manifestedFailPopUp;
             this.manifestedFailBackButton = manifestedFailBackButton;
@@ -1611,9 +1489,7 @@ namespace Pakuri.InGame
             BindButton(this.choiceButton, CommitManifestChoice);
         }
 
-        /*
-         * TryManifestPrisoner 작업을 시도하고 성공 여부를 반환한다.
-         */
+        /// <summary><c>ManifestPrisoner</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
         public bool TryManifestPrisoner()
         {
             var session = resolveSession?.Invoke();
@@ -1639,19 +1515,15 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /*
-         * Hide 작업을 수행한다.
-         */
+        /// <summary><c>요청값</c>를 숨긴다.</summary>
         public void Hide()
         {
             SetActive(manifestedFailPopUp, false);
             SetActive(manifestedSuccessPopUp, false);
         }
 
-        /*
-         * ShowManifestSuccessPopup 작업을 수행한다.
-         */
-        private void ShowManifestSuccessPopup(MonsterDefinition monster /* 몬스터 */)
+        /// <summary>전달된 <c>monster</c> 값을 사용해 <c>ManifestSuccessPopup</c>를 표시한다.</summary>
+        private void ShowManifestSuccessPopup(MonsterDefinition monster)
         {
             SetActive(manifestedSuccessPopUp, true);
 
@@ -1677,9 +1549,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * SkipManifestChoice 작업을 수행한다.
-         */
+        /// <summary><c>SkipManifestChoice</c> 작업을 수행한다.</summary>
         private void SkipManifestChoice()
         {
             pendingManifestMonster = null;
@@ -1687,9 +1557,7 @@ namespace Pakuri.InGame
             completePrisonAction?.Invoke();
         }
 
-        /*
-         * CompleteAfterFailure 작업을 수행한다.
-         */
+        /// <summary><c>AfterFailure</c>를 완료한다.</summary>
         private void CompleteAfterFailure()
         {
             pendingManifestMonster = null;
@@ -1697,9 +1565,7 @@ namespace Pakuri.InGame
             completePrisonAction?.Invoke();
         }
 
-        /*
-         * CommitManifestChoice 작업을 수행한다.
-         */
+        /// <summary><c>CommitManifestChoice</c> 작업을 수행한다.</summary>
         private void CommitManifestChoice()
         {
             var session = resolveSession?.Invoke();
@@ -1725,10 +1591,8 @@ namespace Pakuri.InGame
             completePrisonAction?.Invoke();
         }
 
-        /*
-         * ResolveNextManifestCandidate 결과를 계산해 반환한다.
-         */
-        private MonsterDefinition ResolveNextManifestCandidate(RunSession session /* 현재 게임 진행 상태 */)
+        /// <summary>전달된 <c>session</c> 값을 사용해 <c>NextManifestCandidate</c>를 결정한다.</summary>
+        private MonsterDefinition ResolveNextManifestCandidate(RunSession session)
         {
             var monsters = GameDataLoader.CurrentCatalog.GetMonsters();
             var candidates = new System.Collections.Generic.List<MonsterDefinition>();
@@ -1748,10 +1612,8 @@ namespace Pakuri.InGame
             return candidates.Count > 0 ? candidates[UnityEngine.Random.Range(0, candidates.Count)] : null;
         }
 
-        /*
-         * BuildManifestDescription에 필요한 결과를 만들어 반환한다.
-         */
-        private static string BuildManifestDescription(MonsterDefinition monster /* 몬스터 */)
+        /// <summary>전달된 <c>monster</c> 값을 사용해 <c>ManifestDescription</c>를 구성한다.</summary>
+        private static string BuildManifestDescription(MonsterDefinition monster)
         {
             if (monster == null)
             {
@@ -1765,10 +1627,8 @@ namespace Pakuri.InGame
                 $"A: {monster.ActiveSkillName} / F: {monster.PassiveSkillName}";
         }
 
-        /*
-         * BindButton에 필요한 값을 설정한다.
-         */
-        private static void BindButton(Button button /* 연결하거나 갱신할 버튼 */, UnityEngine.Events.UnityAction action /* 동작 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Button</c>를 런타임 사건 또는 씬 대상에 연결한다.</summary>
+        private static void BindButton(Button button, UnityEngine.Events.UnityAction action)
         {
             if (button == null)
             {
@@ -1779,10 +1639,8 @@ namespace Pakuri.InGame
             button.onClick.AddListener(action);
         }
 
-        /*
-         * SetActive에 필요한 값을 설정한다.
-         */
-        private static void SetActive(GameObject target /* 활성화하거나 변경할 게임 오브젝트 */, bool active /* 대상 활성화 여부 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Active</c>를 갱신한다.</summary>
+        private static void SetActive(GameObject target, bool active)
         {
             if (target != null)
             {

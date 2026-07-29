@@ -1,23 +1,25 @@
+/*
+ * 역할: 런타임 버프 비주얼 소유.
+ * 책임: 버프 효과를 대상에 부착하고 소유 상태 효과가 끝나면 제거한다.
+ */
+
 using UnityEngine;
 
-/*
- * 대상의 자식으로 연결된 강화, 보호막, 회복 스킬 비주얼의 수명을 관리
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>BuffSkillActor</c> 런타임 오브젝트를 나타내며 모델과 Unity 컴포넌트를 연결한다.</summary>
     public class BuffSkillActor : MonoBehaviour
     {
-        // 대상 부착형 강화 시각 효과의 시간 제한을 구현한다.
+
         private EffectManager effectManager;
         private float remainingLifetime;
         private bool hasLifetime;
 
-        /*
-         * 대상에게 붙은 강화 비주얼이 지정한 시간 뒤 제거되도록 설정한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>소유한 런타임 상태</c>를 초기화한다.</summary>
         public void Initialize(
-            EffectManager manager /* 효과 생성과 제거를 담당하는 관리자 */,
-            float durationSeconds /* 지속 시간(초) */)
+            EffectManager manager,
+            float durationSeconds)
         {
             effectManager = manager;
             hasLifetime = durationSeconds > 0f;
@@ -27,10 +29,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * Buff 효과 오브젝트에 Actor가 없으면 추가해 반환한다.
-         */
-        public static BuffSkillActor Attach(GameObject instance /* Buff 효과 오브젝트 */)
+        /// <summary>전달된 <c>instance</c> 값을 사용해 <c>요청값</c>를 연결한다.</summary>
+        public static BuffSkillActor Attach(GameObject instance)
         {
             var actor = instance.GetComponent<BuffSkillActor>();
             if (actor == null)
@@ -41,9 +41,7 @@ namespace Pakuri.InGame
             return actor;
         }
 
-        /*
-         * 남은 수명을 갱신하고 종료 시 관리자에게 삭제를 요청한다.
-         */
+        /// <summary>현재 Unity 프레임에서 <c>Update</c> 갱신 동작을 진행한다.</summary>
         private void Update()
         {
             if (!hasLifetime)

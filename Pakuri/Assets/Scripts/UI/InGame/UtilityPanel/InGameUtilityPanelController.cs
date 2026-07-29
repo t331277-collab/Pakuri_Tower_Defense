@@ -1,16 +1,19 @@
+/*
+ * 역할: InGame Utility Panel 제어.
+ * 책임: 일시정지·배속·Debug·Damage Meter·설정·종료 동작을 관리한다.
+ */
+
 using UnityEngine;
 using UnityEngine.UI;
 
-/*
- * 자동 스킬 사용과 전투 배속 버튼을 제어하는 인게임 UI 컴포넌트.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>InGameUtilityPanelController</c>가 담당하는 입력 또는 표시 흐름을 조정하고 관련 런타임 상태를 갱신한다.</summary>
     public class InGameUtilityPanelController : MonoBehaviour
     {
         private static readonly float[] TimeScales = { 1f, 1.5f, 2f };
 
-        // 자동 스킬 입력 상태는 PlayerCombatControl에 직접 요청한다.
         [SerializeField] private PlayerCombatInputController playerCombatControl;
         [SerializeField] private Button autoButton;
         [SerializeField] private Button timeButton;
@@ -20,9 +23,7 @@ namespace Pakuri.InGame
         private float baseFixedDeltaTime;
         private int timeScaleIndex;
 
-        /*
-         * Unity가 컴포넌트를 초기화할 때 필요한 참조와 상태를 준비한다.
-         */
+        /// <summary>Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.</summary>
         private void Awake()
         {
             ResolveReferences();
@@ -30,9 +31,7 @@ namespace Pakuri.InGame
             ApplyTimeScale(0);
         }
 
-        /*
-         * 컴포넌트가 활성화될 때 이벤트와 표시 상태를 연결한다.
-         */
+        /// <summary>Unity가 컴포넌트를 활성화할 때 구독과 활성 상태를 복원한다.</summary>
         private void OnEnable()
         {
             ResolveReferences();
@@ -50,9 +49,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * 컴포넌트가 비활성화될 때 연결된 이벤트를 해제한다.
-         */
+        /// <summary>Unity가 컴포넌트를 비활성화할 때 구독과 임시 상태를 중단한다.</summary>
         private void OnDisable()
         {
             if (autoButton != null)
@@ -66,9 +63,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * 컴포넌트가 제거될 때 남아 있는 연결과 상태를 정리한다.
-         */
+        /// <summary>Unity가 컴포넌트를 제거할 때 구독과 런타임 오브젝트를 해제한다.</summary>
         private void OnDestroy()
         {
             Time.timeScale = 1f;
@@ -78,9 +73,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * ResolveReferences에 필요한 값을 계산해 현재 상태에 반영한다.
-         */
+        /// <summary><c>References</c>를 결정한다.</summary>
         private void ResolveReferences()
         {
             if (playerCombatControl == null)
@@ -114,18 +107,14 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * CycleTimeScale 작업을 수행한다.
-         */
+        /// <summary><c>CycleTimeScale</c> 작업을 수행한다.</summary>
         private void CycleTimeScale()
         {
             ApplyTimeScale((timeScaleIndex + 1) % TimeScales.Length);
         }
 
-        /*
-         * ApplyTimeScale 처리를 대상에 적용한다.
-         */
-        private void ApplyTimeScale(int index /* 목록에서의 순서 번호 */)
+        /// <summary>전달된 <c>index</c> 값을 사용해 <c>TimeScale</c>를 적용한다.</summary>
+        private void ApplyTimeScale(int index)
         {
             timeScaleIndex = Mathf.Clamp(index, 0, TimeScales.Length - 1);
             var timeScale = TimeScales[timeScaleIndex];
@@ -143,9 +132,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * ToggleSelectedPlayerAutoSkillMode 작업을 수행한다.
-         */
+        /// <summary><c>SelectedPlayerAutoSkillMode</c>를 활성 상태를 전환한다.</summary>
         private void ToggleSelectedPlayerAutoSkillMode()
         {
             if (playerCombatControl != null)

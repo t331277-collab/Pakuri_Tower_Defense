@@ -1,14 +1,16 @@
+/*
+ * 역할: 한 게임 Run의 지속 상태.
+ * 책임: 선택 몬스터·학습 스킬·선택지·Stage 진행·보상·Run 초기화를 추적한다.
+ */
+
 using System;
 using System.Collections.Generic;
 using Pakuri.Data;
 
-/*
- * 한 번의 런에서 유지되는 진행 상태보관
- * 스테이지·일차, 재화, 배치 파티,
- * 몬스터별 학습 스킬과 Choice를 기록한다.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>RunSession</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
     [Serializable]
     public class RunSession
     {
@@ -19,6 +21,7 @@ namespace Pakuri.InGame
         private const int MaxActiveMasterCount = 1;
         private const int MaxPassiveEnhancementCount = 1;
 
+        /// <summary><c>RunMonsterState</c>의 변경 가능한 런타임 상태를 보관한다.</summary>
         [Serializable]
         public class RunMonsterState
         {
@@ -36,10 +39,8 @@ namespace Pakuri.InGame
         public int Gold;
         public int DarkTrace;
 
-        /*
-         * 선택한 몬스터로 첫 스테이지의 런 진행 상태를 만든다.
-         */
-        public static RunSession Begin(MonsterDefinition monster /* 몬스터 */)
+        /// <summary>전달된 <c>monster</c> 값을 사용해 <c>Begin</c> 결과값을 생성해 반환한다.</summary>
+        public static RunSession Begin(MonsterDefinition monster)
         {
 
             var session = new RunSession();
@@ -47,10 +48,8 @@ namespace Pakuri.InGame
             return session;
         }
 
-        /*
-         * 기본 스킬 학습
-         */
-        private static string ResolveDefaultActiveSkillId(MonsterDefinition monster /* 몬스터 */)
+        /// <summary>전달된 <c>monster</c> 값을 사용해 <c>DefaultActiveSkillId</c>를 결정한다.</summary>
+        private static string ResolveDefaultActiveSkillId(MonsterDefinition monster)
         {
             if (monster == null || monster.ActiveSkills == null)
             {
@@ -72,15 +71,13 @@ namespace Pakuri.InGame
             return string.Empty;
         }
 
-        /*
-         * 지정한 파티원이 선택한 Offering 보상과 습득 스킬을 기록한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>RecordOfferingChoice</c> 작업을 수행한다.</summary>
         public void RecordOfferingChoice(
-            RunMonsterState member /* 보상을 받을 파티원 상태 */,
-            string rewardId /* 보상 식별자 */,
-            string linkedChoiceId /* 연결된 선택지 식별자 */,
-            string activeSkillId /* 액티브 스킬 식별자 */,
-            string passiveSkillId /* 패시브 스킬 식별자 */)
+            RunMonsterState member,
+            string rewardId,
+            string linkedChoiceId,
+            string activeSkillId,
+            string passiveSkillId)
         {
             if (member == null)
             {
@@ -108,13 +105,11 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * 파티원이 지정한 액티브 스킬을 새로 학습할 수 있는지 확인한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>LearnActive</c> 실행 가능 여부를 반환한다.</summary>
         public bool CanLearnActive(
-            RunMonsterState member /* 스킬을 학습할 파티원 상태 */,
-            MonsterDefinition monster /* 스킬을 학습할 몬스터 */,
-            SkillDefinition skill /* 학습 후보 액티브 스킬 */)
+            RunMonsterState member,
+            MonsterDefinition monster,
+            SkillDefinition skill)
         {
             if (member == null
                 || monster == null
@@ -141,13 +136,11 @@ namespace Pakuri.InGame
             return additionalCount < MaxAdditionalActiveSkillCount;
         }
 
-        /*
-         * 파티원이 요구 액티브 스킬을 갖추고 패시브를 새로 학습할 수 있는지 확인한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>LearnPassive</c> 실행 가능 여부를 반환한다.</summary>
         public bool CanLearnPassive(
-            RunMonsterState member /* 스킬을 학습할 파티원 상태 */,
-            MonsterDefinition monster /* 스킬을 학습할 몬스터 */,
-            PassiveSkillDefinition passive /* 학습 후보 패시브 스킬 */)
+            RunMonsterState member,
+            MonsterDefinition monster,
+            PassiveSkillDefinition passive)
         {
             if (member == null
                 || monster == null
@@ -183,13 +176,11 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /*
-         * 파티원이 요구 스킬과 선행 강화를 갖추고 Choice를 선택할 수 있는지 확인한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ChooseSkillChoice</c> 실행 가능 여부를 반환한다.</summary>
         public bool CanChooseSkillChoice(
-            RunMonsterState member /* Choice를 선택할 파티원 상태 */,
-            MonsterDefinition.RewardChoiceDefinition reward /* Choice와 연결된 보상 */,
-            SkillChoice choice /* 선택 후보 강화 효과 */)
+            RunMonsterState member,
+            MonsterDefinition.RewardChoiceDefinition reward,
+            SkillChoice choice)
         {
             if (member == null || reward == null || choice == null)
             {
@@ -223,13 +214,11 @@ namespace Pakuri.InGame
             return CanChooseSkillChoice(member, sourceSkillId, choice);
         }
 
-        /*
-         * 파티원의 선택 기록과 성장 단계 제한을 기준으로 Choice를 선택할 수 있는지 확인한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ChooseSkillChoice</c> 실행 가능 여부를 반환한다.</summary>
         public bool CanChooseSkillChoice(
-            RunMonsterState member /* Choice를 선택할 파티원 상태 */,
-            string sourceSkillId /* Choice가 연결된 원본 스킬 식별자 */,
-            SkillChoice choice /* 선택 후보 강화 효과 */)
+            RunMonsterState member,
+            string sourceSkillId,
+            SkillChoice choice)
         {
             if (member == null || choice == null || string.IsNullOrWhiteSpace(choice.ChoiceId))
             {
@@ -264,21 +253,17 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /*
-         * 획득한 골드와 어둠의 흔적을 런 재화에 더한다.
-         */
-        public void ClaimMaterialReward(int goldReward /* 골드 보상 */, int darkTraceReward /* 어둠 흔적 보상 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ClaimMaterialReward</c> 작업을 수행한다.</summary>
+        public void ClaimMaterialReward(int goldReward, int darkTraceReward)
         {
             Gold += Math.Max(0, goldReward);
             DarkTrace += Math.Max(0, darkTraceReward);
         }
 
-        /*
-         * 새 몬스터를 다음 파티 슬롯과 진행 상태에 등록한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>AddPartyMonster</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
         public bool TryAddPartyMonster(
-            MonsterDefinition monster /* 파티에 추가할 몬스터 */,
-            out int slotIndex /* 추가된 파티 슬롯 순서 번호 */)
+            MonsterDefinition monster,
+            out int slotIndex)
         {
             slotIndex = -1;
             if (monster == null
@@ -294,10 +279,8 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /*
-         * 새 파티 진행 상태를 기본 액티브 스킬과 함께 추가한다.
-         */
-        private RunMonsterState AddPartyMemberState(MonsterDefinition monster /* 추가할 몬스터 */)
+        /// <summary>전달된 <c>monster</c> 값을 사용해 <c>PartyMemberState</c>를 소유한 런타임 상태에 추가한다.</summary>
+        private RunMonsterState AddPartyMemberState(MonsterDefinition monster)
         {
             var state = new RunMonsterState
             {
@@ -314,10 +297,8 @@ namespace Pakuri.InGame
             return state;
         }
 
-        /*
-         * 몬스터 식별자와 일치하는 파티 진행 상태를 찾는다.
-         */
-        public RunMonsterState GetPartyMemberState(string monsterId /* 몬스터 식별자 */)
+        /// <summary>전달된 <c>monsterId</c> 값을 사용해 <c>PartyMemberState</c>를 반환한다.</summary>
+        public RunMonsterState GetPartyMemberState(string monsterId)
         {
             if (string.IsNullOrWhiteSpace(monsterId))
             {
@@ -336,13 +317,11 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /*
-         * 지정한 스킬과 성장 단계에 해당하는 선택 완료 Choice 수를 계산한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>CountChosenChoices</c> 결과값을 생성해 반환한다.</summary>
         private static int CountChosenChoices(
-            RunMonsterState member /* 파티원의 런 성장 상태 */,
-            string skillId /* Choice가 강화하는 스킬 식별자 */,
-            SkillChoiceGroup group /* 계산할 성장 단계 */)
+            RunMonsterState member,
+            string skillId,
+            SkillChoiceGroup group)
         {
             if (member == null || string.IsNullOrWhiteSpace(skillId))
             {
@@ -370,12 +349,10 @@ namespace Pakuri.InGame
             return count;
         }
 
-        /*
-         * Choice가 적용될 스킬 ID를 명시값과 대체값 순서로 찾는다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ChoiceTargetSkillId</c>를 결정한다.</summary>
         private static string ResolveChoiceTargetSkillId(
-            SkillChoice choice /* 적용하거나 검사할 스킬 선택지 */,
-            string fallbackSkillId /* Choice에 대상이 없을 때 사용할 스킬 식별자 */)
+            SkillChoice choice,
+            string fallbackSkillId)
         {
             if (choice == null)
             {

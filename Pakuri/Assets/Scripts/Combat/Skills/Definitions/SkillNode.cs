@@ -1,26 +1,30 @@
+/*
+ * 역할: 스킬 그래프 작업 계약.
+ * 책임: 런타임 스킬 실행에서 사용하는 조건·배율·행동·후속 작업 값을 정의한다.
+ */
+
 using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
-/*
- * GameDataCatalogBuilder가 작성 Node를 전투용 강타입 값으로 바꾼다.
- * SkillNode는 값 하나를 보관하고, SkillExecutionData가 필요한 값을 읽어서 최종 스킬을 만들고 Executor 에 넘겨준다.
- 즉 언제든 꺼내 쓸 수 있는 실행 가능한 규칙 값 보관
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>DamageModifierOpKind</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum DamageModifierOpKind
     {
         BossMultiplier,
         ExecuteMultiplier
     }
 
+    /// <summary><c>KillActionOpKind</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum KillActionOpKind
     {
         CooldownReset,
         CooldownRefundBonus
     }
 
+    /// <summary><c>SkillActionOpKind</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum SkillActionOpKind
     {
         DamageMultiplier,
@@ -62,10 +66,11 @@ namespace Pakuri.InGame
         ConsumeTargetStatusRatioOverride
     }
 
-    /* 상태 종류와 필요한 최소 중첩 수를 함께 보관한다. */
+    /// <summary><c>StatusStackCondition</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct StatusStackCondition
     {
-        /* 상태 조건 판정에 사용할 상태 종류와 최소 중첩을 묶는다. */
+
+        /// <summary><c>StatusStackCondition</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public StatusStackCondition(StatusEffectKind statusKind, int minimumStacks)
         {
             StatusKind = statusKind;
@@ -76,11 +81,12 @@ namespace Pakuri.InGame
         public int MinimumStacks { get; }
     }
 
-    /* 단일 공격의 체력 비율 시전 조건에 더할 값을 보관한다. */
+    /// <summary><c>CastConditionOp</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct CastConditionOp
     {
-        /* 단일 공격의 기존 체력 비율 시전 조건에 더할 값을 기록한다. */
-        public CastConditionOp(float targetHealthRatioBonus /* 대상 체력 비율 추가값 */)
+
+        /// <summary><c>CastConditionOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+        public CastConditionOp(float targetHealthRatioBonus)
         {
             TargetHealthRatioBonus = targetHealthRatioBonus;
         }
@@ -88,11 +94,12 @@ namespace Pakuri.InGame
         public float TargetHealthRatioBonus { get; }
     }
 
-    /* 보스·처형 조건에 적용할 피해 배율을 보관한다. */
+    /// <summary><c>DamageModifierOp</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct DamageModifierOp
     {
-        /* 조건부 피해 보정의 종류와 적용 배율을 기록한다. */
-        public DamageModifierOp(DamageModifierOpKind kind /* 처리할 종류 */, float multiplier /* 값에 곱할 배율 */)
+
+        /// <summary><c>DamageModifierOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+        public DamageModifierOp(DamageModifierOpKind kind, float multiplier)
         {
             Kind = kind;
             Multiplier = multiplier;
@@ -102,11 +109,12 @@ namespace Pakuri.InGame
         public float Multiplier { get; }
     }
 
-    /* 조건을 만족했을 때 더할 치명타 확률을 보관한다. */
+    /// <summary><c>CritModifierOp</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct CritModifierOp
     {
-        /* 조건을 만족했을 때 더할 치명타 확률을 기록한다. */
-        public CritModifierOp(float chanceBonus /* 확률 추가값 */)
+
+        /// <summary><c>CritModifierOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+        public CritModifierOp(float chanceBonus)
         {
             ChanceBonus = chanceBonus;
         }
@@ -114,11 +122,12 @@ namespace Pakuri.InGame
         public float ChanceBonus { get; }
     }
 
-    /* 처치 후 재사용 대기시간을 초기화하거나 일부 돌려주는 규칙을 보관한다. */
+    /// <summary><c>KillActionOp</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct KillActionOp
     {
-        /* 처치 후 실행할 쿨다운 행동과 필요한 조건값을 기록한다. */
-        public KillActionOp(KillActionOpKind kind /* 처리할 종류 */, float ratioBonus /* 비율 추가값 */, bool requiresExecute /* 필요 처형 여부 */)
+
+        /// <summary><c>KillActionOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+        public KillActionOp(KillActionOpKind kind, float ratioBonus, bool requiresExecute)
         {
             Kind = kind;
             RatioBonus = ratioBonus;
@@ -130,16 +139,14 @@ namespace Pakuri.InGame
         public bool RequiresExecute { get; }
     }
 
-    /*
-     * 단순 강화 하나의 종류와 값을 보관한다.
-     * 강화 종류에 따라 Amount, Count, ReferenceId 중 필요한 값만 사용한다.
-     */
+    /// <summary><c>SkillActionOp</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct SkillActionOp
     {
-        /* 소수 배율이나 보너스만 필요한 행동을 만든다. */
+
+        /// <summary><c>SkillActionOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public SkillActionOp(
-            SkillActionOpKind kind /* 처리할 종류 */,
-            float amount /* 적용할 수치 */)
+            SkillActionOpKind kind,
+            float amount)
         {
             Kind = kind;
             Amount = amount;
@@ -147,10 +154,10 @@ namespace Pakuri.InGame
             ReferenceId = string.Empty;
         }
 
-        /* 탄창, 관통, 투사체 수처럼 정수 개수만 필요한 행동을 만든다. */
+        /// <summary><c>SkillActionOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public SkillActionOp(
-            SkillActionOpKind kind /* 처리할 종류 */,
-            int count /* 적용할 개수 */)
+            SkillActionOpKind kind,
+            int count)
         {
             Kind = kind;
             Amount = 0f;
@@ -158,11 +165,11 @@ namespace Pakuri.InGame
             ReferenceId = string.Empty;
         }
 
-        /* 특정 상태나 트리거 ID에 연결된 소수 보너스 행동을 만든다. */
+        /// <summary><c>SkillActionOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public SkillActionOp(
-            SkillActionOpKind kind /* 처리할 종류 */,
-            string referenceId /* 참조할 데이터 식별자 */,
-            float amount /* 적용할 수치 */)
+            SkillActionOpKind kind,
+            string referenceId,
+            float amount)
         {
             if (referenceId == null)
             {
@@ -175,11 +182,11 @@ namespace Pakuri.InGame
             ReferenceId = referenceId;
         }
 
-        /* 특정 상태 ID에 귀속되는 정수 보너스 행동을 만든다. */
+        /// <summary><c>SkillActionOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public SkillActionOp(
-            SkillActionOpKind kind /* 처리할 종류 */,
-            string referenceId /* 참조할 데이터 식별자 */,
-            int count /* 적용할 개수 */)
+            SkillActionOpKind kind,
+            string referenceId,
+            int count)
         {
             if (referenceId == null)
             {
@@ -198,15 +205,14 @@ namespace Pakuri.InGame
         public string ReferenceId { get; }
     }
 
-    /*
-     * 연속 적중 횟수에 따라 증가하는 피해 값을 보관한다.
-     */
+    /// <summary><c>ConsecutiveHitActionOp</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct ConsecutiveHitActionOp
     {
-        /* 같은 대상을 연속 적중할 때 누적할 피해 증가율과 상한을 기록한다. */
+
+        /// <summary><c>ConsecutiveHitActionOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public ConsecutiveHitActionOp(
-            float bonusRate /* 적중당 피해 증가율 */,
-            float maxBonus /* 최대 피해 증가율 */)
+            float bonusRate,
+            float maxBonus)
         {
             BonusRate = bonusRate;
             MaxBonus = maxBonus;
@@ -216,17 +222,16 @@ namespace Pakuri.InGame
         public float MaxBonus { get; }
     }
 
-    /*
-     * 공격이 다른 대상으로 분기될 때 필요한 값을 보관한다.
-     */
+    /// <summary><c>BranchDamageActionOp</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct BranchDamageActionOp
     {
-        /* 분기 공격의 확률, 개수, 피해 배율과 탐색 반경을 기록한다. */
+
+        /// <summary><c>BranchDamageActionOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public BranchDamageActionOp(
-            float chanceBonus /* 분기 확률 추가값 */,
-            int branchCount /* 분기 횟수 */,
-            float damageMultiplier /* 분기 피해 배율 */,
-            float searchRadius /* 다음 대상을 찾을 반경 */)
+            float chanceBonus,
+            int branchCount,
+            float damageMultiplier,
+            float searchRadius)
         {
             ChanceBonus = chanceBonus;
             BranchCount = branchCount;
@@ -240,16 +245,15 @@ namespace Pakuri.InGame
         public float SearchRadius { get; }
     }
 
-    /*
-     * 대상의 상태 효과 조건에 따라 적용할 피해 배율을 보관한다.
-     */
+    /// <summary><c>ConditionalDamageActionOp</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct ConditionalDamageActionOp
     {
-        /* 대상 상태 중첩 조건과 조건 충족 시 피해 배율을 기록한다. */
+
+        /// <summary><c>ConditionalDamageActionOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public ConditionalDamageActionOp(
-            float damageMultiplier /* 조건을 만족했을 때 적용할 피해 배율 */,
-            StatusEffectKind requiredStatus /* 대상에게 필요한 상태 효과 */,
-            int minimumStacks /* 필요한 최소 중첩 수 */)
+            float damageMultiplier,
+            StatusEffectKind requiredStatus,
+            int minimumStacks)
         {
             DamageMultiplier = damageMultiplier;
             Condition = new StatusStackCondition(requiredStatus, minimumStacks);
@@ -259,10 +263,11 @@ namespace Pakuri.InGame
         public StatusStackCondition Condition { get; }
     }
 
-    /* 대상 상태 중첩 조건을 만족할 때 더할 치명타 확률을 보관한다. */
+    /// <summary><c>ConditionalCritChanceActionOp</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct ConditionalCritChanceActionOp
     {
-        /* 대상 상태 중첩 조건과 조건 충족 시 치명타 확률 보너스를 기록한다. */
+
+        /// <summary><c>ConditionalCritChanceActionOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public ConditionalCritChanceActionOp(float chanceBonus, StatusEffectKind requiredStatus, int minimumStacks)
         {
             ChanceBonus = chanceBonus;
@@ -273,10 +278,11 @@ namespace Pakuri.InGame
         public StatusStackCondition Condition { get; }
     }
 
-    /* 연속 발사 중 지정한 투사체 순서에 적용할 피해 배율을 보관한다. 순서 0은 마지막 투사체다. */
+    /// <summary><c>BurstDamageActionOp</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct BurstDamageActionOp
     {
-        /* 연속 발사 중 피해 배율을 적용할 투사체 순번을 기록한다. */
+
+        /// <summary><c>BurstDamageActionOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public BurstDamageActionOp(int projectileIndex, float damageMultiplier)
         {
             ProjectileIndex = projectileIndex;
@@ -287,10 +293,11 @@ namespace Pakuri.InGame
         public float DamageMultiplier { get; }
     }
 
-    /* 연속 발사 중 지정한 투사체 순서에 더할 상태 중첩 수를 보관한다. 순서 0은 마지막 투사체다. */
+    /// <summary><c>BurstStatusActionOp</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct BurstStatusActionOp
     {
-        /* 연속 발사 중 상태 중첩을 더할 투사체 순번을 기록한다. */
+
+        /// <summary><c>BurstStatusActionOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public BurstStatusActionOp(int projectileIndex, int stacksBonus)
         {
             ProjectileIndex = projectileIndex;
@@ -301,10 +308,11 @@ namespace Pakuri.InGame
         public int StacksBonus { get; }
     }
 
-    /* 기본 발사 뒤 생성할 후속 투사체의 개수, 간격, 피해 배율을 보관한다. */
+    /// <summary><c>FollowUpProjectileActionOp</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct FollowUpProjectileActionOp
     {
-        /* 후속 투사체의 개수, 지연시간과 피해 배율을 기록한다. */
+
+        /// <summary><c>FollowUpProjectileActionOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public FollowUpProjectileActionOp(int count, float delaySeconds, float damageMultiplier)
         {
             Count = count;
@@ -317,10 +325,11 @@ namespace Pakuri.InGame
         public float DamageMultiplier { get; }
     }
 
-    /* 대상 상태가 임계 중첩에 도달했을 때 새로 적용할 상태를 보관한다. */
+    /// <summary><c>ThresholdStatusActionOp</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct ThresholdStatusActionOp
     {
-        /* 시전자 상태 임계치를 만족했을 때 적용할 상태를 기록한다. */
+
+        /// <summary><c>ThresholdStatusActionOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public ThresholdStatusActionOp(StatusEffectKind sourceStatus, int minimumStacks, StatusEffectKind appliedStatus)
         {
             Condition = new StatusStackCondition(sourceStatus, minimumStacks);
@@ -331,10 +340,11 @@ namespace Pakuri.InGame
         public StatusEffectKind AppliedStatus { get; }
     }
 
-    /* 같은 대상에게 예약할 반복 공격 횟수, 간격, 피해 배율을 보관한다. */
+    /// <summary><c>RepeatPerTargetActionOp</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct RepeatPerTargetActionOp
     {
-        /* 대상마다 반복할 횟수, 간격과 반복 피해 배율을 기록한다. */
+
+        /// <summary><c>RepeatPerTargetActionOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public RepeatPerTargetActionOp(int count, float intervalSeconds, float damageMultiplier)
         {
             Count = count;
@@ -347,10 +357,11 @@ namespace Pakuri.InGame
         public float DamageMultiplier { get; }
     }
 
-    /* 처치 시 소비한 상태 일부를 주변 대상에게 재분배하는 규칙을 보관한다. */
+    /// <summary><c>RedistributeConsumedStatusActionOp</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct RedistributeConsumedStatusActionOp
     {
-        /* 처치 시 소비 상태를 주변 대상에게 재분배할 규칙을 기록한다. */
+
+        /// <summary><c>RedistributeConsumedStatusActionOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public RedistributeConsumedStatusActionOp(float ratio, StatusEffectKind statusKind, float searchRadius, int targetCount)
         {
             Ratio = ratio;
@@ -365,10 +376,11 @@ namespace Pakuri.InGame
         public int TargetCount { get; }
     }
 
-    /* 적중 시 확률적으로 발생하는 추가 피해 규칙을 보관한다. */
+    /// <summary><c>AdditionalDamageActionOp</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct AdditionalDamageActionOp
     {
-        /* 명중 시 추가 피해의 확률, 배율, 속성과 대상 방식을 기록한다. */
+
+        /// <summary><c>AdditionalDamageActionOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public AdditionalDamageActionOp(float chance, float multiplier, DamageAttribute attribute, string target)
         {
             Chance = chance;
@@ -383,10 +395,11 @@ namespace Pakuri.InGame
         public string Target { get; }
     }
 
-    /* 지정한 핵심 충돌 영역에 적용할 피해 배율을 보관한다. */
+    /// <summary><c>CoreDamageActionOp</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct CoreDamageActionOp
     {
-        /* 지정한 핵심 히트박스에 적용할 피해 배율을 기록한다. */
+
+        /// <summary><c>CoreDamageActionOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public CoreDamageActionOp(string hitboxName, float multiplier)
         {
             HitboxName = hitboxName ?? string.Empty;
@@ -397,10 +410,11 @@ namespace Pakuri.InGame
         public float Multiplier { get; }
     }
 
-    /* 지정한 핵심 충돌 영역 적중 시 발생할 추가 피해 규칙을 보관한다. */
+    /// <summary><c>CoreAdditionalDamageActionOp</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct CoreAdditionalDamageActionOp
     {
-        /* 핵심 히트박스 명중 시 발생할 추가 피해 규칙을 기록한다. */
+
+        /// <summary><c>CoreAdditionalDamageActionOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public CoreAdditionalDamageActionOp(string hitboxName, float chance, float multiplier, DamageAttribute attribute)
         {
             HitboxName = hitboxName ?? string.Empty;
@@ -415,10 +429,11 @@ namespace Pakuri.InGame
         public DamageAttribute Attribute { get; }
     }
 
-    /* 일정 적중 횟수마다 주변 대상으로 이어지는 연쇄 피해 규칙을 보관한다. */
+    /// <summary><c>HitChainDamageActionOp</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct HitChainDamageActionOp
     {
-        /* 일정 명중 주기마다 발생할 연쇄 피해 규칙을 기록한다. */
+
+        /// <summary><c>HitChainDamageActionOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public HitChainDamageActionOp(int hitPeriod, int targetCount, float searchRadius, float multiplier, DamageAttribute attribute)
         {
             HitPeriod = hitPeriod;
@@ -435,10 +450,11 @@ namespace Pakuri.InGame
         public DamageAttribute Attribute { get; }
     }
 
-    /* 한 번의 공격이 일정 수 이상 적중했을 때 대상 스킬의 쿨다운을 환급하는 규칙을 보관한다. */
+    /// <summary><c>HitCountCooldownRefundActionOp</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct HitCountCooldownRefundActionOp
     {
-        /* 요구 명중 대상 수를 달성했을 때 돌려줄 스킬 쿨다운 비율을 기록한다. */
+
+        /// <summary><c>HitCountCooldownRefundActionOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public HitCountCooldownRefundActionOp(string targetSkillId, int minimumTargets, float ratio)
         {
             TargetSkillId = targetSkillId ?? string.Empty;
@@ -451,10 +467,11 @@ namespace Pakuri.InGame
         public float Ratio { get; }
     }
 
-    /* 적중마다 대상 스킬의 재장전 시간을 감소시키는 규칙을 보관한다. */
+    /// <summary><c>ReloadReducePerHitActionOp</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct ReloadReducePerHitActionOp
     {
-        /* 명중마다 지정 스킬의 재장전 시간을 줄일 값을 기록한다. */
+
+        /// <summary><c>ReloadReducePerHitActionOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public ReloadReducePerHitActionOp(string targetSkillId, float secondsPerHit)
         {
             TargetSkillId = targetSkillId ?? string.Empty;
@@ -465,10 +482,11 @@ namespace Pakuri.InGame
         public float SecondsPerHit { get; }
     }
 
-    /* 강화 선택지를 적용하기 전에 시전자가 만족해야 하는 상태 조건을 보관한다. */
+    /// <summary><c>SourceStatusRequirementOp</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct SourceStatusRequirementOp
     {
-        /* Choice나 Node 실행에 필요한 시전자 상태와 최소 중첩을 기록한다. */
+
+        /// <summary><c>SourceStatusRequirementOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public SourceStatusRequirementOp(StatusEffectKind statusKind, int minimumStacks)
         {
             Condition = new StatusStackCondition(statusKind, minimumStacks);
@@ -477,17 +495,16 @@ namespace Pakuri.InGame
         public StatusStackCondition Condition { get; }
     }
 
-    /*
-     * 지정된 진영의 상태 효과 개수에 따라 증가하는 피해 값을 보관한다.
-     */
+    /// <summary><c>CountStatusDamageActionOp</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct CountStatusDamageActionOp
     {
-        /* 상태 수에 비례한 피해 계산에 사용할 상태 분류와 배율을 기록한다. */
+
+        /// <summary><c>CountStatusDamageActionOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public CountStatusDamageActionOp(
-            SkillMultiEffectTargetSide targetSide /* 상태 효과를 확인할 대상 진영 */,
-            StatusEffectKind statusKind /* 셀 상태 효과 종류 */,
-            float amountPerCount /* 상태 효과 하나당 피해 증가량 */,
-            int maximumCount /* 피해 계산에 사용할 최대 개수 */)
+            SkillMultiEffectTargetSide targetSide,
+            StatusEffectKind statusKind,
+            float amountPerCount,
+            int maximumCount)
         {
             TargetSide = targetSide;
             StatusKind = statusKind;
@@ -501,15 +518,14 @@ namespace Pakuri.InGame
         public int MaximumCount { get; }
     }
 
-    /*
-     * 공격자에게 특정 상태 효과가 있을 때 받는 피해 증가값을 보관한다.
-     */
+    /// <summary><c>StatusConditionalDamageTakenActionOp</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
     public readonly struct StatusConditionalDamageTakenActionOp
     {
-        /* 공격자 상태 조건을 만족할 때 대상이 받을 피해 보너스를 기록한다. */
+
+        /// <summary><c>StatusConditionalDamageTakenActionOp</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         public StatusConditionalDamageTakenActionOp(
-            float bonus /* 받는 피해 증가값 */,
-            StatusEffectKind requiredSourceStatus /* 공격자에게 필요한 상태 효과 */)
+            float bonus,
+            StatusEffectKind requiredSourceStatus)
         {
             Bonus = bonus;
             RequiredSourceStatus = requiredSourceStatus;
@@ -519,22 +535,19 @@ namespace Pakuri.InGame
         public StatusEffectKind RequiredSourceStatus { get; }
     }
 
-    /*
-     * 전투용 실행 값 하나를 보관한다.
-     * GameDataCatalogBuilder가 만들고 SkillExecutionData와 스킬 규칙 코드가 필요한 형식으로 꺼낸다.
-     */
+    /// <summary><c>SkillNode</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
     public class SkillNode
     {
         private readonly object operation;
         public string TargetSkillId { get; internal set; }
 
-        // CSV Graph Handler에서 변환된 강타입 실행 값 하나를 보관하는 부분을 구현.
+        /// <summary><c>SkillNode</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
         private SkillNode(object operation)
         {
             this.operation = operation;
         }
 
-        /* 저장된 실행 값이 요청한 형식이면 반환한다. */
+        /// <summary><c>Operation</c>를 반환한다.</summary>
         internal T? GetOperation<T>() where T : struct
         {
             if (operation is T value)
@@ -544,10 +557,11 @@ namespace Pakuri.InGame
 
             return null;
         }
-        /* 실행 값 하나를 SkillNode로 감싼다. */
+
+        /// <summary>전달된 <c>op</c> 값을 사용해 <c>FromOperation</c> 결과값을 생성해 반환한다.</summary>
         public static SkillNode FromOperation<T>(T op) where T : struct => new SkillNode(op);
 
-        /* 실행 값과 적용 대상 스킬을 SkillNode 하나로 만든다. */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>FromOperation</c> 결과값을 생성해 반환한다.</summary>
         public static SkillNode FromOperation<T>(T op, string targetSkillId) where T : struct
         {
             return new SkillNode(op) { TargetSkillId = targetSkillId ?? string.Empty };

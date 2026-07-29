@@ -1,3 +1,8 @@
+/*
+ * 역할: Zone 스킬 전달 조정.
+ * 책임: 설정된 Zone Actor와 비주얼을 생성하고 주기 적중을 스킬 실행에 전달한다.
+ */
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -5,56 +10,27 @@ using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
-/*
- * 지속 범위 공격을 준비하고 생성한 오브젝트의 처리를 ZoneSkillActor에 맡긴다.
- */
 namespace Pakuri.InGame
 {
 
+    /// <summary><c>ZoneSkillExecutor</c>에 해당하는 런타임 동작을 실행한다.</summary>
     internal static class ZoneSkillExecutor
     {
-        // 범위 중심, 반지름, 배치 수, 지속시간을 조립하고 Actor 생성을 구현.
-        /*
-         * 현재 스킬의 노드 효과 중 요청한 실행 시점에 맞는 효과를 적용한다.
-         */
-
-        /*
-         * 추가 효과의 지연시간이 지난 뒤 같은 Executor에서 효과를 적용한다.
-         */
-
-        /*
-         * 추가 효과 종류에 맞는 실제 적용 기능을 호출한다.
-         */
-
-        /*
-         * 노드 피해 효과를 대상, 범위 또는 지속 영역에 적용한다.
-         */
-
-
-        /*
-         * 추가 피해의 런타임 비주얼 충돌체를 사용해 범위 피해를 적용한다.
-         */
-
-        /*
-         * 지속 피해 추가 효과용 Zone Actor를 생성하고 실행 정보를 전달한다.
-         */
 
         private static bool applyingHitEnhancement;
 
-        /*
-         * 적중 후 추가 피해, 연쇄 피해, 재장전 감소 강화 효과를 적용한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>HitEnhancements</c>를 적용한다.</summary>
         internal static void ApplyHitEnhancements(
-            InGameCombatManager manager /* 전투 진행 관리자 */,
-            UnitSpawnManager roster /* 전투 유닛 목록 */,
-            SkillUseState runtime /* 실행 중인 스킬 */,
-            SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
-            CombatUnitEntry sourceEntry /* 시전자 등록 정보 */,
-            UnitCombatState source /* 시전자 */,
-            string sourceSkillId /* 원본 스킬 식별자 */,
-            CombatUnitEntry hitTarget /* 최초 적중 대상 */,
-            Vector2 hitPosition /* 최초 적중 위치 */,
-            float primaryBaseDamage /* 최초 적중 기본 피해 */)
+            InGameCombatManager manager,
+            UnitSpawnManager roster,
+            SkillUseState runtime,
+            SkillExecutionData skillData,
+            CombatUnitEntry sourceEntry,
+            UnitCombatState source,
+            string sourceSkillId,
+            CombatUnitEntry hitTarget,
+            Vector2 hitPosition,
+            float primaryBaseDamage)
         {
             if (manager != null && roster != null && source != null && hitTarget != null && hitTarget.Model != null)
             {
@@ -173,14 +149,12 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * 재시전을 실행한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Recast</c>를 실행한다.</summary>
         internal static bool ExecuteRecast(
-            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillExecutionData inheritedData /* 앞 실행에서 이어받은 스킬 강화 정보 */,
-            SkillTriggerCommand command /* 재시전 명령 */,
-            Vector2 center /* 효과가 적용될 중심 위치 */)
+            SkillExecutionContext context,
+            SkillExecutionData inheritedData,
+            SkillTriggerCommand command,
+            Vector2 center)
         {
             var skill = context != null && context.Runtime != null
                 ? context.Runtime.Data as ZoneSkillDefinition
@@ -277,13 +251,11 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /*
-         * 요청받은 지속 범위 스킬을 실행한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>설정된 런타임 작업</c>를 실행한다.</summary>
         internal static bool Execute(
-            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
-            ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */)
+            SkillExecutionContext context,
+            SkillExecutionData snapshot,
+            ZoneSkillDefinition skill)
         {
             var deploymentCount = DeploymentCount(snapshot);
             var centers = AreaCenters(context, skill.Targeting, skill.Area, deploymentCount);
@@ -365,18 +337,14 @@ namespace Pakuri.InGame
             return routed;
         }
 
-        /*
-         * 배치 횟수를 결정한다.
-         */
-        private static int DeploymentCount(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        /// <summary>전달된 <c>snapshot</c> 값을 사용해 <c>DeploymentCount</c> 결과값을 생성해 반환한다.</summary>
+        private static int DeploymentCount(SkillExecutionData snapshot)
         {
             return 1 + (snapshot != null && snapshot.HasBranchCount ? Math.Max(0, snapshot.BranchCount) : 0);
         }
 
-        /*
-         * 적중 대상 횟수를 결정한다.
-         */
-        private static int HitTargetCount(ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>HitTargetCount</c> 결과값을 생성해 반환한다.</summary>
+        private static int HitTargetCount(ZoneSkillDefinition skill, SkillExecutionData snapshot)
         {
             if (skill == null || skill.HitAllTargets || !skill.UsesHitTargetCount)
             {
@@ -388,14 +356,12 @@ namespace Pakuri.InGame
             return Math.Max(1, baseCount + bonus);
         }
 
-        /*
-         * 범위 중심점을 결정한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>AreaCenters</c> 결과값을 생성해 반환한다.</summary>
         private static List<Vector2> AreaCenters(
-            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */,
-            AreaBlueprintSpec area /* 범위 */,
-            int deploymentCount /* 배치 개수 */)
+            SkillExecutionContext context,
+            SkillTargetingSpec targeting,
+            AreaBlueprintSpec area,
+            int deploymentCount)
         {
             var primaryCenter = AreaCenter(context, targeting, area);
             var coverAll = (area != null && area.CoverAll)
@@ -409,21 +375,17 @@ namespace Pakuri.InGame
                 SkillDeploymentRepeatMode.RandomExisting);
         }
 
-        /*
-         * 범위 중심점을 결정한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>AreaCenter</c> 결과값을 생성해 반환한다.</summary>
         private static Vector2 AreaCenter(
-            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */,
-            AreaBlueprintSpec area /* 범위 */)
+            SkillExecutionContext context,
+            SkillTargetingSpec targeting,
+            AreaBlueprintSpec area)
         {
             return SkillTargeting.AreaCenter(context, targeting, area);
         }
 
-        /*
-         * 반경을 결정한다.
-         */
-        private static float Radius(ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Radius</c> 결과값을 생성해 반환한다.</summary>
+        private static float Radius(ZoneSkillDefinition skill, SkillExecutionData snapshot)
         {
             var area = skill != null ? skill.Area : null;
             var targeting = skill != null ? skill.Targeting : null;
@@ -433,10 +395,8 @@ namespace Pakuri.InGame
                 snapshot.RadiusBonus);
         }
 
-        /*
-         * 지속시간을 결정한다.
-         */
-        private static float Duration(ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Duration</c> 결과값을 생성해 반환한다.</summary>
+        private static float Duration(ZoneSkillDefinition skill, SkillExecutionData snapshot)
         {
             var area = skill != null ? skill.Area : null;
             var timing = skill != null ? skill.Timing : null;
@@ -456,10 +416,8 @@ namespace Pakuri.InGame
             return Mathf.Max(0.05f, duration);
         }
 
-        /*
-         * 주기 간격을 결정한다.
-         */
-        private static float TickInterval(ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Interval</c>를 경과 시간 기준으로 갱신한다.</summary>
+        private static float TickInterval(ZoneSkillDefinition skill, SkillExecutionData snapshot)
         {
             var area = skill != null ? skill.Area : null;
             var timing = skill != null ? skill.Timing : null;
@@ -473,10 +431,6 @@ namespace Pakuri.InGame
 
             return Mathf.Max(0.05f, interval);
         }
-
-        /*
-         * 종료 효과를 결정한다.
-         */
 
     }
 }

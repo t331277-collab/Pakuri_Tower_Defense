@@ -1,3 +1,8 @@
+/*
+ * 역할: 타입 지정 CSV 행 파싱.
+ * 책임: 이름 기반 Column을 읽어 유닛·스킬·상태·Trigger·카탈로그 행으로 변환한다.
+ */
+
 using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
@@ -9,9 +14,12 @@ using static Pakuri.Data.SkillGraphParser;
 
 namespace Pakuri.Data
 {
+
+    /// <summary><c>CsvRowParser</c> 원본 값을 런타임 모델로 파싱한다.</summary>
     internal static class CsvRowParser
     {
 
+        /// <summary><c>MonsterRow</c>에 해당하는 CSV 한 행을 표현한다.</summary>
         internal class MonsterRow
         {
             public string Id;
@@ -38,6 +46,7 @@ namespace Pakuri.Data
             public float HolyDefense;
         }
 
+        /// <summary><c>RewardChoiceRow</c>에 해당하는 CSV 한 행을 표현한다.</summary>
         internal class RewardChoiceRow
         {
             public string Id;
@@ -47,6 +56,7 @@ namespace Pakuri.Data
             public int SortOrder;
         }
 
+        /// <summary><c>SkillRow</c>에 해당하는 CSV 한 행을 표현한다.</summary>
         internal class SkillRow
         {
             public string Id;
@@ -122,6 +132,7 @@ namespace Pakuri.Data
             public StatusPayloadRow Status = new StatusPayloadRow();
         }
 
+        /// <summary><c>SkillChoiceRow</c>에 해당하는 CSV 한 행을 표현한다.</summary>
         internal class SkillChoiceRow
         {
             public string Id;
@@ -135,6 +146,7 @@ namespace Pakuri.Data
             public string SkillIconPath;
         }
 
+        /// <summary><c>SkillTriggerRow</c>에 해당하는 CSV 한 행을 표현한다.</summary>
         internal class SkillTriggerRow
         {
             public string Id;
@@ -161,7 +173,8 @@ namespace Pakuri.Data
             public bool RequireEventExecute;
         }
 
-        internal static MonsterRow ParseMonsterRow(CsvRecord record )
+        /// <summary>전달된 <c>record</c> 값을 사용해 <c>MonsterRow</c> 값을 런타임 표현으로 파싱한다.</summary>
+        internal static MonsterRow ParseMonsterRow(CsvRecord record)
         {
             return new MonsterRow
             {
@@ -190,7 +203,8 @@ namespace Pakuri.Data
             };
         }
 
-        internal static RewardChoiceRow ParseRewardChoiceRow(CsvRecord record )
+        /// <summary>전달된 <c>record</c> 값을 사용해 <c>RewardChoiceRow</c> 값을 런타임 표현으로 파싱한다.</summary>
+        internal static RewardChoiceRow ParseRewardChoiceRow(CsvRecord record)
         {
             return new RewardChoiceRow
             {
@@ -202,10 +216,11 @@ namespace Pakuri.Data
             };
         }
 
+        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillRow</c> 값을 런타임 표현으로 파싱한다.</summary>
         internal static SkillRow ParseSkillRow(
-            CsvRecord record ,
-            PakuriCsvSkillKind skillKind ,
-            string ownerIdOverride = null )
+            CsvRecord record,
+            PakuriCsvSkillKind skillKind,
+            string ownerIdOverride = null)
         {
             var slot = record.ReadEnum<SkillSlot>("slot");
             var monsterId = ownerIdOverride;
@@ -296,7 +311,8 @@ namespace Pakuri.Data
             };
         }
 
-        internal static SkillChoiceRow ParseSkillChoiceRow(CsvRecord record )
+        /// <summary>전달된 <c>record</c> 값을 사용해 <c>SkillChoiceRow</c> 값을 런타임 표현으로 파싱한다.</summary>
+        internal static SkillChoiceRow ParseSkillChoiceRow(CsvRecord record)
         {
             return new SkillChoiceRow
             {
@@ -312,7 +328,8 @@ namespace Pakuri.Data
             };
         }
 
-        internal static SkillTriggerRow ParseSkillTriggerRow(CsvRecord record )
+        /// <summary>전달된 <c>record</c> 값을 사용해 <c>SkillTriggerRow</c> 값을 런타임 표현으로 파싱한다.</summary>
+        internal static SkillTriggerRow ParseSkillTriggerRow(CsvRecord record)
         {
             var row = new SkillTriggerRow
             {
@@ -366,7 +383,8 @@ namespace Pakuri.Data
             return row;
         }
 
-        internal static SkillSlot GetRequiredActiveSlot(SkillSlot passiveSlot )
+        /// <summary>전달된 <c>passiveSlot</c> 값을 사용해 <c>RequiredActiveSlot</c>를 반환한다.</summary>
+        internal static SkillSlot GetRequiredActiveSlot(SkillSlot passiveSlot)
         {
             switch (passiveSlot)
             {
@@ -383,54 +401,63 @@ namespace Pakuri.Data
             }
         }
 
-        internal static int ReadOptionalIntIfColumnExists(CsvRecord record , string columnName )
+        /// <summary>전달된 런타임 입력값을 사용해 <c>OptionalIntIfColumnExists</c>를 읽는다.</summary>
+        internal static int ReadOptionalIntIfColumnExists(CsvRecord record, string columnName)
         {
             return record.HasColumn(columnName) ? record.ReadInt(columnName) : 0;
         }
 
-        internal static float ReadOptionalFloatIfColumnExists(CsvRecord record , string columnName )
+        /// <summary>전달된 런타임 입력값을 사용해 <c>OptionalFloatIfColumnExists</c>를 읽는다.</summary>
+        internal static float ReadOptionalFloatIfColumnExists(CsvRecord record, string columnName)
         {
             return ReadOptionalFloat(record, columnName, 0f);
         }
 
-        internal static float ReadOptionalFloat(CsvRecord record , string columnName , float defaultValue )
+        /// <summary>전달된 런타임 입력값을 사용해 <c>OptionalFloat</c>를 읽는다.</summary>
+        internal static float ReadOptionalFloat(CsvRecord record, string columnName, float defaultValue)
         {
             return record.HasColumn(columnName) && TryReadFloat(record, columnName, out var value)
                 ? value
                 : defaultValue;
         }
 
-        internal static string ReadOptionalStringIfColumnExists(CsvRecord record , string columnName )
+        /// <summary>전달된 런타임 입력값을 사용해 <c>OptionalStringIfColumnExists</c>를 읽는다.</summary>
+        internal static string ReadOptionalStringIfColumnExists(CsvRecord record, string columnName)
         {
             return record.HasColumn(columnName) ? record.ReadString(columnName) : string.Empty;
         }
 
-        internal static bool ReadOptionalBoolIfColumnExists(CsvRecord record , string columnName )
+        /// <summary>전달된 런타임 입력값을 사용해 <c>OptionalBoolIfColumnExists</c>를 읽는다.</summary>
+        internal static bool ReadOptionalBoolIfColumnExists(CsvRecord record, string columnName)
         {
             return ReadOptionalBool(record, columnName, false);
         }
 
-        internal static bool ReadOptionalBool(CsvRecord record , string columnName , bool defaultValue )
+        /// <summary>전달된 런타임 입력값을 사용해 <c>OptionalBool</c>를 읽는다.</summary>
+        internal static bool ReadOptionalBool(CsvRecord record, string columnName, bool defaultValue)
         {
             return !record.HasColumn(columnName) || string.IsNullOrWhiteSpace(record.ReadString(columnName))
                 ? defaultValue
                 : record.ReadBool(columnName);
         }
 
-        internal static T ReadOptionalEnum<T>(CsvRecord record , string columnName , T defaultValue ) where T : struct
+        /// <summary>전달된 런타임 입력값을 사용해 <c>OptionalEnum</c>를 읽는다.</summary>
+        internal static T ReadOptionalEnum<T>(CsvRecord record, string columnName, T defaultValue) where T : struct
         {
             return !record.HasColumn(columnName) || string.IsNullOrWhiteSpace(record.ReadString(columnName))
                 ? defaultValue
                 : record.ReadEnum<T>(columnName);
         }
 
-        internal static bool TryReadFloatIfColumnExists(CsvRecord record , string columnName , out float value )
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ReadFloatIfColumnExists</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
+        internal static bool TryReadFloatIfColumnExists(CsvRecord record, string columnName, out float value)
         {
             value = 0f;
             return record.HasColumn(columnName) && TryReadFloat(record, columnName, out value);
         }
 
-        internal static bool TryReadFloat(CsvRecord record , string columnName , out float value )
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ReadFloat</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
+        internal static bool TryReadFloat(CsvRecord record, string columnName, out float value)
         {
             var raw = record.ReadString(columnName);
             if (string.IsNullOrWhiteSpace(raw))
@@ -443,6 +470,7 @@ namespace Pakuri.Data
             return true;
         }
 
+        /// <summary><c>EnemyRow</c>에 해당하는 CSV 한 행을 표현한다.</summary>
         internal class EnemyRow
         {
             public string Id;
@@ -469,6 +497,7 @@ namespace Pakuri.Data
             public float NexusDamage;
         }
 
+        /// <summary><c>EnemyBaseSkillRow</c>에 해당하는 CSV 한 행을 표현한다.</summary>
         internal class EnemyBaseSkillRow
         {
             public SkillRow Skill;
@@ -498,6 +527,7 @@ namespace Pakuri.Data
             public float PassiveModifierValue;
         }
 
+        /// <summary><c>EnemyTriggerRow</c>에 해당하는 CSV 한 행을 표현한다.</summary>
         internal class EnemyTriggerRow
         {
             public string Id;
@@ -508,7 +538,8 @@ namespace Pakuri.Data
             public bool Enabled;
         }
 
-        internal static EnemyRow ParseEnemyRow(CsvRecord record )
+        /// <summary>전달된 <c>record</c> 값을 사용해 <c>EnemyRow</c> 값을 런타임 표현으로 파싱한다.</summary>
+        internal static EnemyRow ParseEnemyRow(CsvRecord record)
         {
             return new EnemyRow
             {
@@ -537,7 +568,8 @@ namespace Pakuri.Data
             };
         }
 
-        internal static EnemyBaseSkillRow ParseEnemyBaseSkillRow(CsvRecord record , string tableName )
+        /// <summary>전달된 런타임 입력값을 사용해 <c>EnemyBaseSkillRow</c> 값을 런타임 표현으로 파싱한다.</summary>
+        internal static EnemyBaseSkillRow ParseEnemyBaseSkillRow(CsvRecord record, string tableName)
         {
             if (string.Equals(tableName, "skills_passive.csv", StringComparison.OrdinalIgnoreCase))
             {
@@ -582,7 +614,8 @@ namespace Pakuri.Data
             return row;
         }
 
-        internal static EnemyBaseSkillRow ParseEnemyPassiveSkillRow(CsvRecord record )
+        /// <summary>전달된 <c>record</c> 값을 사용해 <c>EnemyPassiveSkillRow</c> 값을 런타임 표현으로 파싱한다.</summary>
+        internal static EnemyBaseSkillRow ParseEnemyPassiveSkillRow(CsvRecord record)
         {
             var modifierKind = record.ReadEnum<PassiveModifierKind>("modifier_kind");
             var hasAttribute = TryReadDamageAttribute(record, "attribute", out var attribute);
@@ -606,7 +639,8 @@ namespace Pakuri.Data
             };
         }
 
-        internal static EnemyTriggerRow ParseEnemyTriggerRow(CsvRecord record )
+        /// <summary>전달된 <c>record</c> 값을 사용해 <c>EnemyTriggerRow</c> 값을 런타임 표현으로 파싱한다.</summary>
+        internal static EnemyTriggerRow ParseEnemyTriggerRow(CsvRecord record)
         {
             return new EnemyTriggerRow
             {

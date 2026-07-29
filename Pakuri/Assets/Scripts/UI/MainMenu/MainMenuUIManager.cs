@@ -1,12 +1,14 @@
+/*
+ * 역할: Main Menu 이동.
+ * 책임: Menu 씬 참조와 Button을 연결하고 몬스터 선택 및 Run 시작을 처리한다.
+ */
+
 using Pakuri.InGame;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-/*
- * 인트로, 메인 메뉴와 몬스터 선택 화면을 전환하고 선택한 몬스터로 새 게임을 시작한다.
- * 화면 참조와 버튼 동작을 연결한 뒤 StartContext를 설정하고 NewRunScene을 불러온다.
- */
+/// <summary><c>MainMenuUIManager</c>가 담당하는 작업을 조정하고 공유 런타임 상태를 소유한다.</summary>
 public class MainMenuUIManager : MonoBehaviour
 {
     [Header("Panels")]
@@ -30,26 +32,20 @@ public class MainMenuUIManager : MonoBehaviour
 
     private string selectedMonsterId;
 
-    /*
-     * 씬 UI 참조를 확인하고 버튼 동작을 연결한다.
-     */
+    /// <summary>Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.</summary>
     private void Awake()
     {
         ResolveSceneReferences();
         BindButtons();
     }
 
-    /*
-     * 첫 화면으로 인트로 패널을 표시한다.
-     */
+    /// <summary>컴포넌트가 첫 프레임을 처리하기 전에 런타임 초기화를 마친다.</summary>
     private void Start()
     {
         ShowIntro();
     }
 
-    /*
-     * Inspector 참조가 비어 있으면 현재 씬의 이름과 계층에서 UI를 찾는다.
-     */
+    /// <summary><c>SceneReferences</c>를 결정한다.</summary>
     private void ResolveSceneReferences()
     {
         introPanel = ResolveGameObject(introPanel, "Intro");
@@ -67,9 +63,7 @@ public class MainMenuUIManager : MonoBehaviour
         rinButton = ResolveButton(rinButton, monsterSelectPanel, "Rin");
     }
 
-    /*
-     * 메뉴 이동, 몬스터 선택과 게임 시작 동작을 각 버튼에 연결한다.
-     */
+    /// <summary><c>Buttons</c>를 런타임 사건 또는 씬 대상에 연결한다.</summary>
     private void BindButtons()
     {
         Bind(introGameStartButton, ShowMainMenu);
@@ -83,10 +77,8 @@ public class MainMenuUIManager : MonoBehaviour
         Bind(rinButton, () => SelectMonster("rin"));
     }
 
-    /*
-     * 버튼과 동작이 모두 있을 때 클릭 동작을 등록한다.
-     */
-    private static void Bind(Button button /* 연결하거나 갱신할 버튼 */, UnityEngine.Events.UnityAction action /* 동작 */)
+    /// <summary>전달된 런타임 입력값을 사용해 <c>요청값</c>를 런타임 사건 또는 씬 대상에 연결한다.</summary>
+    private static void Bind(Button button, UnityEngine.Events.UnityAction action)
     {
         if (button == null || action == null)
         {
@@ -96,41 +88,31 @@ public class MainMenuUIManager : MonoBehaviour
         button.onClick.AddListener(action);
     }
 
-    /*
-     * 인트로 패널만 표시한다.
-     */
+    /// <summary><c>Intro</c>를 표시한다.</summary>
     private void ShowIntro()
     {
         SetOnlyActive(introPanel);
     }
 
-    /*
-     * 메인 메뉴 패널만 표시한다.
-     */
+    /// <summary><c>MainMenu</c>를 표시한다.</summary>
     private void ShowMainMenu()
     {
         SetOnlyActive(mainMenuPanel);
     }
 
-    /*
-     * 몬스터 선택 패널만 표시한다.
-     */
+    /// <summary><c>MonsterSelect</c>를 표시한다.</summary>
     private void ShowMonsterSelect()
     {
         SetOnlyActive(monsterSelectPanel);
     }
 
-    /*
-     * 다음 Run에서 사용할 몬스터 식별자를 저장한다.
-     */
-    private void SelectMonster(string monsterId /* 몬스터 식별자 */)
+    /// <summary>전달된 <c>monsterId</c> 값을 사용해 <c>Monster</c>를 선택한다.</summary>
+    private void SelectMonster(string monsterId)
     {
         selectedMonsterId = monsterId;
     }
 
-    /*
-     * 선택한 몬스터를 시작 정보에 저장하고 NewRunScene으로 이동한다.
-     */
+    /// <summary><c>SelectedMonsterRun</c>를 시작한다.</summary>
     private void StartSelectedMonsterRun()
     {
         var monsterId = string.IsNullOrWhiteSpace(selectedMonsterId) ? defaultMonsterId : selectedMonsterId;
@@ -145,20 +127,16 @@ public class MainMenuUIManager : MonoBehaviour
         SceneManager.LoadScene(newRunScenePath);
     }
 
-    /*
-     * 지정한 패널만 켜고 나머지 메뉴 패널을 끈다.
-     */
-    private void SetOnlyActive(GameObject activePanel /* 활성 패널 여부 */)
+    /// <summary>전달된 <c>activePanel</c> 값을 사용해 <c>OnlyActive</c>를 갱신한다.</summary>
+    private void SetOnlyActive(GameObject activePanel)
     {
         SetActive(introPanel, introPanel == activePanel);
         SetActive(mainMenuPanel, mainMenuPanel == activePanel);
         SetActive(monsterSelectPanel, monsterSelectPanel == activePanel);
     }
 
-    /*
-     * UI 오브젝트가 있을 때 활성 상태를 변경한다.
-     */
-    private static void SetActive(GameObject target /* 활성화하거나 변경할 게임 오브젝트 */, bool active /* 대상 활성화 여부 */)
+    /// <summary>전달된 런타임 입력값을 사용해 <c>Active</c>를 갱신한다.</summary>
+    private static void SetActive(GameObject target, bool active)
     {
         if (target != null)
         {
@@ -166,10 +144,8 @@ public class MainMenuUIManager : MonoBehaviour
         }
     }
 
-    /*
-     * 현재 참조를 사용하거나 전달받은 이름 순서대로 씬 오브젝트를 찾는다.
-     */
-    private static GameObject ResolveGameObject(GameObject current /* 현재 */, params string[] names /* 이름 목록 */)
+    /// <summary>전달된 런타임 입력값을 사용해 <c>GameObject</c>를 결정한다.</summary>
+    private static GameObject ResolveGameObject(GameObject current, params string[] names)
     {
         if (current != null)
         {
@@ -188,10 +164,8 @@ public class MainMenuUIManager : MonoBehaviour
         return null;
     }
 
-    /*
-     * 현재 버튼을 사용하거나 지정한 UI 아래에서 버튼을 찾는다.
-     */
-    private static Button ResolveButton(Button current /* 현재 */, GameObject root /* 검색이나 배치의 기준 오브젝트 */, string childName /* 자식 오브젝트 이름 */)
+    /// <summary>전달된 런타임 입력값을 사용해 <c>Button</c>를 결정한다.</summary>
+    private static Button ResolveButton(Button current, GameObject root, string childName)
     {
         if (current != null)
         {
@@ -207,10 +181,8 @@ public class MainMenuUIManager : MonoBehaviour
         return target != null ? target.GetComponent<Button>() : null;
     }
 
-    /*
-     * 지정한 계층에서 이름이 같은 자식 오브젝트를 재귀적으로 찾는다.
-     */
-    private static GameObject FindChild(Transform root /* 검색이나 배치의 기준 오브젝트 */, string childName /* 자식 오브젝트 이름 */)
+    /// <summary>전달된 런타임 입력값을 사용해 <c>Child</c>를 찾는다.</summary>
+    private static GameObject FindChild(Transform root, string childName)
     {
         if (root == null || string.IsNullOrWhiteSpace(childName))
         {
@@ -234,10 +206,8 @@ public class MainMenuUIManager : MonoBehaviour
         return null;
     }
 
-    /*
-     * 현재 씬에 속한 오브젝트 중 이름이 같은 오브젝트를 찾는다.
-     */
-    private static GameObject FindSceneGameObject(string objectName /* 게임 오브젝트 이름 */)
+    /// <summary>전달된 <c>objectName</c> 값을 사용해 <c>SceneGameObject</c>를 찾는다.</summary>
+    private static GameObject FindSceneGameObject(string objectName)
     {
         if (string.IsNullOrWhiteSpace(objectName))
         {

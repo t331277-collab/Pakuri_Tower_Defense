@@ -1,16 +1,17 @@
+/*
+ * 역할: 스킬 저작 및 런타임 데이터 계약.
+ * 책임: 스킬 종류·대상·피해·상태·전달·패시브·Trigger·비주얼·선택지 설정을 정의한다.
+ */
+
 using System;
 using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
-/*
- * 스킬 슬롯, 작성 원본, 공통 실행 설정과 계열별 런타임 Definition 형식을 제공한다.
- * Pakuri.Data 영역은 카탈로그·Choice·Trigger·Node 작성 계약을,
- * Pakuri.InGame 영역은 Projectile·Line·Single·Zone·Buff·Passive 실행 설계도를 보관한다.
- * 이 파일은 값을 정의할 뿐 대상 선택, 피해 적용, Trigger 발동이나 Node 실행은 담당하지 않는다.
- */
 namespace Pakuri.Data
 {
+
+    /// <summary><c>SkillSlot</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum SkillSlot
     {
         A,
@@ -25,9 +26,7 @@ namespace Pakuri.Data
         J
     }
 
-    /*
-     * 스킬 데이터가 런타임에서 지원되는 단계를 구분
-     */
+    /// <summary><c>SkillImplementationState</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum SkillImplementationState
     {
         NotImplemented,
@@ -35,9 +34,7 @@ namespace Pakuri.Data
         RuntimeImplemented
     }
 
-    /*
-     * 스킬을 실행할 공용 런타임 종류를 구분
-     */
+    /// <summary><c>SkillRuntimeKind</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum SkillRuntimeKind
     {
         MagazineProjectile,
@@ -54,9 +51,7 @@ namespace Pakuri.Data
         Passive
     }
 
-    /*
-     * 패시브가 유닛 전투 수치에 적용하는 상시 보정 종류를 구분한다.
-     */
+    /// <summary><c>PassiveModifierKind</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum PassiveModifierKind
     {
         None,
@@ -70,22 +65,17 @@ namespace Pakuri.Data
 
 }
 
-/*
- * CSV 스킬 정의를 전투에서 실행할 때 사용하는 공통 실행 데이터 구조.
- * 대상 지정, 피해, 상태, 투사체, 범위, 버프 설정과 실행 계획을 보관하고
- * 버프·회복·연쇄·돌진·빔·투사체·단일·범위·보호막·패시브별 세부 데이터를 정의한다.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>StatSource</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum StatSource
     {
         Attack,
         Intelligence
     }
 
-    /*
-     * 스킬 대상 진영에서 사용하는 선택 값을 정의한다.
-     */
+    /// <summary><c>SkillTargetSide</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum SkillTargetSide
     {
         Enemy,
@@ -94,9 +84,7 @@ namespace Pakuri.InGame
         AllAllies
     }
 
-    /*
-     * 스킬 대상 선택 방식에서 사용하는 선택 값을 정의한다.
-     */
+    /// <summary><c>SkillTargetSelection</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum SkillTargetSelection
     {
         Nearest,
@@ -109,9 +97,7 @@ namespace Pakuri.InGame
         Random
     }
 
-    /*
-     * 스킬 대상 형태에서 사용하는 선택 값을 정의한다.
-     */
+    /// <summary><c>SkillTargetShape</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum SkillTargetShape
     {
         Single,
@@ -120,9 +106,7 @@ namespace Pakuri.InGame
         Battlefield
     }
 
-    /*
-     * 상태 대상 범위에서 사용하는 선택 값을 정의한다.
-     */
+    /// <summary><c>StatusTargetScope</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum StatusTargetScope
     {
         Unspecified,
@@ -130,9 +114,7 @@ namespace Pakuri.InGame
         Self
     }
 
-    /*
-     * 상태 병합 규칙에서 사용하는 선택 값을 정의한다.
-     */
+    /// <summary><c>StatusMergePolicy</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum StatusMergePolicy
     {
         Unspecified,
@@ -141,9 +123,7 @@ namespace Pakuri.InGame
         AlwaysStack
     }
 
-    /*
-     * 보호막 갱신 규칙에서 사용하는 선택 값을 정의한다.
-     */
+    /// <summary><c>ShieldRefreshRule</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum ShieldRefreshRule
     {
         Replace,
@@ -151,9 +131,7 @@ namespace Pakuri.InGame
         Stack
     }
 
-    /*
-     * 스킬 실행 시간 설정에 필요한 값을 보관한다.
-     */
+    /// <summary><c>SkillTimingSpec</c>을 설명하는 설정값을 묶는다.</summary>
     [Serializable]
     public class SkillTimingSpec
     {
@@ -162,9 +140,7 @@ namespace Pakuri.InGame
         public float TickInterval;
     }
 
-    /*
-     * 스킬 대상 지정 설정에 필요한 값을 보관한다.
-     */
+    /// <summary><c>SkillTargetingSpec</c>을 설명하는 설정값을 묶는다.</summary>
     [Serializable]
     public class SkillTargetingSpec
     {
@@ -182,9 +158,7 @@ namespace Pakuri.InGame
         public bool CoverAll;
     }
 
-    /*
-     * 스킬 피해 설정에 필요한 값을 보관한다.
-     */
+    /// <summary><c>SkillDamageSpec</c>을 설명하는 설정값을 묶는다.</summary>
     [Serializable]
     public class SkillDamageSpec
     {
@@ -196,9 +170,7 @@ namespace Pakuri.InGame
         public bool CriticalAllowed = true;
     }
 
-    /*
-     * 상태 적용 설정에 필요한 값을 보관한다.
-     */
+    /// <summary><c>StatusApplicationSpec</c>을 설명하는 설정값을 묶는다.</summary>
     [Serializable]
     public class StatusApplicationSpec
     {
@@ -208,9 +180,7 @@ namespace Pakuri.InGame
         public bool RefreshDuration = true;
     }
 
-    /*
-     * 투사체 설계값 설정에 필요한 값을 보관한다.
-     */
+    /// <summary><c>ProjectileBlueprintSpec</c>을 설명하는 설정값을 묶는다.</summary>
     [Serializable]
     public class ProjectileBlueprintSpec
     {
@@ -226,9 +196,7 @@ namespace Pakuri.InGame
         public float LifetimeSeconds;
     }
 
-    /*
-     * 범위 설계값 설정에 필요한 값을 보관한다.
-     */
+    /// <summary><c>AreaBlueprintSpec</c>을 설명하는 설정값을 묶는다.</summary>
     [Serializable]
     public class AreaBlueprintSpec
     {
@@ -238,9 +206,7 @@ namespace Pakuri.InGame
         public bool CoverAll;
     }
 
-    /*
-     * 버프 보정값 설정에 필요한 값을 보관한다.
-     */
+    /// <summary><c>BuffModifierSpec</c>을 설명하는 설정값을 묶는다.</summary>
     [Serializable]
     public class BuffModifierSpec
     {
@@ -255,12 +221,10 @@ namespace Pakuri.InGame
         public DamageAttribute ResistReductionElement;
     }
 
-    /*
-     * 스킬 데이터에 필요한 값을 보관한다.
-     */
+    /// <summary><c>SkillDefinition</c>의 저작 데이터와 런타임 설정을 정의한다.</summary>
     public class SkillDefinition
     {
-        // 모든 스킬 계열이 공유하는 런타임 Definition의 기본 필드를 구현.
+
         [Header("Identity")]
         public string SkillId;
         public string SkillName;
@@ -291,9 +255,7 @@ namespace Pakuri.InGame
         public SkillNode[] Nodes = Array.Empty<SkillNode>();
     }
 
-    /*
-     * 버프 스킬 데이터에 필요한 값을 보관한다.
-     */
+    /// <summary><c>BuffSkillDefinition</c>의 저작 데이터와 런타임 설정을 정의한다.</summary>
     public class BuffSkillDefinition : SkillDefinition
     {
         [Header("Buff")]
@@ -312,17 +274,13 @@ namespace Pakuri.InGame
         public StatusApplicationSpec AttachedStatus = new StatusApplicationSpec();
     }
 
-    /*
-     * 회복 스킬 데이터에 필요한 값을 보관한다.
-     */
+    /// <summary><c>BuffHealSkillDefinition</c>의 저작 데이터와 런타임 설정을 정의한다.</summary>
     public class BuffHealSkillDefinition : SkillDefinition
     {
         public SkillDamageSpec Healing = new SkillDamageSpec();
     }
 
-    /*
-     * Single 계열의 연쇄 공격 값을 보관한다.
-     */
+    /// <summary><c>SingleChainSkillDefinition</c>의 저작 데이터와 런타임 설정을 정의한다.</summary>
     public class SingleChainSkillDefinition : SkillDefinition
     {
         public SkillDamageSpec Damage = new SkillDamageSpec();
@@ -332,9 +290,7 @@ namespace Pakuri.InGame
         public bool ExcludePrimaryTarget = true;
     }
 
-    /*
-     * Single 계열의 돌진 공격 값을 보관한다.
-     */
+    /// <summary><c>SingleChargeSkillDefinition</c>의 저작 데이터와 런타임 설정을 정의한다.</summary>
     public class SingleChargeSkillDefinition : SkillDefinition
     {
         public float TargetMaxHealthRatio = 1f;
@@ -343,9 +299,7 @@ namespace Pakuri.InGame
         public StatusApplicationSpec OnHitStatus = new StatusApplicationSpec();
     }
 
-    /*
-     * Line 스킬 데이터에 필요한 값을 보관한다.
-     */
+    /// <summary><c>LineSkillDefinition</c>의 저작 데이터와 런타임 설정을 정의한다.</summary>
     public class LineSkillDefinition : SkillDefinition
     {
         [Header("Line")]
@@ -360,9 +314,7 @@ namespace Pakuri.InGame
         public StatusApplicationSpec OnHitStatus = new StatusApplicationSpec();
     }
 
-    /*
-     * 투사체 스킬 데이터에 필요한 값을 보관한다.
-     */
+    /// <summary><c>ProjectileSkillDefinition</c>의 저작 데이터와 런타임 설정을 정의한다.</summary>
     public class ProjectileSkillDefinition : SkillDefinition
     {
         [Header("Projectile")]
@@ -387,9 +339,7 @@ namespace Pakuri.InGame
         public StatusApplicationSpec ImpactStatus = new StatusApplicationSpec();
     }
 
-    /*
-     * 단일 공격 데이터에 필요한 값을 보관한다.
-     */
+    /// <summary><c>SingleSkillDefinition</c>의 저작 데이터와 런타임 설정을 정의한다.</summary>
     public class SingleSkillDefinition : SkillDefinition
     {
         [Header("Area")]
@@ -423,9 +373,7 @@ namespace Pakuri.InGame
         public StatusApplicationSpec OnHitStatus = new StatusApplicationSpec();
     }
 
-    /*
-     * 지속 범위 스킬 데이터에 필요한 값을 보관한다.
-     */
+    /// <summary><c>ZoneSkillDefinition</c>의 저작 데이터와 런타임 설정을 정의한다.</summary>
     public class ZoneSkillDefinition : SkillDefinition
     {
         [Header("Area")]
@@ -439,9 +387,7 @@ namespace Pakuri.InGame
         public StatusApplicationSpec OnTickStatus = new StatusApplicationSpec();
     }
 
-    /*
-     * 보호막 스킬 데이터에 필요한 값을 보관한다.
-     */
+    /// <summary><c>BuffShieldSkillDefinition</c>의 저작 데이터와 런타임 설정을 정의한다.</summary>
     public class BuffShieldSkillDefinition : SkillDefinition
     {
         [Header("Shield")]
@@ -455,9 +401,7 @@ namespace Pakuri.InGame
         public StatusRuntimeData ShieldStatus;
     }
 
-    /*
-     * 패시브 스킬 데이터에 필요한 값을 보관한다.
-     */
+    /// <summary><c>PassiveSkillDefinition</c>의 저작 데이터와 런타임 설정을 정의한다.</summary>
     public class PassiveSkillDefinition : SkillDefinition
     {
         public SkillSlot RequiredActiveSlot;
@@ -474,12 +418,10 @@ namespace Pakuri.InGame
     }
 }
 
-
-/*
- * 선택지의 최종 표시값과 실행 노드를 보관한다.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>SkillChoice</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
     [Serializable]
     public class SkillChoice
     {
@@ -496,12 +438,10 @@ namespace Pakuri.InGame
     }
 }
 
-
-/*
- * 선택지가 액티브·패시브의 어느 성장 단계인지 구분한다.
- */
 namespace Pakuri.Data
 {
+
+    /// <summary><c>SkillChoiceGroup</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum SkillChoiceGroup
     {
         ActiveEnhancement,
@@ -512,15 +452,10 @@ namespace Pakuri.Data
 
 }
 
-
-/*
- * 한 스킬에 연결되는 추가 효과의 동작을 구분한다.
- */
 namespace Pakuri.Data
 {
-    /*
-     * 추가 효과가 적용될 진영을 구분한다.
-     */
+
+    /// <summary><c>SkillMultiEffectTargetSide</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum SkillMultiEffectTargetSide
     {
         Enemy,
@@ -528,9 +463,7 @@ namespace Pakuri.Data
         AllAllies
     }
 
-    /*
-     * 추가 효과가 대상을 고르는 방식을 구분한다.
-     */
+    /// <summary><c>SkillMultiEffectTargetSelection</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum SkillMultiEffectTargetSelection
     {
         Nearest,
@@ -538,9 +471,7 @@ namespace Pakuri.Data
         EventTarget
     }
 
-    /*
-     * 추가 효과의 대상 범위를 구분한다.
-     */
+    /// <summary><c>SkillMultiEffectTargetShape</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum SkillMultiEffectTargetShape
     {
         Single,
@@ -548,9 +479,7 @@ namespace Pakuri.Data
         Battlefield
     }
 
-    /*
-     * 범위 효과의 중심 위치를 구분한다.
-     */
+    /// <summary><c>SkillMultiEffectCenterMode</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum SkillMultiEffectCenterMode
     {
         EffectTarget,
@@ -559,9 +488,7 @@ namespace Pakuri.Data
         NearestEnemy
     }
 
-    /*
-     * 스킬 Trigger를 발생시키는 전투 사건을 구분한다.
-     */
+    /// <summary><c>SkillTriggerEvent</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum SkillTriggerEvent
     {
         BuildExecutionData,
@@ -580,6 +507,7 @@ namespace Pakuri.Data
         CombatStart
     }
 
+    /// <summary><c>SkillTriggerEventSourceScope</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum SkillTriggerEventSourceScope
     {
         Any,
@@ -587,6 +515,7 @@ namespace Pakuri.Data
         AllAllies
     }
 
+    /// <summary><c>SkillTriggerDamageValueSource</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum SkillTriggerDamageValueSource
     {
         Fixed,
@@ -597,6 +526,7 @@ namespace Pakuri.Data
         EventAppliedDamage
     }
 
+    /// <summary><c>SkillTriggerCenterMode</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum SkillTriggerCenterMode
     {
         EventCenter,
@@ -604,6 +534,7 @@ namespace Pakuri.Data
         Caster
     }
 
+    /// <summary><c>SkillTriggerCommandKind</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum SkillTriggerCommandKind
     {
         RecastZone,
@@ -612,6 +543,7 @@ namespace Pakuri.Data
         ExtendStatusDuration
     }
 
+    /// <summary><c>SkillTriggerCommand</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
     [Serializable]
     public class SkillTriggerCommand
     {
@@ -630,13 +562,11 @@ namespace Pakuri.Data
         public int MaxGeneration = 1;
     }
 
-    /*
-     * 전투 사건의 활성화 조건과 실행할 Node 목록을 보관한다.
-     */
+    /// <summary><c>SkillTriggerDefinition</c>의 저작 데이터와 런타임 설정을 정의한다.</summary>
     [Serializable]
     public class SkillTriggerDefinition
     {
-        // Trigger 식별과 발생 조건
+
         public string TriggerId;
         public string MonsterId;
         public string SourceSkillId;
@@ -673,47 +603,37 @@ namespace Pakuri.Data
 
 }
 
-
-/*
- * 추가 효과의 시각 오브젝트가 붙을 위치를 구분한다.
- */
 namespace Pakuri.Data
 {
+
+    /// <summary><c>SkillMultiEffectVisualAnchorMode</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum SkillMultiEffectVisualAnchorMode
     {
         Center,
         AppliedTargets
     }
 
-    /*
-     * 스킬 시각 오브젝트가 스킬과 상태 중 어디에 속하는지 구분한다.
-     */
+    /// <summary><c>RuntimeSkillVisualAnchor</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum RuntimeSkillVisualAnchor
     {
         Skill,
         StatusTarget
     }
 
-    /*
-     * 런타임 스킬 충돌 영역의 크기를 보관한다.
-     */
+    /// <summary><c>RuntimeSkillHitboxSpec</c>을 설명하는 설정값을 묶는다.</summary>
     [Serializable]
     public class RuntimeSkillHitboxSpec
     {
         public Vector2 Size;
 
-        /*
-         * 너비와 높이가 모두 설정됐는지 확인한다.
-         */
+        /// <summary>소유한 런타임 상태에 <c>Hitbox</c>가 있는지 반환한다.</summary>
         public bool HasHitbox()
         {
             return Size.x > 0f && Size.y > 0f;
         }
     }
 
-    /*
-     * 런타임에서 조합할 스프라이트, 애니메이터, 크기, 충돌 영역을 보관한다.
-     */
+    /// <summary><c>RuntimeSkillVisualSpec</c>을 설명하는 설정값을 묶는다.</summary>
     [Serializable]
     public class RuntimeSkillVisualSpec
     {
@@ -724,9 +644,7 @@ namespace Pakuri.Data
         public RuntimeSkillVisualAnchor Anchor = RuntimeSkillVisualAnchor.Skill;
         public RuntimeSkillHitboxSpec Hitbox = new RuntimeSkillHitboxSpec();
 
-        /*
-         * 화면 표시나 충돌 영역으로 사용할 데이터가 있는지 확인한다.
-         */
+        /// <summary>소유한 런타임 상태에 <c>Visual</c>가 있는지 반환한다.</summary>
         public bool HasVisual()
         {
             return Sprite != null

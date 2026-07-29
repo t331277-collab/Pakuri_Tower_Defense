@@ -1,12 +1,15 @@
+/*
+ * 역할: Nexus 씬과 모델 연결.
+ * 책임: Nexus 전투 모델을 월드 표시에 연결하고 표시 체력을 동기화한다.
+ */
+
 using TMPro;
 using UnityEngine;
 
-/*
- * Nexus GameObject와 전투 상태를 연결하고 체력 표시를 갱신한다.
- * 모델 생성, 패배 판정, UI 문자열 작성은 각각 외부 책임으로 분리한다.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>NexusActor</c> 런타임 오브젝트를 나타내며 모델과 Unity 컴포넌트를 연결한다.</summary>
     public class NexusActor : MonoBehaviour
     {
         private const float DefaultMaxHealth = 20f;
@@ -17,28 +20,22 @@ namespace Pakuri.InGame
         public float MaxHealth => maxHealth;
         public UnitCombatState Model { get; private set; }
 
-        /*
-         * Initialize에 필요한 값을 설정한다.
-         */
-        public void Initialize(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        /// <summary>전달된 <c>model</c> 값을 사용해 <c>소유한 런타임 상태</c>를 초기화한다.</summary>
+        public void Initialize(UnitCombatState model)
         {
             Model = model;
             GetComponent<BoxCollider2D>().isTrigger = true;
             RefreshDisplay();
         }
 
-        /*
-         * RefreshDisplay 대상의 현재 상태를 갱신한다.
-         */
+        /// <summary><c>Display</c>를 현재 런타임 모델을 기준으로 갱신한다.</summary>
         public void RefreshDisplay()
         {
             NexusHealthDisplay.Refresh(nexusHpInfo, Model);
         }
 
-        /*
-         * SetCurrentHealth에 필요한 값을 설정한다.
-         */
-        public void SetCurrentHealth(float currentHealth /* 현재 체력 */)
+        /// <summary>전달된 <c>currentHealth</c> 값을 사용해 <c>CurrentHealth</c>를 갱신한다.</summary>
+        public void SetCurrentHealth(float currentHealth)
         {
             Model.Resources.CurrentHealth = Mathf.Clamp(
                 Mathf.Round(currentHealth),

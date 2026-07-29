@@ -1,26 +1,27 @@
+/*
+ * 역할: 단일 스킬 런타임 Actor 동작.
+ * 책임: 단일 대상 전달 상태를 소유하고 설정된 적중 또는 이동 순서를 완료한다.
+ */
+
 using UnityEngine;
 
-/*
- * 단일 공격으로 생성된 비주얼의 수명과 대상 추적을 관리한다.
- * 효과가 끝나면 직접 삭제하지 않고 EffectManager에 제거를 요청한다.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>SingleSkillActor</c> 런타임 오브젝트를 나타내며 모델과 Unity 컴포넌트를 연결한다.</summary>
     public class SingleSkillActor : MonoBehaviour
     {
-        // 단일 공격 시각 효과의 대상 추적과 수명 종료를 구현.
+
         private EffectManager effectManager;
         private Transform target;
         private Vector3 offset;
         private float remainingLifetime;
         private bool followsTarget;
 
-        /*
-         * 단일 공격 비주얼이 지정한 시간 뒤 제거되도록 설정한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Timed</c>를 초기화한다.</summary>
         public void InitializeTimed(
-            EffectManager manager /* 효과 생성과 제거를 담당하는 관리자 */,
-            float durationSeconds /* 지속 시간(초) */)
+            EffectManager manager,
+            float durationSeconds)
         {
             effectManager = manager;
             target = null;
@@ -29,26 +30,22 @@ namespace Pakuri.InGame
             remainingLifetime = Mathf.Max(0.01f, durationSeconds);
         }
 
-        /*
-         * 단일 공격 비주얼의 지정 수명을 설정하고 반환한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Animation</c>를 초기화한다.</summary>
         public float InitializeAnimation(
-            EffectManager manager /* 효과 생성과 제거를 담당하는 관리자 */,
-            float durationSeconds /* 지속 시간(초) */)
+            EffectManager manager,
+            float durationSeconds)
         {
             var lifetime = Mathf.Max(0.01f, durationSeconds);
             InitializeTimed(manager, lifetime);
             return lifetime;
         }
 
-        /*
-         * 단일 공격 비주얼이 대상을 따라가다가 지정한 시간 뒤 제거되도록 설정한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Following</c>를 초기화한다.</summary>
         public void InitializeFollowing(
-            EffectManager manager /* 효과 생성과 제거를 담당하는 관리자 */,
-            Transform followTarget /* 효과가 따라갈 대상 */,
-            float durationSeconds /* 지속 시간(초) */,
-            Vector3 localOffset /* 위치 보정 */)
+            EffectManager manager,
+            Transform followTarget,
+            float durationSeconds,
+            Vector3 localOffset)
         {
             effectManager = manager;
             target = followTarget;
@@ -58,10 +55,8 @@ namespace Pakuri.InGame
             transform.position = followTarget.position + offset;
         }
 
-        /*
-         * 단일 공격 효과 오브젝트에 Actor가 없으면 추가해 반환한다.
-         */
-        public static SingleSkillActor Attach(GameObject instance /* 단일 공격 효과 오브젝트 */)
+        /// <summary>전달된 <c>instance</c> 값을 사용해 <c>요청값</c>를 연결한다.</summary>
+        public static SingleSkillActor Attach(GameObject instance)
         {
             var actor = instance.GetComponent<SingleSkillActor>();
             if (actor == null)
@@ -72,9 +67,7 @@ namespace Pakuri.InGame
             return actor;
         }
 
-        /*
-         * 대상 위치와 남은 수명을 갱신하고 종료 시 관리자에게 삭제를 요청한다.
-         */
+        /// <summary>현재 Unity 프레임에서 <c>Update</c> 갱신 동작을 진행한다.</summary>
         private void Update()
         {
             if (followsTarget)

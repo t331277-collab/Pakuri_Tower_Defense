@@ -1,3 +1,8 @@
+/*
+ * 역할: 저수준 CSV 파싱.
+ * 책임: 인용된 값을 보존하면서 CSV 텍스트를 Header와 행으로 나누고 원본 오류를 보고한다.
+ */
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -6,18 +11,23 @@ using UnityEngine;
 
 namespace Pakuri.Data
 {
+
+    /// <summary><c>CsvParser</c> 원본 값을 런타임 모델로 파싱한다.</summary>
     internal static class CsvParser
     {
 
+        /// <summary><c>CsvFatalException</c> 처리 중 발생한 실패 정보를 전달한다.</summary>
         internal class CsvFatalException : Exception
         {
 
-            public CsvFatalException(string message )
+            /// <summary><c>CsvFatalException</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+            public CsvFatalException(string message)
                 : this(message, null)
             {
             }
 
-            public CsvFatalException(string message , List<string> errors )
+            /// <summary><c>CsvFatalException</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+            public CsvFatalException(string message, List<string> errors)
                 : base(FormatMessage(message, errors))
             {
                 if (errors == null)
@@ -30,7 +40,8 @@ namespace Pakuri.Data
 
             public List<string> Errors { get; }
 
-            private static string FormatMessage(string message , List<string> errors )
+            /// <summary>전달된 런타임 입력값을 사용해 <c>Message</c>를 표시 또는 직렬화 형식으로 변환한다.</summary>
+            private static string FormatMessage(string message, List<string> errors)
             {
                 if (errors == null || errors.Count == 0)
                 {
@@ -45,17 +56,20 @@ namespace Pakuri.Data
 
         }
 
+        /// <summary><c>CsvTable</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
         internal class CsvTable
         {
 
-            internal CsvTable(List<CsvRecord> records )
+            /// <summary><c>CsvTable</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+            internal CsvTable(List<CsvRecord> records)
             {
                 Records = records;
             }
 
             public List<CsvRecord> Records { get; }
 
-            public static CsvTable Load(TextAsset asset , string tableName )
+            /// <summary>전달된 런타임 입력값을 사용해 <c>요청값</c>를 불러온다.</summary>
+            public static CsvTable Load(TextAsset asset, string tableName)
             {
                 if (asset == null)
                 {
@@ -65,7 +79,8 @@ namespace Pakuri.Data
                 return Load(tableName, asset.text);
             }
 
-            internal static CsvTable Load(string tableName , string contents )
+            /// <summary>전달된 런타임 입력값을 사용해 <c>요청값</c>를 불러온다.</summary>
+            internal static CsvTable Load(string tableName, string contents)
             {
                 var normalizedContents = string.Empty;
                 if (!string.IsNullOrEmpty(contents))
@@ -115,12 +130,14 @@ namespace Pakuri.Data
             }
         }
 
+        /// <summary><c>CsvRecord</c>가 나타내는 런타임 값을 보관한다.</summary>
         internal class CsvRecord
         {
             internal readonly string[] cells;
             internal readonly Dictionary<string, int> headerLookup;
 
-            public CsvRecord(string tableName , int rowNumber , string[] headers , string[] cells )
+            /// <summary><c>CsvRecord</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+            public CsvRecord(string tableName, int rowNumber, string[] headers, string[] cells)
             {
                 TableName = tableName;
                 RowNumber = rowNumber;
@@ -135,7 +152,8 @@ namespace Pakuri.Data
             public string TableName { get; }
             public int RowNumber { get; }
 
-            public string ReadRequiredString(string columnName )
+            /// <summary>전달된 <c>columnName</c> 값을 사용해 <c>RequiredString</c>를 읽는다.</summary>
+            public string ReadRequiredString(string columnName)
             {
                 var value = ReadString(columnName);
                 if (string.IsNullOrWhiteSpace(value))
@@ -146,18 +164,21 @@ namespace Pakuri.Data
                 return value;
             }
 
-            public string ReadString(string columnName )
+            /// <summary>전달된 <c>columnName</c> 값을 사용해 <c>String</c>를 읽는다.</summary>
+            public string ReadString(string columnName)
             {
                 return GetCell(columnName).Trim();
             }
 
-            public bool HasColumn(string columnName )
+            /// <summary>전달된 <c>columnName</c> 값을 사용해 소유한 런타임 상태에 <c>Column</c>가 있는지 반환한다.</summary>
+            public bool HasColumn(string columnName)
             {
                 return !string.IsNullOrWhiteSpace(columnName)
                     && headerLookup.ContainsKey(columnName);
             }
 
-            public int ReadInt(string columnName )
+            /// <summary>전달된 <c>columnName</c> 값을 사용해 <c>Int</c>를 읽는다.</summary>
+            public int ReadInt(string columnName)
             {
                 var value = ReadString(columnName);
                 if (string.IsNullOrWhiteSpace(value))
@@ -174,7 +195,8 @@ namespace Pakuri.Data
                 return parsed;
             }
 
-            public float ReadFloat(string columnName )
+            /// <summary>전달된 <c>columnName</c> 값을 사용해 <c>Float</c>를 읽는다.</summary>
+            public float ReadFloat(string columnName)
             {
                 var value = ReadString(columnName);
                 if (string.IsNullOrWhiteSpace(value))
@@ -191,7 +213,8 @@ namespace Pakuri.Data
                 return parsed;
             }
 
-            public bool ReadBool(string columnName )
+            /// <summary>전달된 <c>columnName</c> 값을 사용해 <c>Bool</c>를 읽는다.</summary>
+            public bool ReadBool(string columnName)
             {
                 var value = ReadString(columnName);
                 if (string.IsNullOrWhiteSpace(value))
@@ -208,7 +231,8 @@ namespace Pakuri.Data
                 return parsed;
             }
 
-            public TEnum ReadEnum<TEnum>(string columnName )
+            /// <summary>전달된 <c>columnName</c> 값을 사용해 <c>Enum</c>를 읽는다.</summary>
+            public TEnum ReadEnum<TEnum>(string columnName)
                 where TEnum : struct
             {
                 var value = ReadString(columnName);
@@ -226,7 +250,8 @@ namespace Pakuri.Data
                 return parsed;
             }
 
-            internal string GetCell(string columnName )
+            /// <summary>전달된 <c>columnName</c> 값을 사용해 <c>Cell</c>를 반환한다.</summary>
+            internal string GetCell(string columnName)
             {
                 if (!headerLookup.TryGetValue(columnName, out var index))
                 {
@@ -243,7 +268,8 @@ namespace Pakuri.Data
             }
         }
 
-        internal static string[] SplitCsvLine(string line )
+        /// <summary>전달된 <c>line</c> 값을 사용해 <c>SplitCsvLine</c> 결과값을 생성해 반환한다.</summary>
+        internal static string[] SplitCsvLine(string line)
         {
             var values = new List<string>();
             var builder = new StringBuilder();
@@ -287,7 +313,8 @@ namespace Pakuri.Data
             return values.ToArray();
         }
 
-        internal static string UnescapeCsvCell(string value )
+        /// <summary>전달된 <c>value</c> 값을 사용해 <c>UnescapeCsvCell</c> 결과값을 생성해 반환한다.</summary>
+        internal static string UnescapeCsvCell(string value)
         {
             if (string.IsNullOrEmpty(value))
             {

@@ -1,3 +1,8 @@
+/*
+ * 역할: 버프 계열 스킬 전달.
+ * 책임: 전투 및 상태 시스템을 통해 버프·회복·보호막·패시브 효과를 실행한다.
+ */
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -5,34 +10,18 @@ using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
-/*
- * 강화 계열 스킬의 세부 실행기를 정의한다.
- * 일반 버프와 보호막·회복 처리를 각 전용 실행기로 전달한다.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>BuffSkillExecutor</c>에 해당하는 런타임 동작을 실행한다.</summary>
     internal static class BuffSkillExecutor
     {
-        // 일반 Buff의 대상 선정, 상태 적용, 추가 효과 실행을 구현.
-        /*
-         * 현재 스킬의 노드 효과 중 요청한 실행 시점에 맞는 효과를 적용한다.
-         */
 
-        /*
-         * 추가 효과의 지연시간이 지난 뒤 같은 Executor에서 효과를 적용한다.
-         */
-
-        /*
-         * 추가 효과 종류에 맞는 실제 적용 기능을 호출한다.
-         */
-
-        /*
-         * 요청받은 버프 스킬을 실행한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>설정된 런타임 작업</c>를 실행한다.</summary>
         internal static bool Execute(
-            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
-            BuffSkillDefinition skill /* 실행하거나 검사할 스킬 */)
+            SkillExecutionContext context,
+            SkillExecutionData snapshot,
+            BuffSkillDefinition skill)
         {
             var statusSpec = BuffStatusSpec(skill, snapshot);
             if (statusSpec == null)
@@ -101,10 +90,8 @@ namespace Pakuri.InGame
             return routed || castCommitted;
         }
 
-        /*
-         * 버프 상태 설정을 결정한다.
-         */
-        private static ProjectileStatusHitSpec BuffStatusSpec(BuffSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>BuffStatusSpec</c> 결과값을 생성해 반환한다.</summary>
+        private static ProjectileStatusHitSpec BuffStatusSpec(BuffSkillDefinition skill, SkillExecutionData snapshot)
         {
             if (skill == null)
             {
@@ -114,13 +101,11 @@ namespace Pakuri.InGame
             return SkillStatus.StatusSpec(skill.AttachedStatus, snapshot);
         }
 
-        /*
-         * 버프 대상을 결정한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>BuffTargets</c> 결과값을 생성해 반환한다.</summary>
         internal static System.Collections.Generic.IReadOnlyList<CombatUnitEntry> BuffTargets(
-            CombatUnitEntry caster /* 스킬을 사용하는 유닛 */,
-            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
-            SkillTargetSide targetMode /* 대상 방식 */)
+            CombatUnitEntry caster,
+            UnitSpawnManager roster,
+            SkillTargetSide targetMode)
         {
             if (targetMode == SkillTargetSide.Self)
             {
@@ -141,12 +126,10 @@ namespace Pakuri.InGame
                 });
         }
 
-        /*
-         * 설정된 대상을 결정한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ConfiguredTargets</c> 결과값을 생성해 반환한다.</summary>
         internal static IReadOnlyList<CombatUnitEntry> ConfiguredTargets(
-            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */)
+            SkillExecutionContext context,
+            SkillTargetingSpec targeting)
         {
             var targets = SkillTargeting.OrderedTargets(context, targeting);
             var caster = context != null ? context.CasterEntry : null;
@@ -164,19 +147,15 @@ namespace Pakuri.InGame
         }
     }
 
-    /*
-     * 보호막 스킬을 실행한다.
-     */
+    /// <summary><c>BuffShieldSkillExecutor</c>에 해당하는 런타임 동작을 실행한다.</summary>
     internal static class BuffShieldSkillExecutor
     {
-        // 보호막 수치 계산, 대상 적용, 보호막 시각 효과 생성을 구현.
-        /*
-         * 요청받은 보호막 스킬을 실행한다.
-         */
+
+        /// <summary>전달된 런타임 입력값을 사용해 <c>설정된 런타임 작업</c>를 실행한다.</summary>
         internal static bool Execute(
-            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
-            BuffShieldSkillDefinition skill /* 실행하거나 검사할 스킬 */)
+            SkillExecutionContext context,
+            SkillExecutionData snapshot,
+            BuffShieldSkillDefinition skill)
         {
             var shieldStat = context.Caster.Stats.SpellPower;
             shieldStat *= StatusCombatRules.SpellPowerMultiplier(context.Caster);
@@ -283,19 +262,15 @@ namespace Pakuri.InGame
         }
     }
 
-    /*
-     * 회복 스킬을 실행한다.
-     */
+    /// <summary><c>BuffHealSkillExecutor</c>에 해당하는 런타임 동작을 실행한다.</summary>
     internal static class BuffHealSkillExecutor
     {
-        // 회복 수치 계산과 대상 체력 회복을 구현.
-        /*
-         * 요청받은 회복 스킬을 실행한다.
-         */
+
+        /// <summary>전달된 런타임 입력값을 사용해 <c>설정된 런타임 작업</c>를 실행한다.</summary>
         internal static bool Execute(
-            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
-            BuffHealSkillDefinition skill /* 실행하거나 검사할 스킬 */)
+            SkillExecutionContext context,
+            SkillExecutionData snapshot,
+            BuffHealSkillDefinition skill)
         {
             var targets = SkillTargeting.OrderedTargets(context, skill.Targeting);
             CombatUnitEntry target = null;

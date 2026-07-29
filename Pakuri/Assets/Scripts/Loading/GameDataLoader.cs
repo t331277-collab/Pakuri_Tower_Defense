@@ -1,3 +1,8 @@
+/*
+ * 역할: 런타임 게임 데이터 로딩 진입점.
+ * 책임: CSV 원본과 에셋 카탈로그를 로드·검증하고 런타임 카탈로그를 구성해 상태를 공개한다.
+ */
+
 using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
@@ -13,6 +18,8 @@ using UnityEditor;
 
 namespace Pakuri.Data
 {
+
+    /// <summary><c>GameDataLoader</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
     public static class GameDataLoader
     {
         internal const string CsvDataAssetRoot = "Assets/CSVdata";
@@ -76,7 +83,8 @@ namespace Pakuri.Data
             }
         }
 
-        public static string GetAuthoringSourceAssetPath(string fileName )
+        /// <summary>전달된 <c>fileName</c> 값을 사용해 <c>AuthoringSourceAssetPath</c>를 반환한다.</summary>
+        public static string GetAuthoringSourceAssetPath(string fileName)
         {
             switch (fileName)
             {
@@ -113,7 +121,8 @@ namespace Pakuri.Data
             }
         }
 
-        public static bool IsAuthoringCsvSourceAssetPath(string assetPath )
+        /// <summary>전달된 <c>assetPath</c> 값을 사용해 <c>AuthoringCsvSourceAssetPath</c> 조건 충족 여부를 반환한다.</summary>
+        public static bool IsAuthoringCsvSourceAssetPath(string assetPath)
         {
             if (string.IsNullOrWhiteSpace(assetPath))
             {
@@ -125,12 +134,14 @@ namespace Pakuri.Data
                 && normalized.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
         }
 
+        /// <summary><c>BeforeSceneLoad</c>를 초기화한다.</summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         internal static void InitializeBeforeSceneLoad()
         {
             EnsureInitialized();
         }
 
+        /// <summary><c>EnsureInitialized</c> 작업을 수행한다.</summary>
         public static void EnsureInitialized()
         {
             if (initialized || failed)
@@ -156,6 +167,7 @@ namespace Pakuri.Data
             }
         }
 
+        /// <summary><c>AndValidateRuntimeCatalog</c>를 불러온다.</summary>
         internal static GameDataCatalog LoadAndValidateRuntimeCatalog()
         {
             var sourceCatalog = LoadRuntimeCatalogOrThrow();
@@ -163,9 +175,10 @@ namespace Pakuri.Data
             return BuildValidatedRuntimeCatalog(sourceCatalog, source);
         }
 
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ValidatedRuntimeCatalog</c>를 구성한다.</summary>
         internal static GameDataCatalog BuildValidatedRuntimeCatalog(
-            CsvRuntimeCatalog sourceCatalog ,
-            SourceModel source )
+            CsvRuntimeCatalog sourceCatalog,
+            SourceModel source)
         {
             ValidateSourceModelOrThrow(source, sourceCatalog);
             var catalog = BuildRuntimeCatalog(source, sourceCatalog);
@@ -175,7 +188,8 @@ namespace Pakuri.Data
             return catalog;
         }
 
-        internal static string FormatRuntimeCatalogSummary(GameDataCatalog catalog )
+        /// <summary>전달된 <c>catalog</c> 값을 사용해 <c>RuntimeCatalogSummary</c>를 표시 또는 직렬화 형식으로 변환한다.</summary>
+        internal static string FormatRuntimeCatalogSummary(GameDataCatalog catalog)
         {
             return
                 $"GameDataLoader loaded runtime catalog from resource source '{RuntimeCatalogResourcesPath}' " +
@@ -183,7 +197,8 @@ namespace Pakuri.Data
                 $"and {catalog.StageTwoEnemies.Length} stage-two enemies.";
         }
 
-        internal static void FailAndQuit(string message , List<string> errors )
+        /// <summary>전달된 런타임 입력값을 사용해 <c>FailAndQuit</c> 작업을 수행한다.</summary>
+        internal static void FailAndQuit(string message, List<string> errors)
         {
             failed = true;
             Debug.LogError(message);
@@ -205,6 +220,7 @@ namespace Pakuri.Data
             Application.Quit();
         }
 
+        /// <summary><c>LoadRuntimeCatalog</c> 데이터를 검증하고 유효하지 않으면 예외를 던진다.</summary>
         internal static CsvRuntimeCatalog LoadRuntimeCatalogOrThrow()
         {
             var sourceCatalog = Resources.Load<CsvRuntimeCatalog>(RuntimeCatalogResourcesPath);
@@ -219,6 +235,8 @@ namespace Pakuri.Data
             }
 
             var missingAssets = new List<string>();
+
+            /// <summary>전달된 런타임 입력값을 사용해 <c>Require</c> 작업을 수행한다.</summary>
             void Require(bool present, string name)
             {
                 if (!present)

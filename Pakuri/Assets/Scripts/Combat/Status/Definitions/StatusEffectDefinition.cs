@@ -1,26 +1,29 @@
-﻿using System;
+﻿/*
+ * 역할: 상태 효과 데이터 계약.
+ * 책임: 상태 종류·중첩·지속 시간·주기 효과·보호막·배율·Trigger 정보를 정의한다.
+ */
+
+using System;
 using Pakuri.Combat;
 using Pakuri.InGame;
 using UnityEngine;
 
-/*
- * CSV 상태 정의와 전투에서 사용하는 상태 종류 및 실행 데이터를 정의한다.
- */
 namespace Pakuri.Data
 {
+
+    /// <summary><c>StatusEffectClassification</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum StatusEffectClassification
     {
         Buff,
         Debuff
     }
 
+    /// <summary><c>StatusEffectDefinition</c>의 저작 데이터와 런타임 설정을 정의한다.</summary>
     [Serializable]
-    /*
-     * 상태 효과의 지속시간, 중첩, 행동 제한, 능력치 변경값을 보관한다.
-     */
+
     public class StatusEffectDefinition
     {
-        // 상태 식별과 기본 적용 규칙
+
         public string StatusEffectId;
         public string StatusEffectLabel;
         public StatusEffectKind Kind;
@@ -31,11 +34,11 @@ namespace Pakuri.Data
         public bool IsPermanent;
         public int MaxStacks;
         public int BaseStackAmount = 1;
-        // 상태가 제한하는 유닛 행동
+
         public bool CanMove = true;
         public bool CanAct = true;
         public bool CanUseSpecialSkill = true;
-        // 중첩 하나당 적용할 능력치 변화
+
         public float ActionSpeedBonusPerStack;
         public float MoveSpeedBonusPerStack;
         public float AttackPowerBonusPerStack;
@@ -44,9 +47,9 @@ namespace Pakuri.Data
         public float CriticalResistanceBonusPerStack;
         public float ElementResistReductionPerStack;
         public float ElementDamageTakenBonusPerStack;
-        // 상태와 함께 표시할 선택적 프리팹
+
         public GameObject StatusEffectPrefab;
-        // Generation에서 한 번 만든 전투용 최종 데이터
+
         public StatusRuntimeData RuntimeData;
 
         public string Id => StatusEffectId;
@@ -55,6 +58,7 @@ namespace Pakuri.Data
         public bool Permanent => IsPermanent;
     }
 
+    /// <summary><c>StatusEffectKind</c>에서 지원하는 값의 종류를 정의한다.</summary>
     public enum StatusEffectKind
     {
         None,
@@ -79,6 +83,7 @@ namespace Pakuri.Data
         SeinDSuperheatedPresence
     }
 
+    /// <summary><c>StatusConditionRequirement</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
     [Serializable]
     public class StatusConditionRequirement
     {
@@ -86,12 +91,14 @@ namespace Pakuri.Data
         public int MinStacks;
     }
 
+    /// <summary><c>StatusConditionGroup</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
     [Serializable]
     public class StatusConditionGroup
     {
         public StatusConditionRequirement[] Requirements = Array.Empty<StatusConditionRequirement>();
     }
 
+    /// <summary><c>SkillRuntimeKindCondition</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
     [Serializable]
     public class SkillRuntimeKindCondition
     {
@@ -99,6 +106,7 @@ namespace Pakuri.Data
         public SkillRuntimeKind Kind;
     }
 
+    /// <summary><c>StatusRuntimeData</c>가 나타내는 런타임 값을 보관한다.</summary>
     public class StatusRuntimeData
     {
         public StatusEffectDefinition Definition;
@@ -166,9 +174,7 @@ namespace Pakuri.Data
         public DamageAttribute OutgoingAdditionalDamageTriggerAttribute;
         public DamageAttribute OutgoingAdditionalDamageAttribute;
 
-        /*
-         * Clone에 필요한 복사본을 반환한다.
-         */
+        /// <summary><c>Clone</c> 결과값을 생성해 반환한다.</summary>
         public StatusRuntimeData Clone()
         {
             var clone = (StatusRuntimeData)MemberwiseClone();

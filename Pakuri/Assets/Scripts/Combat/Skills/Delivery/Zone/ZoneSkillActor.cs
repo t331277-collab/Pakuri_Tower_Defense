@@ -1,16 +1,20 @@
+/*
+ * 역할: 지속 Zone 런타임 동작.
+ * 책임: Zone의 수명과 주기를 추적하고 Collider 점유 대상을 판정해 유효 적중을 전달한다.
+ */
+
 using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
-/*
- * 인게임 지속 범위 스킬의 위치, 충돌, 수명 주기를 처리한다.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>ZoneSkillActor</c> 런타임 오브젝트를 나타내며 모델과 Unity 컴포넌트를 연결한다.</summary>
     public class ZoneSkillActor : MonoBehaviour
     {
-        // 생성된 지속 범위의 대상 판정, 주기 피해, 상태, 만료 효과를 구현.
+
         private InGameCombatManager combatManager;
         private CombatUnitEntry casterEntry;
         private UnitSpawnManager roster;
@@ -35,30 +39,28 @@ namespace Pakuri.InGame
         private bool usePrefabHitbox;
         private int recastGeneration;
 
-        /*
-         * 인게임 지속 범위 스킬 실행에 필요한 위치, 대상, 피해 정보를 설정한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>소유한 런타임 상태</c>를 초기화한다.</summary>
         public void Initialize(
-            InGameCombatManager manager /* 전투 진행 관리자 */,
-            CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */,
-            UnitSpawnManager unitRoster /* 전투에 등록된 유닛 목록 */,
-            SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */,
-            Vector2 areaCenter /* 범위 중심 위치 */,
-            float areaRadius /* 범위 반지름 */,
-            bool areaCoversAll /* 범위 포함 전체 여부 */,
-            float durationSeconds /* 지속 시간(초) */,
-            float tickIntervalSeconds /* 반복 적용 간격(초) */,
-            int maxTargetsPerTick /* 최대 대상 목록 개별 반복 적용 */,
-            float damagePerTick /* 피해 개별 반복 적용 */,
-            DamageAttribute damageAttribute /* 적용할 피해 속성 */,
-            ProjectileStatusHitSpec onTickStatus /* 발생 시 반복 적용 상태 효과 */,
-            SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
-            SkillExecutionData executionData /* 실행 시점의 스킬 강화 정보 */,
-            UnitCombatState source /* 효과를 발생시킨 유닛 */,
-            bool allowCritical /* 허용 치명타 여부 */,
-            float criticalChanceBonus /* 치명타 확률 추가값 */,
-            float criticalDamageBonus /* 치명타 피해 추가값 */,
-            int generation = 0 /* 실행 세대 */)
+            InGameCombatManager manager,
+            CombatUnitEntry sourceEntry,
+            UnitSpawnManager unitRoster,
+            SkillTargetingSpec targetingSpec,
+            Vector2 areaCenter,
+            float areaRadius,
+            bool areaCoversAll,
+            float durationSeconds,
+            float tickIntervalSeconds,
+            int maxTargetsPerTick,
+            float damagePerTick,
+            DamageAttribute damageAttribute,
+            ProjectileStatusHitSpec onTickStatus,
+            SkillUseState sourceRuntime,
+            SkillExecutionData executionData,
+            UnitCombatState source,
+            bool allowCritical,
+            float criticalChanceBonus,
+            float criticalDamageBonus,
+            int generation = 0)
         {
             combatManager = manager;
             casterEntry = sourceEntry;
@@ -89,28 +91,26 @@ namespace Pakuri.InGame
             ApplyCurrentAreaTick();
         }
 
-        /*
-         * 범위 주기를 적용한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>AreaTick</c>를 적용한다.</summary>
         public static bool ApplyAreaTick(
-            InGameCombatManager manager /* 전투 진행 관리자 */,
-            CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */,
-            UnitSpawnManager unitRoster /* 전투에 등록된 유닛 목록 */,
-            SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */,
-            Vector2 areaCenter /* 범위 중심 위치 */,
-            float areaRadius /* 범위 반지름 */,
-            bool areaCoversAll /* 범위 포함 전체 여부 */,
-            float damagePerTick /* 피해 개별 반복 적용 */,
-            DamageAttribute damageAttribute /* 적용할 피해 속성 */,
-            ProjectileStatusHitSpec onHitStatus /* 발생 시 적중 상태 효과 */,
-            UnitCombatState source /* 효과를 발생시킨 유닛 */,
-            string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */,
-            SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
-            bool criticalAllowed /* 치명타 허용 여부 */,
-            float critChanceBonus /* 추가 치명타 확률 */,
-            float critDamageBonus /* 추가 치명타 피해 배율 */,
-            int maxTargetsPerTick = int.MaxValue /* 최대 대상 목록 개별 반복 적용 */,
-            SkillExecutionData executionData = null /* 실행 시점의 스킬 강화 정보 */)
+            InGameCombatManager manager,
+            CombatUnitEntry sourceEntry,
+            UnitSpawnManager unitRoster,
+            SkillTargetingSpec targetingSpec,
+            Vector2 areaCenter,
+            float areaRadius,
+            bool areaCoversAll,
+            float damagePerTick,
+            DamageAttribute damageAttribute,
+            ProjectileStatusHitSpec onHitStatus,
+            UnitCombatState source,
+            string sourceSkillId,
+            SkillUseState sourceRuntime,
+            bool criticalAllowed,
+            float critChanceBonus,
+            float critDamageBonus,
+            int maxTargetsPerTick = int.MaxValue,
+            SkillExecutionData executionData = null)
         {
             if (manager == null || sourceEntry == null || unitRoster == null)
             {
@@ -196,9 +196,7 @@ namespace Pakuri.InGame
                 executionData);
         }
 
-        /*
-         * 인게임 지속 범위 스킬의 이동, 수명, 주기 처리를 매 프레임 갱신한다.
-         */
+        /// <summary>현재 Unity 프레임에서 <c>Update</c> 갱신 동작을 진행한다.</summary>
         private void Update()
         {
             var deltaTime = Time.deltaTime;
@@ -217,9 +215,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * 종료 효과를 실행하고 성공 여부를 반환한다.
-         */
+        /// <summary><c>ExecuteExpireEffects</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
         private void TryExecuteExpireEffects()
         {
             if (combatManager != null && casterEntry != null && roster != null)
@@ -244,9 +240,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * 지속 범위 비주얼과 히트박스 크기를 설정한다.
-         */
+        /// <summary><c>ConfigureVisual</c> 작업을 수행한다.</summary>
         private void ConfigureVisual()
         {
             transform.position = center;
@@ -282,9 +276,7 @@ namespace Pakuri.InGame
             transform.localScale = scale;
         }
 
-        /*
-         * 현재 범위 주기를 적용한다.
-         */
+        /// <summary><c>CurrentAreaTick</c>를 적용한다.</summary>
         private bool ApplyCurrentAreaTick()
         {
             if (usePrefabHitbox)
@@ -329,26 +321,24 @@ namespace Pakuri.InGame
                 snapshot);
         }
 
-        /*
-         * 콜라이더 범위 주기를 적용한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ColliderAreaTick</c>를 적용한다.</summary>
         internal static bool ApplyColliderAreaTick(
-            InGameCombatManager manager /* 전투 진행 관리자 */,
-            CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */,
-            UnitSpawnManager unitRoster /* 전투에 등록된 유닛 목록 */,
-            SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */,
-            Collider2D[] hitboxColliders /* 피격 판정 콜라이더 목록 */,
-            int maxTargetsPerTick /* 최대 대상 목록 개별 반복 적용 */,
-            float damagePerTick /* 피해 개별 반복 적용 */,
-            DamageAttribute damageAttribute /* 적용할 피해 속성 */,
-            ProjectileStatusHitSpec onHitStatus /* 발생 시 적중 상태 효과 */,
-            UnitCombatState source /* 효과를 발생시킨 유닛 */,
-            string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */,
-            SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
-            bool criticalAllowed /* 치명타 허용 여부 */,
-            float critChanceBonus /* 추가 치명타 확률 */,
-            float critDamageBonus /* 추가 치명타 피해 배율 */,
-            SkillExecutionData executionData /* 실행 시점의 스킬 강화 정보 */)
+            InGameCombatManager manager,
+            CombatUnitEntry sourceEntry,
+            UnitSpawnManager unitRoster,
+            SkillTargetingSpec targetingSpec,
+            Collider2D[] hitboxColliders,
+            int maxTargetsPerTick,
+            float damagePerTick,
+            DamageAttribute damageAttribute,
+            ProjectileStatusHitSpec onHitStatus,
+            UnitCombatState source,
+            string sourceSkillId,
+            SkillUseState sourceRuntime,
+            bool criticalAllowed,
+            float critChanceBonus,
+            float critDamageBonus,
+            SkillExecutionData executionData)
         {
             if (manager == null || sourceEntry == null || unitRoster == null || hitboxColliders == null || hitboxColliders.Length == 0)
             {
@@ -383,24 +373,22 @@ namespace Pakuri.InGame
             return routed;
         }
 
-        /*
-         * 이번 주기에 결정된 적중 결과를 적용한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ResolvedHits</c>를 적용한다.</summary>
         private static bool ApplyResolvedHits(
-            InGameCombatManager manager /* 전투 진행 관리자 */,
-            CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */,
-            List<CombatUnitEntry> eligibleTargets /* 적용 가능한 대상 목록 */,
-            int maxTargetsPerTick /* 최대 대상 목록 개별 반복 적용 */,
-            float damagePerTick /* 피해 개별 반복 적용 */,
-            DamageAttribute damageAttribute /* 적용할 피해 속성 */,
-            ProjectileStatusHitSpec onHitStatus /* 발생 시 적중 상태 효과 */,
-            UnitCombatState source /* 효과를 발생시킨 유닛 */,
-            string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */,
-            SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
-            bool criticalAllowed /* 치명타 허용 여부 */,
-            float critChanceBonus /* 추가 치명타 확률 */,
-            float critDamageBonus /* 추가 치명타 피해 배율 */,
-            SkillExecutionData executionData /* 실행 시점의 스킬 강화 정보 */)
+            InGameCombatManager manager,
+            CombatUnitEntry sourceEntry,
+            List<CombatUnitEntry> eligibleTargets,
+            int maxTargetsPerTick,
+            float damagePerTick,
+            DamageAttribute damageAttribute,
+            ProjectileStatusHitSpec onHitStatus,
+            UnitCombatState source,
+            string sourceSkillId,
+            SkillUseState sourceRuntime,
+            bool criticalAllowed,
+            float critChanceBonus,
+            float critDamageBonus,
+            SkillExecutionData executionData)
         {
             if (manager == null || eligibleTargets == null || eligibleTargets.Count == 0)
             {
@@ -444,10 +432,8 @@ namespace Pakuri.InGame
             return routed;
         }
 
-        /*
-         * 대상 대상 주기를 선택한다.
-         */
-        private static List<CombatUnitEntry> SelectTargetsForTick(List<CombatUnitEntry> eligibleTargets /* 적용 가능한 대상 목록 */, int maxTargetsPerTick /* 최대 대상 목록 개별 반복 적용 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>TargetsForTick</c>를 선택한다.</summary>
+        private static List<CombatUnitEntry> SelectTargetsForTick(List<CombatUnitEntry> eligibleTargets, int maxTargetsPerTick)
         {
             if (eligibleTargets == null || eligibleTargets.Count == 0)
             {
@@ -470,22 +456,18 @@ namespace Pakuri.InGame
             return selectedTargets;
         }
 
-        /*
-         * 상태를 적용하고 성공 여부를 반환한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ApplyStatus</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
         private static void TryApplyStatus(
-            InGameCombatManager manager /* 전투 진행 관리자 */,
-            UnitCombatState target /* 효과를 받을 대상 유닛 */,
-            ProjectileStatusHitSpec status /* 적용하거나 검사할 상태 효과 */,
-            UnitCombatState source /* 효과를 발생시킨 유닛 */)
+            InGameCombatManager manager,
+            UnitCombatState target,
+            ProjectileStatusHitSpec status,
+            UnitCombatState source)
         {
             StatusCombatRules.ApplyStatus(manager, target, status, source);
         }
 
-        /*
-         * 출처 스킬 ID를 결정한다.
-         */
-        private static string SourceSkillId(SkillExecutionData executionData /* 실행 시점의 스킬 강화 정보 */, SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */)
+        /// <summary>전달된 런타임 입력값을 사용해 <c>SourceSkillId</c> 결과값을 생성해 반환한다.</summary>
+        private static string SourceSkillId(SkillExecutionData executionData, SkillUseState sourceRuntime)
         {
             if (sourceRuntime != null && !string.IsNullOrWhiteSpace(sourceRuntime.SkillId))
             {

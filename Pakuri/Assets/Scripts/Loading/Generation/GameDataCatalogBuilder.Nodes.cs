@@ -1,3 +1,8 @@
+/*
+ * 역할: 스킬 Node 런타임 변환.
+ * 책임: 파싱된 스킬 그래프 Node 행을 실행 가능한 조건·배율·행동 작업으로 변환한다.
+ */
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -5,18 +10,17 @@ using Pakuri.Combat;
 using Pakuri.InGame;
 using UnityEngine;
 
-/*
- * 작성 데이터의 SkillNodeBuildData을 전투 실행용 SkillNode로 변환한다.
- * 노드 종류와 값을 해석해 SkillNode 전투 실행 값으로 옮긴다.
- */
 namespace Pakuri.Data
 {
+
+    /// <summary><c>SkillNodeParamBuildData</c>가 나타내는 런타임 값을 보관한다.</summary>
     internal sealed class SkillNodeParamBuildData
     {
         public string ParamKey;
         public string Value;
     }
 
+    /// <summary><c>SkillNodeBuildData</c>가 나타내는 런타임 값을 보관한다.</summary>
     internal sealed class SkillNodeBuildData
     {
         public string OwnerKind;
@@ -28,12 +32,12 @@ namespace Pakuri.Data
         public RuntimeSkillVisualSpec ResolvedRuntimeVisual;
     }
 
+    /// <summary><c>GameDataCatalogBuilder</c> 런타임 데이터를 파싱된 저작 데이터에서 생성한다.</summary>
     internal sealed partial class GameDataCatalogBuilder
     {
-	/*
-	 * MapSkillNodes에 필요한 형식으로 변환해 반환한다.
-	 */
-	public static SkillNode[] MapSkillNodes(SkillNodeBuildData[] source /* 변환할 스킬 노드 정의 목록 */)
+
+	/// <summary>전달된 <c>source</c> 값을 사용해 <c>SkillNodes</c>를 대응시킨다.</summary>
+	public static SkillNode[] MapSkillNodes(SkillNodeBuildData[] source)
 	{
 		if (source == null || source.Length == 0)
 		{
@@ -56,6 +60,7 @@ namespace Pakuri.Data
 		return Array.Empty<SkillNode>();
 	}
 
+	/// <summary>전달된 런타임 입력값을 사용해 <c>TriggerOutcome</c>를 구성한다.</summary>
 	private static void BuildTriggerOutcome(
 		SkillTriggerDefinition trigger,
 		SkillNodeBuildData[] nodes,
@@ -283,6 +288,7 @@ namespace Pakuri.Data
 		}
 	}
 
+	/// <summary>전달된 <c>handler</c> 값을 사용해 <c>TriggerOutcomeHandler</c> 조건 충족 여부를 반환한다.</summary>
 	internal static bool IsTriggerOutcomeHandler(string handler)
 	{
 		return string.Equals(handler, "EffectDamage", StringComparison.OrdinalIgnoreCase)
@@ -297,6 +303,7 @@ namespace Pakuri.Data
 			|| string.Equals(handler, "ExtendStatusDuration", StringComparison.OrdinalIgnoreCase);
 	}
 
+	/// <summary>전달된 런타임 입력값을 사용해 <c>TriggeredDamage</c>를 구성한다.</summary>
 	private static void BuildTriggeredDamage(
 		SkillTriggerDefinition trigger,
 		SkillNodeBuildData node,
@@ -349,6 +356,7 @@ namespace Pakuri.Data
 			DamageAttribute.Physical);
 	}
 
+	/// <summary>전달된 런타임 입력값을 사용해 <c>TriggeredStatus</c>를 구성한다.</summary>
 	private static void BuildTriggeredStatus(
 		SkillTriggerDefinition trigger,
 		SkillNodeBuildData node,
@@ -378,6 +386,7 @@ namespace Pakuri.Data
 		trigger.TriggeredSkill = skill;
 	}
 
+	/// <summary>전달된 런타임 입력값을 사용해 <c>TriggeredShield</c>를 구성한다.</summary>
 	private static void BuildTriggeredShield(
 		SkillTriggerDefinition trigger,
 		SkillNodeBuildData node,
@@ -404,6 +413,7 @@ namespace Pakuri.Data
 		trigger.TriggeredSkill = skill;
 	}
 
+	/// <summary>전달된 런타임 입력값을 사용해 <c>TriggeredStatus</c>를 생성한다.</summary>
 	private static StatusRuntimeData CreateTriggeredStatus(
 		StatusEffectKind kind,
 		SkillTriggerDefinition trigger,
@@ -440,6 +450,7 @@ namespace Pakuri.Data
 		return status;
 	}
 
+	/// <summary>전달된 런타임 입력값을 사용해 <c>TriggeredCommon</c>를 대응시킨다.</summary>
 	private static void MapTriggeredCommon(
 		SkillDefinition skill,
 		SkillTriggerDefinition trigger,
@@ -457,6 +468,7 @@ namespace Pakuri.Data
 		trigger.PublishSkillLifecycleEvents = false;
 	}
 
+	/// <summary>전달된 <c>state</c> 값을 사용해 <c>TriggerTargeting</c>를 구성한다.</summary>
 	private static SkillTargetingSpec BuildTriggerTargeting(
 		TriggerOutcomeBuildState state)
 	{
@@ -485,6 +497,7 @@ namespace Pakuri.Data
 		return targeting;
 	}
 
+	/// <summary>전달된 런타임 입력값을 사용해 <c>Skill</c>를 찾는다.</summary>
 	private static SkillDefinition FindSkill(
 		SkillDefinition[] skills,
 		string skillId)
@@ -507,6 +520,7 @@ namespace Pakuri.Data
 			"Triggered skill is not registered: " + skillId);
 	}
 
+	/// <summary>전달된 런타임 입력값을 사용해 <c>TriggeredStatusMutations</c>를 적용한다.</summary>
 	private static void ApplyTriggeredStatusMutations(
 		StatusRuntimeData status,
 		IReadOnlyList<TriggerStatusMutation> mutations)
@@ -581,6 +595,7 @@ namespace Pakuri.Data
 		}
 	}
 
+	/// <summary>전달된 런타임 입력값을 사용해 <c>TriggeredElementModifier</c>를 갱신한다.</summary>
 	private static void SetTriggeredElementModifier(
 		StatusRuntimeData status,
 		TriggerStatusMutation mutation)
@@ -589,6 +604,7 @@ namespace Pakuri.Data
 		status.ElementModifierTarget = mutation.Attribute;
 	}
 
+	/// <summary><c>TriggerStatusMutationKind</c>에서 지원하는 값의 종류를 정의한다.</summary>
 	private enum TriggerStatusMutationKind
 	{
 		ActionSpeedBonus,
@@ -609,8 +625,11 @@ namespace Pakuri.Data
 		OutgoingAdditionalDamage
 	}
 
+	/// <summary><c>TriggerStatusMutation</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
 	private readonly struct TriggerStatusMutation
 	{
+
+		/// <summary><c>TriggerStatusMutation</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
 		internal TriggerStatusMutation(
 			TriggerStatusMutationKind kind,
 			float amount,
@@ -641,6 +660,7 @@ namespace Pakuri.Data
 		internal SkillRuntimeKindCondition[] OutgoingRuntimeKinds { get; }
 	}
 
+	/// <summary><c>TriggerOutcomeBuildState</c>의 변경 가능한 런타임 상태를 보관한다.</summary>
 	private sealed class TriggerOutcomeBuildState
 	{
 		internal SkillMultiEffectTargetSide TargetSide =
@@ -671,10 +691,8 @@ namespace Pakuri.Data
 			new List<TriggerStatusMutation>();
 	}
 
-	/*
-	 * CanProcessNode 조건을 만족하는지 확인한다.
-	 */
-	internal static bool CanProcessNode(string ownerKind /* 소유자 종류 */, string handlerId /* 처리기 식별자 */)
+	/// <summary>전달된 런타임 입력값을 사용해 <c>ProcessNode</c> 실행 가능 여부를 반환한다.</summary>
+	internal static bool CanProcessNode(string ownerKind, string handlerId)
 	{
 		if (string.Equals(ownerKind, "Skill", StringComparison.OrdinalIgnoreCase)
 			&& IsSingleBaseFieldHandler(handlerId))
@@ -684,10 +702,8 @@ namespace Pakuri.Data
 		return IsRuntimeNodeHandler(handlerId);
 	}
 
-	/*
-	 * MapSkillNode에 필요한 형식으로 변환해 반환한다.
-	 */
-	private static SkillNode MapSkillNode(SkillNodeBuildData node /* 노드 */)
+	/// <summary>전달된 <c>node</c> 값을 사용해 <c>SkillNode</c>를 대응시킨다.</summary>
+	private static SkillNode MapSkillNode(SkillNodeBuildData node)
 	{
 		if (node == null || !node.EnabledByDefault)
 		{
@@ -892,10 +908,8 @@ namespace Pakuri.Data
 		return SkillNode.FromOperation(skillActionOp);
 	}
 
-	/*
-	 * IsSingleBaseFieldHandler 조건을 만족하는지 확인한다.
-	 */
-	private static bool IsSingleBaseFieldHandler(string handlerId /* 처리기 식별자 */)
+	/// <summary>전달된 <c>handlerId</c> 값을 사용해 <c>SingleBaseFieldHandler</c> 조건 충족 여부를 반환한다.</summary>
+	private static bool IsSingleBaseFieldHandler(string handlerId)
 	{
 		if (string.Equals(handlerId, "StatusFilteredDeployment", StringComparison.OrdinalIgnoreCase))
 		{
@@ -904,10 +918,8 @@ namespace Pakuri.Data
 		return string.Equals(handlerId, "TargetStatusStackDamage", StringComparison.OrdinalIgnoreCase);
 	}
 
-	/*
-	 * IsRuntimeNodeHandler 조건을 만족하는지 확인한다.
-	 */
-	private static bool IsRuntimeNodeHandler(string handlerId /* 처리기 식별자 */)
+	/// <summary>전달된 <c>handlerId</c> 값을 사용해 <c>RuntimeNodeHandler</c> 조건 충족 여부를 반환한다.</summary>
+	private static bool IsRuntimeNodeHandler(string handlerId)
 	{
 		if (string.Equals(handlerId, "EffectDamage", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "ApplyDamage", StringComparison.OrdinalIgnoreCase)
@@ -1029,10 +1041,8 @@ namespace Pakuri.Data
 		return false;
 	}
 
-	/*
-	 * MapSkillActionOp에 필요한 형식으로 변환해 반환한다.
-	 */
-	private static SkillActionOp MapSkillActionOp(SkillNodeBuildData node /* 노드 */, string handlerId /* 처리기 식별자 */)
+	/// <summary>전달된 런타임 입력값을 사용해 <c>SkillActionOp</c>를 대응시킨다.</summary>
+	private static SkillActionOp MapSkillActionOp(SkillNodeBuildData node, string handlerId)
 	{
 		if (string.Equals(handlerId, "DamageMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
@@ -1185,6 +1195,7 @@ namespace Pakuri.Data
 		throw new InvalidOperationException("Unsupported skill node handler: " + handlerId);
 	}
 
+	/// <summary>전달된 런타임 입력값을 사용해 <c>MapStatusMutation</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
 	private static bool TryMapStatusMutation(
 		SkillNodeBuildData node,
 		string handlerId,
@@ -1297,10 +1308,8 @@ namespace Pakuri.Data
 		return false;
 	}
 
-	/*
-	 * GetParam에 해당하는 값을 찾아 반환한다.
-	 */
-	internal static string GetParam(SkillNodeBuildData node /* 노드 */, string key /* 조회 키 */)
+	/// <summary>전달된 런타임 입력값을 사용해 <c>Param</c>를 반환한다.</summary>
+	internal static string GetParam(SkillNodeBuildData node, string key)
 	{
 		if (node == null || node.Params == null || string.IsNullOrWhiteSpace(key))
 		{
@@ -1321,10 +1330,8 @@ namespace Pakuri.Data
 		return string.Empty;
 	}
 
-	/*
-	 * GetFloatParam에 해당하는 값을 찾아 반환한다.
-	 */
-	internal static float GetFloatParam(SkillNodeBuildData node /* 노드 */, string key /* 조회 키 */, float defaultValue /* 값이 없을 때 사용할 기본값 */)
+	/// <summary>전달된 런타임 입력값을 사용해 <c>FloatParam</c>를 반환한다.</summary>
+	internal static float GetFloatParam(SkillNodeBuildData node, string key, float defaultValue)
 	{
 		string param = GetParam(node, key);
 		if (string.IsNullOrWhiteSpace(param) || !float.TryParse(param, NumberStyles.Float, CultureInfo.InvariantCulture, out var result))
@@ -1334,10 +1341,8 @@ namespace Pakuri.Data
 		return result;
 	}
 
-	/*
-	 * GetIntParam에 해당하는 값을 찾아 반환한다.
-	 */
-	internal static int GetIntParam(SkillNodeBuildData node /* 노드 */, string key /* 조회 키 */, int defaultValue /* 값이 없을 때 사용할 기본값 */)
+	/// <summary>전달된 런타임 입력값을 사용해 <c>IntParam</c>를 반환한다.</summary>
+	internal static int GetIntParam(SkillNodeBuildData node, string key, int defaultValue)
 	{
 		string param = GetParam(node, key);
 		if (string.IsNullOrWhiteSpace(param) || !int.TryParse(param, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result))
@@ -1347,10 +1352,8 @@ namespace Pakuri.Data
 		return result;
 	}
 
-	/*
-	 * GetBoolParam에 해당하는 값을 찾아 반환한다.
-	 */
-	internal static bool GetBoolParam(SkillNodeBuildData node /* 노드 */, string key /* 조회 키 */, bool defaultValue /* 값이 없을 때 사용할 기본값 */)
+	/// <summary>전달된 런타임 입력값을 사용해 <c>BoolParam</c>를 반환한다.</summary>
+	internal static bool GetBoolParam(SkillNodeBuildData node, string key, bool defaultValue)
 	{
 		string param = GetParam(node, key);
 		if (string.IsNullOrWhiteSpace(param))
@@ -1368,10 +1371,8 @@ namespace Pakuri.Data
 		return true;
 	}
 
-	/*
-	 * GetEnumParam에 해당하는 값을 찾아 반환한다.
-	 */
-	internal static T GetEnumParam<T>(SkillNodeBuildData node /* 노드 */, string key /* 조회 키 */, T defaultValue /* 값이 없을 때 사용할 기본값 */) where T : struct
+	/// <summary>전달된 런타임 입력값을 사용해 <c>EnumParam</c>를 반환한다.</summary>
+	internal static T GetEnumParam<T>(SkillNodeBuildData node, string key, T defaultValue) where T : struct
 	{
 		string param = GetParam(node, key);
 		if (string.IsNullOrWhiteSpace(param) || !Enum.TryParse<T>(param, ignoreCase: true, out var result))

@@ -1,16 +1,19 @@
+/*
+ * 역할: 일차 사이 몬스터 회복.
+ * 책임: Stage 사이에 플레이어 유닛 전투 자원을 회복하고 임시 전투 상태를 정리한다.
+ */
+
 using UnityEngine;
 
-/*
- * 하루가 끝나면 몬스터의 임시 상태를 지우고 체력과 자동 행동 설정을 다음 전투용으로 복구한다.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>MonsterDayRecovery</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
     static class MonsterDayRecovery
     {
-        /*
-         * 한 전투에서만 유지되는 상태 효과, 보호막, 스킬 실행 상태를 초기화한다.
-         */
-        public static void ResetTransient(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+
+        /// <summary>전달된 <c>model</c> 값을 사용해 <c>Transient</c>를 초기 런타임 상태로 되돌린다.</summary>
+        public static void ResetTransient(UnitCombatState model)
         {
             model.Statuses.Clear();
             model.Resources.DirectShield = 0f;
@@ -23,10 +26,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * 다음 전투를 위해 자동 행동, 임시 상태, 체력을 복구한다.
-         */
-        public static void Restore(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        /// <summary>전달된 <c>model</c> 값을 사용해 <c>Restore</c> 작업을 수행한다.</summary>
+        public static void Restore(UnitCombatState model)
         {
             model.AutoAttackEnabled = true;
             if (!IsSelectedPlayerMonster(model))
@@ -38,10 +39,8 @@ namespace Pakuri.InGame
             model.Resources.CurrentHealth = Mathf.Max(0f, model.Stats.MaxHealth);
         }
 
-        /*
-         * 플레이어가 직접 조작하는 선두 몬스터인지 확인한다.
-         */
-        private static bool IsSelectedPlayerMonster(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
+        /// <summary>전달된 <c>model</c> 값을 사용해 <c>SelectedPlayerMonster</c> 조건 충족 여부를 반환한다.</summary>
+        private static bool IsSelectedPlayerMonster(UnitCombatState model)
         {
             return model.Identity.Side == UnitSide.Player
                 && model.Identity.Role == UnitRole.Monster

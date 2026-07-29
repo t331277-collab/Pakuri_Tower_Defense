@@ -1,21 +1,23 @@
+/*
+ * 역할: 스킬 기반 상태 효과 적용.
+ * 책임: 상태 대상을 확정하고 전투 관리자를 통해 상태를 적용·연장·소비·제거한다.
+ */
+
 using System;
 using Pakuri.Data;
 using UnityEngine;
 
 namespace Pakuri.InGame
 {
-/*
- * 스킬 상태 설정에 선택지의 확률, 중첩, 지속시간과 능력치 보정을 반영한다.
- */
+
+/// <summary>스킬에 정의된 상태 효과 작업을 확정된 전투 대상에게 적용한다.</summary>
 static class SkillStatus
 {
 
-    /*
-     * 스킬의 기본 상태 설정과 실행 데이터 보정을 합쳐 투사체 적중 설정을 만든다.
-     */
+    /// <summary>전달된 런타임 입력값을 사용해 <c>StatusSpec</c> 결과값을 생성해 반환한다.</summary>
     public static ProjectileStatusHitSpec StatusSpec(
-        StatusApplicationSpec baseStatus /* 기본 상태 효과 */,
-        SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        StatusApplicationSpec baseStatus,
+        SkillExecutionData snapshot)
     {
         StatusRuntimeData statusData = null;
         if (baseStatus != null)
@@ -118,13 +120,11 @@ static class SkillStatus
         };
     }
 
-    /*
-     * 상태 종류와 중첩 수만으로 즉시 적용할 상태 적중 설정을 만든다.
-     */
+    /// <summary>전달된 런타임 입력값을 사용해 <c>DirectStatusSpec</c>를 생성한다.</summary>
     public static ProjectileStatusHitSpec CreateDirectStatusSpec(
-        StatusEffectKind kind /* 처리할 종류 */,
-        int stacks /* 중첩 수 */,
-        SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        StatusEffectKind kind,
+        int stacks,
+        SkillExecutionData snapshot)
     {
         if (kind == StatusEffectKind.None || stacks <= 0)
         {
@@ -161,13 +161,11 @@ static class SkillStatus
         };
     }
 
-    /*
-     * 실행 데이터의 상태 능력치 보너스를 복사한 상태 데이터에 적용한다.
-     */
+    /// <summary>전달된 런타임 입력값을 사용해 <c>StatusData</c> 결과값을 생성해 반환한다.</summary>
     public static StatusRuntimeData StatusData(
-        StatusRuntimeData statusData /* 상태 효과 실행 데이터 */,
-        StatusEffectKind kind /* 처리할 종류 */,
-        SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+        StatusRuntimeData statusData,
+        StatusEffectKind kind,
+        SkillExecutionData snapshot)
     {
         if (snapshot == null)
         {
@@ -252,10 +250,8 @@ static class SkillStatus
         return resolvedStatus;
     }
 
-    /*
-     * 상태 태그에 연결된 실행 데이터 지속시간 보너스를 반환한다.
-     */
-    private static float StatusDurationBonus(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, StatusRuntimeData statusData /* 상태 효과 실행 데이터 */)
+    /// <summary>전달된 런타임 입력값을 사용해 <c>StatusDurationBonus</c> 결과값을 생성해 반환한다.</summary>
+    private static float StatusDurationBonus(SkillExecutionData snapshot, StatusRuntimeData statusData)
     {
         if (snapshot == null)
         {
@@ -265,10 +261,8 @@ static class SkillStatus
         return snapshot.StatusDurationBonus(statusData.StatusTag);
     }
 
-    /*
-     * 상태 태그에 연결된 실행 데이터 최대 중첩 보너스를 반환한다.
-     */
-    private static int StatusMaxStacksBonus(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, StatusRuntimeData statusData /* 상태 효과 실행 데이터 */)
+    /// <summary>전달된 런타임 입력값을 사용해 <c>StatusMaxStacksBonus</c> 결과값을 생성해 반환한다.</summary>
+    private static int StatusMaxStacksBonus(SkillExecutionData snapshot, StatusRuntimeData statusData)
     {
         if (snapshot == null)
         {
@@ -278,10 +272,8 @@ static class SkillStatus
         return snapshot.StatusMaxStacksBonus(statusData.StatusTag);
     }
 
-    /*
-     * 임계 중첩에 도달했을 때 추가로 적용할 상태 설정을 만든다.
-     */
-    private static ProjectileStatusHitSpec ThresholdStatusSpec(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+    /// <summary>전달된 <c>snapshot</c> 값을 사용해 <c>ThresholdStatusSpec</c> 결과값을 생성해 반환한다.</summary>
+    private static ProjectileStatusHitSpec ThresholdStatusSpec(SkillExecutionData snapshot)
     {
         if (snapshot == null || snapshot.ThresholdApplyStatusKind == StatusEffectKind.None)
         {
@@ -311,6 +303,7 @@ static class SkillStatus
         };
     }
 
+    /// <summary>전달된 <c>kind</c> 값을 사용해 <c>CatalogStatusData</c> 결과값을 생성해 반환한다.</summary>
     private static StatusRuntimeData CatalogStatusData(StatusEffectKind kind)
     {
         return GameDataLoader.CurrentCatalog?.GetStatusRuntimeData(kind)

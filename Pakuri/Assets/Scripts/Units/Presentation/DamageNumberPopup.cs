@@ -1,11 +1,15 @@
+/*
+ * 역할: 월드 피해 숫자 표시.
+ * 책임: 부유 피해 숫자 오브젝트를 Pooling·배치·애니메이션·Fade·해제한다.
+ */
+
 using System.Collections.Generic;
 using UnityEngine;
 
-/*
- * 유닛 머리 위에 피해 숫자를 복제하고 위로 이동시키며 서서히 숨긴다.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>DamageNumberPopup</c> 상태를 Unity UI 또는 월드 오브젝트로 표시한다.</summary>
     internal class DamageNumberPopup : MonoBehaviour
     {
         private const float DefaultDurationSeconds = 1f;
@@ -24,10 +28,8 @@ namespace Pakuri.InGame
         private readonly List<ActiveDamagePopup> activePopups = new List<ActiveDamagePopup>();
         private bool initialized;
 
-        /*
-         * Initialize에 필요한 값을 설정한다.
-         */
-        public void Initialize(TextMesh textMesh /* 텍스트 메시 */)
+        /// <summary>전달된 <c>textMesh</c> 값을 사용해 <c>소유한 런타임 상태</c>를 초기화한다.</summary>
+        public void Initialize(TextMesh textMesh)
         {
             damageText = textMesh != null ? textMesh : GetComponent<TextMesh>();
             if (damageText == null)
@@ -46,10 +48,8 @@ namespace Pakuri.InGame
             enabled = false;
         }
 
-        /*
-         * Show 작업을 수행한다.
-         */
-        public void Show(float damageAmount /* 표시하거나 적용할 피해량 */)
+        /// <summary>전달된 <c>damageAmount</c> 값을 사용해 <c>요청값</c>를 표시한다.</summary>
+        public void Show(float damageAmount)
         {
             if (!initialized)
             {
@@ -66,9 +66,7 @@ namespace Pakuri.InGame
             enabled = true;
         }
 
-        /*
-         * 매 프레임 현재 상태를 갱신한다.
-         */
+        /// <summary>현재 Unity 프레임에서 <c>Update</c> 갱신 동작을 진행한다.</summary>
         private void Update()
         {
             if (damageText == null)
@@ -112,10 +110,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * SpawnPopup 작업을 수행한다.
-         */
-        private void SpawnPopup(float damageAmount /* 표시하거나 적용할 피해량 */)
+        /// <summary>전달된 <c>damageAmount</c> 값을 사용해 <c>Popup</c>를 런타임 씬 오브젝트로 생성하고 등록한다.</summary>
+        private void SpawnPopup(float damageAmount)
         {
             damageText.text = string.Empty;
             var hiddenColor = startColor;
@@ -178,17 +174,17 @@ namespace Pakuri.InGame
                 Mathf.Max(0.01f, durationSeconds)));
         }
 
+        /// <summary><c>ActiveDamagePopup</c> 상태를 Unity UI 또는 월드 오브젝트로 표시한다.</summary>
         private class ActiveDamagePopup
         {
-            /*
-             * ActiveDamagePopup에 필요한 값을 초기화한다.
-             */
+
+            /// <summary><c>ActiveDamagePopup</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
             public ActiveDamagePopup(
-                GameObject instance /* 생성된 게임 오브젝트 */,
-                TextMesh text /* 텍스트 */,
-                Vector3 startLocalPosition /* 시작 로컬 위치 */,
-                Color startColor /* 시작 색상 */,
-                float durationSeconds /* 지속 시간(초) */)
+                GameObject instance,
+                TextMesh text,
+                Vector3 startLocalPosition,
+                Color startColor,
+                float durationSeconds)
             {
                 Instance = instance;
                 Text = text;

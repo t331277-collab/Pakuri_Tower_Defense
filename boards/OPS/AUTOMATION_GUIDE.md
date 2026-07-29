@@ -112,3 +112,62 @@ Plugin installed and enabled. User-owned restart and hook trust remain.
 
 - 2026-07-29: User approved global Ponytail installation and requested usage instructions.
 - 2026-07-29: Designer registered the marketplace, installed and enabled Ponytail 4.8.4, and verified the local runtime and installed files.
+
+## Task: 2026-07-30 Global Script Comment Normalization
+
+### Task title
+
+Replace stale comments under `Pakuri/Assets/Scripts` with complete Korean responsibility summaries.
+
+### Goals
+
+- Remove every pre-existing source comment from the 73 current C# scripts.
+- Add a concise Korean role and responsibility header at the top of every script.
+- Add a concise Korean responsibility summary to every type, method, constructor, and local function declaration.
+- Preserve all non-comment code and runtime behavior.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Scope is limited to `Pakuri/Assets/Scripts/**/*.cs` plus this persistent-state record.
+- Comments must describe responsibilities found in the inspected current source.
+- Public APIs, serialized fields, source tokens, preprocessor directives, scenes, prefabs, CSV data, and Unity assets must not change.
+- Unity Play Mode remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Completed and verified.
+
+### Next Actions
+
+- Use the new file and declaration summaries as the current structural documentation.
+- Update the matching summary whenever a script or declaration responsibility changes.
+- Run user-owned Play Mode gameplay verification only if behavioral work is later added.
+
+### Evidence
+
+- Initial inventory found 73 scripts and 3,773 lines containing legacy comment syntax under `Pakuri/Assets/Scripts`.
+- Roslyn inspection with `UNITY_EDITOR` enabled found 244 type declarations, 1,195 method or constructor declarations, and 1 local function.
+- Final structural audit found 73/73 file headers and 1,440/1,440 documented declarations, with 0 missing declarations and 0 unexpected legacy or inline comments.
+- Korean localization audit found Korean text in 73/73 file headers and 1,440/1,440 declaration summaries, with 0 missing Korean summaries.
+- A Roslyn token and preprocessor comparison against Git `HEAD` found 0 non-comment code mismatches across all 73 scripts.
+- The Korean comment conversion compared every file before and after localization and found 0 non-comment code-token or preprocessor mismatches.
+- `dotnet build Assembly-CSharp.csproj --no-restore --verbosity quiet` passed with 0 errors and the existing 2 assembly-reference warnings.
+- `dotnet build Assembly-CSharp-Editor.csproj --no-restore --verbosity quiet` passed with 0 errors and the existing 2 assembly-reference warnings.
+- Unity script refresh and compilation completed with the editor idle and 0 error console entries.
+- Unity EditMode test job `f129a3b2a83947de9be624252c6666b1` passed 9/9 tests with 0 failures and 0 skips.
+- After Korean localization, Unity EditMode test job `0c77612c4dc643bcaf92b7722801eafb` passed 9/9 tests with 0 failures and 0 skips.
+- The temporary Roslyn audit utility and its generated build output were removed after verification.
+
+### History
+
+- 2026-07-30: User explicitly selected Code Builder and requested complete replacement of all comments under `Pakuri/Assets/Scripts`.
+- 2026-07-30: Code Builder inspected the current file, type, method, constructor, local-function, comment, and build baseline before editing.
+- 2026-07-30: Code Builder replaced legacy comments with file-level role/responsibility headers and declaration-level summaries without changing non-comment source tokens.
+- 2026-07-30: Code Builder completed static coverage, Git token comparison, runtime/editor builds, Unity compilation, console inspection, and the full EditMode test suite.
+- 2026-07-30: User requested Korean comments without damaging their meaning; Code Builder localized all file and declaration summaries while preserving code identifiers and responsibility scope.
+- 2026-07-30: Code Builder revalidated Korean coverage, non-comment token identity, runtime/editor builds, Unity compilation, the error console, and the full EditMode test suite.

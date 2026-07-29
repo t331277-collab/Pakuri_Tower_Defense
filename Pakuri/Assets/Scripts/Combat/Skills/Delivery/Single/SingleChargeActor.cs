@@ -1,28 +1,29 @@
+/*
+ * 역할: 지연 단일 차지 실행.
+ * 책임: 차지 시간과 대상 유효성을 추적한 뒤 단일 대상 스킬을 발동하거나 취소한다.
+ */
+
 using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
-/*
- * 돌진 중인 유닛의 이동과 적 접촉을 매 프레임 처리한다.
- * 실행기가 기록한 돌진 상태를 사용해 목표를 추적하고, 접촉 시 피해와 상태 효과를 적용한다.
- */
 namespace Pakuri.InGame
 {
+
+    /// <summary><c>SingleChargeActor</c> 런타임 오브젝트를 나타내며 모델과 Unity 컴포넌트를 연결한다.</summary>
     public static class SingleChargeActor
     {
-        // 진행 중인 돌진의 이동, 접촉 판정, 피해와 상태 적용을 구현.
+
         private static readonly List<CombatUnitEntry> collisionTargets = new List<CombatUnitEntry>(1);
 
-        /*
-         * 돌진 이동과 대상 접촉을 갱신하고 돌진 처리 여부를 반환한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>요청값</c>를 경과 시간 기준으로 갱신한다.</summary>
         public static bool Tick(
-            CombatUnitEntry casterEntry /* 스킬 사용자의 전투 등록 정보 */,
-            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
-            InGameCombatManager combatManager /* 전투 진행 관리자 */,
-            float deltaTime /* 이전 갱신 이후 지난 시간 */)
+            CombatUnitEntry casterEntry,
+            UnitSpawnManager roster,
+            InGameCombatManager combatManager,
+            float deltaTime)
         {
             var caster = casterEntry != null ? casterEntry.Model : null;
             var charge = caster != null ? caster.ActiveCharge : null;
@@ -85,16 +86,14 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /*
-         * 현재 접촉한 적이 있으면 돌진 적중을 처리한다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>ResolveHit</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
         private static bool TryResolveHit(
-            CombatUnitEntry casterEntry /* 스킬 사용자의 전투 등록 정보 */,
-            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
-            InGameCombatManager combatManager /* 전투 진행 관리자 */,
-            UnitCombatState caster /* 스킬을 사용하는 유닛 */,
-            SingleChargeState charge /* 돌진 */,
-            Vector2 movement /* 이번 판정에서 이동할 거리와 방향 */)
+            CombatUnitEntry casterEntry,
+            UnitSpawnManager roster,
+            InGameCombatManager combatManager,
+            UnitCombatState caster,
+            SingleChargeState charge,
+            Vector2 movement)
         {
             var hitTarget = FindHitTarget(casterEntry, roster, movement);
             if (hitTarget == null)
@@ -106,13 +105,11 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /*
-         * 돌진 시작 때 저장한 유닛 ID와 같은 적을 찾는다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>TargetByUnitId</c>를 찾는다.</summary>
         private static CombatUnitEntry FindTargetByUnitId(
-            CombatUnitEntry casterEntry /* 스킬 사용자의 전투 등록 정보 */,
-            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
-            string unitId /* 유닛 식별자 */)
+            CombatUnitEntry casterEntry,
+            UnitSpawnManager roster,
+            string unitId)
         {
             var targets = SkillTargeting.TargetList(
                 casterEntry,
@@ -130,13 +127,11 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /*
-         * 돌진 유닛과 접촉한 첫 적을 찾는다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>HitTarget</c>를 찾는다.</summary>
         private static CombatUnitEntry FindHitTarget(
-            CombatUnitEntry casterEntry /* 스킬 사용자의 전투 등록 정보 */,
-            UnitSpawnManager roster /* 전투에 등록된 유닛 목록 */,
-            Vector2 movement /* 이번 판정에서 이동할 거리와 방향 */)
+            CombatUnitEntry casterEntry,
+            UnitSpawnManager roster,
+            Vector2 movement)
         {
             var targets = SkillTargeting.TargetList(
                 casterEntry,
@@ -151,14 +146,12 @@ namespace Pakuri.InGame
             return collisionTargets.Count > 0 ? collisionTargets[0] : null;
         }
 
-        /*
-         * 최대 체력 비례 피해와 적중 상태를 적용하고 돌진을 끝낸다.
-         */
+        /// <summary>전달된 런타임 입력값을 사용해 <c>Hit</c> 작업을 수행한다.</summary>
         private static void Hit(
-            UnitCombatState caster /* 스킬을 사용하는 유닛 */,
-            CombatUnitEntry target /* 효과를 받을 대상의 등록 정보 */,
-            InGameCombatManager combatManager /* 전투 진행 관리자 */,
-            SingleChargeState charge /* 돌진 */)
+            UnitCombatState caster,
+            CombatUnitEntry target,
+            InGameCombatManager combatManager,
+            SingleChargeState charge)
         {
             var maxHealth = target.Model != null && target.Model.Stats != null
                 ? Mathf.Max(0f, target.Model.Stats.MaxHealth)
