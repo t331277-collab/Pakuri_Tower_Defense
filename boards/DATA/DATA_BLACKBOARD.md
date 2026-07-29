@@ -29,12 +29,12 @@ Designer / Code Builder refactoring handoff
 
 ### Status
 
-Data-contract design complete. Implementation not started.
+Superseded by the 2026-07-29 Trigger Final Outcome Generation Design.
 
 ### Next Actions
 
-- User approves or revises the Node-only schema in `boards/COMBAT/SKILL_TRIGGER_NODE_UNIFICATION_HANDOFF.md`.
-- Code Builder adds dual-read/migration support before converting the 508 current Effect rows.
+- No action. The preserved historical handoff is under `boards/ARCHIVE/`.
+- Current work follows `boards/COMBAT/SKILL_TRIGGER_EXECUTOR_REUSE_HANDOFF.md`.
 
 ### Evidence
 
@@ -48,6 +48,7 @@ Data-contract design complete. Implementation not started.
 - 2026-07-28: User requested removal of `graph_kind`, rejection of the intermediate grouping term, and Trigger-based Node activation.
 - 2026-07-28: Designer recorded the replacement data contract without editing CSV or runtime catalogs.
 - 2026-07-28: Code Builder archived older DATA task history and retained this as the only active DATA task.
+- 2026-07-29: User superseded runtime Trigger Node dispatch with final outcome generation and existing Executor reuse.
 
 ## Task: 2026-07-29 Trigger Visual Duration Data Repair
 
@@ -247,3 +248,51 @@ Code Builder implementation and available non-Play-Mode verification complete. P
 - 2026-07-29: Code Builder completed Phase 4 final catalog direct runtime consumption.
 - 2026-07-29: Code Builder completed Phase 5 Generation ownership integration and Combat skill folder migration.
 - 2026-07-29: Code Builder completed Phase 6 temporary-contract cleanup and full non-Play-Mode verification.
+
+## Task: 2026-07-29 Trigger Final Outcome Generation Design
+
+### Task title
+
+Generate final triggered skill Definitions or typed state commands once.
+
+### Goals
+
+- Convert Trigger-owned authored Nodes into final concrete `SkillDefinition` references or typed non-skill commands in Generation.
+- Stop building runtime `SkillNode[]` payloads for Trigger execution.
+- Reuse existing catalog Definitions for the four current `ExecuteSkill` mappings.
+- Preserve Choice/base modifier Node generation.
+
+### Constraints
+
+- Keep the current Parsing -> Validation -> Generation -> RuntimeCatalog order.
+- Do not add a new CSV schema or C# script unless inspected code proves it necessary.
+- Preserve IDs, values, ordering, asset paths, dynamic event-value semantics, and one validation/build/lookup flow.
+- Do not silently activate the 81 current modifier-only owners without owner-level evidence.
+
+### Role Owner
+
+Designer / Code Builder refactoring handoff
+
+### Status
+
+Phase 1 baseline complete. Phase 2 final outcome Generation pending.
+
+### Next Actions
+
+- Generate final concrete Definitions or typed commands beside the retained legacy Node path.
+- Verify owner classification remains 77 action and 81 current no-action owners.
+
+### Evidence
+
+- No Trigger owner currently combines two delivery kinds.
+- No Trigger owner currently combines delivery and a non-skill state command.
+- Current delivery shapes map to existing Single, Zone, Buff, and Shield Definition families.
+- Event-derived damage uses shield-applied, shield-absorbed, or event-applied damage snapshots.
+- The full Generation mapping and validation rules are recorded in the handoff.
+- Phase 1 confirmed 158 Trigger rows and 606 Trigger-owned Node rows with runtime/editor build error 0.
+
+### History
+
+- 2026-07-29: User selected existing Executor reuse instead of runtime Trigger Node effect dispatch.
+- 2026-07-29: Designer recorded the corresponding final Generation outcome contract.
+- 2026-07-29: User approved Code Builder implementation; Phase 1 fixed the current owner and build baseline.

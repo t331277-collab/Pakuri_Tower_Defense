@@ -40,9 +40,9 @@ Code Builder tracks:
 - Root current status: `BLACKBOARD.md`
 - Role, routing, archive, and automation work: `boards/OPS/AUTOMATION_GUIDE.md`
 
-### Skill Trigger / Node Refactor
+### Skill Trigger Executor Reuse
 
-- Approved design handoff: `boards/COMBAT/SKILL_TRIGGER_NODE_UNIFICATION_HANDOFF.md`
+- Approved design handoff: `boards/COMBAT/SKILL_TRIGGER_EXECUTOR_REUSE_HANDOFF.md`
 - Combat-side current task: `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`
 - Data-contract current task: `boards/DATA/DATA_BLACKBOARD.md`
 
@@ -74,7 +74,7 @@ Read `BLACKBOARD.md`. For root policy, role, routing, archive, or board maintena
 
 ### Combat / Skill Runtime Work
 
-For the current Trigger/Node migration, read the handoff and the narrow COMBAT or DATA task board required by the requested change. Inspect the exact C# and CSV files before making claims.
+For the current Trigger executor-reuse migration, read the handoff and the narrow COMBAT or DATA task board required by the requested change. Inspect the exact C# and CSV files before making claims.
 
 For unrelated new combat work, start from the exact code path. Create a new required-field task block in the narrowest applicable active board only when persistent state is needed.
 

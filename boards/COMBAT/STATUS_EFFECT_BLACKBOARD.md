@@ -29,12 +29,12 @@ Designer / Code Builder refactoring handoff
 
 ### Status
 
-Code Builder implementation in progress. Phases 1-3 complete.
+Superseded by the 2026-07-29 Trigger Executor Reuse Design.
 
 ### Next Actions
 
-- User approves or revises `boards/COMBAT/SKILL_TRIGGER_NODE_UNIFICATION_HANDOFF.md`.
-- Code Builder begins with the new Action Context and Node Executor foundation while retaining the legacy Effect path.
+- No action. The preserved historical handoff is under `boards/ARCHIVE/`.
+- Current work follows `boards/COMBAT/SKILL_TRIGGER_EXECUTOR_REUSE_HANDOFF.md`.
 
 ### Evidence
 
@@ -42,13 +42,14 @@ Code Builder implementation in progress. Phases 1-3 complete.
 - Current Trigger events do not cover all current Effect timings.
 - Active authoring contains 508 Effect graph rows and 256 ordinary modifier graph rows.
 - Fifteen current C# files reference `SkillEffectDefinition`.
-- Full design, deletion surface, final responsibilities, migration phases, parser/validator changes, risks, and acceptance criteria are recorded in `boards/COMBAT/SKILL_TRIGGER_NODE_UNIFICATION_HANDOFF.md`.
+- The superseded full design is preserved at `boards/ARCHIVE/SKILL_TRIGGER_NODE_UNIFICATION_HANDOFF_2026-07-28.md`.
 
 ### History
 
 - 2026-07-28: User selected Trigger-to-Node as the unified execution direction and removed `graph_kind` plus the rejected intermediate terminology.
 - 2026-07-28: Designer created the implementation handoff without changing runtime code or CSV.
 - 2026-07-28: Code Builder archived older COMBAT task history and retained this as the only active COMBAT task.
+- 2026-07-29: User superseded direct Trigger Node dispatch with existing family Executor reuse.
 
 ## Task: 2026-07-29 Trigger Visual Duration Restoration
 
@@ -305,3 +306,52 @@ Code Builder implementation and available non-Play-Mode verification complete. P
 - 2026-07-29: Code Builder completed Phase 4 final Choice/Trigger/Status direct consumption and removed 239 net C# lines.
 - 2026-07-29: Code Builder completed Phase 5 compiler deletion and responsibility-folder migration.
 - 2026-07-29: Code Builder completed Phase 6 dead-contract deletion and full non-Play-Mode regression verification.
+
+## Task: 2026-07-29 Trigger Executor Reuse Design
+
+### Task title
+
+Keep Trigger as the activation gate and route skill outcomes through existing family Executors.
+
+### Goals
+
+- Reduce `SkillTrigger` to event, condition, cooldown/count, delay/repeat, and delegation.
+- Route Trigger delivery through `SkillExecution.TryExecuteTriggered` and existing family Executors.
+- Delete `SkillNodeExecutor.cs` without adding a replacement script.
+- Keep non-skill cooldown, reload, and status-duration commands on existing runtime APIs.
+
+### Constraints
+
+- Preserve current Trigger IDs, conditions, ordering, event snapshots, dynamic values, recursion limits, and player-facing behavior.
+- Do not duplicate Trigger condition checks in `SkillExecution` or family Executors.
+- Designer changes documentation only.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Designer / Code Builder refactoring handoff
+
+### Status
+
+Phase 1 baseline complete. Phase 2 Generation final outcome implementation pending.
+
+### Next Actions
+
+- Build final Trigger delivery/command contracts while retaining the legacy Node path for parity.
+- Keep 81 current no-action owners inactive.
+
+### Evidence
+
+- `SkillNodeExecutor.Execute` and `HasRuntimeActions` are called only by `SkillTrigger.cs`.
+- Current Trigger authoring contains 158 owners and 606 Nodes: 4 existing-skill calls, 51 direct delivery results, 1 recast, 21 state commands, and 81 modifier-only owners.
+- `SkillExecution.ExecuteSkill` already dispatches every concrete skill family to the existing Executor.
+- `InGameCombatManager` publishes shield, status, kill, damage, and combat-start events outside the family Executor boundary.
+- Full contracts, migration phases, edge cases, acceptance criteria, and verification are recorded in the handoff.
+- Phase 1 confirmed 158 Triggers, 606 owned Nodes, 77 action owners, 81 no-action owners, 24 Combat/Skills scripts, and 12,102 lines.
+- Runtime and Editor builds completed with zero errors before implementation.
+
+### History
+
+- 2026-07-29: User selected condition-only Trigger orchestration, existing Executor reuse, and `SkillNodeExecutor` deletion.
+- 2026-07-29: Designer replaced the obsolete direct Node-dispatch design with the executor-reuse handoff.
+- 2026-07-29: User approved implementation; Code Builder completed the Phase 1 behavior and build baseline.
