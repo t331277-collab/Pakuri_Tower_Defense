@@ -216,44 +216,6 @@ namespace Pakuri.InGame
                 null);
         }
 
-        /*
-         * Trigger가 전달한 목표 지점과 피해 배율로 스킬 실행을 요청한다.
-         */
-        public bool TryExecuteTriggered(
-            CombatUnitEntry entry /* 처리할 등록 정보 */,
-            SkillUseState runtime /* 실행 중인 스킬 정보 */,
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
-            InGameCombatManager combatManager /* 전투 진행 관리자 */,
-            Vector2 targetPoint /* 지정한 대상 위치 */,
-            bool hasTargetPoint /* 보유 대상 위치 여부 */,
-            float triggeredDamageMultiplier = 1f /* 트리거로 실행된 피해 배율 */,
-            string triggerSourceSkillId = null /* 트리거 발생 원본 스킬 식별자 */)
-        {
-            if (runtime == null || entry == null)
-            {
-                return false;
-            }
-
-            var aimDirection = default(Vector2);
-            if (entry.Transform != null && hasTargetPoint)
-            {
-                aimDirection = targetPoint - (Vector2)entry.Transform.position;
-            }
-            var hasAimDirection = hasTargetPoint && aimDirection.sqrMagnitude > 0.0001f;
-            return TryExecuteSkill(
-                entry,
-                runtime,
-                roster,
-                combatManager,
-                hasAimDirection,
-                aimDirection,
-                hasTargetPoint,
-                targetPoint,
-                false,
-                triggeredDamageMultiplier,
-                triggerSourceSkillId);
-        }
-
         public bool TryExecuteTriggered(
             CombatUnitEntry entry,
             SkillUseState sourceRuntime,

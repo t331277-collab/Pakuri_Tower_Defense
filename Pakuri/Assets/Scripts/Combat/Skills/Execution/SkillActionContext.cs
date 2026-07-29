@@ -2,10 +2,7 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
-    /*
-     * Trigger가 선택한 Node 실행에 필요한 사건 값을 불변 형태로 보관한다.
-     * 대상 선택과 Node 실행은 각각 SkillTargeting과 SkillNodeExecutor가 담당한다.
-     */
+    /* 스킬 lifecycle Trigger에 전달할 사건 값을 불변 형태로 보관한다. */
     public sealed class SkillActionContext
     {
         /*
@@ -20,10 +17,7 @@ namespace Pakuri.InGame
             float eventDamage,
             int hitCount,
             SkillExecutionData executionData,
-            SkillExecutionContext executionContext = null,
-            string nodeOwnerId = "",
-            StatusRuntimeInstance eventStatus = null,
-            float shieldAbsorbedAmount = 0f)
+            SkillExecutionContext executionContext = null)
         {
             Source = source;
             SourceSkillId = sourceSkillId ?? string.Empty;
@@ -33,9 +27,6 @@ namespace Pakuri.InGame
             HitCount = Mathf.Max(0, hitCount);
             ExecutionData = executionData;
             ExecutionContext = executionContext;
-            NodeOwnerId = nodeOwnerId ?? string.Empty;
-            EventStatus = eventStatus;
-            ShieldAbsorbedAmount = Mathf.Max(0f, shieldAbsorbedAmount);
         }
 
         public UnitCombatState Source { get; }
@@ -51,12 +42,6 @@ namespace Pakuri.InGame
         public int HitCount { get; }
 
         public SkillExecutionData ExecutionData { get; }
-
-        public string NodeOwnerId { get; }
-
-        public StatusRuntimeInstance EventStatus { get; }
-
-        public float ShieldAbsorbedAmount { get; }
 
         internal SkillExecutionContext ExecutionContext { get; }
     }

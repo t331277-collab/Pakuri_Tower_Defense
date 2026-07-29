@@ -32,7 +32,7 @@ Designer for this handoff. Code Builder for implementation after explicit role a
 
 ## Status
 
-설계 보완 및 구현 승인 완료. Code Builder Phase 4 typed command 및 Trigger runtime Node payload 제거 완료, Phase 5 진행 예정.
+설계 보완 및 구현 승인 완료. Code Builder Phase 5 legacy executor/operation 삭제 완료, Phase 6 검증 진행 예정.
 
 ## Current inspected evidence
 
@@ -465,11 +465,12 @@ Rollback point: unmigrated owner만 기존 Node 실행.
 
 ### Phase 5 — `SkillNodeExecutor` deletion
 
-- `SkillNodeExecutor` 호출 0건 확인
-- script와 `.meta` 삭제
-- Trigger runtime action operation과 Generation mapping 삭제
-- 빈 helper와 stale comments 삭제
-- final folder/script count와 net line reduction 기록
+- 완료: active C#에서 `SkillNodeExecutor` 호출/참조 0건을 확인했다.
+- 완료: `SkillNodeExecutor.cs`와 `.meta`를 삭제했다.
+- 완료: 18개 Trigger runtime action operation과 legacy `MapSkillNode` branch를 삭제했다.
+- 완료: legacy `TryExecuteTriggered` overload와 Node 전용 `SkillActionContext` 필드/comment를 삭제했다.
+- 완료: 상태 조립용 mutation은 새 script/public contract 없이 `GameDataCatalogBuilder.Nodes.cs` private 타입으로 한정했다.
+- 완료: Phase 5 C# diff는 95 additions / 1,659 deletions이며 runtime/editor build error 0, Unity EditMode 3/3이다.
 
 Rollback point: Phase 4 commit.
 
@@ -558,8 +559,8 @@ Rollback point: Phase 4 commit.
 
 ## Next Actions
 
-- Phase 5에서 `SkillNodeExecutor.cs`와 `.meta`, Trigger-only runtime operation/mapping을 삭제한다.
-- 삭제 뒤 stale helper/comment 및 duplicate bridge를 정리한다.
+- Phase 6에서 static search, 전체 build, Unity compile/EditMode, CSV/catalog 수량을 최종 검증한다.
+- 최종 script/line 순감소와 Phase별 commit 목록을 기록한다.
 
 ## Evidence
 
@@ -590,3 +591,4 @@ Rollback point: Phase 4 commit.
 - 2026-07-29: Phase 2 generated 55 final Definitions and 22 typed commands, preserved 81 no-action owners, and passed the focused Unity EditMode catalog test.
 - 2026-07-29: Phase 3 routed final Definitions through existing family Executors with source snapshots, event-target predicates, lifecycle policy, dynamic damage snapshots, and depth-8 recursion protection.
 - 2026-07-29: Phase 4 removed Trigger runtime Node payloads and routed 22 typed commands through existing Zone/cooldown/reload/status APIs; focused EditMode tests passed 3/3.
+- 2026-07-29: Phase 5 deleted `SkillNodeExecutor`, its meta, Trigger-only runtime operations/mapping, and stale bridge fields; focused EditMode tests passed 3/3.

@@ -333,12 +333,12 @@ Designer / Code Builder refactoring handoff
 
 ### Status
 
-Phase 4 typed command migration and Trigger runtime Node payload removal complete. Phase 5 legacy executor deletion pending.
+Phase 5 legacy executor and Trigger-only operation deletion complete. Phase 6 final verification pending.
 
 ### Next Actions
 
-- Delete `SkillNodeExecutor.cs`, its `.meta`, and Trigger-only runtime operation/mapping contracts.
-- Remove stale bridge code and comments after the deletion.
+- Run final static search, runtime/editor builds, Unity compilation/EditMode tests, and catalog validation.
+- Record final Combat/Skills script count and C# net line reduction.
 
 ### Evidence
 
@@ -356,6 +356,8 @@ Phase 4 typed command migration and Trigger runtime Node payload removal complet
 - Runtime/editor builds completed with error 0 and `SkillCatalogRuntimeTests` passed 3/3.
 - Phase 4 routes 1 recast, 14 cooldown refunds, 6 reload reductions, and 1 status-duration extension through existing APIs.
 - `SkillTriggerDefinition.Nodes` and `SkillTrigger` legacy Node execution are removed; `SkillCatalogRuntimeTests` remains 3/3 and Unity Console reports zero errors/warnings.
+- Phase 5 deletes `SkillNodeExecutor.cs/.meta`, Trigger-only public operation types, and their legacy mapping; active C# search returns zero deleted symbols.
+- Runtime/editor builds remain error 0 and Unity `SkillCatalogRuntimeTests` passes 3/3 after deletion.
 
 ### History
 
@@ -365,3 +367,4 @@ Phase 4 typed command migration and Trigger runtime Node payload removal complet
 - 2026-07-29: Code Builder completed Phase 2 final Trigger outcome Generation and focused catalog verification.
 - 2026-07-29: Code Builder completed Phase 3 shared family execution, status-rule parity, EventTarget filtering, and dynamic event-value snapshots.
 - 2026-07-29: Code Builder completed Phase 4 typed command execution and removed Trigger runtime Node payload consumption.
+- 2026-07-29: Code Builder completed Phase 5 legacy executor, operation, mapping, and stale context cleanup.
