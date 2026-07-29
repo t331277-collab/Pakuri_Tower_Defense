@@ -309,8 +309,9 @@ Trigger 조건을 Node나 family Executor에 넘겨 다시 판단하지 않는�
 
 ### `Combat/Skills/Reactions/PassiveSkill.cs`
 
-- Trigger별 internal cooldown과 count 상태 유지
-- 새 실행 책임 추가 없음
+- 후속 책임 정리에서 script와 `.meta` 삭제
+- 실제 사용하던 Trigger별 internal cooldown/count 상태는 `SkillTrigger.cs`로 이동
+- 비어 있던 resource/roster/status/shield/health 알림과 pending flush API는 호출부까지 삭제
 
 ### `Combat/Skills/Execution/SkillExecution.cs`
 
@@ -372,7 +373,7 @@ Trigger 조건을 Node나 family Executor에 넘겨 다시 판단하지 않는�
 
 ## Final `Combat/Skills` structure
 
-새 script는 없고 현재 24개에서 `SkillNodeExecutor.cs` 하나가 삭제되어 최대 23개다.
+새 script는 없다. 후속 상태 통합으로 `SkillStatus.cs`가 추가된 뒤 `PassiveSkill.cs`가 삭제되어 현재 23개다.
 
 ```text
 Combat/Skills/
@@ -394,7 +395,6 @@ Combat/Skills/
 │  ├─ Single/
 │  └─ Zone/
 └─ Reactions/
-   ├─ PassiveSkill.cs
    └─ SkillTrigger.cs
 ```
 
@@ -586,6 +586,7 @@ Rollback point: Phase 4 commit.
 - Final CSV validation: catalog 5/8/8.
 - Git C# diff from Phase 1 baseline: `Combat/Skills` 579 additions / 1,547 deletions = net -968; all `Assets/Scripts` 1,299 additions / 1,742 deletions = net -443.
 - `Combat/Skills` inventory: 24 -> 23 C# scripts; existing board line-count method 12,102 -> 11,230.
+- Follow-up responsibility cleanup deletes `PassiveSkill.cs/.meta`, keeps cooldown/count state per `InGameCombatManager` inside `SkillTrigger`, removes 14 empty notification/flush call sites, builds with error 0, and passes `SkillCatalogRuntimeTests` 4/4.
 
 ## History
 
@@ -601,3 +602,4 @@ Rollback point: Phase 4 commit.
 - 2026-07-29: Phase 4 removed Trigger runtime Node payloads and routed 22 typed commands through existing Zone/cooldown/reload/status APIs; focused EditMode tests passed 3/3.
 - 2026-07-29: Phase 5 deleted `SkillNodeExecutor`, its meta, Trigger-only runtime operations/mapping, and stale bridge fields; focused EditMode tests passed 3/3.
 - 2026-07-29: Phase 6 completed static, solution, Unity EditMode/Console, and CSV catalog verification with Code Builder work complete.
+- 2026-07-29: User approved deleting `PassiveSkill.cs`; Code Builder moved its only live cooldown/count behavior into `SkillTrigger` and removed its empty manager notification pipeline.

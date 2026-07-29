@@ -58,7 +58,6 @@ namespace Pakuri.InGame
         private readonly CombatUnitRegistry unitRegistry = new CombatUnitRegistry();
         private EnemyActionController enemyActionController;
         private readonly SkillExecution skillExecution = new SkillExecution();
-        private readonly PassiveSkill passiveEffects = new PassiveSkill();
         [SerializeField] private PlayerCombatInputController playerCombatControl;
         private readonly HashSet<UnitCombatState> combatStartDispatchedUnits = new HashSet<UnitCombatState>();
         [SerializeField] private bool enemyCombatSimulationEnabled = true;
@@ -67,7 +66,6 @@ namespace Pakuri.InGame
 
         public CombatUnitRegistry UnitRegistry => unitRegistry;
         public EffectManager Effects => effectManager;
-        internal PassiveSkill PassiveEffects => passiveEffects;
         internal SkillExecution SkillExecution => skillExecution;
 
         public int ActiveEnemyCount => unitRegistry.EnemyCount;
@@ -82,16 +80,14 @@ namespace Pakuri.InGame
             enemyActionController = new EnemyActionController(unitRegistry, skillExecution, this);
             unitRegistry.Clear();
             combatStartDispatchedUnits.Clear();
-            passiveEffects.Reset();
+            SkillTrigger.Reset(this);
         }
 
         /*
-         * 패시브, 스킬, 입력, 적 행동, 상태 지속시간을 순서대로 갱신한다.
+         * 스킬, 입력, 적 행동, 상태 지속시간을 순서대로 갱신한다.
          */
         private void Update()
         {
-            FlushPassiveEffectChanges();
-
             if (skillExecutionEnabled)
             {
                 TickSkillStates(Time.deltaTime);
@@ -111,7 +107,6 @@ namespace Pakuri.InGame
             }
 
             TickUnitStatuses(Time.deltaTime);
-            FlushPassiveEffectChanges();
         }
 
         /*
@@ -136,7 +131,6 @@ namespace Pakuri.InGame
         public CombatUnitEntry RegisterPlayerMonster(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, MonsterActor actor /* 화면에서 유닛을 표현하는 컴포넌트 */, Transform hitboxRoot /* 피격 판정의 기준 위치 */)
         {
             var entry = unitRegistry.Register(model, actor, hitboxRoot);
-            passiveEffects.NotifyRosterChanged();
             if (PlayerCombatInputController.IsSelectedPlayerModel(model))
             {
                 playerCombatControl.ApplyAutoSkillModeToSelectedPlayer(unitRegistry);
@@ -152,7 +146,6 @@ namespace Pakuri.InGame
         public CombatUnitEntry RegisterEnemy(EnemyCombatState model /* 처리할 상태 모델 */, EnemyActor actor /* 화면에서 유닛을 표현하는 컴포넌트 */, Transform hitboxRoot /* 피격 판정의 기준 위치 */)
         {
             var entry = unitRegistry.Register(model, actor, hitboxRoot);
-            passiveEffects.NotifyRosterChanged();
             DispatchCombatStartOnce(model);
             return entry;
         }
@@ -163,7 +156,6 @@ namespace Pakuri.InGame
         public CombatUnitEntry RegisterNexus(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, NexusActor actor /* 화면에서 유닛을 표현하는 컴포넌트 */, Transform hitboxRoot /* 피격 판정의 기준 위치 */)
         {
             var entry = unitRegistry.Register(model, actor, hitboxRoot);
-            passiveEffects.NotifyRosterChanged();
             return entry;
         }
 
@@ -175,7 +167,6 @@ namespace Pakuri.InGame
             var entry = unitRegistry.Find(model);
             var actor = entry.Actor;
             unitRegistry.Unregister(model);
-            passiveEffects.NotifyRosterChanged();
             Destroy(actor.gameObject);
 
             return true;
@@ -209,11 +200,9 @@ namespace Pakuri.InGame
                 return result;
             }
 
-            passiveEffects.NotifyResourceChanged(result);
-            // 보호막 소진은 상태 조건 변경도 함께 알린다.
+            // 소진된 보호막의 시각 효과를 제거한다.
             if (depletedShields.Count > 0)
             {
-                passiveEffects.NotifyStatusChanged(target);
                 for (var i = 0; i < depletedShields.Count; i++)
                 {
                     effectManager.RemoveEffect(null, depletedShields[i]);
@@ -256,7 +245,6 @@ namespace Pakuri.InGame
                 return result;
             }
 
-            passiveEffects.NotifyResourceChanged(result);
             unitRegistry.Find(result.Target).RefreshDisplay();
             return result;
         }
@@ -374,7 +362,6 @@ namespace Pakuri.InGame
                 permanent,
                 refreshDuration);
             status.SetSourceUnit(source);
-            passiveEffects.NotifyStatusChanged(target);
             target.SyncShield();
             unitRegistry.RefreshDisplay(target);
             ShowStatusEffectVisual(target, status);
@@ -412,8 +399,6 @@ namespace Pakuri.InGame
                 refreshDuration,
                 adjustedShieldAmount);
             status.SetSourceUnit(source);
-            passiveEffects.NotifyStatusChanged(target);
-
             target.SyncShield();
             unitRegistry.RefreshDisplay(target);
             ShowStatusEffectVisual(target, status);
@@ -486,7 +471,7 @@ namespace Pakuri.InGame
             effectManager.ClearEffects();
 
             combatStartDispatchedUnits.Clear();
-            passiveEffects.Reset();
+            SkillTrigger.Reset(this);
 
             var entries = unitRegistry.Entries;
             for (var i = 0; i < entries.Count; i++)
@@ -526,14 +511,6 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 모인 패시브 조건 변경을 활성 효과에 반영한다.
-         */
-        private void FlushPassiveEffectChanges()
-        {
-            passiveEffects.FlushPendingChanges(this, unitRegistry);
-        }
-
-        /*
          * 지정한 패시브 출처가 만든 상태를 제거한다.
          */
         internal bool RemovePassiveStatus(UnitCombatState target /* 효과를 받을 대상 유닛 */, StatusEffectKind kind /* 처리할 종류 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */)
@@ -553,7 +530,6 @@ namespace Pakuri.InGame
             }
 
             SkillTrigger.ExecuteExpiredStatuses(this, unitRegistry, target, removedStatuses);
-            passiveEffects.NotifyStatusChanged(target);
             return true;
         }
 
@@ -649,7 +625,6 @@ namespace Pakuri.InGame
 
                 target.SyncShield();
                 unitRegistry.RefreshDisplay(target);
-                passiveEffects.NotifyStatusChanged(target);
             }
 
             return consumed;
@@ -682,7 +657,6 @@ namespace Pakuri.InGame
 
                     // 만료 상태는 일반 만료와 보호막 만료 Trigger에 각각 전달한다.
                     SkillTrigger.ExecuteExpiredStatuses(this, unitRegistry, model, removedStatuses);
-                    passiveEffects.NotifyStatusChanged(model);
                 }
             }
         }
@@ -699,7 +673,6 @@ namespace Pakuri.InGame
 
             var entry = unitRegistry.Find(result.Target);
             unitRegistry.Unregister(result.Target);
-            passiveEffects.NotifyRosterChanged();
             entry.HandleDefeat();
             UnitDefeated?.Invoke(result.Target);
         }

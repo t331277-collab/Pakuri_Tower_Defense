@@ -374,6 +374,55 @@ Code Builder Phase 1-6 complete. Non-Play-Mode verification passed; user Play Mo
 - 2026-07-29: Code Builder completed Phase 5 legacy executor, operation, mapping, and stale context cleanup.
 - 2026-07-29: Code Builder completed Phase 6 static/build/Unity/CSV verification and recorded final net deletion.
 
+## Task: 2026-07-29 Passive Trigger State Consolidation
+
+### Task title
+
+Delete `PassiveSkill.cs` and keep its live Trigger gate state with `SkillTrigger`.
+
+### Goals
+
+- Move internal cooldown and N-count state to the Trigger condition owner.
+- Delete `PassiveSkill.cs` and its Unity `.meta`.
+- Remove the empty passive change-notification pipeline from `InGameCombatManager`.
+
+### Constraints
+
+- Preserve Trigger cooldown timing, count reset behavior, case-insensitive keys, and per-combat-manager state isolation.
+- Do not add a replacement script, interface, factory, or gameplay behavior.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implementation and available non-Play-Mode verification complete.
+
+### Next Actions
+
+- User verifies `eve-g`, `rin-h`, `sein-g`, and `vega-i` cooldown/count behavior in Play Mode.
+
+### Evidence
+
+- `PassiveSkill.cs` contained two dictionaries, `Reset`, `ConsumeTriggerCooldown`, `ConsumeTriggerCount`, and six empty notification/flush methods.
+- Only `SkillTrigger.cs` called the two live consume methods.
+- `SkillTrigger.cs` now owns the same case-insensitive cooldown/count dictionaries in manager-keyed `TriggerGateState`.
+- `InGameCombatManager.Awake` and `ResetCombatState` reset that manager's Trigger state.
+- Active Combat C# search returns zero `PassiveSkill`, `PassiveEffects`, empty notification, or pending-flush references.
+- `PassiveSkill.cs` and `PassiveSkill.cs.meta` are deleted; no replacement script was added.
+- `git diff --check` passed.
+- `Pakuri/Pakuri.sln` builds with zero errors and the two existing assembly-reference warnings.
+- Unity Console reports zero errors/warnings after script refresh.
+- Unity EditMode `SkillCatalogRuntimeTests` passes 4/4 and loads the catalog at 5 monsters, 8 stage-one enemies, and 8 stage-two enemies.
+- The implementation diff is 69 additions and 122 deletions: net reduction 53 lines.
+
+### History
+
+- 2026-07-29: User approved Code Builder consolidation and deletion of `PassiveSkill.cs`.
+- 2026-07-29: Code Builder moved live Trigger gate state to `SkillTrigger`, removed empty manager callbacks, deleted the script/meta, and completed local verification.
+
 ## Task: 2026-07-29 Status Runtime Responsibility Refactor
 
 ### Task title

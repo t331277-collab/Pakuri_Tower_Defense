@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
@@ -13,7 +14,65 @@ namespace Pakuri.InGame
 
 internal static class SkillTrigger
 {
+	private sealed class TriggerGateState
+	{
+		private readonly Dictionary<string, float> cooldowns =
+			new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
+		private readonly Dictionary<string, int> counts =
+			new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+		public bool ConsumeCooldown(string key, float cooldownSeconds)
+		{
+			float now = Time.time;
+			if (cooldowns.TryGetValue(key, out float readyAt) && readyAt > now)
+			{
+				return false;
+			}
+
+			if (cooldownSeconds > 0f)
+			{
+				cooldowns[key] = now + cooldownSeconds;
+			}
+			else
+			{
+				cooldowns.Remove(key);
+			}
+
+			return true;
+		}
+
+		public bool ConsumeCount(string key, int triggerEveryCount)
+		{
+			if (triggerEveryCount <= 1)
+			{
+				return true;
+			}
+
+			counts.TryGetValue(key, out int currentCount);
+			currentCount++;
+			if (currentCount < triggerEveryCount)
+			{
+				counts[key] = currentCount;
+				return false;
+			}
+
+			counts[key] = 0;
+			return true;
+		}
+	}
+
+	private static readonly ConditionalWeakTable<InGameCombatManager, TriggerGateState> gateStates =
+		new ConditionalWeakTable<InGameCombatManager, TriggerGateState>();
+
 	// 전투 사건을 조건·확률·횟수로 판정하고 후속 행동을 실행하는 부분을 구현.
+	internal static void Reset(InGameCombatManager combatManager)
+	{
+		if (combatManager != null)
+		{
+			gateStates.Remove(combatManager);
+		}
+	}
+
 	/*
 	 * null 항목을 제외한 기본 Trigger 실행 목록을 만든다.
 	 */
@@ -554,7 +613,9 @@ internal static class SkillTrigger
 		{
 			return false;
 		}
-		return combatManager.PassiveEffects.ConsumeTriggerCooldown(BuildPassiveTriggerCooldownKey(owner, trigger), trigger.InternalCooldownSeconds);
+		return gateStates.GetOrCreateValue(combatManager).ConsumeCooldown(
+			BuildPassiveTriggerCooldownKey(owner, trigger),
+			trigger.InternalCooldownSeconds);
 	}
 
 	/*
@@ -566,7 +627,9 @@ internal static class SkillTrigger
 		{
 			return false;
 		}
-		return combatManager.PassiveEffects.ConsumeTriggerCount(BuildPassiveTriggerCooldownKey(owner, trigger), trigger.TriggerEveryCount);
+		return gateStates.GetOrCreateValue(combatManager).ConsumeCount(
+			BuildPassiveTriggerCooldownKey(owner, trigger),
+			trigger.TriggerEveryCount);
 	}
 
 	/*
