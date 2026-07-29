@@ -260,11 +260,11 @@ Designer / Code Builder refactoring handoff
 
 ### Status
 
-Code Builder implementation in progress. Phases 1-4 complete.
+Code Builder implementation in progress. Phases 1-5 complete.
 
 ### Next Actions
 
-- Code Builder implements Phase 5 compiler deletion and script moves.
+- Code Builder implements Phase 6 dead-contract deletion and full regression verification.
 
 ### Evidence
 
@@ -286,6 +286,9 @@ Code Builder implementation in progress. Phases 1-4 complete.
 - Phase 4 removed `SkillChoice.Source`, Choice lazy Node mapping/cache, and runtime Trigger authored-string parsing.
 - Runtime Execution/Trigger/StatusRules search found zero `Split`, `Enum.Parse`, or `TryParse` calls.
 - Runtime and Editor builds completed with zero errors; Unity CSV validation retained 5 monsters and 8/8 enemies.
+- Phase 5 removed all three compiler/mapper symbols and `CompileTriggers`; Generation owns the integrated Builder logic.
+- `Combat/Skills` now contains the specified 24 scripts under Definitions, Runtime, Execution, Delivery, and Reactions.
+- All 18 moved script GUID pairs matched; runtime/editor builds and Unity CSV validation passed.
 
 ### History
 
@@ -296,3 +299,4 @@ Code Builder implementation in progress. Phases 1-4 complete.
 - 2026-07-29: Code Builder completed Phase 2 final typed contracts while retaining the old compiler path as a buildable bridge.
 - 2026-07-29: Code Builder completed Phase 3 final catalog generation and direct final-type indexing.
 - 2026-07-29: Code Builder completed Phase 4 final Choice/Trigger/Status direct consumption and removed 239 net C# lines.
+- 2026-07-29: Code Builder completed Phase 5 compiler deletion and responsibility-folder migration.

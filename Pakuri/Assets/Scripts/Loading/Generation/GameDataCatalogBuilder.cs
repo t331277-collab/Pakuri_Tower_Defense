@@ -11,7 +11,7 @@ using static Pakuri.Data.SkillGraphParser;
 
 namespace Pakuri.Data
 {
-    internal sealed class GameDataCatalogBuilder
+    internal sealed partial class GameDataCatalogBuilder
     {
 
         private readonly CsvRuntimeCatalog assetCatalog;
@@ -248,7 +248,7 @@ namespace Pakuri.Data
                 return;
             }
 
-            definitions.Add(SkillDefinitionCompiler.CompileActive(
+            definitions.Add(BuildActiveDefinition(
                 ownerId,
                 BuildEnemyAssignedSkillDefinition(source, runtimeSlot),
                 triggers,
@@ -423,7 +423,7 @@ namespace Pakuri.Data
                     ProcChance = 1f,
                     EventSourceScopeValue = SkillTriggerEventSourceScope.Any,
                     NormalizedNodes = normalizedNodes,
-                    Nodes = SkillNodeMapper.MapSkillNodeDefinitions(normalizedNodes)
+                    Nodes = MapSkillNodeDefinitions(normalizedNodes)
                 };
             }
 
@@ -567,7 +567,7 @@ namespace Pakuri.Data
                 };
 
                 ApplyStatusPayload(definition, skill.Status);
-                definitions[i] = SkillDefinitionCompiler.CompileActive(
+                definitions[i] = BuildActiveDefinition(
                     monsterId,
                     definition,
                     triggers,
@@ -675,7 +675,7 @@ namespace Pakuri.Data
                     EventSourceScopeValue = StatusRuntimeCompiler.ParseEventSourceScope(trigger.EventSourceScope),
                     RequireEventExecute = trigger.RequireEventExecute,
                     NormalizedNodes = normalizedNodes,
-                    Nodes = SkillNodeMapper.MapSkillNodeDefinitions(normalizedNodes)
+                    Nodes = MapSkillNodeDefinitions(normalizedNodes)
                 };
             }
 
@@ -712,7 +712,7 @@ namespace Pakuri.Data
                     EnhancementChoices = BuildSkillChoices(model, skill.Id, SkillChoiceGroup.PassiveEnhancement),
                     NormalizedNodes = BuildSkillNodeDefinitions(model, SkillNodeOwnerKind.Passive, skill.Id, skill.Id)
                 };
-                definitions[i] = SkillDefinitionCompiler.CompilePassive(monster, definition);
+                definitions[i] = BuildPassiveDefinition(monster, definition);
             }
 
             return definitions;

@@ -12,42 +12,6 @@ namespace Pakuri.Data
     public static class StatusRuntimeCompiler
     {
         /*
-         * CompileTriggers 작업을 수행한다.
-         */
-        public static void CompileTriggers(SkillTriggerDefinition[] triggers /* 트리거 목록 */)
-        {
-            if (triggers == null)
-            {
-                return;
-            }
-
-            for (var i = 0; i < triggers.Length; i++)
-            {
-                var trigger = triggers[i];
-                if (trigger == null)
-                {
-                    continue;
-                }
-
-                if (!string.IsNullOrWhiteSpace(trigger.RequiredSourceStatusId))
-                {
-                    trigger.RequiredSourceStatusKind = ParseStatusKind(trigger.RequiredSourceStatusId);
-                }
-
-                trigger.ConditionStatuses = ParseConditionStatusExpression(trigger.ConditionStatusId);
-                trigger.ConditionStatusSourceSkillIds = ParseIdList(trigger.ConditionStatusSourceSkillId);
-                trigger.RequiredActiveChoiceIds = ParseIdList(trigger.RequiresActiveChoiceId);
-                trigger.ExcludedActiveChoiceIds = ParseIdList(trigger.ExcludesActiveChoiceId);
-                trigger.TriggerAttributes = ParseDamageAttributes(trigger.TriggerAttribute);
-                trigger.EventSkillIds = ParseIdList(trigger.EventSkillId);
-                trigger.EventSkillRuntimeKindValues = ParseSkillRuntimeKindConditions(
-                    trigger.EventSkillRuntimeKinds);
-                trigger.EventSourceScopeValue = ParseEventSourceScope(trigger.EventSourceScope);
-                trigger.Nodes = SkillNodeMapper.MapSkillNodeDefinitions(trigger.NormalizedNodes);
-            }
-        }
-
-        /*
          * ParseStatusKind에 필요한 데이터를 읽어 변환한다.
          */
         public static StatusEffectKind ParseStatusKind(string value /* 처리할 값 */)

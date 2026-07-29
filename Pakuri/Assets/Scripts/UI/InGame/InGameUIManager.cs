@@ -1395,8 +1395,7 @@ namespace Pakuri.InGame
                 model.Skills = new UnitSkills();
             }
 
-            SkillDefinitionCompiler.ApplyLearnedSkills(
-                model.Skills,
+            model.Skills.ApplyLearnedSkills(
                 state.LearnedActives,
                 state.LearnedPassives,
                 state.ChosenChoiceIds);

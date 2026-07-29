@@ -179,8 +179,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            SkillDefinitionCompiler.ApplyLearnedSkills(
-                target,
+            target.ApplyLearnedSkills(
                 runState.LearnedActives,
                 runState.LearnedPassives,
                 runState.ChosenChoiceIds);

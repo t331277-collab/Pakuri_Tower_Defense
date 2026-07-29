@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Pakuri.Data;
 
 /*
  * 유닛이 학습한 액티브·패시브 스킬과 선택한 강화·마스터 ID를 보관한다.
@@ -20,6 +21,44 @@ namespace Pakuri.InGame
         public IReadOnlyCollection<string> LearnedPassiveSkillIds => learnedPassiveSkillIds;
         public IReadOnlyCollection<string> ChosenEnhancementIds => chosenEnhancementIds;
         public IReadOnlyCollection<string> ChosenMasterSkillIds => chosenMasterSkillIds;
+
+        /*
+         * 런 세션에서 확정된 학습 스킬과 Choice ID를 저장소에 복사한다.
+         */
+        public void ApplyLearnedSkills(
+            IReadOnlyList<string> activeSkillIds,
+            IReadOnlyList<string> passiveSkillIds,
+            IReadOnlyList<string> choiceIds)
+        {
+            Clear();
+            for (var i = 0; i < activeSkillIds.Count; i++)
+            {
+                AddActiveSkill(activeSkillIds[i]);
+            }
+
+            for (var i = 0; i < passiveSkillIds.Count; i++)
+            {
+                AddPassiveSkill(passiveSkillIds[i]);
+            }
+
+            for (var i = 0; i < choiceIds.Count; i++)
+            {
+                var choiceId = choiceIds[i];
+                if (!GameDataLoader.CurrentCatalog.TryGetData(choiceId, out SkillChoice choice))
+                {
+                    throw new InvalidOperationException($"Unknown learned skill choice '{choiceId}'.");
+                }
+
+                if (choice.ChoiceGroup == SkillChoiceGroup.ActiveMaster)
+                {
+                    AddMasterSkill(choiceId);
+                }
+                else
+                {
+                    AddEnhancement(choiceId);
+                }
+            }
+        }
 
         /*
          * 학습한 액티브 스킬 ID를 추가한다.

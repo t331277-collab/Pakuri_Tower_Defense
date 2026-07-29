@@ -3,7 +3,7 @@ using Pakuri.Data;
 using UnityEngine;
 
 /*
- * GameDataCatalogBuilder가 만든 SkillNodeDefinition을 SkillNodeMapper가 전투용 값으로 바꾼다.
+ * GameDataCatalogBuilder가 작성 Node를 전투용 강타입 값으로 바꾼다.
  * SkillNode는 값 하나를 보관하고, SkillExecutionData가 필요한 값을 읽어서 최종 스킬을 만들고 Executor 에 넘겨준다.
  즉 언제든 꺼내 쓸 수 있는 실행 가능한 규칙 값 보관
  */
@@ -884,7 +884,7 @@ namespace Pakuri.InGame
 
     /*
      * 전투용 실행 값 하나를 보관한다.
-     * SkillNodeMapper가 만들고 SkillExecutionData와 스킬 규칙 코드가 필요한 형식으로 꺼낸다.
+     * GameDataCatalogBuilder가 만들고 SkillExecutionData와 스킬 규칙 코드가 필요한 형식으로 꺼낸다.
      */
     public class SkillNode
     {

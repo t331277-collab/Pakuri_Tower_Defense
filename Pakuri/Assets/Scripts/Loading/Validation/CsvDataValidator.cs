@@ -974,7 +974,7 @@ namespace Pakuri.Data
                 {
                     continue;
                 }
-                if (SkillNodeMapper.CanProcessNode(graph.OwnerKind.ToString(), nodeType.HandlerId))
+                if (GameDataCatalogBuilder.CanProcessNode(graph.OwnerKind.ToString(), nodeType.HandlerId))
                 {
                     continue;
                 }

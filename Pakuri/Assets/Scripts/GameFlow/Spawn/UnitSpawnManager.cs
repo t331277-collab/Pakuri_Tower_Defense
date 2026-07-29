@@ -325,8 +325,7 @@ namespace Pakuri.InGame
             var state = activeSession.GetPartyMemberState(model.Identity.DefinitionId)
                 ?? throw new InvalidOperationException(
                     $"Party state '{model.Identity.DefinitionId}' is required before restoring.");
-            SkillDefinitionCompiler.ApplyLearnedSkills(
-                model.Skills,
+            model.Skills.ApplyLearnedSkills(
                 state.LearnedActives,
                 state.LearnedPassives,
                 state.ChosenChoiceIds);

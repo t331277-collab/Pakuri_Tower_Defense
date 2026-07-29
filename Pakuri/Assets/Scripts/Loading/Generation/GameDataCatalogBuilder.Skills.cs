@@ -2,92 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Pakuri.Combat;
-using Pakuri.Data;
+using Pakuri.InGame;
 using UnityEngine;
 
 /*
- * 작성된 액티브·패시브 스킬 데이터를 전투용 SkillDefinition으로 변환한다.
- * 선택지는 SkillChoiceCompiler, 노드는 SkillNodeMapper에 맡긴다.
+ * 검증된 스킬 작성 데이터를 최종 전투 Definition으로 생성한다.
  */
-namespace Pakuri.InGame
+namespace Pakuri.Data
 {
 
-public static class SkillDefinitionCompiler
+internal sealed partial class GameDataCatalogBuilder
 {
-	/*
-	 * 런 세션에서 확정된 학습 스킬과 Choice ID를 유닛 저장소에 복사한다.
-	 */
-	public static void ApplyLearnedSkills(
-		UnitSkills target /* 학습 결과를 저장할 유닛 스킬 정보 */,
-		IReadOnlyList<string> activeSkillIds /* 학습한 액티브 스킬 식별자 목록 */,
-		IReadOnlyList<string> passiveSkillIds /* 학습한 패시브 스킬 식별자 목록 */,
-		IReadOnlyList<string> choiceIds /* 선택한 강화·마스터 식별자 목록 */)
-	{
-		target.Clear();
-		for (int i = 0; i < activeSkillIds.Count; i++)
-		{
-			target.AddActiveSkill(activeSkillIds[i]);
-		}
-
-		for (int i = 0; i < passiveSkillIds.Count; i++)
-		{
-			target.AddPassiveSkill(passiveSkillIds[i]);
-		}
-
-		for (int i = 0; i < choiceIds.Count; i++)
-		{
-			string choiceId = choiceIds[i];
-			if (!GameDataLoader.CurrentCatalog.TryGetData(choiceId, out SkillChoice choice))
-			{
-				throw new InvalidOperationException($"Unknown learned skill choice '{choiceId}'.");
-			}
-
-			if (choice.ChoiceGroup == SkillChoiceGroup.ActiveMaster)
-			{
-				target.AddMasterSkill(choiceId);
-			}
-			else
-			{
-				target.AddEnhancement(choiceId);
-			}
-		}
-	}
-
-	/*
-	 * CompileActive 작업 결과를 반환한다.
-	 */
-	public static SkillDefinition CompileActive(MonsterDefinition monster /* 몬스터 */, SkillSourceDefinition source /* 변환할 스킬 정의 */)
-	{
-		SkillDefinition skillRuntimeData = CreateConcreteActiveSkill(source);
-		string monsterId = string.Empty;
-		SkillTriggerDefinition[] triggers = null;
-		if (monster != null)
-		{
-			monsterId = monster.MonsterId;
-			triggers = monster.SkillTriggers;
-		}
-		MapCommonFields(skillRuntimeData, monsterId, source, triggers);
-		MapActiveFields(skillRuntimeData, monster, source);
-		return skillRuntimeData;
-	}
-
-	/*
-	 * CompileActive 작업 결과를 반환한다.
-	 */
-	public static SkillDefinition CompileActive(string monsterId /* 몬스터 식별자 */, SkillSourceDefinition source /* 변환할 스킬 정의 */)
-	{
-		return CompileActive(monsterId, source, null);
-	}
-
-	/*
-	 * CompileActive 작업 결과를 반환한다.
-	 */
-	public static SkillDefinition CompileActive(string ownerId /* 소유자 식별자 */, SkillSourceDefinition source /* 변환할 스킬 정의 */, SkillTriggerDefinition[] triggers /* 트리거 목록 */)
-	{
-		return CompileActive(ownerId, source, triggers, null);
-	}
-
-	internal static SkillDefinition CompileActive(
+	private static SkillDefinition BuildActiveDefinition(
 		string ownerId,
 		SkillSourceDefinition source,
 		SkillTriggerDefinition[] triggers,
@@ -100,9 +26,9 @@ public static class SkillDefinitionCompiler
 	}
 
 	/*
-	 * CompilePassive 작업 결과를 반환한다.
+	 * 패시브 최종 Definition을 생성한다.
 	 */
-	public static PassiveSkillDefinition CompilePassive(MonsterDefinition monster /* 몬스터 */, PassiveDefinition source /* 변환할 패시브 정의 */)
+	private static PassiveSkillDefinition BuildPassiveDefinition(MonsterDefinition monster /* 몬스터 */, PassiveDefinition source /* 변환할 패시브 정의 */)
 	{
 		PassiveSkillDefinition passiveSkillExecutionDefinition = CreateRuntimeData<PassiveSkillDefinition>();
 		passiveSkillExecutionDefinition.SkillId = source.PassiveId;
@@ -122,8 +48,8 @@ public static class SkillDefinitionCompiler
 		passiveSkillExecutionDefinition.Summary = source.Summary;
 		passiveSkillExecutionDefinition.Icon = source.SkillIcon;
 		passiveSkillExecutionDefinition.SkillEffectPrefab = source.SkillEffectPrefab;
-		passiveSkillExecutionDefinition.BaseModifierChoices = SkillChoiceCompiler.Compile(source.BaseModifierChoices);
-		passiveSkillExecutionDefinition.EnhancementChoices = SkillChoiceCompiler.Compile(source.EnhancementChoices);
+		passiveSkillExecutionDefinition.BaseModifierChoices = BuildChoices(source.BaseModifierChoices);
+		passiveSkillExecutionDefinition.EnhancementChoices = BuildChoices(source.EnhancementChoices);
 		passiveSkillExecutionDefinition.MasterChoices = Array.Empty<SkillChoice>();
 		SkillTriggerDefinition[] triggers = null;
 		if (monster != null)
@@ -131,9 +57,31 @@ public static class SkillDefinitionCompiler
 			triggers = monster.SkillTriggers;
 		}
 		passiveSkillExecutionDefinition.SkillTriggers = FilterSkillTriggersForSkill(triggers, source.PassiveId);
-		StatusRuntimeCompiler.CompileTriggers(passiveSkillExecutionDefinition.SkillTriggers);
-		passiveSkillExecutionDefinition.NormalizedNodes = SkillNodeMapper.MapSkillNodeDefinitions(source.NormalizedNodes);
+		passiveSkillExecutionDefinition.NormalizedNodes = MapSkillNodeDefinitions(source.NormalizedNodes);
 		return passiveSkillExecutionDefinition;
+	}
+
+	private static SkillChoice[] BuildChoices(SkillChoiceDefinition[] source)
+	{
+		var choices = new SkillChoice[source.Length];
+		for (var i = 0; i < source.Length; i++)
+		{
+			var choice = source[i];
+			choices[i] = new SkillChoice
+			{
+				ChoiceId = choice.ChoiceId,
+				MonsterId = choice.MonsterId,
+				SkillId = choice.SkillId,
+				TargetSkillId = choice.TargetSkillId,
+				ChoiceGroup = choice.ChoiceGroup,
+				Title = choice.Title,
+				SkillIcon = choice.SkillIcon,
+				SkillEffectPrefab = choice.SkillEffectPrefab,
+				DescriptionText = choice.DescriptionText,
+				Nodes = MapSkillNodeDefinitions(choice.NormalizedNodes)
+			};
+		}
+		return choices;
 	}
 
 	/*
@@ -210,11 +158,10 @@ public static class SkillDefinitionCompiler
 		skill.Icon = source.SkillIcon;
 		skill.SkillEffectPrefab = source.SkillEffectPrefab;
 		skill.RuntimeVisual = source.RuntimeVisual;
-		skill.EnhancementChoices = SkillChoiceCompiler.Compile(source.EnhancementChoices);
-		skill.MasterChoices = SkillChoiceCompiler.Compile(source.MasterSkillChoices);
+		skill.EnhancementChoices = BuildChoices(source.EnhancementChoices);
+		skill.MasterChoices = BuildChoices(source.MasterSkillChoices);
 		skill.SkillTriggers = FilterSkillTriggersForSkill(monsterTriggers, source.SkillId);
-		StatusRuntimeCompiler.CompileTriggers(skill.SkillTriggers);
-		skill.NormalizedNodes = SkillNodeMapper.MapSkillNodeDefinitions(source.NormalizedNodes);
+		skill.NormalizedNodes = MapSkillNodeDefinitions(source.NormalizedNodes);
 		skill.Timing.Cooldown = source.CooldownSeconds;
 		skill.Timing.ActiveDuration = source.ActiveDurationSeconds;
 		skill.Timing.TickInterval = source.ShotIntervalSeconds;
@@ -657,17 +604,17 @@ public static class SkillDefinitionCompiler
 				}
 				if (string.Equals(a, "StatusFilteredDeployment", StringComparison.OrdinalIgnoreCase))
 				{
-					single.DeploymentRequiredTargetStatusId = SkillNodeMapper.GetParam(skillNodeDefinition, "status_id");
-					single.DeploymentRequiredTargetStatusMinStacks = Mathf.Max(1, SkillNodeMapper.GetIntParam(skillNodeDefinition, "min_stacks", 1));
+					single.DeploymentRequiredTargetStatusId = GetParam(skillNodeDefinition, "status_id");
+					single.DeploymentRequiredTargetStatusMinStacks = Mathf.Max(1, GetIntParam(skillNodeDefinition, "min_stacks", 1));
 				}
 				else if (string.Equals(a, "TargetStatusStackDamage", StringComparison.OrdinalIgnoreCase))
 				{
-					single.TargetStatusStackStatusId = SkillNodeMapper.GetParam(skillNodeDefinition, "status_id");
-					single.TargetStatusStackMaxStacks = Mathf.Max(0, SkillNodeMapper.GetIntParam(skillNodeDefinition, "max_stacks", 0));
+					single.TargetStatusStackStatusId = GetParam(skillNodeDefinition, "status_id");
+					single.TargetStatusStackMaxStacks = Mathf.Max(0, GetIntParam(skillNodeDefinition, "max_stacks", 0));
 					single.TargetStatusStackDamage.Element = attribute;
-					single.TargetStatusStackDamage.BaseDamage = SkillNodeMapper.GetFloatParam(skillNodeDefinition, "base_damage", 0f);
-					single.TargetStatusStackDamage.AttackPowerCoefficient = SkillNodeMapper.GetFloatParam(skillNodeDefinition, "attack_power_coefficient", 0f);
-					single.TargetStatusStackDamage.SpellPowerCoefficient = SkillNodeMapper.GetFloatParam(skillNodeDefinition, "spell_power_coefficient", 0f);
+					single.TargetStatusStackDamage.BaseDamage = GetFloatParam(skillNodeDefinition, "base_damage", 0f);
+					single.TargetStatusStackDamage.AttackPowerCoefficient = GetFloatParam(skillNodeDefinition, "attack_power_coefficient", 0f);
+					single.TargetStatusStackDamage.SpellPowerCoefficient = GetFloatParam(skillNodeDefinition, "spell_power_coefficient", 0f);
 					single.TargetStatusStackDamage.CriticalAllowed = false;
 				}
 			}

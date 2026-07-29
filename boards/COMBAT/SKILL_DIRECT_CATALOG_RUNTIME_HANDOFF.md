@@ -35,7 +35,7 @@ Designer for this handoff. Code Builder for implementation after explicit role a
 
 ## Status
 
-Code Builder 구현 진행 중. Phase 1-4 완료.
+Code Builder 구현 진행 중. Phase 1-5 완료.
 
 ## Implementation log
 
@@ -94,6 +94,18 @@ Code Builder 구현 진행 중. Phase 1-4 완료.
 - `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore -v:minimal`: 오류 0, 기존 경고 3개
 - Unity script compilation 완료. project script 오류 0이며 별도 MCP package disposed-object 오류 1개만 존재했다.
 - Unity CSV validation: monsters 5, stage-one enemies 8, stage-two enemies 8 로드
+
+### Phase 5 — Compiler deletion and responsibility folders
+
+- `SkillDefinitionCompiler`, `SkillChoiceCompiler`, `SkillNodeMapper` 클래스와 Combat compiler 파일을 제거했다.
+- Definition/Choice/Node 생성은 `GameDataCatalogBuilder.Skills.cs`와 `GameDataCatalogBuilder.Nodes.cs`의 같은 partial Builder 책임으로 통합했다.
+- 학습 ID/Choice 적용은 `UnitSkills.ApplyLearnedSkills`가 직접 담당한다.
+- `StatusRuntimeCompiler.CompileTriggers`는 호출 0건이므로 삭제했다.
+- `Combat/Skills`는 Definitions, Runtime, Execution, Delivery, Reactions의 24개 C# 구조로 이동했다.
+- 기존 Compilation, Choices, SkillType 폴더는 파일 0건을 확인한 뒤 제거했다.
+- 이동 스크립트 18개의 이전/현재 `.meta` GUID를 비교했으며 불일치 0건이다.
+- 제거 symbol 검색 결과 `SkillDefinitionCompiler|SkillChoiceCompiler|SkillNodeMapper|CompileActive|CompilePassive|CompileTriggers` 0건이다.
+- runtime/editor build 오류 0, Unity project script 오류 0, CSV validation 5/8/8을 확인했다.
 
 ## Core decision
 

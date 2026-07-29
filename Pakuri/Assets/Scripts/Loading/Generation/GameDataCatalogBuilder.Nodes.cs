@@ -2,16 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Pakuri.Combat;
-using Pakuri.Data;
+using Pakuri.InGame;
 using UnityEngine;
 
 /*
  * 작성 데이터의 SkillNodeDefinition을 전투 실행용 SkillNode로 변환한다.
  * 노드 종류와 값을 해석해 SkillNode 전투 실행 값으로 옮긴다.
  */
-namespace Pakuri.InGame
+namespace Pakuri.Data
 {
-    public static class SkillNodeMapper
+    internal sealed partial class GameDataCatalogBuilder
     {
 	/*
 	 * MapSkillNodeDefinitions에 필요한 형식으로 변환해 반환한다.
