@@ -66,6 +66,10 @@ public class SkillExecutionData
 	 */
 	public float DamageMultiplier { get; private set; }
 
+	public bool HasRawDamageOverride { get; private set; }
+
+	public float RawDamageOverride { get; private set; }
+
 	public float ShieldAmountMultiplier { get; private set; }
 
 	public float CooldownMultiplier { get; private set; }
@@ -427,6 +431,12 @@ public class SkillExecutionData
 	public void ApplyDynamicDamageMultiplier(float multiplier /* 값에 곱할 배율 */)
 	{
 		DamageMultiplier += PositiveOrDefault(multiplier, 1f) - 1f;
+	}
+
+	internal void SetRawDamageOverride(float rawDamage)
+	{
+		HasRawDamageOverride = true;
+		RawDamageOverride = Mathf.Max(0f, rawDamage);
 	}
 
 	/*

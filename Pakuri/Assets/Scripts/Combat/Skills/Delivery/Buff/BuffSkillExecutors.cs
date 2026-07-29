@@ -41,7 +41,7 @@ namespace Pakuri.InGame
             }
 
             var targets = skill.UseConfiguredTargeting
-                ? ConfiguredTargets(context.CasterEntry, context.Roster, skill.Targeting)
+                ? ConfiguredTargets(context, skill.Targeting)
                 : BuffTargets(context.CasterEntry, context.Roster, skill.Target);
             var effects = context.CombatManager.Effects;
             var runtimeVisual = skill.RuntimeVisual;
@@ -62,20 +62,14 @@ namespace Pakuri.InGame
                 }
 
                 castCommitted = true;
-                if (UnityEngine.Random.value > Mathf.Clamp01(statusSpec.Chance))
+                if (!StatusCombatRules.ApplyStatus(
+                    context.CombatManager,
+                    target.Model,
+                    statusSpec,
+                    context.Caster))
                 {
                     continue;
                 }
-
-                context.CombatManager.ApplyStatus(
-                    target.Model,
-                    statusSpec.StatusData,
-                    statusSpec.Stacks,
-                    statusSpec.DurationSeconds,
-                    statusSpec.MaxStacks,
-                    statusSpec.Permanent,
-                    statusSpec.RefreshDuration,
-                    context.Caster);
 
                 var visualTarget = target.Transform;
                 if (skill.AttachVisualToCaster)
@@ -151,11 +145,11 @@ namespace Pakuri.InGame
          * 설정된 대상을 결정한다.
          */
         internal static IReadOnlyList<CombatUnitEntry> ConfiguredTargets(
-            CombatUnitEntry caster /* 스킬을 사용하는 유닛 */,
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
             SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */)
         {
-            var targets = SkillTargeting.OrderedTargets(caster, roster, targeting);
+            var targets = SkillTargeting.OrderedTargets(context, targeting);
+            var caster = context != null ? context.CasterEntry : null;
             if (caster == null || caster.Transform == null || targeting == null || targeting.Radius <= 0f)
             {
                 return targets;
@@ -195,9 +189,11 @@ namespace Pakuri.InGame
             var shield = Mathf.Max(0f, skill.ShieldBase + shieldStat * skill.ShieldCoefficient);
             if (snapshot != null)
             {
-                shield = shield
-                    * Mathf.Max(0f, snapshot.DamageMultiplier)
-                    * Mathf.Max(0f, snapshot.ShieldAmountMultiplier);
+                if (context.ApplyDamageMultiplierToShield)
+                {
+                    shield *= Mathf.Max(0f, snapshot.DamageMultiplier);
+                }
+                shield *= Mathf.Max(0f, snapshot.ShieldAmountMultiplier);
             }
             shield = Mathf.Max(0f, shield);
 
@@ -230,7 +226,7 @@ namespace Pakuri.InGame
             IReadOnlyList<CombatUnitEntry> targets;
             if (skill.UseConfiguredTargeting)
             {
-                targets = BuffSkillExecutor.ConfiguredTargets(context.CasterEntry, context.Roster, skill.Targeting);
+                targets = BuffSkillExecutor.ConfiguredTargets(context, skill.Targeting);
             }
             else
             {
@@ -301,7 +297,7 @@ namespace Pakuri.InGame
             SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             BuffHealSkillDefinition skill /* 실행하거나 검사할 스킬 */)
         {
-            var targets = SkillTargeting.OrderedTargets(context.CasterEntry, context.Roster, skill.Targeting);
+            var targets = SkillTargeting.OrderedTargets(context, skill.Targeting);
             CombatUnitEntry target = null;
             if (targets.Count > 0)
             {

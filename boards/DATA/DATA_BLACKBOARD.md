@@ -275,12 +275,12 @@ Designer / Code Builder refactoring handoff
 
 ### Status
 
-Phase 2 final outcome Generation complete. Phase 3 runtime consumption pending.
+Phase 3 final Definition runtime consumption complete. Phase 4 Trigger Node payload removal pending.
 
 ### Next Actions
 
-- Consume generated final Definitions through the existing family Executor dispatch.
-- Keep the legacy Node path only until Phase 4 parity is complete.
+- Execute the 22 generated typed commands through existing runtime APIs.
+- Remove legacy Trigger Node payload generation and consumption.
 
 ### Evidence
 
@@ -292,6 +292,8 @@ Phase 2 final outcome Generation complete. Phase 3 runtime consumption pending.
 - Phase 1 confirmed 158 Trigger rows and 606 Trigger-owned Node rows with runtime/editor build error 0.
 - Phase 2 generated 55 final Definitions and 22 typed commands while retaining 81 current no-action owners.
 - Unity EditMode catalog verification passed 1/1 and both C# builds completed with error 0.
+- Phase 3 consumes 55 final Definitions through the existing family dispatch without catalog registration of hidden Definitions.
+- Runtime/editor builds completed with error 0; `SkillCatalogRuntimeTests` passed 3/3.
 
 ### History
 
@@ -299,3 +301,4 @@ Phase 2 final outcome Generation complete. Phase 3 runtime consumption pending.
 - 2026-07-29: Designer recorded the corresponding final Generation outcome contract.
 - 2026-07-29: User approved Code Builder implementation; Phase 1 fixed the current owner and build baseline.
 - 2026-07-29: Code Builder completed Phase 2 final outcome Generation and focused catalog verification.
+- 2026-07-29: Code Builder completed Phase 3 runtime consumption with source snapshot, lifecycle, target, and dynamic-value policies.

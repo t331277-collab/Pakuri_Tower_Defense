@@ -32,7 +32,7 @@ Designer for this handoff. Code Builder for implementation after explicit role a
 
 ## Status
 
-설계 보완 및 구현 승인 완료. Code Builder Phase 2 Generation final outcome 완료, Phase 3 진행 예정.
+설계 보완 및 구현 승인 완료. Code Builder Phase 3 shared Trigger execution 완료, Phase 4 진행 예정.
 
 ## Current inspected evidence
 
@@ -446,6 +446,10 @@ Rollback point: Trigger는 기존 Nodes를 계속 실행 가능.
 - Single/Buff/Shield와 기존 4 ExecuteSkill 사례를 순서대로 전환한다.
 - 직접 delivery는 lifecycle을 억제하고, 기존 ExecuteSkill은 lifecycle을 유지한다.
 - 임시 runtime과 source snapshot을 분리한다.
+- 완료: 55 final Definition이 기존 `SkillExecution.ExecuteSkill` family dispatch를 사용한다.
+- 완료: direct delivery는 transient runtime/source snapshot/lifecycle off, 기존 4 ExecuteSkill은 actual runtime/lifecycle on이다.
+- 완료: EventTarget 고정, 대상별 status/skill-attribute 필터, 사건 시점 dynamic raw damage, 깊이 8 제한을 공통 경로에 적용했다.
+- 완료: `BuffSkillExecutor`가 `StatusCombatRules.ApplyStatus`를 사용한다.
 
 Rollback point: owner 단위로 기존 Node 실행 유지.
 
@@ -553,8 +557,8 @@ Rollback point: Phase 4 commit.
 
 ## Next Actions
 
-- Phase 3에서 final Definition을 `SkillExecution.TryExecuteTriggered`와 기존 family Executor에 연결한다.
-- lifecycle, 임시 runtime/source snapshot, EventTarget, dynamic raw damage parity를 구현한다.
+- Phase 4에서 22 typed command를 기존 runtime API에 연결한다.
+- `SkillTriggerDefinition.Nodes`와 legacy runtime Node 실행 의존을 제거한다.
 
 ## Evidence
 
@@ -582,3 +586,4 @@ Rollback point: Phase 4 commit.
 - 2026-07-29: User approved the corrected document and assigned Code Builder implementation with Ponytail Ultra and one local Git commit per phase.
 - 2026-07-29: Phase 1 fixed the 158/606/77/81 and 24-script/12,102-line baseline and completed runtime/editor builds with zero errors.
 - 2026-07-29: Phase 2 generated 55 final Definitions and 22 typed commands, preserved 81 no-action owners, and passed the focused Unity EditMode catalog test.
+- 2026-07-29: Phase 3 routed final Definitions through existing family Executors with source snapshots, event-target predicates, lifecycle policy, dynamic damage snapshots, and depth-8 recursion protection.

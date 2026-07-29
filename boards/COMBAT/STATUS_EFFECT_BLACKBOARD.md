@@ -333,12 +333,12 @@ Designer / Code Builder refactoring handoff
 
 ### Status
 
-Phase 2 Generation final outcome implementation complete. Phase 3 shared Trigger execution pending.
+Phase 3 shared Trigger execution complete. Phase 4 typed command migration pending.
 
 ### Next Actions
 
-- Route the 55 generated final Definitions through `SkillExecution.TryExecuteTriggered`.
-- Preserve shared status rules, per-target conditions, EventTarget, lifecycle policy, and source snapshot parity.
+- Route the 22 typed commands through existing cooldown, reload, status-duration, and Zone recast APIs.
+- Remove Trigger runtime Node payload consumption.
 
 ### Evidence
 
@@ -351,6 +351,9 @@ Phase 2 Generation final outcome implementation complete. Phase 3 shared Trigger
 - Runtime and Editor builds completed with zero errors before implementation.
 - Phase 2 generated 55 final Definitions, 22 typed commands, and 81 inactive owners.
 - Focused Unity EditMode catalog test passed 1/1; runtime/editor builds remained error 0.
+- Phase 3 routes all 55 final Definitions through existing family Executors.
+- `BuffSkillExecutor` now uses `StatusCombatRules.ApplyStatus`; lifecycle and source snapshot policies are explicit.
+- Runtime/editor builds completed with error 0 and `SkillCatalogRuntimeTests` passed 3/3.
 
 ### History
 
@@ -358,3 +361,4 @@ Phase 2 Generation final outcome implementation complete. Phase 3 shared Trigger
 - 2026-07-29: Designer replaced the obsolete direct Node-dispatch design with the executor-reuse handoff.
 - 2026-07-29: User approved implementation; Code Builder completed the Phase 1 behavior and build baseline.
 - 2026-07-29: Code Builder completed Phase 2 final Trigger outcome Generation and focused catalog verification.
+- 2026-07-29: Code Builder completed Phase 3 shared family execution, status-rule parity, EventTarget filtering, and dynamic event-value snapshots.

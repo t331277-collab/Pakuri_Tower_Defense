@@ -97,6 +97,15 @@ public sealed class SkillCatalogRuntimeTests
             triggers.FindAll(trigger => trigger.UsesExistingSkillRuntime),
             Has.Count.EqualTo(4));
         Assert.That(
+            triggers.FindAll(trigger => trigger.PublishSkillLifecycleEvents),
+            Has.Count.EqualTo(4));
+        Assert.That(
+            triggers.FindAll(trigger =>
+                trigger.TriggeredSkill != null
+                && !trigger.UsesExistingSkillRuntime
+                && trigger.PublishSkillLifecycleEvents),
+            Is.Empty);
+        Assert.That(
             triggers.FindAll(trigger =>
                 trigger.TriggeredSkill is SingleSkillDefinition),
             Has.Count.EqualTo(27));

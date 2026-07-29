@@ -37,6 +37,8 @@ internal static class SkillTrigger
 
 	internal readonly struct TriggerExecutionContext
 	{
+		private readonly float[] trackedIncomingDamage;
+
 		public UnitCombatState EventTarget { get; }
 
 		public UnitCombatState Attacker { get; }
@@ -46,6 +48,10 @@ internal static class SkillTrigger
 		public StatusRuntimeInstance Status { get; }
 
 		public float ShieldAbsorbedAmount { get; }
+
+		public float ShieldAppliedAmount { get; }
+
+		public float ShieldRemainingAmount { get; }
 
 		public float EventAppliedDamage { get; }
 
@@ -73,6 +79,17 @@ internal static class SkillTrigger
 			EventCenter = eventCenter;
 			Status = status;
 			ShieldAbsorbedAmount = shieldAbsorbedAmount;
+			ShieldAppliedAmount = status != null ? status.AppliedShieldAmount : 0f;
+			ShieldRemainingAmount = status != null ? status.RemainingShieldAmount : 0f;
+			trackedIncomingDamage = new float[(int)DamageAttribute.Holy + 1];
+			if (status != null)
+			{
+				for (var i = 0; i < trackedIncomingDamage.Length; i++)
+				{
+					trackedIncomingDamage[i] =
+						status.GetTrackedIncomingDamage((DamageAttribute)i);
+				}
+			}
 			EventAppliedDamage = eventAppliedDamage;
 			EventAttribute = eventAttribute;
 			EventSourceSkillId = eventSourceSkillId;
@@ -81,6 +98,16 @@ internal static class SkillTrigger
 			EventTriggerSourceSkillId = eventTriggerSourceSkillId;
 			EventHitCount = Mathf.Max(0, eventHitCount);
 			RecastGeneration = Mathf.Max(0, recastGeneration);
+		}
+
+		public float TrackedIncomingDamage(DamageAttribute attribute)
+		{
+			var index = (int)attribute;
+			return trackedIncomingDamage != null
+				&& index >= 0
+				&& index < trackedIncomingDamage.Length
+					? trackedIncomingDamage[index]
+					: 0f;
 		}
 	}
 
@@ -93,7 +120,8 @@ internal static class SkillTrigger
 	{
 		if (actionContext == null
 			|| actionContext.Source == null
-			|| actionContext.ExecutionContext == null)
+			|| actionContext.ExecutionContext == null
+			|| !actionContext.ExecutionContext.PublishSkillLifecycleEvents)
 		{
 			return;
 		}
@@ -728,13 +756,56 @@ internal static class SkillTrigger
 			|| roster == null
 			|| sourceEntry == null
 			|| source == null
-			|| trigger == null
-			|| !SkillNodeExecutor.HasRuntimeActions(trigger.Nodes))
+			|| trigger == null)
 		{
 			return false;
 		}
 
 		SkillUseState runtime = source.SkillState.FindBySkillId(trigger.SourceSkillId);
+		if (trigger.TriggeredSkill != null)
+		{
+			if (runtime == null)
+			{
+				return false;
+			}
+
+			var targetPoint = triggerContext.EventCenter;
+			if (trigger.CenterMode == SkillTriggerCenterMode.Caster
+				&& sourceEntry.Transform != null)
+			{
+				targetPoint = sourceEntry.Transform.position;
+			}
+			else if (trigger.CenterMode == SkillTriggerCenterMode.EventTarget
+				&& triggerContext.EventTarget != null)
+			{
+				var targetEntry = roster.Find(triggerContext.EventTarget);
+				if (targetEntry != null && targetEntry.Transform != null)
+				{
+					targetPoint = targetEntry.Transform.position;
+				}
+			}
+
+			var hasRawDamageOverride =
+				trigger.DamageValueSource != SkillTriggerDamageValueSource.Fixed;
+			return combatManager.SkillExecution.TryExecuteTriggered(
+				sourceEntry,
+				runtime,
+				trigger,
+				roster,
+				combatManager,
+				triggerContext.EventTarget,
+				targetPoint,
+				true,
+				hasRawDamageOverride,
+				ResolveTriggeredRawDamage(trigger, triggerContext),
+				triggerContext.RecastGeneration);
+		}
+
+		if (!SkillNodeExecutor.HasRuntimeActions(trigger.Nodes))
+		{
+			return false;
+		}
+
 		SkillExecutionData executionData = runtime != null
 			? source.SkillState.CreateExecutionData(source, runtime, roster)
 			: null;
@@ -759,6 +830,32 @@ internal static class SkillTrigger
 			triggerContext.ShieldAbsorbedAmount);
 		SkillNodeExecutor.Execute(trigger.Nodes, actionContext);
 		return true;
+	}
+
+	private static float ResolveTriggeredRawDamage(
+		SkillTriggerDefinition trigger,
+		TriggerExecutionContext context)
+	{
+		var value = 0f;
+		switch (trigger.DamageValueSource)
+		{
+			case SkillTriggerDamageValueSource.ShieldAppliedAmount:
+				value = context.ShieldAppliedAmount;
+				break;
+			case SkillTriggerDamageValueSource.ShieldRemainingAmount:
+				value = context.ShieldRemainingAmount;
+				break;
+			case SkillTriggerDamageValueSource.ShieldAbsorbedAmount:
+				value = context.ShieldAbsorbedAmount;
+				break;
+			case SkillTriggerDamageValueSource.TrackedIncomingDamage:
+				value = context.TrackedIncomingDamage(trigger.TrackedDamageAttribute);
+				break;
+			case SkillTriggerDamageValueSource.EventAppliedDamage:
+				value = context.EventAppliedDamage;
+				break;
+		}
+		return Mathf.Max(0f, value) * Mathf.Max(0f, trigger.DamageValueMultiplier);
 	}
 
 	private static UnitCombatState SourceModel(

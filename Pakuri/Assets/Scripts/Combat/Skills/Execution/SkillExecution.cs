@@ -29,7 +29,11 @@ namespace Pakuri.InGame
             Vector2 manualAimDirection = default /* 수동 조준 방향 */,
             bool hasManualTargetPoint = false /* 보유 수동 대상 위치 여부 */,
             Vector2 manualTargetPoint = default /* 수동 대상 위치 */,
-            int recastGeneration = 0 /* 재시전 실행 세대 */)
+            int recastGeneration = 0 /* 재시전 실행 세대 */,
+            bool lockToEventTarget = false /* 사건 대상 고정 여부 */,
+            bool publishSkillLifecycleEvents = true /* 스킬 lifecycle 발행 여부 */,
+            bool applyDamageMultiplierToShield = true /* 보호막에 피해 배율 적용 여부 */,
+            string sourceSkillId = null /* 피해와 사건에 사용할 원본 스킬 식별자 */)
         {
             CombatManager = combatManager;
             Roster = roster;
@@ -41,6 +45,14 @@ namespace Pakuri.InGame
             HasManualTargetPoint = hasManualTargetPoint;
             ManualTargetPoint = manualTargetPoint;
             RecastGeneration = Mathf.Max(0, recastGeneration);
+            LockToEventTarget = lockToEventTarget;
+            PublishSkillLifecycleEvents = publishSkillLifecycleEvents;
+            ApplyDamageMultiplierToShield = applyDamageMultiplierToShield;
+            SourceSkillId = string.IsNullOrWhiteSpace(sourceSkillId)
+                ? runtime != null && runtime.Data != null
+                    ? runtime.Data.SkillId
+                    : string.Empty
+                : sourceSkillId;
         }
 
         public InGameCombatManager CombatManager { get; }
@@ -53,6 +65,10 @@ namespace Pakuri.InGame
         public bool HasManualTargetPoint { get; }
         public Vector2 ManualTargetPoint { get; }
         public int RecastGeneration { get; }
+        public bool LockToEventTarget { get; }
+        public bool PublishSkillLifecycleEvents { get; }
+        public bool ApplyDamageMultiplierToShield { get; }
+        public string SourceSkillId { get; }
 
         public UnitCombatState Caster
         {
@@ -74,6 +90,9 @@ namespace Pakuri.InGame
      */
     public class SkillExecution
     {
+        private const int MaxTriggeredExecutionDepth = 8;
+        private static int triggeredExecutionDepth;
+
         private static readonly SkillSlot[] ActiveSlots =
         {
             SkillSlot.A,
@@ -235,6 +254,82 @@ namespace Pakuri.InGame
                 triggerSourceSkillId);
         }
 
+        public bool TryExecuteTriggered(
+            CombatUnitEntry entry,
+            SkillUseState sourceRuntime,
+            SkillTriggerDefinition trigger,
+            CombatUnitRegistry roster,
+            InGameCombatManager combatManager,
+            UnitCombatState eventTarget,
+            Vector2 targetPoint,
+            bool hasTargetPoint,
+            bool hasRawDamageOverride,
+            float rawDamageOverride,
+            int recastGeneration)
+        {
+            if (entry == null
+                || sourceRuntime == null
+                || trigger == null
+                || trigger.TriggeredSkill == null
+                || triggeredExecutionDepth >= MaxTriggeredExecutionDepth)
+            {
+                return false;
+            }
+
+            var runtime = trigger.UsesExistingSkillRuntime
+                ? entry.Model.SkillState.FindBySkillId(trigger.TriggeredSkill.SkillId)
+                : new SkillUseState(entry.Model, trigger.TriggeredSkill);
+            if (runtime == null)
+            {
+                return false;
+            }
+
+            var snapshotRuntime = trigger.UsesExistingSkillRuntime
+                ? runtime
+                : sourceRuntime;
+            var snapshot = entry.Model.SkillState.CreateExecutionData(
+                entry.Model,
+                snapshotRuntime,
+                roster);
+            if (!Mathf.Approximately(trigger.TriggeredDamageMultiplier, 1f))
+            {
+                snapshot.ApplyDynamicDamageMultiplier(trigger.TriggeredDamageMultiplier);
+            }
+            if (hasRawDamageOverride)
+            {
+                snapshot.SetRawDamageOverride(rawDamageOverride);
+            }
+
+            var aimDirection = entry.Transform != null && hasTargetPoint
+                ? targetPoint - (Vector2)entry.Transform.position
+                : default;
+            try
+            {
+                triggeredExecutionDepth++;
+                return ExecutePrepared(
+                    entry,
+                    runtime,
+                    trigger.TriggeredSkill,
+                    snapshot,
+                    roster,
+                    combatManager,
+                    aimDirection.sqrMagnitude > 0.0001f,
+                    aimDirection,
+                    hasTargetPoint,
+                    targetPoint,
+                    false,
+                    trigger.SourceSkillId,
+                    eventTarget,
+                    trigger.LockToEventTarget,
+                    trigger.PublishSkillLifecycleEvents,
+                    recastGeneration);
+            }
+            finally
+            {
+                triggeredExecutionDepth--;
+            }
+        }
+
         /*
          * 일반·수동·트리거 요청의 실행 데이터와 실행 정보를 준비해 스킬 종류별 실행기로 전달한다.
          */
@@ -267,6 +362,39 @@ namespace Pakuri.InGame
                 snapshot.ApplyDynamicDamageMultiplier(damageMultiplier);
             }
 
+            return ExecutePrepared(
+                entry,
+                runtime,
+                runtime.Data,
+                snapshot,
+                roster,
+                combatManager,
+                hasManualAimDirection,
+                manualAimDirection,
+                hasManualTargetPoint,
+                manualTargetPoint,
+                beginCast,
+                triggerSourceSkillId);
+        }
+
+        private bool ExecutePrepared(
+            CombatUnitEntry entry,
+            SkillUseState runtime,
+            SkillDefinition definition,
+            SkillExecutionData snapshot,
+            CombatUnitRegistry roster,
+            InGameCombatManager combatManager,
+            bool hasManualAimDirection,
+            Vector2 manualAimDirection,
+            bool hasManualTargetPoint,
+            Vector2 manualTargetPoint,
+            bool beginCast,
+            string triggerSourceSkillId,
+            UnitCombatState eventTarget = null,
+            bool lockToEventTarget = false,
+            bool publishSkillLifecycleEvents = true,
+            int recastGeneration = 0)
+        {
             if (beginCast && !runtime.CanCastWithData(snapshot))
             {
                 return false;
@@ -280,24 +408,40 @@ namespace Pakuri.InGame
                 hasManualAimDirection: hasManualAimDirection,
                 manualAimDirection: manualAimDirection,
                 hasManualTargetPoint: hasManualTargetPoint,
-                manualTargetPoint: manualTargetPoint);
+                manualTargetPoint: manualTargetPoint,
+                recastGeneration: recastGeneration,
+                lockToEventTarget: lockToEventTarget,
+                publishSkillLifecycleEvents: publishSkillLifecycleEvents,
+                applyDamageMultiplierToShield: publishSkillLifecycleEvents,
+                sourceSkillId: publishSkillLifecycleEvents
+                    ? null
+                    : triggerSourceSkillId,
+                eventTarget: eventTarget);
+            if (lockToEventTarget
+                && SkillTargeting.OrderedTargets(context, definition.Targeting).Count == 0)
+            {
+                return false;
+            }
             var lifecycleCenter = hasManualTargetPoint
                 ? manualTargetPoint
                 : entry.Transform != null
                     ? (Vector2)entry.Transform.position
                     : Vector2.zero;
-            SkillTrigger.PublishLifecycleEvent(
-                SkillTriggerEvent.BuildExecutionData,
-                new SkillActionContext(
-                    entry.Model,
-                    runtime.Data.SkillId,
-                    null,
-                    lifecycleCenter,
-                    0f,
-                    0,
-                    snapshot,
-                    context));
-            var routed = ExecuteSkill(context, snapshot, runtime.Data);
+            if (publishSkillLifecycleEvents)
+            {
+                SkillTrigger.PublishLifecycleEvent(
+                    SkillTriggerEvent.BuildExecutionData,
+                    new SkillActionContext(
+                        entry.Model,
+                        definition.SkillId,
+                        eventTarget,
+                        lifecycleCenter,
+                        0f,
+                        0,
+                        snapshot,
+                        context));
+            }
+            var routed = ExecuteSkill(context, snapshot, definition);
             if (routed)
             {
                 if (beginCast && !runtime.TryBeginCast(snapshot))
@@ -311,18 +455,27 @@ namespace Pakuri.InGame
                     monsterActor.TryPlayActiveSkillAnimation();
                 }
 
-                SkillTrigger.PublishLifecycleEvent(
-                    SkillTriggerEvent.OnCast,
-                    new SkillActionContext(
-                        entry.Model,
-                        runtime.Data.SkillId,
-                        null,
-                        lifecycleCenter,
-                        0f,
-                        0,
-                        snapshot,
-                        context));
-                NotifySkillCastTriggers(combatManager, roster, entry, runtime, context, triggerSourceSkillId);
+                if (publishSkillLifecycleEvents)
+                {
+                    SkillTrigger.PublishLifecycleEvent(
+                        SkillTriggerEvent.OnCast,
+                        new SkillActionContext(
+                            entry.Model,
+                            definition.SkillId,
+                            eventTarget,
+                            lifecycleCenter,
+                            0f,
+                            0,
+                            snapshot,
+                            context));
+                    NotifySkillCastTriggers(
+                        combatManager,
+                        roster,
+                        entry,
+                        runtime,
+                        context,
+                        triggerSourceSkillId);
+                }
             }
 
             return routed;

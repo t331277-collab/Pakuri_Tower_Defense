@@ -34,6 +34,63 @@ namespace Pakuri.InGame
             return OrderedTargets(sourceEntry, unitRoster, targetingSpec, StatusEffectKind.None, 0);
         }
 
+        public static List<CombatUnitEntry> OrderedTargets(
+            SkillExecutionContext context,
+            SkillTargetingSpec targetingSpec)
+        {
+            if (context == null)
+            {
+                return new List<CombatUnitEntry>();
+            }
+
+            if (!context.LockToEventTarget)
+            {
+                return OrderedTargets(
+                    context.CasterEntry,
+                    context.Roster,
+                    targetingSpec);
+            }
+
+            return OrderedTargets(
+                context.CasterEntry,
+                context.Roster,
+                targetingSpec,
+                context.EventTarget,
+                true);
+        }
+
+        public static List<CombatUnitEntry> OrderedTargets(
+            CombatUnitEntry sourceEntry,
+            CombatUnitRegistry unitRoster,
+            SkillTargetingSpec targetingSpec,
+            UnitCombatState eventTarget,
+            bool lockToEventTarget)
+        {
+            if (!lockToEventTarget)
+            {
+                return OrderedTargets(sourceEntry, unitRoster, targetingSpec);
+            }
+
+            var target = unitRoster != null ? unitRoster.Find(eventTarget) : null;
+            if (target == null || !target.IsAlive)
+            {
+                return new List<CombatUnitEntry>();
+            }
+
+            var candidates = TargetList(
+                sourceEntry,
+                unitRoster,
+                targetingSpec);
+            for (var i = 0; i < candidates.Count; i++)
+            {
+                if (candidates[i] == target)
+                {
+                    return new List<CombatUnitEntry> { target };
+                }
+            }
+            return new List<CombatUnitEntry>();
+        }
+
         /*
          * OrderedTargets 결과를 계산해 반환한다.
          */
@@ -301,8 +358,13 @@ namespace Pakuri.InGame
                 selectionStatusMinStacks = Mathf.Max(0, targeting.SelectionStatusMinStacks);
             }
             var useSelectionStatusFilter = selectionStatusKind != StatusEffectKind.None && selectionStatusMinStacks > 0;
+            var useSkillAttributeFilter =
+                targeting != null && targeting.HasSelectionSkillAttribute;
             var mustFilterNexus = ContainsNexusTarget(targets);
-            if (requiredStatusKind == StatusEffectKind.None && !useSelectionStatusFilter && !mustFilterNexus)
+            if (requiredStatusKind == StatusEffectKind.None
+                && !useSelectionStatusFilter
+                && !useSkillAttributeFilter
+                && !mustFilterNexus)
             {
                 return targets;
             }
@@ -328,11 +390,38 @@ namespace Pakuri.InGame
                 {
                     continue;
                 }
+                if (useSkillAttributeFilter
+                    && !HasActiveSkillAttribute(model, targeting.SelectionSkillAttribute))
+                {
+                    continue;
+                }
 
                 filtered.Add(target);
             }
 
             return filtered;
+        }
+
+        private static bool HasActiveSkillAttribute(
+            UnitCombatState target,
+            DamageAttribute attribute)
+        {
+            if (target == null || target.Skills == null)
+            {
+                return false;
+            }
+
+            var activeSkills = target.SkillState.ActiveSkills;
+            for (var i = 0; i < activeSkills.Count; i++)
+            {
+                if (activeSkills[i] != null
+                    && activeSkills[i].Data != null
+                    && activeSkills[i].Data.Element == attribute)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /*
