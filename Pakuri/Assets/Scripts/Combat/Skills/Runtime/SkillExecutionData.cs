@@ -336,6 +336,42 @@ public class SkillExecutionData
 
 	internal float PreparedImpactDamage { get; set; }
 
+	internal GameObject PreparedSkillEffectPrefab { get; set; }
+
+	internal bool PreparedUsePrefabHitbox { get; set; }
+
+	internal bool PreparedUsesHitTargetCount { get; set; }
+
+	internal bool PreparedUsesResolvedDeployments { get; set; }
+
+	internal bool PreparedPrefabHitboxAtOrigin { get; set; }
+
+	internal float PreparedDamageDelay { get; set; }
+
+	internal string PreparedTargetStatusStackStatusId { get; set; }
+
+	internal StatusEffectKind PreparedTargetStatusStackStatusKind { get; set; }
+
+	internal int PreparedTargetStatusStackMaxStacks { get; set; }
+
+	internal float PreparedTargetStatusStackDamage { get; set; }
+
+	internal float PreparedTargetStatusStackDamageRateBonus { get; set; }
+
+	internal StatusEffectKind PreparedConsumeTargetStatusKind { get; set; }
+
+	internal float PreparedConsumeTargetStatusRatio { get; set; }
+
+	internal int PreparedConsumeTargetStatusStacks { get; set; }
+
+	internal float PreparedExecuteHealthRatioThreshold { get; set; }
+
+	internal float PreparedExecuteDamageMultiplier { get; set; } = 1f;
+
+	internal float PreparedKillCooldownRefundRatio { get; set; }
+
+	internal float PreparedBossDamageMultiplier { get; set; } = 1f;
+
 	public IReadOnlyList<CastConditionOp> CastConditionOps => castConditionOps;
 
 	public IReadOnlyList<DamageModifierOp> DamageModifierOps => damageModifierOps;

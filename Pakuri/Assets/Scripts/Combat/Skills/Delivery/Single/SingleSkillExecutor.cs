@@ -3,7 +3,6 @@
  * 책임: 실행용 Single Actor를 생성하고 해석된 실행 데이터를 전달한다.
  */
 
-using Pakuri.Data;
 using UnityEngine;
 
 namespace Pakuri.InGame
@@ -14,8 +13,7 @@ internal static class SingleSkillExecutor
 {
 	internal static bool Execute(
 		SkillExecutionContext context,
-		SkillExecutionData snapshot,
-		SingleSkillDefinition skill)
+		SkillExecutionData snapshot)
 	{
 		var effects = context.CombatManager.Effects;
 		if (effects == null)
@@ -41,7 +39,7 @@ internal static class SingleSkillExecutor
 			return false;
 		}
 
-		return SingleSkillActor.Attach(instance).InitializeExecution(context, snapshot, skill);
+		return SingleSkillActor.Attach(instance).InitializeExecution(context, snapshot);
 	}
 }
 }

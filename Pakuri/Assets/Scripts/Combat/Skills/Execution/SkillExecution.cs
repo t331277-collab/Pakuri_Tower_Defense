@@ -486,7 +486,7 @@ namespace Pakuri.InGame
 
             if (skillData is SingleSkillDefinition single)
             {
-                return SingleSkillExecutor.Execute(context, snapshot, single);
+                return SingleSkillExecutor.Execute(context, snapshot);
             }
 
             if (skillData is ZoneSkillDefinition zone)
@@ -523,6 +523,10 @@ namespace Pakuri.InGame
             if (definition is ProjectileSkillDefinition projectile)
             {
                 return PrepareProjectileExecutionData(context, snapshot, projectile);
+            }
+            if (definition is SingleSkillDefinition single)
+            {
+                return PrepareSingleExecutionData(context, snapshot, single);
             }
 
             return true;
@@ -830,6 +834,112 @@ namespace Pakuri.InGame
                 snapshot.RadiusBonus);
             snapshot.PreparedImpactDamage = snapshot.PreparedDamage;
             return true;
+        }
+
+        private static bool PrepareSingleExecutionData(
+            SkillExecutionContext context,
+            SkillExecutionData snapshot,
+            SingleSkillDefinition skill)
+        {
+            var primaryCenter = SkillTargeting.AreaCenter(context, skill.Targeting, skill.Area);
+            var usesStatusFilteredDeployments =
+                !string.IsNullOrWhiteSpace(skill.DeploymentRequiredTargetStatusId);
+            var usesResolvedDeployments = skill.UseMultiDeployment || usesStatusFilteredDeployments;
+            var coverAll = (skill.Area != null && skill.Area.CoverAll)
+                || (skill.Targeting != null && skill.Targeting.CoverAll);
+            IReadOnlyList<Vector2> centers;
+            if (usesStatusFilteredDeployments)
+            {
+                var targets = SkillTargeting.OrderedTargets(
+                    context.CasterEntry,
+                    context.Roster,
+                    skill.Targeting,
+                    skill.DeploymentRequiredTargetStatusKind,
+                    Mathf.Max(1, skill.DeploymentRequiredTargetStatusMinStacks));
+                var resolvedCenters = new List<Vector2>(targets.Count);
+                for (var i = 0; i < targets.Count; i++)
+                {
+                    if (targets[i] != null && targets[i].Transform != null)
+                    {
+                        resolvedCenters.Add(targets[i].Transform.position);
+                    }
+                }
+                centers = resolvedCenters;
+            }
+            else if (usesResolvedDeployments)
+            {
+                centers = SkillTargeting.TargetAnchoredCenters(
+                    context,
+                    skill.Targeting,
+                    primaryCenter,
+                    Mathf.Max(1, skill.DeploymentCount + snapshot.HitTargetCountBonus),
+                    coverAll,
+                    SkillDeploymentRepeatMode.RepeatNearest);
+            }
+            else
+            {
+                centers = new[] { primaryCenter };
+            }
+
+            var baseRadius = SkillTargeting.BaseRadius(skill.Targeting, skill.Area);
+            var executeThresholdBonus = 0f;
+            for (var i = 0; i < snapshot.CastConditionOps.Count; i++)
+            {
+                executeThresholdBonus += snapshot.CastConditionOps[i].TargetHealthRatioBonus;
+            }
+
+            snapshot.PreparedTargeting = skill.Targeting;
+            snapshot.PreparedRuntimeVisual = skill.RuntimeVisual;
+            snapshot.PreparedOrigin = context.CasterEntry.Transform != null
+                ? (Vector2)context.CasterEntry.Transform.position
+                : Vector2.zero;
+            snapshot.PreparedCenters = centers;
+            snapshot.PreparedBaseRadius = baseRadius;
+            snapshot.PreparedRadius = SkillTargeting.Radius(
+                baseRadius,
+                snapshot.RadiusMultiplier,
+                snapshot.RadiusBonus);
+            snapshot.PreparedCoverAll = coverAll;
+            snapshot.PreparedDamage = snapshot.HasRawDamageOverride
+                ? snapshot.RawDamageOverride
+                : DamageCalculator.CalculateRawDamage(context.Caster, skill.Damage);
+            snapshot.PreparedDamageAttribute = skill.Damage != null
+                ? skill.Damage.Element
+                : skill.Element;
+            snapshot.PreparedStatus = SkillStatus.StatusSpec(skill.OnHitStatus, snapshot);
+            snapshot.PreparedCriticalAllowed = skill.Damage != null && skill.Damage.CriticalAllowed;
+            snapshot.PreparedHitTargetCount = skill.HitAllTargets || skill.HitTargetCount == int.MaxValue
+                ? int.MaxValue
+                : Mathf.Max(1, skill.HitTargetCount + snapshot.HitTargetCountBonus);
+            snapshot.PreparedSkillEffectPrefab = snapshot.SkillEffectPrefab != null
+                ? snapshot.SkillEffectPrefab
+                : skill.SkillEffectPrefab;
+            snapshot.PreparedUsePrefabHitbox = skill.UsePrefabHitbox;
+            snapshot.PreparedUsesHitTargetCount = skill.UsesHitTargetCount;
+            snapshot.PreparedUsesResolvedDeployments = usesResolvedDeployments;
+            snapshot.PreparedPrefabHitboxAtOrigin = skill.HitAllTargets
+                && !usesStatusFilteredDeployments;
+            snapshot.PreparedDamageDelay = Mathf.Max(0f, skill.DamageDelaySeconds);
+            snapshot.PreparedTargetStatusStackStatusId = skill.TargetStatusStackStatusId;
+            snapshot.PreparedTargetStatusStackStatusKind = skill.TargetStatusStackStatusKind;
+            snapshot.PreparedTargetStatusStackMaxStacks = skill.TargetStatusStackMaxStacks;
+            snapshot.PreparedTargetStatusStackDamage =
+                DamageCalculator.CalculateRawDamage(context.Caster, skill.TargetStatusStackDamage);
+            snapshot.PreparedTargetStatusStackDamageRateBonus =
+                snapshot.TargetStatusStackDamageRateBonus(skill.TargetStatusStackStatusId);
+            snapshot.PreparedConsumeTargetStatusKind = skill.ConsumeTargetStatusKind;
+            snapshot.PreparedConsumeTargetStatusRatio = snapshot.HasConsumeTargetStatusRatioOverride
+                ? snapshot.ConsumeTargetStatusRatioOverride
+                : skill.ConsumeTargetStatusRatio;
+            snapshot.PreparedConsumeTargetStatusStacks = snapshot.HasConsumeTargetStatusStacksOverride
+                ? snapshot.ConsumeTargetStatusStacksOverride
+                : skill.ConsumeTargetStatusStacks;
+            snapshot.PreparedExecuteHealthRatioThreshold = Mathf.Clamp01(
+                Mathf.Max(0f, skill.ExecuteHealthRatioThreshold) + executeThresholdBonus);
+            snapshot.PreparedExecuteDamageMultiplier = skill.ExecuteDamageMultiplier;
+            snapshot.PreparedKillCooldownRefundRatio = skill.KillCooldownRefundRatio;
+            snapshot.PreparedBossDamageMultiplier = skill.BossDamageMultiplier;
+            return centers.Count > 0 || !usesResolvedDeployments;
         }
 
         private static Vector2 ProjectileSpreadDirection(Vector2 direction, int index, int count)

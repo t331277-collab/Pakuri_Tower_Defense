@@ -51,22 +51,20 @@ namespace Pakuri.InGame
 
         /// 전달된 런타임 입력값을 사용해 DamageModifiers를 적용한다.
         internal static SingleDamageModifierState ApplyDamageModifiers(
-            SingleSkillDefinition skill,
             SkillExecutionData snapshot,
             UnitCombatState target,
             float damageMultiplier,
             float critChanceBonus)
         {
             var state = new SingleDamageModifierState(damageMultiplier, critChanceBonus);
-            ApplyExecuteDamageModifier(skill, snapshot, target, ref state);
-            ApplyBossDamageModifier(skill, snapshot, target, ref state);
+            ApplyExecuteDamageModifier(snapshot, target, ref state);
+            ApplyBossDamageModifier(snapshot, target, ref state);
             return state;
         }
 
         /// 전달된 런타임 입력값을 사용해 KillRecovery를 처리한다.
         internal static void HandleKillRecovery(
             SkillUseState sourceRuntime,
-            SingleSkillDefinition skill,
             SkillExecutionData snapshot,
             InGameResourceChangeResult result,
             bool wasExecute)
@@ -81,7 +79,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            TryRefundCooldown(sourceRuntime, skill, snapshot);
+            TryRefundCooldown(sourceRuntime, snapshot);
         }
 
         /// 전달된 런타임 입력값을 사용해 ResolveThreshold 작업을 시도하고 성공 여부를 반환한다.
@@ -123,26 +121,20 @@ namespace Pakuri.InGame
 
         /// 전달된 런타임 입력값을 사용해 ExecuteDamageModifier를 적용한다.
         private static void ApplyExecuteDamageModifier(
-            SingleSkillDefinition skill,
             SkillExecutionData snapshot,
             UnitCombatState target,
             ref SingleDamageModifierState state)
         {
-            if (!TryResolveThreshold(skill, snapshot, out var threshold)
-                || !IsWithinThreshold(target, threshold))
+            if (snapshot == null
+                || !IsWithinThreshold(target, snapshot.PreparedExecuteHealthRatioThreshold))
             {
                 return;
             }
 
             state.IsExecute = true;
-            if (skill.ExecuteDamageMultiplier > 0f)
+            if (snapshot.PreparedExecuteDamageMultiplier > 0f)
             {
-                state.DamageMultiplier *= skill.ExecuteDamageMultiplier;
-            }
-
-            if (snapshot == null)
-            {
-                return;
+                state.DamageMultiplier *= snapshot.PreparedExecuteDamageMultiplier;
             }
 
             for (var i = 0; i < snapshot.DamageModifierOps.Count; i++)
@@ -163,7 +155,6 @@ namespace Pakuri.InGame
 
         /// 전달된 런타임 입력값을 사용해 BossDamageModifier를 적용한다.
         private static void ApplyBossDamageModifier(
-            SingleSkillDefinition skill,
             SkillExecutionData snapshot,
             UnitCombatState target,
             ref SingleDamageModifierState state)
@@ -173,9 +164,9 @@ namespace Pakuri.InGame
                 return;
             }
 
-            if (skill.BossDamageMultiplier > 0f)
+            if (snapshot != null && snapshot.PreparedBossDamageMultiplier > 0f)
             {
-                state.DamageMultiplier *= skill.BossDamageMultiplier;
+                state.DamageMultiplier *= snapshot.PreparedBossDamageMultiplier;
             }
 
             if (snapshot == null)
@@ -223,7 +214,6 @@ namespace Pakuri.InGame
         /// 전달된 런타임 입력값을 사용해 RefundCooldown 작업을 시도하고 성공 여부를 반환한다.
         private static bool TryRefundCooldown(
             SkillUseState sourceRuntime,
-            SingleSkillDefinition skill,
             SkillExecutionData snapshot)
         {
             var refundBonus = 0f;
@@ -239,7 +229,8 @@ namespace Pakuri.InGame
                 }
             }
 
-            var refundRatio = Mathf.Clamp01(skill.KillCooldownRefundRatio + refundBonus);
+            var refundRatio = Mathf.Clamp01(
+                (snapshot != null ? snapshot.PreparedKillCooldownRefundRatio : 0f) + refundBonus);
             if (refundRatio <= 0f)
             {
                 return false;
