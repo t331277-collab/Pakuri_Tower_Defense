@@ -14,10 +14,7 @@ namespace Pakuri.InGame
     {
         internal static bool Execute(
             SkillExecutionContext context,
-            SkillExecutionData snapshot,
-            ZoneSkillDefinition skill,
-            SkillTriggerCommand command = null,
-            Vector2? recastCenter = null)
+            SkillExecutionData snapshot)
         {
             var effects = context.CombatManager.Effects;
             if (effects == null)
@@ -49,7 +46,7 @@ namespace Pakuri.InGame
                 actor = instance.AddComponent<ZoneSkillActor>();
             }
 
-            return actor.InitializeExecution(context, snapshot, skill, command, recastCenter);
+            return actor.InitializeExecution(context, snapshot);
         }
     }
 }

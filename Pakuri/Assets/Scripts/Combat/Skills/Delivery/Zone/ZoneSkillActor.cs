@@ -490,43 +490,29 @@ namespace Pakuri.InGame
         /// 전달된 런타임 입력값으로 Zone Actor를 생성한다.
         internal bool InitializeExecution(
             SkillExecutionContext context,
-            SkillExecutionData snapshot,
-            ZoneSkillDefinition skill,
-            SkillTriggerCommand command,
-            Vector2? recastCenter)
+            SkillExecutionData snapshot)
         {
-            var isRecast = command != null && recastCenter.HasValue;
-            var centers = isRecast
-                ? new List<Vector2> { recastCenter.Value }
-                : AreaCenters(context, skill.Targeting, skill.Area, DeploymentCount(snapshot));
-            var radiusMultiplier = isRecast ? Mathf.Max(0f, command.RadiusMultiplier) : 1f;
-            var radius = Radius(skill, snapshot) * radiusMultiplier;
-            var duration = isRecast
-                ? Mathf.Max(0.05f, command.DurationSeconds)
-                : Duration(skill, snapshot);
-            var tickInterval = TickInterval(skill, snapshot);
-            var hitTargetCount = HitTargetCount(skill, snapshot);
-            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick);
-            var attribute = skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element;
-            var statusSpec = SkillStatus.StatusSpec(skill.OnTickStatus, snapshot);
-            var coverAll = (skill.Area != null && skill.Area.CoverAll)
-                || (skill.Targeting != null && skill.Targeting.CoverAll);
+            var centers = snapshot.PreparedCenters;
+            var radius = snapshot.PreparedRadius;
+            var duration = snapshot.PreparedDuration;
+            var tickInterval = snapshot.PreparedTickInterval;
+            var hitTargetCount = snapshot.PreparedHitTargetCount;
+            var damage = snapshot.PreparedDamage;
+            var attribute = snapshot.PreparedDamageAttribute;
+            var statusSpec = snapshot.PreparedStatus;
+            var coverAll = snapshot.PreparedCoverAll;
             var effects = context.CombatManager.Effects;
-            var runtimeVisual = skill.RuntimeVisual;
-            var prefab = skill.SkillEffectPrefab;
-            if (snapshot != null && snapshot.SkillEffectPrefab != null)
-            {
-                prefab = snapshot.SkillEffectPrefab;
-            }
+            var runtimeVisual = snapshot.PreparedRuntimeVisual;
+            var prefab = snapshot.SkillEffectPrefab;
 
             var routed = false;
             for (var i = 0; i < centers.Count; i++)
             {
                 var center = centers[i];
-                var objectName = isRecast ? "InGameRecastZone" : "ZoneSkill";
-                if (!string.IsNullOrWhiteSpace(skill.SkillId))
+                var objectName = snapshot.PreparedIsRecast ? "InGameRecastZone" : "ZoneSkill";
+                if (!string.IsNullOrWhiteSpace(snapshot.SkillId))
                 {
-                    objectName += "_" + skill.SkillId;
+                    objectName += "_" + snapshot.SkillId;
                 }
 
                 var instance = effects.CreateEffect(new EffectCreateRequest(
@@ -543,10 +529,10 @@ namespace Pakuri.InGame
 
                 EffectVisualBuilder.ConfigureAreaEffect(
                     instance,
-                    SkillTargeting.BaseRadius(skill.Targeting, skill.Area),
+                    snapshot.PreparedBaseRadius,
                     snapshot.RadiusMultiplier,
                     snapshot.RadiusBonus,
-                    radiusMultiplier);
+                    snapshot.PreparedVisualRadiusMultiplier);
 
                 var actor = instance.GetComponent<ZoneSkillActor>();
                 if (actor == null)
@@ -558,7 +544,7 @@ namespace Pakuri.InGame
                     context.CombatManager,
                     context.CasterEntry,
                     context.Roster,
-                    skill.Targeting,
+                    snapshot.PreparedTargeting,
                     center,
                     radius,
                     coverAll,
@@ -571,110 +557,15 @@ namespace Pakuri.InGame
                     context.Runtime,
                     snapshot,
                     context.Caster,
-                    skill.DamagePerTick != null && skill.DamagePerTick.CriticalAllowed,
+                    snapshot.PreparedCriticalAllowed,
                     snapshot != null ? snapshot.CritChanceBonus : 0f,
                     snapshot != null ? snapshot.CritDamageBonus : 0f,
-                    isRecast ? context.RecastGeneration + 1 : 0);
+                    snapshot.PreparedRecastGeneration);
                 routed = true;
             }
 
             context.CombatManager.Effects.RemoveEffect(gameObject);
             return routed;
-        }
-
-        /// 전달된 snapshot 값을 사용해 DeploymentCount 결과값을 생성해 반환한다.
-        private static int DeploymentCount(SkillExecutionData snapshot)
-        {
-            return 1 + (snapshot != null && snapshot.HasBranchCount ? Math.Max(0, snapshot.BranchCount) : 0);
-        }
-
-        /// 전달된 런타임 입력값을 사용해 HitTargetCount 결과값을 생성해 반환한다.
-        private static int HitTargetCount(ZoneSkillDefinition skill, SkillExecutionData snapshot)
-        {
-            if (skill == null || skill.HitAllTargets || !skill.UsesHitTargetCount)
-            {
-                return int.MaxValue;
-            }
-
-            var baseCount = Math.Max(1, skill.HitTargetCount);
-            var bonus = snapshot != null ? snapshot.HitTargetCountBonus : 0;
-            return Math.Max(1, baseCount + bonus);
-        }
-
-        /// 전달된 런타임 입력값을 사용해 AreaCenters 결과값을 생성해 반환한다.
-        private static List<Vector2> AreaCenters(
-            SkillExecutionContext context,
-            SkillTargetingSpec targeting,
-            AreaBlueprintSpec area,
-            int deploymentCount)
-        {
-            var primaryCenter = AreaCenter(context, targeting, area);
-            var coverAll = (area != null && area.CoverAll)
-                || (targeting != null && targeting.CoverAll);
-            return SkillTargeting.TargetAnchoredCenters(
-                context,
-                targeting,
-                primaryCenter,
-                deploymentCount,
-                coverAll,
-                SkillDeploymentRepeatMode.RandomExisting);
-        }
-
-        /// 전달된 런타임 입력값을 사용해 AreaCenter 결과값을 생성해 반환한다.
-        private static Vector2 AreaCenter(
-            SkillExecutionContext context,
-            SkillTargetingSpec targeting,
-            AreaBlueprintSpec area)
-        {
-            return SkillTargeting.AreaCenter(context, targeting, area);
-        }
-
-        /// 전달된 런타임 입력값을 사용해 Radius 결과값을 생성해 반환한다.
-        private static float Radius(ZoneSkillDefinition skill, SkillExecutionData snapshot)
-        {
-            var area = skill != null ? skill.Area : null;
-            var targeting = skill != null ? skill.Targeting : null;
-            return SkillTargeting.Radius(
-                SkillTargeting.BaseRadius(targeting, area),
-                snapshot.RadiusMultiplier,
-                snapshot.RadiusBonus);
-        }
-
-        /// 전달된 런타임 입력값을 사용해 Duration 결과값을 생성해 반환한다.
-        private static float Duration(ZoneSkillDefinition skill, SkillExecutionData snapshot)
-        {
-            var area = skill != null ? skill.Area : null;
-            var timing = skill != null ? skill.Timing : null;
-            var duration = area != null && area.Duration > 0f
-                ? area.Duration
-                : timing != null ? timing.ActiveDuration : 0f;
-            if (duration <= 0f)
-            {
-                duration = TickInterval(skill, snapshot);
-            }
-
-            if (snapshot != null)
-            {
-                duration = duration * Mathf.Max(0f, snapshot.DurationMultiplier) + snapshot.DurationBonus;
-            }
-
-            return Mathf.Max(0.05f, duration);
-        }
-
-        /// 전달된 런타임 입력값을 사용해 Interval를 경과 시간 기준으로 갱신한다.
-        private static float TickInterval(ZoneSkillDefinition skill, SkillExecutionData snapshot)
-        {
-            var area = skill != null ? skill.Area : null;
-            var timing = skill != null ? skill.Timing : null;
-            var interval = area != null && area.TickInterval > 0f
-                ? area.TickInterval
-                : timing != null && timing.TickInterval > 0f ? timing.TickInterval : 1f;
-            if (snapshot != null)
-            {
-                interval *= Mathf.Max(0.05f, snapshot.ShotIntervalMultiplier);
-            }
-
-            return Mathf.Max(0.05f, interval);
         }
 
     }

@@ -866,7 +866,7 @@ internal static class SkillTrigger
 			var snapshot = command.InheritSnapshot
 				? inheritedSnapshot
 				: new SkillExecutionData(skill);
-			return ZoneSkillExecutor.Execute(
+			return combatManager.SkillExecution.TryExecuteRecast(
 				context,
 				snapshot,
 				skill,

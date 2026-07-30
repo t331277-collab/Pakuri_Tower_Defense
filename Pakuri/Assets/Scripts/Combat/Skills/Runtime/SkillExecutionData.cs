@@ -266,6 +266,8 @@ public class SkillExecutionData
 
 	internal IReadOnlyList<Vector2> PreparedDirections { get; set; } = Array.Empty<Vector2>();
 
+	internal IReadOnlyList<Vector2> PreparedCenters { get; set; } = Array.Empty<Vector2>();
+
 	internal float PreparedDamage { get; set; }
 
 	internal DamageAttribute PreparedDamageAttribute { get; set; }
@@ -285,6 +287,20 @@ public class SkillExecutionData
 	internal float PreparedRepeatInterval { get; set; }
 
 	internal bool PreparedCriticalAllowed { get; set; }
+
+	internal float PreparedRadius { get; set; }
+
+	internal float PreparedBaseRadius { get; set; }
+
+	internal float PreparedVisualRadiusMultiplier { get; set; } = 1f;
+
+	internal int PreparedHitTargetCount { get; set; } = int.MaxValue;
+
+	internal bool PreparedCoverAll { get; set; }
+
+	internal bool PreparedIsRecast { get; set; }
+
+	internal int PreparedRecastGeneration { get; set; }
 
 	public IReadOnlyList<CastConditionOp> CastConditionOps => castConditionOps;
 

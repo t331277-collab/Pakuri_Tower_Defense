@@ -491,7 +491,7 @@ namespace Pakuri.InGame
 
             if (skillData is ZoneSkillDefinition zone)
             {
-                return ZoneSkillExecutor.Execute(context, snapshot, zone);
+                return ZoneSkillExecutor.Execute(context, snapshot);
             }
 
             if (skillData is BuffSkillDefinition buff)
@@ -516,8 +516,23 @@ namespace Pakuri.InGame
             {
                 return PrepareLineExecutionData(context, snapshot, line);
             }
+            if (definition is ZoneSkillDefinition zone)
+            {
+                return PrepareZoneExecutionData(context, snapshot, zone, null, null);
+            }
 
             return true;
+        }
+
+        internal bool TryExecuteRecast(
+            SkillExecutionContext context,
+            SkillExecutionData snapshot,
+            ZoneSkillDefinition skill,
+            SkillTriggerCommand command,
+            Vector2 center)
+        {
+            return PrepareZoneExecutionData(context, snapshot, skill, command, center)
+                && ZoneSkillExecutor.Execute(context, snapshot);
         }
 
         private static bool PrepareLineExecutionData(
@@ -609,6 +624,92 @@ namespace Pakuri.InGame
             snapshot.PreparedCriticalAllowed =
                 skill.DamagePerTick != null && skill.DamagePerTick.CriticalAllowed;
             return true;
+        }
+
+        private static bool PrepareZoneExecutionData(
+            SkillExecutionContext context,
+            SkillExecutionData snapshot,
+            ZoneSkillDefinition skill,
+            SkillTriggerCommand command,
+            Vector2? recastCenter)
+        {
+            if (context == null || snapshot == null || skill == null)
+            {
+                return false;
+            }
+
+            var isRecast = command != null && recastCenter.HasValue;
+            var baseRadius = SkillTargeting.BaseRadius(skill.Targeting, skill.Area);
+            var radiusMultiplier = isRecast ? Mathf.Max(0f, command.RadiusMultiplier) : 1f;
+            var radius = SkillTargeting.Radius(
+                baseRadius,
+                snapshot.RadiusMultiplier,
+                snapshot.RadiusBonus) * radiusMultiplier;
+            var coverAll = (skill.Area != null && skill.Area.CoverAll)
+                || (skill.Targeting != null && skill.Targeting.CoverAll);
+            IReadOnlyList<Vector2> centers;
+            if (isRecast)
+            {
+                centers = new[] { recastCenter.Value };
+            }
+            else
+            {
+                var primaryCenter = SkillTargeting.AreaCenter(context, skill.Targeting, skill.Area);
+                var deploymentCount = 1
+                    + (snapshot.HasBranchCount ? Math.Max(0, snapshot.BranchCount) : 0);
+                centers = SkillTargeting.TargetAnchoredCenters(
+                    context,
+                    skill.Targeting,
+                    primaryCenter,
+                    deploymentCount,
+                    coverAll,
+                    SkillDeploymentRepeatMode.RandomExisting);
+            }
+
+            var interval = skill.Area != null && skill.Area.TickInterval > 0f
+                ? skill.Area.TickInterval
+                : skill.Timing != null && skill.Timing.TickInterval > 0f
+                    ? skill.Timing.TickInterval
+                    : 1f;
+            interval = Mathf.Max(0.05f, interval * Mathf.Max(0.05f, snapshot.ShotIntervalMultiplier));
+            var duration = isRecast
+                ? Mathf.Max(0.05f, command.DurationSeconds)
+                : skill.Area != null && skill.Area.Duration > 0f
+                    ? skill.Area.Duration
+                    : skill.Timing != null
+                        ? skill.Timing.ActiveDuration
+                        : 0f;
+            if (!isRecast)
+            {
+                if (duration <= 0f)
+                {
+                    duration = interval;
+                }
+                duration = duration * Mathf.Max(0f, snapshot.DurationMultiplier) + snapshot.DurationBonus;
+            }
+
+            snapshot.PreparedTargeting = skill.Targeting;
+            snapshot.PreparedRuntimeVisual = skill.RuntimeVisual;
+            snapshot.PreparedCenters = centers;
+            snapshot.PreparedDamage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick);
+            snapshot.PreparedDamageAttribute = skill.DamagePerTick != null
+                ? skill.DamagePerTick.Element
+                : skill.Element;
+            snapshot.PreparedStatus = SkillStatus.StatusSpec(skill.OnTickStatus, snapshot);
+            snapshot.PreparedBaseRadius = baseRadius;
+            snapshot.PreparedVisualRadiusMultiplier = radiusMultiplier;
+            snapshot.PreparedRadius = Mathf.Max(0f, radius);
+            snapshot.PreparedCoverAll = coverAll;
+            snapshot.PreparedDuration = Mathf.Max(0.05f, duration);
+            snapshot.PreparedTickInterval = interval;
+            snapshot.PreparedHitTargetCount = skill.HitAllTargets || !skill.UsesHitTargetCount
+                ? int.MaxValue
+                : Math.Max(1, Math.Max(1, skill.HitTargetCount) + snapshot.HitTargetCountBonus);
+            snapshot.PreparedCriticalAllowed =
+                skill.DamagePerTick != null && skill.DamagePerTick.CriticalAllowed;
+            snapshot.PreparedIsRecast = isRecast;
+            snapshot.PreparedRecastGeneration = isRecast ? context.RecastGeneration + 1 : 0;
+            return centers.Count > 0;
         }
 
         /// 전달된 owner 값을 사용해 RebuildLearnedSkillState 작업을 수행한다.
