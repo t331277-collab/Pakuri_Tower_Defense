@@ -151,6 +151,54 @@ namespace Pakuri.InGame
             instance.transform.localScale = scale;
         }
 
+        public static GameObject CreateBranchDamageLine(
+            EffectManager effects,
+            Vector2 origin,
+            Vector2 target,
+            out Material material)
+        {
+            material = null;
+            var shader = Shader.Find("Sprites/Default");
+            if (effects == null || shader == null)
+            {
+                return null;
+            }
+
+            var instance = effects.CreateEffect(new EffectCreateRequest(
+                null,
+                null,
+                "InGameBranchDamageLine",
+                Vector3.zero,
+                Quaternion.identity,
+                null,
+                null,
+                false,
+                false,
+                true));
+            if (instance == null)
+            {
+                return null;
+            }
+
+            material = new Material(shader)
+            {
+                name = "RuntimeBranchDamageLineMaterial"
+            };
+            var line = instance.AddComponent<LineRenderer>();
+            line.sharedMaterial = material;
+            line.useWorldSpace = true;
+            line.positionCount = 2;
+            line.startWidth = 0.08f;
+            line.endWidth = 0.04f;
+            line.startColor = new Color(0.1f, 0.65f, 1f, 1f);
+            line.endColor = new Color(0.1f, 0.35f, 1f, 0.75f);
+            line.numCapVertices = 2;
+            line.sortingOrder = 100;
+            line.SetPosition(0, new Vector3(origin.x, origin.y, 0f));
+            line.SetPosition(1, new Vector3(target.x, target.y, 0f));
+            return instance;
+        }
+
         /// 전달된 런타임 입력값을 사용해 ConfigureHitbox 작업을 수행한다.
         private static void ConfigureHitbox(
             GameObject instance,

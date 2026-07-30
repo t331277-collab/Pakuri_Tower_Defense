@@ -13,7 +13,7 @@ namespace Pakuri.InGame
 {
 
     /// ZoneSkillActor 런타임 오브젝트를 나타내며 모델과 Unity 컴포넌트를 연결한다.
-    public partial class ZoneSkillActor : MonoBehaviour
+    public class ZoneSkillActor : MonoBehaviour
     {
 
         private InGameCombatManager combatManager;
@@ -131,7 +131,7 @@ namespace Pakuri.InGame
                     SkillTriggerEvent.OnExpire,
                     new SkillActionContext(
                         casterEntry.Model,
-                        snapshot != null ? snapshot.SkillId : string.Empty,
+                        SourceSkillId(snapshot, runtime),
                         null,
                         center,
                         0f,
@@ -253,91 +253,5 @@ namespace Pakuri.InGame
 
             return string.Empty;
         }
-    }
-
-    /// Zone 계열 판정과 적용을 소유한다.
-    public partial class ZoneSkillActor
-    {
-        /// 전달된 런타임 입력값으로 Zone Actor를 생성한다.
-        internal bool InitializeExecution(
-            SkillExecutionContext context,
-            SkillExecutionData snapshot)
-        {
-            var centers = snapshot.PreparedCenters;
-            var radius = snapshot.PreparedRadius;
-            var duration = snapshot.PreparedDuration;
-            var tickInterval = snapshot.PreparedTickInterval;
-            var hitTargetCount = snapshot.PreparedHitTargetCount;
-            var damage = snapshot.PreparedDamage;
-            var attribute = snapshot.PreparedDamageAttribute;
-            var statusSpec = snapshot.PreparedStatus;
-            var coverAll = snapshot.PreparedCoverAll;
-            var effects = context.CombatManager.Effects;
-            var runtimeVisual = snapshot.PreparedRuntimeVisual;
-            var prefab = snapshot.SkillEffectPrefab;
-
-            var routed = false;
-            for (var i = 0; i < centers.Count; i++)
-            {
-                var center = centers[i];
-                var objectName = snapshot.PreparedIsRecast ? "InGameRecastZone" : "ZoneSkill";
-                if (!string.IsNullOrWhiteSpace(snapshot.SkillId))
-                {
-                    objectName += "_" + snapshot.SkillId;
-                }
-
-                var instance = effects.CreateEffect(new EffectCreateRequest(
-                    runtimeVisual,
-                    prefab,
-                    objectName,
-                    center,
-                    Quaternion.identity,
-                    null,
-                    null,
-                    false,
-                    true,
-                    true));
-
-                EffectVisualBuilder.ConfigureAreaEffect(
-                    instance,
-                    snapshot.PreparedBaseRadius,
-                    snapshot.RadiusMultiplier,
-                    snapshot.RadiusBonus,
-                    snapshot.PreparedVisualRadiusMultiplier);
-
-                var actor = instance.GetComponent<ZoneSkillActor>();
-                if (actor == null)
-                {
-                    actor = instance.AddComponent<ZoneSkillActor>();
-                }
-
-                actor.Initialize(
-                    context.CombatManager,
-                    context.CasterEntry,
-                    context.Roster,
-                    snapshot.PreparedTargeting,
-                    center,
-                    radius,
-                    coverAll,
-                    duration,
-                    tickInterval,
-                    hitTargetCount,
-                    damage,
-                    attribute,
-                    statusSpec,
-                    context.Runtime,
-                    snapshot,
-                    context.Caster,
-                    snapshot.PreparedCriticalAllowed,
-                    snapshot != null ? snapshot.CritChanceBonus : 0f,
-                    snapshot != null ? snapshot.CritDamageBonus : 0f,
-                    snapshot.PreparedRecastGeneration);
-                routed = true;
-            }
-
-            context.CombatManager.Effects.RemoveEffect(gameObject);
-            return routed;
-        }
-
     }
 }

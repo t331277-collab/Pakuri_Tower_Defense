@@ -258,6 +258,8 @@ public class SkillExecutionData
 
 	public GameObject SkillEffectPrefab { get; private set; }
 
+	internal string PreparedSkillId { get; set; }
+
 	internal SkillTargetingSpec PreparedTargeting { get; set; }
 
 	internal RuntimeSkillVisualSpec PreparedRuntimeVisual { get; set; }
@@ -269,6 +271,14 @@ public class SkillExecutionData
 	internal IReadOnlyList<Vector2> PreparedDirections { get; set; } = Array.Empty<Vector2>();
 
 	internal IReadOnlyList<float> PreparedBoundaries { get; set; } = Array.Empty<float>();
+
+	internal IReadOnlyList<float> PreparedBranchChances { get; set; } = Array.Empty<float>();
+
+	internal IReadOnlyList<int> PreparedBranchCounts { get; set; } = Array.Empty<int>();
+
+	internal IReadOnlyList<float> PreparedBranchDamageMultipliers { get; set; } = Array.Empty<float>();
+
+	internal IReadOnlyList<float> PreparedBranchSearchRadii { get; set; } = Array.Empty<float>();
 
 	internal IReadOnlyList<Vector2> PreparedCenters { get; set; } = Array.Empty<Vector2>();
 
@@ -349,8 +359,6 @@ public class SkillExecutionData
 	internal bool PreparedPrefabHitboxAtOrigin { get; set; }
 
 	internal float PreparedDamageDelay { get; set; }
-
-	internal string PreparedTargetStatusStackStatusId { get; set; }
 
 	internal StatusEffectKind PreparedTargetStatusStackStatusKind { get; set; }
 

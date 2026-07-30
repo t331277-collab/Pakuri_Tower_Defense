@@ -67,7 +67,7 @@ namespace Pakuri.InGame
         }
 
         /// Single 실행 Actor의 작업 추적을 시작한다.
-        private void BeginExecution(EffectManager manager)
+	internal void BeginPreparedExecution(EffectManager manager)
         {
             effectManager = manager;
             executionActor = true;
@@ -79,7 +79,7 @@ namespace Pakuri.InGame
         }
 
         /// Single 실행 초기화를 끝내고 남은 작업이 없으면 Actor를 종료한다.
-        private void FinishExecution()
+	internal void FinishPreparedExecution()
         {
             executionLaunchFinished = true;
             TryCompleteExecution();
@@ -166,7 +166,7 @@ public partial class SingleSkillActor
 {
 
 	/// SingleExecutionOutcome 처리에 함께 전달되는 값들을 묶는다.
-	private readonly struct SingleExecutionOutcome
+	internal readonly struct SingleExecutionOutcome
 	{
 		public bool Routed { get; }
 
@@ -248,48 +248,8 @@ public partial class SingleSkillActor
 	private const float PostDamageLifetimePaddingSeconds = 0.05f;
 
 	/// 전달된 런타임 입력값으로 Single 실행을 초기화한다.
-	internal bool InitializeExecution(SkillExecutionContext context, SkillExecutionData snapshot)
-	{
-		BeginExecution(context.CombatManager.Effects);
-		EffectManager effects = context.CombatManager.Effects;
-		RuntimeSkillVisualSpec runtimeVisual = snapshot.PreparedRuntimeVisual;
-		bool num = effects != null && runtimeVisual != null && runtimeVisual.HasVisual();
-		GameObject prefab = snapshot.PreparedSkillEffectPrefab;
-		if (num || effects == null)
-		{
-			prefab = null;
-		}
-		SingleExecutionOutcome singleExecutionOutcome = snapshot.PreparedUsesResolvedDeployments
-			? ExecuteResolvedDeployments(context, snapshot, runtimeVisual, prefab)
-			: ExecuteAtCenter(context, snapshot, snapshot.PreparedCenters[0], runtimeVisual, prefab, allowConditionalFollowUp: true);
-		if (!singleExecutionOutcome.Routed)
-		{
-			FinishExecution();
-			return singleExecutionOutcome.CastCommitted;
-		}
-		FinishExecution();
-		return true;
-	}
-
-	/// 전달된 런타임 입력값을 사용해 ResolvedDeployments를 실행한다.
-	private SingleExecutionOutcome ExecuteResolvedDeployments(SkillExecutionContext context, SkillExecutionData snapshot, RuntimeSkillVisualSpec runtimeVisual, GameObject prefab)
-	{
-		bool flag = false;
-		bool flag2 = false;
-		for (int i = 0; i < snapshot.PreparedCenters.Count; i++)
-		{
-			Vector2 vector = snapshot.PreparedCenters[i];
-			SingleExecutionOutcome singleExecutionOutcome = ExecuteAtCenter(context, snapshot, vector, runtimeVisual, prefab, allowConditionalFollowUp: true);
-			flag = flag || singleExecutionOutcome.Routed;
-			flag2 = flag2 || singleExecutionOutcome.CastCommitted;
-			PublishDeploymentLifecycle(context, snapshot, vector);
-			ScheduleRepeatedDeployments(context, snapshot, vector, runtimeVisual, prefab);
-		}
-		return new SingleExecutionOutcome(flag, flag2);
-	}
-
 	/// 전달된 런타임 입력값을 사용해 ScheduleRepeatedDeployments 작업을 수행한다.
-	private void ScheduleRepeatedDeployments(SkillExecutionContext context, SkillExecutionData snapshot, Vector2 center, RuntimeSkillVisualSpec runtimeVisual, GameObject prefab)
+	internal void ScheduleRepeatedDeployments(SkillExecutionContext context, SkillExecutionData snapshot, Vector2 center, RuntimeSkillVisualSpec runtimeVisual, GameObject prefab)
 	{
 		if (context == null || context.CombatManager == null || snapshot == null || snapshot.RepeatCountPerTarget <= 0)
 		{
@@ -327,7 +287,7 @@ public partial class SingleSkillActor
 	}
 
 	/// 전달된 런타임 입력값을 사용해 PublishDeploymentLifecycle 작업을 수행한다.
-	private static void PublishDeploymentLifecycle(
+	internal static void PublishDeploymentLifecycle(
 		SkillExecutionContext context,
 		SkillExecutionData snapshot,
 		Vector2 center)
@@ -343,7 +303,7 @@ public partial class SingleSkillActor
 	}
 
 	/// 전달된 런타임 입력값을 사용해 AtCenter를 실행한다.
-	private SingleExecutionOutcome ExecuteAtCenter(SkillExecutionContext context, SkillExecutionData snapshot, Vector2 center, RuntimeSkillVisualSpec runtimeVisual, GameObject prefab, bool allowConditionalFollowUp)
+	internal SingleExecutionOutcome ExecuteAtCenter(SkillExecutionContext context, SkillExecutionData snapshot, Vector2 center, RuntimeSkillVisualSpec runtimeVisual, GameObject prefab, bool allowConditionalFollowUp)
 	{
 		float radius = snapshot.PreparedRadius;
 		bool coverAll = snapshot.PreparedCoverAll;
@@ -683,7 +643,19 @@ public partial class SingleSkillActor
 				publishSkillLifecycleEvents: sourceRuntime != null);
 			SkillTrigger.PublishLifecycleEvent(
 				SkillTriggerEvent.OnHitCount,
-				new SkillActionContext(sourceEntry.Model, snapshot.SkillId, null, center, 0f, hitCount, snapshot, executionContext));
+				new SkillActionContext(
+					sourceEntry.Model,
+					sourceRuntime != null && !string.IsNullOrWhiteSpace(sourceRuntime.SkillId)
+						? sourceRuntime.SkillId
+						: !string.IsNullOrWhiteSpace(snapshot.PreparedSkillId)
+							? snapshot.PreparedSkillId
+							: snapshot.SkillId,
+					null,
+					center,
+					0f,
+					hitCount,
+					snapshot,
+					executionContext));
 		}
 	}
 

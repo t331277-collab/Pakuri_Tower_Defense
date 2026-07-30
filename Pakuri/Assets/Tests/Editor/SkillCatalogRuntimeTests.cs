@@ -299,6 +299,50 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     [Test]
+    public void TriggeredPreparationKeepsTriggeredDefinitionIdentity()
+    {
+        var actorObject = new GameObject("TriggeredIdentityActor");
+
+        try
+        {
+            var owner = new EnemyCombatState();
+            var source = new SingleSkillDefinition { SkillId = "source-skill" };
+            var triggered = new BuffSkillDefinition
+            {
+                SkillId = "triggered-charge",
+                EffectKind = BuffEffectKind.Charge
+            };
+            var sourceSnapshot = new SkillExecutionData(source);
+            var triggeredRuntime = new SkillUseState(owner, triggered);
+            var context = new SkillExecutionContext(
+                null,
+                null,
+                new CombatUnitEntry(owner, actorObject.transform),
+                triggeredRuntime);
+            var prepare = typeof(SkillExecution).GetMethod(
+                "PrepareExecutionData",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            var preparedSkillId = typeof(SkillExecutionData).GetProperty(
+                "PreparedSkillId",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+
+            Assert.That(prepare, Is.Not.Null);
+            Assert.That(preparedSkillId, Is.Not.Null);
+            Assert.That(
+                prepare.Invoke(null, new object[] { context, sourceSnapshot, triggered }),
+                Is.True);
+            Assert.That(
+                preparedSkillId.GetValue(sourceSnapshot),
+                Is.EqualTo(triggered.SkillId));
+            Assert.That(sourceSnapshot.SkillId, Is.EqualTo(source.SkillId));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(actorObject);
+        }
+    }
+
+    [Test]
     public void MonsterRuntimeSharesRunSessionSkills()
     {
         var monster = ScriptableObject.CreateInstance<MonsterDefinition>();

@@ -172,7 +172,9 @@ namespace Pakuri.InGame
                 snapshot.PreparedDamageAttribute,
                 caster,
                 true,
-                sourceSkillId: snapshot.SkillId);
+                sourceSkillId: !string.IsNullOrWhiteSpace(snapshot.PreparedSkillId)
+                    ? snapshot.PreparedSkillId
+                    : runtime.SkillId);
 
             var statusSpec = snapshot.PreparedStatus;
             if (!damageResult.IsDead && statusSpec != null)
@@ -211,9 +213,12 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var visualName = string.IsNullOrWhiteSpace(snapshot.SkillId)
+            var skillId = !string.IsNullOrWhiteSpace(snapshot.PreparedSkillId)
+                ? snapshot.PreparedSkillId
+                : snapshot.SkillId;
+            var visualName = string.IsNullOrWhiteSpace(skillId)
                 ? namePrefix
-                : namePrefix + "_" + snapshot.SkillId;
+                : namePrefix + "_" + skillId;
             var instance = effects.CreateEffect(new EffectCreateRequest(
                 snapshot.PreparedRuntimeVisual,
                 snapshot.PreparedSkillEffectPrefab,

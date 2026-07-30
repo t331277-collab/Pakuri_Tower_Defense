@@ -1,10 +1,9 @@
 /*
  * 역할: 런타임 Line Hit Actor 동작.
- * 책임: Line 타기팅·반복·Hitbox·피해·상태·넉백·비주얼 수명과 완료를 소유한다.
+ * 책임: Line Hitbox 판정·피해·상태·넉백·비주얼 수명과 완료를 소유한다.
  */
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
@@ -14,7 +13,7 @@ namespace Pakuri.InGame
 {
 
     /// LineSkillActor 런타임 오브젝트를 나타내며 모델과 Unity 컴포넌트를 연결한다.
-    public partial class LineSkillActor : MonoBehaviour
+    public class LineSkillActor : MonoBehaviour
     {
 
         private InGameCombatManager combatManager;
@@ -41,9 +40,6 @@ namespace Pakuri.InGame
         private float critChanceBonus;
         private float critDamageBonus;
         private bool visualOnly;
-        private bool executionActor;
-        private bool executionLaunchFinished;
-        private int pendingOperations;
         private readonly HashSet<string> appliedBaseStatusTargets = new HashSet<string>();
         private readonly List<CombatUnitEntry> collisionTargets = new List<CombatUnitEntry>();
         private readonly Collider2D[] lineHitboxes = new Collider2D[1];
@@ -76,9 +72,6 @@ namespace Pakuri.InGame
             combatManager = manager;
             effectManager = manager.Effects;
             visualOnly = false;
-            executionActor = false;
-            executionLaunchFinished = false;
-            pendingOperations = 0;
             casterEntry = sourceEntry;
             roster = unitRoster;
             targeting = targetingSpec;
@@ -115,52 +108,8 @@ namespace Pakuri.InGame
         {
             effectManager = manager;
             visualOnly = true;
-            executionActor = false;
-            executionLaunchFinished = false;
-            pendingOperations = 0;
             remainingDuration = Mathf.Max(0.05f, durationSeconds);
             return remainingDuration;
-        }
-
-        /// Line 실행 Actor의 작업 추적을 시작한다.
-        private void BeginExecution(EffectManager manager)
-        {
-            effectManager = manager;
-            executionActor = true;
-            executionLaunchFinished = false;
-            pendingOperations = 0;
-            visualOnly = false;
-        }
-
-        /// Line 실행 초기화를 끝낸다.
-        private void FinishExecution()
-        {
-            executionLaunchFinished = true;
-            TryCompleteExecution();
-        }
-
-        /// Line 지연 작업을 이 Actor의 수명에 연결한다.
-        private void StartTrackedCoroutine(IEnumerator operation)
-        {
-            pendingOperations++;
-            StartCoroutine(TrackOperation(operation));
-        }
-
-        /// Line 지연 작업 완료를 추적한다.
-        private IEnumerator TrackOperation(IEnumerator operation)
-        {
-            yield return operation;
-            pendingOperations = Mathf.Max(0, pendingOperations - 1);
-            TryCompleteExecution();
-        }
-
-        /// 모든 Line 실행 작업이 끝났으면 삭제를 요청한다.
-        private void TryCompleteExecution()
-        {
-            if (executionActor && executionLaunchFinished && pendingOperations == 0)
-            {
-                effectManager.RemoveEffect(gameObject);
-            }
         }
 
         /// LineTick를 적용한다.
@@ -219,11 +168,6 @@ namespace Pakuri.InGame
         /// 현재 Unity 프레임에서 Update 갱신 동작을 진행한다.
         private void Update()
         {
-            if (executionActor)
-            {
-                return;
-            }
-
             var deltaTime = Time.deltaTime;
             remainingDuration -= deltaTime;
             if (!visualOnly)
@@ -293,149 +237,6 @@ namespace Pakuri.InGame
             }
 
             return target != null ? target.GetHashCode().ToString() : string.Empty;
-        }
-
-    }
-
-    /// Line 계열 판정과 적용을 소유한다.
-    public partial class LineSkillActor
-    {
-        /// 전달된 런타임 입력값을 사용해 설정된 런타임 작업를 실행한다.
-        internal bool InitializeExecution(
-            SkillExecutionContext context,
-            SkillExecutionData snapshot)
-        {
-            BeginExecution(context.CombatManager.Effects);
-            var origin = snapshot.PreparedOrigin;
-            var directions = snapshot.PreparedDirections;
-            if (directions.Count == 0)
-            {
-                FinishExecution();
-                return false;
-            }
-
-            if (!ExecuteOnce(context, snapshot, origin, directions[0]))
-            {
-                FinishExecution();
-                return false;
-            }
-
-            if (directions.Count > 1)
-            {
-                StartTrackedCoroutine(ExecuteRepeatedLineCasts(
-                    context,
-                    snapshot,
-                    origin,
-                    directions,
-                    snapshot.PreparedRepeatInterval));
-            }
-
-            FinishExecution();
-            return true;
-        }
-
-        /// 전달된 런타임 입력값을 사용해 RepeatedLineCasts를 실행한다.
-        private IEnumerator ExecuteRepeatedLineCasts(
-            SkillExecutionContext context,
-            SkillExecutionData snapshot,
-            Vector2 origin,
-            IReadOnlyList<Vector2> directions,
-            float repeatIntervalSeconds)
-        {
-            for (var i = 1; i < directions.Count; i++)
-            {
-                yield return new WaitForSeconds(repeatIntervalSeconds);
-                if (context == null
-                    || context.CombatManager == null
-                    || context.CasterEntry == null
-                    || context.Caster == null)
-                {
-                    yield break;
-                }
-
-                ExecuteOnce(context, snapshot, origin, directions[i]);
-            }
-        }
-
-        /// 전달된 런타임 입력값을 사용해 Once를 실행한다.
-        private static bool ExecuteOnce(
-            SkillExecutionContext context,
-            SkillExecutionData snapshot,
-            Vector2 origin,
-            Vector2 direction)
-        {
-            var damage = snapshot.PreparedDamage;
-            var attribute = snapshot.PreparedDamageAttribute;
-            var statusSpec = snapshot.PreparedStatus;
-            var length = snapshot.PreparedLength;
-            var width = snapshot.PreparedWidth;
-            var knockbackDistance = snapshot.PreparedKnockbackDistance;
-            var duration = snapshot.PreparedDuration;
-            var tickInterval = snapshot.PreparedTickInterval;
-            var center = (Vector2)origin + direction * (length * 0.5f);
-            var effects = context.CombatManager.Effects;
-            var runtimeVisual = snapshot.PreparedRuntimeVisual;
-            var prefab = snapshot.SkillEffectPrefab;
-            if (effects == null)
-            {
-                return false;
-            }
-
-            var rotation = EffectVisualBuilder.Rotation(direction);
-            var objectName = "LineSkill";
-            if (!string.IsNullOrWhiteSpace(snapshot.SkillId))
-            {
-                objectName = "LineSkill_" + snapshot.SkillId;
-            }
-
-            var instance = effects.CreateEffect(new EffectCreateRequest(
-                runtimeVisual,
-                prefab,
-                objectName,
-                center,
-                rotation,
-                null,
-                null,
-                false,
-                false,
-                true));
-            if (instance == null)
-            {
-                return false;
-            }
-
-            var actor = instance.GetComponent<LineSkillActor>();
-            if (actor == null)
-            {
-                actor = instance.AddComponent<LineSkillActor>();
-            }
-
-            actor.Initialize(
-                context.CombatManager,
-                context.CasterEntry,
-                context.Roster,
-                snapshot.PreparedTargeting,
-                origin,
-                direction,
-                length,
-                width,
-                knockbackDistance,
-                duration,
-                tickInterval,
-                damage,
-                attribute,
-                statusSpec,
-                context.Runtime,
-                snapshot,
-                context.Caster,
-                snapshot.SkillId,
-                snapshot.PreparedCriticalAllowed,
-                snapshot != null ? snapshot.CritChanceBonus : 0f,
-                snapshot != null ? snapshot.CritDamageBonus : 0f);
-            SkillTrigger.PublishLifecycleEvent(
-                SkillTriggerEvent.OnDeploymentCast,
-                new SkillActionContext(context.Caster, snapshot.SkillId, null, center, 0f, 0, snapshot, context));
-            return true;
         }
 
     }

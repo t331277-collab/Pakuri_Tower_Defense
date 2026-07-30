@@ -512,6 +512,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
+            snapshot.PreparedSkillId = definition.SkillId;
             if (definition is LineSkillDefinition line)
             {
                 return PrepareLineExecutionData(context, snapshot, line);
@@ -614,6 +615,9 @@ namespace Pakuri.InGame
 
             snapshot.PreparedTargeting = skill.Targeting;
             snapshot.PreparedRuntimeVisual = skill.RuntimeVisual;
+            snapshot.PreparedSkillEffectPrefab = snapshot.SkillEffectPrefab != null
+                ? snapshot.SkillEffectPrefab
+                : skill.SkillEffectPrefab;
             snapshot.PreparedOrigin = origin;
             snapshot.PreparedDirections = directions;
             snapshot.PreparedDamage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick);
@@ -702,6 +706,9 @@ namespace Pakuri.InGame
 
             snapshot.PreparedTargeting = skill.Targeting;
             snapshot.PreparedRuntimeVisual = skill.RuntimeVisual;
+            snapshot.PreparedSkillEffectPrefab = snapshot.SkillEffectPrefab != null
+                ? snapshot.SkillEffectPrefab
+                : skill.SkillEffectPrefab;
             snapshot.PreparedCenters = centers;
             snapshot.PreparedDamage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick);
             snapshot.PreparedDamageAttribute = skill.DamagePerTick != null
@@ -824,6 +831,38 @@ namespace Pakuri.InGame
             snapshot.PreparedMagazineLastProjectile = context.Runtime != null
                 && context.Runtime.UsesMagazine
                 && context.Runtime.MagazineRemaining == 1;
+            var followUpCount = snapshot.HasFollowUpProjectile
+                && skill.RuntimeVisual != null
+                && skill.RuntimeVisual.HasVisual()
+                && burstIndex >= burstCount
+                    ? Math.Max(1, snapshot.FollowUpProjectileCount)
+                    : 0;
+            var plannedLaunchCount = projectileCount + followUpCount;
+            var branchChances = new List<float>(plannedLaunchCount);
+            var branchCounts = new List<int>(plannedLaunchCount);
+            var branchDamageMultipliers = new List<float>(plannedLaunchCount);
+            var branchSearchRadii = new List<float>(plannedLaunchCount);
+            for (var i = 0; i < plannedLaunchCount; i++)
+            {
+                var launchIndex = context.Runtime != null
+                    ? (int)(((long)context.Runtime.ProjectileLaunchCount + i) % int.MaxValue) + 1
+                    : 0;
+                SkillExecutionRuleResolver.ResolveProjectileBranch(
+                    snapshot,
+                    launchIndex,
+                    out var branchChance,
+                    out var branchCount,
+                    out var branchDamageMultiplier,
+                    out var branchSearchRadius);
+                branchChances.Add(branchChance);
+                branchCounts.Add(branchCount);
+                branchDamageMultipliers.Add(branchDamageMultiplier);
+                branchSearchRadii.Add(branchSearchRadius);
+            }
+            snapshot.PreparedBranchChances = branchChances;
+            snapshot.PreparedBranchCounts = branchCounts;
+            snapshot.PreparedBranchDamageMultipliers = branchDamageMultipliers;
+            snapshot.PreparedBranchSearchRadii = branchSearchRadii;
             snapshot.PreparedImpactStatus = SkillStatus.StatusSpec(skill.ImpactStatus, snapshot);
             snapshot.PreparedImpactRuntimeVisual = skill.ImpactRuntimeVisual;
             snapshot.PreparedImpactTargeting = new SkillTargetingSpec
@@ -933,7 +972,6 @@ namespace Pakuri.InGame
             snapshot.PreparedPrefabHitboxAtOrigin = skill.HitAllTargets
                 && !usesStatusFilteredDeployments;
             snapshot.PreparedDamageDelay = Mathf.Max(0f, skill.DamageDelaySeconds);
-            snapshot.PreparedTargetStatusStackStatusId = skill.TargetStatusStackStatusId;
             snapshot.PreparedTargetStatusStackStatusKind = skill.TargetStatusStackStatusKind;
             snapshot.PreparedTargetStatusStackMaxStacks = skill.TargetStatusStackMaxStacks;
             snapshot.PreparedTargetStatusStackDamage =
