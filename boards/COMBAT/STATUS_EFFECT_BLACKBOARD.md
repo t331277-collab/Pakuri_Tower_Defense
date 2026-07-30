@@ -787,3 +787,51 @@ Code implementation and available non-Play-Mode verification complete.
 - 2026-07-31: User corrected visual lifetime ownership; Designer revised the handoff so family Actors own completion and request `EffectManager` deletion.
 - 2026-07-31: User confirmed reuse of `SkillTargeting.cs` and explicitly assigned Code Builder implementation.
 - 2026-07-31: Code Builder completed Executor/Actor responsibility migration, EffectManager lifetime correction, Buff Executor rename, static/build/Unity/EditMode verification, and preserved Play Mode verification for the user.
+
+## Task: 2026-07-31 Skill Cast Finalization / Actor Application
+
+### Task title
+
+Finalize cast-fixed skill values before delivery and reduce Actors to runtime application.
+
+### Goals
+
+- Finalize family values and deployment plans in `SkillExecution`/`SkillExecutionData`.
+- Remove concrete Definition interpretation and cast planning from Actors.
+- Consolidate targeting, status, hit application, and visual setup into existing shared paths.
+- Delete cross-family Actor dependencies and direct Trigger-to-Executor bypasses.
+
+### Constraints
+
+- Preserve current gameplay, CSV, Definition, Trigger, visual, prefab, asset, and timing behavior.
+- Keep hit-time target, collision, health/status, resistance, chance, death, recovery, consumption, and redistribution decisions in Actor/shared hit rules.
+- Add no production script, family snapshot class, base Actor, interface, or factory.
+- Reuse and move existing logic; do not copy algorithms.
+- Actor owns normal lifetime and requests `EffectManager` deletion.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder for implementation. Code Reviewer for one final review pass.
+
+### Status
+
+Implementation in progress.
+
+### Next Actions
+
+- Implement `boards/COMBAT/SKILL_CAST_FINALIZATION_ACTOR_APPLICATION_HANDOFF.md`.
+- Commit family containment checkpoints.
+- Run static/build/Unity/EditMode verification.
+- Execute one user-authorized Code Reviewer pass.
+
+### Evidence
+
+- Baseline Runtime and Editor builds complete with zero errors and two existing assembly-reference warnings.
+- Baseline checkpoint commit is `c9303c4`.
+- Actor calculation, Trigger bypass, shared status type placement, and cross-family Actor dependencies are recorded in the handoff.
+
+### History
+
+- 2026-07-31: User approved the finalized responsibility boundary and explicitly assigned Builder implementation, intermediate commits, and final Reviewer inspection.
+- 2026-07-31: Code Builder created the implementation handoff and preserved the prior completed work in checkpoint `c9303c4`.
