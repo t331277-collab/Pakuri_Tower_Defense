@@ -816,22 +816,27 @@ Code Builder for implementation. Code Reviewer for one final review pass.
 
 ### Status
 
-Implementation in progress.
+Code Builder implementation and non-Play-Mode verification complete. Code Reviewer inspection pending.
 
 ### Next Actions
 
-- Implement `boards/COMBAT/SKILL_CAST_FINALIZATION_ACTOR_APPLICATION_HANDOFF.md`.
-- Commit family containment checkpoints.
-- Run static/build/Unity/EditMode verification.
-- Execute one user-authorized Code Reviewer pass.
+- Execute the one user-authorized Code Reviewer pass.
+- Fix concrete reviewer findings, if any, and repeat proportional verification.
+- User verifies representative Projectile, Line, Single, Zone, Buff, Trigger, no-visual, and Charge behavior in Play Mode.
 
 ### Evidence
 
 - Baseline Runtime and Editor builds complete with zero errors and two existing assembly-reference warnings.
 - Baseline checkpoint commit is `c9303c4`.
 - Actor calculation, Trigger bypass, shared status type placement, and cross-family Actor dependencies are recorded in the handoff.
+- Family and consolidation commits are `8698375`, `4db7aef`, `fac4762`, `f6a9e33`, `95dbf2a`, `eae8a74`, `a59a415`, and `befb722`.
+- Spatial Actor/Executor forbidden-symbol searches return zero concrete Definition, cast-calculation, and cross-family Actor matches.
+- Runtime and Editor builds complete with zero errors and the two existing assembly-reference warnings.
+- Unity focused Charge test passes 1/1 and full EditMode tests pass 11/11.
+- Full implementation evidence is recorded in `boards/COMBAT/SKILL_CAST_FINALIZATION_ACTOR_APPLICATION_HANDOFF.md`.
 
 ### History
 
 - 2026-07-31: User approved the finalized responsibility boundary and explicitly assigned Builder implementation, intermediate commits, and final Reviewer inspection.
 - 2026-07-31: Code Builder created the implementation handoff and preserved the prior completed work in checkpoint `c9303c4`.
+- 2026-07-31: Code Builder completed family finalization, common-path consolidation, static/build/Unity verification, and intermediate commits.

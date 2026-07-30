@@ -30,17 +30,14 @@ Code Builder for implementation. Code Reviewer for one final review pass explici
 
 ## Status
 
-Implementation in progress.
+Code Builder implementation and non-Play-Mode verification complete. Code Reviewer inspection pending.
 
 ## Next Actions
 
-1. Add cast-finalized values and prepared deployment collections to existing `SkillExecutionData`.
-2. Finalize those values once in `SkillExecution` before family dispatch.
-3. Route Trigger Zone recast through `SkillExecution`.
-4. Remove Definition interpretation and scalar planning from every spatial Actor.
-5. Consolidate shared hit, target, status, and visual logic in existing helpers.
-6. Verify each family and commit containment checkpoints.
-7. Run Code Reviewer once, fix findings, and perform final verification.
+1. Run the user-authorized Code Reviewer pass.
+2. Fix concrete findings, if any, without adding parallel abstractions.
+3. Repeat static, build, and focused verification after any reviewer fix.
+4. Leave Play Mode gameplay verification to the user.
 
 ## Inspected evidence
 
@@ -189,6 +186,16 @@ Implementation in progress.
 - `Pakuri/Assets/Scripts/Combat/Effects/EffectManager.cs`
 - `Pakuri/Assets/Scripts/Combat/Effects/EffectVisualBuilder.cs`
 - `Pakuri/Assets/Scripts/Units/Collision/UnitCollisionResolver.cs`
+- Family commits: `8698375`, `4db7aef`, `fac4762`, `f6a9e33`, `95dbf2a`.
+- Shared-consolidation commits: `eae8a74`, `a59a415`, `befb722`.
+- Spatial Actor/Executor forbidden-symbol searches returned zero Definition, cast-calculation, and cross-family Actor matches.
+- `ProjectileBranchDamageSpec` and the Projectile-local generic status declaration are removed.
+- `SkillExecutionRuleResolver` now owns the shared area/resolved hit application and Projectile launch-time branch/boundary rule paths.
+- `SkillTargeting` owns Buff target and configured-radius filtering; `SkillRequirement` and dead `HasLearnedPassive` are removed.
+- Runtime and Editor builds complete with zero errors and the two existing MCP assembly-reference warnings.
+- Unity script compilation is idle and contains no project compile error.
+- Focused Charge EditMode test passes 1/1; full EditMode tests pass 11/11.
+- Unity Play Mode was not entered.
 
 ## History
 
@@ -196,3 +203,6 @@ Implementation in progress.
 - 2026-07-31: User required consolidation by moving and deleting existing logic rather than copying classes or adding parallel algorithms.
 - 2026-07-31: User explicitly assigned Code Builder implementation, intermediate Git commits, and one final Code Reviewer pass.
 - 2026-07-31: Code Builder verified and committed baseline state as `c9303c4`.
+- 2026-07-31: Code Builder moved cast-fixed values and plans for Line, Zone, Projectile, Single, and Buff into `SkillExecution`/`SkillExecutionData`.
+- 2026-07-31: Code Builder consolidated shared hit application, targeting, status contracts, visual configuration, Charge active snapshots, and Projectile branch rules in existing paths.
+- 2026-07-31: Runtime/Editor builds passed with zero errors; Unity focused and full EditMode tests passed.
