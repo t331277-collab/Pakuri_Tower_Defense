@@ -816,12 +816,11 @@ Code Builder for implementation. Code Reviewer for one final review pass.
 
 ### Status
 
-Code Builder implementation and non-Play-Mode verification complete. Code Reviewer inspection pending.
+Code Reviewer ran once and returned concrete fixes. Code Builder applied them in `a9088f0`; static and Runtime/Editor build verification pass. Final EditMode rerun is pending because Unity is in user-owned Play Mode.
 
 ### Next Actions
 
-- Execute the one user-authorized Code Reviewer pass.
-- Fix concrete reviewer findings, if any, and repeat proportional verification.
+- User exits Play Mode when ready, then rerun the full EditMode suite.
 - User verifies representative Projectile, Line, Single, Zone, Buff, Trigger, no-visual, and Charge behavior in Play Mode.
 
 ### Evidence
@@ -833,6 +832,10 @@ Code Builder implementation and non-Play-Mode verification complete. Code Review
 - Spatial Actor/Executor forbidden-symbol searches return zero concrete Definition, cast-calculation, and cross-family Actor matches.
 - Runtime and Editor builds complete with zero errors and the two existing assembly-reference warnings.
 - Unity focused Charge test passes 1/1 and full EditMode tests pass 11/11.
+- Code Reviewer ran once and found Executor/Actor placement, triggered Definition identity, and Projectile branch/visual responsibility gaps.
+- Fix commit `a9088f0` moves prepared placement/scheduling into Executors, preserves hit-time Actor application, prepares branch values and execution identity, and moves branch-line presentation into `EffectVisualBuilder`.
+- Post-fix static searches and Runtime/Editor builds pass; Unity refresh passes and Console error query is empty.
+- Post-fix EditMode job `167d7ad311004124906e358775f87d61` ran zero tests because Unity reported Play Mode/transition; Code Builder did not stop user-owned Play Mode.
 - Full implementation evidence is recorded in `boards/COMBAT/SKILL_CAST_FINALIZATION_ACTOR_APPLICATION_HANDOFF.md`.
 
 ### History
@@ -840,3 +843,5 @@ Code Builder implementation and non-Play-Mode verification complete. Code Review
 - 2026-07-31: User approved the finalized responsibility boundary and explicitly assigned Builder implementation, intermediate commits, and final Reviewer inspection.
 - 2026-07-31: Code Builder created the implementation handoff and preserved the prior completed work in checkpoint `c9303c4`.
 - 2026-07-31: Code Builder completed family finalization, common-path consolidation, static/build/Unity verification, and intermediate commits.
+- 2026-07-31: Code Reviewer ran once and returned concrete fixes; Code Builder applied them in `a9088f0`.
+- 2026-07-31: Post-fix builds and Unity compilation passed; the full EditMode rerun remains pending because Unity was in user-owned Play Mode.

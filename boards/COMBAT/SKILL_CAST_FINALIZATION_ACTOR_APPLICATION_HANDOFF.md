@@ -30,14 +30,13 @@ Code Builder for implementation. Code Reviewer for one final review pass explici
 
 ## Status
 
-Code Builder implementation and non-Play-Mode verification complete. Code Reviewer inspection pending.
+Code Reviewer ran once and returned concrete fixes. Code Builder applied them in `a9088f0`; static and Runtime/Editor build verification pass. The final Unity EditMode rerun is pending because the Editor is in user-owned Play Mode.
 
 ## Next Actions
 
-1. Run the user-authorized Code Reviewer pass.
-2. Fix concrete findings, if any, without adding parallel abstractions.
-3. Repeat static, build, and focused verification after any reviewer fix.
-4. Leave Play Mode gameplay verification to the user.
+1. User exits Play Mode when ready.
+2. Rerun the full EditMode suite; the attempted run `167d7ad311004124906e358775f87d61` started zero tests because Unity reported Play Mode/transition.
+3. Leave gameplay verification in Play Mode to the user.
 
 ## Inspected evidence
 
@@ -195,7 +194,13 @@ Code Builder implementation and non-Play-Mode verification complete. Code Review
 - Runtime and Editor builds complete with zero errors and the two existing MCP assembly-reference warnings.
 - Unity script compilation is idle and contains no project compile error.
 - Focused Charge EditMode test passes 1/1; full EditMode tests pass 11/11.
-- Unity Play Mode was not entered.
+- Code Builder did not enter Unity Play Mode during the initial verification.
+- Code Reviewer executed once and found three concrete gaps: empty Executor coordinators, inherited-snapshot skill identity drift, and Projectile branch/branch-line work left in Actor.
+- Fix commit `a9088f0` moves Zone placement and Line/Projectile scheduling into Executors, moves Single center-plan iteration into its Executor, keeps hit-time application in Actors, prepares triggered Definition identity and Projectile branch values, and moves branch-line presentation into `EffectVisualBuilder`.
+- Post-fix forbidden-symbol searches return zero Definition, `DamageCalculator`, `SkillStatus.StatusSpec`, `ResolveProjectileBranch`, and `InitializeExecution` matches in spatial Actors; spatial Executors contain zero Definition, `DamageCalculator`, `SkillStatus.StatusSpec`, or `SkillTargeting` interpretation.
+- Post-fix Runtime and Editor builds pass with zero errors and the same two existing MCP assembly-reference warnings.
+- Unity refresh completed and Console error query returned zero entries.
+- Post-fix full EditMode job `167d7ad311004124906e358775f87d61` ran zero tests because Unity reported that the Editor was already in or entering Play Mode; the observed editor state reported `is_playing=true`, so Code Builder did not stop user-owned Play Mode.
 
 ## History
 
@@ -206,3 +211,5 @@ Code Builder implementation and non-Play-Mode verification complete. Code Review
 - 2026-07-31: Code Builder moved cast-fixed values and plans for Line, Zone, Projectile, Single, and Buff into `SkillExecution`/`SkillExecutionData`.
 - 2026-07-31: Code Builder consolidated shared hit application, targeting, status contracts, visual configuration, Charge active snapshots, and Projectile branch rules in existing paths.
 - 2026-07-31: Runtime/Editor builds passed with zero errors; Unity focused and full EditMode tests passed.
+- 2026-07-31: Code Reviewer ran once, returned Structure/Implementation/Refactoring fixes, and was not rerun.
+- 2026-07-31: Code Builder applied the reviewer fixes in `a9088f0`; builds and Unity compilation passed, while the final EditMode rerun was blocked by user-owned Play Mode.
