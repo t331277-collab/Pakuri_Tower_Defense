@@ -189,6 +189,66 @@ namespace Pakuri.InGame
             return routed;
         }
 
+        internal static void ResolveProjectileBranch(
+            SkillExecutionData data,
+            int projectileLaunchIndex,
+            out float chance,
+            out int count,
+            out float damageMultiplier,
+            out float searchRadius)
+        {
+            chance = 0f;
+            count = 0;
+            damageMultiplier = 1f;
+            searchRadius = 0f;
+            if (data == null || !data.HasBranchBehavior)
+            {
+                return;
+            }
+
+            chance = data.HasBranchChanceSet
+                ? data.BranchChanceSet
+                : data.BranchChanceBonus;
+            if (data.HasBranchLaunchTrigger
+                && projectileLaunchIndex > 0
+                && projectileLaunchIndex % data.BranchLaunchPeriod == 0)
+            {
+                chance = data.BranchLaunchChanceSet;
+            }
+
+            count = data.HasBranchCount ? data.BranchCount : chance > 0f ? 1 : 0;
+            searchRadius = data.HasBranchSearchRadius ? data.BranchSearchRadius : 4.5f;
+            if (chance <= 0f || count <= 0 || searchRadius <= 0f)
+            {
+                chance = 0f;
+                count = 0;
+                searchRadius = 0f;
+                return;
+            }
+
+            chance = Mathf.Clamp01(chance);
+            count = Math.Max(1, count);
+            damageMultiplier = data.HasBranchDamageMultiplier
+                ? Mathf.Max(0f, data.BranchDamageMultiplier)
+                : 1f;
+            searchRadius = Mathf.Max(0f, searchRadius);
+        }
+
+        internal static float ProjectileDestroyBoundaryX(
+            Vector2 origin,
+            Vector2 direction,
+            float speed,
+            float lifetime)
+        {
+            var normalizedDirection = direction.sqrMagnitude > 0.0001f
+                ? direction.normalized
+                : Vector2.right;
+            var maxTravelDistance = Mathf.Max(
+                40f,
+                Mathf.Max(0f, speed) * Mathf.Max(0.1f, lifetime) + 1f);
+            return origin.x + normalizedDirection.x * maxTravelDistance;
+        }
+
         /// 적중 공통 후속 효과와 OnHit 생명주기를 한 경로에서 적용한다.
         internal static void ApplyHitEnhancements(
             InGameCombatManager manager,

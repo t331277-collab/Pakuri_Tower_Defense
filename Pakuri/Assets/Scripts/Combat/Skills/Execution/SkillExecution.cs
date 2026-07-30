@@ -771,7 +771,7 @@ namespace Pakuri.InGame
             {
                 var spreadDirection = ProjectileSpreadDirection(direction, i, projectileCount);
                 directions.Add(spreadDirection);
-                boundaries.Add(ProjectileSkillActor.DestroyBoundaryX(
+                boundaries.Add(SkillExecutionRuleResolver.ProjectileDestroyBoundaryX(
                     origin,
                     spreadDirection,
                     speed,
@@ -826,6 +826,14 @@ namespace Pakuri.InGame
                 && context.Runtime.MagazineRemaining == 1;
             snapshot.PreparedImpactStatus = SkillStatus.StatusSpec(skill.ImpactStatus, snapshot);
             snapshot.PreparedImpactRuntimeVisual = skill.ImpactRuntimeVisual;
+            snapshot.PreparedImpactTargeting = new SkillTargetingSpec
+            {
+                TargetSide = SkillTargetSide.Enemy,
+                Selection = SkillTargetSelection.Nearest,
+                Shape = SkillTargetShape.Circle,
+                Radius = snapshot.PreparedImpactRadius,
+                CoverAll = false
+            };
             snapshot.PreparedContactDamageEnabled = skill.ContactDamageEnabled;
             snapshot.PreparedStopOnFirstHit = skill.StopOnFirstHit;
             snapshot.PreparedImpactDelay = Mathf.Max(
@@ -836,6 +844,7 @@ namespace Pakuri.InGame
                 skill.ImpactArea != null ? skill.ImpactArea.Radius : 0f,
                 snapshot.RadiusMultiplier,
                 snapshot.RadiusBonus);
+            snapshot.PreparedImpactTargeting.Radius = snapshot.PreparedImpactRadius;
             snapshot.PreparedImpactDamage = snapshot.PreparedDamage;
             return true;
         }

@@ -32,7 +32,10 @@ namespace Pakuri.InGame
         private int remainingHits = 1;
         private bool destroyWhenGreaterThanBoundary = true;
         private ProjectileStatusHitSpec statusOnHit;
-        private ProjectileBranchDamageSpec branchDamageOnHit;
+        private float branchDamageChance;
+        private int branchDamageCount;
+        private float branchDamageMultiplier = 1f;
+        private float branchDamageSearchRadius;
         private SkillUseState runtime;
         private SkillExecutionData executionData;
         private string sourceSkillId;
@@ -90,7 +93,10 @@ namespace Pakuri.InGame
             maxLifetime = Mathf.Max(0.1f, lifetimeSeconds);
             destroyWhenGreaterThanBoundary = direction.x >= 0f;
             statusOnHit = null;
-            branchDamageOnHit = null;
+            branchDamageChance = 0f;
+            branchDamageCount = 0;
+            branchDamageMultiplier = 1f;
+            branchDamageSearchRadius = 0f;
             runtime = null;
             executionData = null;
             sourceSkillId = null;
@@ -171,22 +177,6 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 전달된 런타임 입력값을 사용해 DestroyBoundaryX 결과값을 생성해 반환한다.
-        internal static float DestroyBoundaryX(
-            Vector2 origin,
-            Vector2 fireDirection,
-            float projectileSpeed,
-            float lifetimeSeconds)
-        {
-            var normalizedDirection = fireDirection.sqrMagnitude > 0.0001f
-                ? fireDirection.normalized
-                : Vector2.right;
-            var maxTravelDistance = Mathf.Max(
-                40f,
-                Mathf.Max(0f, projectileSpeed) * Mathf.Max(0.1f, lifetimeSeconds) + 1f);
-            return origin.x + normalizedDirection.x * maxTravelDistance;
-        }
-
         /// 전달된 런타임 입력값을 사용해 소유한 런타임 상태를 초기화한다.
         public void Initialize(
             InGameCombatManager manager,
@@ -199,7 +189,10 @@ namespace Pakuri.InGame
             float boundaryX,
             float lifetimeSeconds,
             ProjectileStatusHitSpec statusSpec,
-            ProjectileBranchDamageSpec branchSpec,
+            float branchChance,
+            int branchCount,
+            float branchMultiplier,
+            float branchSearchRadius,
             ProjectileStatusHitSpec impactStatusSpec,
             bool enableContactDamage,
             bool stopAfterFirstHit,
@@ -229,7 +222,10 @@ namespace Pakuri.InGame
                 lifetimeSeconds);
 
             statusOnHit = statusSpec;
-            branchDamageOnHit = branchSpec;
+            branchDamageChance = Mathf.Clamp01(branchChance);
+            branchDamageCount = Mathf.Max(0, branchCount);
+            branchDamageMultiplier = Mathf.Max(0f, branchMultiplier);
+            branchDamageSearchRadius = Mathf.Max(0f, branchSearchRadius);
             impactStatusOnHit = impactStatusSpec;
             contactDamageEnabled = enableContactDamage;
             stopOnFirstHit = stopAfterFirstHit;
@@ -440,20 +436,21 @@ namespace Pakuri.InGame
                 || combatManager == null
                 || combatManager.Units == null
                 || hitTarget == null
-                || branchDamageOnHit == null
-                || !branchDamageOnHit.Enabled
+                || branchDamageChance <= 0f
+                || branchDamageCount <= 0
+                || branchDamageSearchRadius <= 0f
                 || primaryDamage <= 0f)
             {
                 return;
             }
 
-            if (UnityEngine.Random.value > Mathf.Clamp01(branchDamageOnHit.Chance))
+            if (UnityEngine.Random.value > branchDamageChance)
             {
                 return;
             }
 
             var candidates = combatManager.Units.Entries;
-            var radiusSq = branchDamageOnHit.SearchRadius * branchDamageOnHit.SearchRadius;
+            var radiusSq = branchDamageSearchRadius * branchDamageSearchRadius;
             var selectedTargets = new HashSet<UnitCombatState>();
             var branchDamage = primaryDamage;
             if (branchDamage <= 0f)
@@ -461,7 +458,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            for (var i = 0; i < branchDamageOnHit.Count; i++)
+            for (var i = 0; i < branchDamageCount; i++)
             {
                 var target = FindNearestBranchTarget(candidates, hitTarget, hitPosition, radiusSq, selectedTargets);
                 if (target == null || target.Model == null || target.Transform == null)
@@ -481,7 +478,7 @@ namespace Pakuri.InGame
                     critDamageBonus,
                     sourceSkillId,
                     suppressOutgoingDamageTriggers: true,
-                    finalDamageMultiplier: HitDamageMultiplier(target.Model) * Mathf.Max(0f, branchDamageOnHit.DamageMultiplier));
+                    finalDamageMultiplier: HitDamageMultiplier(target.Model) * branchDamageMultiplier);
                 SpawnBranchDamageLine(hitPosition, targetPosition);
             }
         }
@@ -666,7 +663,7 @@ namespace Pakuri.InGame
                     combatManager,
                     combatManager.Units != null ? combatManager.Units.Find(owner) : null,
                     combatManager.Units,
-                    BuildImpactTargeting(),
+                    executionData.PreparedImpactTargeting,
                     impactCenter,
                     impactRadius,
                     false,
@@ -719,19 +716,6 @@ namespace Pakuri.InGame
             }
         }
 
-        /// ImpactTargeting를 구성한다.
-        private SkillTargetingSpec BuildImpactTargeting()
-        {
-            return new SkillTargetingSpec
-            {
-                TargetSide = SkillTargetSide.Enemy,
-                Selection = SkillTargetSelection.Nearest,
-                Shape = SkillTargetShape.Circle,
-                Radius = impactRadius,
-                CoverAll = false
-            };
-        }
-
         /// CacheHitboxColliders 작업을 수행한다.
         private void CacheHitboxColliders()
         {
@@ -776,7 +760,13 @@ namespace Pakuri.InGame
                 var projectileLaunchIndex = context.Runtime != null
                     ? context.Runtime.AdvanceProjectileLaunchCount()
                     : 0;
-                var branchSpec = BranchDamageSpec(snapshot, projectileLaunchIndex);
+                SkillExecutionRuleResolver.ResolveProjectileBranch(
+                    snapshot,
+                    projectileLaunchIndex,
+                    out var branchChance,
+                    out var branchCount,
+                    out var branchMultiplier,
+                    out var branchSearchRadius);
                 var rotation = EffectVisualBuilder.Rotation(spreadDirection);
                 var objectName = "Projectile";
                 if (!string.IsNullOrWhiteSpace(snapshot.SkillId))
@@ -818,7 +808,10 @@ namespace Pakuri.InGame
                     boundary,
                     lifetime,
                     baseStatusSpec,
-                    branchSpec,
+                    branchChance,
+                    branchCount,
+                    branchMultiplier,
+                    branchSearchRadius,
                     snapshot.PreparedImpactStatus,
                     snapshot.PreparedContactDamageEnabled,
                     snapshot.PreparedStopOnFirstHit,
@@ -842,49 +835,6 @@ namespace Pakuri.InGame
             FinishExecution();
             return true;
         }
-
-        /// 전달된 런타임 입력값을 사용해 BranchDamageSpec 결과값을 생성해 반환한다.
-        private static ProjectileBranchDamageSpec BranchDamageSpec(
-            SkillExecutionData snapshot,
-            int projectileLaunchIndex)
-        {
-            if (snapshot == null || !snapshot.HasBranchBehavior)
-            {
-                return null;
-            }
-
-            var chance = BranchChance(snapshot, projectileLaunchIndex);
-            var count = snapshot.HasBranchCount ? snapshot.BranchCount : chance > 0f ? 1 : 0;
-            var radius = snapshot.HasBranchSearchRadius ? snapshot.BranchSearchRadius : 4.5f;
-            if (chance <= 0f || count <= 0 || radius <= 0f)
-            {
-                return null;
-            }
-
-            return new ProjectileBranchDamageSpec
-            {
-                Enabled = true,
-                Chance = Mathf.Clamp01(chance),
-                Count = Math.Max(1, count),
-                DamageMultiplier = snapshot.HasBranchDamageMultiplier ? Mathf.Max(0f, snapshot.BranchDamageMultiplier) : 1f,
-                SearchRadius = Mathf.Max(0f, radius)
-            };
-        }
-
-        /// 전달된 런타임 입력값을 사용해 BranchChance 결과값을 생성해 반환한다.
-        private static float BranchChance(SkillExecutionData snapshot, int projectileLaunchIndex)
-        {
-            var chance = snapshot.HasBranchChanceSet ? snapshot.BranchChanceSet : snapshot.BranchChanceBonus;
-            if (snapshot.HasBranchLaunchTrigger
-                && projectileLaunchIndex > 0
-                && projectileLaunchIndex % snapshot.BranchLaunchPeriod == 0)
-            {
-                chance = snapshot.BranchLaunchChanceSet;
-            }
-
-            return chance;
-        }
-
 
         /// 전달된 런타임 입력값을 사용해 ScheduleFollowUpProjectile 작업을 시도하고 성공 여부를 반환한다.
         private void TryScheduleFollowUpProjectile(
@@ -968,7 +918,13 @@ namespace Pakuri.InGame
             var projectileLaunchIndex = context.Runtime != null
                 ? context.Runtime.AdvanceProjectileLaunchCount()
                 : 0;
-            var branchSpec = BranchDamageSpec(snapshot, projectileLaunchIndex);
+            SkillExecutionRuleResolver.ResolveProjectileBranch(
+                snapshot,
+                projectileLaunchIndex,
+                out var branchChance,
+                out var branchCount,
+                out var branchMultiplier,
+                out var branchSearchRadius);
             var rotation = EffectVisualBuilder.Rotation(direction);
             var objectName = "Projectile";
             if (!string.IsNullOrWhiteSpace(snapshot.SkillId))
@@ -1008,14 +964,17 @@ namespace Pakuri.InGame
                 snapshot.PreparedPierceCount,
                 snapshot.PreparedBoundaries.Count > 0
                     ? snapshot.PreparedBoundaries[0]
-                    : DestroyBoundaryX(
+                    : SkillExecutionRuleResolver.ProjectileDestroyBoundaryX(
                         snapshot.PreparedOrigin,
                         direction,
                         snapshot.PreparedProjectileSpeed,
                         snapshot.PreparedProjectileLifetime),
                 snapshot.PreparedProjectileLifetime,
                 snapshot.PreparedStatus,
-                branchSpec,
+                branchChance,
+                branchCount,
+                branchMultiplier,
+                branchSearchRadius,
                 snapshot.PreparedImpactStatus,
                 snapshot.PreparedContactDamageEnabled,
                 snapshot.PreparedStopOnFirstHit,

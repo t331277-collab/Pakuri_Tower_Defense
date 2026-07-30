@@ -12,16 +12,6 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-/// Projectile 분기 적중에 사용할 확정 피해 값.
-public class ProjectileBranchDamageSpec
-{
-	public bool Enabled;
-	public float Chance;
-	public int Count;
-	public float DamageMultiplier = 1f;
-	public float SearchRadius;
-}
-
 /// SkillExecutionData가 나타내는 런타임 값을 보관한다.
 public class SkillExecutionData
 {
@@ -333,6 +323,8 @@ public class SkillExecutionData
 	internal ProjectileStatusHitSpec PreparedImpactStatus { get; set; }
 
 	internal RuntimeSkillVisualSpec PreparedImpactRuntimeVisual { get; set; }
+
+	internal SkillTargetingSpec PreparedImpactTargeting { get; set; }
 
 	internal bool PreparedContactDamageEnabled { get; set; }
 
