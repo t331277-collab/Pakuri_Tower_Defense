@@ -221,7 +221,9 @@ namespace Pakuri.InGame
 
                 if (selection == SkillTargetSelection.LowestHealth)
                 {
-                    var health = candidate.Model.Resources != null ? candidate.Model.Resources.CurrentHealth : 0f;
+                    var health = candidate.Model.Resources != null && candidate.Model.Stats.MaxHealth > 0f
+                        ? candidate.Model.Resources.CurrentHealth / candidate.Model.Stats.MaxHealth
+                        : 1f;
                     if (health > bestLowestHealth)
                     {
                         continue;
@@ -620,9 +622,15 @@ namespace Pakuri.InGame
                 return rightHealth.CompareTo(leftHealth);
             }
 
-            if (selection == SkillTargetSelection.LowestHealth && !Mathf.Approximately(leftHealth, rightHealth))
+            var leftHealthRatio = left.Model != null && left.Model.Resources != null && left.Model.Stats.MaxHealth > 0f
+                ? leftHealth / left.Model.Stats.MaxHealth
+                : 1f;
+            var rightHealthRatio = right.Model != null && right.Model.Resources != null && right.Model.Stats.MaxHealth > 0f
+                ? rightHealth / right.Model.Stats.MaxHealth
+                : 1f;
+            if (selection == SkillTargetSelection.LowestHealth && !Mathf.Approximately(leftHealthRatio, rightHealthRatio))
             {
-                return leftHealth.CompareTo(rightHealth);
+                return leftHealthRatio.CompareTo(rightHealthRatio);
             }
 
             if (selection == SkillTargetSelection.HighestStacks)

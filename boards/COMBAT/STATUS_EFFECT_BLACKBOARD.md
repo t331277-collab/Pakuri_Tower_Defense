@@ -845,3 +845,41 @@ Code Reviewer ran once and returned concrete fixes. Code Builder applied them in
 - 2026-07-31: Code Builder completed family finalization, common-path consolidation, static/build/Unity verification, and intermediate commits.
 - 2026-07-31: Code Reviewer ran once and returned concrete fixes; Code Builder applied them in `a9088f0`.
 - 2026-07-31: Post-fix builds and Unity compilation passed; the full EditMode rerun remains pending because Unity was in user-owned Play Mode.
+
+## Task: 2026-07-31 Lowest Health Ratio Targeting
+
+### Task title
+
+Select the ally with the lowest current-health/max-health ratio.
+
+### Goals
+
+- Make `LowestHealth` compare health ratios instead of absolute current health.
+
+### Constraints
+
+- Change only the existing shared comparison expressions.
+- Preserve `HighestHealth` behavior and all targeting contracts.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Complete.
+
+### Next Actions
+
+- User verifies the Stage1 priest heals the ally with the lowest health ratio in Play Mode.
+
+### Evidence
+
+- `SkillTargeting.FindNearestTarget` and `SkillTargeting.CompareTargets` now compare `CurrentHealth / MaxHealth` for `LowestHealth`.
+- `git diff --check` passes.
+- `Assembly-CSharp.csproj` and `Assembly-CSharp-Editor.csproj` build with zero errors and the two existing assembly-reference warnings.
+
+### History
+
+- 2026-07-31: User requested a minimal formula-only Code Builder fix.
+- 2026-07-31: Code Builder changed both shared `LowestHealth` comparison paths without adding a class or targeting mode.
