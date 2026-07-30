@@ -258,6 +258,34 @@ public class SkillExecutionData
 
 	public GameObject SkillEffectPrefab { get; private set; }
 
+	internal SkillTargetingSpec PreparedTargeting { get; set; }
+
+	internal RuntimeSkillVisualSpec PreparedRuntimeVisual { get; set; }
+
+	internal Vector2 PreparedOrigin { get; set; }
+
+	internal IReadOnlyList<Vector2> PreparedDirections { get; set; } = Array.Empty<Vector2>();
+
+	internal float PreparedDamage { get; set; }
+
+	internal DamageAttribute PreparedDamageAttribute { get; set; }
+
+	internal ProjectileStatusHitSpec PreparedStatus { get; set; }
+
+	internal float PreparedLength { get; set; }
+
+	internal float PreparedWidth { get; set; }
+
+	internal float PreparedKnockbackDistance { get; set; }
+
+	internal float PreparedDuration { get; set; }
+
+	internal float PreparedTickInterval { get; set; }
+
+	internal float PreparedRepeatInterval { get; set; }
+
+	internal bool PreparedCriticalAllowed { get; set; }
+
 	public IReadOnlyList<CastConditionOp> CastConditionOps => castConditionOps;
 
 	public IReadOnlyList<DamageModifierOp> DamageModifierOps => damageModifierOps;

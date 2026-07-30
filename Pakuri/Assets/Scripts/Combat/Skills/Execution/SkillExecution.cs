@@ -377,6 +377,10 @@ namespace Pakuri.InGame
             {
                 return false;
             }
+            if (!PrepareExecutionData(context, snapshot, definition))
+            {
+                return false;
+            }
             var lifecycleCenter = hasManualTargetPoint
                 ? manualTargetPoint
                 : entry.Transform != null
@@ -477,7 +481,7 @@ namespace Pakuri.InGame
 
             if (skillData is LineSkillDefinition line)
             {
-                return LineSkillExecutor.Execute(context, snapshot, line);
+                return LineSkillExecutor.Execute(context, snapshot);
             }
 
             if (skillData is SingleSkillDefinition single)
@@ -496,6 +500,115 @@ namespace Pakuri.InGame
             }
 
             throw new InvalidOperationException("Unsupported compiled skill data: " + skillData.GetType().Name);
+        }
+
+        private static bool PrepareExecutionData(
+            SkillExecutionContext context,
+            SkillExecutionData snapshot,
+            SkillDefinition definition)
+        {
+            if (context == null || snapshot == null || definition == null)
+            {
+                return false;
+            }
+
+            if (definition is LineSkillDefinition line)
+            {
+                return PrepareLineExecutionData(context, snapshot, line);
+            }
+
+            return true;
+        }
+
+        private static bool PrepareLineExecutionData(
+            SkillExecutionContext context,
+            SkillExecutionData snapshot,
+            LineSkillDefinition skill)
+        {
+            var origin = context.CasterEntry.Transform != null
+                ? (Vector2)context.CasterEntry.Transform.position
+                : Vector2.zero;
+            var repeatCount = Mathf.Max(1, skill.CastRepeatCount + snapshot.LineCastRepeatCountBonus);
+            var directions = new List<Vector2>(repeatCount);
+            if (context.HasManualAimDirection)
+            {
+                var direction = context.ManualAimDirection;
+                if (direction.sqrMagnitude <= 0.0001f)
+                {
+                    return false;
+                }
+
+                direction.Normalize();
+                for (var i = 0; i < repeatCount; i++)
+                {
+                    directions.Add(direction);
+                }
+            }
+            else
+            {
+                var target = SkillTargeting.FindNearestTarget(context.CasterEntry, context.Roster, skill.Targeting);
+                var primaryDirection = SkillTargeting.DirectionToTarget(origin, target);
+                if (primaryDirection.sqrMagnitude <= 0.0001f || target == null || target.Transform == null)
+                {
+                    return false;
+                }
+
+                var centers = SkillTargeting.TargetAnchoredCenters(
+                    context,
+                    skill.Targeting,
+                    target.Transform.position,
+                    repeatCount,
+                    false,
+                    SkillDeploymentRepeatMode.RepeatNearest);
+                for (var i = 0; i < centers.Count; i++)
+                {
+                    var direction = centers[i] - origin;
+                    if (direction.sqrMagnitude > 0.0001f)
+                    {
+                        directions.Add(direction.normalized);
+                    }
+                }
+            }
+
+            if (directions.Count == 0)
+            {
+                return false;
+            }
+
+            var baseTickInterval = skill.Timing != null && skill.Timing.TickInterval > 0f
+                ? skill.Timing.TickInterval
+                : 0.1f;
+            var tickInterval = Mathf.Max(
+                0.05f,
+                baseTickInterval * Mathf.Max(0.05f, snapshot.ShotIntervalMultiplier));
+            var baseDuration = skill.Timing != null && skill.Timing.ActiveDuration > 0f
+                ? skill.Timing.ActiveDuration
+                : tickInterval;
+
+            snapshot.PreparedTargeting = skill.Targeting;
+            snapshot.PreparedRuntimeVisual = skill.RuntimeVisual;
+            snapshot.PreparedOrigin = origin;
+            snapshot.PreparedDirections = directions;
+            snapshot.PreparedDamage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick);
+            snapshot.PreparedDamageAttribute = skill.DamagePerTick != null
+                ? skill.DamagePerTick.Element
+                : skill.Element;
+            snapshot.PreparedStatus = SkillStatus.StatusSpec(skill.OnHitStatus, snapshot);
+            snapshot.PreparedLength = Mathf.Max(0.1f, skill.LineLength);
+            snapshot.PreparedWidth = Mathf.Max(
+                0.1f,
+                skill.LineWidth * Mathf.Max(0.01f, 1f + snapshot.BeamWidthBonus));
+            snapshot.PreparedKnockbackDistance = Mathf.Max(
+                0f,
+                skill.KnockbackDistance * Mathf.Max(0f, snapshot.KnockbackDistanceMultiplier));
+            snapshot.PreparedDuration = Mathf.Max(
+                0.05f,
+                baseDuration * Mathf.Max(0f, snapshot.DurationMultiplier) + snapshot.DurationBonus);
+            snapshot.PreparedTickInterval = tickInterval;
+            snapshot.PreparedRepeatInterval = Mathf.Max(0f, skill.CastRepeatIntervalSeconds);
+            snapshot.PreparedCriticalAllowed =
+                skill.DamagePerTick != null && skill.DamagePerTick.CriticalAllowed;
+            return true;
         }
 
         /// 전달된 owner 값을 사용해 RebuildLearnedSkillState 작업을 수행한다.

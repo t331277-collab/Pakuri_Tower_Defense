@@ -14,8 +14,7 @@ namespace Pakuri.InGame
     {
         internal static bool Execute(
             SkillExecutionContext context,
-            SkillExecutionData snapshot,
-            LineSkillDefinition skill)
+            SkillExecutionData snapshot)
         {
             var effects = context.CombatManager.Effects;
             if (effects == null)
@@ -47,7 +46,7 @@ namespace Pakuri.InGame
                 actor = instance.AddComponent<LineSkillActor>();
             }
 
-            return actor.InitializeExecution(context, snapshot, skill);
+            return actor.InitializeExecution(context, snapshot);
         }
     }
 }

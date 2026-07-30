@@ -346,36 +346,31 @@ namespace Pakuri.InGame
         /// 전달된 런타임 입력값을 사용해 설정된 런타임 작업를 실행한다.
         internal bool InitializeExecution(
             SkillExecutionContext context,
-            SkillExecutionData snapshot,
-            LineSkillDefinition skill)
+            SkillExecutionData snapshot)
         {
             BeginExecution(context.CombatManager.Effects);
-            var origin = context.CasterEntry.Transform != null
-                ? context.CasterEntry.Transform.position
-                : Vector3.zero;
-            var repeatCount = CastRepeatCount(skill, snapshot);
-            var directions = CastDirections(context, skill, origin, repeatCount);
+            var origin = snapshot.PreparedOrigin;
+            var directions = snapshot.PreparedDirections;
             if (directions.Count == 0)
             {
                 FinishExecution();
                 return false;
             }
 
-            if (!ExecuteOnce(context, snapshot, skill, origin, directions[0]))
+            if (!ExecuteOnce(context, snapshot, origin, directions[0]))
             {
                 FinishExecution();
                 return false;
             }
 
-            if (repeatCount > 1)
+            if (directions.Count > 1)
             {
                 StartTrackedCoroutine(ExecuteRepeatedLineCasts(
                     context,
                     snapshot,
-                    skill,
                     origin,
                     directions,
-                    CastRepeatInterval(skill)));
+                    snapshot.PreparedRepeatInterval));
             }
 
             FinishExecution();
@@ -386,7 +381,6 @@ namespace Pakuri.InGame
         private IEnumerator ExecuteRepeatedLineCasts(
             SkillExecutionContext context,
             SkillExecutionData snapshot,
-            LineSkillDefinition skill,
             Vector2 origin,
             IReadOnlyList<Vector2> directions,
             float repeatIntervalSeconds)
@@ -397,93 +391,34 @@ namespace Pakuri.InGame
                 if (context == null
                     || context.CombatManager == null
                     || context.CasterEntry == null
-                    || context.Caster == null
-                    || skill == null)
+                    || context.Caster == null)
                 {
                     yield break;
                 }
 
-                ExecuteOnce(context, snapshot, skill, origin, directions[i]);
+                ExecuteOnce(context, snapshot, origin, directions[i]);
             }
-        }
-
-        /// 전달된 런타임 입력값을 사용해 CastDirections 결과값을 생성해 반환한다.
-        private static List<Vector2> CastDirections(
-            SkillExecutionContext context,
-            LineSkillDefinition skill,
-            Vector2 origin,
-            int repeatCount)
-        {
-            var directions = new List<Vector2>(repeatCount);
-            if (context.HasManualAimDirection)
-            {
-                var direction = context.ManualAimDirection;
-                if (direction.sqrMagnitude <= 0.0001f)
-                {
-                    return directions;
-                }
-
-                direction.Normalize();
-                for (var i = 0; i < repeatCount; i++)
-                {
-                    directions.Add(direction);
-                }
-
-                return directions;
-            }
-
-            var target = SkillTargeting.FindNearestTarget(context.CasterEntry, context.Roster, skill.Targeting);
-            var primaryDirection = SkillTargeting.DirectionToTarget(origin, target);
-            if (primaryDirection.sqrMagnitude <= 0.0001f || target.Transform == null)
-            {
-                return directions;
-            }
-
-            var centers = SkillTargeting.TargetAnchoredCenters(
-                context,
-                skill.Targeting,
-                target.Transform.position,
-                repeatCount,
-                false,
-                SkillDeploymentRepeatMode.RepeatNearest);
-            for (var i = 0; i < centers.Count; i++)
-            {
-                var direction = centers[i] - origin;
-                if (direction.sqrMagnitude <= 0.0001f)
-                {
-                    continue;
-                }
-
-                directions.Add(direction.normalized);
-            }
-
-            return directions;
         }
 
         /// 전달된 런타임 입력값을 사용해 Once를 실행한다.
         private static bool ExecuteOnce(
             SkillExecutionContext context,
             SkillExecutionData snapshot,
-            LineSkillDefinition skill,
             Vector2 origin,
             Vector2 direction)
         {
-            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick);
-            var attribute = skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element;
-            var statusSpec = SkillStatus.StatusSpec(skill.OnHitStatus, snapshot);
-            var length = LineLength(skill);
-            var width = LineWidth(skill, snapshot);
-            var knockbackDistance = KnockbackDistance(skill, snapshot);
-            var duration = Duration(skill, snapshot);
-            var tickInterval = TickInterval(skill, snapshot);
+            var damage = snapshot.PreparedDamage;
+            var attribute = snapshot.PreparedDamageAttribute;
+            var statusSpec = snapshot.PreparedStatus;
+            var length = snapshot.PreparedLength;
+            var width = snapshot.PreparedWidth;
+            var knockbackDistance = snapshot.PreparedKnockbackDistance;
+            var duration = snapshot.PreparedDuration;
+            var tickInterval = snapshot.PreparedTickInterval;
             var center = (Vector2)origin + direction * (length * 0.5f);
             var effects = context.CombatManager.Effects;
-            var runtimeVisual = skill.RuntimeVisual;
-            var prefab = skill.SkillEffectPrefab;
-            if (snapshot != null && snapshot.SkillEffectPrefab != null)
-            {
-                prefab = snapshot.SkillEffectPrefab;
-            }
+            var runtimeVisual = snapshot.PreparedRuntimeVisual;
+            var prefab = snapshot.SkillEffectPrefab;
             if (effects == null)
             {
                 return false;
@@ -491,9 +426,9 @@ namespace Pakuri.InGame
 
             var rotation = EffectVisualBuilder.Rotation(direction);
             var objectName = "LineSkill";
-            if (!string.IsNullOrWhiteSpace(skill.SkillId))
+            if (!string.IsNullOrWhiteSpace(snapshot.SkillId))
             {
-                objectName = "LineSkill_" + skill.SkillId;
+                objectName = "LineSkill_" + snapshot.SkillId;
             }
 
             var instance = effects.CreateEffect(new EffectCreateRequest(
@@ -522,7 +457,7 @@ namespace Pakuri.InGame
                 context.CombatManager,
                 context.CasterEntry,
                 context.Roster,
-                skill.Targeting,
+                snapshot.PreparedTargeting,
                 origin,
                 direction,
                 length,
@@ -536,102 +471,14 @@ namespace Pakuri.InGame
                 context.Runtime,
                 snapshot,
                 context.Caster,
-                skill.SkillId,
-                skill.DamagePerTick != null && skill.DamagePerTick.CriticalAllowed,
+                snapshot.SkillId,
+                snapshot.PreparedCriticalAllowed,
                 snapshot != null ? snapshot.CritChanceBonus : 0f,
                 snapshot != null ? snapshot.CritDamageBonus : 0f);
             SkillTrigger.PublishLifecycleEvent(
                 SkillTriggerEvent.OnDeploymentCast,
-                new SkillActionContext(context.Caster, skill.SkillId, null, center, 0f, 0, snapshot, context));
+                new SkillActionContext(context.Caster, snapshot.SkillId, null, center, 0f, 0, snapshot, context));
             return true;
-        }
-
-        /// 전달된 skill 값을 사용해 LineLength 결과값을 생성해 반환한다.
-        private static float LineLength(LineSkillDefinition skill)
-        {
-            return Mathf.Max(0.1f, skill != null ? skill.LineLength : 0f);
-        }
-
-        /// 전달된 런타임 입력값을 사용해 CastRepeatCount 결과값을 생성해 반환한다.
-        private static int CastRepeatCount(LineSkillDefinition skill, SkillExecutionData snapshot)
-        {
-            var baseCount = skill != null ? skill.CastRepeatCount : 1;
-            var bonus = snapshot != null ? snapshot.LineCastRepeatCountBonus : 0;
-            return Mathf.Max(1, baseCount + bonus);
-        }
-
-        /// 전달된 skill 값을 사용해 CastRepeatInterval 결과값을 생성해 반환한다.
-        private static float CastRepeatInterval(LineSkillDefinition skill)
-        {
-            return Mathf.Max(0f, skill != null ? skill.CastRepeatIntervalSeconds : 0f);
-        }
-
-        /// 전달된 런타임 입력값을 사용해 Duration 결과값을 생성해 반환한다.
-        private static float Duration(LineSkillDefinition skill, SkillExecutionData snapshot)
-        {
-            var timing = skill != null ? skill.Timing : null;
-            var duration = timing != null && timing.ActiveDuration > 0f
-                ? timing.ActiveDuration
-                : TickInterval(skill, snapshot);
-            if (snapshot != null)
-            {
-                duration = duration * Mathf.Max(0f, snapshot.DurationMultiplier) + snapshot.DurationBonus;
-            }
-
-            return Mathf.Max(0.05f, duration);
-        }
-
-        /// 전달된 런타임 입력값을 사용해 LineWidth 결과값을 생성해 반환한다.
-        private static float LineWidth(LineSkillDefinition skill, SkillExecutionData snapshot)
-        {
-            var width = skill != null ? skill.LineWidth : 0f;
-            if (snapshot != null)
-            {
-                width *= LineVisualWidthScale(snapshot);
-            }
-
-            return Mathf.Max(0.1f, width);
-        }
-
-        /// 전달된 런타임 입력값을 사용해 KnockbackDistance 결과값을 생성해 반환한다.
-        private static float KnockbackDistance(LineSkillDefinition skill, SkillExecutionData snapshot)
-        {
-            var distance = skill != null ? Mathf.Max(0f, skill.KnockbackDistance) : 0f;
-            if (snapshot != null)
-            {
-                distance *= Mathf.Max(0f, snapshot.KnockbackDistanceMultiplier);
-            }
-
-            return Mathf.Max(0f, distance);
-        }
-
-        /// 전달된 snapshot 값을 사용해 LineVisualWidthScale 결과값을 생성해 반환한다.
-        private static float LineVisualWidthScale(SkillExecutionData snapshot)
-        {
-            return snapshot != null
-                ? Mathf.Max(0.01f, 1f + snapshot.BeamWidthBonus)
-                : 1f;
-        }
-
-        /// 전달된 런타임 입력값을 사용해 Interval를 경과 시간 기준으로 갱신한다.
-        private static float TickInterval(LineSkillDefinition skill, SkillExecutionData snapshot)
-        {
-            var interval = TickInterval(skill);
-            if (snapshot != null)
-            {
-                interval *= Mathf.Max(0.05f, snapshot.ShotIntervalMultiplier);
-            }
-
-            return Mathf.Max(0.05f, interval);
-        }
-
-        /// 전달된 skill 값을 사용해 Interval를 경과 시간 기준으로 갱신한다.
-        private static float TickInterval(LineSkillDefinition skill)
-        {
-            var timing = skill != null ? skill.Timing : null;
-            return timing != null && timing.TickInterval > 0f
-                ? timing.TickInterval
-                : 0.1f;
         }
 
     }
