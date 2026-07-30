@@ -796,6 +796,55 @@ namespace Pakuri.InGame
             });
             return resolved;
         }
+
+        internal static IReadOnlyList<CombatUnitEntry> BuffTargets(
+            SkillExecutionContext context,
+            SkillTargetSide targetMode,
+            bool useConfiguredTargeting,
+            SkillTargetingSpec targeting)
+        {
+            if (context == null)
+            {
+                return Array.Empty<CombatUnitEntry>();
+            }
+            if (!useConfiguredTargeting)
+            {
+                if (targetMode == SkillTargetSide.Self)
+                {
+                    return context.CasterEntry != null
+                        ? new[] { context.CasterEntry }
+                        : Array.Empty<CombatUnitEntry>();
+                }
+                return TargetList(
+                    context.CasterEntry,
+                    context.Roster,
+                    new SkillTargetingSpec
+                    {
+                        TargetSide = SkillTargetSide.AllAllies,
+                        Selection = SkillTargetSelection.Owner,
+                        Shape = SkillTargetShape.Battlefield,
+                        CoverAll = true
+                    });
+            }
+
+            var targets = OrderedTargets(context, targeting);
+            var caster = context.CasterEntry;
+            if (caster == null
+                || caster.Transform == null
+                || targeting == null
+                || targeting.Radius <= 0f)
+            {
+                return targets;
+            }
+
+            var radiusSquared = targeting.Radius * targeting.Radius;
+            targets.RemoveAll(target =>
+                target == null
+                || target.Transform == null
+                || ((Vector2)target.Transform.position
+                    - (Vector2)caster.Transform.position).sqrMagnitude > radiusSquared);
+            return targets;
+        }
     }
 }
 

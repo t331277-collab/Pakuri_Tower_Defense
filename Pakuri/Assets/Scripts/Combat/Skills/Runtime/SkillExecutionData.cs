@@ -372,6 +372,24 @@ public class SkillExecutionData
 
 	internal float PreparedBossDamageMultiplier { get; set; } = 1f;
 
+	internal BuffEffectKind PreparedBuffEffectKind { get; set; }
+
+	internal IReadOnlyList<CombatUnitEntry> PreparedTargets { get; set; } = Array.Empty<CombatUnitEntry>();
+
+	internal float PreparedHealAmount { get; set; }
+
+	internal float PreparedShieldAmount { get; set; }
+
+	internal StatusRuntimeData PreparedShieldStatusData { get; set; }
+
+	internal bool PreparedAttachVisualToCaster { get; set; }
+
+	internal float PreparedChargeTargetMaxHealthRatio { get; set; }
+
+	internal float PreparedChargeRampSeconds { get; set; }
+
+	internal float PreparedChargeMaxMoveSpeedMultiplier { get; set; } = 1f;
+
 	public IReadOnlyList<CastConditionOp> CastConditionOps => castConditionOps;
 
 	public IReadOnlyList<DamageModifierOp> DamageModifierOps => damageModifierOps;

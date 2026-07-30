@@ -3,56 +3,50 @@
  * 책임: 상태·회복·보호막·돌진 효과를 하나의 버프 실행 경로로 전달한다.
  */
 
-using System;
-using System.Collections.Generic;
 using Pakuri.Combat;
-using Pakuri.Data;
 using UnityEngine;
 
 namespace Pakuri.InGame
 {
 
-    /// BuffSkillDefinition의 효과 종류에 맞는 런타임 동작을 실행한다.
+    /// 시전 시 확정된 버프 효과 종류에 맞는 런타임 동작을 실행한다.
     internal static class BuffSkillExecutor
     {
 
         /// 설정된 버프 효과를 실행한다.
         internal static bool Execute(
             SkillExecutionContext context,
-            SkillExecutionData snapshot,
-            BuffSkillDefinition skill)
+            SkillExecutionData snapshot)
         {
-            switch (skill.EffectKind)
+            switch (snapshot.PreparedBuffEffectKind)
             {
                 case BuffEffectKind.Heal:
-                    return ExecuteHeal(context, snapshot, skill);
+                    return ExecuteHeal(context, snapshot);
                 case BuffEffectKind.Shield:
-                    return ExecuteShield(context, snapshot, skill);
+                    return ExecuteShield(context, snapshot);
                 case BuffEffectKind.Charge:
                     return ExecuteCharge(context);
                 default:
-                    return ExecuteStatus(context, snapshot, skill);
+                    return ExecuteStatus(context, snapshot);
             }
         }
 
         private static bool ExecuteStatus(
             SkillExecutionContext context,
-            SkillExecutionData snapshot,
-            BuffSkillDefinition skill)
+            SkillExecutionData snapshot)
         {
-            var statusSpec = SkillStatus.StatusSpec(skill.AttachedStatus, snapshot);
+            var statusSpec = snapshot.PreparedStatus;
             if (statusSpec == null)
             {
                 return false;
             }
 
-            var targets = Targets(context, skill);
             var routed = false;
             var castCommitted = false;
             var casterVisualSpawned = false;
-            for (var i = 0; i < targets.Count; i++)
+            for (var i = 0; i < snapshot.PreparedTargets.Count; i++)
             {
-                var target = targets[i];
+                var target = snapshot.PreparedTargets[i];
                 if (!IsValid(target))
                 {
                     continue;
@@ -71,7 +65,6 @@ namespace Pakuri.InGame
                 SpawnVisual(
                     context,
                     snapshot,
-                    skill,
                     target,
                     "RuntimeBuffVisual",
                     statusSpec.DurationSeconds,
@@ -84,33 +77,21 @@ namespace Pakuri.InGame
 
         private static bool ExecuteHeal(
             SkillExecutionContext context,
-            SkillExecutionData snapshot,
-            BuffSkillDefinition skill)
+            SkillExecutionData snapshot)
         {
-            var targets = SkillTargeting.OrderedTargets(context, skill.Targeting);
-            var target = targets.Count > 0 ? targets[0] : null;
+            var target = snapshot.PreparedTargets.Count > 0
+                ? snapshot.PreparedTargets[0]
+                : null;
             if (!IsValid(target))
             {
                 return false;
             }
 
-            var healing = skill.Healing;
-            var attack = context.Caster.Stats.AttackPower
-                * StatusCombatRules.AttackPowerMultiplier(context.Caster);
-            var spell = context.Caster.Stats.SpellPower
-                * StatusCombatRules.SpellPowerMultiplier(context.Caster);
-            var amount = healing.BaseDamage
-                + attack * healing.AttackPowerCoefficient
-                + spell * healing.SpellPowerCoefficient;
-            amount = Mathf.Max(0f, amount)
-                * context.Caster.SkillState.PassiveHealingMultiplier();
-
-            context.CombatManager.Heal(target.Model, amount);
+            context.CombatManager.Heal(target.Model, snapshot.PreparedHealAmount);
             var casterVisualSpawned = false;
             SpawnVisual(
                 context,
                 snapshot,
-                skill,
                 target,
                 "RuntimeSupportVisual",
                 0.8f,
@@ -120,55 +101,18 @@ namespace Pakuri.InGame
 
         private static bool ExecuteShield(
             SkillExecutionContext context,
-            SkillExecutionData snapshot,
-            BuffSkillDefinition skill)
+            SkillExecutionData snapshot)
         {
-            var shieldStat = context.Caster.Stats.SpellPower
-                * StatusCombatRules.SpellPowerMultiplier(context.Caster);
-            if (skill.ShieldStatSource == StatSource.Attack)
-            {
-                shieldStat = context.Caster.Stats.AttackPower
-                    * StatusCombatRules.AttackPowerMultiplier(context.Caster);
-            }
-
-            var shield = Mathf.Max(0f, skill.ShieldBase + shieldStat * skill.ShieldCoefficient);
-            if (snapshot != null)
-            {
-                if (context.ApplyDamageMultiplierToShield)
-                {
-                    shield *= Mathf.Max(0f, snapshot.DamageMultiplier);
-                }
-                shield *= Mathf.Max(0f, snapshot.ShieldAmountMultiplier);
-            }
-
-            var duration = skill.ShieldDuration;
-            if (duration <= 0f && skill.ShieldStatus != null)
-            {
-                duration = skill.ShieldStatus.Duration;
-            }
-            if (snapshot != null
-                && (!Mathf.Approximately(snapshot.DurationMultiplier, 1f)
-                    || !Mathf.Approximately(snapshot.DurationBonus, 0f)))
-            {
-                duration = duration * Mathf.Max(0f, snapshot.DurationMultiplier)
-                    + snapshot.DurationBonus;
-            }
-
-            var statusData = SkillStatus.StatusData(
-                skill.ShieldStatus,
-                StatusEffectKind.Shield,
-                snapshot);
-            if (statusData == null || duration <= 0f)
+            if (snapshot.PreparedShieldStatusData == null || snapshot.PreparedDuration <= 0f)
             {
                 return false;
             }
 
-            var targets = Targets(context, skill);
             var routed = false;
             var casterVisualSpawned = false;
-            for (var i = 0; i < targets.Count; i++)
+            for (var i = 0; i < snapshot.PreparedTargets.Count; i++)
             {
-                var target = targets[i];
+                var target = snapshot.PreparedTargets[i];
                 if (!IsValid(target))
                 {
                     continue;
@@ -176,9 +120,9 @@ namespace Pakuri.InGame
 
                 context.CombatManager.ApplyShieldStatus(
                     target.Model,
-                    statusData,
-                    Mathf.Max(0f, shield),
-                    duration,
+                    snapshot.PreparedShieldStatusData,
+                    snapshot.PreparedShieldAmount,
+                    snapshot.PreparedDuration,
                     1,
                     0,
                     false,
@@ -187,10 +131,9 @@ namespace Pakuri.InGame
                 SpawnVisual(
                     context,
                     snapshot,
-                    skill,
                     target,
                     "RuntimeShieldVisual",
-                    duration,
+                    snapshot.PreparedDuration,
                     ref casterVisualSpawned);
                 routed = true;
             }
@@ -210,12 +153,12 @@ namespace Pakuri.InGame
             CombatUnitEntry target,
             SkillUseState runtime)
         {
-            var skill = runtime != null ? runtime.Data as BuffSkillDefinition : null;
+            var snapshot = runtime != null ? runtime.ActiveExecutionData : null;
             if (combatManager == null
                 || caster == null
                 || !IsValid(target)
-                || skill == null
-                || skill.EffectKind != BuffEffectKind.Charge)
+                || snapshot == null
+                || snapshot.PreparedBuffEffectKind != BuffEffectKind.Charge)
             {
                 return false;
             }
@@ -225,13 +168,13 @@ namespace Pakuri.InGame
                 : 0f;
             var damageResult = combatManager.ApplyDamage(
                 target.Model,
-                maxHealth * Mathf.Max(0f, skill.ChargeTargetMaxHealthRatio),
-                skill.Element,
+                maxHealth * snapshot.PreparedChargeTargetMaxHealthRatio,
+                snapshot.PreparedDamageAttribute,
                 caster,
                 true,
-                sourceSkillId: skill.SkillId);
+                sourceSkillId: snapshot.SkillId);
 
-            var statusSpec = SkillStatus.StatusSpec(skill.AttachedStatus, null);
+            var statusSpec = snapshot.PreparedStatus;
             if (!damageResult.IsDead && statusSpec != null)
             {
                 StatusCombatRules.ApplyStatus(combatManager, target.Model, statusSpec, caster);
@@ -239,15 +182,6 @@ namespace Pakuri.InGame
 
             runtime.StopActive();
             return true;
-        }
-
-        private static IReadOnlyList<CombatUnitEntry> Targets(
-            SkillExecutionContext context,
-            BuffSkillDefinition skill)
-        {
-            return skill.UseConfiguredTargeting
-                ? ConfiguredTargets(context, skill.Targeting)
-                : BuffTargets(context.CasterEntry, context.Roster, skill.Target);
         }
 
         private static bool IsValid(CombatUnitEntry target)
@@ -258,18 +192,17 @@ namespace Pakuri.InGame
         private static void SpawnVisual(
             SkillExecutionContext context,
             SkillExecutionData snapshot,
-            BuffSkillDefinition skill,
             CombatUnitEntry target,
             string namePrefix,
             float duration,
             ref bool casterVisualSpawned)
         {
-            if (skill.AttachVisualToCaster && casterVisualSpawned)
+            if (snapshot.PreparedAttachVisualToCaster && casterVisualSpawned)
             {
                 return;
             }
 
-            var visualTarget = skill.AttachVisualToCaster
+            var visualTarget = snapshot.PreparedAttachVisualToCaster
                 ? context.CasterEntry.Transform
                 : target.Transform;
             var effects = context.CombatManager.Effects;
@@ -278,15 +211,12 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var prefab = snapshot != null && snapshot.SkillEffectPrefab != null
-                ? snapshot.SkillEffectPrefab
-                : skill.SkillEffectPrefab;
-            var visualName = string.IsNullOrWhiteSpace(skill.SkillId)
+            var visualName = string.IsNullOrWhiteSpace(snapshot.SkillId)
                 ? namePrefix
-                : namePrefix + "_" + skill.SkillId;
+                : namePrefix + "_" + snapshot.SkillId;
             var instance = effects.CreateEffect(new EffectCreateRequest(
-                skill.RuntimeVisual,
-                prefab,
+                snapshot.PreparedRuntimeVisual,
+                snapshot.PreparedSkillEffectPrefab,
                 visualName,
                 visualTarget.position,
                 Quaternion.identity,
@@ -298,55 +228,8 @@ namespace Pakuri.InGame
             if (instance != null)
             {
                 BuffSkillActor.Attach(instance).InitializeTimed(effects, duration);
-                casterVisualSpawned = skill.AttachVisualToCaster;
+                casterVisualSpawned = snapshot.PreparedAttachVisualToCaster;
             }
-        }
-
-        internal static IReadOnlyList<CombatUnitEntry> BuffTargets(
-            CombatUnitEntry caster,
-            UnitSpawnManager roster,
-            SkillTargetSide targetMode)
-        {
-            if (targetMode == SkillTargetSide.Self)
-            {
-                return caster != null
-                    ? new[] { caster }
-                    : Array.Empty<CombatUnitEntry>();
-            }
-
-            return SkillTargeting.TargetList(
-                caster,
-                roster,
-                new SkillTargetingSpec
-                {
-                    TargetSide = SkillTargetSide.AllAllies,
-                    Selection = SkillTargetSelection.Owner,
-                    Shape = SkillTargetShape.Battlefield,
-                    CoverAll = true
-                });
-        }
-
-        internal static IReadOnlyList<CombatUnitEntry> ConfiguredTargets(
-            SkillExecutionContext context,
-            SkillTargetingSpec targeting)
-        {
-            var targets = SkillTargeting.OrderedTargets(context, targeting);
-            var caster = context != null ? context.CasterEntry : null;
-            if (caster == null
-                || caster.Transform == null
-                || targeting == null
-                || targeting.Radius <= 0f)
-            {
-                return targets;
-            }
-
-            var radiusSq = targeting.Radius * targeting.Radius;
-            targets.RemoveAll(target =>
-                target == null
-                || target.Transform == null
-                || ((Vector2)target.Transform.position
-                    - (Vector2)caster.Transform.position).sqrMagnitude > radiusSq);
-            return targets;
         }
     }
 }

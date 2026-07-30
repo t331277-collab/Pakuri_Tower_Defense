@@ -496,7 +496,7 @@ namespace Pakuri.InGame
 
             if (skillData is BuffSkillDefinition buff)
             {
-                return BuffSkillExecutor.Execute(context, snapshot, buff);
+                return BuffSkillExecutor.Execute(context, snapshot);
             }
 
             throw new InvalidOperationException("Unsupported compiled skill data: " + skillData.GetType().Name);
@@ -527,6 +527,10 @@ namespace Pakuri.InGame
             if (definition is SingleSkillDefinition single)
             {
                 return PrepareSingleExecutionData(context, snapshot, single);
+            }
+            if (definition is BuffSkillDefinition buff)
+            {
+                return PrepareBuffExecutionData(context, snapshot, buff);
             }
 
             return true;
@@ -942,6 +946,76 @@ namespace Pakuri.InGame
             return centers.Count > 0 || !usesResolvedDeployments;
         }
 
+        private static bool PrepareBuffExecutionData(
+            SkillExecutionContext context,
+            SkillExecutionData snapshot,
+            BuffSkillDefinition skill)
+        {
+            snapshot.PreparedBuffEffectKind = skill.EffectKind;
+            snapshot.PreparedTargeting = skill.Targeting;
+            snapshot.PreparedRuntimeVisual = skill.RuntimeVisual;
+            snapshot.PreparedDamageAttribute = skill.Element;
+            snapshot.PreparedTargets = skill.EffectKind == BuffEffectKind.Heal
+                ? SkillTargeting.OrderedTargets(context, skill.Targeting)
+                : SkillTargeting.BuffTargets(
+                    context,
+                    skill.Target,
+                    skill.UseConfiguredTargeting,
+                    skill.Targeting);
+            snapshot.PreparedStatus = SkillStatus.StatusSpec(skill.AttachedStatus, snapshot);
+            snapshot.PreparedSkillEffectPrefab = snapshot.SkillEffectPrefab != null
+                ? snapshot.SkillEffectPrefab
+                : skill.SkillEffectPrefab;
+            snapshot.PreparedAttachVisualToCaster = skill.AttachVisualToCaster;
+
+            var healing = skill.Healing;
+            if (healing != null)
+            {
+                var attack = context.Caster.Stats.AttackPower
+                    * StatusCombatRules.AttackPowerMultiplier(context.Caster);
+                var spell = context.Caster.Stats.SpellPower
+                    * StatusCombatRules.SpellPowerMultiplier(context.Caster);
+                snapshot.PreparedHealAmount = Mathf.Max(
+                    0f,
+                    healing.BaseDamage
+                    + attack * healing.AttackPowerCoefficient
+                    + spell * healing.SpellPowerCoefficient)
+                    * context.Caster.SkillState.PassiveHealingMultiplier();
+            }
+
+            var shieldStat = context.Caster.Stats.SpellPower
+                * StatusCombatRules.SpellPowerMultiplier(context.Caster);
+            if (skill.ShieldStatSource == StatSource.Attack)
+            {
+                shieldStat = context.Caster.Stats.AttackPower
+                    * StatusCombatRules.AttackPowerMultiplier(context.Caster);
+            }
+            var shield = Mathf.Max(0f, skill.ShieldBase + shieldStat * skill.ShieldCoefficient);
+            if (context.ApplyDamageMultiplierToShield)
+            {
+                shield *= Mathf.Max(0f, snapshot.DamageMultiplier);
+            }
+            snapshot.PreparedShieldAmount = shield * Mathf.Max(0f, snapshot.ShieldAmountMultiplier);
+            var shieldDuration = skill.ShieldDuration > 0f
+                ? skill.ShieldDuration
+                : skill.ShieldStatus != null
+                    ? skill.ShieldStatus.Duration
+                    : 0f;
+            snapshot.PreparedDuration = shieldDuration * Mathf.Max(0f, snapshot.DurationMultiplier)
+                + snapshot.DurationBonus;
+            snapshot.PreparedShieldStatusData = SkillStatus.StatusData(
+                skill.ShieldStatus,
+                StatusEffectKind.Shield,
+                snapshot);
+            snapshot.PreparedChargeTargetMaxHealthRatio =
+                Mathf.Max(0f, skill.ChargeTargetMaxHealthRatio);
+            snapshot.PreparedChargeRampSeconds = Mathf.Max(0f, skill.ChargeRampSeconds);
+            snapshot.PreparedChargeMaxMoveSpeedMultiplier =
+                Mathf.Max(1f, skill.ChargeMaxMoveSpeedMultiplier);
+            return skill.EffectKind == BuffEffectKind.Charge
+                || snapshot.PreparedTargets.Count > 0;
+        }
+
         private static Vector2 ProjectileSpreadDirection(Vector2 direction, int index, int count)
         {
             if (count <= 1)
@@ -1097,6 +1171,7 @@ namespace Pakuri.InGame
         public int MagazineRemaining { get; private set; }
         public int ProjectileLaunchCount { get; private set; }
         public int SkillHitCount { get; private set; }
+        internal SkillExecutionData ActiveExecutionData { get; private set; }
 
         private int effectiveMaxMagazineSize;
         private int effectiveBurstProjectileCount;
@@ -1139,6 +1214,7 @@ namespace Pakuri.InGame
             queuedBurstShotsRemaining = 0;
             ProjectileLaunchCount = 0;
             SkillHitCount = 0;
+            ActiveExecutionData = null;
             consecutiveHitTargetUnitId = string.Empty;
             consecutiveHitRepeatCount = 0;
         }
@@ -1294,6 +1370,7 @@ namespace Pakuri.InGame
                     BeginRecoveryIfNeeded();
                 }
 
+                ActiveExecutionData = snapshot;
                 return true;
             }
 
@@ -1321,6 +1398,7 @@ namespace Pakuri.InGame
                 BeginRecoveryIfNeeded();
             }
 
+            ActiveExecutionData = snapshot;
             return true;
         }
 
@@ -1328,6 +1406,7 @@ namespace Pakuri.InGame
         public void StopActive()
         {
             ActiveDurationRemaining = 0f;
+            ActiveExecutionData = null;
         }
 
         /// TickReady 조건 충족 여부를 반환한다.

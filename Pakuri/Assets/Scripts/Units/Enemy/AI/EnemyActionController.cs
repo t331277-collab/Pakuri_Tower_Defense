@@ -192,14 +192,22 @@ namespace Pakuri.InGame
         /// Charge 이동 배율을 활성 경과 시간에 맞춰 계산한다.
         private static float ChargeSpeedMultiplier(SkillUseState runtime)
         {
-            var skill = (BuffSkillDefinition)runtime.Data;
-            var elapsed = Mathf.Max(0f, skill.Timing.ActiveDuration - runtime.ActiveDurationRemaining);
-            var ramp = skill.ChargeRampSeconds > 0f
-                ? Mathf.Clamp01(elapsed / skill.ChargeRampSeconds)
+            var snapshot = runtime.ActiveExecutionData;
+            if (snapshot == null)
+            {
+                return 1f;
+            }
+
+            var activeDuration = runtime.Data != null && runtime.Data.Timing != null
+                ? runtime.Data.Timing.ActiveDuration
+                : 0f;
+            var elapsed = Mathf.Max(0f, activeDuration - runtime.ActiveDurationRemaining);
+            var ramp = snapshot.PreparedChargeRampSeconds > 0f
+                ? Mathf.Clamp01(elapsed / snapshot.PreparedChargeRampSeconds)
                 : 1f;
             return Mathf.Lerp(
                 1f,
-                Mathf.Max(1f, skill.ChargeMaxMoveSpeedMultiplier),
+                snapshot.PreparedChargeMaxMoveSpeedMultiplier,
                 ramp);
         }
 
