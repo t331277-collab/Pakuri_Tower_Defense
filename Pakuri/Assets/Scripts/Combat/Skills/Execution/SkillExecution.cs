@@ -969,7 +969,7 @@ namespace Pakuri.InGame
             snapshot.PreparedAttachVisualToCaster = skill.AttachVisualToCaster;
 
             var healing = skill.Healing;
-            if (healing != null)
+            if (skill.EffectKind == BuffEffectKind.Heal && healing != null)
             {
                 var attack = context.Caster.Stats.AttackPower
                     * StatusCombatRules.AttackPowerMultiplier(context.Caster);
@@ -983,30 +983,35 @@ namespace Pakuri.InGame
                     * context.Caster.SkillState.PassiveHealingMultiplier();
             }
 
-            var shieldStat = context.Caster.Stats.SpellPower
-                * StatusCombatRules.SpellPowerMultiplier(context.Caster);
-            if (skill.ShieldStatSource == StatSource.Attack)
+            if (skill.EffectKind == BuffEffectKind.Shield)
             {
-                shieldStat = context.Caster.Stats.AttackPower
-                    * StatusCombatRules.AttackPowerMultiplier(context.Caster);
+                var shieldStat = context.Caster.Stats.SpellPower
+                    * StatusCombatRules.SpellPowerMultiplier(context.Caster);
+                if (skill.ShieldStatSource == StatSource.Attack)
+                {
+                    shieldStat = context.Caster.Stats.AttackPower
+                        * StatusCombatRules.AttackPowerMultiplier(context.Caster);
+                }
+                var shield = Mathf.Max(0f, skill.ShieldBase + shieldStat * skill.ShieldCoefficient);
+                if (context.ApplyDamageMultiplierToShield)
+                {
+                    shield *= Mathf.Max(0f, snapshot.DamageMultiplier);
+                }
+                snapshot.PreparedShieldAmount =
+                    shield * Mathf.Max(0f, snapshot.ShieldAmountMultiplier);
+                var shieldDuration = skill.ShieldDuration > 0f
+                    ? skill.ShieldDuration
+                    : skill.ShieldStatus != null
+                        ? skill.ShieldStatus.Duration
+                        : 0f;
+                snapshot.PreparedDuration =
+                    shieldDuration * Mathf.Max(0f, snapshot.DurationMultiplier)
+                    + snapshot.DurationBonus;
+                snapshot.PreparedShieldStatusData = SkillStatus.StatusData(
+                    skill.ShieldStatus,
+                    StatusEffectKind.Shield,
+                    snapshot);
             }
-            var shield = Mathf.Max(0f, skill.ShieldBase + shieldStat * skill.ShieldCoefficient);
-            if (context.ApplyDamageMultiplierToShield)
-            {
-                shield *= Mathf.Max(0f, snapshot.DamageMultiplier);
-            }
-            snapshot.PreparedShieldAmount = shield * Mathf.Max(0f, snapshot.ShieldAmountMultiplier);
-            var shieldDuration = skill.ShieldDuration > 0f
-                ? skill.ShieldDuration
-                : skill.ShieldStatus != null
-                    ? skill.ShieldStatus.Duration
-                    : 0f;
-            snapshot.PreparedDuration = shieldDuration * Mathf.Max(0f, snapshot.DurationMultiplier)
-                + snapshot.DurationBonus;
-            snapshot.PreparedShieldStatusData = SkillStatus.StatusData(
-                skill.ShieldStatus,
-                StatusEffectKind.Shield,
-                snapshot);
             snapshot.PreparedChargeTargetMaxHealthRatio =
                 Mathf.Max(0f, skill.ChargeTargetMaxHealthRatio);
             snapshot.PreparedChargeRampSeconds = Mathf.Max(0f, skill.ChargeRampSeconds);
