@@ -70,6 +70,87 @@ namespace Pakuri.InGame
             Physics2D.SyncTransforms();
         }
 
+        public static void ConfigureLineEffect(
+            GameObject instance,
+            Vector2 origin,
+            Vector2 direction,
+            float length,
+            float width)
+        {
+            instance.transform.position = origin + direction * (length * 0.5f);
+            instance.transform.rotation = Rotation(direction);
+            var renderer = instance.GetComponent<SpriteRenderer>();
+            if (renderer == null || renderer.sprite == null)
+            {
+                return;
+            }
+
+            var size = renderer.sprite.bounds.size;
+            var scale = instance.transform.localScale;
+            if (size.x > 0.0001f)
+            {
+                scale.x = Mathf.Sign(scale.x == 0f ? 1f : scale.x) * (length / size.x);
+            }
+            if (size.y > 0.0001f)
+            {
+                scale.y = Mathf.Sign(scale.y == 0f ? 1f : scale.y) * (width / size.y);
+            }
+            instance.transform.localScale = scale;
+        }
+
+        public static BoxCollider2D ConfigureLineHitbox(
+            GameObject instance,
+            float length,
+            float width)
+        {
+            var collider = instance.GetComponent<BoxCollider2D>();
+            if (collider == null)
+            {
+                collider = instance.AddComponent<BoxCollider2D>();
+            }
+
+            var scale = instance.transform.lossyScale;
+            collider.size = new Vector2(
+                length / Mathf.Max(0.0001f, Mathf.Abs(scale.x)),
+                width / Mathf.Max(0.0001f, Mathf.Abs(scale.y)));
+            collider.offset = Vector2.zero;
+            collider.isTrigger = true;
+            return collider;
+        }
+
+        public static void ConfigureZoneEffect(
+            GameObject instance,
+            Vector2 center,
+            float radius,
+            bool coverAll,
+            bool usePrefabHitbox)
+        {
+            instance.transform.position = center;
+            if (usePrefabHitbox || coverAll || radius <= 0f)
+            {
+                return;
+            }
+
+            var renderer = instance.GetComponent<SpriteRenderer>();
+            if (renderer == null || renderer.sprite == null)
+            {
+                return;
+            }
+
+            var size = renderer.sprite.bounds.size;
+            var scale = instance.transform.localScale;
+            var diameter = radius * 2f;
+            if (size.x > 0.0001f)
+            {
+                scale.x = Mathf.Sign(scale.x == 0f ? 1f : scale.x) * (diameter / size.x);
+            }
+            if (size.y > 0.0001f)
+            {
+                scale.y = Mathf.Sign(scale.y == 0f ? 1f : scale.y) * (diameter / size.y);
+            }
+            instance.transform.localScale = scale;
+        }
+
         /// 전달된 런타임 입력값을 사용해 ConfigureHitbox 작업을 수행한다.
         private static void ConfigureHitbox(
             GameObject instance,

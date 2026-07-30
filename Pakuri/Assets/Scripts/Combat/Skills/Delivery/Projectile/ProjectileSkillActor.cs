@@ -662,7 +662,7 @@ namespace Pakuri.InGame
 
             if (hasImpactArea)
             {
-                ZoneSkillActor.ApplyAreaTick(
+                SkillExecutionRuleResolver.ApplyAreaHits(
                     combatManager,
                     combatManager.Units != null ? combatManager.Units.Find(owner) : null,
                     combatManager.Units,
@@ -738,44 +738,6 @@ namespace Pakuri.InGame
             hitboxColliders = GetComponentsInChildren<Collider2D>();
         }
 
-        /// 전달된 direction 값을 사용해 Rotation 결과값을 생성해 반환한다.
-        private static Quaternion Rotation(Vector3 direction)
-        {
-            if (direction.sqrMagnitude <= 0.0001f)
-            {
-                return Quaternion.identity;
-            }
-
-            var angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-            return Quaternion.Euler(0f, 0f, angle);
-        }
-    }
-
-    /// ProjectileStatusHitSpec을 설명하는 설정값을 묶는다.
-    public class ProjectileStatusHitSpec
-    {
-        public bool Enabled;
-        public StatusEffectKind Kind;
-        public StatusRuntimeData StatusData;
-        public float Chance;
-        public int Stacks;
-        public float DurationSeconds;
-        public int MaxStacks;
-        public bool Permanent;
-        public bool RefreshDuration = true;
-        public StatusEffectKind ThresholdSourceStatusKind;
-        public int ThresholdSourceMinStacks;
-        public ProjectileStatusHitSpec ThresholdStatusSpec;
-    }
-
-    /// ProjectileBranchDamageSpec을 설명하는 설정값을 묶는다.
-    public class ProjectileBranchDamageSpec
-    {
-        public bool Enabled;
-        public float Chance;
-        public int Count;
-        public float DamageMultiplier = 1f;
-        public float SearchRadius;
     }
 
     /// Projectile 계열 판정과 적용을 소유한다.

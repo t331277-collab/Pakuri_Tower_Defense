@@ -102,8 +102,9 @@ namespace Pakuri.InGame
             critDamageBonus = criticalDamageBonus;
             appliedBaseStatusTargets.Clear();
 
-            ConfigureVisual();
-            ConfigureHitbox();
+            EffectVisualBuilder.ConfigureLineEffect(gameObject, origin, direction, length, width);
+            lineHitbox = EffectVisualBuilder.ConfigureLineHitbox(gameObject, length, width);
+            lineHitboxes[0] = lineHitbox;
             ApplyLineTick();
         }
 
@@ -239,50 +240,6 @@ namespace Pakuri.InGame
             {
                 effectManager.RemoveEffect(gameObject);
             }
-        }
-
-        /// ConfigureVisual 작업을 수행한다.
-        private void ConfigureVisual()
-        {
-            transform.position = origin + direction * (length * 0.5f);
-            var angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-            transform.rotation = Quaternion.Euler(0f, 0f, angle);
-
-            var spriteRenderer = GetComponent<SpriteRenderer>();
-            if (spriteRenderer != null && spriteRenderer.sprite != null)
-            {
-                var size = spriteRenderer.sprite.bounds.size;
-                var scale = transform.localScale;
-                if (size.x > 0.0001f)
-                {
-                    scale.x = Mathf.Sign(scale.x == 0f ? 1f : scale.x) * (length / size.x);
-                }
-
-                if (size.y > 0.0001f)
-                {
-                    scale.y = Mathf.Sign(scale.y == 0f ? 1f : scale.y) * (width / size.y);
-                }
-
-                transform.localScale = scale;
-            }
-        }
-
-        /// ConfigureHitbox 작업을 수행한다.
-        private void ConfigureHitbox()
-        {
-            lineHitbox = GetComponent<BoxCollider2D>();
-            if (lineHitbox == null)
-            {
-                lineHitbox = gameObject.AddComponent<BoxCollider2D>();
-            }
-
-            var scale = transform.lossyScale;
-            lineHitbox.size = new Vector2(
-                length / Mathf.Max(0.0001f, Mathf.Abs(scale.x)),
-                width / Mathf.Max(0.0001f, Mathf.Abs(scale.y)));
-            lineHitbox.offset = Vector2.zero;
-            lineHitbox.isTrigger = true;
-            lineHitboxes[0] = lineHitbox;
         }
 
         /// 전달된 런타임 입력값을 사용해 ApplyKnockback 작업을 시도하고 성공 여부를 반환한다.

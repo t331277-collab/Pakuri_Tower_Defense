@@ -17,6 +17,178 @@ namespace Pakuri.InGame
     {
         private static bool applyingHitEnhancement;
 
+        internal static bool ApplyAreaHits(
+            InGameCombatManager manager,
+            CombatUnitEntry sourceEntry,
+            UnitSpawnManager roster,
+            SkillTargetingSpec targeting,
+            Vector2 center,
+            float radius,
+            bool coverAll,
+            float damage,
+            DamageAttribute attribute,
+            ProjectileStatusHitSpec status,
+            UnitCombatState source,
+            string sourceSkillId,
+            SkillUseState runtime,
+            bool criticalAllowed,
+            float critChanceBonus,
+            float critDamageBonus,
+            int maxTargets,
+            SkillExecutionData executionData)
+        {
+            if (manager == null || sourceEntry == null || roster == null)
+            {
+                return false;
+            }
+
+            if (!coverAll && radius <= 0f)
+            {
+                var target = SkillTargeting.FindNearestTarget(sourceEntry, roster, targeting);
+                return ApplyResolvedHits(
+                    manager,
+                    sourceEntry,
+                    roster,
+                    target != null ? new[] { target } : Array.Empty<CombatUnitEntry>(),
+                    1,
+                    damage,
+                    attribute,
+                    status,
+                    source,
+                    sourceSkillId,
+                    runtime,
+                    criticalAllowed,
+                    critChanceBonus,
+                    critDamageBonus,
+                    executionData);
+            }
+
+            var candidates = SkillTargeting.TargetList(sourceEntry, roster, targeting);
+            var radiusSquared = Mathf.Max(0f, radius) * Mathf.Max(0f, radius);
+            var hitUnitIds = new HashSet<string>();
+            var eligibleTargets = new List<CombatUnitEntry>();
+            for (var i = 0; i < candidates.Count; i++)
+            {
+                var target = candidates[i];
+                if (target == null || !target.IsAlive || target.Model == null || target.Transform == null)
+                {
+                    continue;
+                }
+
+                var unitId = target.Model.Identity != null ? target.Model.Identity.UnitId : null;
+                if (!string.IsNullOrWhiteSpace(unitId) && !hitUnitIds.Add(unitId))
+                {
+                    continue;
+                }
+                if (!coverAll
+                    && ((Vector2)target.Transform.position - center).sqrMagnitude > radiusSquared)
+                {
+                    continue;
+                }
+
+                eligibleTargets.Add(target);
+            }
+
+            return ApplyResolvedHits(
+                manager,
+                sourceEntry,
+                roster,
+                eligibleTargets,
+                maxTargets,
+                damage,
+                attribute,
+                status,
+                source,
+                sourceSkillId,
+                runtime,
+                criticalAllowed,
+                critChanceBonus,
+                critDamageBonus,
+                executionData);
+        }
+
+        internal static bool ApplyResolvedHits(
+            InGameCombatManager manager,
+            CombatUnitEntry sourceEntry,
+            UnitSpawnManager roster,
+            IReadOnlyList<CombatUnitEntry> eligibleTargets,
+            int maxTargets,
+            float damage,
+            DamageAttribute attribute,
+            ProjectileStatusHitSpec status,
+            UnitCombatState source,
+            string sourceSkillId,
+            SkillUseState runtime,
+            bool criticalAllowed,
+            float critChanceBonus,
+            float critDamageBonus,
+            SkillExecutionData executionData)
+        {
+            if (manager == null || eligibleTargets == null || eligibleTargets.Count == 0)
+            {
+                return false;
+            }
+
+            var selectedTargets = new List<CombatUnitEntry>(eligibleTargets);
+            if (maxTargets > 0 && maxTargets < selectedTargets.Count)
+            {
+                for (var i = 0; i < maxTargets; i++)
+                {
+                    var randomIndex = UnityEngine.Random.Range(i, selectedTargets.Count);
+                    (selectedTargets[i], selectedTargets[randomIndex]) =
+                        (selectedTargets[randomIndex], selectedTargets[i]);
+                }
+                selectedTargets.RemoveRange(maxTargets, selectedTargets.Count - maxTargets);
+            }
+
+            var routed = false;
+            for (var i = 0; i < selectedTargets.Count; i++)
+            {
+                var target = selectedTargets[i];
+                if (target == null || !target.IsAlive || target.Model == null)
+                {
+                    continue;
+                }
+
+                var hitPosition = target.Transform != null
+                    ? (Vector2)target.Transform.position
+                    : Vector2.zero;
+                var resolvedDamage = Mathf.Max(0f, damage);
+                var finalDamageMultiplier = executionData != null
+                    ? Mathf.Max(0f, executionData.DamageMultiplier)
+                        * ConditionalDamageMultiplier(executionData, target.Model)
+                    : 1f;
+                var result = manager.ApplyDamage(
+                    target.Model,
+                    resolvedDamage,
+                    attribute,
+                    source,
+                    criticalAllowed,
+                    critChanceBonus,
+                    critDamageBonus,
+                    sourceSkillId,
+                    finalDamageMultiplier: finalDamageMultiplier);
+                if (!result.IsDead)
+                {
+                    StatusCombatRules.ApplyStatus(manager, target.Model, status, source);
+                }
+                ApplyHitEnhancements(
+                    manager,
+                    runtime != null ? roster : null,
+                    runtime,
+                    executionData,
+                    sourceEntry,
+                    source,
+                    sourceSkillId,
+                    target,
+                    hitPosition,
+                    resolvedDamage);
+                routed = true;
+            }
+
+            return routed;
+        }
+
         /// 적중 공통 후속 효과와 OnHit 생명주기를 한 경로에서 적용한다.
         internal static void ApplyHitEnhancements(
             InGameCombatManager manager,
@@ -272,7 +444,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                if (!SkillRequirement.HasSourceStatus(
+                if (!HasSourceStatus(
                     owner,
                     requirement.Value.Condition.StatusKind,
                     requirement.Value.Condition.MinimumStacks))
@@ -282,6 +454,26 @@ namespace Pakuri.InGame
             }
 
             return true;
+        }
+
+        private static bool HasSourceStatus(
+            UnitCombatState owner,
+            StatusEffectKind statusKind,
+            int minimumStacks)
+        {
+            if (statusKind == StatusEffectKind.None)
+            {
+                return true;
+            }
+            if (statusKind == StatusEffectKind.Shield)
+            {
+                return owner != null
+                    && owner.Resources != null
+                    && owner.Resources.CurrentShield > 0f;
+            }
+            return owner != null
+                && owner.Statuses != null
+                && owner.Statuses.GetStacks(statusKind) >= Mathf.Max(1, minimumStacks);
         }
 
         /// 전달된 런타임 입력값을 사용해 소유한 런타임 상태에 RequiredStacks가 있는지 반환한다.

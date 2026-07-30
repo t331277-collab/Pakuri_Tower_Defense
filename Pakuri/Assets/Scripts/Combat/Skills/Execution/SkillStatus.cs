@@ -10,6 +10,23 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
+/// 스킬 적중으로 적용할 확정 상태 효과 값.
+public class ProjectileStatusHitSpec
+{
+    public bool Enabled;
+    public StatusEffectKind Kind;
+    public StatusRuntimeData StatusData;
+    public float Chance;
+    public int Stacks;
+    public float DurationSeconds;
+    public int MaxStacks;
+    public bool Permanent;
+    public bool RefreshDuration = true;
+    public StatusEffectKind ThresholdSourceStatusKind;
+    public int ThresholdSourceMinStacks;
+    public ProjectileStatusHitSpec ThresholdStatusSpec;
+}
+
 /// 스킬에 정의된 상태 효과 작업을 확정된 전투 대상에게 적용한다.
 static class SkillStatus
 {

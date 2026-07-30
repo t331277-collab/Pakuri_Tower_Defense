@@ -847,38 +847,3 @@ namespace Pakuri.InGame
         }
     }
 }
-
-namespace Pakuri.InGame
-{
-
-    /// SkillRequirement가 소유하는 데이터와 동작을 캡슐화한다.
-    static class SkillRequirement
-    {
-
-        /// 전달된 런타임 입력값을 사용해 소유한 런타임 상태에 SourceStatus가 있는지 반환한다.
-        public static bool HasSourceStatus(UnitCombatState owner, StatusEffectKind statusKind, int minimumStacks)
-        {
-            if (statusKind == StatusEffectKind.None)
-            {
-                return true;
-            }
-
-            if (statusKind == StatusEffectKind.Shield)
-            {
-                return owner != null && owner.Resources != null && owner.Resources.CurrentShield > 0f;
-            }
-
-            return owner != null
-                && owner.Statuses != null
-                && owner.Statuses.GetStacks(statusKind) >= Mathf.Max(1, minimumStacks);
-        }
-
-        /// 전달된 런타임 입력값을 사용해 소유한 런타임 상태에 LearnedPassive가 있는지 반환한다.
-        private static bool HasLearnedPassive(UnitCombatState owner, string passiveId)
-        {
-            return owner != null
-                && owner.Skills != null
-                && owner.Skills.HasPassiveSkill(passiveId);
-        }
-    }
-}
