@@ -11,7 +11,7 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// <summary><c>UnitSpawnManager</c>가 담당하는 작업을 조정하고 공유 런타임 상태를 소유한다.</summary>
+    /// UnitSpawnManager가 담당하는 작업을 조정하고 공유 런타임 상태를 소유한다.
     public class UnitSpawnManager : MonoBehaviour
     {
         private const string ArielMonsterId = "ariel";
@@ -39,7 +39,7 @@ namespace Pakuri.InGame
         public IReadOnlyList<CombatUnitEntry> Enemies => unitRegistry.Enemies;
         public int EnemyCount => unitRegistry.EnemyCount;
 
-        /// <summary>전달된 <c>actor</c> 값을 사용해 <c>Nexus</c>를 소유 런타임 Registry에 등록한다.</summary>
+        /// 전달된 actor 값을 사용해 Nexus를 소유 런타임 Registry에 등록한다.
         public void RegisterNexus(NexusActor actor)
         {
             var model = unitStateFactory.CreateNexus(actor.MaxHealth);
@@ -47,7 +47,7 @@ namespace Pakuri.InGame
             RegisterUnit(model, actor, actor.transform);
         }
 
-        /// <summary><c>EnemyPrefabBinding</c>가 나타내는 런타임 값을 보관한다.</summary>
+        /// EnemyPrefabBinding가 나타내는 런타임 값을 보관한다.
         [Serializable]
         private class EnemyPrefabBinding
         {
@@ -58,7 +58,7 @@ namespace Pakuri.InGame
             public GameObject Prefab => prefab;
         }
 
-        /// <summary>전달된 <c>session</c> 값을 사용해 <c>SelectedPlayerUnit</c>를 런타임 씬 오브젝트로 생성하고 등록한다.</summary>
+        /// 전달된 session 값을 사용해 SelectedPlayerUnit를 런타임 씬 오브젝트로 생성하고 등록한다.
         public void SpawnSelectedPlayerUnit(RunSession session)
         {
             if (FindPlayerMonsterBySlot(0) != null)
@@ -72,7 +72,7 @@ namespace Pakuri.InGame
                 out _);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>SelectedPlayerUnit</c>를 생성한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 SelectedPlayerUnit를 생성한다.
         private GameObject CreateSelectedPlayerUnit(
             RunSession session,
             out UnitCombatState model,
@@ -91,7 +91,7 @@ namespace Pakuri.InGame
             return spawnedUnit;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ManifestedMonster</c>를 런타임 씬 오브젝트로 생성하고 등록한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ManifestedMonster를 런타임 씬 오브젝트로 생성하고 등록한다.
         public GameObject SpawnManifestedMonster(
             RunSession session,
             MonsterDefinition monster,
@@ -100,7 +100,7 @@ namespace Pakuri.InGame
             return CreateManifestedMonster(monster, session, partySlotIndex);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ManifestedMonster</c>를 생성한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ManifestedMonster를 생성한다.
         private GameObject CreateManifestedMonster(
             MonsterDefinition monster,
             RunSession activeSession,
@@ -124,14 +124,14 @@ namespace Pakuri.InGame
             return spawnedUnit;
         }
 
-        /// <summary>전달된 <c>session</c> 값을 사용해 <c>RestorePlayerPartyFromSession</c> 작업을 수행한다.</summary>
+        /// 전달된 session 값을 사용해 RestorePlayerPartyFromSession 작업을 수행한다.
         public void RestorePlayerPartyFromSession(RunSession session)
         {
             RestoreSelectedPlayerFromSession(session);
             RestoreAdditionalPlayersFromSession(session);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>EnemyById</c>를 런타임 씬 오브젝트로 생성하고 등록한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 EnemyById를 런타임 씬 오브젝트로 생성하고 등록한다.
         public GameObject SpawnEnemyById(
             string enemyId,
             int spawnIndex,
@@ -145,7 +145,7 @@ namespace Pakuri.InGame
             return SpawnEnemyUnit(prefab, enemyId, spawnIndex, spawnX, spawnYMin, spawnYMax, healthMultiplier, isBoss);
         }
 
-        /// <summary>전달된 <c>activeSession</c> 값을 사용해 <c>RestoreSelectedPlayerFromSession</c> 작업을 수행한다.</summary>
+        /// 전달된 activeSession 값을 사용해 RestoreSelectedPlayerFromSession 작업을 수행한다.
         private void RestoreSelectedPlayerFromSession(
             RunSession activeSession)
         {
@@ -167,7 +167,7 @@ namespace Pakuri.InGame
                 out _);
         }
 
-        /// <summary>전달된 <c>activeSession</c> 값을 사용해 <c>RestoreAdditionalPlayersFromSession</c> 작업을 수행한다.</summary>
+        /// 전달된 activeSession 값을 사용해 RestoreAdditionalPlayersFromSession 작업을 수행한다.
         private void RestoreAdditionalPlayersFromSession(RunSession activeSession)
         {
             for (var slotIndex = 1; slotIndex < activeSession.PartyMembers.Count; slotIndex++)
@@ -190,7 +190,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 <c>slotIndex</c> 값을 사용해 <c>PlayerMonsterBySlot</c>를 찾는다.</summary>
+        /// 전달된 slotIndex 값을 사용해 PlayerMonsterBySlot를 찾는다.
         public CombatUnitEntry FindPlayerMonsterBySlot(int slotIndex)
         {
             var players = Players;
@@ -209,25 +209,25 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /// <summary>전달된 <c>model</c> 값을 사용해 <c>요청값</c>를 찾는다.</summary>
+        /// 전달된 model 값을 사용해 요청값를 찾는다.
         public CombatUnitEntry Find(UnitCombatState model)
         {
             return unitRegistry.Find(model);
         }
 
-        /// <summary>전달된 <c>collider</c> 값을 사용해 <c>ByCollider</c>를 찾는다.</summary>
+        /// 전달된 collider 값을 사용해 ByCollider를 찾는다.
         public CombatUnitEntry FindByCollider(Collider2D collider)
         {
             return unitRegistry.FindByCollider(collider);
         }
 
-        /// <summary>전달된 <c>model</c> 값을 사용해 <c>Display</c>를 현재 런타임 모델을 기준으로 갱신한다.</summary>
+        /// 전달된 model 값을 사용해 Display를 현재 런타임 모델을 기준으로 갱신한다.
         public bool RefreshDisplay(UnitCombatState model)
         {
             return unitRegistry.RefreshDisplay(model);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Unit</c>를 소유 런타임 Registry에 등록한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Unit를 소유 런타임 Registry에 등록한다.
         private CombatUnitEntry RegisterUnit(
             UnitCombatState model,
             Component actor,
@@ -236,13 +236,13 @@ namespace Pakuri.InGame
             return unitRegistry.Register(model, actor, hitboxRoot);
         }
 
-        /// <summary>전달된 <c>model</c> 값을 사용해 <c>Unit</c>를 소유 런타임 Registry에서 등록 해제한다.</summary>
+        /// 전달된 model 값을 사용해 Unit를 소유 런타임 Registry에서 등록 해제한다.
         private bool UnregisterUnit(UnitCombatState model)
         {
             return unitRegistry.Unregister(model);
         }
 
-        /// <summary>전달된 <c>model</c> 값을 사용해 <c>DespawnUnit</c> 조건을 평가하고 결과를 반환한다.</summary>
+        /// 전달된 model 값을 사용해 DespawnUnit 조건을 평가하고 결과를 반환한다.
         internal bool DespawnUnit(UnitCombatState model)
         {
             var entry = Find(model);
@@ -256,7 +256,7 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /// <summary>전달된 <c>model</c> 값을 사용해 <c>DefeatUnit</c> 작업을 수행한다.</summary>
+        /// 전달된 model 값을 사용해 DefeatUnit 작업을 수행한다.
         internal void DefeatUnit(UnitCombatState model)
         {
             var entry = Find(model);
@@ -269,7 +269,7 @@ namespace Pakuri.InGame
             entry.HandleDefeat();
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ReviveExistingPlayerBySlot</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ReviveExistingPlayerBySlot 작업을 시도하고 성공 여부를 반환한다.
         private bool TryReviveExistingPlayerBySlot(
             RunSession activeSession,
             int slotIndex,
@@ -291,7 +291,7 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ExistingMonsterModelFromSession</c>를 현재 원본 상태와 동기화한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ExistingMonsterModelFromSession를 현재 원본 상태와 동기화한다.
         private void SyncExistingMonsterModelFromSession(
             RunSession activeSession,
             UnitCombatState model)
@@ -303,7 +303,7 @@ namespace Pakuri.InGame
             SkillExecution.RebuildLearnedSkillState(model);
         }
 
-        /// <summary>전달된 <c>slotIndex</c> 값을 사용해 <c>ExistingPlayerActorBySlot</c>를 찾는다.</summary>
+        /// 전달된 slotIndex 값을 사용해 ExistingPlayerActorBySlot를 찾는다.
         private static MonsterActor FindExistingPlayerActorBySlot(int slotIndex)
         {
 
@@ -330,7 +330,7 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /// <summary>전달된 <c>session</c> 값을 사용해 <c>SelectedModel</c>를 생성한다.</summary>
+        /// 전달된 session 값을 사용해 SelectedModel를 생성한다.
         private UnitCombatState CreateSelectedModel(RunSession session)
         {
             var monster = ResolveMonsterDefinition(session.SelectedMonsterId);
@@ -341,7 +341,7 @@ namespace Pakuri.InGame
             return model;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>EnemyUnit</c>를 런타임 씬 오브젝트로 생성하고 등록한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 EnemyUnit를 런타임 씬 오브젝트로 생성하고 등록한다.
         private GameObject SpawnEnemyUnit(
             GameObject prefab,
             string enemyId,
@@ -368,7 +368,7 @@ namespace Pakuri.InGame
             return spawnedUnit;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>EnemyModel</c>를 생성한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 EnemyModel를 생성한다.
         private EnemyCombatState CreateEnemyModel(string enemyId, int slotIndex, bool isBoss)
         {
             var enemy = ResolveEnemyDefinition(enemyId);
@@ -383,21 +383,21 @@ namespace Pakuri.InGame
             return model;
         }
 
-        /// <summary>전달된 <c>monsterId</c> 값을 사용해 <c>MonsterDefinition</c>를 결정한다.</summary>
+        /// 전달된 monsterId 값을 사용해 MonsterDefinition를 결정한다.
         private MonsterDefinition ResolveMonsterDefinition(string monsterId)
         {
             return GameDataLoader.CurrentCatalog.GetData<MonsterDefinition>(monsterId)
                 ?? throw new InvalidOperationException($"Monster data '{monsterId}' is required.");
         }
 
-        /// <summary>전달된 <c>enemyId</c> 값을 사용해 <c>EnemyDefinition</c>를 결정한다.</summary>
+        /// 전달된 enemyId 값을 사용해 EnemyDefinition를 결정한다.
         private EnemyDefinition ResolveEnemyDefinition(string enemyId)
         {
             return GameDataLoader.CurrentCatalog.GetData<EnemyDefinition>(enemyId)
                 ?? throw new InvalidOperationException($"Enemy data '{enemyId}' is required.");
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>MonsterActor</c>를 런타임 사건 또는 씬 대상에 연결한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 MonsterActor를 런타임 사건 또는 씬 대상에 연결한다.
         private MonsterActor BindMonsterActor(GameObject spawnedUnit, UnitCombatState model)
         {
             var actor = spawnedUnit.GetComponentInChildren<MonsterActor>(true);
@@ -405,7 +405,7 @@ namespace Pakuri.InGame
             return actor;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>EnemyActor</c>를 런타임 사건 또는 씬 대상에 연결한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 EnemyActor를 런타임 사건 또는 씬 대상에 연결한다.
         private EnemyActor BindEnemyActor(GameObject spawnedUnit, EnemyCombatState model)
         {
             var actor = spawnedUnit.GetComponentInChildren<EnemyActor>(true);
@@ -413,7 +413,7 @@ namespace Pakuri.InGame
             return actor;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Player</c>를 소유 런타임 Registry에 등록한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Player를 소유 런타임 Registry에 등록한다.
         private CombatUnitEntry RegisterPlayer(UnitCombatState model, MonsterActor actor, Transform hitboxRoot)
         {
             var entry = RegisterUnit(model, actor, hitboxRoot);
@@ -421,7 +421,7 @@ namespace Pakuri.InGame
             return entry;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Enemy</c>를 소유 런타임 Registry에 등록한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Enemy를 소유 런타임 Registry에 등록한다.
         private CombatUnitEntry RegisterEnemy(EnemyCombatState model, EnemyActor actor, Transform hitboxRoot)
         {
             var entry = RegisterUnit(model, actor, hitboxRoot);
@@ -429,7 +429,7 @@ namespace Pakuri.InGame
             return entry;
         }
 
-        /// <summary>전달된 <c>monsterId</c> 값을 사용해 <c>MonsterPrefab</c>를 결정한다.</summary>
+        /// 전달된 monsterId 값을 사용해 MonsterPrefab를 결정한다.
         private GameObject ResolveMonsterPrefab(string monsterId)
         {
             if (string.Equals(monsterId, ArielMonsterId, StringComparison.OrdinalIgnoreCase))
@@ -460,7 +460,7 @@ namespace Pakuri.InGame
             throw new InvalidOperationException($"Monster prefab '{monsterId}' is required.");
         }
 
-        /// <summary>전달된 <c>enemyId</c> 값을 사용해 <c>EnemyPrefab</c>를 결정한다.</summary>
+        /// 전달된 enemyId 값을 사용해 EnemyPrefab를 결정한다.
         private GameObject ResolveEnemyPrefab(string enemyId)
         {
             for (var i = 0; i < enemyPrefabBindings.Length; i++)
@@ -475,7 +475,7 @@ namespace Pakuri.InGame
             throw new InvalidOperationException($"Enemy prefab '{enemyId}' is required.");
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>RequirePrefab</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 RequirePrefab 결과값을 생성해 반환한다.
         private static GameObject RequirePrefab(GameObject prefab, string unitId)
         {
             return prefab != null
@@ -483,7 +483,7 @@ namespace Pakuri.InGame
                 : throw new InvalidOperationException($"Unit prefab '{unitId}' is required.");
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>EnemyHealthMultiplier</c>를 적용한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 EnemyHealthMultiplier를 적용한다.
         private static void ApplyEnemyHealthMultiplier(EnemyCombatState model, float healthMultiplier)
         {
             if (healthMultiplier <= 0f)
@@ -500,7 +500,7 @@ namespace Pakuri.InGame
             model.Resources.CurrentHealth *= healthMultiplier;
         }
 
-        /// <summary>전달된 <c>partySlotIndex</c> 값을 사용해 <c>ManifestSpawnPoint</c>를 결정한다.</summary>
+        /// 전달된 partySlotIndex 값을 사용해 ManifestSpawnPoint를 결정한다.
         private static Transform ResolveManifestSpawnPoint(int partySlotIndex)
         {
             return GameObject.Find($"{partySlotIndex + 1}PSpawnPoint").transform;

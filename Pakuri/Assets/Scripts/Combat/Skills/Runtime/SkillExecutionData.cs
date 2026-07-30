@@ -12,7 +12,7 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-/// <summary><c>SkillExecutionData</c>가 나타내는 런타임 값을 보관한다.</summary>
+/// SkillExecutionData가 나타내는 런타임 값을 보관한다.
 public class SkillExecutionData
 {
 
@@ -334,7 +334,7 @@ public class SkillExecutionData
 		}
 	}
 
-	/// <summary><c>SkillExecutionData</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+	/// SkillExecutionData 인스턴스를 전달된 런타임 입력값으로 초기화한다.
 	public SkillExecutionData(SkillDefinition source)
 	{
 		Source = source;
@@ -362,7 +362,7 @@ public class SkillExecutionData
 		}
 	}
 
-	/// <summary>전달된 <c>spec</c> 값을 사용해 <c>ChoiceSpec</c>를 적용한다.</summary>
+	/// 전달된 spec 값을 사용해 ChoiceSpec를 적용한다.
 	public void ApplyChoiceSpec(SkillChoice spec)
 	{
 		if (spec == null || spec.Nodes == null || spec.Nodes.Length == 0)
@@ -372,20 +372,20 @@ public class SkillExecutionData
 		ApplyNodeBackedChoice(spec);
 	}
 
-	/// <summary>전달된 <c>multiplier</c> 값을 사용해 <c>DynamicDamageMultiplier</c>를 적용한다.</summary>
+	/// 전달된 multiplier 값을 사용해 DynamicDamageMultiplier를 적용한다.
 	public void ApplyDynamicDamageMultiplier(float multiplier)
 	{
 		DamageMultiplier += PositiveOrDefault(multiplier, 1f) - 1f;
 	}
 
-	/// <summary>전달된 <c>rawDamage</c> 값을 사용해 <c>RawDamageOverride</c>를 갱신한다.</summary>
+	/// 전달된 rawDamage 값을 사용해 RawDamageOverride를 갱신한다.
 	internal void SetRawDamageOverride(float rawDamage)
 	{
 		HasRawDamageOverride = true;
 		RawDamageOverride = Mathf.Max(0f, rawDamage);
 	}
 
-	/// <summary>전달된 <c>multiplier</c> 값을 사용해 <c>WithDamageMultiplier</c>를 복사한다.</summary>
+	/// 전달된 multiplier 값을 사용해 WithDamageMultiplier를 복사한다.
 	internal SkillExecutionData CopyWithDamageMultiplier(float multiplier)
 	{
 		SkillExecutionData copy = (SkillExecutionData)MemberwiseClone();
@@ -393,7 +393,7 @@ public class SkillExecutionData
 		return copy;
 	}
 
-	/// <summary>전달된 <c>choiceSpec</c> 값을 사용해 <c>NodeBackedChoice</c>를 적용한다.</summary>
+	/// 전달된 choiceSpec 값을 사용해 NodeBackedChoice를 적용한다.
 	private void ApplyNodeBackedChoice(SkillChoice choiceSpec)
 	{
 		if (choiceSpec.SkillEffectPrefab != null)
@@ -403,7 +403,7 @@ public class SkillExecutionData
 		ApplyNodes(choiceSpec.Nodes, SkillId);
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>Nodes</c>를 적용한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 Nodes를 적용한다.
 	internal void ApplyNodes(IReadOnlyList<SkillNode> nodes, string targetSkillId = null)
 	{
 
@@ -554,7 +554,7 @@ public class SkillExecutionData
 		}
 	}
 
-	/// <summary>전달된 <c>action</c> 값을 사용해 <c>NodeAction</c>를 적용한다.</summary>
+	/// 전달된 action 값을 사용해 NodeAction를 적용한다.
 	private void ApplyNodeAction(SkillActionOp action)
 	{
 		switch (action.Kind)
@@ -696,14 +696,14 @@ public class SkillExecutionData
 		}
 	}
 
-	/// <summary>전달된 <c>action</c> 값을 사용해 <c>ConsecutiveHitAction</c>를 적용한다.</summary>
+	/// 전달된 action 값을 사용해 ConsecutiveHitAction를 적용한다.
 	private void ApplyConsecutiveHitAction(ConsecutiveHitActionOp action)
 	{
 		ConsecutiveHitBonusRate += Mathf.Max(0f, action.BonusRate);
 		ConsecutiveHitMax += Mathf.Max(0f, action.MaxBonus);
 	}
 
-	/// <summary>전달된 <c>action</c> 값을 사용해 <c>BranchDamageAction</c>를 적용한다.</summary>
+	/// 전달된 action 값을 사용해 BranchDamageAction를 적용한다.
 	private void ApplyBranchDamageAction(BranchDamageActionOp action)
 	{
 		BranchChanceBonus += action.ChanceBonus;
@@ -724,7 +724,7 @@ public class SkillExecutionData
 		}
 	}
 
-	/// <summary>전달된 <c>action</c> 값을 사용해 <c>ConditionalDamageAction</c>를 적용한다.</summary>
+	/// 전달된 action 값을 사용해 ConditionalDamageAction를 적용한다.
 	private void ApplyConditionalDamageAction(ConditionalDamageActionOp action)
 	{
 		if (action.Condition.StatusKind != StatusEffectKind.None
@@ -735,7 +735,7 @@ public class SkillExecutionData
 		}
 	}
 
-	/// <summary>전달된 <c>action</c> 값을 사용해 <c>ConditionalCritChanceAction</c>를 적용한다.</summary>
+	/// 전달된 action 값을 사용해 ConditionalCritChanceAction를 적용한다.
 	private void ApplyConditionalCritChanceAction(ConditionalCritChanceActionOp action)
 	{
 		if (action.Condition.StatusKind != StatusEffectKind.None
@@ -746,7 +746,7 @@ public class SkillExecutionData
 		}
 	}
 
-	/// <summary>전달된 <c>action</c> 값을 사용해 <c>BurstDamageAction</c>를 적용한다.</summary>
+	/// 전달된 action 값을 사용해 BurstDamageAction를 적용한다.
 	private void ApplyBurstDamageAction(BurstDamageActionOp action)
 	{
 		if (action.DamageMultiplier > 0f)
@@ -755,7 +755,7 @@ public class SkillExecutionData
 		}
 	}
 
-	/// <summary>전달된 <c>action</c> 값을 사용해 <c>BurstStatusAction</c>를 적용한다.</summary>
+	/// 전달된 action 값을 사용해 BurstStatusAction를 적용한다.
 	private void ApplyBurstStatusAction(BurstStatusActionOp action)
 	{
 		if (action.StacksBonus != 0)
@@ -764,7 +764,7 @@ public class SkillExecutionData
 		}
 	}
 
-	/// <summary>전달된 <c>action</c> 값을 사용해 <c>StatusConditionalDamageTakenAction</c>를 적용한다.</summary>
+	/// 전달된 action 값을 사용해 StatusConditionalDamageTakenAction를 적용한다.
 	private void ApplyStatusConditionalDamageTakenAction(StatusConditionalDamageTakenActionOp action)
 	{
 		HasStatusConditionalDamageTakenBonus = true;
@@ -772,7 +772,7 @@ public class SkillExecutionData
 		StatusConditionalSourceStatusKind = action.RequiredSourceStatus;
 	}
 
-	/// <summary>전달된 <c>action</c> 값을 사용해 <c>FollowUpProjectileAction</c>를 적용한다.</summary>
+	/// 전달된 action 값을 사용해 FollowUpProjectileAction를 적용한다.
 	private void ApplyFollowUpProjectileAction(FollowUpProjectileActionOp action)
 	{
 		if (action.Count <= 0)
@@ -785,7 +785,7 @@ public class SkillExecutionData
 		FollowUpProjectileDamageMultiplier = Mathf.Max(0f, action.DamageMultiplier);
 	}
 
-	/// <summary>전달된 <c>action</c> 값을 사용해 <c>ThresholdStatusAction</c>를 적용한다.</summary>
+	/// 전달된 action 값을 사용해 ThresholdStatusAction를 적용한다.
 	private void ApplyThresholdStatusAction(ThresholdStatusActionOp action)
 	{
 		if (action.Condition.StatusKind == StatusEffectKind.None
@@ -800,7 +800,7 @@ public class SkillExecutionData
 		ThresholdApplyStatusKind = action.AppliedStatus;
 	}
 
-	/// <summary>전달된 <c>action</c> 값을 사용해 <c>RepeatPerTargetAction</c>를 적용한다.</summary>
+	/// 전달된 action 값을 사용해 RepeatPerTargetAction를 적용한다.
 	private void ApplyRepeatPerTargetAction(RepeatPerTargetActionOp action)
 	{
 		if (action.Count <= 0)
@@ -816,7 +816,7 @@ public class SkillExecutionData
 		}
 	}
 
-	/// <summary>전달된 <c>action</c> 값을 사용해 <c>RedistributeConsumedStatusAction</c>를 적용한다.</summary>
+	/// 전달된 action 값을 사용해 RedistributeConsumedStatusAction를 적용한다.
 	private void ApplyRedistributeConsumedStatusAction(RedistributeConsumedStatusActionOp action)
 	{
 		if (action.Ratio <= 0f || action.StatusKind == StatusEffectKind.None || action.SearchRadius <= 0f)
@@ -830,7 +830,7 @@ public class SkillExecutionData
 		RedistributeConsumedStatusTargetCount = Mathf.Max(0, action.TargetCount);
 	}
 
-	/// <summary>전달된 <c>action</c> 값을 사용해 <c>AdditionalDamageAction</c>를 적용한다.</summary>
+	/// 전달된 action 값을 사용해 AdditionalDamageAction를 적용한다.
 	private void ApplyAdditionalDamageAction(AdditionalDamageActionOp action)
 	{
 		HasOnHitAdditionalDamage = true;
@@ -840,7 +840,7 @@ public class SkillExecutionData
 		OnHitAdditionalDamageTarget = action.Target;
 	}
 
-	/// <summary>전달된 <c>action</c> 값을 사용해 <c>CoreDamageAction</c>를 적용한다.</summary>
+	/// 전달된 action 값을 사용해 CoreDamageAction를 적용한다.
 	private void ApplyCoreDamageAction(CoreDamageActionOp action)
 	{
 		CoreHitboxName = action.HitboxName;
@@ -848,7 +848,7 @@ public class SkillExecutionData
 		CoreDamageMultiplier *= action.Multiplier;
 	}
 
-	/// <summary>전달된 <c>action</c> 값을 사용해 <c>CoreAdditionalDamageAction</c>를 적용한다.</summary>
+	/// 전달된 action 값을 사용해 CoreAdditionalDamageAction를 적용한다.
 	private void ApplyCoreAdditionalDamageAction(CoreAdditionalDamageActionOp action)
 	{
 		CoreHitboxName = action.HitboxName;
@@ -858,7 +858,7 @@ public class SkillExecutionData
 		CoreOnHitAdditionalDamageAttribute = action.Attribute;
 	}
 
-	/// <summary>전달된 <c>action</c> 값을 사용해 <c>HitChainDamageAction</c>를 적용한다.</summary>
+	/// 전달된 action 값을 사용해 HitChainDamageAction를 적용한다.
 	private void ApplyHitChainDamageAction(HitChainDamageActionOp action)
 	{
 		if (action.HitPeriod <= 0)
@@ -873,7 +873,7 @@ public class SkillExecutionData
 		OnHitChainDamageAttribute = action.Attribute;
 	}
 
-	/// <summary>전달된 <c>action</c> 값을 사용해 <c>HitCountCooldownRefundAction</c>를 적용한다.</summary>
+	/// 전달된 action 값을 사용해 HitCountCooldownRefundAction를 적용한다.
 	private void ApplyHitCountCooldownRefundAction(HitCountCooldownRefundActionOp action)
 	{
 		if (string.IsNullOrWhiteSpace(action.TargetSkillId))
@@ -886,7 +886,7 @@ public class SkillExecutionData
 		HitCountCooldownRefundRatio = action.Ratio;
 	}
 
-	/// <summary>전달된 <c>action</c> 값을 사용해 <c>ReloadReducePerHitAction</c>를 적용한다.</summary>
+	/// 전달된 action 값을 사용해 ReloadReducePerHitAction를 적용한다.
 	private void ApplyReloadReducePerHitAction(ReloadReducePerHitActionOp action)
 	{
 		if (string.IsNullOrWhiteSpace(action.TargetSkillId))
@@ -898,7 +898,7 @@ public class SkillExecutionData
 		ReloadReduceSecondsPerHit += action.SecondsPerHit;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>StatusActionSpeedBonus</c>를 적용한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 StatusActionSpeedBonus를 적용한다.
 	private void ApplyStatusActionSpeedBonus(string statusId, float bonus)
 	{
 		HasStatusActionSpeedBonus = true;
@@ -916,7 +916,7 @@ public class SkillExecutionData
 		statusActionSpeedBonuses[statusId] = total;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>StatusDurationBonus</c>를 적용한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 StatusDurationBonus를 적용한다.
 	private void ApplyStatusDurationBonus(string statusId, float bonus)
 	{
 		if (!string.IsNullOrWhiteSpace(statusId) && !Mathf.Approximately(bonus, 0f))
@@ -930,7 +930,7 @@ public class SkillExecutionData
 		}
 	}
 
-	/// <summary>전달된 <c>choiceId</c> 값을 사용해 <c>ActiveChoiceId</c>를 소유한 런타임 상태에 추가한다.</summary>
+	/// 전달된 choiceId 값을 사용해 ActiveChoiceId를 소유한 런타임 상태에 추가한다.
 	public void AddActiveChoiceId(string choiceId)
 	{
 		if (!string.IsNullOrWhiteSpace(choiceId))
@@ -939,7 +939,7 @@ public class SkillExecutionData
 		}
 	}
 
-	/// <summary>전달된 <c>choiceId</c> 값을 사용해 소유한 런타임 상태에 <c>ActiveChoice</c>가 있는지 반환한다.</summary>
+	/// 전달된 choiceId 값을 사용해 소유한 런타임 상태에 ActiveChoice가 있는지 반환한다.
 	public bool HasActiveChoice(string choiceId)
 	{
 		if (!string.IsNullOrWhiteSpace(choiceId))
@@ -949,7 +949,7 @@ public class SkillExecutionData
 		return false;
 	}
 
-	/// <summary>전달된 <c>statusId</c> 값을 사용해 <c>StatusDurationBonus</c> 결과값을 생성해 반환한다.</summary>
+	/// 전달된 statusId 값을 사용해 StatusDurationBonus 결과값을 생성해 반환한다.
 	public float StatusDurationBonus(string statusId)
 	{
 		if (string.IsNullOrWhiteSpace(statusId))
@@ -963,7 +963,7 @@ public class SkillExecutionData
 		return value;
 	}
 
-	/// <summary>전달된 <c>statusId</c> 값을 사용해 <c>StatusActionSpeedBonus</c>를 반환한다.</summary>
+	/// 전달된 statusId 값을 사용해 StatusActionSpeedBonus를 반환한다.
 	public float GetStatusActionSpeedBonus(string statusId)
 	{
 		float num = StatusActionSpeedBonus;
@@ -974,7 +974,7 @@ public class SkillExecutionData
 		return num;
 	}
 
-	/// <summary>전달된 <c>statusId</c> 값을 사용해 <c>StatusMaxStacksBonus</c> 결과값을 생성해 반환한다.</summary>
+	/// 전달된 statusId 값을 사용해 StatusMaxStacksBonus 결과값을 생성해 반환한다.
 	public int StatusMaxStacksBonus(string statusId)
 	{
 		if (string.IsNullOrWhiteSpace(statusId))
@@ -988,7 +988,7 @@ public class SkillExecutionData
 		return value;
 	}
 
-	/// <summary>전달된 <c>statusId</c> 값을 사용해 <c>TargetStatusStackDamageRateBonus</c> 결과값을 생성해 반환한다.</summary>
+	/// 전달된 statusId 값을 사용해 TargetStatusStackDamageRateBonus 결과값을 생성해 반환한다.
 	public float TargetStatusStackDamageRateBonus(string statusId)
 	{
 		if (string.IsNullOrWhiteSpace(statusId))
@@ -1002,7 +1002,7 @@ public class SkillExecutionData
 		return value;
 	}
 
-	/// <summary>전달된 <c>triggerId</c> 값을 사용해 <c>TriggerProcChanceBonus</c> 결과값을 생성해 반환한다.</summary>
+	/// 전달된 triggerId 값을 사용해 TriggerProcChanceBonus 결과값을 생성해 반환한다.
 	public float TriggerProcChanceBonus(string triggerId)
 	{
 		if (string.IsNullOrWhiteSpace(triggerId))
@@ -1016,7 +1016,7 @@ public class SkillExecutionData
 		return value;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>PositiveOrDefault</c> 결과값을 생성해 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 PositiveOrDefault 결과값을 생성해 반환한다.
 	private static float PositiveOrDefault(float value, float fallback)
 	{
 		if (!(value > 0f))

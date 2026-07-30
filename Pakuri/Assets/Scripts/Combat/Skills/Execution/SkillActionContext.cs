@@ -8,11 +8,11 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// <summary><c>SkillActionContext</c> 처리에 필요한 불변 실행 문맥을 전달한다.</summary>
+    /// SkillActionContext 처리에 필요한 불변 실행 문맥을 전달한다.
     public sealed class SkillActionContext
     {
 
-        /// <summary><c>SkillActionContext</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+        /// SkillActionContext 인스턴스를 전달된 런타임 입력값으로 초기화한다.
         public SkillActionContext(
             UnitCombatState source,
             string sourceSkillId,

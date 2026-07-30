@@ -13,18 +13,18 @@ using static Pakuri.Data.SkillGraphParser;
 namespace Pakuri.Data
 {
 
-    /// <summary><c>PakuriCsvSkillKind</c>에서 지원하는 값의 종류를 정의한다.</summary>
+    /// PakuriCsvSkillKind에서 지원하는 값의 종류를 정의한다.
     internal enum PakuriCsvSkillKind
     {
         Active,
         Passive
     }
 
-    /// <summary><c>CsvSourceModel</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
+    /// CsvSourceModel가 소유하는 데이터와 동작을 캡슐화한다.
     internal static class CsvSourceModel
     {
 
-        /// <summary><c>SourceModel</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
+        /// SourceModel가 소유하는 데이터와 동작을 캡슐화한다.
         internal class SourceModel
         {
             public readonly Dictionary<string, CatalogEntryRow> CatalogMonsters = new Dictionary<string, CatalogEntryRow>(StringComparer.OrdinalIgnoreCase);
@@ -44,7 +44,7 @@ namespace Pakuri.Data
             public readonly Dictionary<string, EnemyTriggerRow> EnemyTriggers = new Dictionary<string, EnemyTriggerRow>(StringComparer.OrdinalIgnoreCase);
         }
 
-        /// <summary><c>CatalogEntryRow</c>에 해당하는 CSV 한 행을 표현한다.</summary>
+        /// CatalogEntryRow에 해당하는 CSV 한 행을 표현한다.
         internal class CatalogEntryRow
         {
             public string Id;
@@ -52,7 +52,7 @@ namespace Pakuri.Data
             public int SortOrder;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>CatalogEntry</c> 값을 런타임 표현으로 파싱한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 CatalogEntry 값을 런타임 표현으로 파싱한다.
         internal static CatalogEntryRow ParseCatalogEntry(CsvRecord record, string refColumnName)
         {
             return new CatalogEntryRow
@@ -63,7 +63,7 @@ namespace Pakuri.Data
             };
         }
 
-        /// <summary><c>StatusEffectRow</c>에 해당하는 CSV 한 행을 표현한다.</summary>
+        /// StatusEffectRow에 해당하는 CSV 한 행을 표현한다.
         internal class StatusEffectRow
         {
             public string Id;
@@ -89,7 +89,7 @@ namespace Pakuri.Data
             public string StatusEffectPrefabPath;
         }
 
-        /// <summary>전달된 <c>record</c> 값을 사용해 <c>StatusEffectRow</c> 값을 런타임 표현으로 파싱한다.</summary>
+        /// 전달된 record 값을 사용해 StatusEffectRow 값을 런타임 표현으로 파싱한다.
         internal static StatusEffectRow ParseStatusEffectRow(CsvRecord record)
         {
             return new StatusEffectRow
@@ -118,7 +118,7 @@ namespace Pakuri.Data
             };
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ReadDamageAttribute</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ReadDamageAttribute 작업을 시도하고 성공 여부를 반환한다.
         internal static bool TryReadDamageAttribute(CsvRecord record, string columnName, out DamageAttribute attribute)
         {
             attribute = default;
@@ -132,7 +132,7 @@ namespace Pakuri.Data
             return true;
         }
 
-        /// <summary><c>StatusPayloadRow</c>에 해당하는 CSV 한 행을 표현한다.</summary>
+        /// StatusPayloadRow에 해당하는 CSV 한 행을 표현한다.
         internal class StatusPayloadRow
         {
             public string StatusEffectId;
@@ -163,7 +163,7 @@ namespace Pakuri.Data
             public float StatusConditionalStatusChanceBonus;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>StatusPayload</c>를 읽는다.</summary>
+        /// 전달된 런타임 입력값을 사용해 StatusPayload를 읽는다.
         internal static StatusPayloadRow ReadStatusPayload(
             CsvRecord record,
             bool includeEffectOnlyModifiers,
@@ -206,7 +206,7 @@ namespace Pakuri.Data
             return payload;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>StatusString</c>를 읽는다.</summary>
+        /// 전달된 런타임 입력값을 사용해 StatusString를 읽는다.
         internal static string ReadStatusString(CsvRecord record, string columnName, bool allowMissingColumns)
         {
             if (allowMissingColumns)
@@ -217,7 +217,7 @@ namespace Pakuri.Data
             return record.ReadString(columnName);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>StatusFloat</c>를 읽는다.</summary>
+        /// 전달된 런타임 입력값을 사용해 StatusFloat를 읽는다.
         internal static float ReadStatusFloat(CsvRecord record, string columnName, bool allowMissingColumns)
         {
             if (allowMissingColumns)
@@ -228,7 +228,7 @@ namespace Pakuri.Data
             return record.ReadFloat(columnName);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>StatusInt</c>를 읽는다.</summary>
+        /// 전달된 런타임 입력값을 사용해 StatusInt를 읽는다.
         internal static int ReadStatusInt(CsvRecord record, string columnName, bool allowMissingColumns)
         {
             if (allowMissingColumns)

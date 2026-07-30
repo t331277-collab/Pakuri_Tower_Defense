@@ -182,6 +182,123 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     [Test]
+    public void EnemySkillProfilesUseUnifiedDefinitionFamilies()
+    {
+        GameDataLoader.EnsureInitialized();
+        var catalog = GameDataLoader.CurrentCatalog;
+
+        var chainEnemy = Array.Find(
+            catalog.StageTwoEnemies,
+            enemy => enemy.EnemyId == "stage2-lightning-scout");
+        var chainSkill = Array.Find(
+            chainEnemy.ActiveSkills,
+            skill => skill.SkillId == "ChainLightning");
+        var chainTrigger = Array.Find(
+            chainEnemy.SkillTriggers,
+            trigger => trigger.TriggerId == "ChainLightning__chain_on_hit");
+
+        Assert.That(chainSkill, Is.TypeOf<SingleSkillDefinition>());
+        Assert.That(chainTrigger, Is.Not.Null);
+        Assert.That(chainTrigger.TriggerEvent, Is.EqualTo(SkillTriggerEvent.OnHit));
+        Assert.That(chainTrigger.TriggerDelaySeconds, Is.EqualTo(0.5f).Within(0.0001f));
+        Assert.That(chainTrigger.TriggeredDamageMultiplier, Is.EqualTo(0.5f).Within(0.0001f));
+        Assert.That(chainTrigger.PublishSkillLifecycleEvents, Is.False);
+        Assert.That(chainTrigger.TriggeredSkill, Is.TypeOf<SingleSkillDefinition>());
+        Assert.That(
+            chainTrigger.TriggeredSkill.Targeting.Selection,
+            Is.EqualTo(SkillTargetSelection.NearestOtherFromEventTarget));
+        Assert.That(chainTrigger.TriggeredSkill.Targeting.Radius, Is.EqualTo(7f).Within(0.0001f));
+
+        var chargeEnemy = Array.Find(
+            catalog.StageTwoEnemies,
+            enemy => enemy.EnemyId == "stage2-drake");
+        var chargeSkill = Array.Find(
+            chargeEnemy.ActiveSkills,
+            skill => skill.SkillId == "OpeningCharge");
+        Assert.That(chargeSkill, Is.TypeOf<BuffSkillDefinition>());
+        Assert.That(
+            ((BuffSkillDefinition)chargeSkill).EffectKind,
+            Is.EqualTo(BuffEffectKind.Charge));
+
+        var shieldEnemy = Array.Find(
+            catalog.StageOneEnemies,
+            enemy => enemy.EnemyId == "stage1-guardian-captain");
+        var shieldSkill = Array.Find(
+            shieldEnemy.ActiveSkills,
+            skill => skill.SkillId == "GuardianFlag");
+        Assert.That(shieldSkill, Is.TypeOf<BuffSkillDefinition>());
+        Assert.That(
+            ((BuffSkillDefinition)shieldSkill).EffectKind,
+            Is.EqualTo(BuffEffectKind.Shield));
+    }
+
+    [Test]
+    public void TriggeredChargeUsesSharedActiveRuntime()
+    {
+        var actorObject = new GameObject("TriggeredChargeActor");
+
+        try
+        {
+            var owner = new EnemyCombatState();
+            owner.Resources.CurrentHealth = 1f;
+            var charge = new BuffSkillDefinition
+            {
+                SkillId = "charge",
+                IsActive = true,
+                EffectKind = BuffEffectKind.Charge,
+                Timing = new SkillTimingSpec
+                {
+                    Cooldown = 30f,
+                    ActiveDuration = 5f
+                }
+            };
+            var runtime = new SkillUseState(owner, charge);
+            owner.SkillState.AddOrReplace(runtime);
+            var entry = new CombatUnitEntry(owner, actorObject.transform);
+            var trigger = new SkillTriggerDefinition
+            {
+                SourceSkillId = charge.SkillId,
+                TriggeredSkill = charge,
+                UsesExistingSkillRuntime = true,
+                PublishSkillLifecycleEvents = false
+            };
+
+            var executed = new SkillExecution().TryExecuteTriggered(
+                entry,
+                runtime,
+                trigger,
+                null,
+                null,
+                null,
+                Vector2.zero,
+                false,
+                false,
+                0f,
+                0);
+
+            Assert.That(executed, Is.True);
+            Assert.That(runtime.IsActive, Is.True);
+            Assert.That(runtime.ActiveDurationRemaining, Is.EqualTo(5f).Within(0.0001f));
+
+            var decision = typeof(SkillExecution).Assembly.GetType("Pakuri.InGame.EnemyCombatDecision");
+            var resolveCharge = decision?.GetMethod(
+                "ResolveActiveCharge",
+                BindingFlags.Static | BindingFlags.Public);
+            Assert.That(resolveCharge, Is.Not.Null);
+            Assert.That(resolveCharge.Invoke(null, new object[] { owner }), Is.SameAs(runtime));
+
+            runtime.StopActive();
+
+            Assert.That(runtime.IsActive, Is.False);
+            Assert.That(resolveCharge.Invoke(null, new object[] { owner }), Is.Null);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(actorObject);
+        }
+    }
+
+    [Test]
     public void MonsterRuntimeSharesRunSessionSkills()
     {
         var monster = ScriptableObject.CreateInstance<MonsterDefinition>();
@@ -266,10 +383,11 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(
             triggers.FindAll(trigger =>
                 trigger.TriggeredSkill is BuffSkillDefinition),
-            Has.Count.EqualTo(21));
+            Has.Count.EqualTo(24));
         Assert.That(
             triggers.FindAll(trigger =>
-                trigger.TriggeredSkill is BuffShieldSkillDefinition),
+                trigger.TriggeredSkill is BuffSkillDefinition buff
+                && buff.EffectKind == BuffEffectKind.Shield),
             Has.Count.EqualTo(3));
     }
 
@@ -331,6 +449,16 @@ public sealed class SkillCatalogRuntimeTests
                 new[] { targetEntry },
                 new Collider2D[] { sourceCollider },
                 new Vector2(3f, 0f),
+                results);
+            Assert.That(results, Is.EqualTo(new[] { targetEntry }));
+
+            sourceObject.transform.position = new Vector3(3f, 0f, 0f);
+            targetObject.transform.position = new Vector3(1.5f, 0f, 0f);
+            CollectCollisionTargets(
+                roster,
+                new[] { targetEntry },
+                new Collider2D[] { sourceCollider },
+                new Vector2(-3f, 0f),
                 results);
             Assert.That(results, Is.EqualTo(new[] { targetEntry }));
         }

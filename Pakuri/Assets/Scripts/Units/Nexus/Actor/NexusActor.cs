@@ -9,7 +9,7 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// <summary><c>NexusActor</c> 런타임 오브젝트를 나타내며 모델과 Unity 컴포넌트를 연결한다.</summary>
+    /// NexusActor 런타임 오브젝트를 나타내며 모델과 Unity 컴포넌트를 연결한다.
     public class NexusActor : MonoBehaviour
     {
         private const float DefaultMaxHealth = 20f;
@@ -20,7 +20,7 @@ namespace Pakuri.InGame
         public float MaxHealth => maxHealth;
         public UnitCombatState Model { get; private set; }
 
-        /// <summary>전달된 <c>model</c> 값을 사용해 <c>소유한 런타임 상태</c>를 초기화한다.</summary>
+        /// 전달된 model 값을 사용해 소유한 런타임 상태를 초기화한다.
         public void Initialize(UnitCombatState model)
         {
             Model = model;
@@ -28,13 +28,13 @@ namespace Pakuri.InGame
             RefreshDisplay();
         }
 
-        /// <summary><c>Display</c>를 현재 런타임 모델을 기준으로 갱신한다.</summary>
+        /// Display를 현재 런타임 모델을 기준으로 갱신한다.
         public void RefreshDisplay()
         {
             NexusHealthDisplay.Refresh(nexusHpInfo, Model);
         }
 
-        /// <summary>전달된 <c>currentHealth</c> 값을 사용해 <c>CurrentHealth</c>를 갱신한다.</summary>
+        /// 전달된 currentHealth 값을 사용해 CurrentHealth를 갱신한다.
         public void SetCurrentHealth(float currentHealth)
         {
             Model.Resources.CurrentHealth = Mathf.Clamp(

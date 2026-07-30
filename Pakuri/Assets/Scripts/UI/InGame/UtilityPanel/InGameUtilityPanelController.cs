@@ -9,7 +9,7 @@ using UnityEngine.UI;
 namespace Pakuri.InGame
 {
 
-    /// <summary><c>InGameUtilityPanelController</c>가 담당하는 입력 또는 표시 흐름을 조정하고 관련 런타임 상태를 갱신한다.</summary>
+    /// InGameUtilityPanelController가 담당하는 입력 또는 표시 흐름을 조정하고 관련 런타임 상태를 갱신한다.
     public class InGameUtilityPanelController : MonoBehaviour
     {
         private static readonly float[] TimeScales = { 1f, 1.5f, 2f };
@@ -23,7 +23,7 @@ namespace Pakuri.InGame
         private float baseFixedDeltaTime;
         private int timeScaleIndex;
 
-        /// <summary>Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.</summary>
+        /// Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.
         private void Awake()
         {
             ResolveReferences();
@@ -31,7 +31,7 @@ namespace Pakuri.InGame
             ApplyTimeScale(0);
         }
 
-        /// <summary>Unity가 컴포넌트를 활성화할 때 구독과 활성 상태를 복원한다.</summary>
+        /// Unity가 컴포넌트를 활성화할 때 구독과 활성 상태를 복원한다.
         private void OnEnable()
         {
             ResolveReferences();
@@ -49,7 +49,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>Unity가 컴포넌트를 비활성화할 때 구독과 임시 상태를 중단한다.</summary>
+        /// Unity가 컴포넌트를 비활성화할 때 구독과 임시 상태를 중단한다.
         private void OnDisable()
         {
             if (autoButton != null)
@@ -63,7 +63,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>Unity가 컴포넌트를 제거할 때 구독과 런타임 오브젝트를 해제한다.</summary>
+        /// Unity가 컴포넌트를 제거할 때 구독과 런타임 오브젝트를 해제한다.
         private void OnDestroy()
         {
             Time.timeScale = 1f;
@@ -73,7 +73,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary><c>References</c>를 결정한다.</summary>
+        /// References를 결정한다.
         private void ResolveReferences()
         {
             if (playerCombatControl == null)
@@ -107,13 +107,13 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary><c>CycleTimeScale</c> 작업을 수행한다.</summary>
+        /// CycleTimeScale 작업을 수행한다.
         private void CycleTimeScale()
         {
             ApplyTimeScale((timeScaleIndex + 1) % TimeScales.Length);
         }
 
-        /// <summary>전달된 <c>index</c> 값을 사용해 <c>TimeScale</c>를 적용한다.</summary>
+        /// 전달된 index 값을 사용해 TimeScale를 적용한다.
         private void ApplyTimeScale(int index)
         {
             timeScaleIndex = Mathf.Clamp(index, 0, TimeScales.Length - 1);
@@ -132,7 +132,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary><c>SelectedPlayerAutoSkillMode</c>를 활성 상태를 전환한다.</summary>
+        /// SelectedPlayerAutoSkillMode를 활성 상태를 전환한다.
         private void ToggleSelectedPlayerAutoSkillMode()
         {
             if (playerCombatControl != null)

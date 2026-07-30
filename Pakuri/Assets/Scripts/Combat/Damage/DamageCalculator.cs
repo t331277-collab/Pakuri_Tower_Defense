@@ -10,11 +10,11 @@ using UnityEngine;
 namespace Pakuri.Combat
 {
 
-    /// <summary><c>DamageCalculator</c>가 담당하는 런타임 값을 계산한다.</summary>
+    /// DamageCalculator가 담당하는 런타임 값을 계산한다.
     public static class DamageCalculator
     {
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>RawDamage</c>를 계산한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 RawDamage를 계산한다.
         internal static float CalculateRawDamage(
             UnitCombatState caster,
             SkillDamageSpec damage)
@@ -27,7 +27,7 @@ namespace Pakuri.Combat
             return Mathf.Max(0f, rawDamage);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>FinalDamage</c>를 계산한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 FinalDamage를 계산한다.
         public static float CalculateFinalDamage(
             UnitCombatState target,
             float rawDamage,

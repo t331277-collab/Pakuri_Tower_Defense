@@ -6,7 +6,7 @@
 namespace Pakuri.Combat
 {
 
-    /// <summary><c>DamageAttribute</c>에서 지원하는 값의 종류를 정의한다.</summary>
+    /// DamageAttribute에서 지원하는 값의 종류를 정의한다.
     public enum DamageAttribute
     {
         Physical,

@@ -16,11 +16,11 @@ using static Pakuri.Data.SkillGraphParser;
 namespace Pakuri.Data
 {
 
-    /// <summary><c>CsvSourceLoader</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
+    /// CsvSourceLoader가 소유하는 데이터와 동작을 캡슐화한다.
     internal static class CsvSourceLoader
     {
 
-        /// <summary>전달된 <c>sourceCatalog</c> 값을 사용해 <c>SourceModel</c>를 불러온다.</summary>
+        /// 전달된 sourceCatalog 값을 사용해 SourceModel를 불러온다.
         internal static SourceModel LoadSourceModel(CsvRuntimeCatalog sourceCatalog)
         {
             var model = new SourceModel();
@@ -191,7 +191,7 @@ namespace Pakuri.Data
             return model;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillRows</c>를 불러온다.</summary>
+        /// 전달된 런타임 입력값을 사용해 SkillRows를 불러온다.
         internal static void LoadSkillRows(
             SourceModel model,
             TextAsset[] skillAssets,
@@ -210,7 +210,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillRows</c>를 불러온다.</summary>
+        /// 전달된 런타임 입력값을 사용해 SkillRows를 불러온다.
         internal static void LoadSkillRows(
             SourceModel model,
             TextAsset skillAsset,
@@ -236,7 +236,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillChoiceRows</c>를 불러온다.</summary>
+        /// 전달된 런타임 입력값을 사용해 SkillChoiceRows를 불러온다.
         internal static void LoadSkillChoiceRows(
             SourceModel model,
             TextAsset[] choiceAssets,
@@ -253,7 +253,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillChoiceRows</c>를 불러온다.</summary>
+        /// 전달된 런타임 입력값을 사용해 SkillChoiceRows를 불러온다.
         internal static void LoadSkillChoiceRows(
             SourceModel model,
             TextAsset choiceAsset,
@@ -288,7 +288,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>AllowedSkillRuntimeKind</c> 조건 충족 여부를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 AllowedSkillRuntimeKind 조건 충족 여부를 반환한다.
         internal static bool IsAllowedSkillRuntimeKind(
             SkillRuntimeKind runtimeKind,
             SkillRuntimeKind[] allowedRuntimeKinds)
@@ -296,7 +296,7 @@ namespace Pakuri.Data
             return Array.IndexOf(allowedRuntimeKinds, runtimeKind) >= 0;
         }
 
-        /// <summary>전달된 <c>asset</c> 값을 사용해 <c>TextAssetCsvTableName</c>를 반환한다.</summary>
+        /// 전달된 asset 값을 사용해 TextAssetCsvTableName를 반환한다.
         internal static string GetTextAssetCsvTableName(TextAsset asset)
         {
             if (asset == null)
@@ -317,7 +317,7 @@ namespace Pakuri.Data
             return asset.name + ".csv";
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Unique</c>를 소유한 런타임 상태에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Unique를 소유한 런타임 상태에 추가한다.
         internal static void AddUnique<T>(Dictionary<string, T> dictionary, string id, T value, CsvRecord record)
         {
             if (string.IsNullOrWhiteSpace(id))

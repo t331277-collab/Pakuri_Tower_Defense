@@ -11,7 +11,7 @@ using Pakuri.Data;
 namespace Pakuri.InGame
 {
 
-    /// <summary><c>UnitStatusCollection</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
+    /// UnitStatusCollection가 소유하는 데이터와 동작을 캡슐화한다.
     public class UnitStatusCollection
     {
         private readonly List<StatusRuntimeInstance> statuses = new List<StatusRuntimeInstance>();
@@ -19,7 +19,7 @@ namespace Pakuri.InGame
         public IReadOnlyList<StatusRuntimeInstance> ActiveStatuses => statuses;
         public int Count => statuses.Count;
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>요청값</c>를 적용한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 요청값를 적용한다.
         public StatusRuntimeInstance Apply(
             StatusRuntimeData statusData,
             int stacks,
@@ -95,13 +95,13 @@ namespace Pakuri.InGame
             return status;
         }
 
-        /// <summary>전달된 <c>deltaTime</c> 값을 사용해 <c>요청값</c>를 경과 시간 기준으로 갱신한다.</summary>
+        /// 전달된 deltaTime 값을 사용해 요청값를 경과 시간 기준으로 갱신한다.
         public bool Tick(float deltaTime)
         {
             return Tick(deltaTime, null);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>요청값</c>를 경과 시간 기준으로 갱신한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 요청값를 경과 시간 기준으로 갱신한다.
         public bool Tick(float deltaTime, ICollection<StatusRuntimeInstance> removedStatuses)
         {
             if (deltaTime <= 0f)
@@ -128,7 +128,7 @@ namespace Pakuri.InGame
             return changed;
         }
 
-        /// <summary>전달된 <c>kind</c> 값을 사용해 소유한 런타임 상태에 <c>요청값</c>가 있는지 반환한다.</summary>
+        /// 전달된 kind 값을 사용해 소유한 런타임 상태에 요청값가 있는지 반환한다.
         public bool Has(StatusEffectKind kind)
         {
             for (var i = 0; i < statuses.Count; i++)
@@ -143,14 +143,14 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 소유한 런타임 상태에 <c>요청값</c>가 있는지 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 소유한 런타임 상태에 요청값가 있는지 반환한다.
         public bool Has(StatusEffectKind kind, string sourceSkillId)
         {
             var status = Find(kind, sourceSkillId);
             return status != null && status.Stacks > 0;
         }
 
-        /// <summary>전달된 <c>kind</c> 값을 사용해 <c>Stacks</c>를 반환한다.</summary>
+        /// 전달된 kind 값을 사용해 Stacks를 반환한다.
         public int GetStacks(StatusEffectKind kind)
         {
             var total = 0;
@@ -166,7 +166,7 @@ namespace Pakuri.InGame
             return total;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Stacks</c>를 현재 런타임 상태에서 소비한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Stacks를 현재 런타임 상태에서 소비한다.
         public int ConsumeStacks(
             StatusEffectKind kind,
             int stacks,
@@ -205,13 +205,13 @@ namespace Pakuri.InGame
             return consumed;
         }
 
-        /// <summary>전달된 <c>kind</c> 값을 사용해 <c>요청값</c>를 소유한 런타임 상태에서 제거한다.</summary>
+        /// 전달된 kind 값을 사용해 요청값를 소유한 런타임 상태에서 제거한다.
         public bool Remove(StatusEffectKind kind)
         {
             return Remove(kind, null, null);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>요청값</c>를 소유한 런타임 상태에서 제거한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 요청값를 소유한 런타임 상태에서 제거한다.
         public bool Remove(
             StatusEffectKind kind,
             string sourceSkillId,
@@ -240,13 +240,13 @@ namespace Pakuri.InGame
             return removed;
         }
 
-        /// <summary><c>소유한 모든 런타임 값</c>를 소유한 런타임 상태에서 비운다.</summary>
+        /// 소유한 모든 런타임 값를 소유한 런타임 상태에서 비운다.
         public void Clear()
         {
             statuses.Clear();
         }
 
-        /// <summary><c>TotalShieldAmount</c>를 반환한다.</summary>
+        /// TotalShieldAmount를 반환한다.
         public float GetTotalShieldAmount()
         {
             var total = 0f;
@@ -262,19 +262,19 @@ namespace Pakuri.InGame
             return total;
         }
 
-        /// <summary>전달된 <c>amount</c> 값을 사용해 <c>Shield</c>를 현재 런타임 상태에서 소비한다.</summary>
+        /// 전달된 amount 값을 사용해 Shield를 현재 런타임 상태에서 소비한다.
         public float ConsumeShield(float amount)
         {
             return ConsumeShield(amount, null);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Shield</c>를 현재 런타임 상태에서 소비한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Shield를 현재 런타임 상태에서 소비한다.
         public float ConsumeShield(float amount, ICollection<StatusRuntimeInstance> depletedStatuses)
         {
             return ConsumeShield(amount, depletedStatuses, null);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Shield</c>를 현재 런타임 상태에서 소비한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Shield를 현재 런타임 상태에서 소비한다.
         public float ConsumeShield(
             float amount,
             ICollection<StatusRuntimeInstance> depletedStatuses,
@@ -316,7 +316,7 @@ namespace Pakuri.InGame
             return Math.Max(0f, amount - remaining);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Durations</c>를 연장한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Durations를 연장한다.
         public bool ExtendDurations(StatusEffectKind kind, float durationDelta, Func<StatusRuntimeInstance, bool> predicate = null)
         {
             if (durationDelta <= 0f)
@@ -344,7 +344,7 @@ namespace Pakuri.InGame
             return changed;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>RecordIncomingDamage</c> 작업을 수행한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 RecordIncomingDamage 작업을 수행한다.
         public void RecordIncomingDamage(DamageAttribute attribute, float amount)
         {
             if (amount <= 0f)
@@ -362,7 +362,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>요청값</c>를 찾는다.</summary>
+        /// 전달된 런타임 입력값을 사용해 요청값를 찾는다.
         private StatusRuntimeInstance Find(StatusEffectKind kind, string sourceSkillId = null)
         {
             var hasSourceSkillId = !string.IsNullOrWhiteSpace(sourceSkillId);
@@ -383,7 +383,7 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /// <summary>전달된 <c>statusData</c> 값을 사용해 소유한 런타임 상태에 <c>SourceAwareIdentity</c>가 있는지 반환한다.</summary>
+        /// 전달된 statusData 값을 사용해 소유한 런타임 상태에 SourceAwareIdentity가 있는지 반환한다.
         private static bool HasSourceAwareIdentity(StatusRuntimeData statusData)
         {
             return statusData != null
@@ -391,7 +391,7 @@ namespace Pakuri.InGame
                 && statusData.MergePolicy != StatusMergePolicy.Unspecified;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ReplaceSourceData</c> 실행 필요 여부를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ReplaceSourceData 실행 필요 여부를 반환한다.
         private static bool ShouldReplaceSourceData(StatusRuntimeData current, StatusRuntimeData incoming)
         {
             if (incoming == null)
@@ -408,11 +408,11 @@ namespace Pakuri.InGame
         }
     }
 
-    /// <summary><c>StatusRuntimeInstance</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
+    /// StatusRuntimeInstance가 소유하는 데이터와 동작을 캡슐화한다.
     public class StatusRuntimeInstance
     {
 
-        /// <summary><c>StatusRuntimeInstance</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+        /// StatusRuntimeInstance 인스턴스를 전달된 런타임 입력값으로 초기화한다.
         public StatusRuntimeInstance(StatusEffectKind kind)
         {
             Kind = kind;
@@ -463,13 +463,13 @@ namespace Pakuri.InGame
         public bool IsTimed => !Permanent && DurationRemaining > 0f;
         public bool IsShieldStatus => Kind == StatusEffectKind.Shield;
 
-        /// <summary>전달된 <c>sourceData</c> 값을 사용해 <c>SourceData</c>를 갱신한다.</summary>
+        /// 전달된 sourceData 값을 사용해 SourceData를 갱신한다.
         public void SetSourceData(StatusRuntimeData sourceData)
         {
             SourceData = sourceData;
         }
 
-        /// <summary>전달된 <c>sourceData</c> 값을 사용해 <c>SourceMetadata</c>를 갱신한다.</summary>
+        /// 전달된 sourceData 값을 사용해 SourceMetadata를 갱신한다.
         public void SetSourceMetadata(StatusRuntimeData sourceData)
         {
             SourceSkillId = sourceData.SourceSkillId;
@@ -478,7 +478,7 @@ namespace Pakuri.InGame
             ShieldAmountRefreshPolicy = sourceData.ShieldAmountRefreshPolicy;
         }
 
-        /// <summary>전달된 <c>source</c> 값을 사용해 <c>SourceUnit</c>를 갱신한다.</summary>
+        /// 전달된 source 값을 사용해 SourceUnit를 갱신한다.
         public void SetSourceUnit(UnitCombatState source)
         {
             SourceUnitId = string.Empty;
@@ -492,7 +492,7 @@ namespace Pakuri.InGame
             SourceDefinitionId = source.Identity.DefinitionId;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Stacks</c>를 소유한 런타임 상태에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Stacks를 소유한 런타임 상태에 추가한다.
         public void AddStacks(int stacks, int maxStacks)
         {
             var nextStacks = Stacks + Math.Max(0, stacks);
@@ -503,7 +503,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Stacks</c>를 현재 런타임 모델을 기준으로 갱신한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Stacks를 현재 런타임 모델을 기준으로 갱신한다.
         public void RefreshStacks(int stacks, int maxStacks)
         {
             var incomingStacks = Math.Max(0, stacks);
@@ -520,7 +520,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 <c>stacks</c> 값을 사용해 <c>Stacks</c>를 현재 런타임 상태에서 소비한다.</summary>
+        /// 전달된 stacks 값을 사용해 Stacks를 현재 런타임 상태에서 소비한다.
         public int ConsumeStacks(int stacks)
         {
             var consumed = Math.Min(Math.Max(0, stacks), Math.Max(0, Stacks));
@@ -528,13 +528,13 @@ namespace Pakuri.InGame
             return consumed;
         }
 
-        /// <summary>전달된 <c>durationSeconds</c> 값을 사용해 <c>Duration</c>를 갱신한다.</summary>
+        /// 전달된 durationSeconds 값을 사용해 Duration를 갱신한다.
         public void SetDuration(float durationSeconds)
         {
             DurationRemaining = Math.Max(0f, durationSeconds);
         }
 
-        /// <summary>전달된 <c>durationDelta</c> 값을 사용해 <c>Duration</c>를 연장한다.</summary>
+        /// 전달된 durationDelta 값을 사용해 Duration를 연장한다.
         public bool ExtendDuration(float durationDelta)
         {
             if (Permanent || durationDelta <= 0f)
@@ -546,7 +546,7 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /// <summary>전달된 <c>permanent</c> 값을 사용해 <c>Permanent</c>를 갱신한다.</summary>
+        /// 전달된 permanent 값을 사용해 Permanent를 갱신한다.
         public void SetPermanent(bool permanent)
         {
             Permanent = permanent;
@@ -556,7 +556,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Shield</c>를 적용한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Shield를 적용한다.
         public void ApplyShield(float amount, ShieldRefreshRule refreshRule, bool mergedExisting)
         {
             var resolvedAmount = Math.Max(0f, amount);
@@ -586,7 +586,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 <c>amount</c> 값을 사용해 <c>Shield</c>를 현재 런타임 상태에서 소비한다.</summary>
+        /// 전달된 amount 값을 사용해 Shield를 현재 런타임 상태에서 소비한다.
         public float ConsumeShield(float amount)
         {
             if (!IsShieldStatus || RemainingShieldAmount <= 0f || amount <= 0f)
@@ -599,7 +599,7 @@ namespace Pakuri.InGame
             return consumed;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>RecordIncomingDamage</c> 작업을 수행한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 RecordIncomingDamage 작업을 수행한다.
         public void RecordIncomingDamage(DamageAttribute attribute, float amount)
         {
             if (amount <= 0f)
@@ -616,7 +616,7 @@ namespace Pakuri.InGame
             trackedIncomingDamageTotals[index] += amount;
         }
 
-        /// <summary>전달된 <c>attribute</c> 값을 사용해 <c>TrackedIncomingDamage</c>를 반환한다.</summary>
+        /// 전달된 attribute 값을 사용해 TrackedIncomingDamage를 반환한다.
         public float GetTrackedIncomingDamage(DamageAttribute attribute)
         {
             var index = (int)attribute;
@@ -628,7 +628,7 @@ namespace Pakuri.InGame
             return trackedIncomingDamageTotals[index];
         }
 
-        /// <summary>전달된 <c>deltaTime</c> 값을 사용해 <c>요청값</c>를 경과 시간 기준으로 갱신한다.</summary>
+        /// 전달된 deltaTime 값을 사용해 요청값를 경과 시간 기준으로 갱신한다.
         public bool Tick(float deltaTime)
         {
             if (IsShieldStatus && RemainingShieldAmount <= 0f)
@@ -651,11 +651,11 @@ namespace Pakuri.InGame
         }
     }
 
-    /// <summary><c>ShieldAbsorptionRecord</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
+    /// ShieldAbsorptionRecord 처리에 함께 전달되는 값들을 묶는다.
     public struct ShieldAbsorptionRecord
     {
 
-        /// <summary><c>ShieldAbsorptionRecord</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+        /// ShieldAbsorptionRecord 인스턴스를 전달된 런타임 입력값으로 초기화한다.
         public ShieldAbsorptionRecord(StatusRuntimeInstance status, float absorbedAmount)
         {
             Status = status;

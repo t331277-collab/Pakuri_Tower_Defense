@@ -673,3 +673,117 @@ Implementation and available non-Play-Mode verification complete.
 - 2026-07-30: User rejected the separate Enemy passive runtime and required Enemy spawn to use the Monster learned-skill path.
 - 2026-07-30: User explicitly required deletion of `EnemyPassiveModifiers`, Enemy-only multiplier fields, and Enemy branches in damage and healing.
 - 2026-07-30: Code Builder completed the shared learned-passive migration and non-Play-Mode verification.
+
+## Task: 2026-07-30 Skill Definition Family Consolidation
+
+### Task title
+
+Consolidate skill Definitions and execution logic by real delivery family.
+
+### Goals
+
+- Keep one concrete Single Definition and one concrete Buff Definition.
+- Convert Chain to Trigger-based common Single execution.
+- Move Charge initiation to the Buff family.
+- Split Definitions into family folders after behavior consolidation.
+- Delete duplicate type dispatch, executor branches, and dead fields.
+
+### Constraints
+
+- Follow `boards/COMBAT/SKILL_DEFINITION_FAMILY_CONSOLIDATION_HANDOFF.md`.
+- Preserve current CSV values, IDs, assets, Trigger behavior, and gameplay behavior.
+- Do not create rejected standalone contract scripts or compatibility-shell subclasses.
+- Preserve existing XML-comment-tag cleanup.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Code implementation and non-Play-Mode verification complete.
+
+### Next Actions
+
+- User Play Mode verification for the affected combat skills.
+
+### Evidence
+
+- Current Generation and runtime use four removable concrete subclasses: Chain, Charge, Heal, and Shield.
+- Current Chain and Charge have separate Single executor overloads.
+- Current Buff Status, Heal, and Shield use three executor classes.
+- Full approved behavior and file contracts are recorded in the handoff.
+- `BuffSkillDefinition` now owns Status, Heal, Shield, and Charge through `BuffEffectKind`.
+- `BuffSkillExecutor.Execute` is the sole Buff family entry and shares target/visual paths.
+- OpeningCharge now uses the Buff active-state path plus ordinary `EnemyCombatDecision`/`EnemyActionController` targeting, movement, and `UnitCollisionResolver` contact; separate Charge Actor/State scripts are removed.
+- Runtime and Editor builds completed with zero errors; Unity C# console errors were zero.
+- Full Unity EditMode tests passed 11/11.
+
+### History
+
+- 2026-07-30: User approved implementation after the handoff MD is created.
+- 2026-07-30: Code Builder created the handoff and started implementation.
+- 2026-07-30: Code Builder completed Buff family consolidation and non-Play-Mode verification.
+
+## Task: 2026-07-31 Skill Executor / Actor Responsibility Unification
+
+### Task title
+
+Unify skill execution as `SkillExecution -> Executor -> Actor -> EffectManager`.
+
+### Goals
+
+- Make spatial family Executors launch-only.
+- Make spatial family Actors own targeting at the required timing, collision, hit judgment, effect application, Trigger publication, and completion.
+- Make `SkillExecutionData` finalized before Executor dispatch.
+- Remove duplicated hit enhancement implementations and `EffectManager`'s automatic family-Actor selection.
+
+### Constraints
+
+- Preserve current gameplay, Trigger, CSV, Definition, asset, and visual behavior.
+- Buff remains the no-spatial-gameplay-Actor exception; `BuffSkillActor` owns Buff/status visual lifetime.
+- Charge remains on `SkillUseState` plus ordinary enemy AI/movement/collision.
+- Normal visual lifetime belongs to the family Actor; `EffectManager` only creates, tracks, deletes on Actor request, and force-clears combat effects.
+- Spatial Actors and the no-gameplay-Actor Buff Executor reuse `SkillTargeting.cs`; no separate targeting algorithm is added.
+- Add no base Actor, interface, factory, or standalone contract script.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Designer for the handoff. Code Builder after explicit user assignment.
+
+### Status
+
+Code implementation and available non-Play-Mode verification complete.
+
+### Next Actions
+
+- User verifies representative Projectile, Line, Single, Zone, Buff, Trigger, no-visual, and Charge behavior in Play Mode.
+
+### Evidence
+
+- Four spatial Executor files contain only matching Actor creation, attachment, initialization, and launch-result return; forbidden targeting, calculation, coroutine, gameplay-application, and Trigger symbols return zero matches.
+- Single, Projectile, Line, and Zone family calculations, targeting, delayed/repeated work, collision, gameplay application, and completion reside in their matching Actor files.
+- Spatial Actors and the Buff Executor call the existing `SkillTargeting`; no second targeting implementation was added.
+- `SkillExecutionRuleResolver.ApplyHitEnhancements` is the only shared hit-enhancement implementation.
+- Projectile no-visual execution uses an empty Projectile Actor; its branch visual uses `ProjectileSkillActor`, not `LineSkillActor`.
+- Zone recast calls normal `ZoneSkillExecutor.Execute`; `ZoneSkillExecutor.ExecuteRecast` is removed.
+- `EffectCreateRequest.DurationSeconds` and `EffectManager` automatic Single/Buff Actor attachment are removed.
+- Persistent status end paths call `EffectManager.SignalStatusEffectEnded`; `BuffSkillActor` then requests removal.
+- `BuffSkillExecutor.cs.meta` retains GUID `210c9a9da090fa545801a1d1fb30c1ed`.
+- Removed-symbol searches find no consolidated subclass, Charge Actor/State, XML `<summary>/<c>` tag, Projectile direct-hit fallback, or Zone recast executor.
+- `git diff --check` passes.
+- Runtime and Editor builds complete with zero errors and the two existing assembly-reference warnings.
+- Unity script compilation completes with zero Console errors.
+- Full Unity EditMode tests pass 11/11.
+- Full boundaries and final responsibilities are recorded in `boards/COMBAT/SKILL_EXECUTOR_ACTOR_RESPONSIBILITY_HANDOFF.md`.
+
+### History
+
+- 2026-07-31: User required no validation or Snapshot interpretation in Executors and gameplay judgment/application in Actors.
+- 2026-07-31: User required Single to use the same high-level execute-then-judge flow as other spatial families.
+- 2026-07-31: Designer created the implementation handoff from inspected current code.
+- 2026-07-31: User corrected visual lifetime ownership; Designer revised the handoff so family Actors own completion and request `EffectManager` deletion.
+- 2026-07-31: User confirmed reuse of `SkillTargeting.cs` and explicitly assigned Code Builder implementation.
+- 2026-07-31: Code Builder completed Executor/Actor responsibility migration, EffectManager lifetime correction, Buff Executor rename, static/build/Unity/EditMode verification, and preserved Play Mode verification for the user.

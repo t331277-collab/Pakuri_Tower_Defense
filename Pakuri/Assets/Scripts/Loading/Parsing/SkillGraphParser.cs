@@ -13,11 +13,11 @@ using Pakuri.InGame;
 namespace Pakuri.Data
 {
 
-	/// <summary><c>SkillGraphParser</c> 원본 값을 런타임 모델로 파싱한다.</summary>
+	/// SkillGraphParser 원본 값을 런타임 모델로 파싱한다.
 	internal static class SkillGraphParser
 	{
 
-		/// <summary><c>SkillNodeOwnerKind</c>에서 지원하는 값의 종류를 정의한다.</summary>
+		/// SkillNodeOwnerKind에서 지원하는 값의 종류를 정의한다.
 		internal enum SkillNodeOwnerKind
 		{
 			Skill,
@@ -27,7 +27,7 @@ namespace Pakuri.Data
 			Trigger
 		}
 
-		/// <summary><c>SkillNodeValueType</c>에서 지원하는 값의 종류를 정의한다.</summary>
+		/// SkillNodeValueType에서 지원하는 값의 종류를 정의한다.
 		internal enum SkillNodeValueType
 		{
 			String,
@@ -41,7 +41,7 @@ namespace Pakuri.Data
 			ChoiceId
 		}
 
-		/// <summary><c>SkillNodeRow</c>에 해당하는 CSV 한 행을 표현한다.</summary>
+		/// SkillNodeRow에 해당하는 CSV 한 행을 표현한다.
 		internal class SkillNodeRow
 		{
 			public string Id;
@@ -70,7 +70,7 @@ namespace Pakuri.Data
 
 		}
 
-		/// <summary><c>SkillNodeParamRow</c>에 해당하는 CSV 한 행을 표현한다.</summary>
+		/// SkillNodeParamRow에 해당하는 CSV 한 행을 표현한다.
 		internal class SkillNodeParamRow
 		{
 			public string NodeId;
@@ -84,7 +84,7 @@ namespace Pakuri.Data
 			public string Value;
 		}
 
-		/// <summary><c>SkillNodeTypeRow</c>에 해당하는 CSV 한 행을 표현한다.</summary>
+		/// SkillNodeTypeRow에 해당하는 CSV 한 행을 표현한다.
 		internal class SkillNodeTypeRow
 		{
 			public string Id;
@@ -93,7 +93,7 @@ namespace Pakuri.Data
 
 		}
 
-		/// <summary><c>SkillNodeTypeParamRow</c>에 해당하는 CSV 한 행을 표현한다.</summary>
+		/// SkillNodeTypeParamRow에 해당하는 CSV 한 행을 표현한다.
 		internal class SkillNodeTypeParamRow
 		{
 			public string NodeTypeId;
@@ -109,7 +109,7 @@ namespace Pakuri.Data
 			public string AllowedValues;
 		}
 
-		/// <summary><c>SkillGraphNodeRow</c>에 해당하는 CSV 한 행을 표현한다.</summary>
+		/// SkillGraphNodeRow에 해당하는 CSV 한 행을 표현한다.
 		internal class SkillGraphNodeRow
 		{
 			public string MonsterId;
@@ -129,7 +129,7 @@ namespace Pakuri.Data
 			public string ExcludesActiveChoiceId;
 		}
 
-		/// <summary>전달된 <c>record</c> 값을 사용해 <c>SkillNodeTypeRow</c> 값을 런타임 표현으로 파싱한다.</summary>
+		/// 전달된 record 값을 사용해 SkillNodeTypeRow 값을 런타임 표현으로 파싱한다.
 		internal static SkillNodeTypeRow ParseSkillNodeTypeRow(CsvParser.CsvRecord record)
 		{
 			return new SkillNodeTypeRow
@@ -139,7 +139,7 @@ namespace Pakuri.Data
 			};
 		}
 
-		/// <summary>전달된 <c>record</c> 값을 사용해 <c>SkillNodeTypeParamRow</c> 값을 런타임 표현으로 파싱한다.</summary>
+		/// 전달된 record 값을 사용해 SkillNodeTypeParamRow 값을 런타임 표현으로 파싱한다.
 		internal static SkillNodeTypeParamRow ParseSkillNodeTypeParamRow(CsvParser.CsvRecord record)
 		{
 			return new SkillNodeTypeParamRow
@@ -153,7 +153,7 @@ namespace Pakuri.Data
 			};
 		}
 
-		/// <summary>전달된 <c>record</c> 값을 사용해 <c>SkillGraphNodeRow</c> 값을 런타임 표현으로 파싱한다.</summary>
+		/// 전달된 record 값을 사용해 SkillGraphNodeRow 값을 런타임 표현으로 파싱한다.
 		internal static SkillGraphNodeRow ParseSkillGraphNodeRow(CsvParser.CsvRecord record)
 		{
 			SkillGraphNodeRow skillGraphNodeRow = new SkillGraphNodeRow
@@ -173,7 +173,7 @@ namespace Pakuri.Data
 			return skillGraphNodeRow;
 		}
 
-		/// <summary>전달된 런타임 입력값을 사용해 <c>SkillNodeValueType</c> 값을 런타임 표현으로 파싱한다.</summary>
+		/// 전달된 런타임 입력값을 사용해 SkillNodeValueType 값을 런타임 표현으로 파싱한다.
 		internal static SkillNodeValueType ParseSkillNodeValueType(string rawValue, CsvParser.CsvRecord record)
 		{
 			return rawValue.Trim().Replace("-", "_").ToLowerInvariant() switch
@@ -191,7 +191,7 @@ namespace Pakuri.Data
 			};
 		}
 
-		/// <summary>전달된 런타임 입력값을 사용해 <c>NormalizedSkillAuthoringRows</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+		/// 전달된 런타임 입력값을 사용해 NormalizedSkillAuthoringRows를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
 		internal static void ValidateNormalizedSkillAuthoringRows(CsvSourceModel.SourceModel model, CsvRuntimeCatalog assetCatalog, List<string> errors)
 		{
 			if (model == null)
@@ -227,7 +227,7 @@ namespace Pakuri.Data
 			}
 		}
 
-		/// <summary>전달된 런타임 입력값을 사용해 <c>SkillNodeOwner</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+		/// 전달된 런타임 입력값을 사용해 SkillNodeOwner를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
 		internal static void ValidateSkillNodeOwner(SkillNodeRow node, CsvSourceModel.SourceModel model, List<string> errors)
 		{
 			switch (node.OwnerKind)
@@ -278,7 +278,7 @@ namespace Pakuri.Data
 			}
 		}
 
-		/// <summary>전달된 런타임 입력값을 사용해 <c>SkillNodeGateReferences</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+		/// 전달된 런타임 입력값을 사용해 SkillNodeGateReferences를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
 		internal static void ValidateSkillNodeGateReferences(SkillNodeRow node, CsvSourceModel.SourceModel model, List<string> errors)
 		{
 			ValidateChoiceGate(node.Id, "requires_active_choice_id", node.RequiresActiveChoiceId, model, errors);
@@ -287,7 +287,7 @@ namespace Pakuri.Data
 			ValidatePassiveGate(node.Id, "excludes_passive_skill_id", node.ExcludesPassiveSkillId, model, errors);
 		}
 
-		/// <summary>전달된 런타임 입력값을 사용해 <c>ChoiceGate</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+		/// 전달된 런타임 입력값을 사용해 ChoiceGate를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
 		internal static void ValidateChoiceGate(string nodeId, string columnName, string choiceId, CsvSourceModel.SourceModel model, List<string> errors)
 		{
 			if (!string.IsNullOrWhiteSpace(choiceId) && !model.SkillChoices.ContainsKey(choiceId))
@@ -296,7 +296,7 @@ namespace Pakuri.Data
 			}
 		}
 
-		/// <summary>전달된 런타임 입력값을 사용해 <c>PassiveGate</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+		/// 전달된 런타임 입력값을 사용해 PassiveGate를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
 		internal static void ValidatePassiveGate(string nodeId, string columnName, string passiveId, CsvSourceModel.SourceModel model, List<string> errors)
 		{
 			if (!string.IsNullOrWhiteSpace(passiveId) && (!model.Skills.TryGetValue(passiveId, out var value) || value.SkillKind != PakuriCsvSkillKind.Passive))
@@ -305,7 +305,7 @@ namespace Pakuri.Data
 			}
 		}
 
-		/// <summary>전달된 런타임 입력값을 사용해 <c>SkillNodeParamValue</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+		/// 전달된 런타임 입력값을 사용해 SkillNodeParamValue를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
 		internal static void ValidateSkillNodeParamValue(SkillNodeParamRow param, CsvSourceModel.SourceModel model, CsvRuntimeCatalog assetCatalog, List<string> errors)
 		{
 			string text = string.Empty;
@@ -380,7 +380,7 @@ namespace Pakuri.Data
 			}
 		}
 
-		/// <summary>전달된 런타임 입력값을 사용해 <c>SkillNodeEnumParam</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+		/// 전달된 런타임 입력값을 사용해 SkillNodeEnumParam를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
 		internal static void ValidateSkillNodeEnumParam(SkillNodeParamRow param, string value, List<string> errors)
 		{
 			if (string.IsNullOrWhiteSpace(value))
@@ -389,7 +389,7 @@ namespace Pakuri.Data
 			}
 		}
 
-		/// <summary>전달된 <c>model</c> 값을 사용해 <c>MaterializeSkillGraphRows</c> 작업을 수행한다.</summary>
+		/// 전달된 model 값을 사용해 MaterializeSkillGraphRows 작업을 수행한다.
 		internal static void MaterializeSkillGraphRows(CsvSourceModel.SourceModel model)
 		{
 			if (model == null || model.SkillGraphNodes.Count == 0)
@@ -496,7 +496,7 @@ namespace Pakuri.Data
 			model.SkillNodeParams.AddRange(list3);
 		}
 
-		/// <summary>전달된 런타임 입력값을 사용해 <c>SkillNodeTypeParamLookup</c>를 구성한다.</summary>
+		/// 전달된 런타임 입력값을 사용해 SkillNodeTypeParamLookup를 구성한다.
 		internal static Dictionary<string, List<SkillNodeTypeParamRow>> BuildSkillNodeTypeParamLookup(CsvSourceModel.SourceModel model, List<string> errors)
 		{
 			Dictionary<string, List<SkillNodeTypeParamRow>> dictionary = new Dictionary<string, List<SkillNodeTypeParamRow>>(StringComparer.OrdinalIgnoreCase);
@@ -537,7 +537,7 @@ namespace Pakuri.Data
 			return dictionary;
 		}
 
-		/// <summary>전달된 런타임 입력값을 사용해 <c>SkillGraphTargetSkillId</c>를 결정한다.</summary>
+		/// 전달된 런타임 입력값을 사용해 SkillGraphTargetSkillId를 결정한다.
 		internal static string ResolveSkillGraphTargetSkillId(CsvSourceModel.SourceModel model, SkillGraphNodeRow graph, List<string> errors)
 		{
 			string text2 = graph?.OwnerId ?? string.Empty;
@@ -605,7 +605,7 @@ namespace Pakuri.Data
 			return text;
 		}
 
-		/// <summary>전달된 런타임 입력값을 사용해 <c>SkillGraphAllowedValue</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+		/// 전달된 런타임 입력값을 사용해 SkillGraphAllowedValue를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
 		internal static void ValidateSkillGraphAllowedValue(string graphNodeKey, SkillNodeTypeParamRow param, string value, List<string> errors)
 		{
 			if (string.IsNullOrWhiteSpace(param.AllowedValues))
@@ -623,7 +623,7 @@ namespace Pakuri.Data
 			errors.Add("Skill graph node '" + graphNodeKey + "' param '" + param.ParamKey + "' has invalid value '" + value + "'. Allowed: " + param.AllowedValues + ".");
 		}
 
-		/// <summary>전달된 런타임 입력값을 사용해 <c>ContiguousNodeOrder</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+		/// 전달된 런타임 입력값을 사용해 ContiguousNodeOrder를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
 		internal static void ValidateContiguousNodeOrder(
 			IReadOnlyList<SkillGraphNodeRow> rows,
 			List<string> errors)
@@ -652,7 +652,7 @@ namespace Pakuri.Data
 			}
 		}
 
-		/// <summary>전달된 <c>graph</c> 값을 사용해 <c>SkillGraphKey</c>를 구성한다.</summary>
+		/// 전달된 graph 값을 사용해 SkillGraphKey를 구성한다.
 		internal static string BuildSkillGraphKey(SkillGraphNodeRow graph)
 		{
 			return graph == null
@@ -660,7 +660,7 @@ namespace Pakuri.Data
 				: $"{graph.MonsterId}:{graph.OwnerKind}:{graph.OwnerId}:{graph.TargetSkillId}";
 		}
 
-		/// <summary>전달된 <c>graph</c> 값을 사용해 <c>GeneratedSkillGraphNodeId</c>를 구성한다.</summary>
+		/// 전달된 graph 값을 사용해 GeneratedSkillGraphNodeId를 구성한다.
 		internal static string BuildGeneratedSkillGraphNodeId(SkillGraphNodeRow graph)
 		{
 			return graph == null

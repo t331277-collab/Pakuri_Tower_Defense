@@ -406,3 +406,51 @@ Implementation and available non-Play-Mode verification complete.
 
 - 2026-07-30: User approved replacing the separate Enemy passive data/runtime with shared learned passives assigned at spawn.
 - 2026-07-30: Code Builder migrated parsing, validation, generation, registration, runtime initialization, and verification.
+
+## Task: 2026-07-30 Skill Definition Family Consolidation
+
+### Task title
+
+Generate final Single and Buff family Definitions without compatibility subclasses.
+
+### Goals
+
+- Generate Chain follow-up as a final hidden Trigger `SingleSkillDefinition`.
+- Generate Status, Heal, Shield, and Charge as one final `BuffSkillDefinition`.
+- Keep current CSV schemas and authored tuning values.
+- Remove obsolete subclass-specific Generation branches and writes.
+
+### Constraints
+
+- Follow `boards/COMBAT/SKILL_DEFINITION_FAMILY_CONSOLIDATION_HANDOFF.md`.
+- Preserve one validation, one catalog build, and one lookup rebuild.
+- Keep existing Chain fields as the tuning source; do not add duplicate Trigger CSV columns.
+- Preserve all current IDs, values, paths, and ordering.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Code implementation and non-Play-Mode verification complete.
+
+### Next Actions
+
+- User Play Mode verification of generated skill behavior.
+
+### Evidence
+
+- `ChainLightning` already carries multiplier, delay, radius, and primary-exclusion values in the base skill CSV.
+- `OpeningCharge` is already authored as Buff and already has an explicit CombatStart Trigger.
+- Generation currently creates the four subclasses that this task removes.
+- Generation now creates only final family Definitions; searches return zero removed subclass symbols.
+- ChainLightning uses its existing CSV chain values to generate a hidden Trigger Single without schema changes.
+- OpeningCharge, Heal, Shield, and Status profiles generate one `BuffSkillDefinition` distinguished by `BuffEffectKind`.
+- No CSV file or schema was changed.
+- Focused generated-family test passed 1/1; full Unity EditMode tests passed 10/10.
+
+### History
+
+- 2026-07-30: User approved final family Generation and requested implementation after a written handoff.
+- 2026-07-30: Code Builder completed final family Generation and catalog verification.

@@ -11,7 +11,7 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// <summary><c>EnemyActionController</c>가 담당하는 입력 또는 표시 흐름을 조정하고 관련 런타임 상태를 갱신한다.</summary>
+    /// EnemyActionController가 담당하는 입력 또는 표시 흐름을 조정하고 관련 런타임 상태를 갱신한다.
     public class EnemyActionController
     {
         private readonly UnitSpawnManager units;
@@ -20,7 +20,7 @@ namespace Pakuri.InGame
         private readonly List<CombatUnitEntry> nexusCandidate = new List<CombatUnitEntry>(1);
         private readonly List<CombatUnitEntry> collisionTargets = new List<CombatUnitEntry>(1);
 
-        /// <summary><c>EnemyActionController</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+        /// EnemyActionController 인스턴스를 전달된 런타임 입력값으로 초기화한다.
         public EnemyActionController(
             UnitSpawnManager units,
             SkillExecution skillExecution,
@@ -31,7 +31,7 @@ namespace Pakuri.InGame
             this.combatManager = combatManager;
         }
 
-        /// <summary>전달된 <c>deltaTime</c> 값을 사용해 <c>요청값</c>를 경과 시간 기준으로 갱신한다.</summary>
+        /// 전달된 deltaTime 값을 사용해 요청값를 경과 시간 기준으로 갱신한다.
         public void Tick(float deltaTime)
         {
             if (deltaTime <= 0f)
@@ -46,7 +46,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Enemy</c>를 경과 시간 기준으로 갱신한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Enemy를 경과 시간 기준으로 갱신한다.
         private void TickEnemy(
             CombatUnitEntry enemyEntry,
             float deltaTime)
@@ -62,12 +62,13 @@ namespace Pakuri.InGame
                 return;
             }
 
-            if (SingleChargeActor.Tick(enemyEntry, units, combatManager, deltaTime))
+            var target = EnemyCombatDecision.FindNearestPlayerTarget(enemyEntry, units);
+            var activeCharge = EnemyCombatDecision.ResolveActiveCharge(enemyModel);
+            if (activeCharge != null)
             {
+                TickCharge(enemyEntry, enemyModel, target, activeCharge, deltaTime);
                 return;
             }
-
-            var target = EnemyCombatDecision.FindNearestPlayerTarget(enemyEntry, units);
 
             if (target != null && target.Model.IsNexus)
             {
@@ -126,7 +127,7 @@ namespace Pakuri.InGame
                 offensiveRuntime);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>UseSkill</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 UseSkill 작업을 시도하고 성공 여부를 반환한다.
         private bool TryUseSkill(
             CombatUnitEntry enemyEntry,
             SkillUseState runtime)
@@ -138,18 +139,20 @@ namespace Pakuri.InGame
                 combatManager);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Toward</c>를 이동시킨다.</summary>
-        private static void MoveToward(
+        /// 전달된 런타임 입력값을 사용해 Toward를 이동시킨다.
+        private static Vector2 MoveToward(
             CombatUnitEntry enemyEntry,
             CombatUnitEntry target,
             EnemyCombatState enemyModel,
-            float deltaTime)
+            float deltaTime,
+            float additionalSpeedMultiplier = 1f)
         {
             var moveSpeed = enemyModel.Stats.MoveSpeed;
             moveSpeed *= StatusCombatRules.MoveSpeedMultiplier(enemyModel);
+            moveSpeed *= Mathf.Max(0f, additionalSpeedMultiplier);
             if (moveSpeed <= 0f)
             {
-                return;
+                return Vector2.zero;
             }
 
             var current = enemyEntry.Transform.position;
@@ -159,9 +162,69 @@ namespace Pakuri.InGame
                 current,
                 targetPosition,
                 moveSpeed * deltaTime);
+            return (Vector2)(enemyEntry.Transform.position - current);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>NexusAttack</c>를 경과 시간 기준으로 갱신한다.</summary>
+        /// 일반 AI 대상과 이동 경로를 사용해 활성 Charge 버프를 갱신한다.
+        private void TickCharge(
+            CombatUnitEntry enemyEntry,
+            EnemyCombatState enemyModel,
+            CombatUnitEntry target,
+            SkillUseState runtime,
+            float deltaTime)
+        {
+            if (TryApplyChargeContact(enemyEntry, enemyModel, runtime, Vector2.zero)
+                || target == null
+                || !StatusCombatRules.CanMove(enemyModel))
+            {
+                return;
+            }
+
+            var movement = MoveToward(
+                enemyEntry,
+                target,
+                enemyModel,
+                deltaTime,
+                ChargeSpeedMultiplier(runtime));
+            TryApplyChargeContact(enemyEntry, enemyModel, runtime, -movement);
+        }
+
+        /// Charge 이동 배율을 활성 경과 시간에 맞춰 계산한다.
+        private static float ChargeSpeedMultiplier(SkillUseState runtime)
+        {
+            var skill = (BuffSkillDefinition)runtime.Data;
+            var elapsed = Mathf.Max(0f, skill.Timing.ActiveDuration - runtime.ActiveDurationRemaining);
+            var ramp = skill.ChargeRampSeconds > 0f
+                ? Mathf.Clamp01(elapsed / skill.ChargeRampSeconds)
+                : 1f;
+            return Mathf.Lerp(
+                1f,
+                Mathf.Max(1f, skill.ChargeMaxMoveSpeedMultiplier),
+                ramp);
+        }
+
+        /// Charge 이동 중 플레이어 접촉을 공통 Collider 경로로 판정한다.
+        private bool TryApplyChargeContact(
+            CombatUnitEntry enemyEntry,
+            EnemyCombatState enemyModel,
+            SkillUseState runtime,
+            Vector2 movement)
+        {
+            UnitCollisionResolver.CollectTargets(
+                units,
+                units.Players,
+                enemyEntry,
+                movement,
+                collisionTargets);
+            return collisionTargets.Count > 0
+                && BuffSkillExecutor.ApplyChargeContact(
+                    combatManager,
+                    enemyModel,
+                    collisionTargets[0],
+                    runtime);
+        }
+
+        /// 전달된 런타임 입력값을 사용해 NexusAttack를 경과 시간 기준으로 갱신한다.
         private void TickNexusAttack(
             CombatUnitEntry enemyEntry,
             EnemyCombatState enemyModel,
@@ -190,7 +253,7 @@ namespace Pakuri.InGame
             units.DespawnUnit(enemyModel);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>TouchingNexus</c> 조건 충족 여부를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 TouchingNexus 조건 충족 여부를 반환한다.
         private bool IsTouchingNexus(CombatUnitEntry enemyEntry, CombatUnitEntry nexusTarget)
         {
             nexusCandidate.Clear();

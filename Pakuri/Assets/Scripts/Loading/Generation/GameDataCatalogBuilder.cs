@@ -17,19 +17,19 @@ using static Pakuri.Data.SkillGraphParser;
 namespace Pakuri.Data
 {
 
-    /// <summary><c>GameDataCatalogBuilder</c> 런타임 데이터를 파싱된 저작 데이터에서 생성한다.</summary>
+    /// GameDataCatalogBuilder 런타임 데이터를 파싱된 저작 데이터에서 생성한다.
     internal sealed partial class GameDataCatalogBuilder
     {
 
         private readonly CsvRuntimeCatalog assetCatalog;
 
-        /// <summary><c>GameDataCatalogBuilder</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+        /// GameDataCatalogBuilder 인스턴스를 전달된 런타임 입력값으로 초기화한다.
         private GameDataCatalogBuilder(CsvRuntimeCatalog assetCatalog)
         {
             this.assetCatalog = assetCatalog ?? throw new ArgumentNullException(nameof(assetCatalog));
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>RuntimeCatalog</c>를 구성한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 RuntimeCatalog를 구성한다.
         internal static GameDataCatalog BuildRuntimeCatalog(
             SourceModel model,
             CsvRuntimeCatalog assetCatalog)
@@ -37,7 +37,7 @@ namespace Pakuri.Data
             return new GameDataCatalogBuilder(assetCatalog).Build(model);
         }
 
-        /// <summary>전달된 <c>model</c> 값을 사용해 <c>요청값</c>를 구성한다.</summary>
+        /// 전달된 model 값을 사용해 요청값를 구성한다.
         private GameDataCatalog Build(SourceModel model)
         {
             var catalog = ScriptableObject.CreateInstance<GameDataCatalog>();
@@ -106,7 +106,7 @@ namespace Pakuri.Data
             return catalog;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>MonsterSkillDisplayName</c>를 결정한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 MonsterSkillDisplayName를 결정한다.
         private string ResolveMonsterSkillDisplayName(
             SourceModel model,
             string monsterId,
@@ -130,7 +130,7 @@ namespace Pakuri.Data
                 $"Monster '{monsterId}' has no '{skillKind}' skill in slot '{slot}'.");
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Enemies</c>를 구성한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Enemies를 구성한다.
         private EnemyDefinition[] BuildEnemies(
             SourceModel model,
             string stageId,
@@ -198,7 +198,7 @@ namespace Pakuri.Data
             return enemies.ToArray();
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>EnemyPassiveDefinition</c>를 구성한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 EnemyPassiveDefinition를 구성한다.
         private PassiveSkillDefinition BuildEnemyPassiveDefinition(
             SourceModel model,
             string passiveId,
@@ -230,7 +230,7 @@ namespace Pakuri.Data
             };
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>EnemyAssignedActiveSkills</c>를 구성한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 EnemyAssignedActiveSkills를 구성한다.
         private SkillDefinition[] BuildEnemyAssignedActiveSkills(
             SourceModel model,
             string enemyId,
@@ -265,7 +265,7 @@ namespace Pakuri.Data
             return definitions.ToArray();
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>AddEnemyAssignedSkillDefinition</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 AddEnemyAssignedSkillDefinition 작업을 시도하고 성공 여부를 반환한다.
         private void TryAddEnemyAssignedSkillDefinition(
             SourceModel model,
             string ownerId,
@@ -292,7 +292,7 @@ namespace Pakuri.Data
                 statusDefinitions));
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>EnemyAssignedSkillDefinition</c>를 구성한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 EnemyAssignedSkillDefinition를 구성한다.
         private ActiveSkillBuildData BuildEnemyAssignedSkillDefinition(EnemyBaseSkillRow source, SkillSlot runtimeSlot)
         {
             var row = source.Skill;
@@ -342,7 +342,7 @@ namespace Pakuri.Data
             return definition;
         }
 
-        /// <summary>전달된 <c>definition</c> 값을 사용해 <c>EnemyExecutionProfile</c>를 적용한다.</summary>
+        /// 전달된 definition 값을 사용해 EnemyExecutionProfile를 적용한다.
         private void ApplyEnemyExecutionProfile(ActiveSkillBuildData definition)
         {
             if (definition == null)
@@ -375,7 +375,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 <c>selection</c> 값을 사용해 <c>EnemyTargetSelection</c>를 대응시킨다.</summary>
+        /// 전달된 selection 값을 사용해 EnemyTargetSelection를 대응시킨다.
         private string MapEnemyTargetSelection(string selection)
         {
             if (string.Equals(selection, "FarthestHostile", StringComparison.OrdinalIgnoreCase))
@@ -407,7 +407,7 @@ namespace Pakuri.Data
             return selection;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>EnemyAssignedSkillTriggers</c>를 구성한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 EnemyAssignedSkillTriggers를 구성한다.
         private SkillTriggerDefinition[] BuildEnemyAssignedSkillTriggers(
             SourceModel model,
             string enemyId,
@@ -431,7 +431,7 @@ namespace Pakuri.Data
                 model.EnemyTriggers.Values,
                 trigger => trigger.Enabled && assignedSkillIds.Contains(trigger.SourceSkillId),
                 (left, right) => left.SortOrder.CompareTo(right.SortOrder));
-            var definitions = new SkillTriggerDefinition[rows.Count];
+            var definitions = new List<SkillTriggerDefinition>(rows.Count + assignedSkillIds.Count);
             for (var i = 0; i < rows.Count; i++)
             {
                 var row = rows[i];
@@ -458,7 +458,7 @@ namespace Pakuri.Data
                         }
                     }
                 };
-                definitions[i] = new SkillTriggerDefinition
+                var definition = new SkillTriggerDefinition
                 {
                     TriggerId = row.Id,
                     MonsterId = enemyId,
@@ -469,16 +469,118 @@ namespace Pakuri.Data
                     EventSourceScopeValue = SkillTriggerEventSourceScope.Any
                 };
                 BuildTriggerOutcome(
-                    definitions[i],
+                    definition,
                     normalizedNodes,
                     activeSkills,
                     statusDefinitions);
+                definitions.Add(definition);
             }
 
-            return definitions;
+            foreach (var skillId in assignedSkillIds)
+            {
+                if (!model.EnemyBaseSkills.TryGetValue(skillId, out var source)
+                    || source == null
+                    || source.Skill == null
+                    || !string.Equals(
+                        source.ExecutionProfile,
+                        "DamageThenDelayedChain",
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var chainTrigger = BuildEnemyChainTrigger(enemyId, source, activeSkills);
+                if (chainTrigger != null)
+                {
+                    definitions.Add(chainTrigger);
+                }
+            }
+
+            return definitions.ToArray();
         }
 
-        /// <summary>전달된 <c>model</c> 값을 사용해 <c>StatusEffects</c>를 구성한다.</summary>
+        /// 연쇄 공격의 후속타를 공용 Trigger와 Single 스킬로 구성한다.
+        private static SkillTriggerDefinition BuildEnemyChainTrigger(
+            string enemyId,
+            EnemyBaseSkillRow source,
+            SkillDefinition[] activeSkills)
+        {
+            SingleSkillDefinition sourceSkill = null;
+            for (var i = 0; activeSkills != null && i < activeSkills.Length; i++)
+            {
+                if (activeSkills[i] is SingleSkillDefinition single
+                    && string.Equals(
+                        single.SkillId,
+                        source.Skill.Id,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    sourceSkill = single;
+                    break;
+                }
+            }
+            if (sourceSkill == null)
+            {
+                return null;
+            }
+
+            var searchRadius = source.ChainRadius > 0f
+                ? source.ChainRadius
+                : source.EffectRadius;
+            var followUp = new SingleSkillDefinition
+            {
+                SkillId = source.Skill.Id + "__chain",
+                SkillName = source.Skill.DisplayName,
+                RuntimeKind = SkillRuntimeKind.SingleAttack,
+                ImplementationState = SkillImplementationState.RuntimeImplemented,
+                IsDefaultLearned = false,
+                Element = sourceSkill.Element,
+                SkillEffectPrefab = sourceSkill.SkillEffectPrefab,
+                RuntimeVisual = sourceSkill.RuntimeVisual,
+                UsesHitTargetCount = true,
+                HitTargetCount = 1,
+                Targeting =
+                {
+                    TargetSide = SkillTargetSide.Enemy,
+                    Selection = source.ExcludePrimaryTarget
+                        ? SkillTargetSelection.NearestOtherFromEventTarget
+                        : SkillTargetSelection.Nearest,
+                    Shape = SkillTargetShape.Single,
+                    Radius = searchRadius
+                },
+                Area =
+                {
+                    Radius = 0f,
+                    CoverAll = false
+                },
+                Damage =
+                {
+                    SkillId = source.Skill.Id,
+                    Element = source.Skill.Attribute,
+                    BaseDamage = source.Skill.BaseDamage,
+                    AttackPowerCoefficient = source.Skill.AttackPowerCoefficient,
+                    SpellPowerCoefficient = source.Skill.SpellPowerCoefficient,
+                    CriticalAllowed = true
+                }
+            };
+
+            return new SkillTriggerDefinition
+            {
+                TriggerId = source.Skill.Id + "__chain_on_hit",
+                MonsterId = enemyId,
+                SourceSkillId = source.Skill.Id,
+                TriggerEvent = SkillTriggerEvent.OnHit,
+                ProcChance = 1f,
+                TriggerDelaySeconds = Mathf.Max(0f, source.ChainDelaySeconds),
+                EventSourceScopeValue = SkillTriggerEventSourceScope.Any,
+                TriggeredSkill = followUp,
+                TriggeredDamageMultiplier = Mathf.Max(0f, source.ChainDamageMultiplier),
+                LockToEventTarget = !source.ExcludePrimaryTarget,
+                CenterMode = SkillTriggerCenterMode.EventTarget,
+                PublishSkillLifecycleEvents = false
+            };
+        }
+
+        /// 전달된 model 값을 사용해 StatusEffects를 구성한다.
         private StatusEffectDefinition[] BuildStatusEffects(SourceModel model)
         {
             var statuses = new List<StatusEffectDefinition>();
@@ -518,7 +620,7 @@ namespace Pakuri.Data
             return statuses.ToArray();
         }
 
-        /// <summary>전달된 <c>definition</c> 값을 사용해 <c>StatusRuntimeData</c>를 구성한다.</summary>
+        /// 전달된 definition 값을 사용해 StatusRuntimeData를 구성한다.
         private static StatusRuntimeData BuildStatusRuntimeData(StatusEffectDefinition definition)
         {
             var status = new StatusRuntimeData
@@ -562,7 +664,7 @@ namespace Pakuri.Data
             return status;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>StatusRuntimeData</c>를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 StatusRuntimeData를 반환한다.
         private static StatusRuntimeData GetStatusRuntimeData(
             StatusEffectKind kind,
             StatusEffectDefinition[] definitions,
@@ -591,7 +693,7 @@ namespace Pakuri.Data
             throw new KeyNotFoundException($"Status definition '{kind}' is not registered.");
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>RewardChoices</c>를 구성한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 RewardChoices를 구성한다.
         private MonsterDefinition.RewardChoiceDefinition[] BuildRewardChoices(SourceModel model, string monsterId)
         {
             var rewards = FilterAndSort(
@@ -614,7 +716,7 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ActiveSkills</c>를 구성한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ActiveSkills를 구성한다.
         private SkillDefinition[] BuildActiveSkills(
             SourceModel model,
             string monsterId,
@@ -703,7 +805,7 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillNodeParamValueLookup</c>를 구성한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 SkillNodeParamValueLookup를 구성한다.
         private Dictionary<string, string> BuildSkillNodeParamValueLookup(SourceModel model, string nodeId)
         {
             var parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -719,7 +821,7 @@ namespace Pakuri.Data
             return parameters;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillNodeStringParam</c>를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 SkillNodeStringParam를 반환한다.
         private string GetSkillNodeStringParam(Dictionary<string, string> parameters, string key)
         {
             if (parameters.TryGetValue(key, out var value))
@@ -730,7 +832,7 @@ namespace Pakuri.Data
             return string.Empty;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillNodeFloatParam</c>를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 SkillNodeFloatParam를 반환한다.
         private float GetSkillNodeFloatParam(Dictionary<string, string> parameters, string key, float defaultValue)
         {
             if (!parameters.TryGetValue(key, out var value) || string.IsNullOrWhiteSpace(value))
@@ -741,7 +843,7 @@ namespace Pakuri.Data
             return float.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillNodeIntParam</c>를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 SkillNodeIntParam를 반환한다.
         private int GetSkillNodeIntParam(Dictionary<string, string> parameters, string key, int defaultValue)
         {
             if (!parameters.TryGetValue(key, out var value) || string.IsNullOrWhiteSpace(value))
@@ -752,7 +854,7 @@ namespace Pakuri.Data
             return int.Parse(value, NumberStyles.Integer, CultureInfo.InvariantCulture);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillTriggers</c>를 구성한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 SkillTriggers를 구성한다.
         private SkillTriggerDefinition[] BuildSkillTriggers(
             SourceModel model,
             string monsterId,
@@ -811,7 +913,7 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillTriggers</c>를 연결한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 SkillTriggers를 연결한다.
         private static void AttachSkillTriggers(
             SkillDefinition[] skills,
             SkillTriggerDefinition[] triggers)
@@ -832,7 +934,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>PassiveSkills</c>를 구성한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 PassiveSkills를 구성한다.
         private PassiveSkillDefinition[] BuildPassiveSkills(
             SourceModel model,
             MonsterDefinition monster)
@@ -869,7 +971,7 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillChoices</c>를 구성한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 SkillChoices를 구성한다.
         private SkillChoiceBuildData[] BuildSkillChoices(SourceModel model, string skillId, SkillChoiceGroup choiceGroup)
         {
             var choices = FilterAndSort(
@@ -914,7 +1016,7 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ChoiceNodeParam</c>를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ChoiceNodeParam를 반환한다.
         private string GetChoiceNodeParam(
             SkillNodeBuildData[] nodes,
             string handlerId,
@@ -955,7 +1057,7 @@ namespace Pakuri.Data
             return string.Empty;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillNodes</c>를 구성한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 SkillNodes를 구성한다.
         private SkillNodeBuildData[] BuildSkillNodes(
             SourceModel model,
             SkillNodeOwnerKind ownerKind,
@@ -1020,7 +1122,7 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillNodeParams</c>를 구성한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 SkillNodeParams를 구성한다.
         private SkillNodeParamBuildData[] BuildSkillNodeParams(SourceModel model, string nodeId)
         {
             var nodeParams = FilterAndSort(
@@ -1047,7 +1149,7 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>FilterAndSort</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 FilterAndSort 결과값을 생성해 반환한다.
         private List<T> FilterAndSort<T>(
             IEnumerable<T> source,
             Predicate<T> predicate,
@@ -1066,7 +1168,7 @@ namespace Pakuri.Data
             return filtered;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>StatusPayload</c>를 적용한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 StatusPayload를 적용한다.
         private void ApplyStatusPayload(ActiveSkillBuildData definition, StatusPayloadRow payload)
         {
             if (definition == null || payload == null)
@@ -1097,7 +1199,7 @@ namespace Pakuri.Data
             definition.StatusElementDamageTakenBonus = payload.StatusElementDamageTakenBonus;
         }
 
-        /// <summary>전달된 <c>entries</c> 값을 사용해 <c>CatalogEntries</c>를 정렬한다.</summary>
+        /// 전달된 entries 값을 사용해 CatalogEntries를 정렬한다.
         private IEnumerable<CatalogEntryRow> SortCatalogEntries(Dictionary<string, CatalogEntryRow> entries)
         {
             var list = new List<CatalogEntryRow>(entries.Values);
@@ -1105,7 +1207,7 @@ namespace Pakuri.Data
             return list;
         }
 
-        /// <summary>전달된 <c>assetPath</c> 값을 사용해 <c>Sprite</c>를 불러온다.</summary>
+        /// 전달된 assetPath 값을 사용해 Sprite를 불러온다.
         private Sprite LoadSprite(string assetPath)
         {
             if (string.IsNullOrWhiteSpace(assetPath))
@@ -1121,7 +1223,7 @@ namespace Pakuri.Data
             throw new CsvFatalException($"Runtime sprite asset is missing: '{assetPath}'.");
         }
 
-        /// <summary>전달된 <c>row</c> 값을 사용해 <c>RuntimeVisual</c>를 구성한다.</summary>
+        /// 전달된 row 값을 사용해 RuntimeVisual를 구성한다.
         private RuntimeSkillVisualSpec BuildRuntimeVisual(SkillRow row)
         {
             if (row == null)
@@ -1142,7 +1244,7 @@ namespace Pakuri.Data
                 row.RuntimeVisualAnchor);
         }
 
-        /// <summary>전달된 <c>row</c> 값을 사용해 <c>ImpactRuntimeVisual</c>를 구성한다.</summary>
+        /// 전달된 row 값을 사용해 ImpactRuntimeVisual를 구성한다.
         private RuntimeSkillVisualSpec BuildImpactRuntimeVisual(SkillRow row)
         {
             if (row == null)
@@ -1162,7 +1264,7 @@ namespace Pakuri.Data
                 0f);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>RuntimeVisual</c>를 구성한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 RuntimeVisual를 구성한다.
         private RuntimeSkillVisualSpec BuildRuntimeVisual(
             string spritePath,
             string animatorControllerPath,
@@ -1217,7 +1319,7 @@ namespace Pakuri.Data
             };
         }
 
-        /// <summary>전달된 <c>assetPath</c> 값을 사용해 <c>AnimatorController</c>를 불러온다.</summary>
+        /// 전달된 assetPath 값을 사용해 AnimatorController를 불러온다.
         private RuntimeAnimatorController LoadAnimatorController(string assetPath)
         {
             if (string.IsNullOrWhiteSpace(assetPath))
@@ -1233,7 +1335,7 @@ namespace Pakuri.Data
             throw new CsvFatalException($"Runtime animator controller asset is missing: '{assetPath}'.");
         }
 
-        /// <summary>전달된 <c>assetPath</c> 값을 사용해 <c>Prefab</c>를 불러온다.</summary>
+        /// 전달된 assetPath 값을 사용해 Prefab를 불러온다.
         private GameObject LoadPrefab(string assetPath)
         {
             if (string.IsNullOrWhiteSpace(assetPath))

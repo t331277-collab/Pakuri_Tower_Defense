@@ -10,11 +10,11 @@ using UnityEngine;
 namespace Pakuri.Data
 {
 
-    /// <summary><c>CsvRuntimeCatalog</c>가 소유한 런타임 데이터를 색인하고 조회 기능을 제공한다.</summary>
+    /// CsvRuntimeCatalog가 소유한 런타임 데이터를 색인하고 조회 기능을 제공한다.
     public class CsvRuntimeCatalog : ScriptableObject
     {
 
-        /// <summary><c>SpriteEntry</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
+        /// SpriteEntry 처리에 함께 전달되는 값들을 묶는다.
         [Serializable]
         public struct SpriteEntry
         {
@@ -22,7 +22,7 @@ namespace Pakuri.Data
             public Sprite Asset;
         }
 
-        /// <summary><c>PrefabEntry</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
+        /// PrefabEntry 처리에 함께 전달되는 값들을 묶는다.
         [Serializable]
         public struct PrefabEntry
         {
@@ -30,7 +30,7 @@ namespace Pakuri.Data
             public GameObject Asset;
         }
 
-        /// <summary><c>AnimatorControllerEntry</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
+        /// AnimatorControllerEntry 처리에 함께 전달되는 값들을 묶는다.
         [Serializable]
         public struct AnimatorControllerEntry
         {
@@ -72,21 +72,21 @@ namespace Pakuri.Data
         private Dictionary<string, GameObject> prefabLookup;
         private Dictionary<string, RuntimeAnimatorController> animatorControllerLookup;
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Sprite</c> 조회를 시도하고 값이 있는지 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Sprite 조회를 시도하고 값이 있는지 반환한다.
         public bool TryGetSprite(string assetPath, out Sprite sprite)
         {
             EnsureLookups();
             return spriteLookup.TryGetValue(Normalize(assetPath), out sprite);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Prefab</c> 조회를 시도하고 값이 있는지 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Prefab 조회를 시도하고 값이 있는지 반환한다.
         public bool TryGetPrefab(string assetPath, out GameObject prefab)
         {
             EnsureLookups();
             return prefabLookup.TryGetValue(Normalize(assetPath), out prefab);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>AnimatorController</c> 조회를 시도하고 값이 있는지 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 AnimatorController 조회를 시도하고 값이 있는지 반환한다.
         public bool TryGetAnimatorController(
             string assetPath,
             out RuntimeAnimatorController animatorController)
@@ -95,25 +95,25 @@ namespace Pakuri.Data
             return animatorControllerLookup.TryGetValue(Normalize(assetPath), out animatorController);
         }
 
-        /// <summary>전달된 <c>assetPath</c> 값을 사용해 소유한 런타임 상태에 <c>Sprite</c>가 있는지 반환한다.</summary>
+        /// 전달된 assetPath 값을 사용해 소유한 런타임 상태에 Sprite가 있는지 반환한다.
         public bool HasSprite(string assetPath)
         {
             return TryGetSprite(assetPath, out _);
         }
 
-        /// <summary>전달된 <c>assetPath</c> 값을 사용해 소유한 런타임 상태에 <c>Prefab</c>가 있는지 반환한다.</summary>
+        /// 전달된 assetPath 값을 사용해 소유한 런타임 상태에 Prefab가 있는지 반환한다.
         public bool HasPrefab(string assetPath)
         {
             return TryGetPrefab(assetPath, out _);
         }
 
-        /// <summary>전달된 <c>assetPath</c> 값을 사용해 소유한 런타임 상태에 <c>AnimatorController</c>가 있는지 반환한다.</summary>
+        /// 전달된 assetPath 값을 사용해 소유한 런타임 상태에 AnimatorController가 있는지 반환한다.
         public bool HasAnimatorController(string assetPath)
         {
             return TryGetAnimatorController(assetPath, out _);
         }
 
-        /// <summary><c>Lookups</c>를 초기 런타임 상태로 되돌린다.</summary>
+        /// Lookups를 초기 런타임 상태로 되돌린다.
         public void ResetLookups()
         {
             spriteLookup = null;
@@ -121,13 +121,13 @@ namespace Pakuri.Data
             animatorControllerLookup = null;
         }
 
-        /// <summary>Unity가 컴포넌트를 활성화할 때 구독과 활성 상태를 복원한다.</summary>
+        /// Unity가 컴포넌트를 활성화할 때 구독과 활성 상태를 복원한다.
         private void OnEnable()
         {
             ResetLookups();
         }
 
-        /// <summary><c>EnsureLookups</c> 작업을 수행한다.</summary>
+        /// EnsureLookups 작업을 수행한다.
         private void EnsureLookups()
         {
             if (spriteLookup != null && prefabLookup != null && animatorControllerLookup != null)
@@ -148,7 +148,7 @@ namespace Pakuri.Data
                 entry => entry.Asset);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Entries</c>를 소유한 런타임 상태에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Entries를 소유한 런타임 상태에 추가한다.
         private static void AddEntries<TEntry, TAsset>(
             TEntry[] entries,
             Dictionary<string, TAsset> lookup,
@@ -174,7 +174,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 <c>assetPath</c> 값을 사용해 <c>Normalize</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 assetPath 값을 사용해 Normalize 결과값을 생성해 반환한다.
         private static string Normalize(string assetPath)
         {
             if (string.IsNullOrWhiteSpace(assetPath))

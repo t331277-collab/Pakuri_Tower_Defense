@@ -11,11 +11,11 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// <summary><c>SingleDamageModifierState</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
+    /// SingleDamageModifierState 처리에 함께 전달되는 값들을 묶는다.
     internal struct SingleDamageModifierState
     {
 
-        /// <summary><c>SingleDamageModifierState</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+        /// SingleDamageModifierState 인스턴스를 전달된 런타임 입력값으로 초기화한다.
         public SingleDamageModifierState(float damageMultiplier, float critChanceBonus)
         {
             DamageMultiplier = damageMultiplier;
@@ -28,11 +28,11 @@ namespace Pakuri.InGame
         public bool IsExecute;
     }
 
-    /// <summary><c>SingleSkillRules</c>에 공통으로 적용되는 런타임 규칙을 구현한다.</summary>
+    /// SingleSkillRules에 공통으로 적용되는 런타임 규칙을 구현한다.
     internal static class SingleSkillRules
     {
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>RejectCastForExecuteThreshold</c> 실행 필요 여부를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 RejectCastForExecuteThreshold 실행 필요 여부를 반환한다.
         internal static bool ShouldRejectCastForExecuteThreshold(
             SkillExecutionContext context,
             SkillExecutionData snapshot,
@@ -49,7 +49,7 @@ namespace Pakuri.InGame
             return target == null || target.Model == null || !IsWithinThreshold(target.Model, threshold);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>DamageModifiers</c>를 적용한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 DamageModifiers를 적용한다.
         internal static SingleDamageModifierState ApplyDamageModifiers(
             SingleSkillDefinition skill,
             SkillExecutionData snapshot,
@@ -63,7 +63,7 @@ namespace Pakuri.InGame
             return state;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>KillRecovery</c>를 처리한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 KillRecovery를 처리한다.
         internal static void HandleKillRecovery(
             SkillUseState sourceRuntime,
             SingleSkillDefinition skill,
@@ -84,7 +84,7 @@ namespace Pakuri.InGame
             TryRefundCooldown(sourceRuntime, skill, snapshot);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ResolveThreshold</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ResolveThreshold 작업을 시도하고 성공 여부를 반환한다.
         private static bool TryResolveThreshold(
             SingleSkillDefinition skill,
             SkillExecutionData snapshot,
@@ -108,7 +108,7 @@ namespace Pakuri.InGame
             return threshold > 0f;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>WithinThreshold</c> 조건 충족 여부를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 WithinThreshold 조건 충족 여부를 반환한다.
         private static bool IsWithinThreshold(UnitCombatState target, float threshold)
         {
             var resources = target.Resources;
@@ -121,7 +121,7 @@ namespace Pakuri.InGame
             return resources.CurrentHealth / stats.MaxHealth <= threshold;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ExecuteDamageModifier</c>를 적용한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ExecuteDamageModifier를 적용한다.
         private static void ApplyExecuteDamageModifier(
             SingleSkillDefinition skill,
             SkillExecutionData snapshot,
@@ -161,7 +161,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>BossDamageModifier</c>를 적용한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 BossDamageModifier를 적용한다.
         private static void ApplyBossDamageModifier(
             SingleSkillDefinition skill,
             SkillExecutionData snapshot,
@@ -193,7 +193,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ResetCooldown</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ResetCooldown 작업을 시도하고 성공 여부를 반환한다.
         private static bool TryResetCooldown(
             SkillUseState sourceRuntime,
             SkillExecutionData snapshot,
@@ -220,7 +220,7 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>RefundCooldown</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 RefundCooldown 작업을 시도하고 성공 여부를 반환한다.
         private static bool TryRefundCooldown(
             SkillUseState sourceRuntime,
             SingleSkillDefinition skill,

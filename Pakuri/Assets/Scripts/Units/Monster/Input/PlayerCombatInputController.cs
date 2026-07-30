@@ -11,7 +11,7 @@ using UnityEngine.InputSystem;
 namespace Pakuri.InGame
 {
 
-    /// <summary><c>PlayerCombatInputController</c>가 담당하는 입력 또는 표시 흐름을 조정하고 관련 런타임 상태를 갱신한다.</summary>
+    /// PlayerCombatInputController가 담당하는 입력 또는 표시 흐름을 조정하고 관련 런타임 상태를 갱신한다.
     public class PlayerCombatInputController : MonoBehaviour
     {
         [SerializeField] private Camera inputCamera;
@@ -23,7 +23,7 @@ namespace Pakuri.InGame
 
         public bool AutoSkillEnabled => autoSkillEnabled;
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ManualInput</c>를 처리한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ManualInput를 처리한다.
         internal void HandleManualInput(
             UnitSpawnManager roster,
             SkillExecution skillExecution,
@@ -94,7 +94,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>UseAutoSkill</c> 실행 가능 여부를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 UseAutoSkill 실행 가능 여부를 반환한다.
         public bool CanUseAutoSkill(
             CombatUnitEntry entry,
             UnitSpawnManager roster)
@@ -113,7 +113,7 @@ namespace Pakuri.InGame
             return entry != FindSelectedPlayer(roster) || autoSkillEnabled;
         }
 
-        /// <summary>전달된 <c>roster</c> 값을 사용해 <c>AutoSkillMode</c>를 활성 상태를 전환한다.</summary>
+        /// 전달된 roster 값을 사용해 AutoSkillMode를 활성 상태를 전환한다.
         public void ToggleAutoSkillMode(UnitSpawnManager roster)
         {
             autoSkillEnabled = !autoSkillEnabled;
@@ -121,7 +121,7 @@ namespace Pakuri.InGame
             ApplyAutoSkillModeToSelectedPlayer(roster);
         }
 
-        /// <summary>전달된 <c>roster</c> 값을 사용해 <c>AutoSkillModeToSelectedPlayer</c>를 적용한다.</summary>
+        /// 전달된 roster 값을 사용해 AutoSkillModeToSelectedPlayer를 적용한다.
         public void ApplyAutoSkillModeToSelectedPlayer(UnitSpawnManager roster)
         {
             var player = FindSelectedPlayer(roster);
@@ -131,7 +131,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 <c>roster</c> 값을 사용해 <c>SelectedPlayer</c>를 찾는다.</summary>
+        /// 전달된 roster 값을 사용해 SelectedPlayer를 찾는다.
         public CombatUnitEntry FindSelectedPlayer(UnitSpawnManager roster)
         {
             var players = roster.Players;
@@ -147,7 +147,7 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /// <summary>전달된 <c>model</c> 값을 사용해 <c>SelectedPlayerModel</c> 조건 충족 여부를 반환한다.</summary>
+        /// 전달된 model 값을 사용해 SelectedPlayerModel 조건 충족 여부를 반환한다.
         public static bool IsSelectedPlayerModel(UnitCombatState model)
         {
             return model.Identity.Side == UnitSide.Player
@@ -155,7 +155,7 @@ namespace Pakuri.InGame
                 && model.Identity.SlotIndex == 0;
         }
 
-        /// <summary><c>ManualInput</c>를 소유한 런타임 상태에서 비운다.</summary>
+        /// ManualInput를 소유한 런타임 상태에서 비운다.
         public void ClearManualInput()
         {
             hasSavedProjectileInput = false;
@@ -163,7 +163,7 @@ namespace Pakuri.InGame
             savedTargetPoint = Vector2.zero;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>CurrentInput</c> 조회를 시도하고 값이 있는지 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 CurrentInput 조회를 시도하고 값이 있는지 반환한다.
         private bool TryGetCurrentInput(
             CombatUnitEntry player,
             bool wantsInput,
@@ -197,7 +197,7 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillInput</c> 조회를 시도하고 값이 있는지 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 SkillInput 조회를 시도하고 값이 있는지 반환한다.
         private bool TryGetSkillInput(
             SkillUseState runtime,
             bool isProjectile,
@@ -242,7 +242,7 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /// <summary>전달된 <c>skills</c> 값을 사용해 소유한 런타임 상태에 <c>BurstingProjectile</c>가 있는지 반환한다.</summary>
+        /// 전달된 skills 값을 사용해 소유한 런타임 상태에 BurstingProjectile가 있는지 반환한다.
         private static bool HasBurstingProjectile(IReadOnlyList<SkillUseState> skills)
         {
             for (var i = 0; i < skills.Count; i++)
@@ -257,7 +257,7 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /// <summary>전달된 <c>roster</c> 값을 사용해 소유한 런타임 상태에 <c>VisibleEnemy</c>가 있는지 반환한다.</summary>
+        /// 전달된 roster 값을 사용해 소유한 런타임 상태에 VisibleEnemy가 있는지 반환한다.
         private bool HasVisibleEnemy(UnitSpawnManager roster)
         {
             var enemies = roster.Enemies;

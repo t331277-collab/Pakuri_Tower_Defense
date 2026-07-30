@@ -12,15 +12,15 @@ using static Pakuri.Data.SkillGraphParser;
 namespace Pakuri.Data
 {
 
-    /// <summary><c>CsvAssetReferenceCollector</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
+    /// CsvAssetReferenceCollector가 소유하는 데이터와 동작을 캡슐화한다.
     internal static class CsvAssetReferenceCollector
     {
 
-        /// <summary><c>ReferencedAssetPath</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
+        /// ReferencedAssetPath 처리에 함께 전달되는 값들을 묶는다.
         internal readonly struct ReferencedAssetPath
         {
 
-            /// <summary><c>ReferencedAssetPath</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+            /// ReferencedAssetPath 인스턴스를 전달된 런타임 입력값으로 초기화한다.
             public ReferencedAssetPath(string assetPath, string ownerLabel)
             {
                 AssetPath = assetPath;
@@ -31,7 +31,7 @@ namespace Pakuri.Data
             public string OwnerLabel { get; }
         }
 
-        /// <summary><c>ReferencedAssetSet</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
+        /// ReferencedAssetSet가 소유하는 데이터와 동작을 캡슐화한다.
         internal class ReferencedAssetSet
         {
             internal readonly HashSet<string> spritePathLookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -42,25 +42,25 @@ namespace Pakuri.Data
             public List<ReferencedAssetPath> PrefabPaths { get; } = new List<ReferencedAssetPath>();
             public List<ReferencedAssetPath> AnimatorControllerPaths { get; } = new List<ReferencedAssetPath>();
 
-            /// <summary>전달된 런타임 입력값을 사용해 <c>Sprite</c>를 소유한 런타임 상태에 추가한다.</summary>
+            /// 전달된 런타임 입력값을 사용해 Sprite를 소유한 런타임 상태에 추가한다.
             public void AddSprite(string assetPath, string ownerLabel)
             {
                 Add(assetPath, ownerLabel, spritePathLookup, SpritePaths);
             }
 
-            /// <summary>전달된 런타임 입력값을 사용해 <c>Prefab</c>를 소유한 런타임 상태에 추가한다.</summary>
+            /// 전달된 런타임 입력값을 사용해 Prefab를 소유한 런타임 상태에 추가한다.
             public void AddPrefab(string assetPath, string ownerLabel)
             {
                 Add(assetPath, ownerLabel, prefabPathLookup, PrefabPaths);
             }
 
-            /// <summary>전달된 런타임 입력값을 사용해 <c>AnimatorController</c>를 소유한 런타임 상태에 추가한다.</summary>
+            /// 전달된 런타임 입력값을 사용해 AnimatorController를 소유한 런타임 상태에 추가한다.
             public void AddAnimatorController(string assetPath, string ownerLabel)
             {
                 Add(assetPath, ownerLabel, animatorControllerPathLookup, AnimatorControllerPaths);
             }
 
-            /// <summary>전달된 런타임 입력값을 사용해 <c>요청값</c>를 소유한 런타임 상태에 추가한다.</summary>
+            /// 전달된 런타임 입력값을 사용해 요청값를 소유한 런타임 상태에 추가한다.
             internal static void Add(
                 string assetPath,
                 string ownerLabel,
@@ -80,7 +80,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 <c>model</c> 값을 사용해 <c>ReferencedAssets</c>를 결과 컬렉션에 수집한다.</summary>
+        /// 전달된 model 값을 사용해 ReferencedAssets를 결과 컬렉션에 수집한다.
         internal static ReferencedAssetSet CollectReferencedAssets(SourceModel model)
         {
             var assets = new ReferencedAssetSet();

@@ -11,14 +11,14 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// <summary><c>UnitSide</c>에서 지원하는 값의 종류를 정의한다.</summary>
+    /// UnitSide에서 지원하는 값의 종류를 정의한다.
     public enum UnitSide
     {
         Player,
         Enemy
     }
 
-    /// <summary><c>UnitRole</c>에서 지원하는 값의 종류를 정의한다.</summary>
+    /// UnitRole에서 지원하는 값의 종류를 정의한다.
     public enum UnitRole
     {
         Monster,
@@ -26,7 +26,7 @@ namespace Pakuri.InGame
         Nexus
     }
 
-    /// <summary><c>UnitIdentity</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
+    /// UnitIdentity가 소유하는 데이터와 동작을 캡슐화한다.
     [Serializable]
     public class UnitIdentity
     {
@@ -38,7 +38,7 @@ namespace Pakuri.InGame
         public int SlotIndex;
     }
 
-    /// <summary><c>UnitCombatStats</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
+    /// UnitCombatStats가 소유하는 데이터와 동작을 캡슐화한다.
     [Serializable]
     public class UnitCombatStats
     {
@@ -51,7 +51,7 @@ namespace Pakuri.InGame
         public float CriticalResistance;
     }
 
-    /// <summary><c>UnitDefenseStats</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
+    /// UnitDefenseStats가 소유하는 데이터와 동작을 캡슐화한다.
     [Serializable]
     public class UnitDefenseStats
     {
@@ -62,7 +62,7 @@ namespace Pakuri.InGame
         public float Darkness;
         public float Holy;
 
-        /// <summary>전달된 <c>attribute</c> 값을 사용해 <c>요청값</c>를 반환한다.</summary>
+        /// 전달된 attribute 값을 사용해 요청값를 반환한다.
         public float Get(DamageAttribute attribute)
         {
             switch (attribute)
@@ -85,7 +85,7 @@ namespace Pakuri.InGame
         }
     }
 
-    /// <summary><c>UnitCombatResources</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
+    /// UnitCombatResources가 소유하는 데이터와 동작을 캡슐화한다.
     [Serializable]
     public class UnitCombatResources
     {
@@ -94,7 +94,7 @@ namespace Pakuri.InGame
         public float DirectShield;
     }
 
-    /// <summary><c>UnitCombatState</c>의 변경 가능한 런타임 상태를 보관한다.</summary>
+    /// UnitCombatState의 변경 가능한 런타임 상태를 보관한다.
     public class UnitCombatState
     {
         public UnitIdentity Identity = new UnitIdentity();
@@ -103,7 +103,6 @@ namespace Pakuri.InGame
         public UnitCombatResources Resources = new UnitCombatResources();
         public UnitSkills Skills = new UnitSkills();
         public SkillExecutionState SkillState = new SkillExecutionState();
-        public SingleChargeState ActiveCharge;
         public UnitStatusCollection Statuses = new UnitStatusCollection();
         public bool IsBoss;
         public bool AutoAttackEnabled = true;
@@ -111,7 +110,7 @@ namespace Pakuri.InGame
 
         public bool IsNexus => Identity.Role == UnitRole.Nexus;
 
-        /// <summary><c>TotalShield</c>를 반환한다.</summary>
+        /// TotalShield를 반환한다.
         public float GetTotalShield()
         {
             var directShield = Mathf.Max(0f, Resources.DirectShield);
@@ -119,7 +118,7 @@ namespace Pakuri.InGame
             return Mathf.Round(Mathf.Max(0f, directShield + statusShield));
         }
 
-        /// <summary><c>Shield</c>를 현재 원본 상태와 동기화한다.</summary>
+        /// Shield를 현재 원본 상태와 동기화한다.
         public void SyncShield()
         {
             Resources.DirectShield = Mathf.Round(Mathf.Max(0f, Resources.DirectShield));
@@ -127,7 +126,7 @@ namespace Pakuri.InGame
         }
     }
 
-    /// <summary><c>EnemyCombatState</c>의 변경 가능한 런타임 상태를 보관한다.</summary>
+    /// EnemyCombatState의 변경 가능한 런타임 상태를 보관한다.
     public class EnemyCombatState : UnitCombatState
     {
         public DamageAttribute Attribute;

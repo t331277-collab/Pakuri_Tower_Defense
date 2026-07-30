@@ -12,18 +12,18 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// <summary><c>SkillDeploymentRepeatMode</c>에서 지원하는 값의 종류를 정의한다.</summary>
+    /// SkillDeploymentRepeatMode에서 지원하는 값의 종류를 정의한다.
     internal enum SkillDeploymentRepeatMode
     {
         RepeatNearest,
         RandomExisting
     }
 
-    /// <summary>대상 진영·거리·형태·정렬 규칙에 따라 등록된 전투 유닛을 선택한다.</summary>
+    /// 대상 진영·거리·형태·정렬 규칙에 따라 등록된 전투 유닛을 선택한다.
     internal static class SkillTargeting
     {
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>OrderedTargets</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 OrderedTargets 결과값을 생성해 반환한다.
         public static List<CombatUnitEntry> OrderedTargets(
             CombatUnitEntry sourceEntry,
             UnitSpawnManager unitRoster,
@@ -33,7 +33,7 @@ namespace Pakuri.InGame
             return OrderedTargets(sourceEntry, unitRoster, targetingSpec, StatusEffectKind.None, 0);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>OrderedTargets</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 OrderedTargets 결과값을 생성해 반환한다.
         public static List<CombatUnitEntry> OrderedTargets(
             SkillExecutionContext context,
             SkillTargetingSpec targetingSpec)
@@ -59,7 +59,7 @@ namespace Pakuri.InGame
                 true);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>OrderedTargets</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 OrderedTargets 결과값을 생성해 반환한다.
         public static List<CombatUnitEntry> OrderedTargets(
             CombatUnitEntry sourceEntry,
             UnitSpawnManager unitRoster,
@@ -67,6 +67,22 @@ namespace Pakuri.InGame
             UnitCombatState eventTarget,
             bool lockToEventTarget)
         {
+            if (targetingSpec != null
+                && targetingSpec.Selection == SkillTargetSelection.NearestOtherFromEventTarget)
+            {
+                var hitTarget = unitRoster != null ? unitRoster.Find(eventTarget) : null;
+                var hitPosition = hitTarget != null && hitTarget.Transform != null
+                    ? (Vector2)hitTarget.Transform.position
+                    : Vector2.zero;
+                return ChainTargets(
+                    unitRoster,
+                    sourceEntry,
+                    sourceEntry != null ? sourceEntry.Model : null,
+                    hitTarget,
+                    hitPosition,
+                    targetingSpec.Radius);
+            }
+
             if (!lockToEventTarget)
             {
                 return OrderedTargets(sourceEntry, unitRoster, targetingSpec);
@@ -92,7 +108,7 @@ namespace Pakuri.InGame
             return new List<CombatUnitEntry>();
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>OrderedTargets</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 OrderedTargets 결과값을 생성해 반환한다.
         public static List<CombatUnitEntry> OrderedTargets(
             CombatUnitEntry sourceEntry,
             UnitSpawnManager unitRoster,
@@ -121,7 +137,7 @@ namespace Pakuri.InGame
             return targets;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>NearestTarget</c>를 찾는다.</summary>
+        /// 전달된 런타임 입력값을 사용해 NearestTarget를 찾는다.
         public static CombatUnitEntry FindNearestTarget(
             CombatUnitEntry caster,
             UnitSpawnManager roster,
@@ -289,7 +305,7 @@ namespace Pakuri.InGame
             return best;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>DirectionToTarget</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 DirectionToTarget 결과값을 생성해 반환한다.
         public static Vector2 DirectionToTarget(Vector3 origin, CombatUnitEntry target)
         {
             if (target == null || target.Transform == null)
@@ -302,7 +318,7 @@ namespace Pakuri.InGame
             return direction;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>TargetList</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 TargetList 결과값을 생성해 반환한다.
         public static IReadOnlyList<CombatUnitEntry> TargetList(
             CombatUnitEntry caster,
             UnitSpawnManager roster,
@@ -311,7 +327,7 @@ namespace Pakuri.InGame
             return TargetList(caster, roster, targeting, StatusEffectKind.None, 0);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>TargetList</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 TargetList 결과값을 생성해 반환한다.
         public static IReadOnlyList<CombatUnitEntry> TargetList(
             CombatUnitEntry caster,
             UnitSpawnManager roster,
@@ -394,7 +410,7 @@ namespace Pakuri.InGame
             return filtered;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 소유한 런타임 상태에 <c>ActiveSkillAttribute</c>가 있는지 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 소유한 런타임 상태에 ActiveSkillAttribute가 있는지 반환한다.
         private static bool HasActiveSkillAttribute(
             UnitCombatState target,
             DamageAttribute attribute)
@@ -417,7 +433,7 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>AreaCenter</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 AreaCenter 결과값을 생성해 반환한다.
         public static Vector2 AreaCenter(
             SkillExecutionContext context,
             SkillTargetingSpec targeting,
@@ -446,7 +462,7 @@ namespace Pakuri.InGame
             return origin;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>BaseRadius</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 BaseRadius 결과값을 생성해 반환한다.
         public static float BaseRadius(SkillTargetingSpec targeting, AreaBlueprintSpec area)
         {
             if (area != null && area.Radius > 0f)
@@ -457,7 +473,7 @@ namespace Pakuri.InGame
             return targeting != null ? targeting.Radius : 0f;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Radius</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Radius 결과값을 생성해 반환한다.
         public static float Radius(
             float baseRadius,
             float radiusMultiplier,
@@ -467,7 +483,7 @@ namespace Pakuri.InGame
             return Mathf.Max(0f, radius);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>PrefabScaleFactor</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 PrefabScaleFactor 결과값을 생성해 반환한다.
         public static float PrefabScaleFactor(
             float baseRadius,
             float radiusMultiplier,
@@ -481,7 +497,7 @@ namespace Pakuri.InGame
             return Mathf.Max(0.01f, Radius(baseRadius, radiusMultiplier, radiusBonus) / baseRadius);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>TargetAnchoredCenters</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 TargetAnchoredCenters 결과값을 생성해 반환한다.
         public static List<Vector2> TargetAnchoredCenters(
             SkillExecutionContext context,
             SkillTargetingSpec targeting,
@@ -560,7 +576,7 @@ namespace Pakuri.InGame
             return centers;
         }
 
-        /// <summary>전달된 <c>targets</c> 값을 사용해 소유한 컬렉션에 <c>NexusTarget</c>가 있는지 반환한다.</summary>
+        /// 전달된 targets 값을 사용해 소유한 컬렉션에 NexusTarget가 있는지 반환한다.
         private static bool ContainsNexusTarget(IReadOnlyList<CombatUnitEntry> targets)
         {
             for (var i = 0; targets != null && i < targets.Count; i++)
@@ -574,7 +590,7 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>CompareTargets</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 CompareTargets 결과값을 생성해 반환한다.
         private static int CompareTargets(
             CombatUnitEntry sourceEntry,
             SkillTargetingSpec targetingSpec,
@@ -634,7 +650,7 @@ namespace Pakuri.InGame
             return leftDistance.CompareTo(rightDistance);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>DistanceSquared</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 DistanceSquared 결과값을 생성해 반환한다.
         private static float DistanceSquared(CombatUnitEntry sourceEntry, CombatUnitEntry target)
         {
             if (sourceEntry == null || sourceEntry.Transform == null || target == null || target.Transform == null)
@@ -647,14 +663,14 @@ namespace Pakuri.InGame
             return offset.sqrMagnitude;
         }
 
-        /// <summary>전달된 <c>entry</c> 값을 사용해 <c>SkillTargetable</c> 조건 충족 여부를 반환한다.</summary>
+        /// 전달된 entry 값을 사용해 SkillTargetable 조건 충족 여부를 반환한다.
         private static bool IsSkillTargetable(CombatUnitEntry entry)
         {
             var identity = entry != null && entry.Model != null ? entry.Model.Identity : null;
             return identity == null || identity.Role != UnitRole.Nexus;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 소유한 런타임 상태에 <c>RequiredStatus</c>가 있는지 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 소유한 런타임 상태에 RequiredStatus가 있는지 반환한다.
         private static bool HasRequiredStatus(UnitCombatState model, StatusEffectKind kind, int minimumStacks)
         {
             if (model == null || kind == StatusEffectKind.None)
@@ -671,7 +687,7 @@ namespace Pakuri.InGame
             return model.Statuses != null && model.Statuses.GetStacks(kind) >= minStacks;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>StatusStacks</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 StatusStacks 결과값을 생성해 반환한다.
         private static int StatusStacks(UnitCombatState model, StatusEffectKind kind)
         {
             if (model == null || kind == StatusEffectKind.None)
@@ -697,7 +713,7 @@ namespace Pakuri.InGame
             return 0;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ChainTargets</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ChainTargets 결과값을 생성해 반환한다.
         public static List<CombatUnitEntry> ChainTargets(
             UnitSpawnManager roster,
             CombatUnitEntry sourceEntry,
@@ -786,11 +802,11 @@ namespace Pakuri.InGame
 namespace Pakuri.InGame
 {
 
-    /// <summary><c>SkillRequirement</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
+    /// SkillRequirement가 소유하는 데이터와 동작을 캡슐화한다.
     static class SkillRequirement
     {
 
-        /// <summary>전달된 런타임 입력값을 사용해 소유한 런타임 상태에 <c>SourceStatus</c>가 있는지 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 소유한 런타임 상태에 SourceStatus가 있는지 반환한다.
         public static bool HasSourceStatus(UnitCombatState owner, StatusEffectKind statusKind, int minimumStacks)
         {
             if (statusKind == StatusEffectKind.None)
@@ -808,7 +824,7 @@ namespace Pakuri.InGame
                 && owner.Statuses.GetStacks(statusKind) >= Mathf.Max(1, minimumStacks);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 소유한 런타임 상태에 <c>LearnedPassive</c>가 있는지 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 소유한 런타임 상태에 LearnedPassive가 있는지 반환한다.
         private static bool HasLearnedPassive(UnitCombatState owner, string passiveId)
         {
             return owner != null

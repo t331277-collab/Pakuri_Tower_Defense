@@ -9,11 +9,11 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// <summary><c>EffectVisualBuilder</c> 런타임 데이터를 파싱된 저작 데이터에서 생성한다.</summary>
+    /// EffectVisualBuilder 런타임 데이터를 파싱된 저작 데이터에서 생성한다.
     static class EffectVisualBuilder
     {
 
-        /// <summary>전달된 <c>direction</c> 값을 사용해 <c>Rotation</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 direction 값을 사용해 Rotation 결과값을 생성해 반환한다.
         public static Quaternion Rotation(Vector2 direction)
         {
             if (direction.sqrMagnitude <= 0.0001f)
@@ -25,7 +25,7 @@ namespace Pakuri.InGame
             return Quaternion.Euler(0f, 0f, angle);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Configure</c> 작업을 수행한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Configure 작업을 수행한다.
         public static void Configure(
             GameObject instance,
             RuntimeSkillVisualSpec visual,
@@ -53,7 +53,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ConfigureAreaEffect</c> 작업을 수행한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ConfigureAreaEffect 작업을 수행한다.
         public static void ConfigureAreaEffect(
             GameObject instance,
             float baseRadius,
@@ -70,7 +70,7 @@ namespace Pakuri.InGame
             Physics2D.SyncTransforms();
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ConfigureHitbox</c> 작업을 수행한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ConfigureHitbox 작업을 수행한다.
         private static void ConfigureHitbox(
             GameObject instance,
             RuntimeSkillHitboxSpec hitbox,

@@ -11,11 +11,11 @@ using UnityEngine;
 namespace Pakuri.Data
 {
 
-    /// <summary><c>MonsterDefinition</c>의 저작 데이터와 런타임 설정을 정의한다.</summary>
+    /// MonsterDefinition의 저작 데이터와 런타임 설정을 정의한다.
     public class MonsterDefinition : ScriptableObject
     {
 
-        /// <summary><c>RewardChoiceDefinition</c>의 저작 데이터와 런타임 설정을 정의한다.</summary>
+        /// RewardChoiceDefinition의 저작 데이터와 런타임 설정을 정의한다.
         [Serializable]
 
         public class RewardChoiceDefinition

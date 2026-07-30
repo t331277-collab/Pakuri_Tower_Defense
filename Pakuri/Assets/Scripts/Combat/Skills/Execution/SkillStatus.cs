@@ -10,11 +10,11 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-/// <summary>스킬에 정의된 상태 효과 작업을 확정된 전투 대상에게 적용한다.</summary>
+/// 스킬에 정의된 상태 효과 작업을 확정된 전투 대상에게 적용한다.
 static class SkillStatus
 {
 
-    /// <summary>전달된 런타임 입력값을 사용해 <c>StatusSpec</c> 결과값을 생성해 반환한다.</summary>
+    /// 전달된 런타임 입력값을 사용해 StatusSpec 결과값을 생성해 반환한다.
     public static ProjectileStatusHitSpec StatusSpec(
         StatusApplicationSpec baseStatus,
         SkillExecutionData snapshot)
@@ -120,7 +120,7 @@ static class SkillStatus
         };
     }
 
-    /// <summary>전달된 런타임 입력값을 사용해 <c>DirectStatusSpec</c>를 생성한다.</summary>
+    /// 전달된 런타임 입력값을 사용해 DirectStatusSpec를 생성한다.
     public static ProjectileStatusHitSpec CreateDirectStatusSpec(
         StatusEffectKind kind,
         int stacks,
@@ -161,7 +161,7 @@ static class SkillStatus
         };
     }
 
-    /// <summary>전달된 런타임 입력값을 사용해 <c>StatusData</c> 결과값을 생성해 반환한다.</summary>
+    /// 전달된 런타임 입력값을 사용해 StatusData 결과값을 생성해 반환한다.
     public static StatusRuntimeData StatusData(
         StatusRuntimeData statusData,
         StatusEffectKind kind,
@@ -250,7 +250,7 @@ static class SkillStatus
         return resolvedStatus;
     }
 
-    /// <summary>전달된 런타임 입력값을 사용해 <c>StatusDurationBonus</c> 결과값을 생성해 반환한다.</summary>
+    /// 전달된 런타임 입력값을 사용해 StatusDurationBonus 결과값을 생성해 반환한다.
     private static float StatusDurationBonus(SkillExecutionData snapshot, StatusRuntimeData statusData)
     {
         if (snapshot == null)
@@ -261,7 +261,7 @@ static class SkillStatus
         return snapshot.StatusDurationBonus(statusData.StatusTag);
     }
 
-    /// <summary>전달된 런타임 입력값을 사용해 <c>StatusMaxStacksBonus</c> 결과값을 생성해 반환한다.</summary>
+    /// 전달된 런타임 입력값을 사용해 StatusMaxStacksBonus 결과값을 생성해 반환한다.
     private static int StatusMaxStacksBonus(SkillExecutionData snapshot, StatusRuntimeData statusData)
     {
         if (snapshot == null)
@@ -272,7 +272,7 @@ static class SkillStatus
         return snapshot.StatusMaxStacksBonus(statusData.StatusTag);
     }
 
-    /// <summary>전달된 <c>snapshot</c> 값을 사용해 <c>ThresholdStatusSpec</c> 결과값을 생성해 반환한다.</summary>
+    /// 전달된 snapshot 값을 사용해 ThresholdStatusSpec 결과값을 생성해 반환한다.
     private static ProjectileStatusHitSpec ThresholdStatusSpec(SkillExecutionData snapshot)
     {
         if (snapshot == null || snapshot.ThresholdApplyStatusKind == StatusEffectKind.None)
@@ -303,7 +303,7 @@ static class SkillStatus
         };
     }
 
-    /// <summary>전달된 <c>kind</c> 값을 사용해 <c>CatalogStatusData</c> 결과값을 생성해 반환한다.</summary>
+    /// 전달된 kind 값을 사용해 CatalogStatusData 결과값을 생성해 반환한다.
     private static StatusRuntimeData CatalogStatusData(StatusEffectKind kind)
     {
         return GameDataLoader.CurrentCatalog?.GetStatusRuntimeData(kind)

@@ -13,14 +13,14 @@ using UnityEngine;
 namespace Pakuri.Data
 {
 
-    /// <summary><c>SkillNodeParamBuildData</c>가 나타내는 런타임 값을 보관한다.</summary>
+    /// SkillNodeParamBuildData가 나타내는 런타임 값을 보관한다.
     internal sealed class SkillNodeParamBuildData
     {
         public string ParamKey;
         public string Value;
     }
 
-    /// <summary><c>SkillNodeBuildData</c>가 나타내는 런타임 값을 보관한다.</summary>
+    /// SkillNodeBuildData가 나타내는 런타임 값을 보관한다.
     internal sealed class SkillNodeBuildData
     {
         public string OwnerKind;
@@ -32,11 +32,11 @@ namespace Pakuri.Data
         public RuntimeSkillVisualSpec ResolvedRuntimeVisual;
     }
 
-    /// <summary><c>GameDataCatalogBuilder</c> 런타임 데이터를 파싱된 저작 데이터에서 생성한다.</summary>
+    /// GameDataCatalogBuilder 런타임 데이터를 파싱된 저작 데이터에서 생성한다.
     internal sealed partial class GameDataCatalogBuilder
     {
 
-	/// <summary>전달된 <c>source</c> 값을 사용해 <c>SkillNodes</c>를 대응시킨다.</summary>
+	/// 전달된 source 값을 사용해 SkillNodes를 대응시킨다.
 	public static SkillNode[] MapSkillNodes(SkillNodeBuildData[] source)
 	{
 		if (source == null || source.Length == 0)
@@ -60,7 +60,7 @@ namespace Pakuri.Data
 		return Array.Empty<SkillNode>();
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>TriggerOutcome</c>를 구성한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 TriggerOutcome를 구성한다.
 	private static void BuildTriggerOutcome(
 		SkillTriggerDefinition trigger,
 		SkillNodeBuildData[] nodes,
@@ -288,7 +288,7 @@ namespace Pakuri.Data
 		}
 	}
 
-	/// <summary>전달된 <c>handler</c> 값을 사용해 <c>TriggerOutcomeHandler</c> 조건 충족 여부를 반환한다.</summary>
+	/// 전달된 handler 값을 사용해 TriggerOutcomeHandler 조건 충족 여부를 반환한다.
 	internal static bool IsTriggerOutcomeHandler(string handler)
 	{
 		return string.Equals(handler, "EffectDamage", StringComparison.OrdinalIgnoreCase)
@@ -303,7 +303,7 @@ namespace Pakuri.Data
 			|| string.Equals(handler, "ExtendStatusDuration", StringComparison.OrdinalIgnoreCase);
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>TriggeredDamage</c>를 구성한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 TriggeredDamage를 구성한다.
 	private static void BuildTriggeredDamage(
 		SkillTriggerDefinition trigger,
 		SkillNodeBuildData node,
@@ -356,7 +356,7 @@ namespace Pakuri.Data
 			DamageAttribute.Physical);
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>TriggeredStatus</c>를 구성한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 TriggeredStatus를 구성한다.
 	private static void BuildTriggeredStatus(
 		SkillTriggerDefinition trigger,
 		SkillNodeBuildData node,
@@ -371,6 +371,7 @@ namespace Pakuri.Data
 
 		var skill = new BuffSkillDefinition
 		{
+			EffectKind = BuffEffectKind.Status,
 			UseConfiguredTargeting = true,
 			AttachedStatus =
 			{
@@ -382,11 +383,10 @@ namespace Pakuri.Data
 		};
 		MapTriggeredCommon(skill, trigger, targeting, state);
 		skill.RuntimeKind = SkillRuntimeKind.Buff;
-		skill.BuffDuration = status.Duration;
 		trigger.TriggeredSkill = skill;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>TriggeredShield</c>를 구성한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 TriggeredShield를 구성한다.
 	private static void BuildTriggeredShield(
 		SkillTriggerDefinition trigger,
 		SkillNodeBuildData node,
@@ -399,8 +399,9 @@ namespace Pakuri.Data
 			trigger,
 			state,
 			statusDefinitions);
-		var skill = new BuffShieldSkillDefinition
+		var skill = new BuffSkillDefinition
 		{
+			EffectKind = BuffEffectKind.Shield,
 			UseConfiguredTargeting = true,
 			ShieldBase = GetFloatParam(node, "base_damage", 0f),
 			ShieldCoefficient = GetFloatParam(node, "spell_power_coefficient", 0f),
@@ -413,7 +414,7 @@ namespace Pakuri.Data
 		trigger.TriggeredSkill = skill;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>TriggeredStatus</c>를 생성한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 TriggeredStatus를 생성한다.
 	private static StatusRuntimeData CreateTriggeredStatus(
 		StatusEffectKind kind,
 		SkillTriggerDefinition trigger,
@@ -450,7 +451,7 @@ namespace Pakuri.Data
 		return status;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>TriggeredCommon</c>를 대응시킨다.</summary>
+	/// 전달된 런타임 입력값을 사용해 TriggeredCommon를 대응시킨다.
 	private static void MapTriggeredCommon(
 		SkillDefinition skill,
 		SkillTriggerDefinition trigger,
@@ -468,7 +469,7 @@ namespace Pakuri.Data
 		trigger.PublishSkillLifecycleEvents = false;
 	}
 
-	/// <summary>전달된 <c>state</c> 값을 사용해 <c>TriggerTargeting</c>를 구성한다.</summary>
+	/// 전달된 state 값을 사용해 TriggerTargeting를 구성한다.
 	private static SkillTargetingSpec BuildTriggerTargeting(
 		TriggerOutcomeBuildState state)
 	{
@@ -497,7 +498,7 @@ namespace Pakuri.Data
 		return targeting;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>Skill</c>를 찾는다.</summary>
+	/// 전달된 런타임 입력값을 사용해 Skill를 찾는다.
 	private static SkillDefinition FindSkill(
 		SkillDefinition[] skills,
 		string skillId)
@@ -520,7 +521,7 @@ namespace Pakuri.Data
 			"Triggered skill is not registered: " + skillId);
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>TriggeredStatusMutations</c>를 적용한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 TriggeredStatusMutations를 적용한다.
 	private static void ApplyTriggeredStatusMutations(
 		StatusRuntimeData status,
 		IReadOnlyList<TriggerStatusMutation> mutations)
@@ -595,7 +596,7 @@ namespace Pakuri.Data
 		}
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>TriggeredElementModifier</c>를 갱신한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 TriggeredElementModifier를 갱신한다.
 	private static void SetTriggeredElementModifier(
 		StatusRuntimeData status,
 		TriggerStatusMutation mutation)
@@ -604,7 +605,7 @@ namespace Pakuri.Data
 		status.ElementModifierTarget = mutation.Attribute;
 	}
 
-	/// <summary><c>TriggerStatusMutationKind</c>에서 지원하는 값의 종류를 정의한다.</summary>
+	/// TriggerStatusMutationKind에서 지원하는 값의 종류를 정의한다.
 	private enum TriggerStatusMutationKind
 	{
 		ActionSpeedBonus,
@@ -625,11 +626,11 @@ namespace Pakuri.Data
 		OutgoingAdditionalDamage
 	}
 
-	/// <summary><c>TriggerStatusMutation</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
+	/// TriggerStatusMutation 처리에 함께 전달되는 값들을 묶는다.
 	private readonly struct TriggerStatusMutation
 	{
 
-		/// <summary><c>TriggerStatusMutation</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+		/// TriggerStatusMutation 인스턴스를 전달된 런타임 입력값으로 초기화한다.
 		internal TriggerStatusMutation(
 			TriggerStatusMutationKind kind,
 			float amount,
@@ -660,7 +661,7 @@ namespace Pakuri.Data
 		internal SkillRuntimeKindCondition[] OutgoingRuntimeKinds { get; }
 	}
 
-	/// <summary><c>TriggerOutcomeBuildState</c>의 변경 가능한 런타임 상태를 보관한다.</summary>
+	/// TriggerOutcomeBuildState의 변경 가능한 런타임 상태를 보관한다.
 	private sealed class TriggerOutcomeBuildState
 	{
 		internal SkillMultiEffectTargetSide TargetSide =
@@ -691,7 +692,7 @@ namespace Pakuri.Data
 			new List<TriggerStatusMutation>();
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>ProcessNode</c> 실행 가능 여부를 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 ProcessNode 실행 가능 여부를 반환한다.
 	internal static bool CanProcessNode(string ownerKind, string handlerId)
 	{
 		if (string.Equals(ownerKind, "Skill", StringComparison.OrdinalIgnoreCase)
@@ -702,7 +703,7 @@ namespace Pakuri.Data
 		return IsRuntimeNodeHandler(handlerId);
 	}
 
-	/// <summary>전달된 <c>node</c> 값을 사용해 <c>SkillNode</c>를 대응시킨다.</summary>
+	/// 전달된 node 값을 사용해 SkillNode를 대응시킨다.
 	private static SkillNode MapSkillNode(SkillNodeBuildData node)
 	{
 		if (node == null || !node.EnabledByDefault)
@@ -908,7 +909,7 @@ namespace Pakuri.Data
 		return SkillNode.FromOperation(skillActionOp);
 	}
 
-	/// <summary>전달된 <c>handlerId</c> 값을 사용해 <c>SingleBaseFieldHandler</c> 조건 충족 여부를 반환한다.</summary>
+	/// 전달된 handlerId 값을 사용해 SingleBaseFieldHandler 조건 충족 여부를 반환한다.
 	private static bool IsSingleBaseFieldHandler(string handlerId)
 	{
 		if (string.Equals(handlerId, "StatusFilteredDeployment", StringComparison.OrdinalIgnoreCase))
@@ -918,7 +919,7 @@ namespace Pakuri.Data
 		return string.Equals(handlerId, "TargetStatusStackDamage", StringComparison.OrdinalIgnoreCase);
 	}
 
-	/// <summary>전달된 <c>handlerId</c> 값을 사용해 <c>RuntimeNodeHandler</c> 조건 충족 여부를 반환한다.</summary>
+	/// 전달된 handlerId 값을 사용해 RuntimeNodeHandler 조건 충족 여부를 반환한다.
 	private static bool IsRuntimeNodeHandler(string handlerId)
 	{
 		if (string.Equals(handlerId, "EffectDamage", StringComparison.OrdinalIgnoreCase)
@@ -1041,7 +1042,7 @@ namespace Pakuri.Data
 		return false;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>SkillActionOp</c>를 대응시킨다.</summary>
+	/// 전달된 런타임 입력값을 사용해 SkillActionOp를 대응시킨다.
 	private static SkillActionOp MapSkillActionOp(SkillNodeBuildData node, string handlerId)
 	{
 		if (string.Equals(handlerId, "DamageMultiplier", StringComparison.OrdinalIgnoreCase))
@@ -1195,7 +1196,7 @@ namespace Pakuri.Data
 		throw new InvalidOperationException("Unsupported skill node handler: " + handlerId);
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>MapStatusMutation</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 MapStatusMutation 작업을 시도하고 성공 여부를 반환한다.
 	private static bool TryMapStatusMutation(
 		SkillNodeBuildData node,
 		string handlerId,
@@ -1308,7 +1309,7 @@ namespace Pakuri.Data
 		return false;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>Param</c>를 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 Param를 반환한다.
 	internal static string GetParam(SkillNodeBuildData node, string key)
 	{
 		if (node == null || node.Params == null || string.IsNullOrWhiteSpace(key))
@@ -1330,7 +1331,7 @@ namespace Pakuri.Data
 		return string.Empty;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>FloatParam</c>를 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 FloatParam를 반환한다.
 	internal static float GetFloatParam(SkillNodeBuildData node, string key, float defaultValue)
 	{
 		string param = GetParam(node, key);
@@ -1341,7 +1342,7 @@ namespace Pakuri.Data
 		return result;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>IntParam</c>를 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 IntParam를 반환한다.
 	internal static int GetIntParam(SkillNodeBuildData node, string key, int defaultValue)
 	{
 		string param = GetParam(node, key);
@@ -1352,7 +1353,7 @@ namespace Pakuri.Data
 		return result;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>BoolParam</c>를 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 BoolParam를 반환한다.
 	internal static bool GetBoolParam(SkillNodeBuildData node, string key, bool defaultValue)
 	{
 		string param = GetParam(node, key);
@@ -1371,7 +1372,7 @@ namespace Pakuri.Data
 		return true;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>EnumParam</c>를 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 EnumParam를 반환한다.
 	internal static T GetEnumParam<T>(SkillNodeBuildData node, string key, T defaultValue) where T : struct
 	{
 		string param = GetParam(node, key);

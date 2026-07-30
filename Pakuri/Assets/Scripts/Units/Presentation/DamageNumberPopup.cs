@@ -9,7 +9,7 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// <summary><c>DamageNumberPopup</c> 상태를 Unity UI 또는 월드 오브젝트로 표시한다.</summary>
+    /// DamageNumberPopup 상태를 Unity UI 또는 월드 오브젝트로 표시한다.
     internal class DamageNumberPopup : MonoBehaviour
     {
         private const float DefaultDurationSeconds = 1f;
@@ -28,7 +28,7 @@ namespace Pakuri.InGame
         private readonly List<ActiveDamagePopup> activePopups = new List<ActiveDamagePopup>();
         private bool initialized;
 
-        /// <summary>전달된 <c>textMesh</c> 값을 사용해 <c>소유한 런타임 상태</c>를 초기화한다.</summary>
+        /// 전달된 textMesh 값을 사용해 소유한 런타임 상태를 초기화한다.
         public void Initialize(TextMesh textMesh)
         {
             damageText = textMesh != null ? textMesh : GetComponent<TextMesh>();
@@ -48,7 +48,7 @@ namespace Pakuri.InGame
             enabled = false;
         }
 
-        /// <summary>전달된 <c>damageAmount</c> 값을 사용해 <c>요청값</c>를 표시한다.</summary>
+        /// 전달된 damageAmount 값을 사용해 요청값를 표시한다.
         public void Show(float damageAmount)
         {
             if (!initialized)
@@ -66,7 +66,7 @@ namespace Pakuri.InGame
             enabled = true;
         }
 
-        /// <summary>현재 Unity 프레임에서 <c>Update</c> 갱신 동작을 진행한다.</summary>
+        /// 현재 Unity 프레임에서 Update 갱신 동작을 진행한다.
         private void Update()
         {
             if (damageText == null)
@@ -110,7 +110,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 <c>damageAmount</c> 값을 사용해 <c>Popup</c>를 런타임 씬 오브젝트로 생성하고 등록한다.</summary>
+        /// 전달된 damageAmount 값을 사용해 Popup를 런타임 씬 오브젝트로 생성하고 등록한다.
         private void SpawnPopup(float damageAmount)
         {
             damageText.text = string.Empty;
@@ -174,11 +174,11 @@ namespace Pakuri.InGame
                 Mathf.Max(0.01f, durationSeconds)));
         }
 
-        /// <summary><c>ActiveDamagePopup</c> 상태를 Unity UI 또는 월드 오브젝트로 표시한다.</summary>
+        /// ActiveDamagePopup 상태를 Unity UI 또는 월드 오브젝트로 표시한다.
         private class ActiveDamagePopup
         {
 
-            /// <summary><c>ActiveDamagePopup</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+            /// ActiveDamagePopup 인스턴스를 전달된 런타임 입력값으로 초기화한다.
             public ActiveDamagePopup(
                 GameObject instance,
                 TextMesh text,

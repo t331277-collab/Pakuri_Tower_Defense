@@ -13,7 +13,7 @@ using UnityEngine;
 namespace Pakuri.Data
 {
 
-/// <summary><c>ActiveSkillBuildData</c>가 나타내는 런타임 값을 보관한다.</summary>
+/// ActiveSkillBuildData가 나타내는 런타임 값을 보관한다.
 internal sealed class ActiveSkillBuildData
 {
 	public string SkillId;
@@ -114,7 +114,7 @@ internal sealed class ActiveSkillBuildData
 	public SkillNodeBuildData[] Nodes = Array.Empty<SkillNodeBuildData>();
 }
 
-/// <summary><c>PassiveSkillBuildData</c>가 나타내는 런타임 값을 보관한다.</summary>
+/// PassiveSkillBuildData가 나타내는 런타임 값을 보관한다.
 internal sealed class PassiveSkillBuildData
 {
 	public string PassiveId;
@@ -131,7 +131,7 @@ internal sealed class PassiveSkillBuildData
 	public SkillNodeBuildData[] Nodes = Array.Empty<SkillNodeBuildData>();
 }
 
-/// <summary><c>SkillChoiceBuildData</c>가 나타내는 런타임 값을 보관한다.</summary>
+/// SkillChoiceBuildData가 나타내는 런타임 값을 보관한다.
 internal sealed class SkillChoiceBuildData
 {
 	public string ChoiceId;
@@ -146,11 +146,11 @@ internal sealed class SkillChoiceBuildData
 	public SkillNodeBuildData[] Nodes = Array.Empty<SkillNodeBuildData>();
 }
 
-/// <summary><c>GameDataCatalogBuilder</c> 런타임 데이터를 파싱된 저작 데이터에서 생성한다.</summary>
+/// GameDataCatalogBuilder 런타임 데이터를 파싱된 저작 데이터에서 생성한다.
 internal sealed partial class GameDataCatalogBuilder
 {
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>ActiveDefinition</c>를 구성한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 ActiveDefinition를 구성한다.
 	private static SkillDefinition BuildActiveDefinition(
 		string ownerId,
 		ActiveSkillBuildData source,
@@ -163,7 +163,7 @@ internal sealed partial class GameDataCatalogBuilder
 		return skillRuntimeData;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>PassiveDefinition</c>를 구성한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 PassiveDefinition를 구성한다.
 	private static PassiveSkillDefinition BuildPassiveDefinition(MonsterDefinition monster, PassiveSkillBuildData source)
 	{
 		PassiveSkillDefinition passiveSkillExecutionDefinition = CreateRuntimeData<PassiveSkillDefinition>();
@@ -196,7 +196,7 @@ internal sealed partial class GameDataCatalogBuilder
 		return passiveSkillExecutionDefinition;
 	}
 
-	/// <summary>전달된 <c>source</c> 값을 사용해 <c>Choices</c>를 구성한다.</summary>
+	/// 전달된 source 값을 사용해 Choices를 구성한다.
 	private static SkillChoice[] BuildChoices(SkillChoiceBuildData[] source)
 	{
 		var choices = new SkillChoice[source.Length];
@@ -220,7 +220,7 @@ internal sealed partial class GameDataCatalogBuilder
 		return choices;
 	}
 
-	/// <summary>전달된 <c>source</c> 값을 사용해 <c>ConcreteActiveSkill</c>를 생성한다.</summary>
+	/// 전달된 source 값을 사용해 ConcreteActiveSkill를 생성한다.
 	private static SkillDefinition CreateConcreteActiveSkill(ActiveSkillBuildData source)
 	{
 		if (MatchesProfile(source, "DamageArea"))
@@ -229,15 +229,15 @@ internal sealed partial class GameDataCatalogBuilder
 		}
 		if (MatchesProfile(source, "DamageThenDelayedChain"))
 		{
-			return CreateRuntimeData<SingleChainSkillDefinition>();
+			return CreateRuntimeData<SingleSkillDefinition>();
 		}
 		if (MatchesProfile(source, "ChargeDamageStatus"))
 		{
-			return CreateRuntimeData<SingleChargeSkillDefinition>();
+			return CreateRuntimeData<BuffSkillDefinition>();
 		}
 		if (source.RuntimeKind == SkillRuntimeKind.Heal)
 		{
-			return CreateRuntimeData<BuffHealSkillDefinition>();
+			return CreateRuntimeData<BuffSkillDefinition>();
 		}
 		if (MatchesProfile(source, "ApplySelfIncomingDamageMultiplier"))
 		{
@@ -260,19 +260,19 @@ internal sealed partial class GameDataCatalogBuilder
 		case SkillRuntimeKind.Buff:
 			return CreateRuntimeData<BuffSkillDefinition>();
 		case SkillRuntimeKind.Shield:
-			return CreateRuntimeData<BuffShieldSkillDefinition>();
+			return CreateRuntimeData<BuffSkillDefinition>();
 		default:
 			throw new InvalidOperationException("Unsupported active skill runtime kind: " + source.RuntimeKind);
 		}
 	}
 
-	/// <summary><c>RuntimeData</c>를 생성한다.</summary>
+	/// RuntimeData를 생성한다.
 	private static T CreateRuntimeData<T>() where T : SkillDefinition, new()
 	{
 		return new T();
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>CommonFields</c>를 대응시킨다.</summary>
+	/// 전달된 런타임 입력값을 사용해 CommonFields를 대응시킨다.
 	private static void MapCommonFields(SkillDefinition skill, string monsterId, ActiveSkillBuildData source, SkillTriggerDefinition[] monsterTriggers = null)
 	{
 		skill.SkillId = source.SkillId;
@@ -317,9 +317,15 @@ internal sealed partial class GameDataCatalogBuilder
 		skill.Targeting.SelectionStatusMinStacks = Mathf.Max(0, source.TargetSelectionStatusMinStacks);
 		skill.Targeting.Shape = MapShape(source.RuntimeKind);
 		skill.Targeting.CoverAll = source.RuntimeKind == SkillRuntimeKind.SingleAttack && source.Radius <= 0f && string.IsNullOrWhiteSpace(source.TargetSelection);
+		if (MatchesProfile(source, "DamageThenDelayedChain"))
+		{
+			skill.Targeting.Radius = 0f;
+			skill.Targeting.Shape = SkillTargetShape.Single;
+			skill.Targeting.CoverAll = false;
+		}
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>FilterSkillTriggersForSkill</c> 결과값을 생성해 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 FilterSkillTriggersForSkill 결과값을 생성해 반환한다.
 	private static SkillTriggerDefinition[] FilterSkillTriggersForSkill(SkillTriggerDefinition[] triggers, string skillId)
 	{
 		if (triggers == null || triggers.Length == 0 || string.IsNullOrWhiteSpace(skillId))
@@ -351,7 +357,7 @@ internal sealed partial class GameDataCatalogBuilder
 		return array;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>TriggerOwnedBySkill</c> 조건 충족 여부를 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 TriggerOwnedBySkill 조건 충족 여부를 반환한다.
 	private static bool IsTriggerOwnedBySkill(SkillTriggerDefinition trigger, string skillId)
 	{
 		if (trigger != null && !string.IsNullOrWhiteSpace(trigger.SourceSkillId))
@@ -361,7 +367,7 @@ internal sealed partial class GameDataCatalogBuilder
 		return false;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>ActiveFields</c>를 대응시킨다.</summary>
+	/// 전달된 런타임 입력값을 사용해 ActiveFields를 대응시킨다.
 	private static void MapActiveFields(
 		SkillDefinition skill,
 		MonsterDefinition monster,
@@ -508,60 +514,70 @@ internal sealed partial class GameDataCatalogBuilder
 				singleSkillExecutionDefinition.UseMultiDeployment = true;
 			}
 			singleSkillExecutionDefinition.OnHitStatus = CreateStatusApplication(source, statusDefinitions);
-		}
-		else if (skill is SingleChainSkillDefinition singleChainSkillExecutionDefinition)
-		{
-			MapDamage(singleChainSkillExecutionDefinition.Damage, source);
-			singleChainSkillExecutionDefinition.ChainDamageMultiplier = source.ChainDamageMultiplier;
-			singleChainSkillExecutionDefinition.ChainDelaySeconds = source.ChainDelaySeconds;
-			singleChainSkillExecutionDefinition.ChainRadius = source.Radius;
-			if (source.ChainRadius > 0f)
+			if (MatchesProfile(source, "DamageThenDelayedChain"))
 			{
-				singleChainSkillExecutionDefinition.ChainRadius = source.ChainRadius;
+				singleSkillExecutionDefinition.Area.Radius = 0f;
+				singleSkillExecutionDefinition.UsesHitTargetCount = true;
+				singleSkillExecutionDefinition.UsePrefabHitbox = false;
+				singleSkillExecutionDefinition.UseMultiDeployment = false;
+				singleSkillExecutionDefinition.HitAllTargets = false;
+				singleSkillExecutionDefinition.HitTargetCount = 1;
+				singleSkillExecutionDefinition.DeploymentCount = 1;
+				singleSkillExecutionDefinition.Area.CoverAll = false;
 			}
-			singleChainSkillExecutionDefinition.ExcludePrimaryTarget = source.ExcludePrimaryTarget;
-		}
-		else if (skill is SingleChargeSkillDefinition singleChargeSkillExecutionDefinition)
-		{
-			singleChargeSkillExecutionDefinition.TargetMaxHealthRatio = source.TargetMaxHealthRatio;
-			singleChargeSkillExecutionDefinition.RampSeconds = source.ChargeRampSeconds;
-			singleChargeSkillExecutionDefinition.MaxMoveSpeedMultiplier = source.ChargeMoveSpeedMultiplier;
-			if (source.MoveSpeedMultiplier > 1f)
-			{
-				singleChargeSkillExecutionDefinition.MaxMoveSpeedMultiplier = source.MoveSpeedMultiplier;
-			}
-			singleChargeSkillExecutionDefinition.OnHitStatus = CreateStatusApplication(source, statusDefinitions);
-		}
-		else if (skill is BuffHealSkillDefinition buffHealSkillExecutionDefinition)
-		{
-			MapDamage(buffHealSkillExecutionDefinition.Healing, source);
-			buffHealSkillExecutionDefinition.Healing.BaseDamage = source.FlatValue;
 		}
 		else if (skill is BuffSkillDefinition buffSkillExecutionDefinition)
 		{
+			buffSkillExecutionDefinition.EffectKind = MapBuffEffectKind(source);
 			buffSkillExecutionDefinition.Target = MapBuffTarget(source);
 			buffSkillExecutionDefinition.UseConfiguredTargeting = !string.IsNullOrWhiteSpace(source.TargetScope);
 			buffSkillExecutionDefinition.AttachVisualToCaster = MatchesProfile(source, "ApplyAllyMoveAndDamageMultiplier");
-			buffSkillExecutionDefinition.BuffDuration = ResolveStatusDuration(source);
-			buffSkillExecutionDefinition.HasAttachedDamage = source.BaseDamage > 0f;
-			MapDamage(buffSkillExecutionDefinition.AttachedDamage, source);
-			buffSkillExecutionDefinition.AttachedDamageRadius = source.Radius;
 			buffSkillExecutionDefinition.AttachedStatus = CreateStatusApplication(source, statusDefinitions);
-		}
-		else if (skill is BuffShieldSkillDefinition buffShieldSkillExecutionDefinition)
-		{
-			buffShieldSkillExecutionDefinition.Target = MapBuffTarget(source);
-			buffShieldSkillExecutionDefinition.UseConfiguredTargeting = !string.IsNullOrWhiteSpace(source.TargetScope);
-			buffShieldSkillExecutionDefinition.AttachVisualToCaster = MatchesProfile(source, "GrantShieldToEnemyAllies");
-			buffShieldSkillExecutionDefinition.ShieldBase = source.BaseDamage;
-			buffShieldSkillExecutionDefinition.ShieldCoefficient = GetDominantCoefficient(source, out var statSource2);
-			buffShieldSkillExecutionDefinition.ShieldStatSource = statSource2;
-			buffShieldSkillExecutionDefinition.ShieldDuration = ResolveStatusDuration(source);
-			buffShieldSkillExecutionDefinition.ShieldStatus = CreateStatusRuntimeData(source, statusDefinitions);
+			if (buffSkillExecutionDefinition.EffectKind == BuffEffectKind.Heal)
+			{
+				MapDamage(buffSkillExecutionDefinition.Healing, source);
+				buffSkillExecutionDefinition.Healing.BaseDamage = source.FlatValue;
+			}
+			else if (buffSkillExecutionDefinition.EffectKind == BuffEffectKind.Shield)
+			{
+				buffSkillExecutionDefinition.AttachVisualToCaster = MatchesProfile(source, "GrantShieldToEnemyAllies");
+				buffSkillExecutionDefinition.ShieldBase = source.BaseDamage;
+				buffSkillExecutionDefinition.ShieldCoefficient = GetDominantCoefficient(source, out var statSource);
+				buffSkillExecutionDefinition.ShieldStatSource = statSource;
+				buffSkillExecutionDefinition.ShieldDuration = ResolveStatusDuration(source);
+				buffSkillExecutionDefinition.ShieldStatus = CreateStatusRuntimeData(source, statusDefinitions);
+			}
+			else if (buffSkillExecutionDefinition.EffectKind == BuffEffectKind.Charge)
+			{
+				buffSkillExecutionDefinition.ChargeTargetMaxHealthRatio = source.TargetMaxHealthRatio;
+				buffSkillExecutionDefinition.ChargeRampSeconds = source.ChargeRampSeconds;
+				buffSkillExecutionDefinition.ChargeMaxMoveSpeedMultiplier = source.MoveSpeedMultiplier > 1f
+					? source.MoveSpeedMultiplier
+					: source.ChargeMoveSpeedMultiplier;
+			}
 		}
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>Damage</c>를 대응시킨다.</summary>
+	/// 전달된 source에 맞는 버프 실행 종류를 반환한다.
+	private static BuffEffectKind MapBuffEffectKind(ActiveSkillBuildData source)
+	{
+		if (MatchesProfile(source, "ChargeDamageStatus"))
+		{
+			return BuffEffectKind.Charge;
+		}
+		if (source.RuntimeKind == SkillRuntimeKind.Heal)
+		{
+			return BuffEffectKind.Heal;
+		}
+		if (source.RuntimeKind == SkillRuntimeKind.Shield
+			&& !MatchesProfile(source, "ApplySelfIncomingDamageMultiplier"))
+		{
+			return BuffEffectKind.Shield;
+		}
+		return BuffEffectKind.Status;
+	}
+
+	/// 전달된 런타임 입력값을 사용해 Damage를 대응시킨다.
 	private static void MapDamage(SkillDamageSpec damage, ActiveSkillBuildData source)
 	{
 		damage.SkillId = source.SkillId;
@@ -572,7 +588,7 @@ internal sealed partial class GameDataCatalogBuilder
 		damage.CriticalAllowed = source.CriticalAllowed;
 	}
 
-	/// <summary>전달된 <c>targetScope</c> 값을 사용해 <c>EnemyTargetSide</c>를 대응시킨다.</summary>
+	/// 전달된 targetScope 값을 사용해 EnemyTargetSide를 대응시킨다.
 	private static SkillTargetSide MapEnemyTargetSide(string targetScope)
 	{
 		if (string.IsNullOrWhiteSpace(targetScope))
@@ -590,13 +606,13 @@ internal sealed partial class GameDataCatalogBuilder
 		return SkillTargetSide.Enemy;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>MatchesProfile</c> 조건을 평가하고 결과를 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 MatchesProfile 조건을 평가하고 결과를 반환한다.
 	private static bool MatchesProfile(ActiveSkillBuildData source, string profile)
 	{
 		return string.Equals(source.ExecutionProfile, profile, StringComparison.OrdinalIgnoreCase);
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>DominantCoefficient</c>를 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 DominantCoefficient를 반환한다.
 	private static float GetDominantCoefficient(ActiveSkillBuildData source, out StatSource statSource)
 	{
 		if (Mathf.Abs(source.SpellPowerCoefficient) >= Mathf.Abs(source.AttackPowerCoefficient))
@@ -608,7 +624,7 @@ internal sealed partial class GameDataCatalogBuilder
 		return source.AttackPowerCoefficient;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>StatusApplication</c>를 생성한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 StatusApplication를 생성한다.
 	private static StatusApplicationSpec CreateStatusApplication(
 		ActiveSkillBuildData source,
 		StatusEffectDefinition[] statusDefinitions)
@@ -625,7 +641,7 @@ internal sealed partial class GameDataCatalogBuilder
 		return statusApplicationSpec;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>StatusRuntimeData</c>를 생성한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 StatusRuntimeData를 생성한다.
 	private static StatusRuntimeData CreateStatusRuntimeData(
 		ActiveSkillBuildData source,
 		StatusEffectDefinition[] statusDefinitions)
@@ -721,7 +737,7 @@ internal sealed partial class GameDataCatalogBuilder
 		return runtimeStatusData;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>ResolveHitTargetCount</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 ResolveHitTargetCount 작업을 시도하고 성공 여부를 반환한다.
 	private static bool TryResolveHitTargetCount(string rawValue, out bool hitAllTargets, out int hitTargetCount)
 	{
 		hitAllTargets = false;
@@ -741,7 +757,7 @@ internal sealed partial class GameDataCatalogBuilder
 		return true;
 	}
 
-	/// <summary>전달된 <c>source</c> 값을 사용해 <c>BuffTarget</c>를 대응시킨다.</summary>
+	/// 전달된 source 값을 사용해 BuffTarget를 대응시킨다.
 	private static SkillTargetSide MapBuffTarget(ActiveSkillBuildData source)
 	{
 		StatusValueParser.TryParseTargetScope(source.StatusTargetScope, out var scope);
@@ -753,7 +769,7 @@ internal sealed partial class GameDataCatalogBuilder
 		return SkillTargetSide.AllAllies;
 	}
 
-	/// <summary>전달된 <c>source</c> 값을 사용해 <c>StatusDuration</c>를 결정한다.</summary>
+	/// 전달된 source 값을 사용해 StatusDuration를 결정한다.
 	private static float ResolveStatusDuration(ActiveSkillBuildData source)
 	{
 		if (source.StatusDurationSeconds > 0f)
@@ -767,7 +783,7 @@ internal sealed partial class GameDataCatalogBuilder
 		return source.CooldownSeconds;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>SingleBaseNodes</c>를 적용한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 SingleBaseNodes를 적용한다.
 	private static void ApplySingleBaseNodes(SingleSkillDefinition single, SkillNodeBuildData[] nodes, DamageAttribute attribute)
 	{
 		foreach (SkillNodeBuildData skillNodeDefinition in nodes)
@@ -798,7 +814,7 @@ internal sealed partial class GameDataCatalogBuilder
 		}
 	}
 
-	/// <summary>전달된 <c>runtimeKind</c> 값을 사용해 <c>Shape</c>를 대응시킨다.</summary>
+	/// 전달된 runtimeKind 값을 사용해 Shape를 대응시킨다.
 	private static SkillTargetShape MapShape(SkillRuntimeKind runtimeKind)
 	{
 		switch (runtimeKind)

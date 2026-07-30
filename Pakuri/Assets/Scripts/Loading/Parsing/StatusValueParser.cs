@@ -11,11 +11,11 @@ using Pakuri.InGame;
 namespace Pakuri.Data
 {
 
-    /// <summary><c>StatusValueParser</c> 원본 값을 런타임 모델로 파싱한다.</summary>
+    /// StatusValueParser 원본 값을 런타임 모델로 파싱한다.
     internal static class StatusValueParser
     {
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>StatusKind</c> 파싱을 시도하고 성공 여부를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 StatusKind 파싱을 시도하고 성공 여부를 반환한다.
         public static bool TryParseStatusKind(string value, out StatusEffectKind kind)
         {
             kind = StatusEffectKind.None;
@@ -24,7 +24,7 @@ namespace Pakuri.Data
                 && kind != StatusEffectKind.None;
         }
 
-        /// <summary>전달된 <c>value</c> 값을 사용해 <c>StatusKind</c> 값을 런타임 표현으로 파싱한다.</summary>
+        /// 전달된 value 값을 사용해 StatusKind 값을 런타임 표현으로 파싱한다.
         public static StatusEffectKind ParseStatusKind(string value)
         {
             if (TryParseStatusKind(value, out var kind))
@@ -35,7 +35,7 @@ namespace Pakuri.Data
             throw new InvalidOperationException($"Unsupported status id '{value}'.");
         }
 
-        /// <summary>전달된 <c>rawValue</c> 값을 사용해 <c>StatusKinds</c> 값을 런타임 표현으로 파싱한다.</summary>
+        /// 전달된 rawValue 값을 사용해 StatusKinds 값을 런타임 표현으로 파싱한다.
         public static StatusEffectKind[] ParseStatusKinds(string rawValue)
         {
             var statusIds = ParseIdList(rawValue);
@@ -48,7 +48,7 @@ namespace Pakuri.Data
             return kinds;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ConditionStatusExpression</c> 파싱을 시도하고 성공 여부를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ConditionStatusExpression 파싱을 시도하고 성공 여부를 반환한다.
         public static bool TryParseConditionStatusExpression(
             string rawValue,
             out StatusConditionGroup[] groups)
@@ -124,7 +124,7 @@ namespace Pakuri.Data
             return groups.Length > 0;
         }
 
-        /// <summary>전달된 <c>rawValue</c> 값을 사용해 <c>ConditionStatusExpression</c> 값을 런타임 표현으로 파싱한다.</summary>
+        /// 전달된 rawValue 값을 사용해 ConditionStatusExpression 값을 런타임 표현으로 파싱한다.
         public static StatusConditionGroup[] ParseConditionStatusExpression(string rawValue)
         {
             if (TryParseConditionStatusExpression(rawValue, out var groups))
@@ -135,7 +135,7 @@ namespace Pakuri.Data
             throw new InvalidOperationException($"Unsupported status condition '{rawValue}'.");
         }
 
-        /// <summary>전달된 <c>rawValue</c> 값을 사용해 <c>SkillRuntimeKindConditions</c> 값을 런타임 표현으로 파싱한다.</summary>
+        /// 전달된 rawValue 값을 사용해 SkillRuntimeKindConditions 값을 런타임 표현으로 파싱한다.
         public static SkillRuntimeKindCondition[] ParseSkillRuntimeKindConditions(string rawValue)
         {
             if (string.IsNullOrWhiteSpace(rawValue))
@@ -167,7 +167,7 @@ namespace Pakuri.Data
             return conditions.ToArray();
         }
 
-        /// <summary>전달된 <c>rawValue</c> 값을 사용해 <c>IdList</c> 값을 런타임 표현으로 파싱한다.</summary>
+        /// 전달된 rawValue 값을 사용해 IdList 값을 런타임 표현으로 파싱한다.
         public static string[] ParseIdList(string rawValue)
         {
             if (string.IsNullOrWhiteSpace(rawValue))
@@ -189,7 +189,7 @@ namespace Pakuri.Data
             return ids.ToArray();
         }
 
-        /// <summary>전달된 <c>rawValue</c> 값을 사용해 <c>DamageAttributes</c> 값을 런타임 표현으로 파싱한다.</summary>
+        /// 전달된 rawValue 값을 사용해 DamageAttributes 값을 런타임 표현으로 파싱한다.
         public static DamageAttribute[] ParseDamageAttributes(string rawValue)
         {
             var values = ParseIdList(rawValue);
@@ -202,7 +202,7 @@ namespace Pakuri.Data
             return attributes;
         }
 
-        /// <summary>전달된 <c>rawValue</c> 값을 사용해 <c>EventSourceScope</c> 값을 런타임 표현으로 파싱한다.</summary>
+        /// 전달된 rawValue 값을 사용해 EventSourceScope 값을 런타임 표현으로 파싱한다.
         public static SkillTriggerEventSourceScope ParseEventSourceScope(string rawValue)
         {
             if (string.IsNullOrWhiteSpace(rawValue))
@@ -224,7 +224,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>TargetScope</c> 파싱을 시도하고 성공 여부를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 TargetScope 파싱을 시도하고 성공 여부를 반환한다.
         public static bool TryParseTargetScope(string rawValue, out StatusTargetScope scope)
         {
             scope = StatusTargetScope.Unspecified;
@@ -246,7 +246,7 @@ namespace Pakuri.Data
             return false;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>MergePolicy</c> 파싱을 시도하고 성공 여부를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 MergePolicy 파싱을 시도하고 성공 여부를 반환한다.
         public static bool TryParseMergePolicy(string rawValue, out StatusMergePolicy policy)
         {
             policy = StatusMergePolicy.Unspecified;
@@ -271,7 +271,7 @@ namespace Pakuri.Data
             return false;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ShieldRefreshRule</c> 파싱을 시도하고 성공 여부를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ShieldRefreshRule 파싱을 시도하고 성공 여부를 반환한다.
         public static bool TryParseShieldRefreshRule(string rawValue, out ShieldRefreshRule rule)
         {
             rule = ShieldRefreshRule.TakeHighest;
@@ -296,7 +296,7 @@ namespace Pakuri.Data
             return false;
         }
 
-        /// <summary>전달된 <c>rawValue</c> 값을 사용해 <c>TargetScope</c> 값을 런타임 표현으로 파싱한다.</summary>
+        /// 전달된 rawValue 값을 사용해 TargetScope 값을 런타임 표현으로 파싱한다.
         public static StatusTargetScope ParseTargetScope(string rawValue)
         {
             if (TryParseTargetScope(rawValue, out var scope))
@@ -307,7 +307,7 @@ namespace Pakuri.Data
             throw new InvalidOperationException($"Unsupported status target scope '{rawValue}'.");
         }
 
-        /// <summary>전달된 <c>rawValue</c> 값을 사용해 <c>MergePolicy</c> 값을 런타임 표현으로 파싱한다.</summary>
+        /// 전달된 rawValue 값을 사용해 MergePolicy 값을 런타임 표현으로 파싱한다.
         public static StatusMergePolicy ParseMergePolicy(string rawValue)
         {
             if (TryParseMergePolicy(rawValue, out var policy))
@@ -318,7 +318,7 @@ namespace Pakuri.Data
             throw new InvalidOperationException($"Unsupported status merge policy '{rawValue}'.");
         }
 
-        /// <summary>전달된 <c>rawValue</c> 값을 사용해 <c>ShieldRefreshRule</c> 값을 런타임 표현으로 파싱한다.</summary>
+        /// 전달된 rawValue 값을 사용해 ShieldRefreshRule 값을 런타임 표현으로 파싱한다.
         public static ShieldRefreshRule ParseShieldRefreshRule(string rawValue)
         {
             if (TryParseShieldRefreshRule(rawValue, out var rule))

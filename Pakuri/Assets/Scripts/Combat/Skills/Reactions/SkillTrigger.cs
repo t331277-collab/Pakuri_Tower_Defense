@@ -14,11 +14,11 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-/// <summary>전투 사건 반응 조건을 평가하고 설정된 후속 스킬 결과를 실행한다.</summary>
+/// 전투 사건 반응 조건을 평가하고 설정된 후속 스킬 결과를 실행한다.
 internal static class SkillTrigger
 {
 
-	/// <summary><c>TriggerGateState</c>의 변경 가능한 런타임 상태를 보관한다.</summary>
+	/// TriggerGateState의 변경 가능한 런타임 상태를 보관한다.
 	private sealed class TriggerGateState
 	{
 		private readonly Dictionary<string, float> cooldowns =
@@ -26,7 +26,7 @@ internal static class SkillTrigger
 		private readonly Dictionary<string, int> counts =
 			new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
-		/// <summary>전달된 런타임 입력값을 사용해 <c>Cooldown</c>를 현재 런타임 상태에서 소비한다.</summary>
+		/// 전달된 런타임 입력값을 사용해 Cooldown를 현재 런타임 상태에서 소비한다.
 		public bool ConsumeCooldown(string key, float cooldownSeconds)
 		{
 			float now = Time.time;
@@ -47,7 +47,7 @@ internal static class SkillTrigger
 			return true;
 		}
 
-		/// <summary>전달된 런타임 입력값을 사용해 <c>Count</c>를 현재 런타임 상태에서 소비한다.</summary>
+		/// 전달된 런타임 입력값을 사용해 Count를 현재 런타임 상태에서 소비한다.
 		public bool ConsumeCount(string key, int triggerEveryCount)
 		{
 			if (triggerEveryCount <= 1)
@@ -71,7 +71,7 @@ internal static class SkillTrigger
 	private static readonly ConditionalWeakTable<InGameCombatManager, TriggerGateState> gateStates =
 		new ConditionalWeakTable<InGameCombatManager, TriggerGateState>();
 
-	/// <summary>전달된 <c>combatManager</c> 값을 사용해 <c>소유한 모든 런타임 값</c>를 초기 런타임 상태로 되돌린다.</summary>
+	/// 전달된 combatManager 값을 사용해 소유한 모든 런타임 값를 초기 런타임 상태로 되돌린다.
 	internal static void Reset(InGameCombatManager combatManager)
 	{
 		if (combatManager != null)
@@ -80,7 +80,7 @@ internal static class SkillTrigger
 		}
 	}
 
-	/// <summary>전달된 <c>baseTriggers</c> 값을 사용해 <c>Triggers</c>를 결과 컬렉션에 수집한다.</summary>
+	/// 전달된 baseTriggers 값을 사용해 Triggers를 결과 컬렉션에 수집한다.
 	private static SkillTriggerDefinition[] CollectTriggers(
 		SkillTriggerDefinition[] baseTriggers)
 	{
@@ -99,7 +99,7 @@ internal static class SkillTrigger
 		return triggers.ToArray();
 	}
 
-	/// <summary><c>TriggerExecutionContext</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
+	/// TriggerExecutionContext 처리에 함께 전달되는 값들을 묶는다.
 	internal readonly struct TriggerExecutionContext
 	{
 		private readonly float[] trackedIncomingDamage;
@@ -134,7 +134,7 @@ internal static class SkillTrigger
 
 		public int RecastGeneration { get; }
 
-		/// <summary><c>TriggerExecutionContext</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+		/// TriggerExecutionContext 인스턴스를 전달된 런타임 입력값으로 초기화한다.
 		public TriggerExecutionContext(UnitCombatState eventTarget, UnitCombatState attacker, Vector2 eventCenter, StatusRuntimeInstance status, float shieldAbsorbedAmount, float eventAppliedDamage, DamageAttribute eventAttribute, string eventSourceSkillId, UnitCombatState eventSource = null, bool eventWasExecute = false, string eventTriggerSourceSkillId = null, int eventHitCount = 0, int recastGeneration = 0)
 		{
 			EventTarget = eventTarget;
@@ -163,7 +163,7 @@ internal static class SkillTrigger
 			RecastGeneration = Mathf.Max(0, recastGeneration);
 		}
 
-		/// <summary>전달된 <c>attribute</c> 값을 사용해 <c>TrackedIncomingDamage</c> 결과값을 생성해 반환한다.</summary>
+		/// 전달된 attribute 값을 사용해 TrackedIncomingDamage 결과값을 생성해 반환한다.
 		public float TrackedIncomingDamage(DamageAttribute attribute)
 		{
 			var index = (int)attribute;
@@ -175,7 +175,7 @@ internal static class SkillTrigger
 		}
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>PublishLifecycleEvent</c> 작업을 수행한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 PublishLifecycleEvent 작업을 수행한다.
 	internal static void PublishLifecycleEvent(
 		SkillTriggerEvent triggerEvent,
 		SkillActionContext actionContext)
@@ -220,7 +220,7 @@ internal static class SkillTrigger
 			triggerContext);
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>ProjectileHit</c>를 실행한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 ProjectileHit를 실행한다.
 	public static void ExecuteProjectileHit(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillId, bool isMagazineLastProjectile, Vector2 eventCenter)
 	{
 		if (isMagazineLastProjectile)
@@ -229,7 +229,7 @@ internal static class SkillTrigger
 		}
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>CombatStart</c>를 실행한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 CombatStart를 실행한다.
 	public static void ExecuteCombatStart(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source)
 	{
 		IReadOnlyList<SkillUseState> readOnlyList = null;
@@ -253,7 +253,7 @@ internal static class SkillTrigger
 		}
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>ShieldExpire</c>를 실행한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 ShieldExpire를 실행한다.
 	public static void ExecuteShieldExpire(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState shieldTarget, StatusRuntimeInstance shieldStatus)
 	{
 		if (shieldTarget != null && shieldStatus != null && shieldStatus.IsShieldStatus)
@@ -267,7 +267,7 @@ internal static class SkillTrigger
 		}
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>ShieldAbsorb</c>를 실행한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 ShieldAbsorb를 실행한다.
 	public static void ExecuteShieldAbsorb(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState shieldTarget, UnitCombatState attacker, StatusRuntimeInstance shieldStatus, float absorbedAmount)
 	{
 		if (shieldTarget != null && shieldStatus != null && shieldStatus.IsShieldStatus && !(absorbedAmount <= 0f))
@@ -281,7 +281,7 @@ internal static class SkillTrigger
 		}
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>ShieldAbsorbs</c>를 실행한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 ShieldAbsorbs를 실행한다.
 	public static void ExecuteShieldAbsorbs(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState shieldTarget, UnitCombatState attacker, IReadOnlyList<ShieldAbsorptionRecord> absorbedShields)
 	{
 		for (int i = 0; i < absorbedShields.Count; i++)
@@ -294,7 +294,7 @@ internal static class SkillTrigger
 		}
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>StatusExpire</c>를 실행한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 StatusExpire를 실행한다.
 	public static void ExecuteStatusExpire(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState statusOwner, StatusRuntimeInstance status)
 	{
 		if (statusOwner != null && status != null)
@@ -308,7 +308,7 @@ internal static class SkillTrigger
 		}
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>ExpiredStatuses</c>를 실행한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 ExpiredStatuses를 실행한다.
 	public static void ExecuteExpiredStatuses(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState statusOwner, IReadOnlyList<StatusRuntimeInstance> removedStatuses)
 	{
 		for (int i = 0; i < removedStatuses.Count; i++)
@@ -319,7 +319,7 @@ internal static class SkillTrigger
 		ExecuteShieldExpires(combatManager, roster, statusOwner, removedStatuses);
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>ShieldExpires</c>를 실행한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 ShieldExpires를 실행한다.
 	public static void ExecuteShieldExpires(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState shieldTarget, IReadOnlyList<StatusRuntimeInstance> removedStatuses)
 	{
 		for (int i = 0; i < removedStatuses.Count; i++)
@@ -332,7 +332,7 @@ internal static class SkillTrigger
 		}
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>OutgoingDamage</c>를 실행한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 OutgoingDamage를 실행한다.
 	public static void ExecuteOutgoingDamage(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillId, UnitCombatState eventTarget, DamageAttribute attribute, float eventAppliedDamage, bool eventWasExecute = false)
 	{
 		if (!(combatManager == null) && roster != null && source != null)
@@ -344,7 +344,7 @@ internal static class SkillTrigger
 		}
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>SkillCast</c>를 실행한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 SkillCast를 실행한다.
 	public static void ExecuteSkillCast(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillId, Vector2 eventCenter, string eventTriggerSourceSkillId = null)
 	{
 		if (!(combatManager == null) && roster != null && source != null)
@@ -355,7 +355,7 @@ internal static class SkillTrigger
 		}
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>Kill</c>를 실행한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 Kill를 실행한다.
 	public static void ExecuteKill(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillId, UnitCombatState eventTarget, DamageAttribute attribute, float eventAppliedDamage, bool eventWasExecute = false)
 	{
 		if (!(combatManager == null) && roster != null && source != null)
@@ -367,7 +367,7 @@ internal static class SkillTrigger
 		}
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>SourceOwnedTriggers</c>를 실행한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 SourceOwnedTriggers를 실행한다.
 	private static void ExecuteSourceOwnedTriggers(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillId, SkillTriggerEvent triggerEvent, TriggerExecutionContext triggerContext)
 	{
 		if (combatManager == null || roster == null || source == null || string.IsNullOrWhiteSpace(sourceSkillId))
@@ -390,7 +390,7 @@ internal static class SkillTrigger
 		}
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>SourceOwnedTriggers</c> 결과값을 생성해 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 SourceOwnedTriggers 결과값을 생성해 반환한다.
 	private static SkillTriggerDefinition[] SourceOwnedTriggers(UnitCombatState source, string sourceSkillId, SkillTriggerDefinition[] baseTriggers)
 	{
 		SkillUseState sourceSkill = null;
@@ -407,7 +407,7 @@ internal static class SkillTrigger
 		return CollectTriggers(sourceSkill.Data.SkillTriggers);
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>PassiveOwnerTriggers</c>를 실행한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 PassiveOwnerTriggers를 실행한다.
 	private static void ExecutePassiveOwnerTriggers(InGameCombatManager combatManager, UnitSpawnManager roster, SkillTriggerEvent triggerEvent, TriggerExecutionContext triggerContext)
 	{
 		if (combatManager == null || roster == null)
@@ -443,7 +443,7 @@ internal static class SkillTrigger
 		}
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>RunSourceOwnedTrigger</c> 실행 필요 여부를 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 RunSourceOwnedTrigger 실행 필요 여부를 반환한다.
 	private static bool ShouldRunSourceOwnedTrigger(SkillTriggerDefinition trigger, UnitCombatState source, string sourceSkillId, SkillTriggerEvent triggerEvent, TriggerExecutionContext triggerContext)
 	{
 		if (trigger != null && trigger.TriggerEvent == triggerEvent && string.Equals(trigger.SourceSkillId, sourceSkillId, StringComparison.OrdinalIgnoreCase) && MatchesEventSkillId(trigger.EventSkillIds, triggerContext.EventSourceSkillId) && StatusConditionRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKindValues, triggerContext.EventSourceSkillId) && (!trigger.RequireEventExecute || triggerContext.EventWasExecute) && HasAllChoices(source, trigger.RequiredActiveChoiceIds) && !HasAnyChoice(source, trigger.ExcludedActiveChoiceIds))
@@ -453,7 +453,7 @@ internal static class SkillTrigger
 		return false;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>RunPassiveOwnerTrigger</c> 실행 필요 여부를 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 RunPassiveOwnerTrigger 실행 필요 여부를 반환한다.
 	private static bool ShouldRunPassiveOwnerTrigger(SkillTriggerDefinition trigger, UnitCombatState owner, SkillTriggerEvent triggerEvent, TriggerExecutionContext triggerContext)
 	{
 		if (trigger == null || owner == null || owner.Skills == null || trigger.TriggerEvent != triggerEvent || string.IsNullOrWhiteSpace(trigger.SourceSkillId) || !owner.Skills.HasPassiveSkill(trigger.SourceSkillId) || !MatchesEventSkillId(trigger.EventSkillIds, triggerContext.EventSourceSkillId) || !StatusConditionRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKindValues, triggerContext.EventSourceSkillId) || (trigger.RequireEventExecute && !triggerContext.EventWasExecute) || !HasAllChoices(owner, trigger.RequiredActiveChoiceIds) || HasAnyChoice(owner, trigger.ExcludedActiveChoiceIds) || !MeetsSourceStatusRequirement(owner, trigger.RequiredSourceStatusKind, trigger.RequiredSourceStatusMinStacks))
@@ -475,7 +475,7 @@ internal static class SkillTrigger
 		return false;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 소유한 런타임 상태에 <c>AllChoices</c>가 있는지 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 소유한 런타임 상태에 AllChoices가 있는지 반환한다.
 	private static bool HasAllChoices(UnitCombatState source, string[] choiceIds)
 	{
 		if (choiceIds == null || choiceIds.Length == 0)
@@ -496,7 +496,7 @@ internal static class SkillTrigger
 		return true;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 소유한 런타임 상태에 <c>AnyChoice</c>가 있는지 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 소유한 런타임 상태에 AnyChoice가 있는지 반환한다.
 	private static bool HasAnyChoice(UnitCombatState source, string[] choiceIds)
 	{
 		if (choiceIds == null || choiceIds.Length == 0 || source == null || source.Skills == null)
@@ -513,7 +513,7 @@ internal static class SkillTrigger
 		return false;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>MeetsSourceStatusRequirement</c> 조건을 평가하고 결과를 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 MeetsSourceStatusRequirement 조건을 평가하고 결과를 반환한다.
 	private static bool MeetsSourceStatusRequirement(UnitCombatState owner, StatusEffectKind statusKind, int minStacks)
 	{
 		if (statusKind == StatusEffectKind.None)
@@ -535,7 +535,7 @@ internal static class SkillTrigger
 		return false;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>MatchesConditionStatus</c> 조건을 평가하고 결과를 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 MatchesConditionStatus 조건을 평가하고 결과를 반환한다.
 	private static bool MatchesConditionStatus(SkillTriggerDefinition trigger, StatusRuntimeInstance status)
 	{
 		if (trigger != null)
@@ -545,7 +545,7 @@ internal static class SkillTrigger
 		return true;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>MatchesTriggerAttribute</c> 조건을 평가하고 결과를 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 MatchesTriggerAttribute 조건을 평가하고 결과를 반환한다.
 	private static bool MatchesTriggerAttribute(DamageAttribute[] attributes, DamageAttribute eventAttribute)
 	{
 		if (attributes == null || attributes.Length == 0)
@@ -562,7 +562,7 @@ internal static class SkillTrigger
 		return false;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>PassesProcGate</c> 조건을 평가하고 결과를 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 PassesProcGate 조건을 평가하고 결과를 반환한다.
 	private static bool PassesProcGate(InGameCombatManager combatManager, UnitCombatState owner, SkillTriggerDefinition trigger)
 	{
 		if (combatManager == null || owner == null || trigger == null)
@@ -580,7 +580,7 @@ internal static class SkillTrigger
 			trigger.InternalCooldownSeconds);
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>PassesCountGate</c> 조건을 평가하고 결과를 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 PassesCountGate 조건을 평가하고 결과를 반환한다.
 	private static bool PassesCountGate(InGameCombatManager combatManager, UnitCombatState owner, SkillTriggerDefinition trigger)
 	{
 		if (combatManager == null || owner == null || trigger == null)
@@ -592,7 +592,7 @@ internal static class SkillTrigger
 			trigger.TriggerEveryCount);
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>MatchesEventSourceScope</c> 조건을 평가하고 결과를 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 MatchesEventSourceScope 조건을 평가하고 결과를 반환한다.
 	private static bool MatchesEventSourceScope(SkillTriggerEventSourceScope scope, UnitCombatState owner, UnitCombatState eventSource)
 	{
 		if (scope == SkillTriggerEventSourceScope.Any)
@@ -618,7 +618,7 @@ internal static class SkillTrigger
 		return false;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>MatchesEventSkillId</c> 조건을 평가하고 결과를 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 MatchesEventSkillId 조건을 평가하고 결과를 반환한다.
 	private static bool MatchesEventSkillId(string[] skillIds, string eventSkillId)
 	{
 		if (skillIds == null || skillIds.Length == 0)
@@ -639,7 +639,7 @@ internal static class SkillTrigger
 		return false;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>MatchesConditionStatusSourceSkill</c> 조건을 평가하고 결과를 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 MatchesConditionStatusSourceSkill 조건을 평가하고 결과를 반환한다.
 	private static bool MatchesConditionStatusSourceSkill(string[] sourceSkillIds, UnitCombatState target, string eventTriggerSourceSkillId = null)
 	{
 		if (sourceSkillIds == null || sourceSkillIds.Length == 0)
@@ -692,7 +692,7 @@ internal static class SkillTrigger
 		return false;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>SameUnit</c> 조건 충족 여부를 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 SameUnit 조건 충족 여부를 반환한다.
 	private static bool IsSameUnit(UnitCombatState left, UnitCombatState right)
 	{
 		if (left == right)
@@ -708,7 +708,7 @@ internal static class SkillTrigger
 		return false;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>PassiveTriggerCooldownKey</c>를 구성한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 PassiveTriggerCooldownKey를 구성한다.
 	private static string BuildPassiveTriggerCooldownKey(UnitCombatState owner, SkillTriggerDefinition trigger)
 	{
 		string obj = ((owner != null && owner.Identity != null && !string.IsNullOrWhiteSpace(owner.Identity.UnitId)) ? owner.Identity.UnitId : ((owner != null) ? owner.GetHashCode().ToString() : "unknown"));
@@ -716,7 +716,7 @@ internal static class SkillTrigger
 		return obj + ":" + text;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>Trigger</c>를 실행한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 Trigger를 실행한다.
 	private static void ExecuteTrigger(InGameCombatManager combatManager, UnitSpawnManager roster, CombatUnitEntry sourceEntry, UnitCombatState source, SkillTriggerDefinition trigger, TriggerExecutionContext triggerContext)
 	{
 		if (trigger == null)
@@ -738,20 +738,20 @@ internal static class SkillTrigger
 		}
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>Delayed</c>를 실행한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 Delayed를 실행한다.
 	private static IEnumerator ExecuteDelayed(InGameCombatManager combatManager, UnitSpawnManager roster, CombatUnitEntry sourceEntry, UnitCombatState source, SkillTriggerDefinition trigger, TriggerExecutionContext triggerContext, float delaySeconds)
 	{
 		yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
 		ExecuteOnce(combatManager, roster, sourceEntry, source, trigger, triggerContext);
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>Once</c>를 실행한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 Once를 실행한다.
 	private static void ExecuteOnce(InGameCombatManager combatManager, UnitSpawnManager roster, CombatUnitEntry sourceEntry, UnitCombatState source, SkillTriggerDefinition trigger, TriggerExecutionContext triggerContext)
 	{
 		TryExecuteOutcome(combatManager, roster, sourceEntry, source, trigger, triggerContext);
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>ExecuteOutcome</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 ExecuteOutcome 작업을 시도하고 성공 여부를 반환한다.
 	private static bool TryExecuteOutcome(
 		InGameCombatManager combatManager,
 		UnitSpawnManager roster,
@@ -824,7 +824,7 @@ internal static class SkillTrigger
 		return false;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>Command</c>를 실행한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 Command를 실행한다.
 	private static bool ExecuteCommand(
 		InGameCombatManager combatManager,
 		UnitSpawnManager roster,
@@ -850,13 +850,26 @@ internal static class SkillTrigger
 			publishSkillLifecycleEvents: false);
 		if (command.Kind == SkillTriggerCommandKind.RecastZone)
 		{
-			var snapshot = source.SkillState.CreateExecutionData(
+			var skill = sourceRuntime.Data as ZoneSkillDefinition;
+			if (skill == null
+				|| (!string.IsNullOrWhiteSpace(command.TargetId)
+					&& !string.Equals(command.TargetId, skill.SkillId, StringComparison.OrdinalIgnoreCase))
+				|| context.RecastGeneration >= Math.Max(1, command.MaxGeneration))
+			{
+				return false;
+			}
+
+			var inheritedSnapshot = source.SkillState.CreateExecutionData(
 				source,
 				sourceRuntime,
 				roster);
-			return ZoneSkillExecutor.ExecuteRecast(
+			var snapshot = command.InheritSnapshot
+				? inheritedSnapshot
+				: new SkillExecutionData(skill);
+			return ZoneSkillExecutor.Execute(
 				context,
 				snapshot,
+				skill,
 				command,
 				triggerContext.EventCenter);
 		}
@@ -909,7 +922,7 @@ internal static class SkillTrigger
 		return changed;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>CommandRuntimes</c> 결과값을 생성해 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 CommandRuntimes 결과값을 생성해 반환한다.
 	private static IReadOnlyList<SkillUseState> CommandRuntimes(
 		UnitCombatState target,
 		string skillId)
@@ -924,7 +937,7 @@ internal static class SkillTrigger
 		return target.SkillState.ActiveSkills;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>TriggeredRawDamage</c>를 결정한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 TriggeredRawDamage를 결정한다.
 	private static float ResolveTriggeredRawDamage(
 		SkillTriggerDefinition trigger,
 		TriggerExecutionContext context)
@@ -951,7 +964,7 @@ internal static class SkillTrigger
 		return Mathf.Max(0f, value) * Mathf.Max(0f, trigger.DamageValueMultiplier);
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>SourceModel</c> 결과값을 생성해 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 SourceModel 결과값을 생성해 반환한다.
 	private static UnitCombatState SourceModel(
 		UnitSpawnManager roster,
 		string sourceUnitId,
@@ -990,7 +1003,7 @@ internal static class SkillTrigger
 		return null;
 	}
 
-	/// <summary>전달된 런타임 입력값을 사용해 <c>UnitPosition</c> 결과값을 생성해 반환한다.</summary>
+	/// 전달된 런타임 입력값을 사용해 UnitPosition 결과값을 생성해 반환한다.
 	private static Vector2 UnitPosition(UnitSpawnManager roster, UnitCombatState model)
 	{
 		var entry = roster != null ? roster.Find(model) : null;

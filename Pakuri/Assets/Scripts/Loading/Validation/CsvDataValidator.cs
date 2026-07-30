@@ -17,11 +17,11 @@ using static Pakuri.Data.SkillGraphParser;
 namespace Pakuri.Data
 {
 
-    /// <summary><c>CsvDataValidator</c> 데이터를 런타임 카탈로그에 넣기 전에 검증한다.</summary>
+    /// CsvDataValidator 데이터를 런타임 카탈로그에 넣기 전에 검증한다.
     internal static class CsvDataValidator
     {
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>SourceModel</c> 데이터를 검증하고 유효하지 않으면 예외를 던진다.</summary>
+        /// 전달된 런타임 입력값을 사용해 SourceModel 데이터를 검증하고 유효하지 않으면 예외를 던진다.
         internal static void ValidateSourceModelOrThrow(SourceModel model, CsvRuntimeCatalog assetCatalog)
         {
             var errors = new List<string>();
@@ -304,7 +304,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>RuntimeStatusColumns</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 RuntimeStatusColumns를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
         internal static void ValidateRuntimeStatusColumns(
             SkillRow skill,
             Dictionary<string, StatusEffectRow> statusEffects,
@@ -398,7 +398,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillTriggerRow</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 SkillTriggerRow를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
         internal static void ValidateSkillTriggerRow(
             SkillTriggerRow trigger,
             SourceModel model,
@@ -489,7 +489,7 @@ namespace Pakuri.Data
             ValidateSkillIdList(trigger.EventSkillId, trigger, model, "event_skill_id", errors);
         }
 
-        /// <summary>전달된 <c>rawValue</c> 값을 사용해 <c>SkillRuntimeKindList</c>를 검증한다.</summary>
+        /// 전달된 rawValue 값을 사용해 SkillRuntimeKindList를 검증한다.
         internal static bool ValidateSkillRuntimeKindList(string rawValue)
         {
             if (string.IsNullOrWhiteSpace(rawValue))
@@ -525,7 +525,7 @@ namespace Pakuri.Data
             return true;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillIdList</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 SkillIdList를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
         internal static void ValidateSkillIdList(
             string rawSkillIds,
             SkillTriggerRow trigger,
@@ -558,7 +558,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>UnitRuntimeValues</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 UnitRuntimeValues를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
         private static void ValidateUnitRuntimeValues(SourceModel model, List<string> errors)
         {
             foreach (var monster in model.Monsters.Values)
@@ -596,7 +596,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillRuntimeValues</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 SkillRuntimeValues를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
         internal static void ValidateSkillRuntimeValues(SkillRow skill, List<string> errors)
         {
             if (!string.IsNullOrWhiteSpace(skill.RuntimeVisualAnchor)
@@ -686,7 +686,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 소유한 런타임 상태에 <c>OwnedTriggerNodeSource</c>가 있는지 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 소유한 런타임 상태에 OwnedTriggerNodeSource가 있는지 반환한다.
         internal static bool HasOwnedTriggerNodeSource(
             SourceModel model,
             string triggerId)
@@ -710,7 +710,7 @@ namespace Pakuri.Data
             return false;
         }
 
-        /// <summary>전달된 <c>rawValue</c> 값을 사용해 <c>EventSourceScope</c>를 검증한다.</summary>
+        /// 전달된 rawValue 값을 사용해 EventSourceScope를 검증한다.
         internal static bool ValidateEventSourceScope(string rawValue)
         {
             if (string.IsNullOrWhiteSpace(rawValue))
@@ -723,7 +723,7 @@ namespace Pakuri.Data
                 || string.Equals(normalized, "all_allies", StringComparison.OrdinalIgnoreCase);
         }
 
-        /// <summary>전달된 <c>rawValue</c> 값을 사용해 <c>TriggerAttributes</c>를 검증한다.</summary>
+        /// 전달된 rawValue 값을 사용해 TriggerAttributes를 검증한다.
         internal static bool ValidateTriggerAttributes(string rawValue)
         {
             if (string.IsNullOrWhiteSpace(rawValue))
@@ -753,7 +753,7 @@ namespace Pakuri.Data
             return true;
         }
 
-        /// <summary>전달된 <c>rawValue</c> 값을 사용해 <c>SupportedHitTargetCount</c> 조건 충족 여부를 반환한다.</summary>
+        /// 전달된 rawValue 값을 사용해 SupportedHitTargetCount 조건 충족 여부를 반환한다.
         internal static bool IsSupportedHitTargetCount(string rawValue)
         {
             if (string.IsNullOrWhiteSpace(rawValue))
@@ -771,7 +771,7 @@ namespace Pakuri.Data
             return int.TryParse(normalized, out var count) && count > 0;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>TriggerChoiceReference</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 TriggerChoiceReference를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
         internal static void ValidateTriggerChoiceReference(
             string choiceId,
             SkillTriggerRow trigger,
@@ -810,7 +810,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ChoiceAppliesToSkillId</c> 조건을 평가하고 결과를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ChoiceAppliesToSkillId 조건을 평가하고 결과를 반환한다.
         internal static bool ChoiceAppliesToSkillId(SkillChoiceRow choice, string skillId)
         {
             if (choice == null || string.IsNullOrWhiteSpace(skillId))
@@ -826,7 +826,7 @@ namespace Pakuri.Data
             return string.Equals(choice.TargetSkillId, skillId, StringComparison.OrdinalIgnoreCase);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>StatusIdList</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 StatusIdList를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
         internal static void ValidateStatusIdList(
             string ownerId,
             string rawValue,
@@ -852,7 +852,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>StatusConditionExpression</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 StatusConditionExpression를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
         private static void ValidateStatusConditionExpression(
             string ownerId,
             string rawValue,
@@ -897,7 +897,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>StatusEffectRow</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 StatusEffectRow를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
         internal static void ValidateStatusEffectRow(StatusEffectRow status, List<string> errors)
         {
             if (status == null)
@@ -927,7 +927,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ReferencedAssetCoverage</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ReferencedAssetCoverage를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
         internal static void ValidateReferencedAssetCoverage(
             SourceModel model,
             CsvRuntimeCatalog assetCatalog,
@@ -956,7 +956,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>SpritePath</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 SpritePath를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
         internal static void ValidateSpritePath(
             CsvRuntimeCatalog assetCatalog,
             string assetPath,
@@ -974,7 +974,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>PrefabPath</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 PrefabPath를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
         internal static void ValidatePrefabPath(
             CsvRuntimeCatalog assetCatalog,
             string assetPath,
@@ -992,7 +992,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>SkillNodeHandlers</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 SkillNodeHandlers를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
         private static void ValidateSkillNodeHandlers(SourceModel model, List<string> errors)
         {
             for (var i = 0; i < model.SkillGraphNodes.Count; i++)
@@ -1012,7 +1012,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>TriggerOutcomes</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 TriggerOutcomes를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
         private static void ValidateTriggerOutcomes(
             SourceModel model,
             List<string> errors)
@@ -1042,7 +1042,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>AnimatorControllerPath</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 AnimatorControllerPath를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
         internal static void ValidateAnimatorControllerPath(
             CsvRuntimeCatalog assetCatalog,
             string assetPath,
@@ -1060,7 +1060,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>CatalogEntries</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 CatalogEntries를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
         internal static void ValidateCatalogEntries<T>(
             Dictionary<string, CatalogEntryRow> entries,
             Dictionary<string, T> targetLookup,
@@ -1082,7 +1082,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ExpectedSlots</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ExpectedSlots를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
         internal static void ValidateExpectedSlots(
             string monsterId,
             HashSet<SkillSlot> slots,
@@ -1100,7 +1100,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>EnemyRows</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 EnemyRows를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
         internal static void ValidateEnemyRows(SourceModel model, List<string> errors)
         {
             var referencedActiveSkillIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -1171,7 +1171,7 @@ namespace Pakuri.Data
             ValidateEnemyCombatStartTrigger(model, "Intimidation", SkillRuntimeKind.Buff, errors);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>EnemySkillSlot</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 EnemySkillSlot를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
         internal static void ValidateEnemySkillSlot(
             SourceModel model,
             EnemyRow enemy,
@@ -1198,7 +1198,7 @@ namespace Pakuri.Data
             referencedSkillIds.Add(skillId);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>EnemyPassive</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 EnemyPassive를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
         internal static void ValidateEnemyPassive(
             SourceModel model,
             EnemyRow enemy,
@@ -1251,7 +1251,7 @@ namespace Pakuri.Data
             referencedPassiveIds.Add(passiveId);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>EnemyCombatStartTrigger</c>를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 EnemyCombatStartTrigger를 검증한다. 발견한 문제는 전달된 오류 컬렉션에 추가한다.
         internal static void ValidateEnemyCombatStartTrigger(
             SourceModel model,
             string skillId,

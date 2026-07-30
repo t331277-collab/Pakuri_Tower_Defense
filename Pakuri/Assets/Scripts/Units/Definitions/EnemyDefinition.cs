@@ -11,7 +11,7 @@ using UnityEngine;
 namespace Pakuri.Data
 {
 
-    /// <summary><c>EnemyDefinition</c>의 저작 데이터와 런타임 설정을 정의한다.</summary>
+    /// EnemyDefinition의 저작 데이터와 런타임 설정을 정의한다.
     public class EnemyDefinition : ScriptableObject
     {
 

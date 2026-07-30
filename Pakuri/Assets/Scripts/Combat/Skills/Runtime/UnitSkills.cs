@@ -10,7 +10,7 @@ using Pakuri.Data;
 namespace Pakuri.InGame
 {
 
-    /// <summary>한 유닛이 학습한 액티브·패시브 스킬과 강화·마스터 선택을 보관한다.</summary>
+    /// 한 유닛이 학습한 액티브·패시브 스킬과 강화·마스터 선택을 보관한다.
     [Serializable]
     public class UnitSkills
     {
@@ -25,7 +25,7 @@ namespace Pakuri.InGame
         public IReadOnlyCollection<string> ChosenEnhancementIds => chosenEnhancementIds;
         public IReadOnlyCollection<string> ChosenMasterSkillIds => chosenMasterSkillIds;
 
-        /// <summary>전달된 <c>choiceId</c> 값을 사용해 <c>Choice</c>를 소유한 런타임 상태에 추가한다.</summary>
+        /// 전달된 choiceId 값을 사용해 Choice를 소유한 런타임 상태에 추가한다.
         public void AddChoice(string choiceId)
         {
             if (string.IsNullOrWhiteSpace(choiceId))
@@ -48,7 +48,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 <c>skillId</c> 값을 사용해 <c>ActiveSkill</c>를 소유한 런타임 상태에 추가한다.</summary>
+        /// 전달된 skillId 값을 사용해 ActiveSkill를 소유한 런타임 상태에 추가한다.
         public void AddActiveSkill(string skillId)
         {
             if (!string.IsNullOrWhiteSpace(skillId))
@@ -57,7 +57,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 <c>skillId</c> 값을 사용해 소유한 런타임 상태에 <c>ActiveSkill</c>가 있는지 반환한다.</summary>
+        /// 전달된 skillId 값을 사용해 소유한 런타임 상태에 ActiveSkill가 있는지 반환한다.
         public bool HasActiveSkill(string skillId)
         {
             foreach (var learnedSkillId in learnedActiveSkillIds)
@@ -71,7 +71,7 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /// <summary>전달된 <c>skillId</c> 값을 사용해 <c>ActiveSkill</c>를 소유한 런타임 상태에서 제거한다.</summary>
+        /// 전달된 skillId 값을 사용해 ActiveSkill를 소유한 런타임 상태에서 제거한다.
         public void RemoveActiveSkill(string skillId)
         {
             if (!string.IsNullOrWhiteSpace(skillId))
@@ -80,7 +80,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 <c>skillId</c> 값을 사용해 <c>PassiveSkill</c>를 소유한 런타임 상태에 추가한다.</summary>
+        /// 전달된 skillId 값을 사용해 PassiveSkill를 소유한 런타임 상태에 추가한다.
         public void AddPassiveSkill(string skillId)
         {
             if (!string.IsNullOrWhiteSpace(skillId))
@@ -89,7 +89,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 <c>skillId</c> 값을 사용해 소유한 런타임 상태에 <c>PassiveSkill</c>가 있는지 반환한다.</summary>
+        /// 전달된 skillId 값을 사용해 소유한 런타임 상태에 PassiveSkill가 있는지 반환한다.
         public bool HasPassiveSkill(string skillId)
         {
             foreach (var learnedSkillId in learnedPassiveSkillIds)
@@ -103,7 +103,7 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /// <summary>전달된 <c>skillId</c> 값을 사용해 <c>PassiveSkill</c>를 소유한 런타임 상태에서 제거한다.</summary>
+        /// 전달된 skillId 값을 사용해 PassiveSkill를 소유한 런타임 상태에서 제거한다.
         public void RemovePassiveSkill(string skillId)
         {
             if (!string.IsNullOrWhiteSpace(skillId))
@@ -112,7 +112,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 <c>choiceId</c> 값을 사용해 <c>Enhancement</c>를 소유한 런타임 상태에 추가한다.</summary>
+        /// 전달된 choiceId 값을 사용해 Enhancement를 소유한 런타임 상태에 추가한다.
         public void AddEnhancement(string choiceId)
         {
             if (!string.IsNullOrWhiteSpace(choiceId))
@@ -121,13 +121,13 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 <c>choiceId</c> 값을 사용해 소유한 런타임 상태에 <c>Enhancement</c>가 있는지 반환한다.</summary>
+        /// 전달된 choiceId 값을 사용해 소유한 런타임 상태에 Enhancement가 있는지 반환한다.
         public bool HasEnhancement(string choiceId)
         {
             return !string.IsNullOrWhiteSpace(choiceId) && chosenEnhancementIds.Contains(choiceId);
         }
 
-        /// <summary>전달된 <c>choiceId</c> 값을 사용해 <c>Enhancement</c>를 소유한 런타임 상태에서 제거한다.</summary>
+        /// 전달된 choiceId 값을 사용해 Enhancement를 소유한 런타임 상태에서 제거한다.
         public void RemoveEnhancement(string choiceId)
         {
             if (!string.IsNullOrWhiteSpace(choiceId))
@@ -136,7 +136,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 <c>choiceId</c> 값을 사용해 <c>MasterSkill</c>를 소유한 런타임 상태에 추가한다.</summary>
+        /// 전달된 choiceId 값을 사용해 MasterSkill를 소유한 런타임 상태에 추가한다.
         public void AddMasterSkill(string choiceId)
         {
             if (!string.IsNullOrWhiteSpace(choiceId))
@@ -145,13 +145,13 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 <c>choiceId</c> 값을 사용해 소유한 런타임 상태에 <c>MasterSkill</c>가 있는지 반환한다.</summary>
+        /// 전달된 choiceId 값을 사용해 소유한 런타임 상태에 MasterSkill가 있는지 반환한다.
         public bool HasMasterSkill(string choiceId)
         {
             return !string.IsNullOrWhiteSpace(choiceId) && chosenMasterSkillIds.Contains(choiceId);
         }
 
-        /// <summary>전달된 <c>choiceId</c> 값을 사용해 <c>MasterSkill</c>를 소유한 런타임 상태에서 제거한다.</summary>
+        /// 전달된 choiceId 값을 사용해 MasterSkill를 소유한 런타임 상태에서 제거한다.
         public void RemoveMasterSkill(string choiceId)
         {
             if (!string.IsNullOrWhiteSpace(choiceId))
@@ -160,13 +160,13 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 <c>choiceId</c> 값을 사용해 소유한 런타임 상태에 <c>Choice</c>가 있는지 반환한다.</summary>
+        /// 전달된 choiceId 값을 사용해 소유한 런타임 상태에 Choice가 있는지 반환한다.
         public bool HasChoice(string choiceId)
         {
             return HasEnhancement(choiceId) || HasMasterSkill(choiceId);
         }
 
-        /// <summary><c>소유한 모든 런타임 값</c>를 소유한 런타임 상태에서 비운다.</summary>
+        /// 소유한 모든 런타임 값를 소유한 런타임 상태에서 비운다.
         public void Clear()
         {
             learnedActiveSkillIds.Clear();

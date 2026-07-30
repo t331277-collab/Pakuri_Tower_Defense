@@ -19,7 +19,7 @@ using UnityEditor;
 namespace Pakuri.Data
 {
 
-    /// <summary><c>GameDataLoader</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
+    /// GameDataLoader가 소유하는 데이터와 동작을 캡슐화한다.
     public static class GameDataLoader
     {
         internal const string CsvDataAssetRoot = "Assets/CSVdata";
@@ -83,7 +83,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 <c>fileName</c> 값을 사용해 <c>AuthoringSourceAssetPath</c>를 반환한다.</summary>
+        /// 전달된 fileName 값을 사용해 AuthoringSourceAssetPath를 반환한다.
         public static string GetAuthoringSourceAssetPath(string fileName)
         {
             switch (fileName)
@@ -121,7 +121,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 <c>assetPath</c> 값을 사용해 <c>AuthoringCsvSourceAssetPath</c> 조건 충족 여부를 반환한다.</summary>
+        /// 전달된 assetPath 값을 사용해 AuthoringCsvSourceAssetPath 조건 충족 여부를 반환한다.
         public static bool IsAuthoringCsvSourceAssetPath(string assetPath)
         {
             if (string.IsNullOrWhiteSpace(assetPath))
@@ -134,14 +134,14 @@ namespace Pakuri.Data
                 && normalized.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
         }
 
-        /// <summary><c>BeforeSceneLoad</c>를 초기화한다.</summary>
+        /// BeforeSceneLoad를 초기화한다.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         internal static void InitializeBeforeSceneLoad()
         {
             EnsureInitialized();
         }
 
-        /// <summary><c>EnsureInitialized</c> 작업을 수행한다.</summary>
+        /// EnsureInitialized 작업을 수행한다.
         public static void EnsureInitialized()
         {
             if (initialized || failed)
@@ -167,7 +167,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary><c>AndValidateRuntimeCatalog</c>를 불러온다.</summary>
+        /// AndValidateRuntimeCatalog를 불러온다.
         internal static GameDataCatalog LoadAndValidateRuntimeCatalog()
         {
             var sourceCatalog = LoadRuntimeCatalogOrThrow();
@@ -175,7 +175,7 @@ namespace Pakuri.Data
             return BuildValidatedRuntimeCatalog(sourceCatalog, source);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ValidatedRuntimeCatalog</c>를 구성한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ValidatedRuntimeCatalog를 구성한다.
         internal static GameDataCatalog BuildValidatedRuntimeCatalog(
             CsvRuntimeCatalog sourceCatalog,
             SourceModel source)
@@ -188,7 +188,7 @@ namespace Pakuri.Data
             return catalog;
         }
 
-        /// <summary>전달된 <c>catalog</c> 값을 사용해 <c>RuntimeCatalogSummary</c>를 표시 또는 직렬화 형식으로 변환한다.</summary>
+        /// 전달된 catalog 값을 사용해 RuntimeCatalogSummary를 표시 또는 직렬화 형식으로 변환한다.
         internal static string FormatRuntimeCatalogSummary(GameDataCatalog catalog)
         {
             return
@@ -197,7 +197,7 @@ namespace Pakuri.Data
                 $"and {catalog.StageTwoEnemies.Length} stage-two enemies.";
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>FailAndQuit</c> 작업을 수행한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 FailAndQuit 작업을 수행한다.
         internal static void FailAndQuit(string message, List<string> errors)
         {
             failed = true;
@@ -220,7 +220,7 @@ namespace Pakuri.Data
             Application.Quit();
         }
 
-        /// <summary><c>LoadRuntimeCatalog</c> 데이터를 검증하고 유효하지 않으면 예외를 던진다.</summary>
+        /// LoadRuntimeCatalog 데이터를 검증하고 유효하지 않으면 예외를 던진다.
         internal static CsvRuntimeCatalog LoadRuntimeCatalogOrThrow()
         {
             var sourceCatalog = Resources.Load<CsvRuntimeCatalog>(RuntimeCatalogResourcesPath);
@@ -236,7 +236,7 @@ namespace Pakuri.Data
 
             var missingAssets = new List<string>();
 
-            /// <summary>전달된 런타임 입력값을 사용해 <c>Require</c> 작업을 수행한다.</summary>
+            /// 전달된 런타임 입력값을 사용해 Require 작업을 수행한다.
             void Require(bool present, string name)
             {
                 if (!present)

@@ -3,18 +3,151 @@
  * 책임: 스킬 정의·학습 선택·패시브 배율·실행 문맥을 결합해 실행 가능한 값을 만든다.
  */
 
+using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
+using UnityEngine;
 
 namespace Pakuri.InGame
 {
 
-    /// <summary><c>SkillExecutionRuleResolver</c> 처리에 필요한 런타임 규칙 또는 대상을 결정한다.</summary>
+    /// SkillExecutionRuleResolver 처리에 필요한 런타임 규칙 또는 대상을 결정한다.
     internal static class SkillExecutionRuleResolver
     {
+        private static bool applyingHitEnhancement;
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ConditionalDamageMultiplier</c> 결과값을 생성해 반환한다.</summary>
+        /// 적중 공통 후속 효과와 OnHit 생명주기를 한 경로에서 적용한다.
+        internal static void ApplyHitEnhancements(
+            InGameCombatManager manager,
+            UnitSpawnManager roster,
+            SkillUseState runtime,
+            SkillExecutionData skillData,
+            CombatUnitEntry sourceEntry,
+            UnitCombatState source,
+            string sourceSkillId,
+            CombatUnitEntry hitTarget,
+            Vector2 hitPosition,
+            float primaryBaseDamage)
+        {
+            if (manager != null && roster != null && source != null && hitTarget != null && hitTarget.Model != null)
+            {
+                var actionExecutionContext = new SkillExecutionContext(
+                    manager,
+                    roster,
+                    sourceEntry,
+                    runtime,
+                    hitTarget.Model,
+                    publishSkillLifecycleEvents: runtime != null,
+                    sourceSkillId: sourceSkillId);
+                SkillTrigger.PublishLifecycleEvent(
+                    SkillTriggerEvent.OnHit,
+                    new SkillActionContext(
+                        source,
+                        sourceSkillId,
+                        hitTarget.Model,
+                        hitPosition,
+                        primaryBaseDamage,
+                        1,
+                        skillData,
+                        actionExecutionContext));
+            }
+
+            if (manager == null
+                || roster == null
+                || skillData == null
+                || source == null
+                || hitTarget == null
+                || hitTarget.Model == null
+                || primaryBaseDamage <= 0f
+                || applyingHitEnhancement)
+            {
+                return;
+            }
+
+            var hasReloadReduction = !string.IsNullOrWhiteSpace(skillData.ReloadReduceTargetSkillId)
+                && skillData.ReloadReduceSecondsPerHit > 0f;
+            if (!skillData.HasOnHitAdditionalDamageBehavior && !hasReloadReduction)
+            {
+                return;
+            }
+
+            var hitIndex = runtime != null
+                ? runtime.AdvanceSkillHitCount()
+                : 0;
+
+            applyingHitEnhancement = true;
+            try
+            {
+                if (hasReloadReduction && runtime != null && runtime.Owner != null && runtime.Owner.Skills != null)
+                {
+                    var reloadSkill = runtime.Owner.SkillState.FindBySkillId(skillData.ReloadReduceTargetSkillId);
+                    if (reloadSkill != null && reloadSkill.IsReloading)
+                    {
+                        reloadSkill.ReduceReloadRemaining(skillData.ReloadReduceSecondsPerHit);
+                    }
+                }
+
+                var targetsHitUnit = string.IsNullOrWhiteSpace(skillData.OnHitAdditionalDamageTarget)
+                    || string.Equals(skillData.OnHitAdditionalDamageTarget, "HitTarget", StringComparison.OrdinalIgnoreCase);
+                if (skillData.HasOnHitAdditionalDamage
+                    && skillData.OnHitAdditionalDamageMultiplier > 0f
+                    && targetsHitUnit
+                    && hitTarget.IsAlive
+                    && UnityEngine.Random.value <= Mathf.Clamp01(skillData.OnHitAdditionalDamageChance))
+                {
+                    manager.ApplyDamage(
+                        hitTarget.Model,
+                        primaryBaseDamage,
+                        skillData.OnHitAdditionalDamageAttribute,
+                        source,
+                        criticalAllowed: false,
+                        0f,
+                        0f,
+                        sourceSkillId,
+                        suppressOutgoingDamageTriggers: true,
+                        finalDamageMultiplier: skillData.OnHitAdditionalDamageMultiplier);
+                }
+
+                if (skillData.HasOnHitChainDamageBehavior
+                    && hitIndex > 0
+                    && hitIndex % skillData.OnHitChainHitPeriod == 0)
+                {
+                    var chainTargets = SkillTargeting.ChainTargets(
+                        roster,
+                        sourceEntry,
+                        source,
+                        hitTarget,
+                        hitPosition,
+                        skillData.OnHitChainSearchRadius);
+                    var targetCount = Mathf.Min(skillData.OnHitChainTargetCount, chainTargets.Count);
+                    for (var i = 0; i < targetCount; i++)
+                    {
+                        var chainTarget = chainTargets[i];
+                        if (chainTarget != null && chainTarget.IsAlive && chainTarget.Model != null)
+                        {
+                            manager.ApplyDamage(
+                                chainTarget.Model,
+                                primaryBaseDamage,
+                                skillData.OnHitChainDamageAttribute,
+                                source,
+                                criticalAllowed: false,
+                                0f,
+                                0f,
+                                sourceSkillId,
+                                suppressOutgoingDamageTriggers: true,
+                                finalDamageMultiplier: skillData.OnHitChainDamageMultiplier);
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                applyingHitEnhancement = false;
+            }
+        }
+
+        /// 전달된 런타임 입력값을 사용해 ConditionalDamageMultiplier 결과값을 생성해 반환한다.
         internal static float ConditionalDamageMultiplier(
             SkillExecutionData data,
             UnitCombatState target)
@@ -39,7 +172,7 @@ namespace Pakuri.InGame
             return multiplier;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ConditionalCritChanceBonus</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ConditionalCritChanceBonus 결과값을 생성해 반환한다.
         internal static float ConditionalCritChanceBonus(
             SkillExecutionData data,
             UnitCombatState target)
@@ -63,7 +196,7 @@ namespace Pakuri.InGame
             return bonus;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>BurstDamageMultiplier</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 BurstDamageMultiplier 결과값을 생성해 반환한다.
         internal static float BurstDamageMultiplier(
             SkillExecutionData data,
             int projectileIndex,
@@ -88,7 +221,7 @@ namespace Pakuri.InGame
             return multiplier;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>BurstStatusStacksBonus</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 BurstStatusStacksBonus 결과값을 생성해 반환한다.
         internal static int BurstStatusStacksBonus(
             SkillExecutionData data,
             int projectileIndex,
@@ -113,7 +246,7 @@ namespace Pakuri.InGame
             return bonus;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>MeetsSourceStatusRequirements</c> 조건을 평가하고 결과를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 MeetsSourceStatusRequirements 조건을 평가하고 결과를 반환한다.
         internal static bool MeetsSourceStatusRequirements(
             SkillChoice choice,
             string targetSkillId,
@@ -151,7 +284,7 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 소유한 런타임 상태에 <c>RequiredStacks</c>가 있는지 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 소유한 런타임 상태에 RequiredStacks가 있는지 반환한다.
         private static bool HasRequiredStacks(UnitCombatState target, StatusStackCondition condition)
         {
             if (target == null || condition.StatusKind == StatusEffectKind.None || condition.MinimumStacks <= 0)
@@ -168,7 +301,7 @@ namespace Pakuri.InGame
                 && target.Statuses.GetStacks(condition.StatusKind) >= condition.MinimumStacks;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>MatchesBurstProjectileIndex</c> 조건을 평가하고 결과를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 MatchesBurstProjectileIndex 조건을 평가하고 결과를 반환한다.
         private static bool MatchesBurstProjectileIndex(
             int configuredIndex,
             int projectileIndex,

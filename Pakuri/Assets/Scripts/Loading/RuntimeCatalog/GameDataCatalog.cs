@@ -11,7 +11,7 @@ using UnityEngine;
 namespace Pakuri.Data
 {
 
-    /// <summary><c>GameDataCatalog</c>가 소유한 런타임 데이터를 색인하고 조회 기능을 제공한다.</summary>
+    /// GameDataCatalog가 소유한 런타임 데이터를 색인하고 조회 기능을 제공한다.
     public class GameDataCatalog : ScriptableObject
     {
         private readonly Dictionary<string, MonsterDefinition> monsters = new Dictionary<string, MonsterDefinition>(StringComparer.OrdinalIgnoreCase);
@@ -31,7 +31,7 @@ namespace Pakuri.Data
         public EnemyDefinition[] StageTwoEnemies = Array.Empty<EnemyDefinition>();
         public StatusEffectDefinition[] StatusEffects = Array.Empty<StatusEffectDefinition>();
 
-        /// <summary><c>RebuildLookup</c> 작업을 수행한다.</summary>
+        /// RebuildLookup 작업을 수행한다.
         public void RebuildLookup()
         {
             monsters.Clear();
@@ -52,14 +52,14 @@ namespace Pakuri.Data
             RegisterStatusEffects(StatusEffects);
         }
 
-        /// <summary>전달된 <c>id</c> 값을 사용해 <c>Data</c>를 반환한다.</summary>
+        /// 전달된 id 값을 사용해 Data를 반환한다.
         public T GetData<T>(string id)
             where T : class
         {
             return TryGetData(id, out T value) ? value : null;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Data</c> 조회를 시도하고 값이 있는지 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Data 조회를 시도하고 값이 있는지 반환한다.
         public bool TryGetData<T>(string id, out T value)
             where T : class
         {
@@ -111,43 +111,43 @@ namespace Pakuri.Data
             return value != null;
         }
 
-        /// <summary><c>Monsters</c>를 반환한다.</summary>
+        /// Monsters를 반환한다.
         public MonsterDefinition[] GetMonsters()
         {
             return Monsters;
         }
 
-        /// <summary>전달된 <c>kind</c> 값을 사용해 <c>StatusRuntimeData</c>를 반환한다.</summary>
+        /// 전달된 kind 값을 사용해 StatusRuntimeData를 반환한다.
         public StatusRuntimeData GetStatusRuntimeData(StatusEffectKind kind)
         {
             return statusRuntimeData.TryGetValue(kind, out var status) ? status : null;
         }
 
-        /// <summary>전달된 <c>id</c> 값을 사용해 <c>Monster</c>를 반환한다.</summary>
+        /// 전달된 id 값을 사용해 Monster를 반환한다.
         public MonsterDefinition GetMonster(string id)
         {
             return GetData<MonsterDefinition>(id);
         }
 
-        /// <summary>전달된 <c>monsterId</c> 값을 사용해 <c>ActiveSkills</c>를 반환한다.</summary>
+        /// 전달된 monsterId 값을 사용해 ActiveSkills를 반환한다.
         public SkillDefinition[] GetActiveSkills(string monsterId)
         {
             return GetRegistered(activeSkillsByMonster, monsterId);
         }
 
-        /// <summary>전달된 <c>monsterId</c> 값을 사용해 <c>PassiveSkills</c>를 반환한다.</summary>
+        /// 전달된 monsterId 값을 사용해 PassiveSkills를 반환한다.
         public PassiveSkillDefinition[] GetPassiveSkills(string monsterId)
         {
             return GetRegistered(passiveSkillsByMonster, monsterId);
         }
 
-        /// <summary>전달된 <c>monsterId</c> 값을 사용해 <c>RewardChoices</c>를 반환한다.</summary>
+        /// 전달된 monsterId 값을 사용해 RewardChoices를 반환한다.
         public MonsterDefinition.RewardChoiceDefinition[] GetRewardChoices(string monsterId)
         {
             return GetRegistered(rewardChoicesByMonster, monsterId);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ActiveSkill</c>를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ActiveSkill를 반환한다.
         public SkillDefinition GetActiveSkill(string monsterId, SkillSlot slot)
         {
             var skills = GetActiveSkills(monsterId);
@@ -162,7 +162,7 @@ namespace Pakuri.Data
             return null;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>PassiveSkill</c>를 결정한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 PassiveSkill를 결정한다.
         public PassiveSkillDefinition ResolvePassiveSkill(string monsterId, SkillSlot slot)
         {
             var passives = GetPassiveSkills(monsterId);
@@ -177,7 +177,7 @@ namespace Pakuri.Data
             return null;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Registered</c>를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Registered를 반환한다.
         private static T[] GetRegistered<T>(Dictionary<string, T[]> lookup, string id)
         {
             return !string.IsNullOrWhiteSpace(id)
@@ -187,7 +187,7 @@ namespace Pakuri.Data
                 : Array.Empty<T>();
         }
 
-        /// <summary>전달된 <c>catalogMonsters</c> 값을 사용해 <c>Monsters</c>를 소유 런타임 Registry에 등록한다.</summary>
+        /// 전달된 catalogMonsters 값을 사용해 Monsters를 소유 런타임 Registry에 등록한다.
         private void RegisterMonsters(MonsterDefinition[] catalogMonsters)
         {
             if (catalogMonsters == null)
@@ -214,7 +214,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 <c>catalogEnemies</c> 값을 사용해 <c>Enemies</c>를 소유 런타임 Registry에 등록한다.</summary>
+        /// 전달된 catalogEnemies 값을 사용해 Enemies를 소유 런타임 Registry에 등록한다.
         private void RegisterEnemies(EnemyDefinition[] catalogEnemies)
         {
             if (catalogEnemies == null)
@@ -236,7 +236,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 <c>catalogStatusEffects</c> 값을 사용해 <c>StatusEffects</c>를 소유 런타임 Registry에 등록한다.</summary>
+        /// 전달된 catalogStatusEffects 값을 사용해 StatusEffects를 소유 런타임 Registry에 등록한다.
         private void RegisterStatusEffects(StatusEffectDefinition[] catalogStatusEffects)
         {
             if (catalogStatusEffects == null)
@@ -258,7 +258,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 <c>skills</c> 값을 사용해 <c>ActiveSkills</c>를 소유 런타임 Registry에 등록한다.</summary>
+        /// 전달된 skills 값을 사용해 ActiveSkills를 소유 런타임 Registry에 등록한다.
         private void RegisterActiveSkills(SkillDefinition[] skills)
         {
             if (skills == null)
@@ -280,7 +280,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 <c>passives</c> 값을 사용해 <c>PassiveSkills</c>를 소유 런타임 Registry에 등록한다.</summary>
+        /// 전달된 passives 값을 사용해 PassiveSkills를 소유 런타임 Registry에 등록한다.
         private void RegisterPassiveSkills(PassiveSkillDefinition[] passives)
         {
             if (passives == null)
@@ -302,7 +302,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 <c>rewards</c> 값을 사용해 <c>RewardChoices</c>를 소유 런타임 Registry에 등록한다.</summary>
+        /// 전달된 rewards 값을 사용해 RewardChoices를 소유 런타임 Registry에 등록한다.
         private void RegisterRewardChoices(MonsterDefinition.RewardChoiceDefinition[] rewards)
         {
             if (rewards == null)
@@ -320,7 +320,7 @@ namespace Pakuri.Data
             }
         }
 
-        /// <summary>전달된 <c>choices</c> 값을 사용해 <c>SkillChoices</c>를 소유 런타임 Registry에 등록한다.</summary>
+        /// 전달된 choices 값을 사용해 SkillChoices를 소유 런타임 Registry에 등록한다.
         private void RegisterSkillChoices(SkillChoice[] choices)
         {
             if (choices == null)

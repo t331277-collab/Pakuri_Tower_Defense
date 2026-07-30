@@ -15,7 +15,7 @@ using UnityEngine.UI;
 namespace Pakuri.InGame
 {
 
-    /// <summary><c>StageManager</c>가 담당하는 작업을 조정하고 공유 런타임 상태를 소유한다.</summary>
+    /// StageManager가 담당하는 작업을 조정하고 공유 런타임 상태를 소유한다.
     public class StageManager : MonoBehaviour
     {
         private const float DefaultClearCheckInterval = 0.25f;
@@ -60,7 +60,7 @@ namespace Pakuri.InGame
         public float PendingManifestSuccessChance => currentReward != null ? currentReward.ManifestSuccessChance : 0.7f;
         public RunSession ActiveSession => activeSession;
 
-        /// <summary>Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.</summary>
+        /// Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.
         private void Awake()
         {
             ResolveEndFlowReferences();
@@ -69,7 +69,7 @@ namespace Pakuri.InGame
             combatManager.UnitDefeated += OnUnitDefeated;
         }
 
-        /// <summary>컴포넌트가 첫 프레임을 처리하기 전에 런타임 초기화를 마친다.</summary>
+        /// 컴포넌트가 첫 프레임을 처리하기 전에 런타임 초기화를 마친다.
         private void Start()
         {
             ResolveEndFlowReferences();
@@ -83,13 +83,13 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>Unity가 컴포넌트를 제거할 때 구독과 런타임 오브젝트를 해제한다.</summary>
+        /// Unity가 컴포넌트를 제거할 때 구독과 런타임 오브젝트를 해제한다.
         private void OnDestroy()
         {
             combatManager.UnitDefeated -= OnUnitDefeated;
         }
 
-        /// <summary><c>CurrentDay</c>를 시작한다.</summary>
+        /// CurrentDay를 시작한다.
         public void StartCurrentDay()
         {
             if (flowCoroutine != null)
@@ -105,7 +105,7 @@ namespace Pakuri.InGame
             flowCoroutine = StartCoroutine(RunCurrentDayFlow());
         }
 
-        /// <summary><c>ContinueToNextDay</c> 작업을 수행한다.</summary>
+        /// ContinueToNextDay 작업을 수행한다.
         public void ContinueToNextDay()
         {
             pendingPrisonerEnemyIds.Clear();
@@ -120,7 +120,7 @@ namespace Pakuri.InGame
             StartCurrentDay();
         }
 
-        /// <summary><c>AdvanceDay</c> 작업을 수행한다.</summary>
+        /// AdvanceDay 작업을 수행한다.
         private void AdvanceDay()
         {
             activeSession.DayIndex += 1;
@@ -133,7 +133,7 @@ namespace Pakuri.InGame
             activeSession.StageIndex = Math.Min(activeSession.StageIndex + 1, 4);
         }
 
-        /// <summary><c>RestorePlayerHealthForNextDay</c> 작업을 수행한다.</summary>
+        /// RestorePlayerHealthForNextDay 작업을 수행한다.
         private void RestorePlayerHealthForNextDay()
         {
             if (!restorePlayerHealthOnDayAdvance)
@@ -162,7 +162,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary><c>RunCurrentDayFlow</c> 결과값을 생성해 반환한다.</summary>
+        /// RunCurrentDayFlow 결과값을 생성해 반환한다.
         private IEnumerator RunCurrentDayFlow()
         {
             if (activeSession == null)
@@ -198,7 +198,7 @@ namespace Pakuri.InGame
             flowCoroutine = null;
         }
 
-        /// <summary><c>BeginRunSession</c> 작업을 수행한다.</summary>
+        /// BeginRunSession 작업을 수행한다.
         private void BeginRunSession()
         {
             var monster = GameDataLoader.CurrentCatalog.GetData<MonsterDefinition>(StartContext.SelectedMonsterId);
@@ -206,7 +206,7 @@ namespace Pakuri.InGame
             StartContext.Clear();
         }
 
-        /// <summary>전달된 <c>rows</c> 값을 사용해 <c>EncounterRows</c>를 런타임 씬 오브젝트로 생성하고 등록한다.</summary>
+        /// 전달된 rows 값을 사용해 EncounterRows를 런타임 씬 오브젝트로 생성하고 등록한다.
         private IEnumerator SpawnEncounterRows(IReadOnlyList<StageEncounterRow> rows)
         {
             var spawnIndex = 0;
@@ -238,7 +238,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary><c>WaitForEnemyClear</c> 결과값을 생성해 반환한다.</summary>
+        /// WaitForEnemyClear 결과값을 생성해 반환한다.
         private IEnumerator WaitForEnemyClear()
         {
             var wait = new WaitForSeconds(Mathf.Max(0.05f, clearCheckInterval));
@@ -249,7 +249,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary><c>PrepareReward</c> 작업을 수행한다.</summary>
+        /// PrepareReward 작업을 수행한다.
         private void PrepareReward()
         {
             pendingPrisonerEnemyIds.Clear();
@@ -262,7 +262,7 @@ namespace Pakuri.InGame
             AddCandidatePrisonersUntilFull();
         }
 
-        /// <summary><c>GuaranteedPrisoners</c>를 소유한 런타임 상태에 추가한다.</summary>
+        /// GuaranteedPrisoners를 소유한 런타임 상태에 추가한다.
         private void AddGuaranteedPrisoners()
         {
             for (var i = 0; i < activeEncounterRows.Count; i++)
@@ -275,7 +275,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary><c>PrisonerCandidatePool</c>를 구성한다.</summary>
+        /// PrisonerCandidatePool를 구성한다.
         private void BuildPrisonerCandidatePool()
         {
             prisonerCandidatePool.Clear();
@@ -295,7 +295,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary><c>CandidatePrisonersUntilFull</c>를 소유한 런타임 상태에 추가한다.</summary>
+        /// CandidatePrisonersUntilFull를 소유한 런타임 상태에 추가한다.
         private void AddCandidatePrisonersUntilFull()
         {
             if (PendingPrisonerCount <= 0)
@@ -311,7 +311,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 <c>enemyId</c> 값을 사용해 <c>Prisoner</c>를 소유한 런타임 상태에 추가한다.</summary>
+        /// 전달된 enemyId 값을 사용해 Prisoner를 소유한 런타임 상태에 추가한다.
         private void AddPrisoner(string enemyId)
         {
             if (string.IsNullOrWhiteSpace(enemyId))
@@ -322,7 +322,7 @@ namespace Pakuri.InGame
             pendingPrisonerEnemyIds.Add(enemyId);
         }
 
-        /// <summary>전달된 <c>enemyId</c> 값을 사용해 <c>OnePrisonerCandidate</c>를 소유한 런타임 상태에서 제거한다.</summary>
+        /// 전달된 enemyId 값을 사용해 OnePrisonerCandidate를 소유한 런타임 상태에서 제거한다.
         private void RemoveOnePrisonerCandidate(string enemyId)
         {
             if (string.IsNullOrWhiteSpace(enemyId))
@@ -340,7 +340,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary><c>BossRows</c>를 선택한다.</summary>
+        /// BossRows를 선택한다.
         private void SelectBossRows()
         {
             var normalBossCandidates = new List<StageEncounterRow>();
@@ -370,7 +370,7 @@ namespace Pakuri.InGame
             normalBossCandidates[UnityEngine.Random.Range(0, normalBossCandidates.Count)].SelectedAsBoss = true;
         }
 
-        /// <summary>전달된 <c>row</c> 값을 사용해 <c>BossEncounter</c> 조건 충족 여부를 반환한다.</summary>
+        /// 전달된 row 값을 사용해 BossEncounter 조건 충족 여부를 반환한다.
         private bool IsBossEncounter(StageEncounterRow row)
         {
             if (row.SelectedAsBoss)
@@ -382,7 +382,7 @@ namespace Pakuri.InGame
             return isMidbossCombat && (row.IsGuaranteedBoss || row.IsBossCandidate);
         }
 
-        /// <summary><c>EndFlowReferences</c>를 결정한다.</summary>
+        /// EndFlowReferences를 결정한다.
         private void ResolveEndFlowReferences()
         {
             if (winButton == null)
@@ -396,7 +396,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary><c>EnsureNexusRegistered</c> 작업을 수행한다.</summary>
+        /// EnsureNexusRegistered 작업을 수행한다.
         private void EnsureNexusRegistered()
         {
             ResolveEndFlowReferences();
@@ -404,7 +404,7 @@ namespace Pakuri.InGame
             RestorePreservedNexusHealth();
         }
 
-        /// <summary><c>PreserveCurrentNexusHealth</c> 작업을 수행한다.</summary>
+        /// PreserveCurrentNexusHealth 작업을 수행한다.
         private void PreserveCurrentNexusHealth()
         {
             ResolveEndFlowReferences();
@@ -412,7 +412,7 @@ namespace Pakuri.InGame
             hasPreservedNexusHealth = true;
         }
 
-        /// <summary><c>RestorePreservedNexusHealth</c> 작업을 수행한다.</summary>
+        /// RestorePreservedNexusHealth 작업을 수행한다.
         private void RestorePreservedNexusHealth()
         {
             if (!hasPreservedNexusHealth)
@@ -423,7 +423,7 @@ namespace Pakuri.InGame
             nexusActor.SetCurrentHealth(preservedNexusHealth);
         }
 
-        /// <summary>전달된 <c>defeatedUnit</c> 값을 사용해 <c>OnUnitDefeated</c> 작업을 수행한다.</summary>
+        /// 전달된 defeatedUnit 값을 사용해 OnUnitDefeated 작업을 수행한다.
         private void OnUnitDefeated(UnitCombatState defeatedUnit)
         {
             if (!defeatedUnit.IsNexus)
@@ -446,28 +446,28 @@ namespace Pakuri.InGame
             ShowDefeatPanel();
         }
 
-        /// <summary><c>EndPanels</c>를 숨긴다.</summary>
+        /// EndPanels를 숨긴다.
         private void HideEndPanels()
         {
             SetActive(winPanel, false);
             SetActive(defeatPanel, false);
         }
 
-        /// <summary><c>WinPanel</c>를 표시한다.</summary>
+        /// WinPanel를 표시한다.
         private void ShowWinPanel()
         {
             SetActive(defeatPanel, false);
             SetActive(winPanel, true);
         }
 
-        /// <summary><c>DefeatPanel</c>를 표시한다.</summary>
+        /// DefeatPanel를 표시한다.
         private void ShowDefeatPanel()
         {
             SetActive(winPanel, false);
             SetActive(defeatPanel, true);
         }
 
-        /// <summary><c>EndButtons</c>를 런타임 사건 또는 씬 대상에 연결한다.</summary>
+        /// EndButtons를 런타임 사건 또는 씬 대상에 연결한다.
         private void BindEndButtons()
         {
             if (endButtonsBound)
@@ -481,51 +481,51 @@ namespace Pakuri.InGame
             endButtonsBound = true;
         }
 
-        /// <summary><c>ReturnToMainMenu</c> 작업을 수행한다.</summary>
+        /// ReturnToMainMenu 작업을 수행한다.
         private void ReturnToMainMenu()
         {
             SceneManager.LoadScene(mainMenuScenePath);
         }
 
-        /// <summary><c>ConfiguredWinDay</c> 조건 충족 여부를 반환한다.</summary>
+        /// ConfiguredWinDay 조건 충족 여부를 반환한다.
         private bool IsConfiguredWinDay()
         {
             return activeSession.StageIndex == winStageIndex
                 && activeSession.DayIndex == winDayIndex;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Active</c>를 갱신한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Active를 갱신한다.
         private static void SetActive(GameObject target, bool active)
         {
             target.SetActive(active);
         }
 
-        /// <summary><c>Tables</c>를 불러온다.</summary>
+        /// Tables를 불러온다.
         private void LoadTables()
         {
             table = StageFlowTable.Load(stageDayCsv, stageEncounterCsv, stageRewardCsv);
         }
     }
 
-    /// <summary><c>StartContext</c> 처리에 필요한 불변 실행 문맥을 전달한다.</summary>
+    /// StartContext 처리에 필요한 불변 실행 문맥을 전달한다.
     public static class StartContext
     {
         public static string SelectedMonsterId { get; private set; }
 
-        /// <summary>전달된 <c>selectedMonsterId</c> 값을 사용해 <c>Prepare</c> 작업을 수행한다.</summary>
+        /// 전달된 selectedMonsterId 값을 사용해 Prepare 작업을 수행한다.
         public static void Prepare(string selectedMonsterId)
         {
             SelectedMonsterId = string.IsNullOrWhiteSpace(selectedMonsterId) ? string.Empty : selectedMonsterId;
         }
 
-        /// <summary><c>소유한 모든 런타임 값</c>를 소유한 런타임 상태에서 비운다.</summary>
+        /// 소유한 모든 런타임 값를 소유한 런타임 상태에서 비운다.
         public static void Clear()
         {
             SelectedMonsterId = string.Empty;
         }
     }
 
-    /// <summary><c>StageState</c>에서 지원하는 값의 종류를 정의한다.</summary>
+    /// StageState에서 지원하는 값의 종류를 정의한다.
     public enum StageState
     {
         NotStarted,
@@ -536,7 +536,7 @@ namespace Pakuri.InGame
         Defeat
     }
 
-    /// <summary><c>StageDayRow</c>에 해당하는 CSV 한 행을 표현한다.</summary>
+    /// StageDayRow에 해당하는 CSV 한 행을 표현한다.
     internal class StageDayRow
     {
         public int Stage;
@@ -545,7 +545,7 @@ namespace Pakuri.InGame
         public string RewardRuleId;
     }
 
-    /// <summary><c>StageEncounterRow</c>에 해당하는 CSV 한 행을 표현한다.</summary>
+    /// StageEncounterRow에 해당하는 CSV 한 행을 표현한다.
     internal class StageEncounterRow
     {
         public string EncounterId;
@@ -564,7 +564,7 @@ namespace Pakuri.InGame
         public bool SelectedAsBoss;
     }
 
-    /// <summary><c>StageRewardRow</c>에 해당하는 CSV 한 행을 표현한다.</summary>
+    /// StageRewardRow에 해당하는 CSV 한 행을 표현한다.
     internal class StageRewardRow
     {
         public string RewardRuleId;
@@ -575,7 +575,7 @@ namespace Pakuri.InGame
         public float ManifestSuccessChance;
         public int EliteBonusPrisoners;
 
-        /// <summary><c>RollPrisonerCount</c> 결과값을 생성해 반환한다.</summary>
+        /// RollPrisonerCount 결과값을 생성해 반환한다.
         public int RollPrisonerCount()
         {
             var roll = UnityEngine.Random.value;
@@ -594,14 +594,14 @@ namespace Pakuri.InGame
         }
     }
 
-    /// <summary><c>StageFlowTable</c>가 소유하는 데이터와 동작을 캡슐화한다.</summary>
+    /// StageFlowTable가 소유하는 데이터와 동작을 캡슐화한다.
     internal class StageFlowTable
     {
         private readonly List<StageDayRow> days = new List<StageDayRow>();
         private readonly List<StageEncounterRow> encounters = new List<StageEncounterRow>();
         private readonly List<StageRewardRow> rewards = new List<StageRewardRow>();
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>요청값</c>를 불러온다.</summary>
+        /// 전달된 런타임 입력값을 사용해 요청값를 불러온다.
         public static StageFlowTable Load(TextAsset dayCsv, TextAsset encounterCsv, TextAsset rewardCsv)
         {
             var table = new StageFlowTable();
@@ -611,7 +611,7 @@ namespace Pakuri.InGame
             return table;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Day</c>를 찾는다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Day를 찾는다.
         public StageDayRow FindDay(int stage, int day)
         {
             for (var i = 0; i < days.Count; i++)
@@ -626,7 +626,7 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /// <summary>전달된 <c>rewardRuleId</c> 값을 사용해 <c>Reward</c>를 찾는다.</summary>
+        /// 전달된 rewardRuleId 값을 사용해 Reward를 찾는다.
         public StageRewardRow FindReward(string rewardRuleId)
         {
             for (var i = 0; i < rewards.Count; i++)
@@ -641,7 +641,7 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>EncounterRows</c>를 찾는다.</summary>
+        /// 전달된 런타임 입력값을 사용해 EncounterRows를 찾는다.
         public void FindEncounterRows(string encounterId, List<StageEncounterRow> results)
         {
             results.Clear();
@@ -658,7 +658,7 @@ namespace Pakuri.InGame
             results.Sort((left, right) => left.SpawnOrder.CompareTo(right.SpawnOrder));
         }
 
-        /// <summary>전달된 <c>csv</c> 값을 사용해 <c>Days</c>를 불러온다.</summary>
+        /// 전달된 csv 값을 사용해 Days를 불러온다.
         private void LoadDays(TextAsset csv)
         {
             foreach (var row in ReadRows(csv))
@@ -673,7 +673,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 <c>csv</c> 값을 사용해 <c>Encounters</c>를 불러온다.</summary>
+        /// 전달된 csv 값을 사용해 Encounters를 불러온다.
         private void LoadEncounters(TextAsset csv)
         {
             foreach (var row in ReadRows(csv))
@@ -697,7 +697,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 <c>csv</c> 값을 사용해 <c>Rewards</c>를 불러온다.</summary>
+        /// 전달된 csv 값을 사용해 Rewards를 불러온다.
         private void LoadRewards(TextAsset csv)
         {
             foreach (var row in ReadRows(csv))
@@ -718,7 +718,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 <c>csv</c> 값을 사용해 <c>Rows</c>를 읽는다.</summary>
+        /// 전달된 csv 값을 사용해 Rows를 읽는다.
         private static IEnumerable<Dictionary<string, string>> ReadRows(TextAsset csv)
         {
             if (string.IsNullOrWhiteSpace(csv.text))
@@ -749,7 +749,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 <c>line</c> 값을 사용해 <c>SplitCsvLine</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 line 값을 사용해 SplitCsvLine 결과값을 생성해 반환한다.
         private static List<string> SplitCsvLine(string line)
         {
             var values = new List<string>();
@@ -788,25 +788,25 @@ namespace Pakuri.InGame
             return values;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>요청값</c>를 읽는다.</summary>
+        /// 전달된 런타임 입력값을 사용해 요청값를 읽는다.
         private static string Read(Dictionary<string, string> row, string key)
         {
             return row.TryGetValue(key, out var value) ? value.Trim() : string.Empty;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Int</c> 값을 런타임 표현으로 파싱한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Int 값을 런타임 표현으로 파싱한다.
         private static int ParseInt(Dictionary<string, string> row, string key)
         {
             return int.Parse(Read(row, key), NumberStyles.Integer, CultureInfo.InvariantCulture);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Float</c> 값을 런타임 표현으로 파싱한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Float 값을 런타임 표현으로 파싱한다.
         private static float ParseFloat(Dictionary<string, string> row, string key)
         {
             return float.Parse(Read(row, key), NumberStyles.Float, CultureInfo.InvariantCulture);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Bool</c> 값을 런타임 표현으로 파싱한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Bool 값을 런타임 표현으로 파싱한다.
         private static bool ParseBool(Dictionary<string, string> row, string key)
         {
             return bool.TryParse(Read(row, key), out var value) && value;

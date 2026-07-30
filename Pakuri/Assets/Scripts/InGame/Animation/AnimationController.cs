@@ -9,7 +9,7 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// <summary><c>AnimationController</c>가 담당하는 입력 또는 표시 흐름을 조정하고 관련 런타임 상태를 갱신한다.</summary>
+    /// AnimationController가 담당하는 입력 또는 표시 흐름을 조정하고 관련 런타임 상태를 갱신한다.
     public class AnimationController : MonoBehaviour
     {
         private const string AttackTriggerName = "Attack";
@@ -25,14 +25,14 @@ namespace Pakuri.InGame
         private bool dead;
         private Coroutine deathFreezeRoutine;
 
-        /// <summary>Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.</summary>
+        /// Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.
         private void Awake()
         {
             animator = GetComponent<Animator>();
             PlayIdle();
         }
 
-        /// <summary><c>PlayRandomAttack</c> 작업을 수행한다.</summary>
+        /// PlayRandomAttack 작업을 수행한다.
         public void PlayRandomAttack()
         {
             if (dead)
@@ -47,7 +47,7 @@ namespace Pakuri.InGame
             animator.SetTrigger(AttackTriggerName);
         }
 
-        /// <summary><c>PlayHit</c> 작업을 수행한다.</summary>
+        /// PlayHit 작업을 수행한다.
         public void PlayHit()
         {
             if (dead)
@@ -60,7 +60,7 @@ namespace Pakuri.InGame
             animator.SetTrigger(HitTriggerName);
         }
 
-        /// <summary><c>PlayDeath</c> 작업을 수행한다.</summary>
+        /// PlayDeath 작업을 수행한다.
         public void PlayDeath()
         {
             if (dead)
@@ -84,7 +84,7 @@ namespace Pakuri.InGame
             deathFreezeRoutine = StartCoroutine(FreezeDeathOnLastFrame(deathLength));
         }
 
-        /// <summary><c>PlayIdle</c> 작업을 수행한다.</summary>
+        /// PlayIdle 작업을 수행한다.
         public void PlayIdle()
         {
             if (dead)
@@ -95,7 +95,7 @@ namespace Pakuri.InGame
             PlayState(idleState);
         }
 
-        /// <summary><c>ReviveToIdle</c> 작업을 수행한다.</summary>
+        /// ReviveToIdle 작업을 수행한다.
         public void ReviveToIdle()
         {
             if (deathFreezeRoutine != null)
@@ -110,7 +110,7 @@ namespace Pakuri.InGame
             PlayIdle();
         }
 
-        /// <summary>전달된 <c>stateName</c> 값을 사용해 <c>PlayState</c> 작업을 수행한다.</summary>
+        /// 전달된 stateName 값을 사용해 PlayState 작업을 수행한다.
         private void PlayState(string stateName)
         {
             if (string.IsNullOrWhiteSpace(stateName))
@@ -122,7 +122,7 @@ namespace Pakuri.InGame
             animator.Play(stateName, 0, 0f);
         }
 
-        /// <summary>전달된 <c>deathLength</c> 값을 사용해 <c>FreezeDeathOnLastFrame</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 deathLength 값을 사용해 FreezeDeathOnLastFrame 결과값을 생성해 반환한다.
         private IEnumerator FreezeDeathOnLastFrame(float deathLength)
         {
             yield return new WaitForSeconds(Mathf.Max(0.01f, deathLength));
@@ -137,7 +137,7 @@ namespace Pakuri.InGame
             deathFreezeRoutine = null;
         }
 
-        /// <summary>전달된 <c>stateName</c> 값을 사용해 <c>ClipLength</c>를 결정한다.</summary>
+        /// 전달된 stateName 값을 사용해 ClipLength를 결정한다.
         private float ResolveClipLength(string stateName)
         {
             var clips = animator.runtimeAnimatorController.animationClips;

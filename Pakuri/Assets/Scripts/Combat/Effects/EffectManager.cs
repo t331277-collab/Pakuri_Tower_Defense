@@ -3,6 +3,7 @@
  * 책임: 전투 결과와 분리하여 효과 GameObject를 생성·부착·추적·제거·일괄 정리한다.
  */
 
+using System;
 using System.Collections.Generic;
 using Pakuri.Data;
 using UnityEngine;
@@ -10,11 +11,11 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// <summary><c>EffectCreateRequest</c> 처리에 함께 전달되는 값들을 묶는다.</summary>
+    /// EffectCreateRequest 처리에 함께 전달되는 값들을 묶는다.
     public readonly struct EffectCreateRequest
     {
 
-        /// <summary><c>EffectCreateRequest</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+        /// EffectCreateRequest 인스턴스를 전달된 런타임 입력값으로 초기화한다.
         public EffectCreateRequest(
             RuntimeSkillVisualSpec visual,
             GameObject prefab,
@@ -22,7 +23,6 @@ namespace Pakuri.InGame
             Vector3 position,
             Quaternion rotation,
             Transform targetTransform,
-            float durationSeconds,
             StatusRuntimeInstance persistentStatus,
             bool hitboxIsTrigger,
             bool includeHitbox,
@@ -34,7 +34,6 @@ namespace Pakuri.InGame
             Position = position;
             Rotation = rotation;
             TargetTransform = targetTransform;
-            DurationSeconds = durationSeconds;
             PersistentStatus = persistentStatus;
             HitboxIsTrigger = hitboxIsTrigger;
             IncludeHitbox = includeHitbox;
@@ -47,21 +46,20 @@ namespace Pakuri.InGame
         public Vector3 Position { get; }
         public Quaternion Rotation { get; }
         public Transform TargetTransform { get; }
-        public float DurationSeconds { get; }
         public StatusRuntimeInstance PersistentStatus { get; }
         public bool HitboxIsTrigger { get; }
         public bool IncludeHitbox { get; }
         public bool CreateEmptyActor { get; }
     }
 
-    /// <summary><c>EffectManager</c>가 담당하는 작업을 조정하고 공유 런타임 상태를 소유한다.</summary>
+    /// EffectManager가 담당하는 작업을 조정하고 공유 런타임 상태를 소유한다.
     public class EffectManager : MonoBehaviour
     {
         [SerializeField] private Transform runtimeSkillRoot;
         private readonly Dictionary<StatusRuntimeInstance, GameObject> statusEffectVisuals = new Dictionary<StatusRuntimeInstance, GameObject>();
         private readonly HashSet<GameObject> targetAttachedEffects = new HashSet<GameObject>();
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Object</c>를 생성한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Object를 생성한다.
         private GameObject CreateObject(
             EffectCreateRequest request,
             Vector3 position)
@@ -86,13 +84,13 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>VisualToTarget</c>를 연결한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 VisualToTarget를 연결한다.
         private static void AttachVisualToTarget(GameObject instance, Transform targetTransform)
         {
             instance.transform.SetParent(targetTransform, true);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>RuntimeObject</c>를 생성한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 RuntimeObject를 생성한다.
         private GameObject CreateRuntimeObject(
             string objectName,
             Vector3 position,
@@ -104,7 +102,7 @@ namespace Pakuri.InGame
             return instance;
         }
 
-        /// <summary>전달된 <c>request</c> 값을 사용해 <c>Effect</c>를 생성한다.</summary>
+        /// 전달된 request 값을 사용해 Effect를 생성한다.
         public GameObject CreateEffect(EffectCreateRequest request)
         {
             GameObject instance = null;
@@ -145,19 +143,35 @@ namespace Pakuri.InGame
             {
                 AttachVisualToTarget(instance, request.TargetTransform);
             }
-            if (request.PersistentStatus == null && request.TargetTransform != null)
-            {
-                BuffSkillActor.Attach(instance).Initialize(this, request.DurationSeconds);
-            }
-            else if (request.PersistentStatus == null && request.DurationSeconds > 0f)
-            {
-                SingleSkillActor.Attach(instance).InitializeTimed(this, request.DurationSeconds);
-            }
-
             return instance;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Effect</c>를 소유한 런타임 상태에서 제거한다.</summary>
+        /// 상태 런타임 종료를 해당 비주얼 Actor에 전달한다.
+        public void SignalStatusEffectEnded(StatusRuntimeInstance status)
+        {
+            if (status == null)
+            {
+                return;
+            }
+
+            if (!statusEffectVisuals.TryGetValue(status, out var instance)
+                || instance == null)
+            {
+                statusEffectVisuals.Remove(status);
+                return;
+            }
+
+            var actor = instance.GetComponent<BuffSkillActor>();
+            if (actor != null)
+            {
+                actor.Complete();
+                return;
+            }
+
+            RemoveEffect(instance, status);
+        }
+
+        /// 전달된 런타임 입력값을 사용해 Effect를 소유한 런타임 상태에서 제거한다.
         public void RemoveEffect(
             GameObject instance,
             StatusRuntimeInstance status = null)
@@ -181,7 +195,7 @@ namespace Pakuri.InGame
             Destroy(instance);
         }
 
-        /// <summary><c>Effects</c>를 소유한 런타임 상태에서 비운다.</summary>
+        /// Effects를 소유한 런타임 상태에서 비운다.
         public void ClearEffects()
         {
             var attachedEffects = new List<GameObject>(targetAttachedEffects);
@@ -205,6 +219,44 @@ namespace Pakuri.InGame
                 RemoveEffect(child);
             }
 
+        }
+    }
+}
+
+namespace Pakuri.Data
+{
+    public enum RuntimeSkillVisualAnchor
+    {
+        Skill,
+        StatusTarget
+    }
+
+    [Serializable]
+    public class RuntimeSkillHitboxSpec
+    {
+        public Vector2 Size;
+
+        public bool HasHitbox()
+        {
+            return Size.x > 0f && Size.y > 0f;
+        }
+    }
+
+    [Serializable]
+    public class RuntimeSkillVisualSpec
+    {
+        public Sprite Sprite;
+        public RuntimeAnimatorController AnimatorController;
+        public Vector3 LocalScale = Vector3.one;
+        public int SortingOrder;
+        public RuntimeSkillVisualAnchor Anchor = RuntimeSkillVisualAnchor.Skill;
+        public RuntimeSkillHitboxSpec Hitbox = new RuntimeSkillHitboxSpec();
+
+        public bool HasVisual()
+        {
+            return Sprite != null
+                || AnimatorController != null
+                || (Hitbox != null && Hitbox.HasHitbox());
         }
     }
 }

@@ -1,8 +1,9 @@
 /*
  * 역할: 지속 Zone 런타임 동작.
- * 책임: Zone의 수명과 주기를 추적하고 Collider 점유 대상을 판정해 유효 적중을 전달한다.
+ * 책임: Zone 배치·recast·주기·Collider 판정·피해·상태·비주얼 수명과 완료를 소유한다.
  */
 
+using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
@@ -11,8 +12,8 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// <summary><c>ZoneSkillActor</c> 런타임 오브젝트를 나타내며 모델과 Unity 컴포넌트를 연결한다.</summary>
-    public class ZoneSkillActor : MonoBehaviour
+    /// ZoneSkillActor 런타임 오브젝트를 나타내며 모델과 Unity 컴포넌트를 연결한다.
+    public partial class ZoneSkillActor : MonoBehaviour
     {
 
         private InGameCombatManager combatManager;
@@ -39,7 +40,7 @@ namespace Pakuri.InGame
         private bool usePrefabHitbox;
         private int recastGeneration;
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>소유한 런타임 상태</c>를 초기화한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 소유한 런타임 상태를 초기화한다.
         public void Initialize(
             InGameCombatManager manager,
             CombatUnitEntry sourceEntry,
@@ -91,7 +92,7 @@ namespace Pakuri.InGame
             ApplyCurrentAreaTick();
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>AreaTick</c>를 적용한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 AreaTick를 적용한다.
         public static bool ApplyAreaTick(
             InGameCombatManager manager,
             CombatUnitEntry sourceEntry,
@@ -136,7 +137,7 @@ namespace Pakuri.InGame
                 {
                     TryApplyStatus(manager, target.Model, onHitStatus, source);
                 }
-                ZoneSkillExecutor.ApplyHitEnhancements(
+                SkillExecutionRuleResolver.ApplyHitEnhancements(
                     manager,
                     sourceRuntime != null ? unitRoster : null,
                     sourceRuntime,
@@ -196,7 +197,7 @@ namespace Pakuri.InGame
                 executionData);
         }
 
-        /// <summary>현재 Unity 프레임에서 <c>Update</c> 갱신 동작을 진행한다.</summary>
+        /// 현재 Unity 프레임에서 Update 갱신 동작을 진행한다.
         private void Update()
         {
             var deltaTime = Time.deltaTime;
@@ -215,7 +216,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary><c>ExecuteExpireEffects</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
+        /// ExecuteExpireEffects 작업을 시도하고 성공 여부를 반환한다.
         private void TryExecuteExpireEffects()
         {
             if (combatManager != null && casterEntry != null && roster != null)
@@ -240,7 +241,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary><c>ConfigureVisual</c> 작업을 수행한다.</summary>
+        /// ConfigureVisual 작업을 수행한다.
         private void ConfigureVisual()
         {
             transform.position = center;
@@ -276,7 +277,7 @@ namespace Pakuri.InGame
             transform.localScale = scale;
         }
 
-        /// <summary><c>CurrentAreaTick</c>를 적용한다.</summary>
+        /// CurrentAreaTick를 적용한다.
         private bool ApplyCurrentAreaTick()
         {
             if (usePrefabHitbox)
@@ -321,7 +322,7 @@ namespace Pakuri.InGame
                 snapshot);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ColliderAreaTick</c>를 적용한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ColliderAreaTick를 적용한다.
         internal static bool ApplyColliderAreaTick(
             InGameCombatManager manager,
             CombatUnitEntry sourceEntry,
@@ -373,7 +374,7 @@ namespace Pakuri.InGame
             return routed;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ResolvedHits</c>를 적용한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ResolvedHits를 적용한다.
         private static bool ApplyResolvedHits(
             InGameCombatManager manager,
             CombatUnitEntry sourceEntry,
@@ -415,7 +416,7 @@ namespace Pakuri.InGame
                 {
                     TryApplyStatus(manager, target.Model, onHitStatus, source);
                 }
-                ZoneSkillExecutor.ApplyHitEnhancements(
+                SkillExecutionRuleResolver.ApplyHitEnhancements(
                     manager,
                     sourceRuntime != null ? manager.Units : null,
                     sourceRuntime,
@@ -432,7 +433,7 @@ namespace Pakuri.InGame
             return routed;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>TargetsForTick</c>를 선택한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 TargetsForTick를 선택한다.
         private static List<CombatUnitEntry> SelectTargetsForTick(List<CombatUnitEntry> eligibleTargets, int maxTargetsPerTick)
         {
             if (eligibleTargets == null || eligibleTargets.Count == 0)
@@ -456,7 +457,7 @@ namespace Pakuri.InGame
             return selectedTargets;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ApplyStatus</c> 작업을 시도하고 성공 여부를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ApplyStatus 작업을 시도하고 성공 여부를 반환한다.
         private static void TryApplyStatus(
             InGameCombatManager manager,
             UnitCombatState target,
@@ -466,7 +467,7 @@ namespace Pakuri.InGame
             StatusCombatRules.ApplyStatus(manager, target, status, source);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>SourceSkillId</c> 결과값을 생성해 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 SourceSkillId 결과값을 생성해 반환한다.
         private static string SourceSkillId(SkillExecutionData executionData, SkillUseState sourceRuntime)
         {
             if (sourceRuntime != null && !string.IsNullOrWhiteSpace(sourceRuntime.SkillId))
@@ -481,5 +482,200 @@ namespace Pakuri.InGame
 
             return string.Empty;
         }
+    }
+
+    /// Zone 계열 판정과 적용을 소유한다.
+    public partial class ZoneSkillActor
+    {
+        /// 전달된 런타임 입력값으로 Zone Actor를 생성한다.
+        internal bool InitializeExecution(
+            SkillExecutionContext context,
+            SkillExecutionData snapshot,
+            ZoneSkillDefinition skill,
+            SkillTriggerCommand command,
+            Vector2? recastCenter)
+        {
+            var isRecast = command != null && recastCenter.HasValue;
+            var centers = isRecast
+                ? new List<Vector2> { recastCenter.Value }
+                : AreaCenters(context, skill.Targeting, skill.Area, DeploymentCount(snapshot));
+            var radiusMultiplier = isRecast ? Mathf.Max(0f, command.RadiusMultiplier) : 1f;
+            var radius = Radius(skill, snapshot) * radiusMultiplier;
+            var duration = isRecast
+                ? Mathf.Max(0.05f, command.DurationSeconds)
+                : Duration(skill, snapshot);
+            var tickInterval = TickInterval(skill, snapshot);
+            var hitTargetCount = HitTargetCount(skill, snapshot);
+            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick);
+            var attribute = skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element;
+            var statusSpec = SkillStatus.StatusSpec(skill.OnTickStatus, snapshot);
+            var coverAll = (skill.Area != null && skill.Area.CoverAll)
+                || (skill.Targeting != null && skill.Targeting.CoverAll);
+            var effects = context.CombatManager.Effects;
+            var runtimeVisual = skill.RuntimeVisual;
+            var prefab = skill.SkillEffectPrefab;
+            if (snapshot != null && snapshot.SkillEffectPrefab != null)
+            {
+                prefab = snapshot.SkillEffectPrefab;
+            }
+
+            var routed = false;
+            for (var i = 0; i < centers.Count; i++)
+            {
+                var center = centers[i];
+                var objectName = isRecast ? "InGameRecastZone" : "ZoneSkill";
+                if (!string.IsNullOrWhiteSpace(skill.SkillId))
+                {
+                    objectName += "_" + skill.SkillId;
+                }
+
+                var instance = effects.CreateEffect(new EffectCreateRequest(
+                    runtimeVisual,
+                    prefab,
+                    objectName,
+                    center,
+                    Quaternion.identity,
+                    null,
+                    null,
+                    false,
+                    true,
+                    true));
+
+                EffectVisualBuilder.ConfigureAreaEffect(
+                    instance,
+                    SkillTargeting.BaseRadius(skill.Targeting, skill.Area),
+                    snapshot.RadiusMultiplier,
+                    snapshot.RadiusBonus,
+                    radiusMultiplier);
+
+                var actor = instance.GetComponent<ZoneSkillActor>();
+                if (actor == null)
+                {
+                    actor = instance.AddComponent<ZoneSkillActor>();
+                }
+
+                actor.Initialize(
+                    context.CombatManager,
+                    context.CasterEntry,
+                    context.Roster,
+                    skill.Targeting,
+                    center,
+                    radius,
+                    coverAll,
+                    duration,
+                    tickInterval,
+                    hitTargetCount,
+                    damage,
+                    attribute,
+                    statusSpec,
+                    context.Runtime,
+                    snapshot,
+                    context.Caster,
+                    skill.DamagePerTick != null && skill.DamagePerTick.CriticalAllowed,
+                    snapshot != null ? snapshot.CritChanceBonus : 0f,
+                    snapshot != null ? snapshot.CritDamageBonus : 0f,
+                    isRecast ? context.RecastGeneration + 1 : 0);
+                routed = true;
+            }
+
+            context.CombatManager.Effects.RemoveEffect(gameObject);
+            return routed;
+        }
+
+        /// 전달된 snapshot 값을 사용해 DeploymentCount 결과값을 생성해 반환한다.
+        private static int DeploymentCount(SkillExecutionData snapshot)
+        {
+            return 1 + (snapshot != null && snapshot.HasBranchCount ? Math.Max(0, snapshot.BranchCount) : 0);
+        }
+
+        /// 전달된 런타임 입력값을 사용해 HitTargetCount 결과값을 생성해 반환한다.
+        private static int HitTargetCount(ZoneSkillDefinition skill, SkillExecutionData snapshot)
+        {
+            if (skill == null || skill.HitAllTargets || !skill.UsesHitTargetCount)
+            {
+                return int.MaxValue;
+            }
+
+            var baseCount = Math.Max(1, skill.HitTargetCount);
+            var bonus = snapshot != null ? snapshot.HitTargetCountBonus : 0;
+            return Math.Max(1, baseCount + bonus);
+        }
+
+        /// 전달된 런타임 입력값을 사용해 AreaCenters 결과값을 생성해 반환한다.
+        private static List<Vector2> AreaCenters(
+            SkillExecutionContext context,
+            SkillTargetingSpec targeting,
+            AreaBlueprintSpec area,
+            int deploymentCount)
+        {
+            var primaryCenter = AreaCenter(context, targeting, area);
+            var coverAll = (area != null && area.CoverAll)
+                || (targeting != null && targeting.CoverAll);
+            return SkillTargeting.TargetAnchoredCenters(
+                context,
+                targeting,
+                primaryCenter,
+                deploymentCount,
+                coverAll,
+                SkillDeploymentRepeatMode.RandomExisting);
+        }
+
+        /// 전달된 런타임 입력값을 사용해 AreaCenter 결과값을 생성해 반환한다.
+        private static Vector2 AreaCenter(
+            SkillExecutionContext context,
+            SkillTargetingSpec targeting,
+            AreaBlueprintSpec area)
+        {
+            return SkillTargeting.AreaCenter(context, targeting, area);
+        }
+
+        /// 전달된 런타임 입력값을 사용해 Radius 결과값을 생성해 반환한다.
+        private static float Radius(ZoneSkillDefinition skill, SkillExecutionData snapshot)
+        {
+            var area = skill != null ? skill.Area : null;
+            var targeting = skill != null ? skill.Targeting : null;
+            return SkillTargeting.Radius(
+                SkillTargeting.BaseRadius(targeting, area),
+                snapshot.RadiusMultiplier,
+                snapshot.RadiusBonus);
+        }
+
+        /// 전달된 런타임 입력값을 사용해 Duration 결과값을 생성해 반환한다.
+        private static float Duration(ZoneSkillDefinition skill, SkillExecutionData snapshot)
+        {
+            var area = skill != null ? skill.Area : null;
+            var timing = skill != null ? skill.Timing : null;
+            var duration = area != null && area.Duration > 0f
+                ? area.Duration
+                : timing != null ? timing.ActiveDuration : 0f;
+            if (duration <= 0f)
+            {
+                duration = TickInterval(skill, snapshot);
+            }
+
+            if (snapshot != null)
+            {
+                duration = duration * Mathf.Max(0f, snapshot.DurationMultiplier) + snapshot.DurationBonus;
+            }
+
+            return Mathf.Max(0.05f, duration);
+        }
+
+        /// 전달된 런타임 입력값을 사용해 Interval를 경과 시간 기준으로 갱신한다.
+        private static float TickInterval(ZoneSkillDefinition skill, SkillExecutionData snapshot)
+        {
+            var area = skill != null ? skill.Area : null;
+            var timing = skill != null ? skill.Timing : null;
+            var interval = area != null && area.TickInterval > 0f
+                ? area.TickInterval
+                : timing != null && timing.TickInterval > 0f ? timing.TickInterval : 1f;
+            if (snapshot != null)
+            {
+                interval *= Mathf.Max(0.05f, snapshot.ShotIntervalMultiplier);
+            }
+
+            return Mathf.Max(0.05f, interval);
+        }
+
     }
 }

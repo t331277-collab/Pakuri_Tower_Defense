@@ -9,11 +9,11 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// <summary><c>NexusHealthDisplay</c> 상태를 Unity UI 또는 월드 오브젝트로 표시한다.</summary>
+    /// NexusHealthDisplay 상태를 Unity UI 또는 월드 오브젝트로 표시한다.
     internal static class NexusHealthDisplay
     {
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>현재 표시 상태</c>를 현재 런타임 모델을 기준으로 갱신한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 현재 표시 상태를 현재 런타임 모델을 기준으로 갱신한다.
         public static void Refresh(TextMeshProUGUI label, UnitCombatState model)
         {
             var current = Mathf.CeilToInt(Mathf.Max(0f, model.Resources.CurrentHealth));

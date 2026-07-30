@@ -9,7 +9,7 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// <summary><c>UnitCollisionResolver</c> 처리에 필요한 런타임 규칙 또는 대상을 결정한다.</summary>
+    /// UnitCollisionResolver 처리에 필요한 런타임 규칙 또는 대상을 결정한다.
     internal static class UnitCollisionResolver
     {
         private static readonly List<Collider2D> overlapResults = new List<Collider2D>(32);
@@ -17,7 +17,7 @@ namespace Pakuri.InGame
         private static readonly List<Collider2D> sourceColliders = new List<Collider2D>(4);
         private static readonly HashSet<CombatUnitEntry> collidedUnits = new HashSet<CombatUnitEntry>();
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Targets</c>를 결과 컬렉션에 수집한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Targets를 결과 컬렉션에 수집한다.
         public static void CollectTargets(
             UnitSpawnManager units,
             IReadOnlyList<CombatUnitEntry> candidates,
@@ -34,7 +34,7 @@ namespace Pakuri.InGame
             CollectTargets(units, candidates, sourceColliders, movement, targets);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Targets</c>를 결과 컬렉션에 수집한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Targets를 결과 컬렉션에 수집한다.
         public static void CollectTargets(
             UnitSpawnManager units,
             IReadOnlyList<CombatUnitEntry> candidates,
@@ -96,7 +96,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>MappedUnit</c>를 소유한 런타임 상태에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 MappedUnit를 소유한 런타임 상태에 추가한다.
         private static void AddMappedUnit(UnitSpawnManager units, Collider2D collider)
         {
             if (collider == null)

@@ -10,7 +10,7 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// <summary><c>UnitWorldDisplay</c> 상태를 Unity UI 또는 월드 오브젝트로 표시한다.</summary>
+    /// UnitWorldDisplay 상태를 Unity UI 또는 월드 오브젝트로 표시한다.
     internal class UnitWorldDisplay
     {
         private const string NameLabelObjectName = "MonsterNameLabel";
@@ -27,7 +27,7 @@ namespace Pakuri.InGame
         private readonly Transform shieldFill;
         private readonly DamageNumberPopup damagePopup;
 
-        /// <summary><c>UnitWorldDisplay</c> 인스턴스를 전달된 런타임 입력값으로 초기화한다.</summary>
+        /// UnitWorldDisplay 인스턴스를 전달된 런타임 입력값으로 초기화한다.
         public UnitWorldDisplay(Component owner)
         {
             nameLabel = FindTextMesh(owner, NameLabelObjectName);
@@ -49,7 +49,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 <c>model</c> 값을 사용해 <c>현재 표시 상태</c>를 현재 런타임 모델을 기준으로 갱신한다.</summary>
+        /// 전달된 model 값을 사용해 현재 표시 상태를 현재 런타임 모델을 기준으로 갱신한다.
         public void Refresh(UnitCombatState model)
         {
             var displayName = model.Identity.DisplayName;
@@ -87,7 +87,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 <c>damageAmount</c> 값을 사용해 <c>Damage</c>를 표시한다.</summary>
+        /// 전달된 damageAmount 값을 사용해 Damage를 표시한다.
         public void ShowDamage(float damageAmount)
         {
             if (damagePopup != null)
@@ -96,7 +96,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ResourceFillSegments</c>를 갱신한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ResourceFillSegments를 갱신한다.
         private void SetResourceFillSegments(float currentHealth, float currentShield, float maxHealth)
         {
             var totalVisibleResource = Mathf.Max(maxHealth, currentHealth + currentShield);
@@ -108,7 +108,7 @@ namespace Pakuri.InGame
             SetSegmentScaleAndPosition(shieldFill, healthRatio, shieldRatio);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>SegmentScaleAndPosition</c>를 갱신한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 SegmentScaleAndPosition를 갱신한다.
         private void SetSegmentScaleAndPosition(Transform target, float leftRatio, float widthRatio)
         {
             if (target == null)
@@ -131,7 +131,7 @@ namespace Pakuri.InGame
             target.localPosition = position;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>Child</c>를 찾는다.</summary>
+        /// 전달된 런타임 입력값을 사용해 Child를 찾는다.
         private static Transform FindChild(Component owner, string objectName)
         {
             var children = owner.GetComponentsInChildren<Transform>(true);
@@ -146,7 +146,7 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>TextMesh</c>를 찾는다.</summary>
+        /// 전달된 런타임 입력값을 사용해 TextMesh를 찾는다.
         private static TextMesh FindTextMesh(Component owner, string objectName)
         {
             var target = FindChild(owner, objectName);
@@ -158,7 +158,7 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>LocalRenderedWidth</c>를 결정한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 LocalRenderedWidth를 결정한다.
         private static float ResolveLocalRenderedWidth(Transform target, float defaultWidth)
         {
             if (target == null)
@@ -175,7 +175,7 @@ namespace Pakuri.InGame
             return Mathf.Abs(target.localScale.x) * Mathf.Max(0.0001f, spriteRenderer.sprite.bounds.size.x);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ScaleXForRenderedWidth</c>를 결정한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ScaleXForRenderedWidth를 결정한다.
         private static float ResolveScaleXForRenderedWidth(Transform target, float renderedWidth, float defaultSignSource)
         {
             var spriteRenderer = target.GetComponent<SpriteRenderer>();
@@ -195,7 +195,7 @@ namespace Pakuri.InGame
             return sign * Mathf.Max(0f, renderedWidth) / unitWidth;
         }
 
-        /// <summary>전달된 <c>value</c> 값을 사용해 <c>Value</c>를 표시 또는 직렬화 형식으로 변환한다.</summary>
+        /// 전달된 value 값을 사용해 Value를 표시 또는 직렬화 형식으로 변환한다.
         private static string FormatValue(float value)
         {
             if (Mathf.Approximately(value, Mathf.Round(value)))
@@ -206,7 +206,7 @@ namespace Pakuri.InGame
             return value.ToString("0.##");
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>StatusDisplay</c>를 누적 결과에 추가한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 StatusDisplay를 누적 결과에 추가한다.
         private static string AppendStatusDisplay(string displayName, IReadOnlyList<StatusRuntimeInstance> statuses)
         {
             var suffix = BuildStatusDisplaySuffix(statuses);
@@ -218,7 +218,7 @@ namespace Pakuri.InGame
             return $"{displayName}{suffix}";
         }
 
-        /// <summary>전달된 <c>statuses</c> 값을 사용해 <c>StatusDisplaySuffix</c>를 구성한다.</summary>
+        /// 전달된 statuses 값을 사용해 StatusDisplaySuffix를 구성한다.
         private static string BuildStatusDisplaySuffix(IReadOnlyList<StatusRuntimeInstance> statuses)
         {
             if (statuses == null || statuses.Count == 0)

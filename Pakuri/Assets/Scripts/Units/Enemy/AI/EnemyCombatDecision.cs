@@ -10,11 +10,11 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// <summary><c>EnemyCombatDecision</c>가 담당하는 런타임 판단을 결정한다.</summary>
+    /// EnemyCombatDecision가 담당하는 런타임 판단을 결정한다.
     internal static class EnemyCombatDecision
     {
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>NearestPlayerTarget</c>를 찾는다.</summary>
+        /// 전달된 런타임 입력값을 사용해 NearestPlayerTarget를 찾는다.
         public static CombatUnitEntry FindNearestPlayerTarget(CombatUnitEntry enemyEntry, UnitSpawnManager registry)
         {
             var best = FindNearestPlayerTarget(enemyEntry, registry, includeNexus: false);
@@ -26,7 +26,7 @@ namespace Pakuri.InGame
             return FindNearestPlayerTarget(enemyEntry, registry, includeNexus: true);
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>NearestPlayerTarget</c>를 찾는다.</summary>
+        /// 전달된 런타임 입력값을 사용해 NearestPlayerTarget를 찾는다.
         private static CombatUnitEntry FindNearestPlayerTarget(
             CombatUnitEntry enemyEntry,
             UnitSpawnManager registry,
@@ -68,7 +68,7 @@ namespace Pakuri.InGame
             return best;
         }
 
-        /// <summary>전달된 <c>registry</c> 값을 사용해 <c>LowestHealthEnemyAlly</c>를 찾는다.</summary>
+        /// 전달된 registry 값을 사용해 LowestHealthEnemyAlly를 찾는다.
         public static CombatUnitEntry FindLowestHealthEnemyAlly(UnitSpawnManager registry)
         {
             var enemies = registry.Enemies;
@@ -105,7 +105,7 @@ namespace Pakuri.InGame
             return best;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>OffensiveSkill</c>를 결정한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 OffensiveSkill를 결정한다.
         public static SkillUseState ResolveOffensiveSkill(
             CombatUnitEntry enemyEntry,
             EnemyCombatState enemyModel,
@@ -133,7 +133,7 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>SelectableSkill</c>를 결정한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 SelectableSkill를 결정한다.
         public static SkillUseState ResolveSelectableSkill(EnemyCombatState enemyModel, SkillSlot slot)
         {
             var runtime = enemyModel.SkillState.FindBySlot(slot);
@@ -145,16 +145,36 @@ namespace Pakuri.InGame
             return runtime;
         }
 
-        /// <summary>전달된 <c>runtime</c> 값을 사용해 <c>SupportSkill</c> 조건 충족 여부를 반환한다.</summary>
+        /// 활성화된 Charge 버프 런타임을 반환한다.
+        public static SkillUseState ResolveActiveCharge(EnemyCombatState enemyModel)
+        {
+            var activeSkills = enemyModel.SkillState.ActiveSkills;
+            for (var i = 0; i < activeSkills.Count; i++)
+            {
+                var runtime = activeSkills[i];
+                if (runtime != null
+                    && runtime.IsActive
+                    && runtime.Data is BuffSkillDefinition buff
+                    && buff.EffectKind == BuffEffectKind.Charge)
+                {
+                    return runtime;
+                }
+            }
+
+            return null;
+        }
+
+        /// 전달된 runtime 값을 사용해 SupportSkill 조건 충족 여부를 반환한다.
         public static bool IsSupportSkill(SkillUseState runtime)
         {
             return runtime != null && runtime.Data.Targeting.TargetSide != SkillTargetSide.Enemy;
         }
 
-        /// <summary>전달된 런타임 입력값을 사용해 <c>ExecuteSupportSkill</c> 실행 가능 여부를 반환한다.</summary>
+        /// 전달된 런타임 입력값을 사용해 ExecuteSupportSkill 실행 가능 여부를 반환한다.
         public static bool CanExecuteSupportSkill(SkillUseState runtime, UnitSpawnManager registry)
         {
-            if (runtime.Data is BuffHealSkillDefinition)
+            if (runtime.Data is BuffSkillDefinition buff
+                && buff.EffectKind == BuffEffectKind.Heal)
             {
                 return FindLowestHealthEnemyAlly(registry) != null;
             }
@@ -162,7 +182,7 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /// <summary>전달된 <c>runtime</c> 값을 사용해 소유한 런타임 상태에 <c>CombatStartTrigger</c>가 있는지 반환한다.</summary>
+        /// 전달된 runtime 값을 사용해 소유한 런타임 상태에 CombatStartTrigger가 있는지 반환한다.
         private static bool HasCombatStartTrigger(SkillUseState runtime)
         {
             if (runtime == null)
