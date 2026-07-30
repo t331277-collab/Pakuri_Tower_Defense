@@ -264,7 +264,11 @@ public class SkillExecutionData
 
 	internal Vector2 PreparedOrigin { get; set; }
 
+	internal Vector2 PreparedDirection { get; set; }
+
 	internal IReadOnlyList<Vector2> PreparedDirections { get; set; } = Array.Empty<Vector2>();
+
+	internal IReadOnlyList<float> PreparedBoundaries { get; set; } = Array.Empty<float>();
 
 	internal IReadOnlyList<Vector2> PreparedCenters { get; set; } = Array.Empty<Vector2>();
 
@@ -301,6 +305,36 @@ public class SkillExecutionData
 	internal bool PreparedIsRecast { get; set; }
 
 	internal int PreparedRecastGeneration { get; set; }
+
+	internal float PreparedProjectileSpeed { get; set; }
+
+	internal int PreparedPierceCount { get; set; }
+
+	internal float PreparedProjectileLifetime { get; set; }
+
+	internal int PreparedBurstProjectileCount { get; set; } = 1;
+
+	internal int PreparedBurstProjectileIndex { get; set; } = 1;
+
+	internal float PreparedBurstDamageMultiplier { get; set; } = 1f;
+
+	internal bool PreparedMagazineLastProjectile { get; set; }
+
+	internal ProjectileStatusHitSpec PreparedImpactStatus { get; set; }
+
+	internal RuntimeSkillVisualSpec PreparedImpactRuntimeVisual { get; set; }
+
+	internal bool PreparedContactDamageEnabled { get; set; }
+
+	internal bool PreparedStopOnFirstHit { get; set; }
+
+	internal float PreparedImpactDelay { get; set; }
+
+	internal bool PreparedHasImpactArea { get; set; }
+
+	internal float PreparedImpactRadius { get; set; }
+
+	internal float PreparedImpactDamage { get; set; }
 
 	public IReadOnlyList<CastConditionOp> CastConditionOps => castConditionOps;
 

@@ -476,7 +476,7 @@ namespace Pakuri.InGame
 
             if (skillData is ProjectileSkillDefinition projectile)
             {
-                return ProjectileSkillExecutor.Execute(context, snapshot, projectile);
+                return ProjectileSkillExecutor.Execute(context, snapshot);
             }
 
             if (skillData is LineSkillDefinition line)
@@ -519,6 +519,10 @@ namespace Pakuri.InGame
             if (definition is ZoneSkillDefinition zone)
             {
                 return PrepareZoneExecutionData(context, snapshot, zone, null, null);
+            }
+            if (definition is ProjectileSkillDefinition projectile)
+            {
+                return PrepareProjectileExecutionData(context, snapshot, projectile);
             }
 
             return true;
@@ -710,6 +714,170 @@ namespace Pakuri.InGame
             snapshot.PreparedIsRecast = isRecast;
             snapshot.PreparedRecastGeneration = isRecast ? context.RecastGeneration + 1 : 0;
             return centers.Count > 0;
+        }
+
+        private static bool PrepareProjectileExecutionData(
+            SkillExecutionContext context,
+            SkillExecutionData snapshot,
+            ProjectileSkillDefinition skill)
+        {
+            var origin = context.CasterEntry.Transform != null
+                ? (Vector2)context.CasterEntry.Transform.position
+                : Vector2.zero;
+            var target = context.HasManualAimDirection
+                ? null
+                : SkillTargeting.FindNearestTarget(context.CasterEntry, context.Roster, skill.Targeting);
+            var direction = context.HasManualAimDirection
+                ? context.ManualAimDirection
+                : SkillTargeting.DirectionToTarget(origin, target);
+            if (direction.sqrMagnitude <= 0.0001f)
+            {
+                if (!context.HasManualAimDirection)
+                {
+                    return false;
+                }
+                direction = Vector2.right;
+            }
+            direction.Normalize();
+
+            var projectile = skill.Projectile;
+            var burstCount = projectile != null ? Math.Max(1, projectile.BurstProjectileCount) : 1;
+            var burstIndex = context.Runtime != null
+                ? context.Runtime.CurrentBurstProjectileIndex()
+                : 1;
+            var projectileCount = projectile != null ? Math.Max(1, projectile.ProjectilesPerShot) : 1;
+            var pierce = projectile != null ? projectile.PierceCount : 0;
+            if (burstCount <= 1)
+            {
+                projectileCount += snapshot.AdditionalProjectileBonus;
+            }
+            pierce = Math.Max(0, pierce + snapshot.PierceBonus);
+            projectileCount = Math.Max(1, projectileCount);
+            var speed = projectile != null ? projectile.ProjectileSpeed : 0f;
+            var lifetime = projectile != null && projectile.LifetimeSeconds > 0f
+                ? projectile.LifetimeSeconds
+                : Mathf.Max(0.25f, 31f / Mathf.Max(0.1f, speed) + 0.5f);
+            var directions = new List<Vector2>(projectileCount);
+            var boundaries = new List<float>(projectileCount);
+            for (var i = 0; i < projectileCount; i++)
+            {
+                var spreadDirection = ProjectileSpreadDirection(direction, i, projectileCount);
+                directions.Add(spreadDirection);
+                boundaries.Add(ProjectileSkillActor.DestroyBoundaryX(
+                    origin,
+                    spreadDirection,
+                    speed,
+                    lifetime));
+            }
+
+            var burstDamageMultiplier = 1f;
+            if (projectile != null
+                && projectile.BurstDamageMultiplier > 0f
+                && MatchesProjectileIndex(
+                    projectile.BurstDamageProjectileIndex,
+                    burstIndex,
+                    burstCount))
+            {
+                burstDamageMultiplier *= projectile.BurstDamageMultiplier;
+            }
+            burstDamageMultiplier *= SkillExecutionRuleResolver.BurstDamageMultiplier(
+                snapshot,
+                burstIndex,
+                burstCount);
+
+            var status = SkillStatus.StatusSpec(skill.OnHitStatus, snapshot);
+            var stacksBonus = SkillExecutionRuleResolver.BurstStatusStacksBonus(
+                snapshot,
+                burstIndex,
+                burstCount);
+            if (status != null && stacksBonus != 0)
+            {
+                status = CloneStatusWithStacks(status, Mathf.Max(1, status.Stacks + stacksBonus));
+            }
+
+            snapshot.PreparedTargeting = skill.Targeting;
+            snapshot.PreparedRuntimeVisual = skill.RuntimeVisual;
+            snapshot.PreparedOrigin = origin;
+            snapshot.PreparedDirection = direction;
+            snapshot.PreparedDirections = directions;
+            snapshot.PreparedBoundaries = boundaries;
+            snapshot.PreparedDamage = DamageCalculator.CalculateRawDamage(context.Caster, skill.Damage);
+            snapshot.PreparedDamageAttribute = skill.Damage != null
+                ? skill.Damage.Element
+                : skill.Element;
+            snapshot.PreparedStatus = status;
+            snapshot.PreparedCriticalAllowed = skill.Damage != null && skill.Damage.CriticalAllowed;
+            snapshot.PreparedProjectileSpeed = speed;
+            snapshot.PreparedPierceCount = pierce;
+            snapshot.PreparedProjectileLifetime = lifetime;
+            snapshot.PreparedBurstProjectileCount = burstCount;
+            snapshot.PreparedBurstProjectileIndex = burstIndex;
+            snapshot.PreparedBurstDamageMultiplier = Mathf.Max(0f, burstDamageMultiplier);
+            snapshot.PreparedMagazineLastProjectile = context.Runtime != null
+                && context.Runtime.UsesMagazine
+                && context.Runtime.MagazineRemaining == 1;
+            snapshot.PreparedImpactStatus = SkillStatus.StatusSpec(skill.ImpactStatus, snapshot);
+            snapshot.PreparedImpactRuntimeVisual = skill.ImpactRuntimeVisual;
+            snapshot.PreparedContactDamageEnabled = skill.ContactDamageEnabled;
+            snapshot.PreparedStopOnFirstHit = skill.StopOnFirstHit;
+            snapshot.PreparedImpactDelay = Mathf.Max(
+                0f,
+                skill.ImpactDelaySeconds * Mathf.Max(0f, snapshot.DamageDelayMultiplier));
+            snapshot.PreparedHasImpactArea = skill.HasImpactArea;
+            snapshot.PreparedImpactRadius = SkillTargeting.Radius(
+                skill.ImpactArea != null ? skill.ImpactArea.Radius : 0f,
+                snapshot.RadiusMultiplier,
+                snapshot.RadiusBonus);
+            snapshot.PreparedImpactDamage = snapshot.PreparedDamage;
+            return true;
+        }
+
+        private static Vector2 ProjectileSpreadDirection(Vector2 direction, int index, int count)
+        {
+            if (count <= 1)
+            {
+                return direction;
+            }
+
+            const float angleStep = 10f;
+            var offset = (index - (count - 1) * 0.5f) * angleStep;
+            var radians = offset * Mathf.Deg2Rad;
+            var cos = Mathf.Cos(radians);
+            var sin = Mathf.Sin(radians);
+            return new Vector2(
+                direction.x * cos - direction.y * sin,
+                direction.x * sin + direction.y * cos).normalized;
+        }
+
+        private static bool MatchesProjectileIndex(
+            int configuredIndex,
+            int projectileIndex,
+            int burstProjectileCount)
+        {
+            return configuredIndex == 0
+                ? burstProjectileCount > 0 && projectileIndex == burstProjectileCount
+                : configuredIndex > 0 && configuredIndex == projectileIndex;
+        }
+
+        private static ProjectileStatusHitSpec CloneStatusWithStacks(
+            ProjectileStatusHitSpec source,
+            int stacks)
+        {
+            return new ProjectileStatusHitSpec
+            {
+                Enabled = source.Enabled,
+                Kind = source.Kind,
+                StatusData = source.StatusData,
+                Chance = source.Chance,
+                Stacks = stacks,
+                DurationSeconds = source.DurationSeconds,
+                MaxStacks = source.MaxStacks,
+                Permanent = source.Permanent,
+                RefreshDuration = source.RefreshDuration,
+                ThresholdSourceStatusKind = source.ThresholdSourceStatusKind,
+                ThresholdSourceMinStacks = source.ThresholdSourceMinStacks,
+                ThresholdStatusSpec = source.ThresholdStatusSpec
+            };
         }
 
         /// 전달된 owner 값을 사용해 RebuildLearnedSkillState 작업을 수행한다.

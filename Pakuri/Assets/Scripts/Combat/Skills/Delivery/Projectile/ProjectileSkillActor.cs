@@ -785,75 +785,27 @@ namespace Pakuri.InGame
         /// 전달된 런타임 입력값을 사용해 설정된 런타임 작업를 실행한다.
         internal bool InitializeExecution(
             SkillExecutionContext context,
-            SkillExecutionData snapshot,
-            ProjectileSkillDefinition skill)
+            SkillExecutionData snapshot)
         {
             BeginExecution(context.CombatManager.Effects);
-            var origin = context.CasterEntry.Transform != null
-                ? context.CasterEntry.Transform.position
-                : Vector3.zero;
-            var target = context.HasManualAimDirection
-                ? null
-                : SkillTargeting.FindNearestTarget(context.CasterEntry, context.Roster, skill.Targeting);
-            var direction = context.HasManualAimDirection
-                ? context.ManualAimDirection
-                : SkillTargeting.DirectionToTarget(origin, target);
-
-            if (direction.sqrMagnitude <= 0.0001f)
-            {
-                if (!context.HasManualAimDirection)
-                {
-                    FinishExecution();
-                    return false;
-                }
-
-                direction = Vector2.right;
-            }
-
-            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.Damage);
-            var attribute = skill.Damage != null ? skill.Damage.Element : skill.Element;
-            var currentBurstProjectileIndex = context.Runtime != null
-                ? context.Runtime.CurrentBurstProjectileIndex()
-                : 1;
+            var origin = snapshot.PreparedOrigin;
+            var direction = snapshot.PreparedDirection;
+            var damage = snapshot.PreparedDamage;
+            var attribute = snapshot.PreparedDamageAttribute;
+            var currentBurstProjectileIndex = snapshot.PreparedBurstProjectileIndex;
             var effects = context.CombatManager.Effects;
-            var runtimeVisual = skill.RuntimeVisual;
+            var runtimeVisual = snapshot.PreparedRuntimeVisual;
             var hasRuntimeVisual = effects != null && runtimeVisual != null && runtimeVisual.HasVisual();
-
-            var baseStatusSpec = SkillStatus.StatusSpec(skill.OnHitStatus, snapshot);
-            var projectile = skill.Projectile;
-            var burstProjectileCount = projectile != null ? Math.Max(1, projectile.BurstProjectileCount) : 1;
-            var speed = projectile != null ? projectile.ProjectileSpeed : 0f;
-            var pierce = projectile != null ? projectile.PierceCount : 0;
-            var projectileCount = projectile != null ? Math.Max(1, projectile.ProjectilesPerShot) : 1;
-            if (snapshot != null)
+            var baseStatusSpec = snapshot.PreparedStatus;
+            var burstProjectileCount = snapshot.PreparedBurstProjectileCount;
+            var speed = snapshot.PreparedProjectileSpeed;
+            var pierce = snapshot.PreparedPierceCount;
+            var launchSnapshot = snapshot.CopyWithDamageMultiplier(snapshot.PreparedBurstDamageMultiplier);
+            var lifetime = snapshot.PreparedProjectileLifetime;
+            for (var i = 0; i < snapshot.PreparedDirections.Count; i++)
             {
-                pierce += snapshot.PierceBonus;
-                if (burstProjectileCount <= 1)
-                {
-                    projectileCount += snapshot.AdditionalProjectileBonus;
-                }
-            }
-
-            projectileCount = Math.Max(1, projectileCount);
-            pierce = Math.Max(0, pierce);
-            var burstDamageMultiplier = BurstDamageMultiplier(
-                skill,
-                snapshot,
-                currentBurstProjectileIndex,
-                burstProjectileCount);
-            var launchSnapshot = snapshot.CopyWithDamageMultiplier(burstDamageMultiplier);
-            var isMagazineLastProjectile = context.Runtime != null
-                && context.Runtime.UsesMagazine
-                && context.Runtime.MagazineRemaining == 1;
-            var lifetime = ProjectileLifetime(skill);
-            for (var i = 0; i < projectileCount; i++)
-            {
-                var spreadDirection = ProjectileSpreadDirection(direction, i, projectileCount);
-                var boundary = ProjectileSkillActor.DestroyBoundaryX(
-                    origin,
-                    spreadDirection,
-                    speed,
-                    lifetime);
+                var spreadDirection = snapshot.PreparedDirections[i];
+                var boundary = snapshot.PreparedBoundaries[i];
                 if (effects == null)
                 {
                     continue;
@@ -865,9 +817,9 @@ namespace Pakuri.InGame
                 var branchSpec = BranchDamageSpec(snapshot, projectileLaunchIndex);
                 var rotation = EffectVisualBuilder.Rotation(spreadDirection);
                 var objectName = "Projectile";
-                if (!string.IsNullOrWhiteSpace(skill.SkillId))
+                if (!string.IsNullOrWhiteSpace(snapshot.SkillId))
                 {
-                    objectName = "Projectile_" + skill.SkillId;
+                    objectName = "Projectile_" + snapshot.SkillId;
                 }
 
                 var instance = effects.CreateEffect(new EffectCreateRequest(
@@ -893,12 +845,6 @@ namespace Pakuri.InGame
                     actor = instance.AddComponent<ProjectileSkillActor>();
                 }
 
-                var statusSpec = BurstStatusSpec(baseStatusSpec, snapshot, currentBurstProjectileIndex, burstProjectileCount);
-                var impactRadius = 0f;
-                if (skill.ImpactArea != null)
-                {
-                    impactRadius = skill.ImpactArea.Radius;
-                }
                 actor.Initialize(
                     context.CombatManager,
                     context.Caster,
@@ -909,81 +855,30 @@ namespace Pakuri.InGame
                     pierce,
                     boundary,
                     lifetime,
-                    statusSpec,
+                    baseStatusSpec,
                     branchSpec,
-                    SkillStatus.StatusSpec(skill.ImpactStatus, snapshot),
-                    skill.ContactDamageEnabled,
-                    skill.StopOnFirstHit,
-                    ImpactDelay(skill, snapshot),
-                    skill.ImpactRuntimeVisual,
-                    skill.HasImpactArea,
-                    SkillTargeting.Radius(
-                        impactRadius,
-                        snapshot.RadiusMultiplier,
-                        snapshot.RadiusBonus),
-                    damage,
+                    snapshot.PreparedImpactStatus,
+                    snapshot.PreparedContactDamageEnabled,
+                    snapshot.PreparedStopOnFirstHit,
+                    snapshot.PreparedImpactDelay,
+                    snapshot.PreparedImpactRuntimeVisual,
+                    snapshot.PreparedHasImpactArea,
+                    snapshot.PreparedImpactRadius,
+                    snapshot.PreparedImpactDamage,
                     context.Runtime,
                     launchSnapshot,
                     null,
-                    skill.SkillId,
-                    isMagazineLastProjectile,
-                    skill.Damage != null && skill.Damage.CriticalAllowed,
+                    snapshot.SkillId,
+                    snapshot.PreparedMagazineLastProjectile,
+                    snapshot.PreparedCriticalAllowed,
                     snapshot != null ? snapshot.CritChanceBonus : 0f,
                     snapshot != null ? snapshot.CritDamageBonus : 0f);
             }
 
-            TryScheduleFollowUpProjectile(
-                context,
-                snapshot,
-                skill,
-                runtimeVisual,
-                baseStatusSpec,
-                origin,
-                direction,
-                speed,
-                damage,
-                attribute,
-                pierce,
-                ProjectileSkillActor.DestroyBoundaryX(
-                    origin,
-                    direction,
-                    speed,
-                    lifetime),
-                lifetime,
-                burstProjectileCount,
-                currentBurstProjectileIndex);
+            TryScheduleFollowUpProjectile(context, snapshot);
 
             FinishExecution();
             return true;
-        }
-
-        /// 전달된 런타임 입력값을 사용해 ProjectileSpreadDirection 결과값을 생성해 반환한다.
-        private static Vector2 ProjectileSpreadDirection(Vector2 direction, int index, int count)
-        {
-            if (count <= 1)
-            {
-                return direction;
-            }
-
-            const float angleStep = 10f;
-            var offset = (index - (count - 1) * 0.5f) * angleStep;
-            return RotateDirection(direction, offset);
-        }
-
-        /// 전달된 런타임 입력값을 사용해 RotateDirection 결과값을 생성해 반환한다.
-        private static Vector2 RotateDirection(Vector2 direction, float degrees)
-        {
-            if (direction.sqrMagnitude <= 0.0001f)
-            {
-                return Vector2.right;
-            }
-
-            var radians = degrees * Mathf.Deg2Rad;
-            var cos = Mathf.Cos(radians);
-            var sin = Mathf.Sin(radians);
-            return new Vector2(
-                direction.x * cos - direction.y * sin,
-                direction.x * sin + direction.y * cos).normalized;
         }
 
         /// 전달된 런타임 입력값을 사용해 BranchDamageSpec 결과값을 생성해 반환한다.
@@ -1028,103 +923,31 @@ namespace Pakuri.InGame
             return chance;
         }
 
-        /// 전달된 런타임 입력값을 사용해 BurstDamageMultiplier 결과값을 생성해 반환한다.
-        private static float BurstDamageMultiplier(
-            ProjectileSkillDefinition skill,
-            SkillExecutionData snapshot,
-            int projectileIndex,
-            int burstProjectileCount)
-        {
-            var multiplier = 1f;
-            var projectile = skill != null ? skill.Projectile : null;
-            if (projectile != null
-                && projectile.BurstDamageMultiplier > 0f
-                && MatchesBurstProjectileIndex(projectile.BurstDamageProjectileIndex, projectileIndex, burstProjectileCount))
-            {
-                multiplier *= projectile.BurstDamageMultiplier;
-            }
-
-            if (snapshot != null)
-            {
-                multiplier *= SkillExecutionRuleResolver.BurstDamageMultiplier(snapshot, projectileIndex, burstProjectileCount);
-            }
-
-            return Mathf.Max(0f, multiplier);
-        }
-
-        /// 전달된 런타임 입력값을 사용해 MatchesBurstProjectileIndex 조건을 평가하고 결과를 반환한다.
-        private static bool MatchesBurstProjectileIndex(int configuredIndex, int projectileIndex, int burstProjectileCount)
-        {
-            if (configuredIndex == 0)
-            {
-                return burstProjectileCount > 0 && projectileIndex == burstProjectileCount;
-            }
-
-            return configuredIndex > 0 && configuredIndex == projectileIndex;
-        }
 
         /// 전달된 런타임 입력값을 사용해 ScheduleFollowUpProjectile 작업을 시도하고 성공 여부를 반환한다.
         private void TryScheduleFollowUpProjectile(
             SkillExecutionContext context,
-            SkillExecutionData snapshot,
-            ProjectileSkillDefinition skill,
-            RuntimeSkillVisualSpec runtimeVisual,
-            ProjectileStatusHitSpec statusSpec,
-            Vector2 origin,
-            Vector2 direction,
-            float speed,
-            float baseDamage,
-            DamageAttribute attribute,
-            int pierce,
-            float boundary,
-            float lifetime,
-            int burstProjectileCount,
-            int currentBurstProjectileIndex)
+            SkillExecutionData snapshot)
         {
             if (context == null
                 || context.CombatManager == null
                 || context.CombatManager.Effects == null
-                || skill == null
                 || snapshot == null
                 || !snapshot.HasFollowUpProjectile
-                || runtimeVisual == null
-                || !runtimeVisual.HasVisual()
-                || currentBurstProjectileIndex < burstProjectileCount)
+                || snapshot.PreparedRuntimeVisual == null
+                || !snapshot.PreparedRuntimeVisual.HasVisual()
+                || snapshot.PreparedBurstProjectileIndex < snapshot.PreparedBurstProjectileCount)
             {
                 return;
             }
 
-            StartTrackedCoroutine(ExecuteFollowUpProjectilesAfterDelay(
-                context,
-                snapshot,
-                skill,
-                runtimeVisual,
-                statusSpec,
-                origin,
-                direction,
-                speed,
-                baseDamage,
-                attribute,
-                pierce,
-                boundary,
-                lifetime));
+            StartTrackedCoroutine(ExecuteFollowUpProjectilesAfterDelay(context, snapshot));
         }
 
         /// 전달된 런타임 입력값을 사용해 FollowUpProjectilesAfterDelay를 실행한다.
         private IEnumerator ExecuteFollowUpProjectilesAfterDelay(
             SkillExecutionContext context,
-            SkillExecutionData snapshot,
-            ProjectileSkillDefinition skill,
-            RuntimeSkillVisualSpec runtimeVisual,
-            ProjectileStatusHitSpec statusSpec,
-            Vector2 origin,
-            Vector2 direction,
-            float speed,
-            float baseDamage,
-            DamageAttribute attribute,
-            int pierce,
-            float boundary,
-            float lifetime)
+            SkillExecutionData snapshot)
         {
             if (snapshot.FollowUpProjectileDelaySeconds > 0f)
             {
@@ -1138,9 +961,8 @@ namespace Pakuri.InGame
             if (context == null
                 || context.CombatManager == null
                 || context.CombatManager.Effects == null
-                || skill == null
-                || runtimeVisual == null
-                || !runtimeVisual.HasVisual())
+                || snapshot.PreparedRuntimeVisual == null
+                || !snapshot.PreparedRuntimeVisual.HasVisual())
             {
                 yield break;
             }
@@ -1151,17 +973,8 @@ namespace Pakuri.InGame
                 SpawnProjectileActor(
                     context,
                     snapshot,
-                    skill,
-                    runtimeVisual,
-                    statusSpec,
-                    origin,
-                    direction,
-                    speed,
-                    baseDamage * Mathf.Max(0f, snapshot.FollowUpProjectileDamageMultiplier),
-                    attribute,
-                    pierce,
-                    boundary,
-                    lifetime,
+                    snapshot.PreparedDirection,
+                    snapshot.PreparedDamage * Mathf.Max(0f, snapshot.FollowUpProjectileDamageMultiplier),
                     false);
             }
         }
@@ -1170,25 +983,16 @@ namespace Pakuri.InGame
         private static void SpawnProjectileActor(
             SkillExecutionContext context,
             SkillExecutionData snapshot,
-            ProjectileSkillDefinition skill,
-            RuntimeSkillVisualSpec runtimeVisual,
-            ProjectileStatusHitSpec statusSpec,
-            Vector2 origin,
             Vector2 direction,
-            float speed,
             float damage,
-            DamageAttribute attribute,
-            int pierce,
-            float boundary,
-            float lifetime,
             bool isMagazineLastProjectile)
         {
             if (context == null
                 || context.CombatManager == null
-                || skill == null
                 || context.CombatManager.Effects == null
-                || runtimeVisual == null
-                || !runtimeVisual.HasVisual())
+                || snapshot == null
+                || snapshot.PreparedRuntimeVisual == null
+                || !snapshot.PreparedRuntimeVisual.HasVisual())
             {
                 return;
             }
@@ -1205,16 +1009,16 @@ namespace Pakuri.InGame
             var branchSpec = BranchDamageSpec(snapshot, projectileLaunchIndex);
             var rotation = EffectVisualBuilder.Rotation(direction);
             var objectName = "Projectile";
-            if (!string.IsNullOrWhiteSpace(skill.SkillId))
+            if (!string.IsNullOrWhiteSpace(snapshot.SkillId))
             {
-                objectName = "Projectile_" + skill.SkillId;
+                objectName = "Projectile_" + snapshot.SkillId;
             }
 
             var instance = effects.CreateEffect(new EffectCreateRequest(
-                runtimeVisual,
+                snapshot.PreparedRuntimeVisual,
                 null,
                 objectName,
-                origin,
+                snapshot.PreparedOrigin,
                 rotation,
                 null,
                 null,
@@ -1232,114 +1036,41 @@ namespace Pakuri.InGame
                 actor = instance.AddComponent<ProjectileSkillActor>();
             }
 
-            var impactRadius = 0f;
-            if (skill.ImpactArea != null)
-            {
-                impactRadius = skill.ImpactArea.Radius;
-            }
             actor.Initialize(
                 context.CombatManager,
                 context.Caster,
                 direction,
-                speed,
+                snapshot.PreparedProjectileSpeed,
                 damage,
-                attribute,
-                pierce,
-                boundary,
-                lifetime,
-                statusSpec,
+                snapshot.PreparedDamageAttribute,
+                snapshot.PreparedPierceCount,
+                snapshot.PreparedBoundaries.Count > 0
+                    ? snapshot.PreparedBoundaries[0]
+                    : DestroyBoundaryX(
+                        snapshot.PreparedOrigin,
+                        direction,
+                        snapshot.PreparedProjectileSpeed,
+                        snapshot.PreparedProjectileLifetime),
+                snapshot.PreparedProjectileLifetime,
+                snapshot.PreparedStatus,
                 branchSpec,
-                SkillStatus.StatusSpec(skill.ImpactStatus, snapshot),
-                skill.ContactDamageEnabled,
-                skill.StopOnFirstHit,
-                ImpactDelay(skill, snapshot),
-                skill.ImpactRuntimeVisual,
-                skill.HasImpactArea,
-                SkillTargeting.Radius(
-                    impactRadius,
-                    snapshot.RadiusMultiplier,
-                    snapshot.RadiusBonus),
+                snapshot.PreparedImpactStatus,
+                snapshot.PreparedContactDamageEnabled,
+                snapshot.PreparedStopOnFirstHit,
+                snapshot.PreparedImpactDelay,
+                snapshot.PreparedImpactRuntimeVisual,
+                snapshot.PreparedHasImpactArea,
+                snapshot.PreparedImpactRadius,
                 damage,
                 context.Runtime,
                 snapshot,
                 null,
-                skill.SkillId,
+                snapshot.SkillId,
                 isMagazineLastProjectile,
-                skill.Damage != null && skill.Damage.CriticalAllowed,
+                snapshot.PreparedCriticalAllowed,
                 snapshot != null ? snapshot.CritChanceBonus : 0f,
                 snapshot != null ? snapshot.CritDamageBonus : 0f);
         }
 
-        /// 전달된 런타임 입력값을 사용해 ImpactDelay 결과값을 생성해 반환한다.
-        private static float ImpactDelay(ProjectileSkillDefinition skill, SkillExecutionData snapshot)
-        {
-            var delay = skill != null ? skill.ImpactDelaySeconds : 0f;
-            if (snapshot != null)
-            {
-                delay *= Mathf.Max(0f, snapshot.DamageDelayMultiplier);
-            }
-
-            return Mathf.Max(0f, delay);
-        }
-
-        /// 전달된 런타임 입력값을 사용해 BurstStatusSpec 결과값을 생성해 반환한다.
-        private static ProjectileStatusHitSpec BurstStatusSpec(
-            ProjectileStatusHitSpec baseStatusSpec,
-            SkillExecutionData snapshot,
-            int projectileIndex,
-            int burstProjectileCount)
-        {
-            if (baseStatusSpec == null || snapshot == null)
-            {
-                return baseStatusSpec;
-            }
-
-            var stacksBonus = SkillExecutionRuleResolver.BurstStatusStacksBonus(snapshot, projectileIndex, burstProjectileCount);
-            if (stacksBonus == 0)
-            {
-                return baseStatusSpec;
-            }
-
-            return CloneStatusSpecWithStacks(baseStatusSpec, Mathf.Max(1, baseStatusSpec.Stacks + stacksBonus));
-        }
-
-        /// 전달된 런타임 입력값을 사용해 CloneStatusSpecWithStacks 결과값을 생성해 반환한다.
-        private static ProjectileStatusHitSpec CloneStatusSpecWithStacks(ProjectileStatusHitSpec source, int stacks)
-        {
-            if (source == null)
-            {
-                return null;
-            }
-
-            return new ProjectileStatusHitSpec
-            {
-                Enabled = source.Enabled,
-                Kind = source.Kind,
-                StatusData = source.StatusData,
-                Chance = source.Chance,
-                Stacks = stacks,
-                DurationSeconds = source.DurationSeconds,
-                MaxStacks = source.MaxStacks,
-                Permanent = source.Permanent,
-                RefreshDuration = source.RefreshDuration,
-                ThresholdSourceStatusKind = source.ThresholdSourceStatusKind,
-                ThresholdSourceMinStacks = source.ThresholdSourceMinStacks,
-                ThresholdStatusSpec = source.ThresholdStatusSpec
-            };
-        }
-
-        /// 전달된 skill 값을 사용해 ProjectileLifetime 결과값을 생성해 반환한다.
-        private static float ProjectileLifetime(ProjectileSkillDefinition skill)
-        {
-            var projectile = skill.Projectile;
-            if (projectile.LifetimeSeconds > 0f)
-            {
-                return projectile.LifetimeSeconds;
-            }
-
-            var speed = Mathf.Max(0.1f, projectile.ProjectileSpeed);
-            const float battlefieldTravelDistance = 31f;
-            return Mathf.Max(0.25f, battlefieldTravelDistance / speed + 0.5f);
-        }
     }
 }
