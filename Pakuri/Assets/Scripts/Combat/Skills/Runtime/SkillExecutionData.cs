@@ -530,6 +530,12 @@ public class SkillExecutionData
 		DamageMultiplier += PositiveOrDefault(multiplier, 1f) - 1f;
 	}
 
+	/// 전달된 reaction multiplier 값을 기존 최종 피해 배율에 곱한다.
+	internal void ScaleDamageMultiplier(float multiplier)
+	{
+		DamageMultiplier *= Mathf.Max(0f, multiplier);
+	}
+
 	/// 전달된 rawDamage 값을 사용해 RawDamageOverride를 갱신한다.
 	internal void SetRawDamageOverride(float rawDamage)
 	{

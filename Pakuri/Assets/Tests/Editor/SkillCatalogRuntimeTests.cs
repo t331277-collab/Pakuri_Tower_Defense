@@ -30,6 +30,22 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     [Test]
+    public void ReactionDamageMultiplierScalesExistingSkillModifier()
+    {
+        var data = new SkillExecutionData(new SkillDefinition { SkillId = "vega-b" });
+        data.ApplyDynamicDamageMultiplier(1.25f);
+
+        var scale = typeof(SkillExecutionData).GetMethod(
+            "ScaleDamageMultiplier",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+
+        Assert.That(scale, Is.Not.Null);
+        scale.Invoke(data, new object[] { 0.45f });
+
+        Assert.That(data.DamageMultiplier, Is.EqualTo(0.5625f).Within(0.0001f));
+    }
+
+    [Test]
     public void CatalogAndRebuildReuseFinalDefinition()
     {
         var catalog = ScriptableObject.CreateInstance<GameDataCatalog>();

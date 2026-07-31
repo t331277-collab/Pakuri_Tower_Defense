@@ -239,7 +239,7 @@ namespace Pakuri.InGame
                 roster);
             if (!Mathf.Approximately(damageMultiplier, 1f))
             {
-                snapshot.ApplyDynamicDamageMultiplier(damageMultiplier);
+                snapshot.ScaleDamageMultiplier(damageMultiplier);
             }
             if (hasRawDamageOverride)
             {
@@ -509,7 +509,7 @@ namespace Pakuri.InGame
                 roster);
             if (!Mathf.Approximately(damageMultiplier, 1f))
             {
-                snapshot.ApplyDynamicDamageMultiplier(damageMultiplier);
+                snapshot.ScaleDamageMultiplier(damageMultiplier);
             }
             var context = new SkillExecutionContext(
                 combatManager,
