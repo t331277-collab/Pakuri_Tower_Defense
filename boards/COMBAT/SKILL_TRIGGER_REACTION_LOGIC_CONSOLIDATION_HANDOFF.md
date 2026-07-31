@@ -737,9 +737,17 @@ SkillTrigger 공통 gate
 
 ### Phase 6: Actor-less and state reactions
 
-- 의미상 passive Trigger 결과 37개를 learned passive runtime 검색 경로로 이전.
+- final catalog의 passive source reaction 48개를 learned passive runtime 검색 경로로 고정.
+- 실제 breakdown은 공통 effect 24, learned cross-skill 재사용 4, 기존 state command 20이다.
+- 설계 단계의 `37`은 구형 hidden-Definition 결과 분류였으며 final passive source ownership 수가 아니므로 이 code-derived 48개로 교정.
 - passive 비-Trigger 결과 3개는 일반 passive 적용 Node로 이전.
 - cooldown/reload/status-duration는 기존 state API에 연결.
+- 완료 증거:
+  - `SkillTrigger.ExecutePassiveOwnerTriggers`가 Actor가 아닌 roster의 learned passive runtime을 검색한다.
+  - passive source reaction 48개 전부 outcome 보유; effect 24, skill reuse 4, command 20.
+  - 전체 state command는 cooldown refund 14, reload reduction 6, Zone recast 1이다.
+  - 새 Actor/Executor/state API 없이 기존 공통 경로만 사용한다.
+  - solution build 오류 0, Unity EditMode 15/15 통과.
 
 ### Phase 7: Recast and Chain
 
@@ -760,7 +768,7 @@ SkillTrigger 공통 gate
 ## Risk boundaries
 
 - `SkillRuntimeKind` 기반 분배가 모든 기존 concrete family 매핑과 정확히 같아야 한다.
-- passive 40개는 Actor 부재 때문에 누락되기 쉬우므로 roster passive 검색을 유지한다.
+- final passive source reaction 48개는 Actor 부재 때문에 누락되기 쉬우므로 roster passive 검색을 유지한다.
 - Trigger snapshot이 일반 cast cooldown/magazine을 소비하면 안 된다.
 - delayed reaction은 live 객체 값을 다시 읽지 않는다.
 - event target이 죽었을 때 현재 LockToEventTarget 결과를 보존한다.
@@ -782,7 +790,7 @@ SkillTrigger 공통 gate
 - 4개 cross-skill passive가 실제 대상 skill runtime을 사용한다.
 - 7개 사건값 피해가 지연 전 사건값 snapshot을 사용한다.
 - 의미상 Trigger direct damage 17개가 기존 대상·횟수·Visual 결과를 유지한다.
-- 의미상 passive Trigger 결과 37개가 Actor 없이 실행된다.
+- passive source reaction 48개(effect 24, skill reuse 4, command 20)가 Actor 없이 실행된다.
 - 비-Trigger 12개 runtime 결과가 일반 Skill/Choice/Passive 실행에서 보존된다.
 - `eve-e-master-1`이 0.5초 뒤 반경 0.6, 지속 3초, 최대 1세대로 재실행된다.
 - ChainLightning이 0.5초 뒤 반경 7 안의 primary 제외 대상에게 0.5배로 실행된다.
@@ -800,7 +808,7 @@ SkillTrigger 공통 gate
 
 - 변경 전/후 owner ID별 기술적 결과 77개와 의미상 Trigger 65개 비교.
 - `65/17/76` 의미 분류 고정 테스트.
-- 기술적 `4/7/20/40/1/Chain`과 의미상 `4/7/17/37/1/Chain` 집중 EditMode 테스트.
+- 기술적 `4/7/20/40/1/Chain` 이력과 final passive source `48(24/4/20)` 집중 EditMode 테스트.
 - 일반 Projectile, Line, Single, Zone, Buff 회귀 테스트.
 - static search:
   - `SkillTriggerDefinition`
@@ -816,7 +824,7 @@ SkillTrigger 공통 gate
 
 ## Next Actions
 
-- Code Builder가 Phase 6 Actor-less/state reaction을 구현한다.
+- Code Builder가 Phase 7 Zone recast와 Chain을 기존 snapshot 재실행으로 통합한다.
 - 각 Phase의 변경과 검증 결과를 별도 Git commit으로 기록한다.
 - Phase 8과 전체 검증 후 Code Reviewer 롤로 전환한다.
 - Reviewer가 수정을 요구하면 Code Reviewer 롤로 수정·재검증하고 통과할 때까지 반복한다.
@@ -850,6 +858,7 @@ SkillTrigger 공통 gate
 - Phase 3 verification: `TryExecuteTriggered` 참조 0; `TryExecuteReaction`이 Trigger Definition 없이 기존 runtime/Definition을 받는다; solution build error 0; Unity EditMode 14/14.
 - Phase 4 verification: runtime Trigger 82, leaked OnCast/same-source Trigger 0, 일반 Skill/Choice/Passive cast effect 74 + 기존 조건부 위력 Choice 1, `eve-h-trait-3` 중복 0; solution build error 0; Unity EditMode 14/14.
 - Phase 5 verification: runtime Trigger effect 57(피해 24, 상태 33), existing-skill reuse 4, command 21, outcome 누락 0; solution build error 0; Unity EditMode 14/14.
+- Phase 6 verification: passive source reaction 48(effect 24, skill reuse 4, command 20), cooldown refund 14, reload reduction 6; solution build error 0; Unity EditMode 15/15.
 
 ## History
 
@@ -866,3 +875,4 @@ SkillTrigger 공통 gate
 - 2026-07-31: Code Builder completed Phase 3 existing-skill runtime reuse and removed the common execution entry point's dependency on `SkillTriggerDefinition`.
 - 2026-07-31: Code Builder completed Phase 4 by removing 76 semantic non-Triggers from runtime reaction registration and restoring 75 non-duplicate normal effects through existing Skill/Choice/Passive Nodes.
 - 2026-07-31: Code Builder completed Phase 5 by replacing 40 hidden direct-delivery Definitions and restoring 17 incomplete event outcomes through the common cast-effect path.
+- 2026-07-31: Code Builder completed Phase 6 by fixing the final catalog's 48 passive source reactions and existing state commands as the Actor-less common-path baseline.

@@ -507,6 +507,9 @@ User approved Generation/runtime implementation. Phases 1-4 complete; Parsing an
 - Phase 5 Generation converts 40 direct-delivery outcomes to common effect payloads and materializes the 17 previously incomplete `StatusModifier` outcomes without changing CSV schema.
 - Phase 5 final runtime counts are effect 57, learned-skill reference 4, command 21, and missing outcome 0.
 - Phase 5 solution build completed with error 0; Unity full EditMode tests passed 14/14.
+- Phase 6 final catalog has 48 passive source reactions: effect 24, learned-skill reference 4, and command 20; all have outcomes.
+- Phase 6 uses the existing cooldown refund 14 and reload reduction 6 commands without schema changes.
+- Phase 6 solution build completed with error 0; Unity full EditMode tests passed 15/15.
 
 ### History
 
@@ -520,3 +523,4 @@ User approved Generation/runtime implementation. Phases 1-4 complete; Parsing an
 - 2026-07-31: Code Builder completed Phase 3 existing-skill runtime reuse without changing the authoring schema.
 - 2026-07-31: Code Builder completed Phase 4 final ownership separation without changing the authoring schema.
 - 2026-07-31: Code Builder completed Phase 5 direct-delivery and incomplete event-outcome Generation.
+- 2026-07-31: Code Builder completed Phase 6 final passive-source and state-command count verification.

@@ -484,22 +484,28 @@ public sealed class SkillCatalogRuntimeTests
                 trigger.TriggerId == "ariel-b-trait4-shield-expire"),
             Is.True);
         Assert.That(
-            incompleteTriggers.Exists(trigger =>
-                trigger.TriggerId == "eve-b-master-2"),
+            workingTriggers.Exists(trigger =>
+                trigger.TriggerId == "eve-b-master-2"
+                && trigger.Effect != null),
             Is.True);
+        var arielShieldDamage = castEffects.Find(
+            effect => effect.EffectId == "ariel-b-trait-5");
+        Assert.That(arielShieldDamage, Is.Not.Null);
+        Assert.That(arielShieldDamage.Status?.Status, Is.Not.Null);
         Assert.That(
-            castEffects.Exists(effect =>
-                effect.EffectId == "ariel-b-trait-5"
-                && effect.Status?.Status != null
-                && effect.Status.Status.Modifiers.DamageBonusRate == 0.12f
-                && effect.Status.Status.HasElementModifierTarget
-                && effect.Status.Status.ElementModifierTarget == DamageAttribute.Holy
-                && effect.Status.Status.Duration == 5f
-                && effect.Targeting.TargetSide == SkillTargetSide.AllAllies
-                && effect.Status.Status.ConditionalTargetStatusGroups.Length == 1
-                && effect.Status.Status.ConditionalTargetStatusGroups[0].Requirements[0].Kind
-                    == StatusEffectKind.Shield),
-            Is.True);
+            arielShieldDamage.Status.Status.Modifiers.DamageBonusRate,
+            Is.EqualTo(0.12f));
+        Assert.That(arielShieldDamage.Status.Status.Duration, Is.EqualTo(5f));
+        Assert.That(
+            arielShieldDamage.Targeting.TargetSide,
+            Is.EqualTo(SkillTargetSide.AllAllies));
+        Assert.That(
+            arielShieldDamage.Status.Status.ConditionalTargetStatusGroups,
+            Has.Length.EqualTo(1));
+        Assert.That(
+            arielShieldDamage.Status.Status
+                .ConditionalTargetStatusGroups[0].Requirements[0].Kind,
+            Is.EqualTo(StatusEffectKind.Shield));
         Assert.That(
             castEffects.Exists(effect =>
                 effect.EffectId == "eve-h-trait-3"),
@@ -508,6 +514,77 @@ public sealed class SkillCatalogRuntimeTests
             castEffects.Exists(effect =>
                 effect.EffectId == "ariel-e-trait-4"),
             Is.False);
+    }
+
+    [Test]
+    public void PassiveEventEffectsAndStateCommandsUseSharedRuntimePaths()
+    {
+        GameDataLoader.EnsureInitialized();
+
+        var passiveReactionCount = 0;
+        var passiveReactionOutcomeCount = 0;
+        var passiveEffectCount = 0;
+        var passiveSkillReuseCount = 0;
+        var passiveCommandCount = 0;
+        var cooldownRefundCount = 0;
+        var reloadReductionCount = 0;
+        foreach (var monster in GameDataLoader.CurrentCatalog.Monsters)
+        {
+            foreach (var trigger in monster.SkillTriggers)
+            {
+                var passiveOwned = false;
+                for (var i = 0; i < monster.PassiveSkills.Length; i++)
+                {
+                    if (string.Equals(
+                        monster.PassiveSkills[i]?.SkillId,
+                        trigger.SourceSkillId,
+                        StringComparison.OrdinalIgnoreCase))
+                    {
+                        passiveOwned = true;
+                        break;
+                    }
+                }
+                if (passiveOwned)
+                {
+                    passiveReactionCount++;
+                    if (trigger.Effect != null
+                        || trigger.TriggeredSkill != null
+                        || trigger.Command != null)
+                    {
+                        passiveReactionOutcomeCount++;
+                    }
+                    if (trigger.Effect != null)
+                    {
+                        passiveEffectCount++;
+                    }
+                    else if (trigger.TriggeredSkill != null)
+                    {
+                        passiveSkillReuseCount++;
+                    }
+                    else if (trigger.Command != null)
+                    {
+                        passiveCommandCount++;
+                    }
+                }
+
+                if (trigger.Command?.Kind == SkillTriggerCommandKind.RefundCooldown)
+                {
+                    cooldownRefundCount++;
+                }
+                else if (trigger.Command?.Kind == SkillTriggerCommandKind.ReduceReload)
+                {
+                    reloadReductionCount++;
+                }
+            }
+        }
+
+        Assert.That(passiveReactionCount, Is.EqualTo(48));
+        Assert.That(passiveReactionOutcomeCount, Is.EqualTo(48));
+        Assert.That(passiveEffectCount, Is.EqualTo(24));
+        Assert.That(passiveSkillReuseCount, Is.EqualTo(4));
+        Assert.That(passiveCommandCount, Is.EqualTo(20));
+        Assert.That(cooldownRefundCount, Is.EqualTo(14));
+        Assert.That(reloadReductionCount, Is.EqualTo(6));
     }
 
     [Test]

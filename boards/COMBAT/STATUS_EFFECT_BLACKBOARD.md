@@ -909,11 +909,11 @@ Code Builder.
 
 ### Status
 
-User approved effect restoration and Code Builder implementation. Phases 1-5 complete.
+User approved effect restoration and Code Builder implementation. Phases 1-6 complete.
 
 ### Next Actions
 
-- Implement Phase 6 Actor-less and state reactions.
+- Implement Phase 7 Zone recast and Chain snapshot reuse.
 - Commit and verify each remaining phase separately.
 - Run the approved Code Reviewer loop after Phase 8.
 
@@ -941,6 +941,10 @@ User approved effect restoration and Code Builder implementation. Phases 1-5 com
 - Phase 5 replaces 40 hidden direct-delivery Definitions with 57 common event effects: damage 24 and status 33, including the restored 17 incomplete status outcomes.
 - Phase 5 leaves only 4 learned cross-skill references and 21 state commands; all 82 runtime reactions now have an outcome.
 - Phase 5 solution build completed with error 0; Unity full EditMode tests passed 14/14.
+- Phase 6 final catalog contains 48 passive source reactions: common effect 24, learned cross-skill reuse 4, and existing state command 20.
+- The earlier design count 37 described a pre-refactor hidden-Definition subset, not final passive source ownership; the code-derived final count is 48.
+- Phase 6 state commands remain on existing APIs: cooldown refund 14 and reload reduction 6; the remaining command is Zone recast.
+- Phase 6 solution build completed with error 0; Unity full EditMode tests passed 15/15.
 
 ### History
 
@@ -954,3 +958,4 @@ User approved effect restoration and Code Builder implementation. Phases 1-5 com
 - 2026-07-31: Code Builder completed Phase 3 existing-skill runtime reuse.
 - 2026-07-31: Code Builder completed Phase 4 non-Trigger extraction and normal effect ownership restoration.
 - 2026-07-31: Code Builder completed Phase 5 direct-delivery consolidation and incomplete event-effect restoration.
+- 2026-07-31: Code Builder completed Phase 6 Actor-less passive and state-command verification without adding runtime branches.
