@@ -57,6 +57,7 @@ Node 의미의 런타임 구현을 Resolver로 통합하고 일반 시전과 조
 - Phase 8 Code Reviewer 책임 수정 완료: `SkillExecutionData` 런타임 lifecycle 조정을 `SkillExecution`으로 이동하고 Core/Editor 프로젝트 빌드를 오류 0개로 통과했다.
 - Phase 9 학습 런타임 목록 재구성 책임을 `UnitSkills`로 이관하고 Core/Editor 프로젝트 빌드를 오류 0개로 통과했다.
 - Phase 10~15 공통 재시전, resolved Definition materialization, Trigger forwarding, Actor 피해 적용과 dead contract 정리가 완료됐다. 최종 Code Reviewer 1회 지적은 `b7037d1`에서 수정됐다.
+- 2026-08-01 연속 적중 책임 보정 완료: `SkillExecution`은 대상·반복 상태만 갱신하고, `SkillExecutionRuleResolver`가 기본 Projectile 값과 snapshot 보정값을 사용해 피해 배율을 계산한다.
 
 ## Selected Code Builder tracks
 
@@ -909,6 +910,8 @@ Unity-MCP로 editor compile과 console을 확인한다. Play Mode gameplay 검�
 - 2026-07-31 Code Reviewer 1회: `MaxGeneration`이 resolved recast 진입점에서 검사되지 않는 문제를 지적했다. Code Builder가 `TryExecuteResolvedEffect`에 `recastGeneration >= MaxGeneration` guard를 복원해 `b7037d1`로 커밋했다.
 - 2026-07-31 수정 후 `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false`와 `Assembly-CSharp-Editor.csproj`가 각각 `빌드했습니다.`로 종료했다. legacy helper/legacy type/direct `ApplyDamage` 경계 검색은 출력이 없었고 `git diff --check`도 통과했다.
 - 2026-07-31 Unity EditMode 실행은 다른 Unity 인스턴스가 같은 프로젝트를 열고 있어 batchmode가 중단됐다. Play Mode와 실제 gameplay 검증은 사용자 소유다.
+- 2026-08-01 `ConsecutiveHitDamageMultiplier`의 상태 갱신과 배율 공식을 분리했다. `ProjectileSkillActor`는 `AdvanceConsecutiveHitCount`와 Resolver의 `ResolveConsecutiveHitDamageMultiplier`를 순서대로 사용한다.
+- 2026-08-01 `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false`, Editor project build가 각각 `빌드했습니다.`로 종료했고 `git diff --check`가 통과했다.
 
 ## History
 
@@ -934,3 +937,4 @@ Unity-MCP로 editor compile과 console을 확인한다. Play Mode gameplay 검�
 - 2026-07-31: 사용자가 조건부 스킬 결과도 Actor 사건 뒤 기본 스킬과 동일한 `SkillExecution -> Executor -> Actor` 경로로 다시 시전하고 Executor가 피해를 직접 적용하지 않도록 구조를 정정했다.
 - 2026-07-31: Designer가 current normal/learned reaction/raw effect/command 경로와 direct damage caller를 재검증하고 Phase 10~15 common recast handoff를 추가했다.
 - 2026-07-31: 자체 검증에서 raw effect는 learned runtime이 없어 direct `TargetSkillId` lookup만으로 실행할 수 없고, non-spatial command를 Actor로 강제하면 가짜 스킬이 필요함을 확인했다. 최종 설계는 Generation-resolved concrete Definition link와 typed state-command 예외를 사용한다.
+- 2026-08-01: Code Builder가 연속 적중 상태 진행과 피해 배율 계산을 각각 `SkillExecution`과 `SkillExecutionRuleResolver`로 분리하고 Projectile 호출부를 전환했다.

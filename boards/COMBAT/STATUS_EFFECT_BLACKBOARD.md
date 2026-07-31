@@ -4,6 +4,49 @@
 
 The pre-cleanup file, including all completed July tasks, is preserved at `boards/ARCHIVE/ACTIVE_BOARD_SNAPSHOT_2026-07-28/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
 
+## Task: 2026-08-01 Consecutive Hit Damage Responsibility
+
+### Task title
+
+Separate consecutive-hit state progression from damage multiplier resolution.
+
+### Goals
+
+- Keep runtime target/repeat state progression in `SkillExecution`.
+- Keep Node/base-definition/snapshot damage multiplier calculation in `SkillExecutionRuleResolver`.
+- Preserve Projectile first-hit, same-target repeat, target-change reset and maximum-bonus behavior.
+
+### Constraints
+
+- Reuse the existing `SkillExecutionData` runtime fields and Projectile Actor path.
+- Do not add a script, runtime kind, Executor, Actor base class or duplicate targeting/calculation path.
+- Preserve Projectile Definition fallback values when snapshot Node values are absent.
+- Keep the unrelated user change in `boards/OPS/AUTOMATION_GUIDE.md` untouched.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Complete. Commit: `085b6fe`.
+
+### Next Actions
+
+- User verifies repeated Projectile hits against the same target in Play Mode.
+
+### Evidence
+
+- `SkillExecution.cs` now exposes `AdvanceConsecutiveHitCount`, which only updates target ID and repeat count.
+- `SkillExecutionRuleResolver.cs` now exposes `ResolveConsecutiveHitDamageMultiplier`, which owns the multiplier formula and preserves base Projectile plus snapshot values.
+- `ProjectileSkillActor.cs` calls state advancement first and Resolver calculation second.
+- Core/Editor builds both ended with `빌드했습니다.` and `git diff --check` passed.
+
+### History
+
+- 2026-08-01: User identified that `ConsecutiveHitDamageMultiplier` mixed runtime state mutation with rule calculation.
+- 2026-08-01: Code Builder split the responsibilities and committed the refactor in `085b6fe`.
+
 ## Task: 2026-07-31 Common Trigger Skill Recast And Actor Hit Ownership
 
 ### Task title
