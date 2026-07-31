@@ -483,6 +483,7 @@ namespace Pakuri.InGame
             int recastGeneration,
             string sourceSkillId,
             bool lockToEventTarget,
+            float damageMultiplier,
             bool hasRawDamageOverride,
             float rawDamageOverride)
         {
@@ -498,6 +499,10 @@ namespace Pakuri.InGame
                 entry.Model,
                 sourceRuntime,
                 roster);
+            if (!Mathf.Approximately(damageMultiplier, 1f))
+            {
+                snapshot.ApplyDynamicDamageMultiplier(damageMultiplier);
+            }
             var context = new SkillExecutionContext(
                 combatManager,
                 roster,

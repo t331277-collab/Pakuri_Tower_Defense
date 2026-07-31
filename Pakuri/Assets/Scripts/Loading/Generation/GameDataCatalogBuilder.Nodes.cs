@@ -138,11 +138,13 @@ namespace Pakuri.Data
 			}
 			if (string.Equals(handler, "RecastZone", StringComparison.OrdinalIgnoreCase))
 			{
+				trigger.TriggerDelaySeconds += Mathf.Max(
+					0f,
+					GetFloatParam(node, "delay_seconds", 0f));
 				trigger.Command = new SkillTriggerCommand
 				{
 					Kind = SkillTriggerCommandKind.RecastZone,
 					TargetId = GetParam(node, "source_skill_id"),
-					DelaySeconds = Mathf.Max(0f, GetFloatParam(node, "delay_seconds", 0f)),
 					DurationSeconds = Mathf.Max(0f, GetFloatParam(node, "duration_seconds", 0f)),
 					RadiusMultiplier = Mathf.Max(0f, GetFloatParam(node, "radius_multiplier", 1f)),
 					InheritSnapshot = GetBoolParam(node, "inherit_snapshot", true),

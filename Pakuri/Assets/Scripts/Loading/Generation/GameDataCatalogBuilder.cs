@@ -532,18 +532,11 @@ namespace Pakuri.Data
             var searchRadius = source.ChainRadius > 0f
                 ? source.ChainRadius
                 : source.EffectRadius;
-            var followUp = new SingleSkillDefinition
+            var followUp = new SkillCastEffect
             {
-                SkillId = source.Skill.Id + "__chain",
-                SkillName = source.Skill.DisplayName,
-                RuntimeKind = SkillRuntimeKind.SingleAttack,
-                ImplementationState = SkillImplementationState.RuntimeImplemented,
-                IsDefaultLearned = false,
-                Element = sourceSkill.Element,
+                EffectId = source.Skill.Id,
                 SkillEffectPrefab = sourceSkill.SkillEffectPrefab,
                 RuntimeVisual = sourceSkill.RuntimeVisual,
-                UsesHitTargetCount = true,
-                HitTargetCount = 1,
                 Targeting =
                 {
                     TargetSide = SkillTargetSide.Enemy,
@@ -558,15 +551,7 @@ namespace Pakuri.Data
                     Radius = 0f,
                     CoverAll = false
                 },
-                Damage =
-                {
-                    SkillId = source.Skill.Id,
-                    Element = source.Skill.Attribute,
-                    BaseDamage = source.Skill.BaseDamage,
-                    AttackPowerCoefficient = source.Skill.AttackPowerCoefficient,
-                    SpellPowerCoefficient = source.Skill.SpellPowerCoefficient,
-                    CriticalAllowed = true
-                }
+                Damage = sourceSkill.Damage
             };
 
             return new SkillTriggerDefinition
@@ -578,7 +563,7 @@ namespace Pakuri.Data
                 ProcChance = 1f,
                 TriggerDelaySeconds = Mathf.Max(0f, source.ChainDelaySeconds),
                 EventSourceScopeValue = SkillTriggerEventSourceScope.Any,
-                TriggeredSkill = followUp,
+                Effect = followUp,
                 TriggeredDamageMultiplier = Mathf.Max(0f, source.ChainDamageMultiplier),
                 LockToEventTarget = !source.ExcludePrimaryTarget,
                 CenterMode = SkillTriggerCenterMode.EventTarget,

@@ -909,11 +909,11 @@ Code Builder.
 
 ### Status
 
-User approved effect restoration and Code Builder implementation. Phases 1-6 complete.
+User approved effect restoration and Code Builder implementation. Phases 1-7 complete.
 
 ### Next Actions
 
-- Implement Phase 7 Zone recast and Chain snapshot reuse.
+- Implement Phase 8 obsolete Trigger Definition and owner-array deletion.
 - Commit and verify each remaining phase separately.
 - Run the approved Code Reviewer loop after Phase 8.
 
@@ -945,6 +945,9 @@ User approved effect restoration and Code Builder implementation. Phases 1-6 com
 - The earlier design count 37 described a pre-refactor hidden-Definition subset, not final passive source ownership; the code-derived final count is 48.
 - Phase 6 state commands remain on existing APIs: cooldown refund 14 and reload reduction 6; the remaining command is Zone recast.
 - Phase 6 solution build completed with error 0; Unity full EditMode tests passed 15/15.
+- Phase 7 ChainLightning uses the original skill Damage and runtime snapshot without a `__chain` Definition; targeting remains primary-excluding, radius 7, delay 0.5, multiplier 0.5.
+- Phase 7 Zone recast uses the original snapshot with delay 0.5, radius multiplier 0.6, duration 3, and generation cap 1.
+- Phase 7 solution build completed with error 0; Unity full EditMode tests passed 15/15.
 
 ### History
 
@@ -959,3 +962,4 @@ User approved effect restoration and Code Builder implementation. Phases 1-6 com
 - 2026-07-31: Code Builder completed Phase 4 non-Trigger extraction and normal effect ownership restoration.
 - 2026-07-31: Code Builder completed Phase 5 direct-delivery consolidation and incomplete event-effect restoration.
 - 2026-07-31: Code Builder completed Phase 6 Actor-less passive and state-command verification without adding runtime branches.
+- 2026-07-31: Code Builder completed Phase 7 Zone and Chain snapshot reuse.

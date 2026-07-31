@@ -510,6 +510,8 @@ User approved Generation/runtime implementation. Phases 1-4 complete; Parsing an
 - Phase 6 final catalog has 48 passive source reactions: effect 24, learned-skill reference 4, and command 20; all have outcomes.
 - Phase 6 uses the existing cooldown refund 14 and reload reduction 6 commands without schema changes.
 - Phase 6 solution build completed with error 0; Unity full EditMode tests passed 15/15.
+- Phase 7 Generation no longer creates the `ChainLightning__chain` SkillDefinition and maps RecastZone node delay into the Trigger scheduler.
+- Phase 7 solution build completed with error 0; Unity full EditMode tests passed 15/15.
 
 ### History
 
@@ -524,3 +526,4 @@ User approved Generation/runtime implementation. Phases 1-4 complete; Parsing an
 - 2026-07-31: Code Builder completed Phase 4 final ownership separation without changing the authoring schema.
 - 2026-07-31: Code Builder completed Phase 5 direct-delivery and incomplete event-outcome Generation.
 - 2026-07-31: Code Builder completed Phase 6 final passive-source and state-command count verification.
+- 2026-07-31: Code Builder completed Phase 7 Zone/Chain Generation consolidation.

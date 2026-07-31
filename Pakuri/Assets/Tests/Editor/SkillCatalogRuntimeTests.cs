@@ -203,11 +203,21 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(chainTrigger.TriggerDelaySeconds, Is.EqualTo(0.5f).Within(0.0001f));
         Assert.That(chainTrigger.TriggeredDamageMultiplier, Is.EqualTo(0.5f).Within(0.0001f));
         Assert.That(chainTrigger.PublishSkillLifecycleEvents, Is.False);
-        Assert.That(chainTrigger.TriggeredSkill, Is.TypeOf<SingleSkillDefinition>());
+        Assert.That(chainTrigger.TriggeredSkill, Is.Null);
+        Assert.That(chainTrigger.Effect, Is.Not.Null);
+        Assert.That(chainTrigger.Effect.Damage, Is.SameAs(
+            ((SingleSkillDefinition)chainSkill).Damage));
         Assert.That(
-            chainTrigger.TriggeredSkill.Targeting.Selection,
+            chainTrigger.Effect.Targeting.Selection,
             Is.EqualTo(SkillTargetSelection.NearestOtherFromEventTarget));
-        Assert.That(chainTrigger.TriggeredSkill.Targeting.Radius, Is.EqualTo(7f).Within(0.0001f));
+        Assert.That(
+            chainTrigger.Effect.Targeting.Radius,
+            Is.EqualTo(7f).Within(0.0001f));
+        Assert.That(
+            Array.Exists(
+                chainEnemy.ActiveSkills,
+                skill => skill.SkillId.Contains("__chain")),
+            Is.False);
 
         var chargeEnemy = Array.Find(
             catalog.StageTwoEnemies,
@@ -403,6 +413,14 @@ public sealed class SkillCatalogRuntimeTests
             triggers.FindAll(trigger =>
                 trigger.Command?.Kind == SkillTriggerCommandKind.ExtendStatusDuration),
             Is.Empty);
+        var zoneRecast = triggers.Find(
+            trigger => trigger.TriggerId == "eve-e-master-1");
+        Assert.That(zoneRecast?.Command, Is.Not.Null);
+        Assert.That(zoneRecast.TriggerDelaySeconds, Is.EqualTo(0.5f));
+        Assert.That(zoneRecast.Command.RadiusMultiplier, Is.EqualTo(0.6f));
+        Assert.That(zoneRecast.Command.DurationSeconds, Is.EqualTo(3f));
+        Assert.That(zoneRecast.Command.MaxGeneration, Is.EqualTo(1));
+        Assert.That(zoneRecast.Command.InheritSnapshot, Is.True);
         Assert.That(
             triggers.FindAll(trigger =>
                 trigger.TriggeredSkill == null

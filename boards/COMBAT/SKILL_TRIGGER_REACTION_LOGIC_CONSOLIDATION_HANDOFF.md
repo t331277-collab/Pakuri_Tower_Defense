@@ -754,6 +754,12 @@ SkillTrigger 공통 gate
 - `eve-e-master-1`을 원본 Zone snapshot 재실행으로 이전.
 - ChainLightning hidden Definition을 제거하고 원본 snapshot 보정으로 이전.
 - depth, generation, lifecycle 제한 검증.
+- 완료 증거:
+  - `eve-e-master-1`은 기존 source runtime snapshot을 상속하고 0.5초 뒤 반경 ×0.6, 지속 3초, 최대 generation 1로 Zone Executor에 재진입한다.
+  - `RecastZone.delay_seconds`는 이전 코드에서 command에 저장만 되고 소비되지 않았으나, 이제 Trigger 예약 지연으로 통합된다.
+  - ChainLightning은 `__chain` Definition 없이 원본 Damage 참조와 source runtime snapshot을 사용한다.
+  - Chain 보정은 0.5초 지연, 반경 7, `NearestOtherFromEventTarget`, 피해 ×0.5, lifecycle 미발행이다.
+  - solution build 오류 0, Unity EditMode 15/15 통과.
 
 ### Phase 8: Delete obsolete contracts
 
@@ -824,7 +830,7 @@ SkillTrigger 공통 gate
 
 ## Next Actions
 
-- Code Builder가 Phase 7 Zone recast와 Chain을 기존 snapshot 재실행으로 통합한다.
+- Code Builder가 Phase 8 obsolete Trigger Definition/배열/hidden Generation 계약을 삭제한다.
 - 각 Phase의 변경과 검증 결과를 별도 Git commit으로 기록한다.
 - Phase 8과 전체 검증 후 Code Reviewer 롤로 전환한다.
 - Reviewer가 수정을 요구하면 Code Reviewer 롤로 수정·재검증하고 통과할 때까지 반복한다.
@@ -859,6 +865,7 @@ SkillTrigger 공통 gate
 - Phase 4 verification: runtime Trigger 82, leaked OnCast/same-source Trigger 0, 일반 Skill/Choice/Passive cast effect 74 + 기존 조건부 위력 Choice 1, `eve-h-trait-3` 중복 0; solution build error 0; Unity EditMode 14/14.
 - Phase 5 verification: runtime Trigger effect 57(피해 24, 상태 33), existing-skill reuse 4, command 21, outcome 누락 0; solution build error 0; Unity EditMode 14/14.
 - Phase 6 verification: passive source reaction 48(effect 24, skill reuse 4, command 20), cooldown refund 14, reload reduction 6; solution build error 0; Unity EditMode 15/15.
+- Phase 7 verification: `__chain` SkillDefinition 0, Chain 원본 Damage 참조/지연 0.5/배율 0.5/반경 7/primary 제외, Zone 지연 0.5/반경 0.6/지속 3/generation 1; solution build error 0; Unity EditMode 15/15.
 
 ## History
 
@@ -876,3 +883,4 @@ SkillTrigger 공통 gate
 - 2026-07-31: Code Builder completed Phase 4 by removing 76 semantic non-Triggers from runtime reaction registration and restoring 75 non-duplicate normal effects through existing Skill/Choice/Passive Nodes.
 - 2026-07-31: Code Builder completed Phase 5 by replacing 40 hidden direct-delivery Definitions and restoring 17 incomplete event outcomes through the common cast-effect path.
 - 2026-07-31: Code Builder completed Phase 6 by fixing the final catalog's 48 passive source reactions and existing state commands as the Actor-less common-path baseline.
+- 2026-07-31: Code Builder completed Phase 7 by deleting the Chain hidden Definition and wiring Zone node delay into the common Trigger scheduler.

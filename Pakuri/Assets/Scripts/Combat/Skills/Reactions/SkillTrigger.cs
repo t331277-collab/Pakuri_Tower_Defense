@@ -800,6 +800,7 @@ internal static class SkillTrigger
 					triggerContext.RecastGeneration,
 					trigger.SourceSkillId,
 					trigger.LockToEventTarget,
+					trigger.TriggeredDamageMultiplier,
 					trigger.DamageValueSource
 						!= SkillTriggerDamageValueSource.Fixed,
 					ResolveTriggeredRawDamage(trigger, triggerContext));
