@@ -88,6 +88,7 @@ namespace Pakuri.InGame
     {
         private const int MaxTriggeredExecutionDepth = 8;
         private static int triggeredExecutionDepth;
+        private static bool applyingHitEnhancement;
 
         private static readonly SkillSlot[] ActiveSlots =
         {
@@ -549,7 +550,9 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var effects = sourceSnapshot.CastEffects;
+            var effects = SkillExecutionRuleResolver.ResolveCastEffects(
+                sourceSnapshot,
+                enemyTargetsOnly);
             for (var i = 0; i < effects.Count; i++)
             {
                 var effect = effects[i];
@@ -1273,11 +1276,7 @@ namespace Pakuri.InGame
             }
 
             var baseRadius = SkillTargeting.BaseRadius(skill.Targeting, skill.Area);
-            var executeThresholdBonus = 0f;
-            for (var i = 0; i < snapshot.CastConditionOps.Count; i++)
-            {
-                executeThresholdBonus += snapshot.CastConditionOps[i].TargetHealthRatioBonus;
-            }
+            var executeThresholdBonus = SkillExecutionRuleResolver.ResolveCastConditionHealthBonus(snapshot);
 
             snapshot.PreparedTargeting = skill.Targeting;
             snapshot.PreparedRuntimeVisual = skill.RuntimeVisual;
@@ -1467,40 +1466,338 @@ namespace Pakuri.InGame
                 return;
             }
 
-            if (snapshot != null)
+            SkillExecutionRuleResolver.ResolveKillRecovery(
+                snapshot,
+                wasExecute,
+                out var resetCooldown,
+                out var refundRatio);
+            if (resetCooldown)
             {
-                for (var i = 0; i < snapshot.KillActionOps.Count; i++)
-                {
-                    var action = snapshot.KillActionOps[i];
-                    if (action.Kind != KillActionOpKind.CooldownReset
-                        || (action.RequiresExecute && !wasExecute))
-                    {
-                        continue;
-                    }
-
-                    sourceRuntime.ResetCooldown();
-                    return;
-                }
+                sourceRuntime.ResetCooldown();
+                return;
             }
-
-            var refundBonus = 0f;
-            if (snapshot != null)
-            {
-                for (var i = 0; i < snapshot.KillActionOps.Count; i++)
-                {
-                    var action = snapshot.KillActionOps[i];
-                    if (action.Kind == KillActionOpKind.CooldownRefundBonus)
-                    {
-                        refundBonus += action.RatioBonus;
-                    }
-                }
-            }
-
-            var refundRatio = Mathf.Clamp01(
-                (snapshot != null ? snapshot.PreparedKillCooldownRefundRatio : 0f) + refundBonus);
             if (refundRatio > 0f)
             {
                 sourceRuntime.ReduceCooldownRemaining(sourceRuntime.EffectiveCooldownDuration * refundRatio);
+            }
+        }
+
+        internal static void ApplyHitCountCooldownRefund(
+            SkillExecutionData sourceRuntime,
+            SkillExecutionData snapshot,
+            int hitCount)
+        {
+            if (sourceRuntime?.Owner?.Skills == null
+                || !SkillExecutionRuleResolver.ResolveHitCountCooldownRefund(
+                    snapshot,
+                    hitCount,
+                    out var targetSkillId,
+                    out var secondsRatio))
+            {
+                return;
+            }
+
+            var targetRuntime = sourceRuntime.Owner.SkillState.FindBySkillId(targetSkillId);
+            targetRuntime?.ReduceCooldownRemaining(targetRuntime.EffectiveCooldownDuration * secondsRatio);
+        }
+
+        internal static bool ApplyAreaHits(
+            InGameCombatManager manager,
+            CombatUnitEntry sourceEntry,
+            UnitSpawnManager roster,
+            SkillTargetingSpec targeting,
+            Vector2 center,
+            float radius,
+            bool coverAll,
+            float damage,
+            DamageAttribute attribute,
+            StatusApplicationSpec status,
+            UnitCombatState source,
+            string sourceSkillId,
+            SkillExecutionData runtime,
+            bool criticalAllowed,
+            float critChanceBonus,
+            float critDamageBonus,
+            int maxTargets,
+            SkillExecutionData executionData)
+        {
+            if (manager == null || sourceEntry == null || roster == null)
+            {
+                return false;
+            }
+
+            if (!coverAll && radius <= 0f)
+            {
+                var target = SkillTargeting.FindNearestTarget(sourceEntry, roster, targeting);
+                return ApplyResolvedHits(
+                    manager,
+                    sourceEntry,
+                    roster,
+                    target != null ? new[] { target } : Array.Empty<CombatUnitEntry>(),
+                    1,
+                    damage,
+                    attribute,
+                    status,
+                    source,
+                    sourceSkillId,
+                    runtime,
+                    criticalAllowed,
+                    critChanceBonus,
+                    critDamageBonus,
+                    executionData);
+            }
+
+            var candidates = SkillTargeting.TargetList(sourceEntry, roster, targeting);
+            var radiusSquared = Mathf.Max(0f, radius) * Mathf.Max(0f, radius);
+            var hitUnitIds = new HashSet<string>();
+            var eligibleTargets = new List<CombatUnitEntry>();
+            for (var i = 0; i < candidates.Count; i++)
+            {
+                var target = candidates[i];
+                if (target == null || !target.IsAlive || target.Model == null || target.Transform == null)
+                {
+                    continue;
+                }
+
+                var unitId = target.Model.Identity != null ? target.Model.Identity.UnitId : null;
+                if (!string.IsNullOrWhiteSpace(unitId) && !hitUnitIds.Add(unitId))
+                {
+                    continue;
+                }
+                if (!coverAll
+                    && ((Vector2)target.Transform.position - center).sqrMagnitude > radiusSquared)
+                {
+                    continue;
+                }
+
+                eligibleTargets.Add(target);
+            }
+
+            return ApplyResolvedHits(
+                manager,
+                sourceEntry,
+                roster,
+                eligibleTargets,
+                maxTargets,
+                damage,
+                attribute,
+                status,
+                source,
+                sourceSkillId,
+                runtime,
+                criticalAllowed,
+                critChanceBonus,
+                critDamageBonus,
+                executionData);
+        }
+
+        internal static bool ApplyResolvedHits(
+            InGameCombatManager manager,
+            CombatUnitEntry sourceEntry,
+            UnitSpawnManager roster,
+            IReadOnlyList<CombatUnitEntry> eligibleTargets,
+            int maxTargets,
+            float damage,
+            DamageAttribute attribute,
+            StatusApplicationSpec status,
+            UnitCombatState source,
+            string sourceSkillId,
+            SkillExecutionData runtime,
+            bool criticalAllowed,
+            float critChanceBonus,
+            float critDamageBonus,
+            SkillExecutionData executionData)
+        {
+            if (manager == null || eligibleTargets == null || eligibleTargets.Count == 0)
+            {
+                return false;
+            }
+
+            var selectedTargets = new List<CombatUnitEntry>(eligibleTargets);
+            if (maxTargets > 0 && maxTargets < selectedTargets.Count)
+            {
+                for (var i = 0; i < maxTargets; i++)
+                {
+                    var randomIndex = UnityEngine.Random.Range(i, selectedTargets.Count);
+                    (selectedTargets[i], selectedTargets[randomIndex]) =
+                        (selectedTargets[randomIndex], selectedTargets[i]);
+                }
+                selectedTargets.RemoveRange(maxTargets, selectedTargets.Count - maxTargets);
+            }
+
+            var routed = false;
+            for (var i = 0; i < selectedTargets.Count; i++)
+            {
+                var target = selectedTargets[i];
+                if (target == null || !target.IsAlive || target.Model == null)
+                {
+                    continue;
+                }
+
+                var hitPosition = target.Transform != null
+                    ? (Vector2)target.Transform.position
+                    : Vector2.zero;
+                var resolvedDamage = Mathf.Max(0f, damage);
+                var finalDamageMultiplier = SkillExecutionRuleResolver.ResolveHitDamageMultiplier(
+                    executionData,
+                    target.Model);
+                var result = manager.ApplyDamage(
+                    target.Model,
+                    resolvedDamage,
+                    attribute,
+                    source,
+                    criticalAllowed,
+                    critChanceBonus,
+                    critDamageBonus,
+                    sourceSkillId,
+                    finalDamageMultiplier: finalDamageMultiplier);
+                if (!result.IsDead)
+                {
+                    StatusCombatRules.ApplyStatus(manager, target.Model, status, source);
+                }
+                ApplyHitEnhancements(
+                    manager,
+                    runtime != null ? roster : null,
+                    runtime,
+                    executionData,
+                    sourceEntry,
+                    source,
+                    sourceSkillId,
+                    target,
+                    hitPosition,
+                    resolvedDamage);
+                routed = true;
+            }
+
+            return routed;
+        }
+
+        internal static void ApplyHitEnhancements(
+            InGameCombatManager manager,
+            UnitSpawnManager roster,
+            SkillExecutionData runtime,
+            SkillExecutionData skillData,
+            CombatUnitEntry sourceEntry,
+            UnitCombatState source,
+            string sourceSkillId,
+            CombatUnitEntry hitTarget,
+            Vector2 hitPosition,
+            float primaryBaseDamage)
+        {
+            if (manager != null && roster != null && source != null && hitTarget != null && hitTarget.Model != null)
+            {
+                var actionExecutionContext = new SkillExecutionContext(
+                    manager,
+                    roster,
+                    sourceEntry,
+                    runtime,
+                    hitTarget.Model,
+                    publishSkillLifecycleEvents: runtime != null,
+                    sourceSkillId: sourceSkillId);
+                SkillTrigger.PublishLifecycleEvent(
+                    SkillTriggerEvent.OnHit,
+                    new SkillActionContext(
+                        source,
+                        sourceSkillId,
+                        hitTarget.Model,
+                        hitPosition,
+                        primaryBaseDamage,
+                        1,
+                        skillData,
+                        actionExecutionContext));
+            }
+
+            if (manager == null
+                || roster == null
+                || skillData == null
+                || source == null
+                || hitTarget == null
+                || hitTarget.Model == null
+                || primaryBaseDamage <= 0f
+                || applyingHitEnhancement)
+            {
+                return;
+            }
+
+            var hasReloadReduction = !string.IsNullOrWhiteSpace(skillData.ReloadReduceTargetSkillId)
+                && skillData.ReloadReduceSecondsPerHit > 0f;
+            if (!skillData.HasOnHitAdditionalDamageBehavior && !hasReloadReduction)
+            {
+                return;
+            }
+
+            var hitIndex = runtime != null
+                ? runtime.AdvanceSkillHitCount()
+                : 0;
+
+            applyingHitEnhancement = true;
+            try
+            {
+                if (hasReloadReduction && runtime != null && runtime.Owner != null && runtime.Owner.Skills != null)
+                {
+                    var reloadSkill = runtime.Owner.SkillState.FindBySkillId(skillData.ReloadReduceTargetSkillId);
+                    if (reloadSkill != null && reloadSkill.IsReloading)
+                    {
+                        reloadSkill.ReduceReloadRemaining(skillData.ReloadReduceSecondsPerHit);
+                    }
+                }
+
+                var targetsHitUnit = string.IsNullOrWhiteSpace(skillData.OnHitAdditionalDamageTarget)
+                    || string.Equals(skillData.OnHitAdditionalDamageTarget, "HitTarget", StringComparison.OrdinalIgnoreCase);
+                if (skillData.HasOnHitAdditionalDamage
+                    && skillData.OnHitAdditionalDamageMultiplier > 0f
+                    && targetsHitUnit
+                    && hitTarget.IsAlive
+                    && UnityEngine.Random.value <= Mathf.Clamp01(skillData.OnHitAdditionalDamageChance))
+                {
+                    manager.ApplyDamage(
+                        hitTarget.Model,
+                        primaryBaseDamage,
+                        skillData.OnHitAdditionalDamageAttribute,
+                        source,
+                        criticalAllowed: false,
+                        0f,
+                        0f,
+                        sourceSkillId,
+                        suppressOutgoingDamageTriggers: true,
+                        finalDamageMultiplier: skillData.OnHitAdditionalDamageMultiplier);
+                }
+
+                if (skillData.HasOnHitChainDamageBehavior
+                    && hitIndex > 0
+                    && hitIndex % skillData.OnHitChainHitPeriod == 0)
+                {
+                    var chainTargets = SkillTargeting.ChainTargets(
+                        roster,
+                        sourceEntry,
+                        source,
+                        hitTarget,
+                        hitPosition,
+                        skillData.OnHitChainSearchRadius);
+                    var targetCount = Mathf.Min(skillData.OnHitChainTargetCount, chainTargets.Count);
+                    for (var i = 0; i < targetCount; i++)
+                    {
+                        var chainTarget = chainTargets[i];
+                        if (chainTarget != null && chainTarget.IsAlive && chainTarget.Model != null)
+                        {
+                            manager.ApplyDamage(
+                                chainTarget.Model,
+                                primaryBaseDamage,
+                                skillData.OnHitChainDamageAttribute,
+                                source,
+                                criticalAllowed: false,
+                                0f,
+                                0f,
+                                sourceSkillId,
+                                suppressOutgoingDamageTriggers: true,
+                                finalDamageMultiplier: skillData.OnHitChainDamageMultiplier);
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                applyingHitEnhancement = false;
             }
         }
 

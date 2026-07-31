@@ -165,7 +165,7 @@ namespace Pakuri.InGame
                     snapshot);
             }
 
-            return SkillExecutionRuleResolver.ApplyAreaHits(
+            return SkillExecution.ApplyAreaHits(
                 combatManager,
                 casterEntry,
                 roster,
@@ -219,7 +219,7 @@ namespace Pakuri.InGame
                 Vector2.zero,
                 eligibleTargets);
 
-            var routed = SkillExecutionRuleResolver.ApplyResolvedHits(
+            var routed = SkillExecution.ApplyResolvedHits(
                 manager,
                 sourceEntry,
                 unitRoster,

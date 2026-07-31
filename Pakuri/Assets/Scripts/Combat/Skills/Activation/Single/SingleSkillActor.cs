@@ -251,18 +251,23 @@ public partial class SingleSkillActor
 	/// 전달된 런타임 입력값을 사용해 ScheduleRepeatedDeployments 작업을 수행한다.
 	internal void ScheduleRepeatedDeployments(SkillExecutionContext context, SkillExecutionData snapshot, Vector2 center, RuntimeSkillVisualSpec runtimeVisual, GameObject prefab)
 	{
-		if (context == null || context.CombatManager == null || snapshot == null || snapshot.RepeatCountPerTarget <= 0)
+		if (context == null || context.CombatManager == null
+			|| !SkillExecutionRuleResolver.ResolveRepeat(
+				snapshot,
+				out var repeatCount,
+				out var repeatInterval,
+				out var repeatDamageMultiplier))
 		{
 			return;
 		}
 		SkillExecutionData snapshot2 = snapshot;
-		if (!Mathf.Approximately(snapshot.RepeatDamageMultiplier, 1f))
+		if (!Mathf.Approximately(repeatDamageMultiplier, 1f))
 		{
-			snapshot2 = snapshot.CopyWithDamageMultiplier(snapshot.RepeatDamageMultiplier);
+			snapshot2 = snapshot.CopyWithDamageMultiplier(repeatDamageMultiplier);
 		}
-		for (int i = 1; i <= snapshot.RepeatCountPerTarget; i++)
+		for (int i = 1; i <= repeatCount; i++)
 		{
-			float num = Mathf.Max(0f, snapshot.RepeatIntervalSeconds * (float)i);
+			float num = Mathf.Max(0f, repeatInterval * (float)i);
 			if (num <= 0f)
 			{
 				ExecuteAtCenter(context, snapshot2, center, runtimeVisual, prefab, allowConditionalFollowUp: false);
@@ -473,7 +478,7 @@ public partial class SingleSkillActor
 					TryApplyStatus(manager, unitEntry.Model, statusSpec, source);
 				}
 				TryApplyCoreOnHitAdditionalDamage(manager, snapshot, source, sourceSkillId, unitEntry, damageResolution.Damage, isCoreHit);
-				SkillExecutionRuleResolver.ApplyHitEnhancements(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry, hitPosition, damageResolution.Damage);
+				SkillExecution.ApplyHitEnhancements(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry, hitPosition, damageResolution.Damage);
 				result = true;
 				num++;
 				if (num >= maxTargets)
@@ -511,7 +516,7 @@ public partial class SingleSkillActor
 			{
 				TryApplyStatus(manager, unitEntry.Model, statusSpec, source);
 			}
-			SkillExecutionRuleResolver.ApplyHitEnhancements(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry, hitPosition, damageResolution.Damage);
+			SkillExecution.ApplyHitEnhancements(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry, hitPosition, damageResolution.Damage);
 			result = true;
 			num++;
 			if (num >= maxTargets)
@@ -550,7 +555,7 @@ public partial class SingleSkillActor
 			{
 				TryApplyStatus(manager, unitEntry.Model, statusSpec, source);
 			}
-			SkillExecutionRuleResolver.ApplyHitEnhancements(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry, hitPosition, damageResolution.Damage);
+			SkillExecution.ApplyHitEnhancements(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry, hitPosition, damageResolution.Damage);
 			TryApplyHitCountCooldownRefund(sourceRuntime, snapshot, 1);
 			TryExecuteOnHitCountEffects(manager, unitRoster, sourceEntry, sourceRuntime, snapshot, 1, center);
 			return true;
@@ -574,7 +579,7 @@ public partial class SingleSkillActor
 				{
 					TryApplyStatus(manager, unitEntry2.Model, statusSpec, source);
 				}
-				SkillExecutionRuleResolver.ApplyHitEnhancements(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry2, hitPosition2, damageResolution2.Damage);
+				SkillExecution.ApplyHitEnhancements(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry2, hitPosition2, damageResolution2.Damage);
 				result2 = true;
 				num++;
 			}
@@ -614,20 +619,34 @@ public partial class SingleSkillActor
 	/// 전달된 런타임 입력값을 사용해 ApplyCoreOnHitAdditionalDamage 작업을 시도하고 성공 여부를 반환한다.
 	private static void TryApplyCoreOnHitAdditionalDamage(InGameCombatManager manager, SkillExecutionData snapshot, UnitCombatState source, string sourceSkillId, CombatUnitEntry target, float primaryDamage, bool isCoreHit)
 	{
-		if (isCoreHit && !(manager == null) && snapshot != null && snapshot.HasCoreOnHitAdditionalDamage && !(snapshot.CoreOnHitAdditionalDamageMultiplier <= 0f) && source != null && target != null && target.IsAlive && target.Model != null && !(primaryDamage <= 0f) && !(UnityEngine.Random.value > Mathf.Clamp01(snapshot.CoreOnHitAdditionalDamageChance)))
+		if (manager == null || source == null || target == null || !target.IsAlive || target.Model == null || primaryDamage <= 0f
+			|| !SkillExecutionRuleResolver.ResolveCoreAdditionalDamage(
+				snapshot,
+				isCoreHit,
+				out var chance,
+				out var multiplier,
+				out var attribute)
+			|| UnityEngine.Random.value > chance)
 		{
-			manager.ApplyDamage(target.Model, primaryDamage * snapshot.CoreOnHitAdditionalDamageMultiplier, snapshot.CoreOnHitAdditionalDamageAttribute, source, criticalAllowed: false, 0f, 0f, sourceSkillId, suppressOutgoingDamageTriggers: true);
+			return;
 		}
+
+		manager.ApplyDamage(
+			target.Model,
+			primaryDamage * multiplier,
+			attribute,
+			source,
+			criticalAllowed: false,
+			0f,
+			0f,
+			sourceSkillId,
+			suppressOutgoingDamageTriggers: true);
 	}
 
 	/// 전달된 런타임 입력값을 사용해 ApplyHitCountCooldownRefund 작업을 시도하고 성공 여부를 반환한다.
 	private static void TryApplyHitCountCooldownRefund(SkillExecutionData sourceRuntime, SkillExecutionData snapshot, int hitCount)
 	{
-		if (sourceRuntime != null && sourceRuntime.Owner != null && sourceRuntime.Owner.Skills != null && snapshot != null && hitCount >= snapshot.HitCountCooldownRefundMinTargets && !string.IsNullOrWhiteSpace(snapshot.HitCountCooldownRefundTargetSkillId) && !(snapshot.HitCountCooldownRefundRatio <= 0f))
-		{
-			SkillExecutionData skillRuntimeInstance = sourceRuntime.Owner.SkillState.FindBySkillId(snapshot.HitCountCooldownRefundTargetSkillId);
-			skillRuntimeInstance?.ReduceCooldownRemaining(skillRuntimeInstance.EffectiveCooldownDuration * Mathf.Clamp01(snapshot.HitCountCooldownRefundRatio));
-		}
+		SkillExecution.ApplyHitCountCooldownRefund(sourceRuntime, snapshot, hitCount);
 	}
 
 	/// 전달된 런타임 입력값을 사용해 ExecuteOnHitCountEffects 작업을 시도하고 성공 여부를 반환한다.
@@ -728,16 +747,15 @@ public partial class SingleSkillActor
 	/// 전달된 런타임 입력값을 사용해 TargetDamage 결과값을 생성해 반환한다.
 	private static TargetDamageResolution TargetDamage(SkillExecutionData snapshot, float baseDamage, UnitCombatState target, float baseCritChanceBonus, bool isCoreHit)
 	{
-		float num = Mathf.Max(0f, baseDamage + TargetStatusStackAdditionalDamage(snapshot, target, baseDamage));
-		float num2 = 1f;
+		float num = Mathf.Max(0f, baseDamage + SkillExecutionRuleResolver.ResolveTargetStatusStackDamage(snapshot, target, baseDamage));
+		float num2 = SkillExecutionRuleResolver.ResolveHitDamageMultiplier(snapshot, target);
 		float critChanceBonus = baseCritChanceBonus;
 		if (snapshot != null)
 		{
-				num2 = Mathf.Max(0f, snapshot.DamageMultiplier) * SkillExecutionRuleResolver.ConditionalDamageMultiplier(snapshot, target);
-			critChanceBonus += SkillExecutionRuleResolver.ConditionalCritChanceBonus(snapshot, target);
+			critChanceBonus += SkillExecutionRuleResolver.ResolveHitCritChanceBonus(snapshot, target);
 		}
 		bool flag = false;
-		int pendingConsumedStacks = PendingConsumedStacks(snapshot, target);
+		int pendingConsumedStacks = SkillExecutionRuleResolver.ResolveConsumedStatusStacks(snapshot, target);
 		if (isCoreHit && snapshot != null && snapshot.HasCoreDamageMultiplier)
 		{
 			num2 *= snapshot.CoreDamageMultiplier;
@@ -749,53 +767,6 @@ public partial class SingleSkillActor
 			ref critChanceBonus,
 			out flag);
 		return new TargetDamageResolution(Mathf.Max(0f, num), Mathf.Max(0f, num2), critChanceBonus, flag, pendingConsumedStacks);
-	}
-
-	/// 전달된 런타임 입력값을 사용해 TargetStatusStackAdditionalDamage 결과값을 생성해 반환한다.
-	private static float TargetStatusStackAdditionalDamage(SkillExecutionData snapshot, UnitCombatState target, float baseDamage)
-	{
-		if (snapshot == null || target == null || snapshot.PreparedTargetStatusStackStatusKind == StatusEffectKind.None)
-		{
-			return 0f;
-		}
-		int num = StatusStacks(target, snapshot.PreparedTargetStatusStackStatusKind);
-		if (num <= 0)
-		{
-			return 0f;
-		}
-		if (snapshot.PreparedTargetStatusStackMaxStacks > 0)
-		{
-			num = Mathf.Min(num, snapshot.PreparedTargetStatusStackMaxStacks);
-		}
-		float num2 = snapshot.PreparedTargetStatusStackDamage;
-		float b = snapshot.TargetStatusStackDamageMultiplier;
-		float num3 = snapshot.PreparedTargetStatusStackDamageRateBonus;
-		float num4 = num2 * Mathf.Max(0f, b) + Mathf.Max(0f, baseDamage) * num3;
-		return Mathf.Max(0f, (float)num * num4);
-	}
-
-	/// 전달된 런타임 입력값을 사용해 PendingConsumedStacks 결과값을 생성해 반환한다.
-	private static int PendingConsumedStacks(SkillExecutionData snapshot, UnitCombatState target)
-	{
-		if (snapshot == null || target == null || snapshot.PreparedConsumeTargetStatusKind == StatusEffectKind.None)
-		{
-			return 0;
-		}
-		int num = StatusStacks(target, snapshot.PreparedConsumeTargetStatusKind);
-		if (num <= 0)
-		{
-			return 0;
-		}
-		if (snapshot.PreparedConsumeTargetStatusStacks > 0)
-		{
-			return Mathf.Clamp(snapshot.PreparedConsumeTargetStatusStacks, 0, num);
-		}
-		float num2 = snapshot.PreparedConsumeTargetStatusRatio;
-		if (num2 <= 0f)
-		{
-			return 0;
-		}
-		return Mathf.Clamp(Mathf.FloorToInt((float)num * Mathf.Clamp01(num2)), 0, num);
 	}
 
 	/// 전달된 런타임 입력값을 사용해 PendingTargetStatusStacks를 현재 런타임 상태에서 소비한다.
@@ -811,22 +782,30 @@ public partial class SingleSkillActor
 	/// 전달된 런타임 입력값을 사용해 RedistributeConsumedStatusOnKill 작업을 시도하고 성공 여부를 반환한다.
 	private static void TryRedistributeConsumedStatusOnKill(InGameCombatManager manager, CombatUnitEntry sourceEntry, UnitSpawnManager roster, UnitCombatState source, SkillExecutionData snapshot, CombatUnitEntry defeatedTarget, InGameResourceChangeResult result, int consumedStacks)
 	{
-		if (manager == null || sourceEntry == null || roster == null || source == null || snapshot == null || defeatedTarget == null || defeatedTarget.Transform == null || !result.IsDead || consumedStacks <= 0 || snapshot.RedistributeConsumedStatusRatioOnKill <= 0f || snapshot.RedistributeConsumedStatusKind == StatusEffectKind.None || snapshot.RedistributeConsumedStatusSearchRadius <= 0f)
+		if (manager == null || sourceEntry == null || roster == null || source == null || defeatedTarget == null || defeatedTarget.Transform == null || !result.IsDead
+			|| !SkillExecutionRuleResolver.ResolveStatusRedistribution(
+				snapshot,
+				consumedStacks,
+				out var redistributedStacks,
+				out var statusKind,
+				out var searchRadius,
+				out var maxTargetCount))
 		{
 			return;
 		}
-		int num = Mathf.FloorToInt((float)consumedStacks * Mathf.Clamp01(snapshot.RedistributeConsumedStatusRatioOnKill));
-		if (num <= 0)
-		{
-			return;
-		}
-		List<CombatUnitEntry> list = RedistributionTargets(sourceEntry, roster, defeatedTarget.Transform.position, snapshot.RedistributeConsumedStatusSearchRadius, defeatedTarget.Model, snapshot.RedistributeConsumedStatusTargetCount);
+		List<CombatUnitEntry> list = RedistributionTargets(
+			sourceEntry,
+			roster,
+			defeatedTarget.Transform.position,
+			searchRadius,
+			defeatedTarget.Model,
+			maxTargetCount);
 		if (list.Count <= 0)
 		{
 			return;
 		}
-		int num2 = num / list.Count;
-		int num3 = num % list.Count;
+		int num2 = redistributedStacks / list.Count;
+		int num3 = redistributedStacks % list.Count;
 		for (int i = 0; i < list.Count; i++)
 		{
 			CombatUnitEntry unitEntry = list[i];
@@ -837,7 +816,7 @@ public partial class SingleSkillActor
 			}
 			if (unitEntry != null && unitEntry.Model != null && num4 > 0)
 			{
-				StatusApplicationSpec projectileStatusHitSpec = SkillExecutionRuleResolver.CreateDirectStatusSpec(snapshot.RedistributeConsumedStatusKind, num4, snapshot);
+				StatusApplicationSpec projectileStatusHitSpec = SkillExecutionRuleResolver.CreateDirectStatusSpec(statusKind, num4, snapshot);
 				if (projectileStatusHitSpec != null)
 				{
 					StatusCombatRules.ApplyStatus(manager, unitEntry.Model, projectileStatusHitSpec, source);
@@ -881,28 +860,6 @@ public partial class SingleSkillActor
 			list.RemoveRange(maxTargetCount, list.Count - maxTargetCount);
 		}
 		return list;
-	}
-
-	/// 전달된 런타임 입력값을 사용해 StatusStacks 결과값을 생성해 반환한다.
-	private static int StatusStacks(UnitCombatState target, StatusEffectKind kind)
-	{
-		if (target == null || kind == StatusEffectKind.None)
-		{
-			return 0;
-		}
-		if (kind == StatusEffectKind.Shield)
-		{
-			if (target.Resources == null || !(target.Resources.CurrentShield > 0f))
-			{
-				return 0;
-			}
-			return 1;
-		}
-		if (target.Statuses == null)
-		{
-			return 0;
-		}
-		return target.Statuses.GetStacks(kind);
 	}
 
 	/// 전달된 런타임 입력값을 사용해 소유한 런타임 상태에 Status가 있는지 반환한다.

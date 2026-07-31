@@ -138,9 +138,7 @@ namespace Pakuri.InGame
 
                 var hitPosition = (Vector2)target.Transform.position;
                 var resolvedDamage = Mathf.Max(0f, damage);
-                var finalDamageMultiplier = executionData != null
-                    ? Mathf.Max(0f, executionData.DamageMultiplier) * SkillExecutionRuleResolver.ConditionalDamageMultiplier(executionData, target.Model)
-                    : 1f;
+                var finalDamageMultiplier = SkillExecutionRuleResolver.ResolveHitDamageMultiplier(executionData, target.Model);
                 var damageResult = combatManager.ApplyDamage(target.Model, resolvedDamage, attribute, sourceModel, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, finalDamageMultiplier: finalDamageMultiplier);
                 TryApplyKnockback(target, direction, knockbackDistance);
                 if (!damageResult.IsDead)
@@ -148,7 +146,7 @@ namespace Pakuri.InGame
                     var targetKey = TargetKey(target.Model);
                     TryApplyStatus(combatManager, target.Model, statusSpec, sourceModel, targetKey, appliedBaseStatusTargets);
                 }
-                SkillExecutionRuleResolver.ApplyHitEnhancements(
+                SkillExecution.ApplyHitEnhancements(
                     combatManager,
                     roster,
                     runtime,

@@ -290,7 +290,7 @@ namespace Pakuri.InGame
                 {
                     TryApplyStatus(target.Model);
                 }
-                SkillExecutionRuleResolver.ApplyHitEnhancements(
+                SkillExecution.ApplyHitEnhancements(
                     combatManager,
                     combatManager != null ? combatManager.Units : null,
                     runtime,
@@ -330,13 +330,7 @@ namespace Pakuri.InGame
         /// 전달된 target 값을 사용해 HitDamageMultiplier 결과값을 생성해 반환한다.
         private float HitDamageMultiplier(UnitCombatState target)
         {
-            var multiplier = executionData != null
-                ? Mathf.Max(0f, executionData.DamageMultiplier)
-                : 1f;
-            if (executionData != null)
-            {
-                multiplier *= SkillExecutionRuleResolver.ConditionalDamageMultiplier(executionData, target);
-            }
+            var multiplier = SkillExecutionRuleResolver.ResolveHitDamageMultiplier(executionData, target);
 
             if (runtime != null && executionData != null)
             {
@@ -579,7 +573,7 @@ namespace Pakuri.InGame
 
             if (hasImpactArea)
             {
-                SkillExecutionRuleResolver.ApplyAreaHits(
+                SkillExecution.ApplyAreaHits(
                     combatManager,
                     combatManager.Units != null ? combatManager.Units.Find(owner) : null,
                     combatManager.Units,

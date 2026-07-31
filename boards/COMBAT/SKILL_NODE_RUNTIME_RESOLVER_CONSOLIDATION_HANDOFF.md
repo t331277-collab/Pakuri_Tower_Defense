@@ -48,7 +48,7 @@ Node 의미의 런타임 구현을 `SkillExecutionRuleResolver` 하나로 통합
 - Code Builder가 지적 1~7을 코드로 검증하고 handoff 보강 완료.
 - Phase 1 baseline/inventory 완료 및 커밋.
 - Phase 2 Node composition 구현 및 빌드 검증 완료.
-- Phase 4 SkillStatus·SingleSkillRules 흡수와 legacy type 삭제 완료; 다음은 Execution과 Actor의 Node 의미 정리다.
+- Phase 5 Execution·Actor의 Node 의미 정리와 Resolver runtime 적용 분리 완료; 다음은 Trigger gate-only 전환이다.
 
 ## Selected Code Builder tracks
 
@@ -520,6 +520,8 @@ Status: complete. Resolved status values now use the existing StatusApplicationS
 
 ### Phase 5 — remove Node meaning from Execution and Actors
 
+Status: complete. Cast effect and cast-condition reads now enter through Resolver APIs, Single repeat/core/status/refund calculations are centralized, Projectile/Line/Zone use shared hit calculation, and damage/status/trigger/reload runtime application is owned by SkillExecution. Assembly-CSharp builds with 0 errors.
+
 1. `SkillExecution`의 `SkillCastEffectOp`, `CastConditionOp`, `CountStatusDamageActionOp` Node 해석을 Resolver로 이동한다.
 2. Single Actor의 repeat/core/status redistribution/hit-count refund 해석을 Resolver로 이동한다.
 3. Projectile, Line, Zone의 조건부 Node 계산을 Resolver API 하나로 통일한다.
@@ -720,3 +722,4 @@ Unity-MCP로 editor compile과 console을 확인한다. Play Mode gameplay 검�
 - 2026-07-31: Phase 2 moved Node extraction and Node action value composition to Resolver; Assembly-CSharp build passed with 0 errors.
 - 2026-07-31: Phase 3 absorbed per-skill runtime state into SkillExecutionData, skill-list state into UnitSkills, removed SkillUseState and SkillExecutionState from C# callers, and passed Assembly-CSharp build with 0 errors.
 - 2026-07-31: Phase 4 moved status calculation into SkillExecutionRuleResolver, reused StatusApplicationSpec for resolved status values, moved Single damage calculation and recovery orchestration to existing owners, deleted SkillStatus and SingleSkillRules with their meta files, and passed Assembly-CSharp build with 0 errors.
+- 2026-07-31: Phase 5 moved cast/repeat/core/status/refund value resolution into SkillExecutionRuleResolver, moved shared damage/status/trigger/reload application into SkillExecution, unified family hit multipliers, and passed Assembly-CSharp build with 0 errors.
