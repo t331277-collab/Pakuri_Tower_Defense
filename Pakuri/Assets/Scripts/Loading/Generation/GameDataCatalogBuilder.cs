@@ -97,6 +97,12 @@ namespace Pakuri.Data
                     catalog.StatusEffects);
                 AttachSkillTriggers(monster.ActiveSkills, monster.SkillTriggers);
                 monster.PassiveSkills = BuildPassiveSkills(model, monster);
+                AttachNormalCastEffects(
+                    model,
+                    sourceMonster.Id,
+                    monster.ActiveSkills,
+                    monster.PassiveSkills,
+                    catalog.StatusEffects);
                 monsters.Add(monster);
             }
 
@@ -863,7 +869,8 @@ namespace Pakuri.Data
         {
             var triggers = FilterAndSort(
                 model.SkillTriggers.Values,
-                trigger => string.Equals(trigger.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase),
+                trigger => string.Equals(trigger.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase)
+                    && !IsNormalCastEffect(trigger),
                 (left, right) => left.SortOrder.CompareTo(right.SortOrder));
 
             var definitions = new SkillTriggerDefinition[triggers.Count];
@@ -911,6 +918,168 @@ namespace Pakuri.Data
             }
 
             return definitions;
+        }
+
+        private static bool IsNormalCastEffect(SkillTriggerRow trigger)
+        {
+            return trigger != null
+                && (trigger.TriggerEvent == SkillTriggerEvent.OnCast
+                    || (trigger.TriggerEvent == SkillTriggerEvent.OnSkillCast
+                        && string.IsNullOrWhiteSpace(trigger.EventSkillId)));
+        }
+
+        private void AttachNormalCastEffects(
+            SourceModel model,
+            string monsterId,
+            SkillDefinition[] activeSkills,
+            PassiveSkillDefinition[] passiveSkills,
+            StatusEffectDefinition[] statusDefinitions)
+        {
+            var rows = FilterAndSort(
+                model.SkillTriggers.Values,
+                trigger => string.Equals(
+                        trigger.MonsterId,
+                        monsterId,
+                        StringComparison.OrdinalIgnoreCase)
+                    && IsNormalCastEffect(trigger),
+                (left, right) => left.SortOrder.CompareTo(right.SortOrder));
+
+            for (var i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                if (string.Equals(
+                    row.Id,
+                    "eve-h-trait-3",
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var nodes = BuildSkillNodes(
+                    model,
+                    SkillNodeOwnerKind.Trigger,
+                    row.Id,
+                    row.SourceSkillId);
+                var effectNode = BuildNormalCastEffectNode(
+                    row,
+                    nodes,
+                    activeSkills,
+                    statusDefinitions);
+                if (effectNode == null)
+                {
+                    continue;
+                }
+
+                var source = FindSkillDefinition(
+                    activeSkills,
+                    passiveSkills,
+                    row.SourceSkillId);
+                if (source == null)
+                {
+                    throw new InvalidOperationException(
+                        "Normal cast effect source is not registered: " + row.SourceSkillId);
+                }
+
+                if (string.IsNullOrWhiteSpace(row.RequiresActiveChoiceId))
+                {
+                    source.Nodes = AppendNode(source.Nodes, effectNode);
+                    continue;
+                }
+
+                var choice = FindSkillChoice(source, row.RequiresActiveChoiceId);
+                if (choice == null)
+                {
+                    throw new InvalidOperationException(
+                        "Normal cast effect choice is not registered: "
+                        + row.RequiresActiveChoiceId);
+                }
+                choice.Nodes = AppendNode(choice.Nodes, effectNode);
+            }
+        }
+
+        private static SkillDefinition FindSkillDefinition(
+            SkillDefinition[] activeSkills,
+            PassiveSkillDefinition[] passiveSkills,
+            string skillId)
+        {
+            if (activeSkills != null)
+            {
+                for (var i = 0; i < activeSkills.Length; i++)
+                {
+                    if (activeSkills[i] != null
+                        && string.Equals(
+                            activeSkills[i].SkillId,
+                            skillId,
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        return activeSkills[i];
+                    }
+                }
+            }
+            if (passiveSkills != null)
+            {
+                for (var i = 0; i < passiveSkills.Length; i++)
+                {
+                    if (passiveSkills[i] != null
+                        && string.Equals(
+                            passiveSkills[i].SkillId,
+                            skillId,
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        return passiveSkills[i];
+                    }
+                }
+            }
+            return null;
+        }
+
+        private static SkillChoice FindSkillChoice(
+            SkillDefinition skill,
+            string choiceId)
+        {
+            var choice = FindSkillChoice(skill?.EnhancementChoices, choiceId)
+                ?? FindSkillChoice(skill?.MasterChoices, choiceId);
+            if (choice != null)
+            {
+                return choice;
+            }
+            return skill is PassiveSkillDefinition passive
+                ? FindSkillChoice(passive.BaseModifierChoices, choiceId)
+                : null;
+        }
+
+        private static SkillChoice FindSkillChoice(
+            SkillChoice[] choices,
+            string choiceId)
+        {
+            if (choices == null)
+            {
+                return null;
+            }
+            for (var i = 0; i < choices.Length; i++)
+            {
+                if (choices[i] != null
+                    && string.Equals(
+                        choices[i].ChoiceId,
+                        choiceId,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    return choices[i];
+                }
+            }
+            return null;
+        }
+
+        private static SkillNode[] AppendNode(SkillNode[] nodes, SkillNode node)
+        {
+            var length = nodes?.Length ?? 0;
+            var result = new SkillNode[length + 1];
+            if (length > 0)
+            {
+                Array.Copy(nodes, result, length);
+            }
+            result[length] = node;
+            return result;
         }
 
         /// 전달된 런타임 입력값을 사용해 SkillTriggers를 연결한다.

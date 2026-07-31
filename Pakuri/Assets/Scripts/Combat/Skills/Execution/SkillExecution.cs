@@ -4,6 +4,7 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
@@ -406,6 +407,8 @@ namespace Pakuri.InGame
                     monsterActor.TryPlayActiveSkillAnimation();
                 }
 
+                ExecuteCastEffects(context, snapshot);
+
                 if (publishSkillLifecycleEvents)
                 {
                     SkillTrigger.PublishLifecycleEvent(
@@ -430,6 +433,183 @@ namespace Pakuri.InGame
             }
 
             return routed;
+        }
+
+        /// 학습한 passive의 일반 효과를 전투 시작 시 기존 효과 경로로 적용한다.
+        public void ExecutePassiveEffects(
+            InGameCombatManager combatManager,
+            UnitSpawnManager roster,
+            UnitCombatState owner,
+            bool enemyTargetsOnly = false)
+        {
+            var ownerEntry = roster != null ? roster.Find(owner) : null;
+            if (combatManager == null
+                || roster == null
+                || ownerEntry == null
+                || owner?.SkillState == null)
+            {
+                return;
+            }
+
+            var passives = owner.SkillState.PassiveSkills;
+            for (var i = 0; i < passives.Count; i++)
+            {
+                var runtime = passives[i];
+                if (runtime?.Data == null)
+                {
+                    continue;
+                }
+
+                var snapshot = owner.SkillState.CreateExecutionData(owner, runtime, roster);
+                var context = new SkillExecutionContext(
+                    combatManager,
+                    roster,
+                    ownerEntry,
+                    runtime,
+                    publishSkillLifecycleEvents: false,
+                    sourceSkillId: runtime.SkillId);
+                ExecuteCastEffects(context, snapshot, enemyTargetsOnly);
+            }
+        }
+
+        private static void ExecuteCastEffects(
+            SkillExecutionContext context,
+            SkillExecutionData sourceSnapshot,
+            bool enemyTargetsOnly = false)
+        {
+            if (context?.CombatManager == null || sourceSnapshot == null)
+            {
+                return;
+            }
+
+            var effects = sourceSnapshot.CastEffects;
+            for (var i = 0; i < effects.Count; i++)
+            {
+                var effect = effects[i];
+                if (effect == null
+                    || (enemyTargetsOnly
+                        && effect.Targeting?.TargetSide != SkillTargetSide.Enemy))
+                {
+                    continue;
+                }
+
+                if (effect.DelaySeconds > 0f)
+                {
+                    context.CombatManager.StartCoroutine(
+                        ExecuteCastEffectDelayed(context, sourceSnapshot, effect));
+                }
+                else
+                {
+                    ExecuteCastEffect(context, sourceSnapshot, effect);
+                }
+            }
+        }
+
+        private static IEnumerator ExecuteCastEffectDelayed(
+            SkillExecutionContext context,
+            SkillExecutionData sourceSnapshot,
+            SkillCastEffect effect)
+        {
+            yield return new WaitForSeconds(effect.DelaySeconds);
+            if (context?.CasterEntry != null && context.CasterEntry.IsAlive)
+            {
+                ExecuteCastEffect(context, sourceSnapshot, effect);
+            }
+        }
+
+        private static bool ExecuteCastEffect(
+            SkillExecutionContext context,
+            SkillExecutionData sourceSnapshot,
+            SkillCastEffect effect)
+        {
+            if (context == null || sourceSnapshot == null || effect == null)
+            {
+                return false;
+            }
+
+            var snapshot = sourceSnapshot.CopyWithDamageMultiplier(1f);
+            snapshot.PreparedSkillId = effect.EffectId;
+            snapshot.PreparedTargeting = effect.Targeting;
+            snapshot.PreparedRuntimeVisual = effect.RuntimeVisual;
+            snapshot.PreparedSkillEffectPrefab = effect.SkillEffectPrefab;
+
+            if (effect.HasDamage)
+            {
+                var primaryCenter = SkillTargeting.AreaCenter(
+                    context,
+                    effect.Targeting,
+                    effect.Area);
+                var baseRadius = SkillTargeting.BaseRadius(effect.Targeting, effect.Area);
+                snapshot.PreparedCenters = new[] { primaryCenter };
+                snapshot.PreparedBaseRadius = baseRadius;
+                snapshot.PreparedRadius = SkillTargeting.Radius(
+                    baseRadius,
+                    snapshot.RadiusMultiplier,
+                    snapshot.RadiusBonus);
+                snapshot.PreparedCoverAll = effect.Targeting != null
+                    && effect.Targeting.CoverAll;
+                snapshot.PreparedDamage = DamageCalculator.CalculateRawDamage(
+                    context.Caster,
+                    effect.Damage);
+                snapshot.PreparedDamageAttribute = effect.Damage.Element;
+                snapshot.PreparedStatus = SkillStatus.StatusSpec(effect.Status, snapshot);
+                snapshot.PreparedCriticalAllowed = effect.Damage.CriticalAllowed;
+                snapshot.PreparedHitTargetCount = snapshot.PreparedCoverAll
+                    ? int.MaxValue
+                    : 1;
+                snapshot.PreparedUsesHitTargetCount = true;
+                return SingleSkillExecutor.Execute(context, snapshot);
+            }
+
+            var targets = SkillTargeting.BuffTargets(
+                context,
+                effect.Targeting != null
+                    ? effect.Targeting.TargetSide
+                    : SkillTargetSide.Self,
+                true,
+                effect.Targeting);
+            snapshot.PreparedTargets = targets;
+            if (effect.ExtendsStatus)
+            {
+                var changed = false;
+                for (var i = 0; i < targets.Count; i++)
+                {
+                    var target = targets[i];
+                    if (target?.Model != null)
+                    {
+                        changed |= context.CombatManager.ExtendStatusDuration(
+                            target.Model,
+                            effect.ExtendStatusKind,
+                            effect.DurationSeconds);
+                    }
+                }
+                return changed;
+            }
+
+            if (effect.HasShield)
+            {
+                var stat = effect.ShieldStatSource == StatSource.Attack
+                    ? context.Caster.Stats.AttackPower
+                        * StatusCombatRules.AttackPowerMultiplier(context.Caster)
+                    : context.Caster.Stats.SpellPower
+                        * StatusCombatRules.SpellPowerMultiplier(context.Caster);
+                snapshot.PreparedBuffEffectKind = BuffEffectKind.Shield;
+                snapshot.PreparedShieldAmount = Mathf.Max(
+                    0f,
+                    effect.ShieldBase + stat * effect.ShieldCoefficient);
+                snapshot.PreparedDuration = Mathf.Max(0f, effect.DurationSeconds);
+                snapshot.PreparedShieldStatusData = effect.ShieldStatus;
+                return BuffSkillExecutor.Execute(context, snapshot);
+            }
+
+            if (effect.HasStatus)
+            {
+                snapshot.PreparedBuffEffectKind = BuffEffectKind.Status;
+                snapshot.PreparedStatus = SkillStatus.StatusSpec(effect.Status, snapshot);
+                return BuffSkillExecutor.Execute(context, snapshot);
+            }
+
+            return false;
         }
 
         /// 전달된 런타임 입력값을 사용해 SkillCastTriggers를 관련 런타임 시스템에 알린다.

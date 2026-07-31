@@ -137,12 +137,26 @@ namespace Pakuri.InGame
                 playerCombatControl.ApplyAutoSkillModeToSelectedPlayer(Units);
             }
 
+            skillExecution.ExecutePassiveEffects(this, Units, model);
             DispatchCombatStartOnce(model);
         }
 
         /// 전달된 model 값을 사용해 EnemyUnitRegistered를 관련 런타임 시스템에 알린다.
         internal void NotifyEnemyUnitRegistered(EnemyCombatState model)
         {
+            var entries = Units.Entries;
+            for (var i = 0; i < entries.Count; i++)
+            {
+                var owner = entries[i]?.Model;
+                if (owner != null && !(owner is EnemyCombatState))
+                {
+                    skillExecution.ExecutePassiveEffects(
+                        this,
+                        Units,
+                        owner,
+                        enemyTargetsOnly: true);
+                }
+            }
             DispatchCombatStartOnce(model);
         }
 

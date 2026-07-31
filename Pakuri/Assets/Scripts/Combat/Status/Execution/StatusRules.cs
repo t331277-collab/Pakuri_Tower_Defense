@@ -198,7 +198,13 @@ namespace Pakuri.InGame
         /// 전달된 model 값을 사용해 ActionSpeedMultiplier 결과값을 생성해 반환한다.
         public static float ActionSpeedMultiplier(UnitCombatState model)
         {
-            return Mathf.Max(MinimumActionMultiplier, 1f + SumStacked(model, data => data.Modifiers.ActionSpeedBonus));
+            return Mathf.Max(
+                MinimumActionMultiplier,
+                1f + SumStacked(
+                    model,
+                    data => MeetsConditionalSourceStatus(model, data)
+                        ? data.Modifiers.ActionSpeedBonus
+                        : 0f));
         }
 
         /// 전달된 model 값을 사용해 SpeedMultiplier를 이동시킨다.
@@ -210,7 +216,13 @@ namespace Pakuri.InGame
         /// 전달된 model 값을 사용해 AttackPowerMultiplier 결과값을 생성해 반환한다.
         public static float AttackPowerMultiplier(UnitCombatState model)
         {
-            return Mathf.Max(0f, 1f + SumStacked(model, data => data.Modifiers.AttackPowerBonus));
+            return Mathf.Max(
+                0f,
+                1f + SumStacked(
+                    model,
+                    data => MeetsConditionalSourceStatus(model, data)
+                        ? data.Modifiers.AttackPowerBonus
+                        : 0f));
         }
 
         /// 전달된 model 값을 사용해 SpellPowerMultiplier 결과값을 생성해 반환한다.
@@ -226,23 +238,45 @@ namespace Pakuri.InGame
         }
 
         /// 전달된 model 값을 사용해 CriticalChanceBonus 결과값을 생성해 반환한다.
-        public static float CriticalChanceBonus(UnitCombatState model)
+        public static float CriticalChanceBonus(
+            UnitCombatState model,
+            UnitCombatState target = null)
         {
-            return SumStacked(model, data => data.Modifiers.CritChanceBonusRate);
+            return SumStacked(
+                model,
+                data => MeetsConditionalEffectTarget(target, data)
+                    ? data.Modifiers.CritChanceBonusRate
+                    : 0f);
         }
 
         /// 전달된 model 값을 사용해 CriticalDamageBonus 결과값을 생성해 반환한다.
-        public static float CriticalDamageBonus(UnitCombatState model)
+        public static float CriticalDamageBonus(
+            UnitCombatState model,
+            UnitCombatState target = null)
         {
-            return SumStacked(model, data => data.Modifiers.CritDamageBonusRate);
+            return SumStacked(
+                model,
+                data => MeetsConditionalEffectTarget(target, data)
+                    ? data.Modifiers.CritDamageBonusRate
+                    : 0f);
         }
 
         /// 전달된 런타임 입력값을 사용해 OutgoingDamageBonus 결과값을 생성해 반환한다.
         public static float OutgoingDamageBonus(UnitCombatState source, DamageAttribute attribute, string sourceSkillId = null)
         {
+            return OutgoingDamageBonus(source, null, attribute, sourceSkillId);
+        }
+
+        public static float OutgoingDamageBonus(
+            UnitCombatState source,
+            UnitCombatState target,
+            DamageAttribute attribute,
+            string sourceSkillId = null)
+        {
             return SumStacked(source, data =>
             {
                 if (MatchesAttribute(data, attribute)
+                    && MeetsConditionalEffectTarget(target, data)
                     && StatusConditionRules.MatchesSkillRuntimeKinds(
                         data.ConditionalOutgoingSkillRuntimeKindValues,
                         sourceSkillId))
@@ -313,6 +347,10 @@ namespace Pakuri.InGame
                 {
                     bonus += data.ConditionalDamageTakenBonus;
                 }
+                if (!MeetsConditionalEffectTarget(target, data))
+                {
+                    bonus = 0f;
+                }
 
                 return bonus;
             });
@@ -341,6 +379,10 @@ namespace Pakuri.InGame
                 {
                     continue;
                 }
+                if (!MeetsConditionalEffectTarget(target, data))
+                {
+                    continue;
+                }
 
                 var reductionMultiplier = 1f - Mathf.Clamp01(data.ElementResistReduction);
                 for (var stackIndex = 0; stackIndex < status.Stacks; stackIndex++)
@@ -359,7 +401,9 @@ namespace Pakuri.InGame
             {
                 if (MatchesAttribute(data, attribute))
                 {
-                    return data.FlatElementResistReduction;
+                    return MeetsConditionalEffectTarget(target, data)
+                        ? data.FlatElementResistReduction
+                        : 0f;
                 }
 
                 return 0f;
@@ -381,7 +425,11 @@ namespace Pakuri.InGame
         /// 전달된 target 값을 사용해 CriticalResistanceBonus 결과값을 생성해 반환한다.
         public static float CriticalResistanceBonus(UnitCombatState target)
         {
-            return SumStacked(target, data => data.CriticalResistanceBonus);
+            return SumStacked(
+                target,
+                data => MeetsConditionalEffectTarget(target, data)
+                    ? data.CriticalResistanceBonus
+                    : 0f);
         }
 
         /// 전달된 런타임 입력값을 사용해 ConditionalStatusChanceBonus 결과값을 생성해 반환한다.
@@ -521,6 +569,52 @@ namespace Pakuri.InGame
             }
 
             return source.Statuses != null && source.Statuses.Has(data.ConditionalSourceStatusKind);
+        }
+
+        private static bool MeetsConditionalSourceStatus(
+            UnitCombatState source,
+            StatusRuntimeData data)
+        {
+            return data == null
+                || data.ConditionalSourceStatusKind == StatusEffectKind.None
+                || MatchesConditionalSourceStatus(source, data);
+        }
+
+        private static bool MeetsConditionalEffectTarget(
+            UnitCombatState target,
+            StatusRuntimeData data)
+        {
+            if (data == null)
+            {
+                return false;
+            }
+            if (data.ConditionalTargetHealthRatioMax > 0f)
+            {
+                if (target?.Resources == null
+                    || target.Stats == null
+                    || target.Stats.MaxHealth <= 0f
+                    || target.Resources.CurrentHealth / target.Stats.MaxHealth
+                        > data.ConditionalTargetHealthRatioMax)
+                {
+                    return false;
+                }
+            }
+            if (data.ConditionalTargetStatusGroups != null
+                && data.ConditionalTargetStatusGroups.Length > 0
+                && !StatusConditionRules.MatchesConditionStatus(
+                    target,
+                    data.ConditionalTargetStatusGroups,
+                    data.ConditionalTargetStatusSourceSkillIds))
+            {
+                return false;
+            }
+            if (data.ConditionalTargetStatusKinds != null
+                && data.ConditionalTargetStatusKinds.Length > 0
+                && !MatchesConditionalTargetStatus(target, data))
+            {
+                return false;
+            }
+            return true;
         }
 
         /// 전달된 런타임 입력값을 사용해 MatchesConditionalTargetStatus 조건을 평가하고 결과를 반환한다.

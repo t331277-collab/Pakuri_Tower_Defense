@@ -38,7 +38,7 @@
 
 ## Status
 
-사용자가 `65 working / 17 incomplete / 76 non-Trigger` 분류, 17개 Trigger 효과 복구, 64개 일반 Choice/base/passive 효과 복구를 승인했다. Code Builder Phase 1~3 구현과 비-Play-Mode 검증 완료.
+사용자가 `65 working / 17 incomplete / 76 non-Trigger` 분류, 17개 Trigger 효과 복구, 64개 일반 Choice/base/passive 효과 복구를 승인했다. Code Builder Phase 1~4 구현과 비-Play-Mode 검증 완료.
 
 ## Core decision
 
@@ -712,6 +712,15 @@ SkillTrigger 공통 gate
 - 같은 source의 `vega-b-master1-second-slash`를 원본 follow-up 실행으로 이전.
 - runtime 결과가 있는 비-Trigger 12개의 현재 결과를 일반 Skill/Choice/Passive Node에서 보존.
 - no-outcome modifier 64개는 중복 삭제와 원본 시전의 Skill/Choice/Passive 효과 복구를 owner별로 수행.
+- 완료 증거:
+  - final runtime Trigger 배열은 `OnCast` 75개와 same-source `OnSkillCast` 1개를 모두 제외해 82개(`65 working + 17 incomplete`)만 보관한다.
+  - 중복 `eve-h-trait-3` OnCast 행은 등록하지 않고 실제 `OnStatusExpire` reaction만 유지한다.
+  - 일반 cast/passive payload 74개는 기존 source Skill, 요구 Choice 또는 Passive의 `SkillNode`에 `SkillCastEffectOp`로 연결된다.
+  - `ariel-e-trait-4`는 별도 피해 payload가 아니라 기존 `ConditionalDamageMultiplier` Choice Node(`holy-exposure`, 최소 1, ×1.5)로 교정된다.
+  - `SkillExecutionData`가 활성 Choice의 일반 효과를 수집하고, active cast 뒤 또는 passive 전투 시작 시 기존 Single/Buff/status API로 실행한다.
+  - `StatusModifier` 64개는 `PassiveBuff` runtime data로 생성되어 대상 상태식, 최소 stack, source skill, 체력 비율, source status 조건을 보존한다.
+  - `ariel-b-trait-5`는 Trigger 배열에 없고 Choice effect로 5초간 신성 피해 +12% 상태를 소유한다.
+  - solution build 오류 0, Unity 강제 script compile 뒤 EditMode 14/14 통과.
 
 ### Phase 5: Direct delivery reactions
 
@@ -801,7 +810,7 @@ SkillTrigger 공통 gate
 
 ## Next Actions
 
-- Code Builder가 Phase 4 비-Trigger 분리와 정상 효과 복구를 구현한다.
+- Code Builder가 Phase 5 direct delivery reaction과 incomplete Trigger 17개 효과 복구를 구현한다.
 - 각 Phase의 변경과 검증 결과를 별도 Git commit으로 기록한다.
 - Phase 8과 전체 검증 후 Code Reviewer 롤로 전환한다.
 - Reviewer가 수정을 요구하면 Code Reviewer 롤로 수정·재검증하고 통과할 때까지 반복한다.
@@ -833,6 +842,7 @@ SkillTrigger 공통 gate
 - Phase 2 verification: solution build error 0; Unity EditMode 13/13.
 - Phase 2 family exception: authored `Slash`와 `FireDragonSlash`는 `SkillRuntimeKind.AreaAttack`이지만 CSV `DamageArea` Generation 결과가 `SingleSkillDefinition`이다. 따라서 현재 `AreaAttack`은 기존 Definition family를 검증해 Single 또는 Zone Executor를 선택한다.
 - Phase 3 verification: `TryExecuteTriggered` 참조 0; `TryExecuteReaction`이 Trigger Definition 없이 기존 runtime/Definition을 받는다; solution build error 0; Unity EditMode 14/14.
+- Phase 4 verification: runtime Trigger 82, leaked OnCast/same-source Trigger 0, 일반 Skill/Choice/Passive cast effect 74 + 기존 조건부 위력 Choice 1, `eve-h-trait-3` 중복 0; solution build error 0; Unity EditMode 14/14.
 
 ## History
 
@@ -847,3 +857,4 @@ SkillTrigger 공통 gate
 - 2026-07-31: Code Builder completed Phase 1 semantic baseline test and non-Play-Mode verification.
 - 2026-07-31: Code Builder completed Phase 2 runtime-kind executor routing and full EditMode verification.
 - 2026-07-31: Code Builder completed Phase 3 existing-skill runtime reuse and removed the common execution entry point's dependency on `SkillTriggerDefinition`.
+- 2026-07-31: Code Builder completed Phase 4 by removing 76 semantic non-Triggers from runtime reaction registration and restoring 75 non-duplicate normal effects through existing Skill/Choice/Passive Nodes.

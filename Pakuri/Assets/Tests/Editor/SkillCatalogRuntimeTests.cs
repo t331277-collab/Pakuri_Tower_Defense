@@ -377,13 +377,13 @@ public sealed class SkillCatalogRuntimeTests
             triggers.AddRange(monster.SkillTriggers);
         }
 
-        Assert.That(triggers, Has.Count.EqualTo(158));
+        Assert.That(triggers, Has.Count.EqualTo(82));
         Assert.That(
             triggers.FindAll(trigger => trigger.TriggeredSkill != null),
-            Has.Count.EqualTo(55));
+            Has.Count.EqualTo(44));
         Assert.That(
             triggers.FindAll(trigger => trigger.Command != null),
-            Has.Count.EqualTo(22));
+            Has.Count.EqualTo(21));
         Assert.That(
             triggers.FindAll(trigger =>
                 trigger.Command?.Kind == SkillTriggerCommandKind.RecastZone),
@@ -399,11 +399,11 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(
             triggers.FindAll(trigger =>
                 trigger.Command?.Kind == SkillTriggerCommandKind.ExtendStatusDuration),
-            Has.Count.EqualTo(1));
+            Is.Empty);
         Assert.That(
             triggers.FindAll(trigger =>
                 trigger.TriggeredSkill == null && trigger.Command == null),
-            Has.Count.EqualTo(81));
+            Has.Count.EqualTo(17));
         Assert.That(
             triggers.FindAll(trigger =>
                 trigger.DamageValueSource != SkillTriggerDamageValueSource.Fixed),
@@ -423,16 +423,16 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(
             triggers.FindAll(trigger =>
                 trigger.TriggeredSkill is SingleSkillDefinition),
-            Has.Count.EqualTo(27));
+            Has.Count.EqualTo(24));
         Assert.That(
             triggers.FindAll(trigger =>
                 trigger.TriggeredSkill is BuffSkillDefinition),
-            Has.Count.EqualTo(24));
+            Has.Count.EqualTo(16));
         Assert.That(
             triggers.FindAll(trigger =>
                 trigger.TriggeredSkill is BuffSkillDefinition buff
                 && buff.EffectKind == BuffEffectKind.Shield),
-                Has.Count.EqualTo(3));
+            Is.Empty);
     }
 
     [Test]
@@ -445,26 +445,31 @@ public sealed class SkillCatalogRuntimeTests
             triggers.AddRange(monster.SkillTriggers);
         }
 
-        var nonTriggers = triggers.FindAll(trigger =>
+        var leakedNonTriggers = triggers.FindAll(trigger =>
             trigger.TriggerEvent == SkillTriggerEvent.OnCast
             || (trigger.TriggerEvent == SkillTriggerEvent.OnSkillCast
                 && (trigger.EventSkillIds == null || trigger.EventSkillIds.Length == 0)));
-        var semanticTriggers = triggers.FindAll(trigger => !nonTriggers.Contains(trigger));
-        var workingTriggers = semanticTriggers.FindAll(trigger =>
+        var workingTriggers = triggers.FindAll(trigger =>
             trigger.TriggeredSkill != null || trigger.Command != null);
-        var incompleteTriggers = semanticTriggers.FindAll(trigger =>
+        var incompleteTriggers = triggers.FindAll(trigger =>
             trigger.TriggeredSkill == null && trigger.Command == null);
+        var castEffects = new List<SkillCastEffect>();
+        foreach (var monster in GameDataLoader.CurrentCatalog.Monsters)
+        {
+            foreach (var skill in monster.ActiveSkills)
+            {
+                CollectCastEffects(skill, castEffects);
+            }
+            foreach (var passive in monster.PassiveSkills)
+            {
+                CollectCastEffects(passive, castEffects);
+            }
+        }
 
         Assert.That(workingTriggers, Has.Count.EqualTo(65));
         Assert.That(incompleteTriggers, Has.Count.EqualTo(17));
-        Assert.That(nonTriggers, Has.Count.EqualTo(76));
-        Assert.That(
-            nonTriggers.FindAll(trigger => trigger.TriggerEvent == SkillTriggerEvent.OnCast),
-            Has.Count.EqualTo(75));
-        Assert.That(
-            nonTriggers.FindAll(trigger =>
-                trigger.TriggerId == "vega-b-master1-second-slash"),
-            Has.Count.EqualTo(1));
+        Assert.That(leakedNonTriggers, Is.Empty);
+        Assert.That(castEffects, Has.Count.EqualTo(74));
         Assert.That(
             workingTriggers.Exists(trigger =>
                 trigger.TriggerId == "ariel-b-trait4-shield-expire"),
@@ -474,9 +479,26 @@ public sealed class SkillCatalogRuntimeTests
                 trigger.TriggerId == "eve-b-master-2"),
             Is.True);
         Assert.That(
-            nonTriggers.Exists(trigger =>
-                trigger.TriggerId == "ariel-b-trait-5"),
+            castEffects.Exists(effect =>
+                effect.EffectId == "ariel-b-trait-5"
+                && effect.Status?.Status != null
+                && effect.Status.Status.Modifiers.DamageBonusRate == 0.12f
+                && effect.Status.Status.Modifiers.HasElementModifierTarget
+                && effect.Status.Status.Modifiers.ElementModifierTarget == DamageAttribute.Holy
+                && effect.Status.Status.Duration == 5f
+                && effect.Targeting.TargetSide == SkillTargetSide.AllAllies
+                && effect.Status.Status.ConditionalTargetStatusGroups.Length == 1
+                && effect.Status.Status.ConditionalTargetStatusGroups[0].Requirements[0].Kind
+                    == StatusEffectKind.Shield),
             Is.True);
+        Assert.That(
+            castEffects.Exists(effect =>
+                effect.EffectId == "eve-h-trait-3"),
+            Is.False);
+        Assert.That(
+            castEffects.Exists(effect =>
+                effect.EffectId == "ariel-e-trait-4"),
+            Is.False);
     }
 
     [Test]
@@ -546,6 +568,38 @@ public sealed class SkillCatalogRuntimeTests
                         definition.SkillId + " has unsupported runtime kind "
                         + definition.RuntimeKind);
                     break;
+            }
+        }
+    }
+
+    private static void CollectCastEffects(
+        SkillDefinition skill,
+        List<SkillCastEffect> effects)
+    {
+        if (skill == null)
+        {
+            return;
+        }
+        effects.AddRange(new SkillExecutionData(skill).CastEffects);
+        CollectCastEffects(skill.EnhancementChoices, effects);
+        CollectCastEffects(skill.MasterChoices, effects);
+        if (skill is PassiveSkillDefinition passive)
+        {
+            CollectCastEffects(passive.BaseModifierChoices, effects);
+        }
+    }
+
+    private static void CollectCastEffects(
+        SkillChoice[] choices,
+        List<SkillCastEffect> effects)
+    {
+        for (var i = 0; choices != null && i < choices.Length; i++)
+        {
+            if (choices[i] != null)
+            {
+                var snapshot = new SkillExecutionData(null);
+                snapshot.ApplyChoiceSpec(choices[i]);
+                effects.AddRange(snapshot.CastEffects);
             }
         }
     }

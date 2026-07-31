@@ -480,11 +480,11 @@ Code Builder.
 
 ### Status
 
-User approved Generation/runtime implementation. Phases 1-3 complete; Parsing and Generation contracts remain unchanged.
+User approved Generation/runtime implementation. Phases 1-4 complete; Parsing and authoring schemas remain unchanged.
 
 ### Next Actions
 
-- Implement Phase 4 non-Trigger extraction and normal Skill/Choice/Passive effect restoration without changing the authoring schema.
+- Implement Phase 5 direct-delivery reactions and restore the 17 incomplete event outcomes without changing the authoring schema.
 
 ### Evidence
 
@@ -501,6 +501,9 @@ User approved Generation/runtime implementation. Phases 1-3 complete; Parsing an
 - Phase 2 changed no CSV, Parsing, Validation, or Generation contract; runtime-kind family verification passed 13/13.
 - Phase 3 changed no CSV, Parsing, Validation, or Generation contract; existing-skill reactions now pass the learned target runtime and Definition directly into the common reaction entry point.
 - Phase 3 solution build completed with error 0; Unity forced script compile and full EditMode tests passed 14/14.
+- Phase 4 Generation excludes all 76 semantic non-Triggers from final Trigger arrays, attaches 74 normal cast/passive payloads to existing Nodes, and maps `ariel-e-trait-4` to the existing conditional-damage Choice handler.
+- Phase 4 retains the current Trigger CSV schema; the `ariel-e-trait-4` graph owner/handler/value is corrected from separate Trigger damage to Choice `ConditionalDamageMultiplier(holy-exposure, 1, 1.5)`.
+- Phase 4 solution build completed with error 0; Unity forced script compile and full EditMode tests passed 14/14.
 
 ### History
 
@@ -512,3 +515,4 @@ User approved Generation/runtime implementation. Phases 1-3 complete; Parsing an
 - 2026-07-31: Code Builder completed Phase 1 semantic catalog baseline verification.
 - 2026-07-31: Code Builder completed Phase 2 without changing the data contract.
 - 2026-07-31: Code Builder completed Phase 3 existing-skill runtime reuse without changing the authoring schema.
+- 2026-07-31: Code Builder completed Phase 4 final ownership separation without changing the authoring schema.

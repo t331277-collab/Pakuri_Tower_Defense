@@ -909,11 +909,11 @@ Code Builder.
 
 ### Status
 
-User approved effect restoration and Code Builder implementation. Phases 1-3 complete.
+User approved effect restoration and Code Builder implementation. Phases 1-4 complete.
 
 ### Next Actions
 
-- Implement Phase 4 non-Trigger extraction and normal Skill/Choice/Passive effect restoration.
+- Implement Phase 5 direct-delivery reactions and restore the 17 incomplete event outcomes.
 - Commit and verify each remaining phase separately.
 - Run the approved Code Reviewer loop after Phase 8.
 
@@ -934,6 +934,10 @@ User approved effect restoration and Code Builder implementation. Phases 1-3 com
 - Current `AreaAttack` data has both `SingleSkillDefinition` (`Slash`, `FireDragonSlash`) and Zone-family results, so Phase 2 validates and preserves that existing family split.
 - Phase 3 replaces the common `TryExecuteTriggered` dependency on the full Trigger Definition with `TryExecuteReaction`, passing existing runtime, Definition, snapshot runtime, and primitive execution adjustments.
 - Phase 3 solution build completed with error 0; Unity forced script compile and full EditMode tests passed 14/14.
+- Phase 4 final runtime contains 82 semantic Trigger rows and zero OnCast/same-source follow-up rows.
+- Phase 4 attaches 74 normal cast/passive payloads to existing Skill/Choice/Passive Nodes; `ariel-e-trait-4` uses the existing conditional-damage Choice operation and duplicate `eve-h-trait-3` is excluded.
+- Phase 4 restores 64 `StatusModifier` payloads as normal `PassiveBuff` effects with authored target, status, source-skill, health-ratio, duration, and mutation conditions.
+- Phase 4 solution build completed with error 0; Unity forced script compile and full EditMode tests passed 14/14.
 
 ### History
 
@@ -945,3 +949,4 @@ User approved effect restoration and Code Builder implementation. Phases 1-3 com
 - 2026-07-31: Code Builder completed the Phase 1 classification baseline.
 - 2026-07-31: Code Builder completed Phase 2 runtime-kind executor routing.
 - 2026-07-31: Code Builder completed Phase 3 existing-skill runtime reuse.
+- 2026-07-31: Code Builder completed Phase 4 non-Trigger extraction and normal effect ownership restoration.

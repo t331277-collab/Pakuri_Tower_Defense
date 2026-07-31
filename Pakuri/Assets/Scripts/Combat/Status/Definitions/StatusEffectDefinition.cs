@@ -195,6 +195,9 @@ namespace Pakuri.Data
         public StatusEffectKind ConditionalSourceStatusKind;
         public float ConditionalDamageTakenBonus;
         public SkillRuntimeKindCondition[] ConditionalIncomingSkillRuntimeKindValues = Array.Empty<SkillRuntimeKindCondition>();
+        public StatusConditionGroup[] ConditionalTargetStatusGroups = Array.Empty<StatusConditionGroup>();
+        public string[] ConditionalTargetStatusSourceSkillIds = Array.Empty<string>();
+        public float ConditionalTargetHealthRatioMax;
 
         [Header("Conditional Status Application")]
         public StatusEffectKind[] ConditionalTargetStatusKinds = Array.Empty<StatusEffectKind>();

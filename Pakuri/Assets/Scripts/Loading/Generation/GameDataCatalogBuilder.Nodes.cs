@@ -9,6 +9,7 @@ using System.Globalization;
 using Pakuri.Combat;
 using Pakuri.InGame;
 using UnityEngine;
+using static Pakuri.Data.CsvRowParser;
 
 namespace Pakuri.Data
 {
@@ -72,109 +73,7 @@ namespace Pakuri.Data
 			return;
 		}
 
-		var state = new TriggerOutcomeBuildState();
-		var outcomeCount = 0;
-		for (var i = 0; i < nodes.Length; i++)
-		{
-			var node = nodes[i];
-			if (node == null || !node.EnabledByDefault)
-			{
-				continue;
-			}
-
-			var handler = node.HandlerId ?? string.Empty;
-			if (IsTriggerOutcomeHandler(handler))
-			{
-				outcomeCount++;
-			}
-			if (string.Equals(handler, "EffectTarget", StringComparison.OrdinalIgnoreCase)
-				|| string.Equals(handler, "SelectTargets", StringComparison.OrdinalIgnoreCase))
-			{
-				state.TargetSide = GetEnumParam(
-					node,
-					"target_side",
-					SkillMultiEffectTargetSide.Enemy);
-				state.TargetSelection = GetEnumParam(
-					node,
-					"target_selection",
-					SkillMultiEffectTargetSelection.Nearest);
-				state.TargetShape = GetEnumParam(
-					node,
-					"target_shape",
-					SkillMultiEffectTargetShape.Single);
-				state.CenterMode = GetEnumParam(
-					node,
-					"center_mode",
-					SkillMultiEffectCenterMode.PrimarySkillCenter);
-				state.CoverAll = GetBoolParam(node, "cover_all", false);
-				state.MaxTargets = GetIntParam(node, "max_targets", 0);
-				continue;
-			}
-			if (string.Equals(handler, "EffectLifetime", StringComparison.OrdinalIgnoreCase)
-				|| string.Equals(handler, "SetDuration", StringComparison.OrdinalIgnoreCase))
-			{
-				state.DurationSeconds = Mathf.Max(
-					0f,
-					GetFloatParam(node, "duration_seconds", 0f));
-				continue;
-			}
-			if (string.Equals(handler, "AttachStatusPayload", StringComparison.OrdinalIgnoreCase))
-			{
-				state.StatusKind = StatusValueParser.ParseStatusKind(
-					GetParam(node, "status_id"));
-				state.StatusChance = Mathf.Clamp01(
-					GetFloatParam(node, "status_chance", 1f));
-				state.StatusStacks = Mathf.Max(
-					1,
-					GetIntParam(node, "status_stack_amount", 1));
-				state.StatusDurationSeconds = Mathf.Max(
-					0f,
-					GetFloatParam(node, "status_duration_seconds", 0f));
-				state.StatusMaxStacks = Mathf.Max(
-					1,
-					GetIntParam(node, "status_max_stacks", 1));
-				state.RefreshDuration = !string.Equals(
-					GetParam(node, "status_merge_policy"),
-					"StackDuration",
-					StringComparison.OrdinalIgnoreCase);
-				state.HasStatusPayload = true;
-				continue;
-			}
-			if (string.Equals(handler, "ConditionStatus", StringComparison.OrdinalIgnoreCase))
-			{
-				if (StatusValueParser.TryParseStatusKind(
-					GetParam(node, "status_id"),
-					out var selectionStatusKind))
-				{
-					state.SelectionStatusKind = selectionStatusKind;
-					state.SelectionStatusMinStacks = Mathf.Max(
-						1,
-						GetIntParam(node, "min_stacks", 1));
-				}
-				continue;
-			}
-			if (string.Equals(handler, "ConditionSkillAttribute", StringComparison.OrdinalIgnoreCase))
-			{
-				state.HasSelectionSkillAttribute = true;
-				state.SelectionSkillAttribute = GetEnumParam(
-					node,
-					"attribute",
-					DamageAttribute.Physical);
-				continue;
-			}
-			if (string.Equals(handler, "EffectVisual", StringComparison.OrdinalIgnoreCase)
-				|| string.Equals(handler, "RuntimeEffectVisual", StringComparison.OrdinalIgnoreCase)
-				|| string.Equals(handler, "ShowVisual", StringComparison.OrdinalIgnoreCase))
-			{
-				state.Prefab = node.ResolvedPrefab;
-				state.RuntimeVisual = node.ResolvedRuntimeVisual;
-				continue;
-			}
-			if (TryMapStatusMutation(node, handler, out var mutation))
-			{
-				state.StatusMutations.Add(mutation);
-			}
-		}
+		var state = BuildTriggerOutcomeState(nodes, out var outcomeCount);
 		if (outcomeCount > 1)
 		{
 			throw new InvalidOperationException(
@@ -286,6 +185,340 @@ namespace Pakuri.Data
 				return;
 			}
 		}
+	}
+
+	private static TriggerOutcomeBuildState BuildTriggerOutcomeState(
+		SkillNodeBuildData[] nodes,
+		out int outcomeCount)
+	{
+		var state = new TriggerOutcomeBuildState();
+		outcomeCount = 0;
+		for (var i = 0; i < nodes.Length; i++)
+		{
+			var node = nodes[i];
+			if (node == null || !node.EnabledByDefault)
+			{
+				continue;
+			}
+
+			var handler = node.HandlerId ?? string.Empty;
+			if (IsTriggerOutcomeHandler(handler))
+			{
+				outcomeCount++;
+			}
+			if (string.Equals(handler, "EffectTarget", StringComparison.OrdinalIgnoreCase)
+				|| string.Equals(handler, "SelectTargets", StringComparison.OrdinalIgnoreCase))
+			{
+				state.TargetSide = GetEnumParam(
+					node,
+					"target_side",
+					SkillMultiEffectTargetSide.Enemy);
+				state.TargetSelection = GetEnumParam(
+					node,
+					"target_selection",
+					SkillMultiEffectTargetSelection.Nearest);
+				state.TargetShape = GetEnumParam(
+					node,
+					"target_shape",
+					SkillMultiEffectTargetShape.Single);
+				state.CenterMode = GetEnumParam(
+					node,
+					"center_mode",
+					SkillMultiEffectCenterMode.PrimarySkillCenter);
+				state.CoverAll = GetBoolParam(node, "cover_all", false);
+				state.MaxTargets = GetIntParam(node, "max_targets", 0);
+				continue;
+			}
+			if (string.Equals(handler, "EffectLifetime", StringComparison.OrdinalIgnoreCase)
+				|| string.Equals(handler, "SetDuration", StringComparison.OrdinalIgnoreCase))
+			{
+				state.DurationSeconds = Mathf.Max(
+					0f,
+					GetFloatParam(node, "duration_seconds", 0f));
+				continue;
+			}
+			if (string.Equals(handler, "AttachStatusPayload", StringComparison.OrdinalIgnoreCase))
+			{
+				state.StatusKind = StatusValueParser.ParseStatusKind(
+					GetParam(node, "status_id"));
+				state.StatusChance = Mathf.Clamp01(
+					GetFloatParam(node, "status_chance", 1f));
+				state.StatusStacks = Mathf.Max(
+					1,
+					GetIntParam(node, "status_stack_amount", 1));
+				state.StatusDurationSeconds = Mathf.Max(
+					0f,
+					GetFloatParam(node, "status_duration_seconds", 0f));
+				state.StatusMaxStacks = Mathf.Max(
+					1,
+					GetIntParam(node, "status_max_stacks", 1));
+				state.RefreshDuration = !string.Equals(
+					GetParam(node, "status_merge_policy"),
+					"StackDuration",
+					StringComparison.OrdinalIgnoreCase);
+				state.HasStatusPayload = true;
+				continue;
+			}
+			if (string.Equals(handler, "ConditionStatus", StringComparison.OrdinalIgnoreCase))
+			{
+				if (StatusValueParser.TryParseStatusKind(
+					GetParam(node, "status_id"),
+					out var selectionStatusKind))
+				{
+					state.SelectionStatusKind = selectionStatusKind;
+					state.SelectionStatusMinStacks = Mathf.Max(
+						1,
+						GetIntParam(node, "min_stacks", 1));
+				}
+				continue;
+			}
+			if (string.Equals(handler, "ConditionSkillAttribute", StringComparison.OrdinalIgnoreCase))
+			{
+				state.HasSelectionSkillAttribute = true;
+				state.SelectionSkillAttribute = GetEnumParam(
+					node,
+					"attribute",
+					DamageAttribute.Physical);
+				continue;
+			}
+			if (string.Equals(handler, "EffectVisual", StringComparison.OrdinalIgnoreCase)
+				|| string.Equals(handler, "RuntimeEffectVisual", StringComparison.OrdinalIgnoreCase)
+				|| string.Equals(handler, "ShowVisual", StringComparison.OrdinalIgnoreCase))
+			{
+				state.Prefab = node.ResolvedPrefab;
+				state.RuntimeVisual = node.ResolvedRuntimeVisual;
+				continue;
+			}
+			if (TryMapStatusMutation(node, handler, out var mutation))
+			{
+				state.StatusMutations.Add(mutation);
+			}
+		}
+		return state;
+	}
+
+	/// Trigger authoring에 남아 있는 일반 시전 효과를 기존 SkillNode 효과로 변환한다.
+	private static SkillNode BuildNormalCastEffectNode(
+		SkillTriggerRow row,
+		SkillNodeBuildData[] nodes,
+		SkillDefinition[] activeSkills,
+		StatusEffectDefinition[] statusDefinitions)
+	{
+		var trigger = new SkillTriggerDefinition
+		{
+			TriggerId = row.Id,
+			SourceSkillId = row.SourceSkillId
+		};
+		BuildTriggerOutcome(trigger, nodes, activeSkills, statusDefinitions);
+
+		SkillCastEffect effect = null;
+		if (trigger.TriggeredSkill is SingleSkillDefinition single)
+		{
+			effect = new SkillCastEffect
+			{
+				EffectId = row.Id,
+				DelaySeconds = Mathf.Max(0f, row.TriggerDelaySeconds),
+				Targeting = single.Targeting,
+				Area = single.Area,
+				Damage = single.Damage,
+				Status = single.OnHitStatus,
+				SkillEffectPrefab = single.SkillEffectPrefab,
+				RuntimeVisual = single.RuntimeVisual
+			};
+		}
+		else if (trigger.TriggeredSkill is BuffSkillDefinition buff)
+		{
+			effect = new SkillCastEffect
+			{
+				EffectId = row.Id,
+				DelaySeconds = Mathf.Max(0f, row.TriggerDelaySeconds),
+				Targeting = buff.Targeting,
+				Status = buff.EffectKind == BuffEffectKind.Status
+					? buff.AttachedStatus
+					: null,
+				ShieldBase = buff.ShieldBase,
+				ShieldCoefficient = buff.ShieldCoefficient,
+				ShieldStatSource = buff.ShieldStatSource,
+				ShieldStatus = buff.EffectKind == BuffEffectKind.Shield
+					? buff.ShieldStatus
+					: null,
+				DurationSeconds = buff.EffectKind == BuffEffectKind.Shield
+					? buff.ShieldDuration
+					: 0f,
+				SkillEffectPrefab = buff.SkillEffectPrefab,
+				RuntimeVisual = buff.RuntimeVisual
+			};
+		}
+		else if (trigger.Command != null
+			&& trigger.Command.Kind == SkillTriggerCommandKind.ExtendStatusDuration)
+		{
+			effect = new SkillCastEffect
+			{
+				EffectId = row.Id,
+				DelaySeconds = Mathf.Max(0f, row.TriggerDelaySeconds),
+				Targeting = trigger.Command.Targeting,
+				ExtendStatusKind = trigger.Command.StatusKind,
+				DurationSeconds = trigger.Command.DurationSeconds
+			};
+		}
+		else if (HasHandler(nodes, "StatusModifier"))
+		{
+			effect = BuildNormalStatusModifierEffect(
+				row,
+				nodes,
+				statusDefinitions);
+		}
+
+		return effect != null
+			? SkillNode.FromOperation(
+				new SkillCastEffectOp(effect),
+				row.SourceSkillId)
+			: null;
+	}
+
+	private static SkillCastEffect BuildNormalStatusModifierEffect(
+		SkillTriggerRow row,
+		SkillNodeBuildData[] nodes,
+		StatusEffectDefinition[] statusDefinitions)
+	{
+		var state = BuildTriggerOutcomeState(nodes, out _);
+		var status = GetStatusRuntimeData(
+			StatusEffectKind.PassiveBuff,
+			statusDefinitions);
+		status.SourceSkillId = row.Id;
+		status.Duration = state.DurationSeconds > 0f
+			? state.DurationSeconds
+			: status.Duration;
+		status.Permanent = status.Duration <= 0f || status.Duration >= 9999f;
+		ApplyTriggeredStatusMutations(status, state.StatusMutations);
+
+		for (var i = 0; i < nodes.Length; i++)
+		{
+			var node = nodes[i];
+			if (node == null || !node.EnabledByDefault)
+			{
+				continue;
+			}
+
+			var handler = node.HandlerId ?? string.Empty;
+			if (string.Equals(handler, "StatusModifier", StringComparison.OrdinalIgnoreCase))
+			{
+				var scope = GetParam(node, "status_target_scope");
+				if (!string.IsNullOrWhiteSpace(scope))
+				{
+					status.TargetScope = StatusValueParser.ParseTargetScope(scope);
+				}
+				var merge = GetParam(node, "status_merge_policy");
+				status.MergePolicy = string.IsNullOrWhiteSpace(merge)
+					? StatusMergePolicy.SameSourceRefresh
+					: StatusValueParser.ParseMergePolicy(merge);
+			}
+			else if (string.Equals(handler, "ConditionStatus", StringComparison.OrdinalIgnoreCase)
+				|| string.Equals(handler, "ConditionStatusExpression", StringComparison.OrdinalIgnoreCase))
+			{
+				status.ConditionalTargetStatusGroups =
+					StatusValueParser.ParseConditionStatusExpression(
+						GetParam(node, "status_id"));
+				var minimumStacks = Mathf.Max(1, GetIntParam(node, "min_stacks", 1));
+				for (var groupIndex = 0;
+					groupIndex < status.ConditionalTargetStatusGroups.Length;
+					groupIndex++)
+				{
+					var requirements =
+						status.ConditionalTargetStatusGroups[groupIndex].Requirements;
+					for (var requirementIndex = 0;
+						requirementIndex < requirements.Length;
+						requirementIndex++)
+					{
+						requirements[requirementIndex].MinStacks = Mathf.Max(
+							requirements[requirementIndex].MinStacks,
+							minimumStacks);
+					}
+				}
+				status.ConditionalTargetStatusSourceSkillIds =
+					StatusValueParser.ParseIdList(GetParam(node, "source_skill_id"));
+			}
+			else if (string.Equals(handler, "ConditionAnyStatus", StringComparison.OrdinalIgnoreCase))
+			{
+				var kinds = StatusValueParser.ParseStatusKinds(
+					GetParam(node, "status_ids"));
+				var groups = new StatusConditionGroup[kinds.Length];
+				for (var kindIndex = 0; kindIndex < kinds.Length; kindIndex++)
+				{
+					groups[kindIndex] = new StatusConditionGroup
+					{
+						Requirements = new[]
+						{
+							new StatusConditionRequirement
+							{
+								Kind = kinds[kindIndex],
+								MinStacks = Mathf.Max(
+									1,
+									GetIntParam(node, "min_stacks", 1))
+							}
+						}
+					};
+				}
+				status.ConditionalTargetStatusGroups = groups;
+				status.ConditionalTargetStatusSourceSkillIds =
+					StatusValueParser.ParseIdList(GetParam(node, "source_skill_id"));
+			}
+			else if (string.Equals(handler, "ConditionHealthRatioMax", StringComparison.OrdinalIgnoreCase))
+			{
+				status.ConditionalTargetHealthRatioMax = Mathf.Clamp01(
+					GetFloatParam(node, "ratio", 0f));
+			}
+			else if (string.Equals(handler, "RequiredSourceStatus", StringComparison.OrdinalIgnoreCase))
+			{
+				status.ConditionalSourceStatusKind =
+					StatusValueParser.ParseStatusKind(GetParam(node, "status_id"));
+			}
+		}
+
+		var targeting = BuildTriggerTargeting(state);
+		if (status.ConditionalTargetStatusGroups.Length > 0
+			|| status.ConditionalTargetStatusKinds.Length > 0
+			|| status.ConditionalTargetHealthRatioMax > 0f)
+		{
+			targeting.SelectionStatusKind = StatusEffectKind.None;
+			targeting.SelectionStatusMinStacks = 0;
+		}
+
+		return new SkillCastEffect
+		{
+			EffectId = row.Id,
+			DelaySeconds = Mathf.Max(0f, row.TriggerDelaySeconds),
+			Targeting = targeting,
+			Status = new StatusApplicationSpec
+			{
+				Status = status,
+				Chance = 1f,
+				Stacks = 1,
+				RefreshDuration = true
+			},
+			DurationSeconds = status.Duration,
+			SkillEffectPrefab = status.StatusEffectPrefab,
+			RuntimeVisual = status.RuntimeVisual
+		};
+	}
+
+	private static bool HasHandler(
+		SkillNodeBuildData[] nodes,
+		string handlerId)
+	{
+		for (var i = 0; nodes != null && i < nodes.Length; i++)
+		{
+			if (nodes[i] != null
+				&& nodes[i].EnabledByDefault
+				&& string.Equals(
+					nodes[i].HandlerId,
+					handlerId,
+					StringComparison.OrdinalIgnoreCase))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/// 전달된 handler 값을 사용해 TriggerOutcomeHandler 조건 충족 여부를 반환한다.

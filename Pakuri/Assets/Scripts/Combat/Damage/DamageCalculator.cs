@@ -44,6 +44,7 @@ namespace Pakuri.Combat
             var finalDamageBonus = attackRule.FinalDamageBonus;
             finalDamageBonus += StatusCombatRules.OutgoingDamageBonus(
                 attackRule.Source,
+                target,
                 attribute,
                 attackRule.SourceSkillId);
             if (attackRule.Source != null)
@@ -63,7 +64,9 @@ namespace Pakuri.Combat
             if (attackRule.CriticalAllowed && attackRule.Source != null)
             {
                 var criticalChance = attackRule.Source.Stats.CriticalChance;
-                criticalChance += StatusCombatRules.CriticalChanceBonus(attackRule.Source);
+                criticalChance += StatusCombatRules.CriticalChanceBonus(
+                    attackRule.Source,
+                    target);
                 criticalChance += attackRule.Source.SkillState.PassiveCriticalChanceBonus();
                 criticalChance += attackRule.CritChanceBonus;
                 criticalChance -= target.Stats.CriticalResistance;
@@ -72,7 +75,9 @@ namespace Pakuri.Combat
                 if (UnityEngine.Random.value < Mathf.Clamp01(criticalChance))
                 {
                     var criticalDamage = attackRule.Source.Stats.CriticalDamage;
-                    criticalDamage += StatusCombatRules.CriticalDamageBonus(attackRule.Source);
+                    criticalDamage += StatusCombatRules.CriticalDamageBonus(
+                        attackRule.Source,
+                        target);
                     criticalDamage += attackRule.Source.SkillState.PassiveCriticalDamageBonus();
                     criticalDamage += attackRule.CritDamageBonus;
                     criticalDamage += StatusCombatRules.CriticalDamageTakenBonus(target);

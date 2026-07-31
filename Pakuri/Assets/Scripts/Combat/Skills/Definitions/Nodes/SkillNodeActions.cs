@@ -5,9 +5,45 @@
 
 using Pakuri.Combat;
 using Pakuri.Data;
+using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /// 일반 시전 또는 패시브 활성화에 함께 실행할 기존 family 효과값.
+    public sealed class SkillCastEffect
+    {
+        public string EffectId;
+        public float DelaySeconds;
+        public SkillTargetingSpec Targeting = new SkillTargetingSpec();
+        public AreaBlueprintSpec Area = new AreaBlueprintSpec();
+        public SkillDamageSpec Damage;
+        public StatusApplicationSpec Status;
+        public float ShieldBase;
+        public float ShieldCoefficient;
+        public StatSource ShieldStatSource = StatSource.Intelligence;
+        public StatusRuntimeData ShieldStatus;
+        public StatusEffectKind ExtendStatusKind;
+        public float DurationSeconds;
+        public GameObject SkillEffectPrefab;
+        public RuntimeSkillVisualSpec RuntimeVisual = new RuntimeSkillVisualSpec();
+
+        public bool HasDamage => Damage != null;
+        public bool HasStatus => Status != null && Status.Status != null;
+        public bool HasShield => ShieldStatus != null;
+        public bool ExtendsStatus => ExtendStatusKind != StatusEffectKind.None
+            && DurationSeconds > 0f;
+    }
+
+    public readonly struct SkillCastEffectOp
+    {
+        public SkillCastEffectOp(SkillCastEffect effect)
+        {
+            Effect = effect;
+        }
+
+        public SkillCastEffect Effect { get; }
+    }
+
     public enum KillActionOpKind
     {
         CooldownReset,

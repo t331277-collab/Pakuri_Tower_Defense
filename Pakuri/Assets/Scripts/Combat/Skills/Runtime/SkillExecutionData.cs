@@ -44,6 +44,8 @@ public class SkillExecutionData
 
 	private readonly List<KillActionOp> killActionOps = new List<KillActionOp>();
 
+	private readonly List<SkillCastEffect> castEffects = new List<SkillCastEffect>();
+
 	public SkillDefinition Source { get; }
 
 	public string SkillId { get; }
@@ -408,6 +410,8 @@ public class SkillExecutionData
 
 	public IReadOnlyList<KillActionOp> KillActionOps => killActionOps;
 
+	public IReadOnlyList<SkillCastEffect> CastEffects => castEffects;
+
 	internal IReadOnlyList<ConditionalDamageActionOp> ConditionalDamageActions => conditionalDamageActions;
 
 	internal IReadOnlyList<ConditionalCritChanceActionOp> ConditionalCritChanceActions => conditionalCritChanceActions;
@@ -584,6 +588,12 @@ public class SkillExecutionData
 			if (killAction.HasValue)
 			{
 				killActionOps.Add(killAction.Value);
+			}
+
+			SkillCastEffectOp? castEffect = nodes[i].GetOperation<SkillCastEffectOp>();
+			if (castEffect.HasValue && castEffect.Value.Effect != null)
+			{
+				castEffects.Add(castEffect.Value.Effect);
 			}
 
 			SkillActionOp? skillActionOp = nodes[i].GetOperation<SkillActionOp>();
