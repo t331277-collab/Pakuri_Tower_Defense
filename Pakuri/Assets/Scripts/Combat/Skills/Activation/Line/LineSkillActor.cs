@@ -45,7 +45,7 @@ namespace Pakuri.InGame
         private readonly Collider2D[] lineHitboxes = new Collider2D[1];
         private BoxCollider2D lineHitbox;
 
-        /// 전달된 런타임 입력값을 사용해 소유한 런타임 상태를 초기화한다.
+        /// 직선 영역의 범위, 지속과 적중 규칙을 시작한다.
         public void Initialize(
             InGameCombatManager manager,
             CombatUnitEntry sourceEntry,
@@ -101,7 +101,7 @@ namespace Pakuri.InGame
             ApplyLineTick();
         }
 
-        /// 전달된 런타임 입력값을 사용해 VisualLifetime를 초기화한다.
+        /// 직선 시각 효과의 수명을 정한다.
         public float InitializeVisualLifetime(
             EffectManager manager,
             float durationSeconds)
@@ -112,7 +112,7 @@ namespace Pakuri.InGame
             return remainingDuration;
         }
 
-        /// LineTick를 적용한다.
+        /// 현재 틱의 직선 충돌과 피해를 실행한다.
         private bool ApplyLineTick()
         {
             if (combatManager == null || casterEntry == null || roster == null || lineHitbox == null)
@@ -163,7 +163,7 @@ namespace Pakuri.InGame
             return routed;
         }
 
-        /// 현재 Unity 프레임에서 Update 갱신 동작을 진행한다.
+        /// 프레임 경과에 따라 직선 영역을 갱신한다.
         private void Update()
         {
             var deltaTime = Time.deltaTime;
@@ -184,7 +184,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 전달된 런타임 입력값을 사용해 ApplyKnockback 작업을 시도하고 성공 여부를 반환한다.
+        /// 적중 대상의 밀어내기를 적용한다.
         private static void TryApplyKnockback(CombatUnitEntry target, Vector2 normalizedDirection, float distance)
         {
             if (target == null
@@ -198,7 +198,7 @@ namespace Pakuri.InGame
             target.Transform.position += (Vector3)(normalizedDirection.normalized * distance);
         }
 
-        /// 전달된 런타임 입력값을 사용해 ApplyStatus 작업을 시도하고 성공 여부를 반환한다.
+        /// 직선 적중 상태를 공통 경로에 적용한다.
         private static void TryApplyStatus(
             InGameCombatManager manager,
             UnitCombatState target,
@@ -225,7 +225,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 전달된 target 값을 사용해 TargetKey 결과값을 생성해 반환한다.
+        /// 대상 중복 처리를 위한 식별자를 고른다.
         private static string TargetKey(UnitCombatState target)
         {
             var unitId = target != null && target.Identity != null ? target.Identity.UnitId : null;

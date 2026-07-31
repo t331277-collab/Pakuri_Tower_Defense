@@ -32,7 +32,7 @@ Code Builder for handoff correction and later implementation. Code Reviewer only
 
 ### Status
 
-User concerns 1-7 validated against current code and reflected in the primary handoff. Phase 1 baseline and inventory are recorded. Phase 2 Node composition, Phase 3 runtime-state ownership, Phase 4 status/single-rule absorption, Phase 5 execution/Actor Node meaning separation, and Phase 6 Trigger gate-only routing are implemented and build-verified; Phase 7 Context cleanup is implemented and comment/final verification is in progress.
+User concerns 1-7 validated against current code and reflected in the primary handoff. Phase 1 baseline and inventory are recorded. Phase 2 Node composition, Phase 3 runtime-state ownership, Phase 4 status/single-rule absorption, Phase 5 execution/Actor Node meaning separation, Phase 6 Trigger gate-only routing, and Phase 7 Context/comment cleanup are implemented and build-verified.
 
 ### Next Actions
 
@@ -43,7 +43,7 @@ User concerns 1-7 validated against current code and reflected in the primary ha
 - Phase 5 moved direct Node reads and runtime hit application out of Resolver/Actors into the existing Resolver and SkillExecution responsibilities.
 - Phase 6 moved reaction delay/repeat/outcome/command application into SkillExecution while preserving the existing Trigger gate asymmetry and command generation limit.
 - Phase 7 removed `SkillExecutionContext` by absorbing its execution values into the existing `SkillActionContext`.
-- Every completed Phase is committed separately; comment normalization and final verification follow this Phase 7 code baseline.
+- Every completed Phase is committed separately; final comment normalization and verification are committed.
 - Add parity coverage for composition order, cast-time versus hit-time values, status results, Trigger asymmetry, recursion/generation, Definition-only reaction lookup, and snapshot immutability.
 - Do not alter Trigger gate asymmetry or command recursion behavior without a separate user decision.
 - Keep `SkillExecution.cs` as the only file for its responsibility and reduce its four current classes to the single `SkillExecution` class; do not create `SkillExecutionContext.cs`, `SkillUseState.cs`, or `SkillExecutionState.cs`.
@@ -65,6 +65,9 @@ User concerns 1-7 validated against current code and reflected in the primary ha
 - `SkillExecution.cs:89,231,501` limits skill/effect reaction depth; `SkillTrigger.cs:901` separately limits only Zone recast generation for commands.
 - Assignment search found no writer for branch set/launch set, skill status tag/chance, or consume-status-stack override fields in `SkillExecutionData`.
 - Declaration search found four top-level classes in `SkillExecution.cs` and two in `SkillStatus.cs`; `ProjectileStatusHitSpec` is consumed by the shared status path and four skill families.
+- Final static checks found zero legacy symbols, six Implementation `.cs` files, one top-level `SkillExecution` class, and no runtime application calls in `SkillExecutionRuleResolver`.
+- Every method under `Pakuri/Assets/Scripts/Combat/Skills` has a concise abstract comment; the mechanical-comment search returned no matches.
+- `git diff --check` passed; `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore` passed with 0 errors and 2 existing reference warnings.
 
 ### History
 
@@ -78,6 +81,7 @@ User concerns 1-7 validated against current code and reflected in the primary ha
 - 2026-07-31: Phase 4 moved status calculation to SkillExecutionRuleResolver, reused StatusApplicationSpec for resolved status values, deleted SkillStatus and SingleSkillRules with their meta files, and passed Assembly-CSharp build with 0 errors.
 - 2026-07-31: Phase 5 moved cast/repeat/core/status/refund value resolution to SkillExecutionRuleResolver, moved shared damage/status/trigger/reload application to SkillExecution, unified family hit multipliers, and passed Assembly-CSharp build with 0 errors.
 - 2026-07-31: Phase 6 left Trigger as the gate owner and routed accepted reactions to SkillExecution for delay, repeat, outcome, command, targeting, and runtime application; Assembly-CSharp build passed with 0 errors.
+- 2026-07-31: Phase 7 absorbed SkillExecutionContext into SkillActionContext, completed abstract comments across Combat/Skills, passed final static checks and Assembly-CSharp build, and committed the result.
 
 ## Task: 2026-07-28 Skill Trigger / Node Unification Design
 

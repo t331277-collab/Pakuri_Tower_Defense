@@ -17,7 +17,7 @@ namespace Pakuri.InGame
         private float remainingLifetime;
         private bool hasLifetime;
 
-        /// 전달된 시간 동안 유지되는 버프 비주얼을 초기화한다.
+        /// 시간형 버프 비주얼의 수명을 시작한다.
         public void InitializeTimed(
             EffectManager manager,
             float durationSeconds)
@@ -31,7 +31,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 상태 런타임과 함께 유지되는 버프 비주얼을 초기화한다.
+        /// 상태가 끝날 때까지 버프 비주얼을 유지한다.
         public void InitializePersistent(
             EffectManager manager,
             StatusRuntimeInstance status)
@@ -42,7 +42,7 @@ namespace Pakuri.InGame
             remainingLifetime = 0f;
         }
 
-        /// 버프 비주얼 수명을 종료하고 EffectManager에 삭제를 요청한다.
+        /// 버프 비주얼의 수명을 끝낸다.
         public void Complete()
         {
             if (effectManager == null)
@@ -55,7 +55,7 @@ namespace Pakuri.InGame
             manager.RemoveEffect(gameObject, persistentStatus);
         }
 
-        /// 전달된 instance 값을 사용해 요청값를 연결한다.
+        /// 효과 객체에 버프 실행 컴포넌트를 연결한다.
         public static BuffSkillActor Attach(GameObject instance)
         {
             var actor = instance.GetComponent<BuffSkillActor>();
@@ -67,7 +67,7 @@ namespace Pakuri.InGame
             return actor;
         }
 
-        /// 현재 Unity 프레임에서 Update 갱신 동작을 진행한다.
+        /// 프레임 경과에 따라 버프 비주얼 수명을 갱신한다.
         private void Update()
         {
             if (!hasLifetime)

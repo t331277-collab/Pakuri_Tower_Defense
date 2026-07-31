@@ -48,7 +48,7 @@ Node 의미의 런타임 구현을 `SkillExecutionRuleResolver` 하나로 통합
 - Code Builder가 지적 1~7을 코드로 검증하고 handoff 보강 완료.
 - Phase 1 baseline/inventory 완료 및 커밋.
 - Phase 2 Node composition 구현 및 빌드 검증 완료.
-- Phase 7 Context 제거 완료; 주석 추상화와 최종 정적 검증을 진행 중이다.
+- Phase 7 Context 제거, 주석 추상화, 최종 정적 검증 완료.
 
 ## Selected Code Builder tracks
 
@@ -540,7 +540,7 @@ Status: complete. Trigger retains source/passive gate asymmetry, count/proc/cool
 
 ### Phase 7 — cleanup and verification
 
-Status: in progress. `SkillExecutionContext` was absorbed into the existing `SkillActionContext`, `SkillExecution.cs` now has one top-level class, and Assembly-CSharp builds with 0 errors. Method comments and final structural checks remain.
+Status: complete. `SkillExecutionContext` was absorbed into the existing `SkillActionContext`, `SkillExecution.cs` has one top-level class, every method under `Combat/Skills` has a concise abstract comment, and Assembly-CSharp builds with 0 errors. Legacy-symbol, six-file, Resolver-boundary, comment, and diff checks pass.
 
 1. `SkillExecutionContext`, `SkillUseState`, `SkillExecutionState`, `ProjectileStatusHitSpec`, `SingleDamageModifierState`, `SkillStatus`, `SingleSkillRules` caller를 모두 기존 책임 API로 전환한다.
 2. 위 타입과 책임을 잃은 class, 중복 helper, 사용되지 않는 field/method를 참조 0 확인 뒤 삭제한다.
@@ -728,3 +728,4 @@ Unity-MCP로 editor compile과 console을 확인한다. Play Mode gameplay 검�
 - 2026-07-31: Phase 4 moved status calculation into SkillExecutionRuleResolver, reused StatusApplicationSpec for resolved status values, moved Single damage calculation and recovery orchestration to existing owners, deleted SkillStatus and SingleSkillRules with their meta files, and passed Assembly-CSharp build with 0 errors.
 - 2026-07-31: Phase 5 moved cast/repeat/core/status/refund value resolution into SkillExecutionRuleResolver, moved shared damage/status/trigger/reload application into SkillExecution, unified family hit multipliers, and passed Assembly-CSharp build with 0 errors.
 - 2026-07-31: Phase 6 kept Trigger gate asymmetry and command generation limits, routed accepted reactions to SkillExecution for delay/repeat/outcome/command/targeting/runtime application, and passed Assembly-CSharp build with 0 errors.
+- 2026-07-31: Phase 7 absorbed `SkillExecutionContext` into existing `SkillActionContext`, normalized concise abstract comments across `Combat/Skills`, confirmed six Implementation scripts and one `SkillExecution` class, found zero legacy symbols and zero runtime-application calls in Resolver, and passed `git diff --check` plus `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore` with 0 errors and 2 existing reference warnings.

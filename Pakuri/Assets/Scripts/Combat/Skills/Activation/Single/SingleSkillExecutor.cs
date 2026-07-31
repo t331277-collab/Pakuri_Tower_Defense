@@ -11,6 +11,7 @@ namespace Pakuri.InGame
 /// 확정된 Single 중심 계획을 실행하고 실제 판정은 SingleSkillActor에 맡긴다.
 internal static class SingleSkillExecutor
 {
+	/// 단일형 스킬의 실행 객체와 입력을 준비한다.
 	internal static bool Execute(
 		SkillActionContext context,
 		SkillExecutionData snapshot)

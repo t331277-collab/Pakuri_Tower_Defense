@@ -32,7 +32,7 @@ namespace Pakuri.InGame
         /// 자동 시전 후보를 외부 정책으로 선별한다.
         public delegate bool SkillAutoRoutePredicate(CombatUnitEntry entry, SkillExecutionData runtime);
 
-        /// 행동 가능한 유닛의 준비된 스킬을 자동으로 시전한다.
+        /// 자동 시전 가능한 스킬만 실행 흐름에 올린다.
         public void TryExecuteAutomaticSkills(
             UnitSpawnManager roster,
             InGameCombatManager combatManager,
@@ -72,7 +72,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 수동 조준 정보로 선택한 스킬의 시전을 요청한다.
+        /// 수동 조준을 실행 입력으로 바꾼다.
         public bool TryExecuteManual(
             CombatUnitEntry entry,
             SkillExecutionData runtime,
@@ -95,7 +95,7 @@ namespace Pakuri.InGame
                 null);
         }
 
-        /// 현재 전투 상태와 대기 상태에서 선택한 스킬을 사용할 수 있는지 확인한다.
+        /// 현재 상태에서 선택한 스킬의 시작 가능 여부를 판정한다.
         public bool CanExecuteSelected(
             CombatUnitEntry entry,
             SkillExecutionData runtime,
@@ -112,7 +112,7 @@ namespace Pakuri.InGame
             return runtime.CanCastWithData(snapshot);
         }
 
-        /// 자동 조준으로 선택한 스킬의 시전을 요청한다.
+        /// 자동 조준으로 선택한 스킬을 실행 흐름에 올린다.
         public bool TryExecuteSelected(
             CombatUnitEntry entry,
             SkillExecutionData runtime,
@@ -133,7 +133,7 @@ namespace Pakuri.InGame
                 null);
         }
 
-        /// 전투 사건에서 파생된 보정값으로 기존 실행 경로에 재진입한다.
+        /// 사건에서 파생된 실행을 기존 스킬 경로에 연결한다.
         public bool TryExecuteReaction(
             CombatUnitEntry entry,
             SkillExecutionData runtime,
@@ -209,7 +209,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 일반 시전 입력으로 최종 실행값을 만들고 공통 실행 경로에 넘긴다.
+        /// 입력을 실행값으로 만들고 공통 실행으로 넘긴다.
         private bool TryExecuteSkill(
             CombatUnitEntry entry,
             SkillExecutionData runtime,
@@ -254,7 +254,7 @@ namespace Pakuri.InGame
                 triggerSourceSkillId);
         }
 
-        /// 확정된 실행값을 검증한 뒤 효과 적용, 상태 소비와 사건 발행을 조정한다.
+        /// 확정된 스킬을 검증하고 실행 단계로 통과시킨다.
         private bool ExecutePrepared(
             CombatUnitEntry entry,
             SkillExecutionData runtime,
@@ -374,7 +374,7 @@ namespace Pakuri.InGame
             return routed;
         }
 
-        /// 학습한 지속 효과를 전투 시작 시 공통 효과 경로로 적용한다.
+        /// 지속 효과를 전투 시작 흐름에 반영한다.
         public void ExecutePassiveEffects(
             InGameCombatManager combatManager,
             UnitSpawnManager roster,
@@ -411,6 +411,7 @@ namespace Pakuri.InGame
             }
         }
 
+        /// 사건에서 파생된 단일 효과를 실행한다.
         internal bool TryExecuteReactionEffect(
             CombatUnitEntry entry,
             SkillExecutionData sourceRuntime,
@@ -470,6 +471,7 @@ namespace Pakuri.InGame
             }
         }
 
+        /// 시전 효과를 즉시 실행하거나 예약한다.
         private static void ExecuteCastEffects(
             SkillActionContext context,
             SkillExecutionData sourceSnapshot,
@@ -505,6 +507,7 @@ namespace Pakuri.InGame
             }
         }
 
+        /// 예약된 시전 효과를 생존 조건 아래 실행한다.
         private static IEnumerator ExecuteCastEffectDelayed(
             SkillActionContext context,
             SkillExecutionData sourceSnapshot,
@@ -517,6 +520,7 @@ namespace Pakuri.InGame
             }
         }
 
+        /// 시전 효과의 대상과 실행 방식을 결정한다.
         private static bool ExecuteCastEffect(
             SkillActionContext context,
             SkillExecutionData sourceSnapshot,
@@ -665,7 +669,7 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /// 성공한 시전을 후속 반응 시스템에 알린다.
+        /// 시전 완료를 후속 반응에 알린다.
         private static void NotifySkillCastTriggers(
             InGameCombatManager combatManager,
             UnitSpawnManager roster,
@@ -692,7 +696,7 @@ namespace Pakuri.InGame
                 triggerSourceSkillId);
         }
 
-        /// 스킬 전달 방식에 맞는 실행기로 분배한다.
+        /// 스킬 계열을 알맞은 실행기로 보낸다.
         private static bool ExecuteSkill(
             SkillActionContext context,
             SkillExecutionData snapshot,
@@ -733,6 +737,7 @@ namespace Pakuri.InGame
             }
         }
 
+        /// 스킬 계열에 맞는 실행 입력을 완성한다.
         private static bool PrepareExecutionData(
             SkillActionContext context,
             SkillExecutionData snapshot,
@@ -794,6 +799,7 @@ namespace Pakuri.InGame
             }
         }
 
+        /// 정의가 기대한 스킬 계열인지 확인한다.
         private static T RequireDefinition<T>(SkillDefinition definition)
             where T : SkillDefinition
         {
@@ -807,6 +813,7 @@ namespace Pakuri.InGame
                 + ", got " + definition.GetType().Name);
         }
 
+        /// 남은 재시전을 같은 실행 흐름으로 이어간다.
         internal bool TryExecuteRecast(
             SkillActionContext context,
             SkillExecutionData snapshot,
@@ -818,6 +825,7 @@ namespace Pakuri.InGame
                 && ZoneSkillExecutor.Execute(context, snapshot);
         }
 
+        /// 직선형 공격의 위치와 피해 입력을 준비한다.
         private static bool PrepareLineExecutionData(
             SkillActionContext context,
             SkillExecutionData snapshot,
@@ -914,6 +922,7 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /// 영역형 공격의 중심과 지속 입력을 준비한다.
         private static bool PrepareZoneExecutionData(
             SkillActionContext context,
             SkillExecutionData snapshot,
@@ -1003,6 +1012,7 @@ namespace Pakuri.InGame
             return centers.Count > 0;
         }
 
+        /// 투사체 공격의 방향과 충돌 입력을 준비한다.
         private static bool PrepareProjectileExecutionData(
             SkillActionContext context,
             SkillExecutionData snapshot,
@@ -1160,6 +1170,7 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /// 단일 공격의 대상과 적중 입력을 준비한다.
         private static bool PrepareSingleExecutionData(
             SkillActionContext context,
             SkillExecutionData snapshot,
@@ -1261,6 +1272,7 @@ namespace Pakuri.InGame
             return centers.Count > 0 || !usesResolvedDeployments;
         }
 
+        /// 지원 효과의 대상과 수치를 준비한다.
         private static bool PrepareBuffExecutionData(
             SkillActionContext context,
             SkillExecutionData snapshot,
@@ -1336,6 +1348,7 @@ namespace Pakuri.InGame
                 || snapshot.PreparedTargets.Count > 0;
         }
 
+        /// 분산 투사체의 방향을 정한다.
         private static Vector2 ProjectileSpreadDirection(Vector2 direction, int index, int count)
         {
             if (count <= 1)
@@ -1353,6 +1366,7 @@ namespace Pakuri.InGame
                 direction.x * sin + direction.y * cos).normalized;
         }
 
+        /// 투사체 순번이 효과 조건에 맞는지 확인한다.
         private static bool MatchesProjectileIndex(
             int configuredIndex,
             int projectileIndex,
@@ -1363,6 +1377,7 @@ namespace Pakuri.InGame
                 : configuredIndex > 0 && configuredIndex == projectileIndex;
         }
 
+        /// 상태 적용값을 중첩 수치만 바꿔 복제한다.
         private static StatusApplicationSpec CloneStatusWithStacks(
             StatusApplicationSpec source,
             int stacks)
@@ -1384,7 +1399,7 @@ namespace Pakuri.InGame
             };
         }
 
-        /// 단일 적 처치 결과에 따라 재사용 대기를 조정한다.
+        /// 처치 결과가 허용한 대기 회복을 반영한다.
         internal static void HandleSingleKillRecovery(
             SkillExecutionData sourceRuntime,
             SkillExecutionData snapshot,
@@ -1412,6 +1427,7 @@ namespace Pakuri.InGame
             }
         }
 
+        /// 적중 수가 만든 대기 환급을 반영한다.
         internal static void ApplyHitCountCooldownRefund(
             SkillExecutionData sourceRuntime,
             SkillExecutionData snapshot,
@@ -1431,6 +1447,7 @@ namespace Pakuri.InGame
             targetRuntime?.ReduceCooldownRemaining(targetRuntime.EffectiveCooldownDuration * secondsRatio);
         }
 
+        /// 범위 판정을 공통 적중 경로에 연결한다.
         internal static bool ApplyAreaHits(
             InGameCombatManager manager,
             CombatUnitEntry sourceEntry,
@@ -1521,6 +1538,7 @@ namespace Pakuri.InGame
                 executionData);
         }
 
+        /// 선택된 대상에 공통 피해와 후속 처리를 적용한다.
         internal static bool ApplyResolvedHits(
             InGameCombatManager manager,
             CombatUnitEntry sourceEntry,
@@ -1602,6 +1620,7 @@ namespace Pakuri.InGame
             return routed;
         }
 
+        /// 적중 사건과 후속 효과를 한 경로로 처리한다.
         internal static void ApplyHitEnhancements(
             InGameCombatManager manager,
             UnitSpawnManager roster,
@@ -1731,6 +1750,7 @@ namespace Pakuri.InGame
             }
         }
 
+        /// 통과한 반응을 지연과 반복 실행으로 연결한다.
         internal static void ExecuteTriggeredReaction(
             InGameCombatManager combatManager,
             UnitSpawnManager roster,
@@ -1774,6 +1794,7 @@ namespace Pakuri.InGame
             }
         }
 
+        /// 예약된 반응을 지정 시점에 실행한다.
         private static IEnumerator ExecuteTriggeredReactionDelayed(
             InGameCombatManager combatManager,
             UnitSpawnManager roster,
@@ -1793,6 +1814,7 @@ namespace Pakuri.InGame
                 triggerContext);
         }
 
+        /// 반응 한 회분의 실행을 시작한다.
         private static void ExecuteTriggeredReactionOnce(
             InGameCombatManager combatManager,
             UnitSpawnManager roster,
@@ -1810,6 +1832,7 @@ namespace Pakuri.InGame
                 triggerContext);
         }
 
+        /// 반응 결과에 맞는 실행 경로를 선택한다.
         private static bool ExecuteTriggeredOutcome(
             InGameCombatManager combatManager,
             UnitSpawnManager roster,
@@ -1904,6 +1927,7 @@ namespace Pakuri.InGame
                     triggerContext);
         }
 
+        /// 반응 command를 런타임 변화로 반영한다.
         private static bool ExecuteTriggeredCommand(
             InGameCombatManager combatManager,
             UnitSpawnManager roster,
@@ -1998,6 +2022,7 @@ namespace Pakuri.InGame
             return changed;
         }
 
+        /// command가 가리키는 스킬 실행값을 모은다.
         private static IReadOnlyList<SkillExecutionData> CommandRuntimes(
             UnitCombatState target,
             string skillId)
@@ -2012,6 +2037,7 @@ namespace Pakuri.InGame
             return target.SkillState.ActiveSkills;
         }
 
+        /// 사건 기반 반응 피해를 하나의 값으로 확정한다.
         private static float ResolveTriggeredRawDamage(
             SkillReaction trigger,
             SkillTrigger.TriggerExecutionContext context)
@@ -2038,7 +2064,7 @@ namespace Pakuri.InGame
             return Mathf.Max(0f, value) * Mathf.Max(0f, trigger.DamageValueMultiplier);
         }
 
-        /// 보유한 스킬 목록을 데이터 카탈로그 기준으로 다시 구성한다.
+        /// 학습 상태를 현재 정의와 동기화한다.
         public static void RebuildLearnedSkillState(UnitCombatState owner)
         {
             if (owner == null)
@@ -2073,7 +2099,7 @@ namespace Pakuri.InGame
                 GameDataLoader.CurrentCatalog.GetPassiveSkills(monsterId));
         }
 
-        /// 학습 여부와 정의 목록을 대조해 실행 상태를 다시 구성한다.
+        /// 전달된 정의로 학습 상태를 다시 구성한다.
         public static void RebuildLearnedSkillState(
             UnitCombatState owner,
             SkillDefinition[] activeDefinitions,

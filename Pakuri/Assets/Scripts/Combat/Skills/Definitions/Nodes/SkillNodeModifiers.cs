@@ -15,6 +15,7 @@ namespace Pakuri.InGame
 
     public readonly struct DamageModifierOp
     {
+        /// 피해 배율 보정의 의미를 보관한다.
         public DamageModifierOp(DamageModifierOpKind kind, float multiplier)
         {
             Kind = kind;
@@ -27,6 +28,7 @@ namespace Pakuri.InGame
 
     public readonly struct CritModifierOp
     {
+        /// 치명타 보정의 의미를 보관한다.
         public CritModifierOp(float chanceBonus)
         {
             ChanceBonus = chanceBonus;
@@ -37,6 +39,7 @@ namespace Pakuri.InGame
 
     public readonly struct ConditionalDamageActionOp
     {
+        /// 조건부 피해 행동의 의미를 보관한다.
         public ConditionalDamageActionOp(
             float damageMultiplier,
             StatusEffectKind requiredStatus,
@@ -52,6 +55,7 @@ namespace Pakuri.InGame
 
     public readonly struct ConditionalCritChanceActionOp
     {
+        /// 조건부 치명타 행동의 의미를 보관한다.
         public ConditionalCritChanceActionOp(
             float chanceBonus,
             StatusEffectKind requiredStatus,
@@ -67,6 +71,7 @@ namespace Pakuri.InGame
 
     public readonly struct StatusConditionalDamageTakenActionOp
     {
+        /// 상태 조건부 피해 행동의 의미를 보관한다.
         public StatusConditionalDamageTakenActionOp(
             float bonus,
             StatusEffectKind requiredSourceStatus)

@@ -17,6 +17,7 @@ namespace Pakuri.InGame
     {
         private EffectManager effects;
 
+        /// 직선형 스킬의 실행 객체와 입력을 준비한다.
         internal static bool Execute(
             SkillActionContext context,
             SkillExecutionData snapshot)
@@ -49,6 +50,7 @@ namespace Pakuri.InGame
             return executor.Initialize(context, snapshot);
         }
 
+        /// 직선형 실행의 배치와 반복 조건을 시작한다.
         private bool Initialize(
             SkillActionContext context,
             SkillExecutionData snapshot)
@@ -73,6 +75,7 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /// 예약된 직선형 반복 시전을 실행한다.
         private IEnumerator ExecuteRepeatedLineCasts(
             SkillActionContext context,
             SkillExecutionData snapshot,
@@ -93,6 +96,7 @@ namespace Pakuri.InGame
             effects.RemoveEffect(gameObject);
         }
 
+        /// 직선형 공격 한 회분을 실행한다.
         private static bool ExecuteOnce(
             SkillActionContext context,
             SkillExecutionData snapshot,

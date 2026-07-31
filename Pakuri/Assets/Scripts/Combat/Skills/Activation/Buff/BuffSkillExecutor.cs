@@ -13,7 +13,7 @@ namespace Pakuri.InGame
     internal static class BuffSkillExecutor
     {
 
-        /// 설정된 버프 효과를 실행한다.
+        /// 지원 효과의 계열에 맞는 실행 경로를 고른다.
         internal static bool Execute(
             SkillActionContext context,
             SkillExecutionData snapshot)
@@ -31,6 +31,7 @@ namespace Pakuri.InGame
             }
         }
 
+        /// 상태 적용을 지원 효과의 공통 경로에 연결한다.
         private static bool ExecuteStatus(
             SkillActionContext context,
             SkillExecutionData snapshot)
@@ -75,6 +76,7 @@ namespace Pakuri.InGame
             return routed || castCommitted;
         }
 
+        /// 회복 효과를 대상의 생명력에 반영한다.
         private static bool ExecuteHeal(
             SkillActionContext context,
             SkillExecutionData snapshot)
@@ -99,6 +101,7 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /// 보호막 효과를 대상의 방어 상태에 반영한다.
         private static bool ExecuteShield(
             SkillActionContext context,
             SkillExecutionData snapshot)
@@ -141,12 +144,13 @@ namespace Pakuri.InGame
             return routed;
         }
 
+        /// 돌진 효과를 이동과 접촉 판정에 연결한다.
         private static bool ExecuteCharge(SkillActionContext context)
         {
             return context.Caster != null && context.Runtime != null;
         }
 
-        /// 활성 Charge 버프가 접촉한 대상에게 정의된 피해와 상태를 적용한다.
+        /// 돌진 접촉 결과를 피해와 후속 효과에 연결한다.
         internal static bool ApplyChargeContact(
             InGameCombatManager combatManager,
             UnitCombatState caster,
@@ -186,11 +190,13 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /// 대상이 지원 효과를 받을 수 있는지 확인한다.
         private static bool IsValid(CombatUnitEntry target)
         {
             return target != null && target.IsAlive && target.Model != null;
         }
 
+        /// 지원 효과의 시각 표현을 생성한다.
         private static void SpawnVisual(
             SkillActionContext context,
             SkillExecutionData snapshot,

@@ -40,7 +40,7 @@ namespace Pakuri.InGame
         private bool usePrefabHitbox;
         private int recastGeneration;
 
-        /// 전달된 런타임 입력값을 사용해 소유한 런타임 상태를 초기화한다.
+        /// 영역의 범위, 지속과 적중 규칙을 시작한다.
         public void Initialize(
             InGameCombatManager manager,
             CombatUnitEntry sourceEntry,
@@ -97,7 +97,7 @@ namespace Pakuri.InGame
             ApplyCurrentAreaTick();
         }
 
-        /// 현재 Unity 프레임에서 Update 갱신 동작을 진행한다.
+        /// 프레임 경과에 따라 영역 틱과 수명을 갱신한다.
         private void Update()
         {
             var deltaTime = Time.deltaTime;
@@ -116,7 +116,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// ExecuteExpireEffects 작업을 시도하고 성공 여부를 반환한다.
+        /// 영역 종료 사건을 후속 효과에 전달한다.
         private void TryExecuteExpireEffects()
         {
             if (combatManager != null && casterEntry != null && roster != null)
@@ -141,7 +141,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// CurrentAreaTick를 적용한다.
+        /// 현재 틱의 범위 적용을 실행한다.
         private bool ApplyCurrentAreaTick()
         {
             if (usePrefabHitbox)
@@ -186,7 +186,7 @@ namespace Pakuri.InGame
                 snapshot);
         }
 
-        /// 전달된 런타임 입력값을 사용해 ColliderAreaTick를 적용한다.
+        /// 충돌된 범위 대상에 피해를 적용한다.
         internal static bool ApplyColliderAreaTick(
             InGameCombatManager manager,
             CombatUnitEntry sourceEntry,
@@ -238,7 +238,7 @@ namespace Pakuri.InGame
             return routed;
         }
 
-        /// 전달된 런타임 입력값을 사용해 SourceSkillId 결과값을 생성해 반환한다.
+        /// 실행에 사용할 원본 스킬 식별자를 고른다.
         private static string SourceSkillId(SkillExecutionData executionData, SkillExecutionData sourceRuntime)
         {
             if (sourceRuntime != null && !string.IsNullOrWhiteSpace(sourceRuntime.SkillId))

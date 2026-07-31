@@ -41,6 +41,7 @@ namespace Pakuri.InGame
 
     public readonly struct SkillCastEffectOp
     {
+        /// 시전 후속 효과의 의미를 보관한다.
         public SkillCastEffectOp(SkillCastEffect effect)
         {
             Effect = effect;
@@ -98,6 +99,7 @@ namespace Pakuri.InGame
 
     public readonly struct KillActionOp
     {
+        /// 처치 결과 보정의 의미를 보관한다.
         public KillActionOp(KillActionOpKind kind, float ratioBonus, bool requiresExecute)
         {
             Kind = kind;
@@ -112,6 +114,7 @@ namespace Pakuri.InGame
 
     public readonly struct SkillActionOp
     {
+        /// 수치형 스킬 행동의 의미를 보관한다.
         public SkillActionOp(SkillActionOpKind kind, float amount)
         {
             Kind = kind;
@@ -120,6 +123,7 @@ namespace Pakuri.InGame
             ReferenceId = string.Empty;
         }
 
+        /// 횟수형 스킬 행동의 의미를 보관한다.
         public SkillActionOp(SkillActionOpKind kind, int count)
         {
             Kind = kind;
@@ -128,6 +132,7 @@ namespace Pakuri.InGame
             ReferenceId = string.Empty;
         }
 
+        /// 대상과 수치를 가진 스킬 행동의 의미를 보관한다.
         public SkillActionOp(SkillActionOpKind kind, string referenceId, float amount)
         {
             Kind = kind;
@@ -136,6 +141,7 @@ namespace Pakuri.InGame
             ReferenceId = referenceId ?? string.Empty;
         }
 
+        /// 대상과 횟수를 가진 스킬 행동의 의미를 보관한다.
         public SkillActionOp(SkillActionOpKind kind, string referenceId, int count)
         {
             Kind = kind;
@@ -152,6 +158,7 @@ namespace Pakuri.InGame
 
     public readonly struct ConsecutiveHitActionOp
     {
+        /// 연속 적중 보정의 의미를 보관한다.
         public ConsecutiveHitActionOp(float bonusRate, float maxBonus)
         {
             BonusRate = bonusRate;
@@ -164,6 +171,7 @@ namespace Pakuri.InGame
 
     public readonly struct BranchDamageActionOp
     {
+        /// 분기 피해의 의미를 보관한다.
         public BranchDamageActionOp(
             float chanceBonus,
             int branchCount,
@@ -184,6 +192,7 @@ namespace Pakuri.InGame
 
     public readonly struct BurstDamageActionOp
     {
+        /// 폭발 피해의 의미를 보관한다.
         public BurstDamageActionOp(int projectileIndex, float damageMultiplier)
         {
             ProjectileIndex = projectileIndex;
@@ -196,6 +205,7 @@ namespace Pakuri.InGame
 
     public readonly struct BurstStatusActionOp
     {
+        /// 폭발 상태 보정의 의미를 보관한다.
         public BurstStatusActionOp(int projectileIndex, int stacksBonus)
         {
             ProjectileIndex = projectileIndex;
@@ -208,6 +218,7 @@ namespace Pakuri.InGame
 
     public readonly struct FollowUpProjectileActionOp
     {
+        /// 후속 투사체의 의미를 보관한다.
         public FollowUpProjectileActionOp(int count, float delaySeconds, float damageMultiplier)
         {
             Count = count;
@@ -222,6 +233,7 @@ namespace Pakuri.InGame
 
     public readonly struct ThresholdStatusActionOp
     {
+        /// 임계 상태 적용의 의미를 보관한다.
         public ThresholdStatusActionOp(
             StatusEffectKind sourceStatus,
             int minimumStacks,
@@ -237,6 +249,7 @@ namespace Pakuri.InGame
 
     public readonly struct RepeatPerTargetActionOp
     {
+        /// 대상별 반복 실행의 의미를 보관한다.
         public RepeatPerTargetActionOp(int count, float intervalSeconds, float damageMultiplier)
         {
             Count = count;
@@ -251,6 +264,7 @@ namespace Pakuri.InGame
 
     public readonly struct RedistributeConsumedStatusActionOp
     {
+        /// 소비 상태 재분배의 의미를 보관한다.
         public RedistributeConsumedStatusActionOp(
             float ratio,
             StatusEffectKind statusKind,
@@ -271,6 +285,7 @@ namespace Pakuri.InGame
 
     public readonly struct AdditionalDamageActionOp
     {
+        /// 추가 피해의 의미를 보관한다.
         public AdditionalDamageActionOp(
             float chance,
             float multiplier,
@@ -291,6 +306,7 @@ namespace Pakuri.InGame
 
     public readonly struct CoreDamageActionOp
     {
+        /// 핵심 피해의 의미를 보관한다.
         public CoreDamageActionOp(string hitboxName, float multiplier)
         {
             HitboxName = hitboxName ?? string.Empty;
@@ -303,6 +319,7 @@ namespace Pakuri.InGame
 
     public readonly struct CoreAdditionalDamageActionOp
     {
+        /// 핵심 적중 추가 피해의 의미를 보관한다.
         public CoreAdditionalDamageActionOp(
             string hitboxName,
             float chance,
@@ -323,6 +340,7 @@ namespace Pakuri.InGame
 
     public readonly struct HitChainDamageActionOp
     {
+        /// 연쇄 적중 피해의 의미를 보관한다.
         public HitChainDamageActionOp(
             int hitPeriod,
             int targetCount,
@@ -346,6 +364,7 @@ namespace Pakuri.InGame
 
     public readonly struct HitCountCooldownRefundActionOp
     {
+        /// 적중 수 기반 대기 환급의 의미를 보관한다.
         public HitCountCooldownRefundActionOp(
             string targetSkillId,
             int minimumTargets,
@@ -363,6 +382,7 @@ namespace Pakuri.InGame
 
     public readonly struct ReloadReducePerHitActionOp
     {
+        /// 적중당 재장전 감소의 의미를 보관한다.
         public ReloadReducePerHitActionOp(string targetSkillId, float secondsPerHit)
         {
             TargetSkillId = targetSkillId ?? string.Empty;
@@ -375,6 +395,7 @@ namespace Pakuri.InGame
 
     public readonly struct CountStatusDamageActionOp
     {
+        /// 상태 중첩 기반 피해의 의미를 보관한다.
         public CountStatusDamageActionOp(
             SkillMultiEffectTargetSide targetSide,
             StatusEffectKind statusKind,

@@ -12,7 +12,7 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-/// SkillExecutionData가 나타내는 런타임 값을 보관한다.
+/// 스킬 정의와 전투 중 실행 상태를 함께 보관한다.
 public class SkillExecutionData
 {
 
@@ -486,7 +486,7 @@ public class SkillExecutionData
 		}
 	}
 
-	/// SkillExecutionData 인스턴스를 전달된 런타임 입력값으로 초기화한다.
+	/// 정의만으로 실행에 필요한 기본값을 만든다.
 	public SkillExecutionData(SkillDefinition source)
 	{
 		Source = source;
@@ -519,7 +519,7 @@ public class SkillExecutionData
 
 	public SkillSlot Slot => Source != null ? Source.Slot : default;
 
-	/// 실행 주체와 정의를 연결해 사용 상태를 만든다.
+	/// 소유자와 정의를 연결해 사용 상태를 만든다.
 	public SkillExecutionData(UnitCombatState owner, SkillDefinition source)
 		: this(source)
 	{
@@ -563,7 +563,7 @@ public class SkillExecutionData
 
     public bool CanCast => CanCastWithData(null);
 
-    /// 모든 사용 제한과 누적 횟수를 초기 상태로 되돌린다.
+    /// 실행 중 누적된 상태를 초기값으로 되돌린다.
     public void ResetRuntimeState()
     {
         effectiveMaxMagazineSize = CalculateMaxMagazineSize(Data);
@@ -586,7 +586,7 @@ public class SkillExecutionData
         consecutiveHitRepeatCount = 0;
     }
 
-    /// 발사 순번을 순환 범위 안에서 한 단계 진행한다.
+    /// 다음 투사체 순번을 기록한다.
     public int AdvanceProjectileLaunchCount()
     {
         if (ProjectileLaunchCount == int.MaxValue)
@@ -598,7 +598,7 @@ public class SkillExecutionData
         return ProjectileLaunchCount;
     }
 
-    /// 적중 순번을 순환 범위 안에서 한 단계 진행한다.
+    /// 다음 적중 순번을 기록한다.
     public int AdvanceSkillHitCount()
     {
         if (SkillHitCount == int.MaxValue)
@@ -610,7 +610,7 @@ public class SkillExecutionData
         return SkillHitCount;
     }
 
-    /// 같은 대상을 연속 적중한 횟수에 따라 피해 배율을 계산한다.
+    /// 연속 적중 흐름에 맞는 피해 배율을 계산한다.
     public float ConsecutiveHitDamageMultiplier(UnitCombatState target, SkillExecutionData snapshot)
     {
         if (target == null)
@@ -667,7 +667,7 @@ public class SkillExecutionData
         return 1f + bonus;
     }
 
-    /// 시간 흐름에 따라 시전, 재사용, 재장전과 활성 대기값을 감소시킨다.
+    /// 시간 경과를 실행 상태에 반영한다.
     public void Tick(float deltaTime)
     {
         if (deltaTime <= 0f)
@@ -692,7 +692,7 @@ public class SkillExecutionData
         }
     }
 
-    /// 현재 보정값과 사용 제한을 반영해 시전 가능 여부를 판단한다.
+    /// 현재 실행값으로 시전 가능 여부를 판정한다.
     public bool CanCastWithData(SkillExecutionData snapshot)
     {
         RefreshRuntimeModifiers(snapshot);
@@ -714,13 +714,13 @@ public class SkillExecutionData
             && HasMagazine;
     }
 
-    /// 기본 보정값으로 시전 상태 진입을 시도한다.
+    /// 기본 실행값으로 시전 상태에 진입한다.
     public bool TryBeginCast()
     {
         return TryBeginCast(null);
     }
 
-    /// 확정된 보정값을 반영해 탄약과 대기 상태를 소비한다.
+    /// 확정 실행값으로 탄약과 대기를 소비한다.
     public bool TryBeginCast(SkillExecutionData snapshot)
     {
         RefreshRuntimeModifiers(snapshot);
@@ -770,26 +770,26 @@ public class SkillExecutionData
         return true;
     }
 
-    /// 진행 중인 지속 실행과 해당 실행 데이터를 종료한다.
+    /// 진행 중인 지속 실행을 끝낸다.
     public void StopActive()
     {
         ActiveDurationRemaining = 0f;
         ActiveExecutionData = null;
     }
 
-    /// 주기 효과를 다시 실행할 시점인지 확인한다.
+    /// 주기 효과가 다시 실행될 시점인지 확인한다.
     public bool IsTickReady()
     {
         return Data.Timing.TickInterval > 0f && TickRemaining <= 0f;
     }
 
-    /// 다음 주기 실행까지의 대기시간을 다시 설정한다.
+    /// 다음 주기까지의 대기를 다시 시작한다.
     public void ResetTickInterval()
     {
         TickRemaining = effectiveTickInterval;
     }
 
-    /// 현재 연사 묶음에서 발사할 탄환 순번을 계산한다.
+    /// 현재 연사 묶음의 투사체 순번을 계산한다.
     public int CurrentBurstProjectileIndex()
     {
         if (effectiveBurstProjectileCount <= 1 || !IsBursting)
@@ -803,7 +803,7 @@ public class SkillExecutionData
             effectiveBurstProjectileCount);
     }
 
-    /// 재장전 대기시간을 줄이고 완료 시 탄창을 복구한다.
+    /// 재장전 대기를 줄이고 완료 상태를 갱신한다.
     public bool ReduceReloadRemaining(float seconds)
     {
         if (seconds <= 0f || ReloadRemaining <= 0f)
@@ -820,7 +820,7 @@ public class SkillExecutionData
         return true;
     }
 
-    /// 재사용 대기시간을 줄이고 사용 가능 상태를 복구한다.
+    /// 재사용 대기를 줄이고 사용 가능 상태를 갱신한다.
     public bool ReduceCooldownRemaining(float seconds)
     {
         if (seconds <= 0f || CooldownRemaining <= 0f)
@@ -837,7 +837,7 @@ public class SkillExecutionData
         return true;
     }
 
-    /// 재사용 대기를 즉시 끝내고 필요한 탄창을 복구한다.
+    /// 재사용 대기를 즉시 끝낸다.
     public void ResetCooldown()
     {
         CooldownRemaining = 0f;
@@ -847,7 +847,7 @@ public class SkillExecutionData
         }
     }
 
-    /// 남은 시간을 0 아래로 내려가지 않게 감소시킨다.
+    /// 시간값을 0 아래로 내려가지 않게 줄인다.
     private static float TickDown(float value, float deltaTime)
     {
         if (value > 0f)
@@ -864,7 +864,7 @@ public class SkillExecutionData
         return effectiveTickInterval <= 0f || TickRemaining <= 0f;
     }
 
-    /// 이번 실행 보정에 맞춰 탄창, 연사와 대기시간 기준값을 갱신한다.
+    /// 이번 실행의 보정값으로 상태 기준을 갱신한다.
     private void RefreshRuntimeModifiers(SkillExecutionData snapshot)
     {
         var previousMax = effectiveMaxMagazineSize;
@@ -917,13 +917,13 @@ public class SkillExecutionData
         }
     }
 
-    /// 정의된 탄창 용량을 유효한 범위로 보정한다.
+    /// 정의된 탄창 용량을 실행 가능한 값으로 만든다.
     private static int CalculateMaxMagazineSize(SkillDefinition data)
     {
         return Math.Max(0, data.MagazineCapacity);
     }
 
-    /// 한 번의 시전에서 이어지는 발사 횟수를 구한다.
+    /// 한 시전에 이어지는 발사 횟수를 계산한다.
     private static int BurstProjectileCount(SkillDefinition data)
     {
         var projectile = data as ProjectileSkillDefinition;
@@ -935,19 +935,19 @@ public class SkillExecutionData
         return 1;
     }
 
-    /// 재장전에 필요한 시간을 유효한 범위로 보정한다.
+    /// 재장전 시간을 실행 가능한 값으로 만든다.
     private static float CalculateReloadDuration(SkillDefinition data)
     {
         return Mathf.Max(0f, data.ReloadSeconds);
     }
 
-    /// 연속 실행 사이의 간격을 유효한 범위로 보정한다.
+    /// 주기 실행 간격을 계산한다.
     private static float TickInterval(SkillDefinition data)
     {
         return Mathf.Max(0f, data.Timing.TickInterval);
     }
 
-    /// 연사 간격을 구하고 별도 값이 없으면 기본 실행 간격을 사용한다.
+    /// 연사 간격을 계산한다.
     private static float BurstInterval(SkillDefinition data)
     {
         var projectile = data as ProjectileSkillDefinition;
@@ -963,13 +963,13 @@ public class SkillExecutionData
         return TickInterval(data);
     }
 
-    /// 재사용 대기시간을 유효한 범위로 보정한다.
+    /// 재사용 대기시간을 계산한다.
     private static float CooldownDuration(SkillDefinition data)
     {
         return Mathf.Max(0f, data.Timing.Cooldown);
     }
 
-    /// 탄창 소모 상태에 맞춰 재사용 또는 재장전을 시작한다.
+    /// 탄창 소모 결과에 맞는 회복을 시작한다.
     private void BeginRecoveryIfNeeded()
     {
         if (!UsesMagazine)
@@ -996,13 +996,13 @@ public class SkillExecutionData
         }
     }
 
-	/// 실행 배율을 현재 값에 반영한다.
+	/// 전투 중 추가 피해 배율을 현재 값에 반영한다.
 	internal void ApplyDynamicDamageMultiplier(float multiplier)
 	{
 		DamageMultiplier += PositiveOrDefault(multiplier, 1f) - 1f;
 	}
 
-	/// 외부 사건의 배율을 현재 값에 곱한다.
+	/// 외부 사건의 피해 배율을 현재 값에 곱한다.
 	internal void ScaleDamageMultiplier(float multiplier)
 	{
 		DamageMultiplier *= Mathf.Max(0f, multiplier);
@@ -1015,7 +1015,7 @@ public class SkillExecutionData
 		RawDamageOverride = Mathf.Max(0f, rawDamage);
 	}
 
-	/// 배율만 바꾼 실행값 사본을 만든다.
+	/// 피해 배율만 다른 실행값 사본을 만든다.
 	internal SkillExecutionData CopyWithDamageMultiplier(float multiplier)
 	{
 		var copy = (SkillExecutionData)MemberwiseClone();
@@ -1023,7 +1023,7 @@ public class SkillExecutionData
 		return copy;
 	}
 
-	/// 전달된 choiceId 값을 사용해 ActiveChoiceId를 소유한 런타임 상태에 추가한다.
+	/// 활성 선택을 학습 상태에 기록한다.
 	public void AddActiveChoiceId(string choiceId)
 	{
 		if (!string.IsNullOrWhiteSpace(choiceId))
@@ -1032,7 +1032,7 @@ public class SkillExecutionData
 		}
 	}
 
-	/// 전달된 choiceId 값을 사용해 소유한 런타임 상태에 ActiveChoice가 있는지 반환한다.
+	/// 학습 상태에 선택이 포함됐는지 확인한다.
 	public bool HasActiveChoice(string choiceId)
 	{
 		if (!string.IsNullOrWhiteSpace(choiceId))
@@ -1042,7 +1042,7 @@ public class SkillExecutionData
 		return false;
 	}
 
-	/// 전달된 statusId 값을 사용해 StatusDurationBonus 결과값을 생성해 반환한다.
+	/// 상태 지속시간 보정량을 읽는다.
 	public float StatusDurationBonus(string statusId)
 	{
 		if (string.IsNullOrWhiteSpace(statusId))
@@ -1056,7 +1056,7 @@ public class SkillExecutionData
 		return value;
 	}
 
-	/// 전달된 statusId 값을 사용해 StatusActionSpeedBonus를 반환한다.
+	/// 상태 행동 속도 보정량을 읽는다.
 	public float GetStatusActionSpeedBonus(string statusId)
 	{
 		float num = StatusActionSpeedBonus;
@@ -1067,7 +1067,7 @@ public class SkillExecutionData
 		return num;
 	}
 
-	/// 전달된 statusId 값을 사용해 StatusMaxStacksBonus 결과값을 생성해 반환한다.
+	/// 상태 최대 중첩 보정량을 읽는다.
 	public int StatusMaxStacksBonus(string statusId)
 	{
 		if (string.IsNullOrWhiteSpace(statusId))
@@ -1081,7 +1081,7 @@ public class SkillExecutionData
 		return value;
 	}
 
-	/// 전달된 statusId 값을 사용해 TargetStatusStackDamageRateBonus 결과값을 생성해 반환한다.
+	/// 대상 상태 중첩 피해 보정량을 읽는다.
 	public float TargetStatusStackDamageRateBonus(string statusId)
 	{
 		if (string.IsNullOrWhiteSpace(statusId))
@@ -1095,7 +1095,7 @@ public class SkillExecutionData
 		return value;
 	}
 
-	/// 전달된 triggerId 값을 사용해 TriggerProcChanceBonus 결과값을 생성해 반환한다.
+	/// 반응 발동 확률 보정량을 읽는다.
 	public float TriggerProcChanceBonus(string triggerId)
 	{
 		if (string.IsNullOrWhiteSpace(triggerId))
@@ -1109,7 +1109,7 @@ public class SkillExecutionData
 		return value;
 	}
 
-	/// 전달된 런타임 입력값을 사용해 PositiveOrDefault 결과값을 생성해 반환한다.
+	/// 보정값을 허용 범위의 기본값으로 정규화한다.
 	private static float PositiveOrDefault(float value, float fallback)
 	{
 		if (!(value > 0f))

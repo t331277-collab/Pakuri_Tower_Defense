@@ -13,6 +13,7 @@ namespace Pakuri.InGame
     /// 확정된 각 중심에 ZoneSkillActor를 생성하고 실행을 시작한다.
     internal static class ZoneSkillExecutor
     {
+        /// 영역형 스킬의 실행 객체와 입력을 준비한다.
         internal static bool Execute(
             SkillActionContext context,
             SkillExecutionData snapshot)

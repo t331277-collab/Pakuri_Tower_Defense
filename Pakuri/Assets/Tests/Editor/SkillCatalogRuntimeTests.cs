@@ -10,6 +10,7 @@ using UnityEngine;
 public sealed class SkillCatalogRuntimeTests
 {
     [Test]
+    /// 선택 의미가 지정 스킬에만 반영되는지 확인한다.
     public void ChoiceNodesApplyOnlyToTheirTargetSkill()
     {
         var skill = new SkillDefinition { SkillId = "skill-a" };
@@ -30,6 +31,7 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     [Test]
+    /// 반응 배율이 기존 피해 보정과 합성되는지 확인한다.
     public void ReactionDamageMultiplierScalesExistingSkillModifier()
     {
         var data = new SkillExecutionData(new SkillDefinition { SkillId = "vega-b" });
@@ -46,6 +48,7 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     [Test]
+    /// 카탈로그 정의와 재구성 결과가 일치하는지 확인한다.
     public void CatalogAndRebuildReuseFinalDefinition()
     {
         var catalog = ScriptableObject.CreateInstance<GameDataCatalog>();
@@ -87,6 +90,7 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     [Test]
+    /// 적 유닛이 공통 런타임으로 스킬을 학습하는지 확인한다.
     public void EnemySpawnLearnsAssignedSkillsThroughSharedRuntime()
     {
         var enemy = ScriptableObject.CreateInstance<EnemyDefinition>();
@@ -132,6 +136,7 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     [Test]
+    /// 공통 지속 런타임이 적 보정 종류를 보존하는지 확인한다.
     public void SharedPassiveRuntimePreservesEnemyModifierKinds()
     {
         var owner = new UnitCombatState();
@@ -164,6 +169,7 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     [Test]
+    /// 적 카탈로그가 공통 지속 상태를 구성하는지 확인한다.
     public void EnemyCatalogBuildsSharedLearnedPassives()
     {
         GameDataLoader.EnsureInitialized();
@@ -198,6 +204,7 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     [Test]
+    /// 적 스킬 프로필이 통합 정의 계열을 사용하는지 확인한다.
     public void EnemySkillProfilesUseUnifiedDefinitionFamilies()
     {
         GameDataLoader.EnsureInitialized();
@@ -258,6 +265,7 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     [Test]
+    /// 반응 돌진이 공통 활성 런타임을 사용하는지 확인한다.
     public void TriggeredChargeUsesSharedActiveRuntime()
     {
         var actorObject = new GameObject("TriggeredChargeActor");
@@ -323,6 +331,7 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     [Test]
+    /// 반응 준비가 원래 정의 식별자를 보존하는지 확인한다.
     public void TriggeredPreparationKeepsTriggeredDefinitionIdentity()
     {
         var actorObject = new GameObject("TriggeredIdentityActor");
@@ -368,6 +377,7 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     [Test]
+    /// 몬스터 런타임이 전투 세션 스킬을 공유하는지 확인한다.
     public void MonsterRuntimeSharesRunSessionSkills()
     {
         var monster = ScriptableObject.CreateInstance<MonsterDefinition>();
@@ -392,6 +402,7 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     [Test]
+    /// 반응 Node가 최종 실행값을 만드는지 확인한다.
     public void TriggerNodesGenerateFinalRuntimeOutcomes()
     {
         GameDataLoader.EnsureInitialized();
@@ -476,6 +487,7 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     [Test]
+    /// 반응 의미 분류 기준이 유지되는지 확인한다.
     public void TriggerSemanticClassificationBaselineIsStable()
     {
         GameDataLoader.EnsureInitialized();
@@ -579,6 +591,7 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     [Test]
+    /// 지속 사건 효과가 공통 실행 경로를 사용하는지 확인한다.
     public void PassiveEventEffectsAndStateCommandsUseSharedRuntimePaths()
     {
         GameDataLoader.EnsureInitialized();
@@ -652,6 +665,7 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     [Test]
+    /// 런타임 종류가 기존 실행 계열과 맞는지 확인한다.
     public void RuntimeKindsMatchExistingExecutorFamilies()
     {
         GameDataLoader.EnsureInitialized();
@@ -708,6 +722,8 @@ public sealed class SkillCatalogRuntimeTests
         }
     }
 
+    /// 시전 효과 목록을 테스트 입력으로 모은다.
+    /// 시전 효과 목록을 테스트 입력으로 모은다.
     private static void CollectCastEffects(
         SkillDefinition skill,
         List<SkillCastEffect> effects)
@@ -740,6 +756,7 @@ public sealed class SkillCatalogRuntimeTests
         }
     }
 
+    /// 반응 목록을 테스트 입력으로 모은다.
     private static List<SkillReaction> CollectReactions(
         SkillDefinition[] skills,
         PassiveSkillDefinition[] passives = null)
@@ -763,6 +780,7 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     [Test]
+    /// 상태 카탈로그가 생성된 런타임 값을 사용하는지 확인한다.
     public void StatusCatalogUsesGeneratedRuntimeData()
     {
         GameDataLoader.EnsureInitialized();
@@ -781,6 +799,7 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     [Test]
+    /// 충돌 Resolver가 겹침과 이동 판정을 사용하는지 확인한다.
     public void CollisionResolverUsesOverlapAndMovementCast()
     {
         var rosterObject = new GameObject("CollisionTestRoster");
@@ -841,6 +860,7 @@ public sealed class SkillCatalogRuntimeTests
         }
     }
 
+    /// 충돌 검증용 전투 모델을 만든다.
     private static UnitCombatState CreateCollisionTestUnit(string unitId, UnitSide side)
     {
         var unit = new UnitCombatState();
@@ -850,6 +870,7 @@ public sealed class SkillCatalogRuntimeTests
         return unit;
     }
 
+    /// 지속 스킬 검증용 정의를 만든다.
     private static PassiveSkillDefinition CreatePassive(
         string skillId,
         PassiveModifierKind kind,
@@ -867,6 +888,7 @@ public sealed class SkillCatalogRuntimeTests
         };
     }
 
+    /// 충돌 검증 대상 목록을 모은다.
     private static void CollectCollisionTargets(
         UnitSpawnManager roster,
         IReadOnlyList<CombatUnitEntry> candidates,

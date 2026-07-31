@@ -19,11 +19,11 @@ namespace Pakuri.InGame
         RandomExisting
     }
 
-    /// 대상 진영·거리·형태·정렬 규칙에 따라 등록된 전투 유닛을 선택한다.
+    /// 타기팅 규칙을 실제 전투 대상 선택으로 바꾼다.
     internal static class SkillTargeting
     {
 
-        /// 전달된 런타임 입력값을 사용해 OrderedTargets 결과값을 생성해 반환한다.
+        /// 조건에 맞는 대상을 실행 순서로 정렬한다.
         public static List<CombatUnitEntry> OrderedTargets(
             CombatUnitEntry sourceEntry,
             UnitSpawnManager unitRoster,
@@ -33,7 +33,7 @@ namespace Pakuri.InGame
             return OrderedTargets(sourceEntry, unitRoster, targetingSpec, StatusEffectKind.None, 0);
         }
 
-        /// 전달된 런타임 입력값을 사용해 OrderedTargets 결과값을 생성해 반환한다.
+        /// 조건에 맞는 대상을 실행 순서로 정렬한다.
         public static List<CombatUnitEntry> OrderedTargets(
             SkillActionContext context,
             SkillTargetingSpec targetingSpec)
@@ -59,7 +59,7 @@ namespace Pakuri.InGame
                 true);
         }
 
-        /// 전달된 런타임 입력값을 사용해 OrderedTargets 결과값을 생성해 반환한다.
+        /// 조건에 맞는 대상을 실행 순서로 정렬한다.
         public static List<CombatUnitEntry> OrderedTargets(
             CombatUnitEntry sourceEntry,
             UnitSpawnManager unitRoster,
@@ -108,7 +108,7 @@ namespace Pakuri.InGame
             return new List<CombatUnitEntry>();
         }
 
-        /// 전달된 런타임 입력값을 사용해 OrderedTargets 결과값을 생성해 반환한다.
+        /// 조건에 맞는 대상을 실행 순서로 정렬한다.
         public static List<CombatUnitEntry> OrderedTargets(
             CombatUnitEntry sourceEntry,
             UnitSpawnManager unitRoster,
@@ -137,7 +137,7 @@ namespace Pakuri.InGame
             return targets;
         }
 
-        /// 전달된 런타임 입력값을 사용해 NearestTarget를 찾는다.
+        /// 가장 가까운 유효 대상을 고른다.
         public static CombatUnitEntry FindNearestTarget(
             CombatUnitEntry caster,
             UnitSpawnManager roster,
@@ -307,7 +307,7 @@ namespace Pakuri.InGame
             return best;
         }
 
-        /// 전달된 런타임 입력값을 사용해 DirectionToTarget 결과값을 생성해 반환한다.
+        /// 시전자에서 대상까지의 방향을 계산한다.
         public static Vector2 DirectionToTarget(Vector3 origin, CombatUnitEntry target)
         {
             if (target == null || target.Transform == null)
@@ -320,7 +320,7 @@ namespace Pakuri.InGame
             return direction;
         }
 
-        /// 전달된 런타임 입력값을 사용해 TargetList 결과값을 생성해 반환한다.
+        /// 타기팅 조건을 만족하는 후보를 모은다.
         public static IReadOnlyList<CombatUnitEntry> TargetList(
             CombatUnitEntry caster,
             UnitSpawnManager roster,
@@ -329,7 +329,7 @@ namespace Pakuri.InGame
             return TargetList(caster, roster, targeting, StatusEffectKind.None, 0);
         }
 
-        /// 전달된 런타임 입력값을 사용해 TargetList 결과값을 생성해 반환한다.
+        /// 타기팅 조건을 만족하는 후보를 모은다.
         public static IReadOnlyList<CombatUnitEntry> TargetList(
             CombatUnitEntry caster,
             UnitSpawnManager roster,
@@ -412,7 +412,7 @@ namespace Pakuri.InGame
             return filtered;
         }
 
-        /// 전달된 런타임 입력값을 사용해 소유한 런타임 상태에 ActiveSkillAttribute가 있는지 반환한다.
+        /// 보유 스킬 중 지정 속성이 있는지 확인한다.
         private static bool HasActiveSkillAttribute(
             UnitCombatState target,
             DamageAttribute attribute)
@@ -435,7 +435,7 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /// 전달된 런타임 입력값을 사용해 AreaCenter 결과값을 생성해 반환한다.
+        /// 타격 중심을 입력과 대상 규칙으로 결정한다.
         public static Vector2 AreaCenter(
             SkillActionContext context,
             SkillTargetingSpec targeting,
@@ -464,7 +464,7 @@ namespace Pakuri.InGame
             return origin;
         }
 
-        /// 전달된 런타임 입력값을 사용해 BaseRadius 결과값을 생성해 반환한다.
+        /// 영역의 기본 범위를 정의값에서 가져온다.
         public static float BaseRadius(SkillTargetingSpec targeting, AreaBlueprintSpec area)
         {
             if (area != null && area.Radius > 0f)
@@ -475,7 +475,7 @@ namespace Pakuri.InGame
             return targeting != null ? targeting.Radius : 0f;
         }
 
-        /// 전달된 런타임 입력값을 사용해 Radius 결과값을 생성해 반환한다.
+        /// 보정된 영역 범위를 계산한다.
         public static float Radius(
             float baseRadius,
             float radiusMultiplier,
@@ -485,7 +485,7 @@ namespace Pakuri.InGame
             return Mathf.Max(0f, radius);
         }
 
-        /// 전달된 런타임 입력값을 사용해 PrefabScaleFactor 결과값을 생성해 반환한다.
+        /// 시각 효과 크기에서 영역 배율을 읽는다.
         public static float PrefabScaleFactor(
             float baseRadius,
             float radiusMultiplier,
@@ -499,7 +499,7 @@ namespace Pakuri.InGame
             return Mathf.Max(0.01f, Radius(baseRadius, radiusMultiplier, radiusBonus) / baseRadius);
         }
 
-        /// 전달된 런타임 입력값을 사용해 TargetAnchoredCenters 결과값을 생성해 반환한다.
+        /// 대상 기준 영역 중심을 순서대로 만든다.
         public static List<Vector2> TargetAnchoredCenters(
             SkillActionContext context,
             SkillTargetingSpec targeting,
@@ -578,7 +578,7 @@ namespace Pakuri.InGame
             return centers;
         }
 
-        /// 전달된 targets 값을 사용해 소유한 컬렉션에 NexusTarget가 있는지 반환한다.
+        /// 선택 결과에 핵심 오브젝트가 포함됐는지 확인한다.
         private static bool ContainsNexusTarget(IReadOnlyList<CombatUnitEntry> targets)
         {
             for (var i = 0; targets != null && i < targets.Count; i++)
@@ -592,7 +592,7 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /// 전달된 런타임 입력값을 사용해 CompareTargets 결과값을 생성해 반환한다.
+        /// 두 대상의 실행 우선순위를 비교한다.
         private static int CompareTargets(
             CombatUnitEntry sourceEntry,
             SkillTargetingSpec targetingSpec,
@@ -658,7 +658,7 @@ namespace Pakuri.InGame
             return leftDistance.CompareTo(rightDistance);
         }
 
-        /// 전달된 런타임 입력값을 사용해 DistanceSquared 결과값을 생성해 반환한다.
+        /// 두 항목 사이의 거리 제곱을 계산한다.
         private static float DistanceSquared(CombatUnitEntry sourceEntry, CombatUnitEntry target)
         {
             if (sourceEntry == null || sourceEntry.Transform == null || target == null || target.Transform == null)
@@ -671,14 +671,14 @@ namespace Pakuri.InGame
             return offset.sqrMagnitude;
         }
 
-        /// 전달된 entry 값을 사용해 SkillTargetable 조건 충족 여부를 반환한다.
+        /// 항목이 현재 스킬의 유효 대상인지 확인한다.
         private static bool IsSkillTargetable(CombatUnitEntry entry)
         {
             var identity = entry != null && entry.Model != null ? entry.Model.Identity : null;
             return identity == null || identity.Role != UnitRole.Nexus;
         }
 
-        /// 전달된 런타임 입력값을 사용해 소유한 런타임 상태에 RequiredStatus가 있는지 반환한다.
+        /// 대상이 요구 상태와 중첩을 충족하는지 확인한다.
         private static bool HasRequiredStatus(UnitCombatState model, StatusEffectKind kind, int minimumStacks)
         {
             if (model == null || kind == StatusEffectKind.None)
@@ -695,7 +695,7 @@ namespace Pakuri.InGame
             return model.Statuses != null && model.Statuses.GetStacks(kind) >= minStacks;
         }
 
-        /// 전달된 런타임 입력값을 사용해 StatusStacks 결과값을 생성해 반환한다.
+        /// 대상의 상태 중첩 수를 읽는다.
         private static int StatusStacks(UnitCombatState model, StatusEffectKind kind)
         {
             if (model == null || kind == StatusEffectKind.None)
@@ -721,7 +721,7 @@ namespace Pakuri.InGame
             return 0;
         }
 
-        /// 전달된 런타임 입력값을 사용해 ChainTargets 결과값을 생성해 반환한다.
+        /// 연쇄 피해가 이어질 대상을 거리 순으로 고른다.
         public static List<CombatUnitEntry> ChainTargets(
             UnitSpawnManager roster,
             CombatUnitEntry sourceEntry,
@@ -805,6 +805,7 @@ namespace Pakuri.InGame
             return resolved;
         }
 
+        /// 지원 효과가 닿을 대상을 모은다.
         internal static IReadOnlyList<CombatUnitEntry> BuffTargets(
             SkillActionContext context,
             SkillTargetSide targetMode,

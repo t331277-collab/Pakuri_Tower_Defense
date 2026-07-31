@@ -16,6 +16,7 @@ namespace Pakuri.InGame
     {
         private EffectManager effects;
 
+        /// 투사체형 스킬의 실행 객체와 입력을 준비한다.
         internal static bool Execute(
             SkillActionContext context,
             SkillExecutionData snapshot)
@@ -47,6 +48,7 @@ namespace Pakuri.InGame
             return instance.AddComponent<ProjectileSkillExecutor>().Initialize(context, snapshot);
         }
 
+        /// 투사체형 실행의 배치와 반복 조건을 시작한다.
         private bool Initialize(
             SkillActionContext context,
             SkillExecutionData snapshot)
@@ -83,6 +85,7 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /// 예약된 후속 투사체를 실행한다.
         private IEnumerator ExecuteFollowUpProjectilesAfterDelay(
             SkillActionContext context,
             SkillExecutionData snapshot)
@@ -130,6 +133,7 @@ namespace Pakuri.InGame
             effects.RemoveEffect(gameObject);
         }
 
+        /// 투사체 실행 객체를 생성하고 입력을 전달한다.
         private static void SpawnProjectileActor(
             SkillActionContext context,
             SkillExecutionData snapshot,
@@ -209,6 +213,7 @@ namespace Pakuri.InGame
                 snapshot.CritDamageBonus);
         }
 
+        /// 순번에 대응하는 실행값을 고른다.
         private static T ValueAt<T>(
             System.Collections.Generic.IReadOnlyList<T> values,
             int index,

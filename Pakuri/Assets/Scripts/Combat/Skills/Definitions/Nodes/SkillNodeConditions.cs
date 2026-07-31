@@ -147,6 +147,7 @@ namespace Pakuri.InGame
 
     public readonly struct SkillReactionOp
     {
+        /// 반응 조건과 결과의 의미를 보관한다.
         public SkillReactionOp(SkillReaction reaction)
         {
             Reaction = reaction;
@@ -157,6 +158,7 @@ namespace Pakuri.InGame
 
     public readonly struct StatusStackCondition
     {
+        /// 상태 중첩 조건의 의미를 보관한다.
         public StatusStackCondition(StatusEffectKind statusKind, int minimumStacks)
         {
             StatusKind = statusKind;
@@ -169,6 +171,7 @@ namespace Pakuri.InGame
 
     public readonly struct CastConditionOp
     {
+        /// 시전 조건 보정의 의미를 보관한다.
         public CastConditionOp(float targetHealthRatioBonus)
         {
             TargetHealthRatioBonus = targetHealthRatioBonus;
@@ -179,6 +182,7 @@ namespace Pakuri.InGame
 
     public readonly struct SourceStatusRequirementOp
     {
+        /// 시전자 상태 조건의 의미를 보관한다.
         public SourceStatusRequirementOp(StatusEffectKind statusKind, int minimumStacks)
         {
             Condition = new StatusStackCondition(statusKind, minimumStacks);

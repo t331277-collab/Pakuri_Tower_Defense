@@ -116,6 +116,7 @@ namespace Pakuri.InGame
 
         public UnitCombatState Caster => CasterEntry != null ? CasterEntry.Model : Source;
 
+        /// 실행 기반값을 사건 전달 객체에 이어 붙인다.
         private void CopyExecutionValues(SkillActionContext executionContext)
         {
             if (executionContext == null)

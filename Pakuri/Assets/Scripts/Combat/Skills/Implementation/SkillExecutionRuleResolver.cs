@@ -12,11 +12,11 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// SkillExecutionRuleResolver 처리에 필요한 런타임 규칙 또는 대상을 결정한다.
+    /// 정의의 의미를 실행값과 판정값으로 확정한다.
     internal static class SkillExecutionRuleResolver
     {
 
-        /// 정의된 Node 의미로 기본 실행값을 만든다.
+        /// 정의가 런타임에서 사용할 기본 골격을 만든다.
         internal static SkillExecutionData CreateDefinitionSnapshot(SkillDefinition source)
         {
             var snapshot = new SkillExecutionData(source);
@@ -27,7 +27,7 @@ namespace Pakuri.InGame
             return snapshot;
         }
 
-        /// 선택 효과의 의미를 기존 실행값에 합성한다.
+        /// 선택된 강화 의미를 실행값에 합친다.
         internal static void ApplyChoice(SkillExecutionData snapshot, SkillChoice choice)
         {
             if (snapshot == null || choice == null || choice.Nodes == null)
@@ -41,7 +41,7 @@ namespace Pakuri.InGame
             ApplyNodes(snapshot, choice.Nodes, snapshot.SkillId);
         }
 
-        /// 소유자의 학습 상태까지 합성한 실행값을 만든다.
+        /// 소유자의 학습과 선택을 반영한 실행값을 만든다.
         internal static SkillExecutionData BuildExecutionData(
             UnitCombatState owner,
             SkillExecutionData runtime,
@@ -60,7 +60,7 @@ namespace Pakuri.InGame
             return snapshot;
         }
 
-        /// 학습한 지속 효과 중 현재 스킬에 맞는 보정을 합성한다.
+        /// 지속 강화의 공통 보정을 실행값에 합친다.
         private static void ApplyPassiveBaseModifiers(
             SkillExecutionData snapshot,
             UnitCombatState owner,
@@ -91,7 +91,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 선택된 강화와 마스터 효과를 조건에 맞게 합성한다.
+        /// 선택된 강화 목록을 실행값에 반영한다.
         private static void ApplyChoices(
             SkillExecutionData snapshot,
             IReadOnlyCollection<string> choiceIds,
@@ -117,7 +117,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 전투 중 대상 수에 따라 선택 효과의 배율을 확정한다.
+        /// 현재 전투 대상 수에 따른 보정을 확정한다.
         internal static void ApplyDynamicChoiceRules(
             SkillExecutionData snapshot,
             SkillChoice choice,
@@ -153,7 +153,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 지정 진영에서 조건을 만족하는 생존 대상 수를 센다.
+        /// 조건을 만족하는 현재 대상 수를 센다.
         private static int CountMatchingTargets(
             UnitCombatState owner,
             UnitSpawnManager roster,
@@ -177,7 +177,7 @@ namespace Pakuri.InGame
             return count;
         }
 
-        /// 시전자와 효과 범위에 맞는 후보 대상을 고른다.
+        /// 대상 수 계산에 사용할 후보를 모은다.
         private static IReadOnlyList<CombatUnitEntry> CountEntries(
             UnitCombatState owner,
             UnitSpawnManager roster,
@@ -202,7 +202,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 전투 대상으로 유효한 항목만 남긴다.
+        /// 실제 스킬 대상만 남긴다.
         private static IReadOnlyList<CombatUnitEntry> FilterSkillTargets(IReadOnlyList<CombatUnitEntry> entries)
         {
             if (entries == null || entries.Count == 0)
@@ -221,14 +221,14 @@ namespace Pakuri.InGame
             return filtered;
         }
 
-        /// 핵심 오브젝트가 아닌 유효 대상인지 확인한다.
+        /// 항목이 스킬 대상인지 확인한다.
         private static bool IsSkillTarget(CombatUnitEntry entry)
         {
             var role = entry?.Model?.Identity?.Role;
             return entry != null && (role == null || role != UnitRole.Nexus);
         }
 
-        /// 모델과 같은 항목을 목록에서 찾는다.
+        /// 모델에 대응하는 전투 항목을 찾는다.
         private static CombatUnitEntry FindEntryForModel(
             UnitCombatState model,
             IReadOnlyList<CombatUnitEntry> entries)
@@ -247,7 +247,7 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /// 대상이 요구 상태를 보유하는지 확인한다.
+        /// 대상이 지정 상태를 보유하는지 확인한다.
         private static bool HasStatus(UnitCombatState target, StatusEffectKind statusKind)
         {
             if (target == null || statusKind == StatusEffectKind.None)
@@ -261,7 +261,7 @@ namespace Pakuri.InGame
             return target.Statuses != null && target.Statuses.GetStacks(statusKind) > 0;
         }
 
-        /// 선택 효과가 지정 스킬을 대상으로 하는지 확인한다.
+        /// 선택 효과가 현재 스킬에 적용되는지 확인한다.
         private static bool AppliesToSkill(SkillChoice choice, SkillDefinition skill)
         {
             if (choice == null || skill == null)
@@ -286,7 +286,7 @@ namespace Pakuri.InGame
             return string.Equals(targetSkillId, skill.SkillId, StringComparison.OrdinalIgnoreCase);
         }
 
-	/// Node 의미를 실행값으로 해석해 저장한다.
+	/// 정의된 Node 의미를 실행값에 순서대로 합친다.
 	internal static void ApplyNodes(SkillExecutionData snapshot, IReadOnlyList<SkillNode> nodes, string targetSkillId = null)
 	{
 
@@ -449,7 +449,7 @@ namespace Pakuri.InGame
 		}
 	}
 
-		/// Node 보정값을 실행 데이터에 반영한다.
+		/// 행동 의미를 실행값에 반영한다.
 		internal static void ApplyNodeAction(SkillExecutionData snapshot, SkillActionOp action)
 	{
 		switch (action.Kind)
@@ -591,14 +591,14 @@ namespace Pakuri.InGame
 		}
 	}
 
-		/// Node 보정값을 실행 데이터에 반영한다.
+		/// 연속 적중 보정을 실행값에 합친다.
 		internal static void ApplyConsecutiveHitAction(SkillExecutionData snapshot, ConsecutiveHitActionOp action)
 	{
 		snapshot.ConsecutiveHitBonusRate += Mathf.Max(0f, action.BonusRate);
 		snapshot.ConsecutiveHitMax += Mathf.Max(0f, action.MaxBonus);
 	}
 
-		/// Node 보정값을 실행 데이터에 반영한다.
+		/// 분기 피해 조건을 실행값에 합친다.
 		internal static void ApplyBranchDamageAction(SkillExecutionData snapshot, BranchDamageActionOp action)
 	{
 		snapshot.BranchChanceBonus += action.ChanceBonus;
@@ -619,7 +619,7 @@ namespace Pakuri.InGame
 		}
 	}
 
-		/// Node 보정값을 실행 데이터에 반영한다.
+		/// 조건부 피해 보정을 실행값에 합친다.
 		internal static void ApplyConditionalDamageAction(SkillExecutionData snapshot, ConditionalDamageActionOp action)
 	{
 		if (action.Condition.StatusKind != StatusEffectKind.None
@@ -630,7 +630,7 @@ namespace Pakuri.InGame
 		}
 	}
 
-		/// Node 보정값을 실행 데이터에 반영한다.
+		/// 조건부 치명타 보정을 실행값에 합친다.
 		internal static void ApplyConditionalCritChanceAction(SkillExecutionData snapshot, ConditionalCritChanceActionOp action)
 	{
 		if (action.Condition.StatusKind != StatusEffectKind.None
@@ -641,7 +641,7 @@ namespace Pakuri.InGame
 		}
 	}
 
-		/// Node 보정값을 실행 데이터에 반영한다.
+		/// 폭발 피해 보정을 실행값에 합친다.
 		internal static void ApplyBurstDamageAction(SkillExecutionData snapshot, BurstDamageActionOp action)
 	{
 		if (action.DamageMultiplier > 0f)
@@ -650,7 +650,7 @@ namespace Pakuri.InGame
 		}
 	}
 
-		/// Node 보정값을 실행 데이터에 반영한다.
+		/// 폭발 상태 보정을 실행값에 합친다.
 		internal static void ApplyBurstStatusAction(SkillExecutionData snapshot, BurstStatusActionOp action)
 	{
 		if (action.StacksBonus != 0)
@@ -659,7 +659,7 @@ namespace Pakuri.InGame
 		}
 	}
 
-		/// Node 보정값을 실행 데이터에 반영한다.
+		/// 상태 조건부 피해 보정을 실행값에 합친다.
 		internal static void ApplyStatusConditionalDamageTakenAction(SkillExecutionData snapshot, StatusConditionalDamageTakenActionOp action)
 	{
 		snapshot.HasStatusConditionalDamageTakenBonus = true;
@@ -667,7 +667,7 @@ namespace Pakuri.InGame
 		snapshot.StatusConditionalSourceStatusKind = action.RequiredSourceStatus;
 	}
 
-		/// Node 보정값을 실행 데이터에 반영한다.
+		/// 후속 투사체 의미를 실행값에 합친다.
 		internal static void ApplyFollowUpProjectileAction(SkillExecutionData snapshot, FollowUpProjectileActionOp action)
 	{
 		if (action.Count <= 0)
@@ -680,7 +680,7 @@ namespace Pakuri.InGame
 		snapshot.FollowUpProjectileDamageMultiplier = Mathf.Max(0f, action.DamageMultiplier);
 	}
 
-		/// Node 보정값을 실행 데이터에 반영한다.
+		/// 임계 상태 적용 의미를 실행값에 합친다.
 		internal static void ApplyThresholdStatusAction(SkillExecutionData snapshot, ThresholdStatusActionOp action)
 	{
 		if (action.Condition.StatusKind == StatusEffectKind.None
@@ -695,7 +695,7 @@ namespace Pakuri.InGame
 		snapshot.ThresholdApplyStatusKind = action.AppliedStatus;
 	}
 
-		/// Node 보정값을 실행 데이터에 반영한다.
+		/// 대상별 반복 실행 의미를 합친다.
 		internal static void ApplyRepeatPerTargetAction(SkillExecutionData snapshot, RepeatPerTargetActionOp action)
 	{
 		if (action.Count <= 0)
@@ -711,7 +711,7 @@ namespace Pakuri.InGame
 		}
 	}
 
-		/// Node 보정값을 실행 데이터에 반영한다.
+		/// 소비 상태의 재분배 의미를 합친다.
 		internal static void ApplyRedistributeConsumedStatusAction(SkillExecutionData snapshot, RedistributeConsumedStatusActionOp action)
 	{
 		if (action.Ratio <= 0f || action.StatusKind == StatusEffectKind.None || action.SearchRadius <= 0f)
@@ -725,7 +725,7 @@ namespace Pakuri.InGame
 		snapshot.RedistributeConsumedStatusTargetCount = Mathf.Max(0, action.TargetCount);
 	}
 
-		/// Node 보정값을 실행 데이터에 반영한다.
+		/// 추가 피해 의미를 실행값에 합친다.
 		internal static void ApplyAdditionalDamageAction(SkillExecutionData snapshot, AdditionalDamageActionOp action)
 	{
 		snapshot.HasOnHitAdditionalDamage = true;
@@ -735,7 +735,7 @@ namespace Pakuri.InGame
 		snapshot.OnHitAdditionalDamageTarget = action.Target;
 	}
 
-		/// Node 보정값을 실행 데이터에 반영한다.
+		/// 핵심 피해 의미를 실행값에 합친다.
 		internal static void ApplyCoreDamageAction(SkillExecutionData snapshot, CoreDamageActionOp action)
 	{
 		snapshot.CoreHitboxName = action.HitboxName;
@@ -743,7 +743,7 @@ namespace Pakuri.InGame
 		snapshot.CoreDamageMultiplier *= action.Multiplier;
 	}
 
-		/// Node 보정값을 실행 데이터에 반영한다.
+		/// 핵심 적중 추가 피해 의미를 합친다.
 		internal static void ApplyCoreAdditionalDamageAction(SkillExecutionData snapshot, CoreAdditionalDamageActionOp action)
 	{
 		snapshot.CoreHitboxName = action.HitboxName;
@@ -753,7 +753,7 @@ namespace Pakuri.InGame
 		snapshot.CoreOnHitAdditionalDamageAttribute = action.Attribute;
 	}
 
-		/// Node 보정값을 실행 데이터에 반영한다.
+		/// 연쇄 적중 피해 의미를 실행값에 합친다.
 		internal static void ApplyHitChainDamageAction(SkillExecutionData snapshot, HitChainDamageActionOp action)
 	{
 		if (action.HitPeriod <= 0)
@@ -768,7 +768,7 @@ namespace Pakuri.InGame
 		snapshot.OnHitChainDamageAttribute = action.Attribute;
 	}
 
-		/// Node 보정값을 실행 데이터에 반영한다.
+		/// 적중 수 기반 대기 환급 의미를 합친다.
 		internal static void ApplyHitCountCooldownRefundAction(SkillExecutionData snapshot, HitCountCooldownRefundActionOp action)
 	{
 		if (string.IsNullOrWhiteSpace(action.TargetSkillId))
@@ -781,7 +781,7 @@ namespace Pakuri.InGame
 		snapshot.HitCountCooldownRefundRatio = action.Ratio;
 	}
 
-		/// Node 보정값을 실행 데이터에 반영한다.
+		/// 적중당 재장전 감소 의미를 합친다.
 		internal static void ApplyReloadReducePerHitAction(SkillExecutionData snapshot, ReloadReducePerHitActionOp action)
 	{
 		if (string.IsNullOrWhiteSpace(action.TargetSkillId))
@@ -793,7 +793,7 @@ namespace Pakuri.InGame
 		snapshot.ReloadReduceSecondsPerHit += action.SecondsPerHit;
 	}
 
-	/// 전달된 런타임 입력값을 사용해 snapshot.StatusActionSpeedBonus를 적용한다.
+		/// 상태의 행동 속도 보정을 실행값에 합친다.
 		internal static void ApplyStatusActionSpeedBonus(SkillExecutionData snapshot, string statusId, float bonus)
 	{
 		snapshot.HasStatusActionSpeedBonus = true;
@@ -811,7 +811,7 @@ namespace Pakuri.InGame
 		snapshot.statusActionSpeedBonuses[statusId] = total;
 	}
 
-	/// 전달된 런타임 입력값을 사용해 StatusDurationBonus를 적용한다.
+		/// 상태 지속시간 보정을 실행값에 합친다.
 		internal static void ApplyStatusDurationBonus(SkillExecutionData snapshot, string statusId, float bonus)
 	{
 		if (!string.IsNullOrWhiteSpace(statusId) && !Mathf.Approximately(bonus, 0f))
@@ -826,12 +826,13 @@ namespace Pakuri.InGame
 	}
 
 
-        /// 양수 보정값을 유효한 기본값으로 정규화한다.
+        /// 보정값을 허용 범위의 기본값으로 정규화한다.
         private static float PositiveOrDefault(float value, float fallback)
         {
             return value > 0f ? value : fallback;
         }
 
+        /// 시전 시점에 허용되는 후속 효과만 남긴다.
         internal static IReadOnlyList<SkillCastEffect> ResolveCastEffects(
             SkillExecutionData snapshot,
             bool enemyTargetsOnly)
@@ -858,6 +859,7 @@ namespace Pakuri.InGame
             return effects;
         }
 
+        /// 시전 조건이 제공하는 처형 기준 보정을 모은다.
         internal static float ResolveCastConditionHealthBonus(SkillExecutionData snapshot)
         {
             if (snapshot == null)
@@ -873,6 +875,7 @@ namespace Pakuri.InGame
             return bonus;
         }
 
+        /// 반복 배치의 횟수와 간격을 확정한다.
         internal static bool ResolveRepeat(
             SkillExecutionData snapshot,
             out int count,
@@ -885,6 +888,7 @@ namespace Pakuri.InGame
             return count > 0;
         }
 
+        /// 핵심 충돌에 연결된 추가 피해 조건을 확정한다.
         internal static bool ResolveCoreAdditionalDamage(
             SkillExecutionData snapshot,
             bool isCoreHit,
@@ -906,6 +910,7 @@ namespace Pakuri.InGame
             return chance > 0f && multiplier > 0f;
         }
 
+        /// 적중 수에 따른 대기 환급 조건을 확정한다.
         internal static bool ResolveHitCountCooldownRefund(
             SkillExecutionData snapshot,
             int hitCount,
@@ -927,6 +932,7 @@ namespace Pakuri.InGame
             return secondsRatio > 0f;
         }
 
+        /// 소비된 상태의 처치 후 재분배 조건을 확정한다.
         internal static bool ResolveStatusRedistribution(
             SkillExecutionData snapshot,
             int consumedStacks,
@@ -956,6 +962,7 @@ namespace Pakuri.InGame
             return stacks > 0;
         }
 
+        /// 대상의 상태 보유량을 공통 기준으로 읽는다.
         private static int StatusStacks(UnitCombatState target, StatusEffectKind statusKind)
         {
             if (target == null || statusKind == StatusEffectKind.None)
@@ -969,6 +976,7 @@ namespace Pakuri.InGame
             return target.Statuses != null ? target.Statuses.GetStacks(statusKind) : 0;
         }
 
+        /// 대상 상태가 피해에 기여하는 중첩 수를 확정한다.
         internal static int ResolveTargetStatusStackCount(
             SkillExecutionData snapshot,
             UnitCombatState target)
@@ -986,6 +994,7 @@ namespace Pakuri.InGame
             return Mathf.Max(0, count);
         }
 
+        /// 대상 상태 중첩을 추가 피해로 환산한다.
         internal static float ResolveTargetStatusStackDamage(
             SkillExecutionData snapshot,
             UnitCombatState target,
@@ -1004,6 +1013,7 @@ namespace Pakuri.InGame
             return Mathf.Max(0f, count * (statusDamage + rateDamage));
         }
 
+        /// 적중 시 소비할 대상 상태 중첩을 확정한다.
         internal static int ResolveConsumedStatusStacks(
             SkillExecutionData snapshot,
             UnitCombatState target)
@@ -1028,6 +1038,7 @@ namespace Pakuri.InGame
                 available);
         }
 
+        /// 적중 대상에 적용할 최종 피해 배율을 합성한다.
         internal static float ResolveHitDamageMultiplier(
             SkillExecutionData snapshot,
             UnitCombatState target)
@@ -1040,6 +1051,7 @@ namespace Pakuri.InGame
                 * ConditionalDamageMultiplier(snapshot, target);
         }
 
+        /// 적중 대상 조건의 치명타 보정을 계산한다.
         internal static float ResolveHitCritChanceBonus(
             SkillExecutionData snapshot,
             UnitCombatState target)
@@ -1049,6 +1061,7 @@ namespace Pakuri.InGame
                 : ConditionalCritChanceBonus(snapshot, target);
         }
 
+        /// 처치 결과가 허용하는 대기 회복을 계산한다.
         internal static void ResolveKillRecovery(
             SkillExecutionData snapshot,
             bool wasExecute,
@@ -1079,6 +1092,7 @@ namespace Pakuri.InGame
             }
         }
 
+        /// 투사체 분기 조건을 실행값에 확정한다.
         internal static void ResolveProjectileBranch(
             SkillExecutionData data,
             int projectileLaunchIndex,
@@ -1124,6 +1138,7 @@ namespace Pakuri.InGame
             searchRadius = Mathf.Max(0f, searchRadius);
         }
 
+        /// 투사체가 사라질 경계를 계산한다.
         internal static float ProjectileDestroyBoundaryX(
             Vector2 origin,
             Vector2 direction,
@@ -1139,7 +1154,7 @@ namespace Pakuri.InGame
             return origin.x + normalizedDirection.x * maxTravelDistance;
         }
 
-        /// 전달된 런타임 입력값을 사용해 ConditionalDamageMultiplier 결과값을 생성해 반환한다.
+        /// 현재 대상이 제공하는 조건부 피해 배율을 계산한다.
         internal static float ConditionalDamageMultiplier(
             SkillExecutionData data,
             UnitCombatState target)
@@ -1164,7 +1179,7 @@ namespace Pakuri.InGame
             return multiplier;
         }
 
-        /// 전달된 런타임 입력값을 사용해 ConditionalCritChanceBonus 결과값을 생성해 반환한다.
+        /// 현재 대상이 제공하는 치명타 보정을 계산한다.
         internal static float ConditionalCritChanceBonus(
             SkillExecutionData data,
             UnitCombatState target)
@@ -1188,7 +1203,7 @@ namespace Pakuri.InGame
             return bonus;
         }
 
-        /// 전달된 런타임 입력값을 사용해 BurstDamageMultiplier 결과값을 생성해 반환한다.
+        /// 폭발 조건이 제공하는 피해 배율을 계산한다.
         internal static float BurstDamageMultiplier(
             SkillExecutionData data,
             int projectileIndex,
@@ -1213,7 +1228,7 @@ namespace Pakuri.InGame
             return multiplier;
         }
 
-        /// 전달된 런타임 입력값을 사용해 BurstStatusStacksBonus 결과값을 생성해 반환한다.
+        /// 폭발 조건이 제공하는 상태 중첩 보정을 계산한다.
         internal static int BurstStatusStacksBonus(
             SkillExecutionData data,
             int projectileIndex,
@@ -1238,7 +1253,7 @@ namespace Pakuri.InGame
             return bonus;
         }
 
-        /// 전달된 런타임 입력값을 사용해 MeetsSourceStatusRequirements 조건을 평가하고 결과를 반환한다.
+        /// 시전자의 상태 조건을 모두 판정한다.
         internal static bool MeetsSourceStatusRequirements(
             SkillChoice choice,
             string targetSkillId,
@@ -1276,6 +1291,7 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /// 시전자가 요구 상태를 보유하는지 확인한다.
         private static bool HasSourceStatus(
             UnitCombatState owner,
             StatusEffectKind statusKind,
@@ -1296,7 +1312,7 @@ namespace Pakuri.InGame
                 && owner.Statuses.GetStacks(statusKind) >= Mathf.Max(1, minimumStacks);
         }
 
-        /// 전달된 런타임 입력값을 사용해 소유한 런타임 상태에 RequiredStacks가 있는지 반환한다.
+        /// 대상이 요구 중첩을 충족하는지 확인한다.
         private static bool HasRequiredStacks(UnitCombatState target, StatusStackCondition condition)
         {
             if (target == null || condition.StatusKind == StatusEffectKind.None || condition.MinimumStacks <= 0)
@@ -1313,7 +1329,7 @@ namespace Pakuri.InGame
                 && target.Statuses.GetStacks(condition.StatusKind) >= condition.MinimumStacks;
         }
 
-        /// 전달된 런타임 입력값을 사용해 MatchesBurstProjectileIndex 조건을 평가하고 결과를 반환한다.
+        /// 현재 투사체가 폭발 조건의 순번인지 확인한다.
         private static bool MatchesBurstProjectileIndex(
             int configuredIndex,
             int projectileIndex,
@@ -1327,7 +1343,7 @@ namespace Pakuri.InGame
             return configuredIndex == projectileIndex;
         }
 
-        /// 시전 전에 처형 조건을 충족하는 첫 대상을 확인한다.
+        /// 시전 시점에 처형 조건을 충족하는지 판정한다.
         internal static bool ShouldRejectCastForExecuteThreshold(
             SkillActionContext context,
             SkillExecutionData snapshot,
@@ -1344,7 +1360,7 @@ namespace Pakuri.InGame
             return target == null || target.Model == null || !IsWithinSingleThreshold(target.Model, threshold);
         }
 
-        /// 처형·보스 조건을 피해와 치명타 값에 반영한다.
+        /// 단일 대상 조건을 피해와 치명타 값에 반영한다.
         internal static void ApplySingleDamageModifiers(
             SkillExecutionData snapshot,
             UnitCombatState target,
@@ -1396,6 +1412,7 @@ namespace Pakuri.InGame
             }
         }
 
+        /// 단일 대상 처형 기준을 확정한다.
         private static bool TryResolveSingleThreshold(
             SingleSkillDefinition skill,
             SkillExecutionData snapshot,
@@ -1414,6 +1431,7 @@ namespace Pakuri.InGame
             return threshold > 0f;
         }
 
+        /// 대상이 처형 기준 안에 있는지 확인한다.
         private static bool IsWithinSingleThreshold(UnitCombatState target, float threshold)
         {
             var resources = target != null ? target.Resources : null;
@@ -1426,7 +1444,7 @@ namespace Pakuri.InGame
             return resources.CurrentHealth / stats.MaxHealth <= threshold;
         }
 
-        /// 전달된 런타임 입력값을 사용해 StatusSpec 결과값을 생성해 반환한다.
+        /// 상태 적용에 필요한 최종 수치를 확정한다.
         internal static StatusApplicationSpec StatusSpec(
             StatusApplicationSpec baseStatus,
             SkillExecutionData snapshot)
@@ -1532,7 +1550,7 @@ namespace Pakuri.InGame
             };
         }
 
-        /// 전달된 런타임 입력값을 사용해 DirectStatusSpec를 생성한다.
+        /// 직접 상태 효과를 공통 적용값으로 만든다.
         internal static StatusApplicationSpec CreateDirectStatusSpec(
             StatusEffectKind kind,
             int stacks,
@@ -1573,7 +1591,7 @@ namespace Pakuri.InGame
             };
         }
 
-        /// 전달된 런타임 입력값을 사용해 StatusData 결과값을 생성해 반환한다.
+        /// 상태 정의와 보정을 런타임 값으로 합친다.
         internal static StatusRuntimeData StatusData(
             StatusRuntimeData statusData,
             StatusEffectKind kind,
@@ -1662,7 +1680,7 @@ namespace Pakuri.InGame
             return resolvedStatus;
         }
 
-        /// 전달된 런타임 입력값을 사용해 StatusDurationBonus 결과값을 생성해 반환한다.
+        /// 상태 지속시간 보정량을 계산한다.
         private static float StatusDurationBonus(SkillExecutionData snapshot, StatusRuntimeData statusData)
         {
             if (snapshot == null)
@@ -1673,7 +1691,7 @@ namespace Pakuri.InGame
             return snapshot.StatusDurationBonus(statusData.StatusTag);
         }
 
-        /// 전달된 런타임 입력값을 사용해 StatusMaxStacksBonus 결과값을 생성해 반환한다.
+        /// 상태 최대 중첩 보정량을 계산한다.
         private static int StatusMaxStacksBonus(SkillExecutionData snapshot, StatusRuntimeData statusData)
         {
             if (snapshot == null)
@@ -1684,7 +1702,7 @@ namespace Pakuri.InGame
             return snapshot.StatusMaxStacksBonus(statusData.StatusTag);
         }
 
-        /// 전달된 snapshot 값을 사용해 ThresholdStatusSpec 결과값을 생성해 반환한다.
+        /// 임계 상태 효과의 적용값을 확정한다.
         private static StatusApplicationSpec ThresholdStatusSpec(SkillExecutionData snapshot)
         {
             if (snapshot == null || snapshot.ThresholdApplyStatusKind == StatusEffectKind.None)
@@ -1715,7 +1733,7 @@ namespace Pakuri.InGame
             };
         }
 
-        /// 전달된 kind 값을 사용해 CatalogStatusData 결과값을 생성해 반환한다.
+        /// 카탈로그에서 상태의 기본값을 가져온다.
         private static StatusRuntimeData CatalogStatusData(StatusEffectKind kind)
         {
             return GameDataLoader.CurrentCatalog?.GetStatusRuntimeData(kind)
