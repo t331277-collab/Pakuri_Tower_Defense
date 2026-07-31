@@ -1226,7 +1226,7 @@ namespace Pakuri.InGame
                 if (entry != null && entry.Model.Identity.Role == UnitRole.Monster)
                 {
                     var model = entry.Model;
-                    SkillExecution.RebuildLearnedSkillState(model);
+                    model.SkillState.RebuildLearnedSkillState(model);
                     combatManager.RefreshPassiveEffects(model);
                     units.RefreshDisplay(model);
                 }
@@ -1253,7 +1253,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                SkillExecution.RebuildLearnedSkillState(model);
+                model.SkillState.RebuildLearnedSkillState(model);
                 actor.RefreshDisplay();
             }
         }

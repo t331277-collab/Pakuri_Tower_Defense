@@ -214,7 +214,7 @@ namespace Pakuri.InGame
                 }
 
                 var model = entry.Model;
-                SkillExecution.RebuildLearnedSkillState(model);
+                model.SkillState.RebuildLearnedSkillState(model);
                 manager.RefreshPassiveEffects(model);
                 manager.Units.RefreshDisplay(model);
             }

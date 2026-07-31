@@ -22,6 +22,15 @@ namespace Pakuri.InGame
         private readonly HashSet<string> chosenEnhancementIds = new HashSet<string>();
         private readonly HashSet<string> chosenMasterSkillIds = new HashSet<string>();
 
+        private static readonly SkillSlot[] ActiveSlots =
+        {
+            SkillSlot.A,
+            SkillSlot.B,
+            SkillSlot.C,
+            SkillSlot.D,
+            SkillSlot.E
+        };
+
         public IReadOnlyCollection<string> LearnedActiveSkillIds => learnedActiveSkillIds;
         public IReadOnlyCollection<string> LearnedPassiveSkillIds => learnedPassiveSkillIds;
         public IReadOnlyCollection<string> ChosenEnhancementIds => chosenEnhancementIds;
@@ -177,6 +186,70 @@ namespace Pakuri.InGame
             chosenMasterSkillIds.Clear();
             activeSkills.Clear();
             passiveSkills.Clear();
+        }
+
+        /// 학습 결과를 전투용 런타임 목록으로 구성한다.
+        public void RebuildLearnedSkillState(
+            UnitCombatState owner,
+            SkillDefinition[] activeDefinitions = null,
+            PassiveSkillDefinition[] passiveDefinitions = null)
+        {
+            if (owner == null)
+            {
+                return;
+            }
+
+            Clear();
+            if (owner.Skills == null)
+            {
+                return;
+            }
+
+            if (activeDefinitions == null && passiveDefinitions == null)
+            {
+                var monsterId = owner.Identity != null ? owner.Identity.DefinitionId : null;
+                if (string.IsNullOrWhiteSpace(monsterId))
+                {
+                    return;
+                }
+
+                var activeSkills = new List<SkillDefinition>();
+                for (var i = 0; i < ActiveSlots.Length; i++)
+                {
+                    var definition = GameDataLoader.CurrentCatalog.GetActiveSkill(monsterId, ActiveSlots[i]);
+                    if (definition != null)
+                    {
+                        activeSkills.Add(definition);
+                    }
+                }
+
+                activeDefinitions = activeSkills.ToArray();
+                passiveDefinitions = GameDataLoader.CurrentCatalog.GetPassiveSkills(monsterId);
+            }
+
+            if (activeDefinitions != null)
+            {
+                for (var i = 0; i < activeDefinitions.Length; i++)
+                {
+                    var definition = activeDefinitions[i];
+                    if (definition != null && owner.Skills.HasActiveSkill(definition.SkillId))
+                    {
+                        AddOrReplace(new SkillExecutionData(owner, definition));
+                    }
+                }
+            }
+
+            if (passiveDefinitions != null)
+            {
+                for (var i = 0; i < passiveDefinitions.Length; i++)
+                {
+                    var definition = passiveDefinitions[i];
+                    if (definition != null && owner.Skills.HasPassiveSkill(definition.SkillId))
+                    {
+                        AddOrReplace(new SkillExecutionData(owner, definition));
+                    }
+                }
+            }
         }
 
         private readonly List<SkillExecutionData> activeSkills = new List<SkillExecutionData>();

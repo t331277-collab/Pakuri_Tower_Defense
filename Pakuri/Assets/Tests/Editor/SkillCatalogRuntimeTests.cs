@@ -72,12 +72,12 @@ public sealed class SkillCatalogRuntimeTests
 
             var owner = new UnitCombatState();
             owner.Skills.AddActiveSkill(skill.SkillId);
-            SkillExecution.RebuildLearnedSkillState(
+            owner.SkillState.RebuildLearnedSkillState(
                 owner,
                 new[] { skill },
                 Array.Empty<PassiveSkillDefinition>());
             var firstState = owner.SkillState.FindBySkillId("skill-a");
-            SkillExecution.RebuildLearnedSkillState(
+            owner.SkillState.RebuildLearnedSkillState(
                 owner,
                 new[] { skill },
                 Array.Empty<PassiveSkillDefinition>());
@@ -121,7 +121,7 @@ public sealed class SkillCatalogRuntimeTests
             enemy.PassiveSkill = passive;
 
             var model = new UnitCombatStateFactory().CreateEnemy(enemy);
-            SkillExecution.RebuildLearnedSkillState(
+            model.SkillState.RebuildLearnedSkillState(
                 model,
                 enemy.ActiveSkills,
                 new[] { enemy.PassiveSkill });
@@ -159,7 +159,7 @@ public sealed class SkillCatalogRuntimeTests
             owner.Skills.AddPassiveSkill(passives[i].SkillId);
         }
 
-        SkillExecution.RebuildLearnedSkillState(
+        owner.SkillState.RebuildLearnedSkillState(
             owner,
             Array.Empty<SkillDefinition>(),
             passives);
@@ -195,7 +195,7 @@ public sealed class SkillCatalogRuntimeTests
                 enemy.EnemyId);
 
             var model = new UnitCombatStateFactory().CreateEnemy(enemy);
-            SkillExecution.RebuildLearnedSkillState(
+            model.SkillState.RebuildLearnedSkillState(
                 model,
                 enemy.ActiveSkills,
                 new[] { enemy.PassiveSkill });

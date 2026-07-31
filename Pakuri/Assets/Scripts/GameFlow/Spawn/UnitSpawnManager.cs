@@ -111,7 +111,7 @@ namespace Pakuri.InGame
             var runState = activeSession.GetPartyMemberState(monster.MonsterId)
                 ?? throw new InvalidOperationException($"Party state '{monster.MonsterId}' is required before spawning.");
             var model = unitStateFactory.CreateManifestedMonster(monster, runState, partySlotIndex);
-            SkillExecution.RebuildLearnedSkillState(model);
+            model.SkillState.RebuildLearnedSkillState(model);
 
             var spawnPoint = ResolveManifestSpawnPoint(partySlotIndex);
             var spawnPosition = spawnPoint.position;
@@ -300,7 +300,7 @@ namespace Pakuri.InGame
                 ?? throw new InvalidOperationException(
                     $"Party state '{model.Identity.DefinitionId}' is required before restoring.");
             model.Skills = state.Skills;
-            SkillExecution.RebuildLearnedSkillState(model);
+            model.SkillState.RebuildLearnedSkillState(model);
         }
 
         /// 전달된 slotIndex 값을 사용해 ExistingPlayerActorBySlot를 찾는다.
@@ -337,7 +337,7 @@ namespace Pakuri.InGame
             var runState = session.GetPartyMemberState(monster.MonsterId)
                 ?? throw new InvalidOperationException($"Party state '{monster.MonsterId}' is required before spawning.");
             var model = unitStateFactory.CreateSelectedMonster(monster, runState, 0);
-            SkillExecution.RebuildLearnedSkillState(model);
+            model.SkillState.RebuildLearnedSkillState(model);
             return model;
         }
 
@@ -374,7 +374,7 @@ namespace Pakuri.InGame
             var enemy = ResolveEnemyDefinition(enemyId);
             var model = unitStateFactory.CreateEnemy(enemy, slotIndex, isBoss);
 
-            SkillExecution.RebuildLearnedSkillState(
+            model.SkillState.RebuildLearnedSkillState(
                 model,
                 enemy.ActiveSkills,
                 enemy.PassiveSkill == null

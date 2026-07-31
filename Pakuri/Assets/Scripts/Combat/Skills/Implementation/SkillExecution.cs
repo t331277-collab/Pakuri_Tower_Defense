@@ -20,15 +20,6 @@ namespace Pakuri.InGame
         private static int triggeredExecutionDepth;
         private static bool applyingHitEnhancement;
 
-        private static readonly SkillSlot[] ActiveSlots =
-        {
-            SkillSlot.A,
-            SkillSlot.B,
-            SkillSlot.C,
-            SkillSlot.D,
-            SkillSlot.E
-        };
-
         /// 자동 시전 후보를 외부 정책으로 선별한다.
         public delegate bool SkillAutoRoutePredicate(CombatUnitEntry entry, SkillExecutionData runtime);
 
@@ -2565,82 +2556,6 @@ namespace Pakuri.InGame
             return Mathf.Max(0f, value) * Mathf.Max(0f, trigger.DamageValueMultiplier);
         }
 
-        /// 학습 상태를 현재 정의와 동기화한다.
-        public static void RebuildLearnedSkillState(UnitCombatState owner)
-        {
-            if (owner == null)
-            {
-                return;
-            }
-
-            string monsterId = null;
-            if (owner.Identity != null)
-            {
-                monsterId = owner.Identity.DefinitionId;
-            }
-            if (string.IsNullOrWhiteSpace(monsterId))
-            {
-                owner.SkillState.Clear();
-                return;
-            }
-
-            var activeSkills = new List<SkillDefinition>();
-            for (var i = 0; i < ActiveSlots.Length; i++)
-            {
-                var source = GameDataLoader.CurrentCatalog.GetActiveSkill(monsterId, ActiveSlots[i]);
-                if (source != null)
-                {
-                    activeSkills.Add(source);
-                }
-            }
-
-            RebuildLearnedSkillState(
-                owner,
-                activeSkills.ToArray(),
-                GameDataLoader.CurrentCatalog.GetPassiveSkills(monsterId));
-        }
-
-        /// 전달된 정의로 학습 상태를 다시 구성한다.
-        public static void RebuildLearnedSkillState(
-            UnitCombatState owner,
-            SkillDefinition[] activeDefinitions,
-            PassiveSkillDefinition[] passiveDefinitions)
-        {
-            if (owner == null)
-            {
-                return;
-            }
-
-            owner.SkillState.Clear();
-            if (owner.Skills == null)
-            {
-                return;
-            }
-
-            if (activeDefinitions != null)
-            {
-                for (var i = 0; i < activeDefinitions.Length; i++)
-                {
-                    var definition = activeDefinitions[i];
-                    if (definition != null && owner.Skills.HasActiveSkill(definition.SkillId))
-                    {
-                        owner.SkillState.AddOrReplace(new SkillExecutionData(owner, definition));
-                    }
-                }
-            }
-
-            if (passiveDefinitions != null)
-            {
-                for (var i = 0; i < passiveDefinitions.Length; i++)
-                {
-                    var definition = passiveDefinitions[i];
-                    if (definition != null && owner.Skills.HasPassiveSkill(definition.SkillId))
-                    {
-                        owner.SkillState.AddOrReplace(new SkillExecutionData(owner, definition));
-                    }
-                }
-            }
-        }
     }
 
 }

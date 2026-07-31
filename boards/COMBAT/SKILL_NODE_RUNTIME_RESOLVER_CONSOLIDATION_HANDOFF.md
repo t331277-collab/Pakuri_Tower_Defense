@@ -50,6 +50,7 @@ Node 의미의 런타임 구현을 `SkillExecutionRuleResolver` 하나로 통합
 - Phase 2 Node composition 구현 및 빌드 검증 완료.
 - Phase 7 Context 제거, 주석 추상화, 최종 정적 검증 완료.
 - Phase 8 Code Reviewer 책임 수정 완료: `SkillExecutionData` 런타임 lifecycle 조정을 `SkillExecution`으로 이동하고 Core/Editor 프로젝트 빌드를 오류 0개로 통과했다.
+- Phase 9 학습 런타임 목록 재구성 책임을 `UnitSkills`로 이관하고 Core/Editor 프로젝트 빌드를 오류 0개로 통과했다.
 
 ## Selected Code Builder tracks
 
@@ -562,6 +563,15 @@ Status: complete. Code Reviewer found that `SkillExecutionData` still owned runt
 3. `UnitSkills`, recovery flow, family Executors, Actors, and editor tests call the new `SkillExecution` owner methods.
 4. Existing six-file Implementation scope, one `SkillExecution` class, Resolver boundary, Trigger gate asymmetry, and legacy-symbol deletion remain unchanged.
 
+### Phase 9 — learned runtime state ownership
+
+Status: complete. `RebuildLearnedSkillState` was removed from `SkillExecution` and integrated into the existing `UnitSkills` state owner. The new method reuses `Clear`, `HasActiveSkill`, `HasPassiveSkill`, and `AddOrReplace`; all runtime, spawn, UI, and Editor test callers use `model.SkillState.RebuildLearnedSkillState(...)`. Core and Editor builds passed with 0 errors and 2 existing reference warnings each.
+
+1. `UnitSkills` resolves catalog definitions for the existing active slots when callers do not provide definitions.
+2. `UnitSkills` filters definitions through the learned ID sets and rebuilds the runtime list through existing list APIs.
+3. `SkillExecution` no longer owns catalog lookup, active-slot selection, or learned-state reconstruction.
+4. Existing behavior and caller coverage remain unchanged; no new script or compatibility facade was added.
+
 ## Compatibility requirements
 
 - 모든 기존 Node operation의 계산 순서와 합산·곱산 방식을 보존한다.
@@ -677,7 +687,7 @@ Unity-MCP로 editor compile과 console을 확인한다. Play Mode gameplay 검�
 
 ## Next Actions
 
-1. Phase 1~8 구현과 각 Phase 커밋이 완료되었다.
+1. Phase 1~9 구현과 각 Phase 커밋이 완료되었다.
 2. Code Reviewer가 확인한 `SkillExecutionData` 책임 위반을 Code Builder가 수정했다.
 3. Assembly-CSharp 빌드와 정적 경계 검증이 완료되었다.
 4. Unity EditMode 회귀 테스트와 추가 gameplay 검증은 아직 실행하지 않았으며, Play Mode는 사용자가 수행한다.
@@ -721,6 +731,12 @@ Unity-MCP로 editor compile과 console을 확인한다. Play Mode gameplay 검�
   - 현재 Implementation은 `.cs` 8개이며 삭제 대상 2개를 제외한 승인 최종 목록은 기존 6개다.
 - `rg -n "SkillExecutionContext|SkillUseState|SkillExecutionState" Pakuri/Assets/Scripts --glob "*.cs" --glob "!SkillExecution.cs"`
   - 세 class는 Combat Activation/Implementation뿐 아니라 Units와 UI caller도 있어 class 삭제 전에 저장소 전체 caller migration이 필요함을 확인했다.
+- `rg -n "SkillExecution\\.RebuildLearnedSkillState" Pakuri --glob "*.cs"`
+  - 구 `SkillExecution` API 참조가 0건임을 확인했다.
+- `rg -n "RebuildLearnedSkillState\\(" Pakuri/Assets/Scripts/GameFlow/UnitSkills.cs Pakuri/Assets/Scripts/GameFlow/Spawn/UnitSpawnManager.cs Pakuri/Assets/Scripts/UI/InGame/DebugUI.cs Pakuri/Assets/Scripts/UI/InGame/InGameUIManager.cs Pakuri/Assets/Tests/Editor/SkillCatalogRuntimeTests.cs`
+  - 새 `UnitSkills` 인스턴스 API와 모든 저장소 호출부가 연결됨을 확인했다.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore -v:minimal /p:UseSharedCompilation=false`, `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore -v:minimal /p:UseSharedCompilation=false`
+  - 두 프로젝트 모두 오류 0개, 기존 참조 경고 2개로 통과했다.
 
 ## History
 
@@ -742,3 +758,4 @@ Unity-MCP로 editor compile과 console을 확인한다. Play Mode gameplay 검�
 - 2026-07-31: Phase 6 kept Trigger gate asymmetry and command generation limits, routed accepted reactions to SkillExecution for delay/repeat/outcome/command/targeting/runtime application, and passed Assembly-CSharp build with 0 errors.
 - 2026-07-31: Phase 7 absorbed `SkillExecutionContext` into existing `SkillActionContext`, normalized concise abstract comments across `Combat/Skills`, confirmed six Implementation scripts and one `SkillExecution` class, found zero legacy symbols and zero runtime-application calls in Resolver, and passed `git diff --check` plus `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore` with 0 errors and 2 existing reference warnings.
 - 2026-07-31: Code Reviewer found runtime lifecycle methods still owned by `SkillExecutionData`; Code Builder moved them into `SkillExecution`, migrated repository callers, exposed the Definition-only Resolver entry points, changed the Editor test to inspect the internal data mutator through its existing reflection pattern, confirmed zero lifecycle method declarations remain in `SkillExecutionData`, and passed both Core and Editor builds with 0 errors and 2 existing reference warnings each.
+- 2026-07-31: Code Builder moved learned runtime-state reconstruction from `SkillExecution` into the existing `UnitSkills` class, reused its existing learning checks and runtime-list APIs, migrated spawn/UI/Editor callers, and passed Core/Editor builds with 0 errors and 2 existing reference warnings each.
