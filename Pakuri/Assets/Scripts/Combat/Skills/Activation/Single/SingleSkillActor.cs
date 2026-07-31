@@ -474,7 +474,7 @@ public partial class SingleSkillActor
 				TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry, result2, consumedStacks);
 				if (!result2.IsDead)
 				{
-					TryApplyStatus(manager, unitEntry.Model, statusSpec, source);
+					StatusCombatRules.ApplyStatus(manager, unitEntry.Model, statusSpec, source);
 				}
 				TryApplyCoreOnHitAdditionalDamage(manager, snapshot, source, sourceSkillId, unitEntry, damageResolution.Damage, isCoreHit);
 				SkillExecution.ApplyHitEnhancements(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry, hitPosition, damageResolution.Damage);
@@ -513,7 +513,7 @@ public partial class SingleSkillActor
 			TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry, result2, consumedStacks);
 			if (!result2.IsDead)
 			{
-				TryApplyStatus(manager, unitEntry.Model, statusSpec, source);
+				StatusCombatRules.ApplyStatus(manager, unitEntry.Model, statusSpec, source);
 			}
 			SkillExecution.ApplyHitEnhancements(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry, hitPosition, damageResolution.Damage);
 			result = true;
@@ -552,7 +552,7 @@ public partial class SingleSkillActor
 			TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry, result, consumedStacks);
 			if (!result.IsDead)
 			{
-				TryApplyStatus(manager, unitEntry.Model, statusSpec, source);
+				StatusCombatRules.ApplyStatus(manager, unitEntry.Model, statusSpec, source);
 			}
 			SkillExecution.ApplyHitEnhancements(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry, hitPosition, damageResolution.Damage);
 			TryApplyHitCountCooldownRefund(sourceRuntime, snapshot, 1);
@@ -576,7 +576,7 @@ public partial class SingleSkillActor
 				TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry2, result3, consumedStacks2);
 				if (!result3.IsDead)
 				{
-					TryApplyStatus(manager, unitEntry2.Model, statusSpec, source);
+					StatusCombatRules.ApplyStatus(manager, unitEntry2.Model, statusSpec, source);
 				}
 				SkillExecution.ApplyHitEnhancements(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry2, hitPosition2, damageResolution2.Damage);
 				result2 = true;
@@ -871,10 +871,5 @@ public partial class SingleSkillActor
 		return false;
 	}
 
-	/// 확정된 상태를 공통 경로에 적용한다.
-	private static void TryApplyStatus(InGameCombatManager manager, UnitCombatState target, StatusApplicationSpec statusSpec, UnitCombatState source)
-	{
-		StatusCombatRules.ApplyStatus(manager, target, statusSpec, source);
-	}
 }
 }

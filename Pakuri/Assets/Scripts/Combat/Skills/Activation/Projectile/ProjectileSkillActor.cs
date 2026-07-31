@@ -284,11 +284,11 @@ namespace Pakuri.InGame
             var resolvedDamage = 0f;
             if (contactDamageEnabled)
             {
-                resolvedDamage = HitDamage();
+                resolvedDamage = damage;
                 var damageResult = combatManager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, owner, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, finalDamageMultiplier: HitDamageMultiplier(target.Model));
                 if (!damageResult.IsDead)
                 {
-                    TryApplyStatus(target.Model);
+                    StatusCombatRules.ApplyStatus(combatManager, target.Model, statusOnHit, owner);
                 }
                 SkillExecution.ApplyHitEnhancements(
                     combatManager,
@@ -321,12 +321,6 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /// 투사체의 기본 피해를 확정한다.
-        private float HitDamage()
-        {
-            return Mathf.Max(0f, damage);
-        }
-
         /// 적중 대상에 맞는 피해 배율을 정한다.
         private float HitDamageMultiplier(UnitCombatState target)
         {
@@ -341,12 +335,6 @@ namespace Pakuri.InGame
             }
 
             return Mathf.Max(0f, multiplier);
-        }
-
-        /// 적중 상태를 공통 경로에 적용한다.
-        private void TryApplyStatus(UnitCombatState target)
-        {
-            StatusCombatRules.ApplyStatus(combatManager, target, statusOnHit, owner);
         }
 
         /// 투사체 적중 사건을 반응 흐름에 전달한다.
