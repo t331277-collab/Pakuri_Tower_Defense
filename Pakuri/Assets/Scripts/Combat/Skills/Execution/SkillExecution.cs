@@ -220,7 +220,8 @@ namespace Pakuri.InGame
             string sourceSkillId,
             bool lockToEventTarget,
             bool publishSkillLifecycleEvents,
-            bool beginCast)
+            bool beginCast,
+            StatusApplicationSpec onHitStatusOverride = null)
         {
             if (entry == null
                 || runtime == null
@@ -243,6 +244,7 @@ namespace Pakuri.InGame
             {
                 snapshot.SetRawDamageOverride(rawDamageOverride);
             }
+            snapshot.OnHitStatusOverride = onHitStatusOverride;
 
             var aimDirection = entry.Transform != null && hasTargetPoint
                 ? targetPoint - (Vector2)entry.Transform.position
@@ -588,6 +590,50 @@ namespace Pakuri.InGame
                 return false;
             }
 
+            if (!string.IsNullOrWhiteSpace(effect.TargetSkillId))
+            {
+                var runtime = context.Caster?.SkillState.FindBySkillId(
+                    effect.TargetSkillId);
+                if (runtime?.Data == null)
+                {
+                    return false;
+                }
+
+                var hasTargetPoint = context.HasManualTargetPoint;
+                var targetPoint = context.ManualTargetPoint;
+                if (effect.UseSourcePreparedAim
+                    && sourceSnapshot.PreparedDirections != null
+                    && sourceSnapshot.PreparedDirections.Count > 0
+                    && sourceSnapshot.PreparedDirections[0].sqrMagnitude > 0.0001f)
+                {
+                    var origin = context.CasterEntry.Transform != null
+                        ? (Vector2)context.CasterEntry.Transform.position
+                        : Vector2.zero;
+                    targetPoint = origin + sourceSnapshot.PreparedDirections[0];
+                    hasTargetPoint = true;
+                }
+
+                return context.CombatManager.SkillExecution.TryExecuteReaction(
+                    context.CasterEntry,
+                    runtime,
+                    runtime,
+                    runtime.Data,
+                    context.Roster,
+                    context.CombatManager,
+                    context.EventTarget,
+                    targetPoint,
+                    hasTargetPoint,
+                    false,
+                    0f,
+                    context.RecastGeneration,
+                    effect.DamageMultiplier,
+                    effect.EffectId,
+                    false,
+                    false,
+                    false,
+                    effect.OnHitStatusOverride);
+            }
+
             var snapshot = sourceSnapshot.CopyWithDamageMultiplier(1f);
             snapshot.PreparedSkillId = effect.EffectId;
             snapshot.PreparedTargeting = effect.Targeting;
@@ -596,10 +642,14 @@ namespace Pakuri.InGame
 
             if (effect.HasDamage)
             {
-                var primaryCenter = SkillTargeting.AreaCenter(
-                    context,
-                    effect.Targeting,
-                    effect.Area);
+                var primaryCenter = effect.UseSourcePreparedCenter
+                    && sourceSnapshot.PreparedCenters != null
+                    && sourceSnapshot.PreparedCenters.Count > 0
+                        ? sourceSnapshot.PreparedCenters[0]
+                        : SkillTargeting.AreaCenter(
+                            context,
+                            effect.Targeting,
+                            effect.Area);
                 var baseRadius = SkillTargeting.BaseRadius(effect.Targeting, effect.Area);
                 snapshot.PreparedCenters = new[] { primaryCenter };
                 snapshot.PreparedBaseRadius = baseRadius;
@@ -904,7 +954,9 @@ namespace Pakuri.InGame
             snapshot.PreparedDamageAttribute = skill.DamagePerTick != null
                 ? skill.DamagePerTick.Element
                 : skill.Element;
-            snapshot.PreparedStatus = SkillStatus.StatusSpec(skill.OnHitStatus, snapshot);
+            snapshot.PreparedStatus = SkillStatus.StatusSpec(
+                snapshot.OnHitStatusOverride ?? skill.OnHitStatus,
+                snapshot);
             snapshot.PreparedLength = Mathf.Max(0.1f, skill.LineLength);
             snapshot.PreparedWidth = Mathf.Max(
                 0.1f,

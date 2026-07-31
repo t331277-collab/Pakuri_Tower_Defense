@@ -14,6 +14,11 @@ namespace Pakuri.InGame
     {
         public string EffectId;
         public float DelaySeconds;
+        public string TargetSkillId;
+        public float DamageMultiplier = 1f;
+        public bool UseSourcePreparedAim;
+        public bool UseSourcePreparedCenter;
+        public StatusApplicationSpec OnHitStatusOverride;
         public SkillTargetingSpec Targeting = new SkillTargetingSpec();
         public AreaBlueprintSpec Area = new AreaBlueprintSpec();
         public SkillDamageSpec Damage;

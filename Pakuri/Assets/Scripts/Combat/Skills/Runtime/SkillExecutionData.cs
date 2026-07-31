@@ -292,6 +292,8 @@ public class SkillExecutionData
 
 	internal ProjectileStatusHitSpec PreparedStatus { get; set; }
 
+	internal StatusApplicationSpec OnHitStatusOverride { get; set; }
+
 	internal float PreparedLength { get; set; }
 
 	internal float PreparedWidth { get; set; }

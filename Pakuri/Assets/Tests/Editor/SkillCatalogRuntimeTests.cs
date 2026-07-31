@@ -499,7 +499,7 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(workingTriggers, Has.Count.EqualTo(82));
         Assert.That(incompleteTriggers, Is.Empty);
         Assert.That(leakedNonTriggers, Is.Empty);
-        Assert.That(castEffects, Has.Count.EqualTo(74));
+        Assert.That(castEffects, Has.Count.EqualTo(73));
         Assert.That(
             workingTriggers.Exists(trigger =>
                 trigger.ReactionId == "ariel-b-trait4-shield-expire"),
@@ -535,6 +535,31 @@ public sealed class SkillCatalogRuntimeTests
             castEffects.Exists(effect =>
                 effect.EffectId == "ariel-e-trait-4"),
             Is.False);
+        Assert.That(
+            castEffects.Exists(effect =>
+                effect.EffectId == "ariel-a-master-2"),
+            Is.False);
+        Assert.That(
+            workingTriggers.Exists(trigger =>
+                trigger.ReactionId
+                    == "ariel-a-master2-holy-exposure-on-hit"
+                && trigger.Effect?.HasStatus == true),
+            Is.True);
+        var vegaSecondSlash = castEffects.Find(
+            effect => effect.EffectId == "vega-b-master1-second-slash");
+        Assert.That(vegaSecondSlash, Is.Not.Null);
+        Assert.That(vegaSecondSlash.TargetSkillId, Is.EqualTo("vega-b"));
+        Assert.That(vegaSecondSlash.DamageMultiplier, Is.EqualTo(0.45f));
+        Assert.That(vegaSecondSlash.DelaySeconds, Is.EqualTo(0.4f));
+        Assert.That(vegaSecondSlash.UseSourcePreparedAim, Is.True);
+        Assert.That(
+            vegaSecondSlash.OnHitStatusOverride?.Status?.Kind,
+            Is.EqualTo(StatusEffectKind.Silence));
+        var arielSecondWave = castEffects.Find(
+            effect => effect.EffectId == "ariel-c-master-2");
+        Assert.That(arielSecondWave, Is.Not.Null);
+        Assert.That(arielSecondWave.UseSourcePreparedCenter, Is.True);
+        Assert.That(arielSecondWave.DelaySeconds, Is.EqualTo(1f));
     }
 
     [Test]

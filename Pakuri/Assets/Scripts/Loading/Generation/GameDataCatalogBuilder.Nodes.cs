@@ -301,6 +301,7 @@ namespace Pakuri.Data
 		SkillNodeBuildData[] nodes,
 		StatusEffectDefinition[] statusDefinitions)
 	{
+		var state = BuildReactionOutcomeState(nodes, out _);
 		var reaction = new SkillReaction
 		{
 			ReactionId = row.Id,
@@ -309,6 +310,34 @@ namespace Pakuri.Data
 		BuildReactionOutcome(reaction, nodes, statusDefinitions);
 
 		var effect = reaction.Effect;
+		if (effect == null && !string.IsNullOrWhiteSpace(reaction.TargetSkillId))
+		{
+			effect = new SkillCastEffect
+			{
+				EffectId = row.Id,
+				TargetSkillId = reaction.TargetSkillId,
+				DamageMultiplier = reaction.DamageMultiplier,
+				UseSourcePreparedAim = string.Equals(
+					reaction.TargetSkillId,
+					row.SourceSkillId,
+					StringComparison.OrdinalIgnoreCase),
+				Targeting = BuildTriggerTargeting(state)
+			};
+			if (state.HasStatusPayload)
+			{
+				effect.OnHitStatusOverride = new StatusApplicationSpec
+				{
+					Status = CreateReactionStatus(
+						state.StatusKind,
+						reaction,
+						state,
+						statusDefinitions),
+					Chance = state.StatusChance,
+					Stacks = state.StatusStacks,
+					RefreshDuration = state.RefreshDuration
+				};
+			}
+		}
 		if (effect == null
 			&& reaction.Command?.Kind
 				== SkillReactionCommandKind.ExtendStatusDuration)
@@ -331,6 +360,9 @@ namespace Pakuri.Data
 		if (effect != null)
 		{
 			effect.DelaySeconds = Mathf.Max(0f, row.TriggerDelaySeconds);
+			effect.UseSourcePreparedCenter = effect.HasDamage
+				&& state.CenterMode
+					== SkillMultiEffectCenterMode.PrimarySkillCenter;
 		}
 
 		return effect != null

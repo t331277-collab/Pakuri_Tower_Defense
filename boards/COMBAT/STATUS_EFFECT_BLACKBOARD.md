@@ -909,12 +909,12 @@ Code Builder.
 
 ### Status
 
-User approved effect restoration and Code Builder implementation. Phases 1-8 complete; Code Reviewer verification is next.
+User approved effect restoration and Code Builder implementation. Phases 1-8 complete. Code Reviewer correction 1 is implemented and awaits re-review.
 
 ### Next Actions
 
-- Commit the completed Phase 8 separately.
-- Run the approved Code Reviewer loop and correct findings until approval.
+- Commit Code Reviewer correction 1 separately.
+- Re-run Code Reviewer and correct findings until approval.
 
 ### Evidence
 
@@ -950,6 +950,8 @@ User approved effect restoration and Code Builder implementation. Phases 1-8 com
 - Phase 8 deletes `SkillTriggerDefinition.cs/.meta`, `SkillDefinition.SkillTriggers`, and Monster/Enemy Trigger arrays.
 - Existing Skill/Choice/Passive Nodes now own `SkillReactionOp`; `SkillExecutionData` exposes the active reaction snapshot to `SkillTrigger`.
 - C# search finds zero `SkillTriggerDefinition` references; solution build error 0, Unity Console error 0, and full EditMode tests passed 15/15.
+- Reviewer correction 1 removes the duplicate `ariel-a-master-2` cast payload, restores Vega B's delayed 0.45 same-skill line follow-up with silence and prepared aim, preserves Ariel C's prepared center, and reapplies passive effects after runtime Choice rebuild.
+- Final normal cast/passive payload count is 73; solution build error 0, Unity Console error 0, and full EditMode tests passed 15/15.
 
 ### History
 
@@ -966,3 +968,4 @@ User approved effect restoration and Code Builder implementation. Phases 1-8 com
 - 2026-07-31: Code Builder completed Phase 6 Actor-less passive and state-command verification without adding runtime branches.
 - 2026-07-31: Code Builder completed Phase 7 Zone and Chain snapshot reuse.
 - 2026-07-31: Code Builder completed Phase 8 obsolete contract deletion and existing-node reaction ownership.
+- 2026-07-31: Code Reviewer requested four behavior corrections; Code Builder implemented them through existing common paths.

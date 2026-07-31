@@ -1227,6 +1227,7 @@ namespace Pakuri.InGame
                 {
                     var model = entry.Model;
                     SkillExecution.RebuildLearnedSkillState(model);
+                    combatManager.RefreshPassiveEffects(model);
                     units.RefreshDisplay(model);
                 }
             }

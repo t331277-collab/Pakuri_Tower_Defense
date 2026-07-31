@@ -53,7 +53,7 @@
 "vega","Trigger","vega-b-trait-5","vega-b","1","ApplyStatus","name-mark","","","","","","","","","","","",""
 "vega","Trigger","vega-b-trait-5","vega-b","2","SelectTargets","Enemy","EventTarget","Single","EffectTarget","Center","true","false","","","","","",""
 "vega","Trigger","vega-b-trait-5","vega-b","3","AttachStatusPayload","name-mark","1","이름표식","0","0","2","same_source_refresh","","","","","",""
-"vega","Trigger","vega-b-master1-second-slash","vega-b","1","ApplyStatus","silence","","","","","","","","","","","",""
+"vega","Trigger","vega-b-master1-second-slash","vega-b","1","ExecuteSkill","vega-b","0.45","","","","","","","","","","",""
 "vega","Trigger","vega-b-master1-second-slash","vega-b","2","SelectTargets","Enemy","EventTarget","Single","EffectTarget","Center","true","false","","","","","",""
 "vega","Trigger","vega-b-master1-second-slash","vega-b","3","AttachStatusPayload","silence","1","침묵","1","1","1","","","","","","",""
 "sein","Trigger","sein-e-trait-3","sein-e","1","ApplyStatus","fire-resist-down","","","","","","","","","","","",""

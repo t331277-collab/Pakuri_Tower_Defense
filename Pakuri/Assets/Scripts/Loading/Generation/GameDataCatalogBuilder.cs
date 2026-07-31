@@ -939,9 +939,13 @@ namespace Pakuri.Data
             {
                 var row = rows[i];
                 if (string.Equals(
-                    row.Id,
-                    "eve-h-trait-3",
-                    StringComparison.OrdinalIgnoreCase))
+                        row.Id,
+                        "eve-h-trait-3",
+                        StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(
+                        row.Id,
+                        "ariel-a-master-2",
+                        StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }

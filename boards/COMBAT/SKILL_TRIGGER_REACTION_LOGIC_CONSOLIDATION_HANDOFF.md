@@ -38,7 +38,7 @@
 
 ## Status
 
-사용자가 `65 working / 17 incomplete / 76 non-Trigger` 분류, 17개 Trigger 효과 복구, 64개 일반 Choice/base/passive 효과 복구를 승인했다. Code Builder Phase 1~8 구현과 비-Play-Mode 검증 완료. Code Reviewer 검증 대기.
+사용자가 `65 working / 17 incomplete / 76 non-Trigger` 분류, 17개 Trigger 효과 복구, 64개 일반 Choice/base/passive 효과 복구를 승인했다. Code Builder Phase 1~8 구현 완료. Code Reviewer 1차 수정 요청을 Code Builder가 반영했으며 재검토 대기.
 
 ## Core decision
 
@@ -773,6 +773,15 @@ SkillTrigger 공통 gate
 - 삭제된 `SkillTriggerDefinition` 타입 참조는 C# 정적 검색 결과 0이다.
 - solution build 오류 0, Unity Console 오류 0, EditMode 15/15 통과.
 
+### Code Reviewer correction 1
+
+- 중복 `ariel-a-master-2` OnCast payload를 일반 효과 등록에서 제외하고 실제 `ariel-a-master2-holy-exposure-on-hit` reaction만 유지했다.
+- `vega-b-master1-second-slash`는 기존 `ExecuteSkill` Node로 `vega-b` 0.45배 재사용을 작성하고, 원본 준비 방향과 침묵 payload를 공통 `SkillExecution` 재진입에 전달한다.
+- `ariel-c-master-2` 1초 지연 파동은 원본 실행의 `PreparedCenters`를 재사용한다.
+- 전투 중 Choice 반영 뒤 `RefreshPassiveEffects`를 호출해 새로 활성화된 passive 일반 효과를 현재 roster에 다시 적용한다.
+- 최종 일반 cast/passive payload는 73개다. 76개 non-Trigger 행 중 `eve-h-trait-3`과 `ariel-a-master-2`는 실제 event reaction과 중복되어 제외되고, `ariel-e-trait-4`는 기존 조건부 위력 Choice Node로 통합된다.
+- solution build 오류 0, Unity Console 오류 0, EditMode 15/15 통과.
+
 ## Risk boundaries
 
 - `SkillRuntimeKind` 기반 분배가 모든 기존 concrete family 매핑과 정확히 같아야 한다.
@@ -832,8 +841,8 @@ SkillTrigger 공통 gate
 
 ## Next Actions
 
-- Phase 8 변경과 검증 결과를 별도 Git commit으로 기록한다.
-- Code Reviewer 롤로 전환해 Phase 1~8 전체 diff와 실행 경로를 검증한다.
+- Code Reviewer 1차 수정 결과를 별도 Git commit으로 기록한다.
+- Code Reviewer 롤로 다시 전환해 Phase 1~8과 수정 결과를 검증한다.
 - Reviewer가 수정을 요구하면 Code Reviewer 롤로 수정·재검증하고 통과할 때까지 반복한다.
 - 기존 `SKILL_TRIGGER_EXECUTOR_REUSE_HANDOFF.md`는 현재 구현의 근거 기록으로 보존하며 삭제하지 않는다.
 
@@ -868,6 +877,7 @@ SkillTrigger 공통 gate
 - Phase 6 verification: passive source reaction 48(effect 24, skill reuse 4, command 20), cooldown refund 14, reload reduction 6; solution build error 0; Unity EditMode 15/15.
 - Phase 7 verification: `__chain` SkillDefinition 0, Chain 원본 Damage 참조/지연 0.5/배율 0.5/반경 7/primary 제외, Zone 지연 0.5/반경 0.6/지속 3/generation 1; solution build error 0; Unity EditMode 15/15.
 - Phase 8 verification: `SkillTriggerDefinition` C# 참조 0; Skill/Monster/Enemy runtime Trigger 배열 제거; reaction은 기존 Skill/Choice/Passive Node에서 수집; hidden Trigger Definition 0; solution build error 0; Unity Console error 0; Unity EditMode 15/15.
+- Reviewer correction 1 verification: `ariel-a-master-2` 일반 payload 0/실제 OnOutgoingDamage reaction 1; Vega B follow-up target `vega-b`/배율 0.45/지연 0.4/침묵/원본 방향 재사용; Ariel C 지연 파동 원본 center 재사용; 일반 payload 73; solution build error 0; Unity Console error 0; Unity EditMode 15/15.
 
 ## History
 
@@ -887,3 +897,5 @@ SkillTrigger 공통 gate
 - 2026-07-31: Code Builder completed Phase 6 by fixing the final catalog's 48 passive source reactions and existing state commands as the Actor-less common-path baseline.
 - 2026-07-31: Code Builder completed Phase 7 by deleting the Chain hidden Definition and wiring Zone node delay into the common Trigger scheduler.
 - 2026-07-31: Code Builder completed Phase 8 by deleting the obsolete Trigger Definition and owner arrays and attaching the final reaction contract to existing Skill/Choice/Passive Nodes.
+- 2026-07-31: Code Reviewer requested corrections for duplicate hit status, missing Vega B follow-up damage, delayed center loss, and passive Choice refresh.
+- 2026-07-31: Code Builder applied Reviewer correction 1 through existing Node, snapshot, SkillExecution, and passive refresh paths.

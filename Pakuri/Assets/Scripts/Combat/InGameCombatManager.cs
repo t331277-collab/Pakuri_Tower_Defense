@@ -137,8 +137,14 @@ namespace Pakuri.InGame
                 playerCombatControl.ApplyAutoSkillModeToSelectedPlayer(Units);
             }
 
-            skillExecution.ExecutePassiveEffects(this, Units, model);
+            RefreshPassiveEffects(model);
             DispatchCombatStartOnce(model);
+        }
+
+        /// 현재 학습한 passive 일반 효과를 공통 실행 경로로 다시 적용한다.
+        internal void RefreshPassiveEffects(UnitCombatState model)
+        {
+            skillExecution.ExecutePassiveEffects(this, Units, model);
         }
 
         /// 전달된 model 값을 사용해 EnemyUnitRegistered를 관련 런타임 시스템에 알린다.
