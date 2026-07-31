@@ -193,17 +193,16 @@ public sealed class SkillCatalogRuntimeTests
         var chainSkill = Array.Find(
             chainEnemy.ActiveSkills,
             skill => skill.SkillId == "ChainLightning");
-        var chainTrigger = Array.Find(
-            chainEnemy.SkillTriggers,
-            trigger => trigger.TriggerId == "ChainLightning__chain_on_hit");
+        var chainTrigger = CollectReactions(chainEnemy.ActiveSkills).Find(
+            reaction => reaction.ReactionId == "ChainLightning__chain_on_hit");
 
         Assert.That(chainSkill, Is.TypeOf<SingleSkillDefinition>());
         Assert.That(chainTrigger, Is.Not.Null);
-        Assert.That(chainTrigger.TriggerEvent, Is.EqualTo(SkillTriggerEvent.OnHit));
-        Assert.That(chainTrigger.TriggerDelaySeconds, Is.EqualTo(0.5f).Within(0.0001f));
-        Assert.That(chainTrigger.TriggeredDamageMultiplier, Is.EqualTo(0.5f).Within(0.0001f));
+        Assert.That(chainTrigger.Event, Is.EqualTo(SkillTriggerEvent.OnHit));
+        Assert.That(chainTrigger.DelaySeconds, Is.EqualTo(0.5f).Within(0.0001f));
+        Assert.That(chainTrigger.DamageMultiplier, Is.EqualTo(0.5f).Within(0.0001f));
         Assert.That(chainTrigger.PublishSkillLifecycleEvents, Is.False);
-        Assert.That(chainTrigger.TriggeredSkill, Is.Null);
+        Assert.That(chainTrigger.TargetSkillId, Is.Empty);
         Assert.That(chainTrigger.Effect, Is.Not.Null);
         Assert.That(chainTrigger.Effect.Damage, Is.SameAs(
             ((SingleSkillDefinition)chainSkill).Damage));
@@ -381,15 +380,18 @@ public sealed class SkillCatalogRuntimeTests
     {
         GameDataLoader.EnsureInitialized();
         var catalog = GameDataLoader.CurrentCatalog;
-        var triggers = new List<SkillTriggerDefinition>();
+        var triggers = new List<SkillReaction>();
         foreach (var monster in catalog.Monsters)
         {
-            triggers.AddRange(monster.SkillTriggers);
+            triggers.AddRange(CollectReactions(
+                monster.ActiveSkills,
+                monster.PassiveSkills));
         }
 
         Assert.That(triggers, Has.Count.EqualTo(82));
         Assert.That(
-            triggers.FindAll(trigger => trigger.TriggeredSkill != null),
+            triggers.FindAll(trigger =>
+                !string.IsNullOrWhiteSpace(trigger.TargetSkillId)),
             Has.Count.EqualTo(4));
         Assert.That(
             triggers.FindAll(trigger => trigger.Effect != null),
@@ -399,31 +401,31 @@ public sealed class SkillCatalogRuntimeTests
             Has.Count.EqualTo(21));
         Assert.That(
             triggers.FindAll(trigger =>
-                trigger.Command?.Kind == SkillTriggerCommandKind.RecastZone),
+                trigger.Command?.Kind == SkillReactionCommandKind.RecastZone),
             Has.Count.EqualTo(1));
         Assert.That(
             triggers.FindAll(trigger =>
-                trigger.Command?.Kind == SkillTriggerCommandKind.RefundCooldown),
+                trigger.Command?.Kind == SkillReactionCommandKind.RefundCooldown),
             Has.Count.EqualTo(14));
         Assert.That(
             triggers.FindAll(trigger =>
-                trigger.Command?.Kind == SkillTriggerCommandKind.ReduceReload),
+                trigger.Command?.Kind == SkillReactionCommandKind.ReduceReload),
             Has.Count.EqualTo(6));
         Assert.That(
             triggers.FindAll(trigger =>
-                trigger.Command?.Kind == SkillTriggerCommandKind.ExtendStatusDuration),
+                trigger.Command?.Kind == SkillReactionCommandKind.ExtendStatusDuration),
             Is.Empty);
         var zoneRecast = triggers.Find(
-            trigger => trigger.TriggerId == "eve-e-master-1");
+            trigger => trigger.ReactionId == "eve-e-master-1");
         Assert.That(zoneRecast?.Command, Is.Not.Null);
-        Assert.That(zoneRecast.TriggerDelaySeconds, Is.EqualTo(0.5f));
+        Assert.That(zoneRecast.DelaySeconds, Is.EqualTo(0.5f));
         Assert.That(zoneRecast.Command.RadiusMultiplier, Is.EqualTo(0.6f));
         Assert.That(zoneRecast.Command.DurationSeconds, Is.EqualTo(3f));
         Assert.That(zoneRecast.Command.MaxGeneration, Is.EqualTo(1));
         Assert.That(zoneRecast.Command.InheritSnapshot, Is.True);
         Assert.That(
             triggers.FindAll(trigger =>
-                trigger.TriggeredSkill == null
+                string.IsNullOrWhiteSpace(trigger.TargetSkillId)
                 && trigger.Effect == null
                 && trigger.Command == null),
             Is.Empty);
@@ -432,17 +434,17 @@ public sealed class SkillCatalogRuntimeTests
                 trigger.DamageValueSource != SkillTriggerDamageValueSource.Fixed),
             Has.Count.EqualTo(7));
         Assert.That(
-            triggers.FindAll(trigger => trigger.UsesExistingSkillRuntime),
+            triggers.FindAll(trigger =>
+                !string.IsNullOrWhiteSpace(trigger.TargetSkillId)),
             Has.Count.EqualTo(4));
         Assert.That(
             triggers.FindAll(trigger => trigger.PublishSkillLifecycleEvents),
             Has.Count.EqualTo(4));
         Assert.That(
             triggers.FindAll(trigger =>
-                trigger.TriggeredSkill != null
-                && !trigger.UsesExistingSkillRuntime
+                !string.IsNullOrWhiteSpace(trigger.TargetSkillId)
                 && trigger.PublishSkillLifecycleEvents),
-            Is.Empty);
+            Has.Count.EqualTo(4));
         Assert.That(
             triggers.FindAll(trigger =>
                 trigger.Effect?.HasDamage == true),
@@ -453,8 +455,7 @@ public sealed class SkillCatalogRuntimeTests
             Has.Count.EqualTo(33));
         Assert.That(
             triggers.FindAll(trigger =>
-                trigger.TriggeredSkill is BuffSkillDefinition buff
-                && buff.EffectKind == BuffEffectKind.Shield),
+                trigger.Effect?.HasShield == true),
             Is.Empty);
     }
 
@@ -462,22 +463,24 @@ public sealed class SkillCatalogRuntimeTests
     public void TriggerSemanticClassificationBaselineIsStable()
     {
         GameDataLoader.EnsureInitialized();
-        var triggers = new List<SkillTriggerDefinition>();
+        var triggers = new List<SkillReaction>();
         foreach (var monster in GameDataLoader.CurrentCatalog.Monsters)
         {
-            triggers.AddRange(monster.SkillTriggers);
+            triggers.AddRange(CollectReactions(
+                monster.ActiveSkills,
+                monster.PassiveSkills));
         }
 
         var leakedNonTriggers = triggers.FindAll(trigger =>
-            trigger.TriggerEvent == SkillTriggerEvent.OnCast
-            || (trigger.TriggerEvent == SkillTriggerEvent.OnSkillCast
+            trigger.Event == SkillTriggerEvent.OnCast
+            || (trigger.Event == SkillTriggerEvent.OnSkillCast
                 && (trigger.EventSkillIds == null || trigger.EventSkillIds.Length == 0)));
         var workingTriggers = triggers.FindAll(trigger =>
-            trigger.TriggeredSkill != null
+            !string.IsNullOrWhiteSpace(trigger.TargetSkillId)
             || trigger.Effect != null
             || trigger.Command != null);
         var incompleteTriggers = triggers.FindAll(trigger =>
-            trigger.TriggeredSkill == null
+            string.IsNullOrWhiteSpace(trigger.TargetSkillId)
             && trigger.Effect == null
             && trigger.Command == null);
         var castEffects = new List<SkillCastEffect>();
@@ -499,11 +502,11 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(castEffects, Has.Count.EqualTo(74));
         Assert.That(
             workingTriggers.Exists(trigger =>
-                trigger.TriggerId == "ariel-b-trait4-shield-expire"),
+                trigger.ReactionId == "ariel-b-trait4-shield-expire"),
             Is.True);
         Assert.That(
             workingTriggers.Exists(trigger =>
-                trigger.TriggerId == "eve-b-master-2"
+                trigger.ReactionId == "eve-b-master-2"
                 && trigger.Effect != null),
             Is.True);
         var arielShieldDamage = castEffects.Find(
@@ -548,7 +551,9 @@ public sealed class SkillCatalogRuntimeTests
         var reloadReductionCount = 0;
         foreach (var monster in GameDataLoader.CurrentCatalog.Monsters)
         {
-            foreach (var trigger in monster.SkillTriggers)
+            foreach (var trigger in CollectReactions(
+                monster.ActiveSkills,
+                monster.PassiveSkills))
             {
                 var passiveOwned = false;
                 for (var i = 0; i < monster.PassiveSkills.Length; i++)
@@ -566,7 +571,7 @@ public sealed class SkillCatalogRuntimeTests
                 {
                     passiveReactionCount++;
                     if (trigger.Effect != null
-                        || trigger.TriggeredSkill != null
+                        || !string.IsNullOrWhiteSpace(trigger.TargetSkillId)
                         || trigger.Command != null)
                     {
                         passiveReactionOutcomeCount++;
@@ -575,7 +580,7 @@ public sealed class SkillCatalogRuntimeTests
                     {
                         passiveEffectCount++;
                     }
-                    else if (trigger.TriggeredSkill != null)
+                    else if (!string.IsNullOrWhiteSpace(trigger.TargetSkillId))
                     {
                         passiveSkillReuseCount++;
                     }
@@ -585,11 +590,11 @@ public sealed class SkillCatalogRuntimeTests
                     }
                 }
 
-                if (trigger.Command?.Kind == SkillTriggerCommandKind.RefundCooldown)
+                if (trigger.Command?.Kind == SkillReactionCommandKind.RefundCooldown)
                 {
                     cooldownRefundCount++;
                 }
-                else if (trigger.Command?.Kind == SkillTriggerCommandKind.ReduceReload)
+                else if (trigger.Command?.Kind == SkillReactionCommandKind.ReduceReload)
                 {
                     reloadReductionCount++;
                 }
@@ -613,13 +618,6 @@ public sealed class SkillCatalogRuntimeTests
         foreach (var monster in GameDataLoader.CurrentCatalog.Monsters)
         {
             definitions.AddRange(monster.ActiveSkills);
-            foreach (var trigger in monster.SkillTriggers)
-            {
-                if (trigger.TriggeredSkill != null && !definitions.Contains(trigger.TriggeredSkill))
-                {
-                    definitions.Add(trigger.TriggeredSkill);
-                }
-            }
         }
         foreach (var enemy in GameDataLoader.CurrentCatalog.StageOneEnemies)
         {
@@ -628,13 +626,6 @@ public sealed class SkillCatalogRuntimeTests
         foreach (var enemy in GameDataLoader.CurrentCatalog.StageTwoEnemies)
         {
             definitions.AddRange(enemy.ActiveSkills);
-            foreach (var trigger in enemy.SkillTriggers)
-            {
-                if (trigger.TriggeredSkill != null && !definitions.Contains(trigger.TriggeredSkill))
-                {
-                    definitions.Add(trigger.TriggeredSkill);
-                }
-            }
         }
 
         foreach (var definition in definitions)
@@ -706,6 +697,28 @@ public sealed class SkillCatalogRuntimeTests
                 effects.AddRange(snapshot.CastEffects);
             }
         }
+    }
+
+    private static List<SkillReaction> CollectReactions(
+        SkillDefinition[] skills,
+        PassiveSkillDefinition[] passives = null)
+    {
+        var reactions = new List<SkillReaction>();
+        for (var i = 0; skills != null && i < skills.Length; i++)
+        {
+            if (skills[i] != null)
+            {
+                reactions.AddRange(new SkillExecutionData(skills[i]).Reactions);
+            }
+        }
+        for (var i = 0; passives != null && i < passives.Length; i++)
+        {
+            if (passives[i] != null)
+            {
+                reactions.AddRange(new SkillExecutionData(passives[i]).Reactions);
+            }
+        }
+        return reactions;
     }
 
     [Test]

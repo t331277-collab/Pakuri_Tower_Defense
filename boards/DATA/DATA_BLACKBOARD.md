@@ -480,11 +480,11 @@ Code Builder.
 
 ### Status
 
-User approved Generation/runtime implementation. Phases 1-4 complete; Parsing and authoring schemas remain unchanged.
+User approved Generation/runtime implementation. Phases 1-8 complete; Parsing and authoring schemas remain unchanged. Code Reviewer verification is next.
 
 ### Next Actions
 
-- Implement Phase 5 direct-delivery reactions and restore the 17 incomplete event outcomes without changing the authoring schema.
+- Run the approved Code Reviewer loop and correct findings until approval.
 
 ### Evidence
 
@@ -512,6 +512,8 @@ User approved Generation/runtime implementation. Phases 1-4 complete; Parsing an
 - Phase 6 solution build completed with error 0; Unity full EditMode tests passed 15/15.
 - Phase 7 Generation no longer creates the `ChainLightning__chain` SkillDefinition and maps RecastZone node delay into the Trigger scheduler.
 - Phase 7 solution build completed with error 0; Unity full EditMode tests passed 15/15.
+- Phase 8 Generation emits `SkillReactionOp` into existing Skill/Choice/Passive Nodes and no longer emits runtime Trigger owner arrays or hidden Trigger Definitions.
+- `SkillTriggerDefinition` C# references are zero; solution build error 0, Unity Console error 0, and full EditMode tests passed 15/15.
 
 ### History
 
@@ -527,3 +529,4 @@ User approved Generation/runtime implementation. Phases 1-4 complete; Parsing an
 - 2026-07-31: Code Builder completed Phase 5 direct-delivery and incomplete event-outcome Generation.
 - 2026-07-31: Code Builder completed Phase 6 final passive-source and state-command count verification.
 - 2026-07-31: Code Builder completed Phase 7 Zone/Chain Generation consolidation.
+- 2026-07-31: Code Builder completed Phase 8 obsolete Trigger contract deletion without changing Parsing or authoring schemas.

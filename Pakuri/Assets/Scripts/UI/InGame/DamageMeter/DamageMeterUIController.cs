@@ -216,70 +216,72 @@ namespace Pakuri.InGame
         /// 전달된 런타임 입력값을 사용해 TriggerSourceDisplayName를 결정한다.
         private static string ResolveTriggerSourceDisplayName(MonsterDefinition monster, string sourceId)
         {
-            var triggers = monster != null ? monster.SkillTriggers : null;
-            if (triggers == null)
+            var trigger = FindReaction(monster, sourceId);
+            if (trigger == null)
             {
                 return string.Empty;
             }
 
-            for (var i = 0; i < triggers.Length; i++)
+            var sourceSkillId = trigger.SourceSkillId;
+            if (string.IsNullOrWhiteSpace(sourceSkillId)
+                || string.Equals(sourceSkillId, sourceId, StringComparison.OrdinalIgnoreCase))
             {
-                var trigger = triggers[i];
-                if (trigger == null
-                    || !string.Equals(trigger.TriggerId, sourceId, StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                var sourceSkillId = trigger.SourceSkillId;
-                if (string.IsNullOrWhiteSpace(sourceSkillId)
-                    || string.Equals(sourceSkillId, sourceId, StringComparison.OrdinalIgnoreCase))
-                {
-                    return string.Empty;
-                }
-
-                var passiveName = ResolvePassiveDisplayName(monster, sourceSkillId);
-                if (!string.IsNullOrWhiteSpace(passiveName))
-                {
-                    return passiveName;
-                }
-
-                var activeName = ResolveActiveSkillDisplayName(monster, sourceSkillId);
-                if (!string.IsNullOrWhiteSpace(activeName))
-                {
-                    return activeName;
-                }
+                return string.Empty;
             }
 
-            return string.Empty;
+            var passiveName = ResolvePassiveDisplayName(monster, sourceSkillId);
+            return !string.IsNullOrWhiteSpace(passiveName)
+                ? passiveName
+                : ResolveActiveSkillDisplayName(monster, sourceSkillId);
         }
 
         /// 전달된 런타임 입력값을 사용해 ChoiceTitleForSource를 결정한다.
         private static string ResolveChoiceTitleForSource(MonsterDefinition monster, string sourceId)
         {
-            var triggers = monster != null ? monster.SkillTriggers : null;
-            if (triggers == null)
+            var reaction = FindReaction(monster, sourceId);
+            return reaction?.RequiredActiveChoiceIds != null
+                && reaction.RequiredActiveChoiceIds.Length > 0
+                    ? ResolveChoiceTitle(reaction.RequiredActiveChoiceIds[0])
+                    : string.Empty;
+        }
+
+        private static SkillReaction FindReaction(
+            MonsterDefinition monster,
+            string reactionId)
+        {
+            for (var i = 0; monster?.ActiveSkills != null
+                && i < monster.ActiveSkills.Length; i++)
             {
-                return string.Empty;
+                var reactions = new SkillExecutionData(
+                    monster.ActiveSkills[i]).Reactions;
+                for (var j = 0; j < reactions.Count; j++)
+                {
+                    if (string.Equals(
+                        reactions[j].ReactionId,
+                        reactionId,
+                        StringComparison.OrdinalIgnoreCase))
+                    {
+                        return reactions[j];
+                    }
+                }
             }
-
-            for (var i = 0; i < triggers.Length; i++)
+            for (var i = 0; monster?.PassiveSkills != null
+                && i < monster.PassiveSkills.Length; i++)
             {
-                var trigger = triggers[i];
-                if (trigger == null)
+                var reactions = new SkillExecutionData(
+                    monster.PassiveSkills[i]).Reactions;
+                for (var j = 0; j < reactions.Count; j++)
                 {
-                    continue;
-                }
-
-                if (string.Equals(trigger.TriggerId, sourceId, StringComparison.OrdinalIgnoreCase)
-                    && trigger.RequiredActiveChoiceIds != null
-                    && trigger.RequiredActiveChoiceIds.Length > 0)
-                {
-                    return ResolveChoiceTitle(trigger.RequiredActiveChoiceIds[0]);
+                    if (string.Equals(
+                        reactions[j].ReactionId,
+                        reactionId,
+                        StringComparison.OrdinalIgnoreCase))
+                    {
+                        return reactions[j];
+                    }
                 }
             }
-
-            return string.Empty;
+            return null;
         }
 
         /// 전달된 choiceId 값을 사용해 ChoiceTitle를 결정한다.

@@ -167,7 +167,6 @@ namespace Pakuri.InGame
         [Header("Choices")]
         public SkillChoice[] EnhancementChoices = Array.Empty<SkillChoice>();
         public SkillChoice[] MasterChoices = Array.Empty<SkillChoice>();
-        public SkillTriggerDefinition[] SkillTriggers = Array.Empty<SkillTriggerDefinition>();
         public SkillNode[] Nodes = Array.Empty<SkillNode>();
     }
 }

@@ -61,29 +61,28 @@ namespace Pakuri.Data
 		return Array.Empty<SkillNode>();
 	}
 
-	/// 전달된 런타임 입력값을 사용해 TriggerOutcome를 구성한다.
-	private static void BuildTriggerOutcome(
-		SkillTriggerDefinition trigger,
+	/// 전달된 Node authoring으로 공통 reaction outcome을 구성한다.
+	private static void BuildReactionOutcome(
+		SkillReaction reaction,
 		SkillNodeBuildData[] nodes,
-		SkillDefinition[] activeSkills,
 		StatusEffectDefinition[] statusDefinitions)
 	{
-		if (trigger == null || nodes == null)
+		if (reaction == null || nodes == null)
 		{
 			return;
 		}
 
-		var state = BuildTriggerOutcomeState(nodes, out var outcomeCount);
+		var state = BuildReactionOutcomeState(nodes, out var outcomeCount);
 		if (outcomeCount > 1)
 		{
 			throw new InvalidOperationException(
-				"Trigger has more than one runtime outcome: " + trigger.TriggerId);
+				"Reaction has more than one runtime outcome: " + reaction.ReactionId);
 		}
 
 		var targeting = BuildTriggerTargeting(state);
-		trigger.LockToEventTarget =
+		reaction.LockToEventTarget =
 			state.TargetSelection == SkillMultiEffectTargetSelection.EventTarget;
-		trigger.CenterMode = state.CenterMode == SkillMultiEffectCenterMode.Caster
+		reaction.CenterMode = state.CenterMode == SkillMultiEffectCenterMode.Caster
 			? SkillTriggerCenterMode.Caster
 			: state.CenterMode == SkillMultiEffectCenterMode.EffectTarget
 				? SkillTriggerCenterMode.EventTarget
@@ -101,13 +100,13 @@ namespace Pakuri.Data
 			if (string.Equals(handler, "EffectDamage", StringComparison.OrdinalIgnoreCase)
 				|| string.Equals(handler, "ApplyDamage", StringComparison.OrdinalIgnoreCase))
 			{
-				BuildTriggeredDamage(trigger, node, state, targeting);
+				BuildReactionDamage(reaction, node, state, targeting);
 				return;
 			}
 			if (string.Equals(handler, "ApplyStatus", StringComparison.OrdinalIgnoreCase))
 			{
-				BuildTriggeredStatus(
-					trigger,
+				BuildReactionStatus(
+					reaction,
 					node,
 					state,
 					targeting,
@@ -116,8 +115,8 @@ namespace Pakuri.Data
 			}
 			if (string.Equals(handler, "ApplyShield", StringComparison.OrdinalIgnoreCase))
 			{
-				BuildTriggeredShield(
-					trigger,
+				BuildReactionShield(
+					reaction,
 					node,
 					state,
 					targeting,
@@ -126,31 +125,28 @@ namespace Pakuri.Data
 			}
 			if (string.Equals(handler, "ExecuteSkill", StringComparison.OrdinalIgnoreCase))
 			{
-				trigger.TriggeredSkill = FindSkill(
-					activeSkills,
-					GetParam(node, "skill_id"));
-				trigger.UsesExistingSkillRuntime = true;
-				trigger.TriggeredDamageMultiplier = Mathf.Max(
+				reaction.TargetSkillId = GetParam(node, "skill_id");
+				reaction.DamageMultiplier = Mathf.Max(
 					0f,
 					GetFloatParam(node, "damage_multiplier", 1f));
-				trigger.PublishSkillLifecycleEvents = true;
+				reaction.PublishSkillLifecycleEvents = true;
 				return;
 			}
 			if (string.Equals(handler, "RecastZone", StringComparison.OrdinalIgnoreCase))
 			{
-				trigger.TriggerDelaySeconds += Mathf.Max(
+				reaction.DelaySeconds += Mathf.Max(
 					0f,
 					GetFloatParam(node, "delay_seconds", 0f));
-				trigger.Command = new SkillTriggerCommand
+				reaction.Command = new SkillReactionCommand
 				{
-					Kind = SkillTriggerCommandKind.RecastZone,
+					Kind = SkillReactionCommandKind.RecastZone,
 					TargetId = GetParam(node, "source_skill_id"),
 					DurationSeconds = Mathf.Max(0f, GetFloatParam(node, "duration_seconds", 0f)),
 					RadiusMultiplier = Mathf.Max(0f, GetFloatParam(node, "radius_multiplier", 1f)),
 					InheritSnapshot = GetBoolParam(node, "inherit_snapshot", true),
 					MaxGeneration = Mathf.Max(1, GetIntParam(node, "max_generation", 1)),
 					Targeting = targeting,
-					LockToEventTarget = trigger.LockToEventTarget,
+					LockToEventTarget = reaction.LockToEventTarget,
 					MaxTargets = state.MaxTargets
 				};
 				return;
@@ -158,15 +154,15 @@ namespace Pakuri.Data
 			if (string.Equals(handler, "RefundCooldown", StringComparison.OrdinalIgnoreCase)
 				|| string.Equals(handler, "ReduceReload", StringComparison.OrdinalIgnoreCase))
 			{
-				trigger.Command = new SkillTriggerCommand
+				reaction.Command = new SkillReactionCommand
 				{
 					Kind = string.Equals(handler, "RefundCooldown", StringComparison.OrdinalIgnoreCase)
-						? SkillTriggerCommandKind.RefundCooldown
-						: SkillTriggerCommandKind.ReduceReload,
+						? SkillReactionCommandKind.RefundCooldown
+						: SkillReactionCommandKind.ReduceReload,
 					TargetId = GetParam(node, "skill_id"),
 					Ratio = Mathf.Clamp01(GetFloatParam(node, "ratio", 0f)),
 					Targeting = targeting,
-					LockToEventTarget = trigger.LockToEventTarget,
+					LockToEventTarget = reaction.LockToEventTarget,
 					MaxTargets = state.MaxTargets
 				};
 				return;
@@ -174,14 +170,14 @@ namespace Pakuri.Data
 			if (string.Equals(handler, "EffectExtendStatusDuration", StringComparison.OrdinalIgnoreCase)
 				|| string.Equals(handler, "ExtendStatusDuration", StringComparison.OrdinalIgnoreCase))
 			{
-				trigger.Command = new SkillTriggerCommand
+				reaction.Command = new SkillReactionCommand
 				{
-					Kind = SkillTriggerCommandKind.ExtendStatusDuration,
+					Kind = SkillReactionCommandKind.ExtendStatusDuration,
 					StatusKind = StatusValueParser.ParseStatusKind(
 						GetParam(node, "status_id")),
 					DurationSeconds = state.DurationSeconds,
 					Targeting = targeting,
-					LockToEventTarget = trigger.LockToEventTarget,
+					LockToEventTarget = reaction.LockToEventTarget,
 					MaxTargets = state.MaxTargets
 				};
 				return;
@@ -189,11 +185,11 @@ namespace Pakuri.Data
 		}
 	}
 
-	private static TriggerOutcomeBuildState BuildTriggerOutcomeState(
+	private static ReactionOutcomeBuildState BuildReactionOutcomeState(
 		SkillNodeBuildData[] nodes,
 		out int outcomeCount)
 	{
-		var state = new TriggerOutcomeBuildState();
+		var state = new ReactionOutcomeBuildState();
 		outcomeCount = 0;
 		for (var i = 0; i < nodes.Length; i++)
 		{
@@ -303,26 +299,38 @@ namespace Pakuri.Data
 	private static SkillNode BuildNormalCastEffectNode(
 		SkillTriggerRow row,
 		SkillNodeBuildData[] nodes,
-		SkillDefinition[] activeSkills,
 		StatusEffectDefinition[] statusDefinitions)
 	{
-		var trigger = new SkillTriggerDefinition
+		var reaction = new SkillReaction
 		{
-			TriggerId = row.Id,
+			ReactionId = row.Id,
 			SourceSkillId = row.SourceSkillId
 		};
-		BuildTriggerOutcome(trigger, nodes, activeSkills, statusDefinitions);
+		BuildReactionOutcome(reaction, nodes, statusDefinitions);
 
-		var effect = BuildCastEffect(
-			trigger,
-			row.Id,
-			Mathf.Max(0f, row.TriggerDelaySeconds));
+		var effect = reaction.Effect;
+		if (effect == null
+			&& reaction.Command?.Kind
+				== SkillReactionCommandKind.ExtendStatusDuration)
+		{
+			effect = new SkillCastEffect
+			{
+				EffectId = row.Id,
+				Targeting = reaction.Command.Targeting,
+				ExtendStatusKind = reaction.Command.StatusKind,
+				DurationSeconds = reaction.Command.DurationSeconds
+			};
+		}
 		if (effect == null && HasHandler(nodes, "StatusModifier"))
 		{
 			effect = BuildNormalStatusModifierEffect(
 				row,
 				nodes,
 				statusDefinitions);
+		}
+		if (effect != null)
+		{
+			effect.DelaySeconds = Mathf.Max(0f, row.TriggerDelaySeconds);
 		}
 
 		return effect != null
@@ -332,70 +340,12 @@ namespace Pakuri.Data
 			: null;
 	}
 
-	private static SkillCastEffect BuildCastEffect(
-		SkillTriggerDefinition trigger,
-		string effectId,
-		float delaySeconds)
-	{
-		SkillCastEffect effect = null;
-		if (trigger.TriggeredSkill is SingleSkillDefinition single)
-		{
-			effect = new SkillCastEffect
-			{
-				EffectId = effectId,
-				DelaySeconds = delaySeconds,
-				Targeting = single.Targeting,
-				Area = single.Area,
-				Damage = single.Damage,
-				Status = single.OnHitStatus,
-				SkillEffectPrefab = single.SkillEffectPrefab,
-				RuntimeVisual = single.RuntimeVisual
-			};
-		}
-		else if (trigger.TriggeredSkill is BuffSkillDefinition buff)
-		{
-			effect = new SkillCastEffect
-			{
-				EffectId = effectId,
-				DelaySeconds = delaySeconds,
-				Targeting = buff.Targeting,
-				Status = buff.EffectKind == BuffEffectKind.Status
-					? buff.AttachedStatus
-					: null,
-				ShieldBase = buff.ShieldBase,
-				ShieldCoefficient = buff.ShieldCoefficient,
-				ShieldStatSource = buff.ShieldStatSource,
-				ShieldStatus = buff.EffectKind == BuffEffectKind.Shield
-					? buff.ShieldStatus
-					: null,
-				DurationSeconds = buff.EffectKind == BuffEffectKind.Shield
-					? buff.ShieldDuration
-					: 0f,
-				SkillEffectPrefab = buff.SkillEffectPrefab,
-				RuntimeVisual = buff.RuntimeVisual
-			};
-		}
-		else if (trigger.Command != null
-			&& trigger.Command.Kind == SkillTriggerCommandKind.ExtendStatusDuration)
-		{
-			effect = new SkillCastEffect
-			{
-				EffectId = effectId,
-				DelaySeconds = delaySeconds,
-				Targeting = trigger.Command.Targeting,
-				ExtendStatusKind = trigger.Command.StatusKind,
-				DurationSeconds = trigger.Command.DurationSeconds
-			};
-		}
-		return effect;
-	}
-
 	private static SkillCastEffect BuildNormalStatusModifierEffect(
 		SkillTriggerRow row,
 		SkillNodeBuildData[] nodes,
 		StatusEffectDefinition[] statusDefinitions)
 	{
-		var state = BuildTriggerOutcomeState(nodes, out _);
+		var state = BuildReactionOutcomeState(nodes, out _);
 		var status = GetStatusRuntimeData(
 			StatusEffectKind.PassiveBuff,
 			statusDefinitions);
@@ -550,11 +500,11 @@ namespace Pakuri.Data
 			|| string.Equals(handler, "ExtendStatusDuration", StringComparison.OrdinalIgnoreCase);
 	}
 
-	/// 전달된 런타임 입력값을 사용해 TriggeredDamage를 구성한다.
-	private static void BuildTriggeredDamage(
-		SkillTriggerDefinition trigger,
+	/// 전달된 런타임 입력값을 사용해 reaction 피해 payload를 구성한다.
+	private static void BuildReactionDamage(
+		SkillReaction reaction,
 		SkillNodeBuildData node,
-		TriggerOutcomeBuildState state,
+		ReactionOutcomeBuildState state,
 		SkillTargetingSpec targeting)
 	{
 		var multiplier = Mathf.Max(
@@ -564,112 +514,115 @@ namespace Pakuri.Data
 		var maxTargets = shape == SkillTargetShape.Single
 			? 1
 			: state.MaxTargets;
-		var damage = new SingleSkillDefinition
+		var area = new AreaBlueprintSpec
 		{
-			Area =
-			{
-				Radius = Mathf.Max(0f, GetFloatParam(node, "radius", 0f)),
-				Duration = state.DurationSeconds,
-				CoverAll = shape != SkillTargetShape.Single || state.CoverAll
-			},
-			UsesHitTargetCount = true,
-			HitAllTargets = shape != SkillTargetShape.Single && maxTargets <= 0,
-			HitTargetCount = maxTargets > 0 ? maxTargets : int.MaxValue
+			Radius = Mathf.Max(0f, GetFloatParam(node, "radius", 0f)),
+			Duration = state.DurationSeconds,
+			CoverAll = shape != SkillTargetShape.Single || state.CoverAll
 		};
-		MapTriggeredCommon(damage, trigger, targeting, state);
-		damage.RuntimeKind = SkillRuntimeKind.SingleAttack;
-		damage.Element = GetEnumParam(node, "attribute", DamageAttribute.Physical);
-		damage.Damage.SkillId = trigger.SourceSkillId;
-		damage.Damage.Element = damage.Element;
-		damage.Damage.BaseDamage =
-			GetFloatParam(node, "base_damage", 0f) * multiplier;
-		damage.Damage.AttackPowerCoefficient =
-			GetFloatParam(node, "attack_power_coefficient", 0f) * multiplier;
-		damage.Damage.SpellPowerCoefficient =
-			GetFloatParam(node, "spell_power_coefficient", 0f) * multiplier;
-		damage.Damage.CriticalAllowed = false;
-
-		trigger.TriggeredSkill = damage;
-		trigger.DamageValueSource = GetEnumParam(
+		targeting.CoverAll = area.CoverAll;
+		reaction.Effect = new SkillCastEffect
+		{
+			EffectId = reaction.ReactionId,
+			Targeting = targeting,
+			Area = area,
+			Damage = new SkillDamageSpec
+			{
+				SkillId = reaction.SourceSkillId,
+				Element = GetEnumParam(
+					node,
+					"attribute",
+					DamageAttribute.Physical),
+				BaseDamage = GetFloatParam(node, "base_damage", 0f) * multiplier,
+				AttackPowerCoefficient =
+					GetFloatParam(node, "attack_power_coefficient", 0f) * multiplier,
+				SpellPowerCoefficient =
+					GetFloatParam(node, "spell_power_coefficient", 0f) * multiplier,
+				CriticalAllowed = false
+			},
+			SkillEffectPrefab = state.Prefab,
+			RuntimeVisual = state.RuntimeVisual ?? new RuntimeSkillVisualSpec()
+		};
+		reaction.DamageValueSource = GetEnumParam(
 			node,
 			"value_source",
 			SkillTriggerDamageValueSource.Fixed);
-		trigger.DamageValueMultiplier =
+		reaction.DamageValueMultiplier =
 			Mathf.Max(0f, GetFloatParam(node, "value_source_multiplier", 1f))
 			* multiplier;
-		trigger.TrackedDamageAttribute = GetEnumParam(
+		reaction.TrackedDamageAttribute = GetEnumParam(
 			node,
 			"tracked_attribute",
 			DamageAttribute.Physical);
+		reaction.PublishSkillLifecycleEvents = false;
 	}
 
-	/// 전달된 런타임 입력값을 사용해 TriggeredStatus를 구성한다.
-	private static void BuildTriggeredStatus(
-		SkillTriggerDefinition trigger,
+	/// 전달된 런타임 입력값을 사용해 reaction 상태 payload를 구성한다.
+	private static void BuildReactionStatus(
+		SkillReaction reaction,
 		SkillNodeBuildData node,
-		TriggerOutcomeBuildState state,
+		ReactionOutcomeBuildState state,
 		SkillTargetingSpec targeting,
 		StatusEffectDefinition[] statusDefinitions)
 	{
 		var kind = state.HasStatusPayload
 			? state.StatusKind
 			: StatusValueParser.ParseStatusKind(GetParam(node, "status_id"));
-		var status = CreateTriggeredStatus(kind, trigger, state, statusDefinitions);
-
-		var skill = new BuffSkillDefinition
+		var status = CreateReactionStatus(kind, reaction, state, statusDefinitions);
+		reaction.Effect = new SkillCastEffect
 		{
-			EffectKind = BuffEffectKind.Status,
-			UseConfiguredTargeting = true,
-			AttachedStatus =
+			EffectId = reaction.ReactionId,
+			Targeting = targeting,
+			Status = new StatusApplicationSpec
 			{
 				Status = status,
 				Chance = state.HasStatusPayload ? state.StatusChance : 1f,
 				Stacks = state.HasStatusPayload ? state.StatusStacks : 1,
 				RefreshDuration = !state.HasStatusPayload || state.RefreshDuration
-			}
+			},
+			SkillEffectPrefab = state.Prefab,
+			RuntimeVisual = state.RuntimeVisual ?? new RuntimeSkillVisualSpec()
 		};
-		MapTriggeredCommon(skill, trigger, targeting, state);
-		skill.RuntimeKind = SkillRuntimeKind.Buff;
-		trigger.TriggeredSkill = skill;
+		reaction.PublishSkillLifecycleEvents = false;
 	}
 
-	/// 전달된 런타임 입력값을 사용해 TriggeredShield를 구성한다.
-	private static void BuildTriggeredShield(
-		SkillTriggerDefinition trigger,
+	/// 전달된 런타임 입력값을 사용해 reaction 방어막 payload를 구성한다.
+	private static void BuildReactionShield(
+		SkillReaction reaction,
 		SkillNodeBuildData node,
-		TriggerOutcomeBuildState state,
+		ReactionOutcomeBuildState state,
 		SkillTargetingSpec targeting,
 		StatusEffectDefinition[] statusDefinitions)
 	{
-		var status = CreateTriggeredStatus(
+		var status = CreateReactionStatus(
 			StatusEffectKind.Shield,
-			trigger,
+			reaction,
 			state,
 			statusDefinitions);
-		var skill = new BuffSkillDefinition
+		reaction.Effect = new SkillCastEffect
 		{
-			EffectKind = BuffEffectKind.Shield,
-			UseConfiguredTargeting = true,
+			EffectId = reaction.ReactionId,
+			Targeting = targeting,
 			ShieldBase = GetFloatParam(node, "base_damage", 0f),
 			ShieldCoefficient = GetFloatParam(node, "spell_power_coefficient", 0f),
 			ShieldStatSource = StatSource.Intelligence,
-			ShieldDuration = status.Duration,
-			ShieldStatus = status
+			DurationSeconds = status.Duration,
+			ShieldStatus = status,
+			SkillEffectPrefab = state.Prefab,
+			RuntimeVisual = state.RuntimeVisual ?? new RuntimeSkillVisualSpec()
 		};
-		MapTriggeredCommon(skill, trigger, targeting, state);
-		skill.RuntimeKind = SkillRuntimeKind.Shield;
-		trigger.TriggeredSkill = skill;
+		reaction.PublishSkillLifecycleEvents = false;
 	}
 
-	/// 전달된 런타임 입력값을 사용해 TriggeredStatus를 생성한다.
-	private static StatusRuntimeData CreateTriggeredStatus(
+	/// 전달된 런타임 입력값을 사용해 reaction 상태값을 생성한다.
+	private static StatusRuntimeData CreateReactionStatus(
 		StatusEffectKind kind,
-		SkillTriggerDefinition trigger,
-		TriggerOutcomeBuildState state,
+		SkillReaction reaction,
+		ReactionOutcomeBuildState state,
 		StatusEffectDefinition[] statusDefinitions)
 	{
 		var status = GetStatusRuntimeData(kind, statusDefinitions);
-		status.SourceSkillId = trigger.TriggerId;
+		status.SourceSkillId = reaction.ReactionId;
 		if (state.HasStatusPayload)
 		{
 			status.BaseStackAmount = state.StatusStacks;
@@ -698,27 +651,9 @@ namespace Pakuri.Data
 		return status;
 	}
 
-	/// 전달된 런타임 입력값을 사용해 TriggeredCommon를 대응시킨다.
-	private static void MapTriggeredCommon(
-		SkillDefinition skill,
-		SkillTriggerDefinition trigger,
-		SkillTargetingSpec targeting,
-		TriggerOutcomeBuildState state)
-	{
-		skill.SkillId = trigger.TriggerId + "@delivery";
-		skill.SkillName = trigger.TriggerId;
-		skill.ImplementationState = SkillImplementationState.RuntimeImplemented;
-		skill.IsDefaultLearned = false;
-		skill.IsActive = true;
-		skill.Targeting = targeting;
-		skill.SkillEffectPrefab = state.Prefab;
-		skill.RuntimeVisual = state.RuntimeVisual ?? new RuntimeSkillVisualSpec();
-		trigger.PublishSkillLifecycleEvents = false;
-	}
-
 	/// 전달된 state 값을 사용해 TriggerTargeting를 구성한다.
 	private static SkillTargetingSpec BuildTriggerTargeting(
-		TriggerOutcomeBuildState state)
+		ReactionOutcomeBuildState state)
 	{
 		var targeting = new SkillTargetingSpec
 		{
@@ -908,8 +843,8 @@ namespace Pakuri.Data
 		internal SkillRuntimeKindCondition[] OutgoingRuntimeKinds { get; }
 	}
 
-	/// TriggerOutcomeBuildState의 변경 가능한 런타임 상태를 보관한다.
-	private sealed class TriggerOutcomeBuildState
+	/// ReactionOutcomeBuildState의 변경 가능한 런타임 상태를 보관한다.
+	private sealed class ReactionOutcomeBuildState
 	{
 		internal SkillMultiEffectTargetSide TargetSide =
 			SkillMultiEffectTargetSide.Enemy;

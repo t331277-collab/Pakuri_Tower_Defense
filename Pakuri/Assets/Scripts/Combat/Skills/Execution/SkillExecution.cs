@@ -821,7 +821,7 @@ namespace Pakuri.InGame
             SkillExecutionContext context,
             SkillExecutionData snapshot,
             ZoneSkillDefinition skill,
-            SkillTriggerCommand command,
+            SkillReactionCommand command,
             Vector2 center)
         {
             return PrepareZoneExecutionData(context, snapshot, skill, command, center)
@@ -926,7 +926,7 @@ namespace Pakuri.InGame
             SkillExecutionContext context,
             SkillExecutionData snapshot,
             ZoneSkillDefinition skill,
-            SkillTriggerCommand command,
+            SkillReactionCommand command,
             Vector2? recastCenter)
         {
             if (context == null || snapshot == null || skill == null)

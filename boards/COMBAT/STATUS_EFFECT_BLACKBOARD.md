@@ -909,13 +909,12 @@ Code Builder.
 
 ### Status
 
-User approved effect restoration and Code Builder implementation. Phases 1-7 complete.
+User approved effect restoration and Code Builder implementation. Phases 1-8 complete; Code Reviewer verification is next.
 
 ### Next Actions
 
-- Implement Phase 8 obsolete Trigger Definition and owner-array deletion.
-- Commit and verify each remaining phase separately.
-- Run the approved Code Reviewer loop after Phase 8.
+- Commit the completed Phase 8 separately.
+- Run the approved Code Reviewer loop and correct findings until approval.
 
 ### Evidence
 
@@ -948,6 +947,9 @@ User approved effect restoration and Code Builder implementation. Phases 1-7 com
 - Phase 7 ChainLightning uses the original skill Damage and runtime snapshot without a `__chain` Definition; targeting remains primary-excluding, radius 7, delay 0.5, multiplier 0.5.
 - Phase 7 Zone recast uses the original snapshot with delay 0.5, radius multiplier 0.6, duration 3, and generation cap 1.
 - Phase 7 solution build completed with error 0; Unity full EditMode tests passed 15/15.
+- Phase 8 deletes `SkillTriggerDefinition.cs/.meta`, `SkillDefinition.SkillTriggers`, and Monster/Enemy Trigger arrays.
+- Existing Skill/Choice/Passive Nodes now own `SkillReactionOp`; `SkillExecutionData` exposes the active reaction snapshot to `SkillTrigger`.
+- C# search finds zero `SkillTriggerDefinition` references; solution build error 0, Unity Console error 0, and full EditMode tests passed 15/15.
 
 ### History
 
@@ -963,3 +965,4 @@ User approved effect restoration and Code Builder implementation. Phases 1-7 com
 - 2026-07-31: Code Builder completed Phase 5 direct-delivery consolidation and incomplete event-effect restoration.
 - 2026-07-31: Code Builder completed Phase 6 Actor-less passive and state-command verification without adding runtime branches.
 - 2026-07-31: Code Builder completed Phase 7 Zone and Chain snapshot reuse.
+- 2026-07-31: Code Builder completed Phase 8 obsolete contract deletion and existing-node reaction ownership.

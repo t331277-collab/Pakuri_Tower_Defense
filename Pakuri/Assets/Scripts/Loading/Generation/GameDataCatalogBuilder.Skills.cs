@@ -154,11 +154,10 @@ internal sealed partial class GameDataCatalogBuilder
 	private static SkillDefinition BuildActiveDefinition(
 		string ownerId,
 		ActiveSkillBuildData source,
-		SkillTriggerDefinition[] triggers,
 		StatusEffectDefinition[] statusDefinitions)
 	{
 		SkillDefinition skillRuntimeData = CreateConcreteActiveSkill(source);
-		MapCommonFields(skillRuntimeData, ownerId, source, triggers);
+		MapCommonFields(skillRuntimeData, ownerId, source);
 		MapActiveFields(skillRuntimeData, null, source, statusDefinitions);
 		return skillRuntimeData;
 	}
@@ -186,12 +185,6 @@ internal sealed partial class GameDataCatalogBuilder
 		passiveSkillExecutionDefinition.BaseModifierChoices = BuildChoices(source.BaseModifierChoices);
 		passiveSkillExecutionDefinition.EnhancementChoices = BuildChoices(source.EnhancementChoices);
 		passiveSkillExecutionDefinition.MasterChoices = Array.Empty<SkillChoice>();
-		SkillTriggerDefinition[] triggers = null;
-		if (monster != null)
-		{
-			triggers = monster.SkillTriggers;
-		}
-		passiveSkillExecutionDefinition.SkillTriggers = FilterSkillTriggersForSkill(triggers, source.PassiveId);
 		passiveSkillExecutionDefinition.Nodes = MapSkillNodes(source.Nodes);
 		return passiveSkillExecutionDefinition;
 	}
@@ -273,7 +266,10 @@ internal sealed partial class GameDataCatalogBuilder
 	}
 
 	/// 전달된 런타임 입력값을 사용해 CommonFields를 대응시킨다.
-	private static void MapCommonFields(SkillDefinition skill, string monsterId, ActiveSkillBuildData source, SkillTriggerDefinition[] monsterTriggers = null)
+	private static void MapCommonFields(
+		SkillDefinition skill,
+		string monsterId,
+		ActiveSkillBuildData source)
 	{
 		skill.SkillId = source.SkillId;
 		skill.SkillName = source.DisplayName;
@@ -290,7 +286,6 @@ internal sealed partial class GameDataCatalogBuilder
 		skill.RuntimeVisual = source.RuntimeVisual;
 		skill.EnhancementChoices = BuildChoices(source.EnhancementChoices);
 		skill.MasterChoices = BuildChoices(source.MasterSkillChoices);
-		skill.SkillTriggers = FilterSkillTriggersForSkill(monsterTriggers, source.SkillId);
 		skill.Nodes = MapSkillNodes(source.Nodes);
 		skill.Timing.Cooldown = source.CooldownSeconds;
 		skill.Timing.ActiveDuration = source.ActiveDurationSeconds;
@@ -323,48 +318,6 @@ internal sealed partial class GameDataCatalogBuilder
 			skill.Targeting.Shape = SkillTargetShape.Single;
 			skill.Targeting.CoverAll = false;
 		}
-	}
-
-	/// 전달된 런타임 입력값을 사용해 FilterSkillTriggersForSkill 결과값을 생성해 반환한다.
-	private static SkillTriggerDefinition[] FilterSkillTriggersForSkill(SkillTriggerDefinition[] triggers, string skillId)
-	{
-		if (triggers == null || triggers.Length == 0 || string.IsNullOrWhiteSpace(skillId))
-		{
-			return Array.Empty<SkillTriggerDefinition>();
-		}
-		int num = 0;
-		for (int i = 0; i < triggers.Length; i++)
-		{
-			if (IsTriggerOwnedBySkill(triggers[i], skillId))
-			{
-				num++;
-			}
-		}
-		if (num == 0)
-		{
-			return Array.Empty<SkillTriggerDefinition>();
-		}
-		SkillTriggerDefinition[] array = new SkillTriggerDefinition[num];
-		int num2 = 0;
-		for (int j = 0; j < triggers.Length; j++)
-		{
-			if (IsTriggerOwnedBySkill(triggers[j], skillId))
-			{
-				array[num2] = triggers[j];
-				num2++;
-			}
-		}
-		return array;
-	}
-
-	/// 전달된 런타임 입력값을 사용해 TriggerOwnedBySkill 조건 충족 여부를 반환한다.
-	private static bool IsTriggerOwnedBySkill(SkillTriggerDefinition trigger, string skillId)
-	{
-		if (trigger != null && !string.IsNullOrWhiteSpace(trigger.SourceSkillId))
-		{
-			return string.Equals(trigger.SourceSkillId, skillId, StringComparison.OrdinalIgnoreCase);
-		}
-		return false;
 	}
 
 	/// 전달된 런타임 입력값을 사용해 ActiveFields를 대응시킨다.

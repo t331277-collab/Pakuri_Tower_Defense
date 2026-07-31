@@ -190,10 +190,10 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var triggers = runtime.Data.SkillTriggers;
-            for (var i = 0; i < triggers.Length; i++)
+            var reactions = new SkillExecutionData(runtime.Data).Reactions;
+            for (var i = 0; i < reactions.Count; i++)
             {
-                if (triggers[i].TriggerEvent == SkillTriggerEvent.CombatStart)
+                if (reactions[i].Event == SkillTriggerEvent.CombatStart)
                 {
                     return true;
                 }

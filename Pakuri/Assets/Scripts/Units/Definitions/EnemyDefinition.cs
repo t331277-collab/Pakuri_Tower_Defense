@@ -31,7 +31,6 @@ namespace Pakuri.Data
         [Header("Shared Runtime Skills")]
 
         public SkillDefinition[] ActiveSkills = Array.Empty<SkillDefinition>();
-        public SkillTriggerDefinition[] SkillTriggers = Array.Empty<SkillTriggerDefinition>();
 
         [Header("Passive")]
 

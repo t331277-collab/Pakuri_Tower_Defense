@@ -46,6 +46,8 @@ public class SkillExecutionData
 
 	private readonly List<SkillCastEffect> castEffects = new List<SkillCastEffect>();
 
+	private readonly List<SkillReaction> reactions = new List<SkillReaction>();
+
 	public SkillDefinition Source { get; }
 
 	public string SkillId { get; }
@@ -412,6 +414,8 @@ public class SkillExecutionData
 
 	public IReadOnlyList<SkillCastEffect> CastEffects => castEffects;
 
+	public IReadOnlyList<SkillReaction> Reactions => reactions;
+
 	internal IReadOnlyList<ConditionalDamageActionOp> ConditionalDamageActions => conditionalDamageActions;
 
 	internal IReadOnlyList<ConditionalCritChanceActionOp> ConditionalCritChanceActions => conditionalCritChanceActions;
@@ -594,6 +598,12 @@ public class SkillExecutionData
 			if (castEffect.HasValue && castEffect.Value.Effect != null)
 			{
 				castEffects.Add(castEffect.Value.Effect);
+			}
+
+			SkillReactionOp? reaction = nodes[i].GetOperation<SkillReactionOp>();
+			if (reaction.HasValue && reaction.Value.Reaction != null)
+			{
+				reactions.Add(reaction.Value.Reaction);
 			}
 
 			SkillActionOp? skillActionOp = nodes[i].GetOperation<SkillActionOp>();

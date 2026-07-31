@@ -88,15 +88,17 @@ namespace Pakuri.Data
                 monster.ActiveSkills = BuildActiveSkills(
                     model,
                     sourceMonster.Id,
-                    Array.Empty<SkillTriggerDefinition>(),
                     catalog.StatusEffects);
-                monster.SkillTriggers = BuildSkillTriggers(
+                monster.PassiveSkills = BuildPassiveSkills(model, monster);
+                var reactions = BuildSkillReactions(
                     model,
                     sourceMonster.Id,
                     monster.ActiveSkills,
                     catalog.StatusEffects);
-                AttachSkillTriggers(monster.ActiveSkills, monster.SkillTriggers);
-                monster.PassiveSkills = BuildPassiveSkills(model, monster);
+                AttachSkillReactions(
+                    monster.ActiveSkills,
+                    monster.PassiveSkills,
+                    reactions);
                 AttachNormalCastEffects(
                     model,
                     sourceMonster.Id,
@@ -185,18 +187,20 @@ namespace Pakuri.Data
                 enemy.ActiveSkills = BuildEnemyAssignedActiveSkills(
                     model,
                     sourceEnemy.Id,
-                    Array.Empty<SkillTriggerDefinition>(),
                     statusDefinitions);
-                enemy.SkillTriggers = BuildEnemyAssignedSkillTriggers(
+                var reactions = BuildEnemyAssignedSkillReactions(
                     model,
                     sourceEnemy.Id,
                     enemy.ActiveSkills,
                     statusDefinitions);
-                AttachSkillTriggers(enemy.ActiveSkills, enemy.SkillTriggers);
+                AttachSkillReactions(
+                    enemy.ActiveSkills,
+                    null,
+                    reactions);
                 enemy.PassiveSkill = BuildEnemyPassiveDefinition(
                     model,
                     sourceEnemy.PassiveId,
-                    enemy.SkillTriggers);
+                    reactions);
                 enemy.NexusDamage = sourceEnemy.NexusDamage;
                 enemies.Add(enemy);
             }
@@ -208,7 +212,7 @@ namespace Pakuri.Data
         private PassiveSkillDefinition BuildEnemyPassiveDefinition(
             SourceModel model,
             string passiveId,
-            SkillTriggerDefinition[] triggers)
+            SkillReaction[] reactions)
         {
             if (model == null
                 || string.IsNullOrWhiteSpace(passiveId)
@@ -232,7 +236,10 @@ namespace Pakuri.Data
                 HasModifierAttribute = source.PassiveHasAttribute,
                 ModifierAttribute = source.PassiveAttribute,
                 ModifierValue = source.PassiveModifierValue,
-                SkillTriggers = FilterSkillTriggersForSkill(triggers, source.Skill.Id)
+                Nodes = AppendReactionNodes(
+                    Array.Empty<SkillNode>(),
+                    reactions,
+                    source.Skill.Id)
             };
         }
 
@@ -240,7 +247,6 @@ namespace Pakuri.Data
         private SkillDefinition[] BuildEnemyAssignedActiveSkills(
             SourceModel model,
             string enemyId,
-            SkillTriggerDefinition[] triggers,
             StatusEffectDefinition[] statusDefinitions)
         {
             if (model == null
@@ -256,7 +262,6 @@ namespace Pakuri.Data
                 enemyId,
                 enemyRow.SkillSlotAId,
                 SkillSlot.A,
-                triggers,
                 statusDefinitions,
                 definitions);
             TryAddEnemyAssignedSkillDefinition(
@@ -264,7 +269,6 @@ namespace Pakuri.Data
                 enemyId,
                 enemyRow.SkillSlotBId,
                 SkillSlot.B,
-                triggers,
                 statusDefinitions,
                 definitions);
 
@@ -277,7 +281,6 @@ namespace Pakuri.Data
             string ownerId,
             string skillId,
             SkillSlot runtimeSlot,
-            SkillTriggerDefinition[] triggers,
             StatusEffectDefinition[] statusDefinitions,
             List<SkillDefinition> definitions)
         {
@@ -294,7 +297,6 @@ namespace Pakuri.Data
             definitions.Add(BuildActiveDefinition(
                 ownerId,
                 BuildEnemyAssignedSkillDefinition(source, runtimeSlot),
-                triggers,
                 statusDefinitions));
         }
 
@@ -414,7 +416,7 @@ namespace Pakuri.Data
         }
 
         /// 전달된 런타임 입력값을 사용해 EnemyAssignedSkillTriggers를 구성한다.
-        private SkillTriggerDefinition[] BuildEnemyAssignedSkillTriggers(
+        private SkillReaction[] BuildEnemyAssignedSkillReactions(
             SourceModel model,
             string enemyId,
             SkillDefinition[] activeSkills,
@@ -424,7 +426,7 @@ namespace Pakuri.Data
                 || string.IsNullOrWhiteSpace(enemyId)
                 || !model.Enemies.TryGetValue(enemyId, out var enemyRow))
             {
-                return Array.Empty<SkillTriggerDefinition>();
+                return Array.Empty<SkillReaction>();
             }
 
             var assignedSkillIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -437,7 +439,7 @@ namespace Pakuri.Data
                 model.EnemyTriggers.Values,
                 trigger => trigger.Enabled && assignedSkillIds.Contains(trigger.SourceSkillId),
                 (left, right) => left.SortOrder.CompareTo(right.SortOrder));
-            var definitions = new List<SkillTriggerDefinition>(rows.Count + assignedSkillIds.Count);
+            var definitions = new List<SkillReaction>(rows.Count + assignedSkillIds.Count);
             for (var i = 0; i < rows.Count; i++)
             {
                 var row = rows[i];
@@ -464,20 +466,18 @@ namespace Pakuri.Data
                         }
                     }
                 };
-                var definition = new SkillTriggerDefinition
+                var definition = new SkillReaction
                 {
-                    TriggerId = row.Id,
-                    MonsterId = enemyId,
+                    ReactionId = row.Id,
                     SourceSkillId = row.SourceSkillId,
-                    TriggerEvent = row.TriggerEvent,
+                    Event = row.TriggerEvent,
                     SortOrder = row.SortOrder,
                     ProcChance = 1f,
-                    EventSourceScopeValue = SkillTriggerEventSourceScope.Any
+                    EventSourceScope = SkillTriggerEventSourceScope.Any
                 };
-                BuildTriggerOutcome(
+                BuildReactionOutcome(
                     definition,
                     normalizedNodes,
-                    activeSkills,
                     statusDefinitions);
                 definitions.Add(definition);
             }
@@ -495,7 +495,7 @@ namespace Pakuri.Data
                     continue;
                 }
 
-                var chainTrigger = BuildEnemyChainTrigger(enemyId, source, activeSkills);
+                var chainTrigger = BuildEnemyChainReaction(enemyId, source, activeSkills);
                 if (chainTrigger != null)
                 {
                     definitions.Add(chainTrigger);
@@ -506,7 +506,7 @@ namespace Pakuri.Data
         }
 
         /// 연쇄 공격의 후속타를 공용 Trigger와 Single 스킬로 구성한다.
-        private static SkillTriggerDefinition BuildEnemyChainTrigger(
+        private static SkillReaction BuildEnemyChainReaction(
             string enemyId,
             EnemyBaseSkillRow source,
             SkillDefinition[] activeSkills)
@@ -554,17 +554,16 @@ namespace Pakuri.Data
                 Damage = sourceSkill.Damage
             };
 
-            return new SkillTriggerDefinition
+            return new SkillReaction
             {
-                TriggerId = source.Skill.Id + "__chain_on_hit",
-                MonsterId = enemyId,
+                ReactionId = source.Skill.Id + "__chain_on_hit",
                 SourceSkillId = source.Skill.Id,
-                TriggerEvent = SkillTriggerEvent.OnHit,
+                Event = SkillTriggerEvent.OnHit,
                 ProcChance = 1f,
-                TriggerDelaySeconds = Mathf.Max(0f, source.ChainDelaySeconds),
-                EventSourceScopeValue = SkillTriggerEventSourceScope.Any,
+                DelaySeconds = Mathf.Max(0f, source.ChainDelaySeconds),
+                EventSourceScope = SkillTriggerEventSourceScope.Any,
                 Effect = followUp,
-                TriggeredDamageMultiplier = Mathf.Max(0f, source.ChainDamageMultiplier),
+                DamageMultiplier = Mathf.Max(0f, source.ChainDamageMultiplier),
                 LockToEventTarget = !source.ExcludePrimaryTarget,
                 CenterMode = SkillTriggerCenterMode.EventTarget,
                 PublishSkillLifecycleEvents = false
@@ -711,7 +710,6 @@ namespace Pakuri.Data
         private SkillDefinition[] BuildActiveSkills(
             SourceModel model,
             string monsterId,
-            SkillTriggerDefinition[] triggers,
             StatusEffectDefinition[] statusDefinitions)
         {
             var skills = FilterAndSort(
@@ -789,7 +787,6 @@ namespace Pakuri.Data
                 definitions[i] = BuildActiveDefinition(
                     monsterId,
                     definition,
-                    triggers,
                     statusDefinitions);
             }
 
@@ -846,7 +843,7 @@ namespace Pakuri.Data
         }
 
         /// 전달된 런타임 입력값을 사용해 SkillTriggers를 구성한다.
-        private SkillTriggerDefinition[] BuildSkillTriggers(
+        private SkillReaction[] BuildSkillReactions(
             SourceModel model,
             string monsterId,
             SkillDefinition[] activeSkills,
@@ -858,7 +855,7 @@ namespace Pakuri.Data
                     && !IsNormalCastEffect(trigger),
                 (left, right) => left.SortOrder.CompareTo(right.SortOrder));
 
-            var definitions = new SkillTriggerDefinition[triggers.Count];
+            var definitions = new SkillReaction[triggers.Count];
             for (var i = 0; i < triggers.Count; i++)
             {
                 var trigger = triggers[i];
@@ -867,12 +864,11 @@ namespace Pakuri.Data
                     SkillNodeOwnerKind.Trigger,
                     trigger.Id,
                     trigger.SourceSkillId);
-                definitions[i] = new SkillTriggerDefinition
+                definitions[i] = new SkillReaction
                 {
-                    TriggerId = trigger.Id,
-                    MonsterId = trigger.MonsterId,
+                    ReactionId = trigger.Id,
                     SourceSkillId = trigger.SourceSkillId,
-                    TriggerEvent = trigger.TriggerEvent,
+                    Event = trigger.TriggerEvent,
                     RequiredActiveChoiceIds = StatusValueParser.ParseIdList(trigger.RequiresActiveChoiceId),
                     ExcludedActiveChoiceIds = StatusValueParser.ParseIdList(trigger.ExcludesActiveChoiceId),
                     RequiredSourceStatusKind = string.IsNullOrWhiteSpace(trigger.RequiredSourceStatusId)
@@ -890,26 +886,17 @@ namespace Pakuri.Data
                     SortOrder = trigger.SortOrder,
                     RepeatCount = trigger.RepeatCount,
                     RepeatIntervalSeconds = trigger.RepeatIntervalSeconds,
-                    TriggerDelaySeconds = trigger.TriggerDelaySeconds,
-                    TriggerEveryCount = trigger.TriggerEveryCount,
-                    EventSourceScopeValue = StatusValueParser.ParseEventSourceScope(trigger.EventSourceScope),
+                    DelaySeconds = trigger.TriggerDelaySeconds,
+                    EveryCount = trigger.TriggerEveryCount,
+                    EventSourceScope = StatusValueParser.ParseEventSourceScope(trigger.EventSourceScope),
                     RequireEventExecute = trigger.RequireEventExecute
                 };
-                BuildTriggerOutcome(
+                BuildReactionOutcome(
                     definitions[i],
                     normalizedNodes,
-                    activeSkills,
                     statusDefinitions);
-                if (definitions[i].TriggeredSkill != null
-                    && !definitions[i].UsesExistingSkillRuntime)
-                {
-                    definitions[i].Effect = BuildCastEffect(
-                        definitions[i],
-                        trigger.Id,
-                        0f);
-                    definitions[i].TriggeredSkill = null;
-                }
-                else if (definitions[i].TriggeredSkill == null
+                if (definitions[i].Effect == null
+                    && string.IsNullOrWhiteSpace(definitions[i].TargetSkillId)
                     && definitions[i].Command == null
                     && HasHandler(normalizedNodes, "StatusModifier"))
                 {
@@ -967,7 +954,6 @@ namespace Pakuri.Data
                 var effectNode = BuildNormalCastEffectNode(
                     row,
                     nodes,
-                    activeSkills,
                     statusDefinitions);
                 if (effectNode == null)
                 {
@@ -1086,25 +1072,56 @@ namespace Pakuri.Data
             return result;
         }
 
-        /// 전달된 런타임 입력값을 사용해 SkillTriggers를 연결한다.
-        private static void AttachSkillTriggers(
+        /// reaction을 source Skill/Passive Node에 연결한다.
+        private static void AttachSkillReactions(
             SkillDefinition[] skills,
-            SkillTriggerDefinition[] triggers)
+            PassiveSkillDefinition[] passives,
+            SkillReaction[] reactions)
         {
-            if (skills == null)
-            {
-                return;
-            }
-
-            for (var i = 0; i < skills.Length; i++)
+            for (var i = 0; skills != null && i < skills.Length; i++)
             {
                 if (skills[i] != null)
                 {
-                    skills[i].SkillTriggers = FilterSkillTriggersForSkill(
-                        triggers,
+                    skills[i].Nodes = AppendReactionNodes(
+                        skills[i].Nodes,
+                        reactions,
                         skills[i].SkillId);
                 }
             }
+            for (var i = 0; passives != null && i < passives.Length; i++)
+            {
+                if (passives[i] != null)
+                {
+                    passives[i].Nodes = AppendReactionNodes(
+                        passives[i].Nodes,
+                        reactions,
+                        passives[i].SkillId);
+                }
+            }
+        }
+
+        private static SkillNode[] AppendReactionNodes(
+            SkillNode[] nodes,
+            SkillReaction[] reactions,
+            string sourceSkillId)
+        {
+            var result = nodes ?? Array.Empty<SkillNode>();
+            for (var i = 0; reactions != null && i < reactions.Length; i++)
+            {
+                if (reactions[i] != null
+                    && string.Equals(
+                        reactions[i].SourceSkillId,
+                        sourceSkillId,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    result = AppendNode(
+                        result,
+                        SkillNode.FromOperation(
+                            new SkillReactionOp(reactions[i]),
+                            sourceSkillId));
+                }
+            }
+            return result;
         }
 
         /// 전달된 런타임 입력값을 사용해 PassiveSkills를 구성한다.

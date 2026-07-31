@@ -38,7 +38,7 @@
 
 ## Status
 
-사용자가 `65 working / 17 incomplete / 76 non-Trigger` 분류, 17개 Trigger 효과 복구, 64개 일반 Choice/base/passive 효과 복구를 승인했다. Code Builder Phase 1~4 구현과 비-Play-Mode 검증 완료.
+사용자가 `65 working / 17 incomplete / 76 non-Trigger` 분류, 17개 Trigger 효과 복구, 64개 일반 Choice/base/passive 효과 복구를 승인했다. Code Builder Phase 1~8 구현과 비-Play-Mode 검증 완료. Code Reviewer 검증 대기.
 
 ## Core decision
 
@@ -763,13 +763,15 @@ SkillTrigger 공통 gate
 
 ### Phase 8: Delete obsolete contracts
 
-- 모든 owner가 새 공통 경로로 실행되는 것을 확인한 뒤:
-  - `SkillTriggerDefinition.cs`와 `.meta` 삭제
-  - `SkillDefinition.SkillTriggers` 삭제
-  - Monster/Enemy Trigger 배열 삭제
-  - hidden Trigger Definition Generation 삭제
-  - `RecastZone` 전용 command 계약 삭제
-- 삭제된 타입을 다른 파일에 복사하지 않음.
+- `SkillTriggerDefinition.cs`와 `.meta`를 삭제했다.
+- `SkillDefinition.SkillTriggers`와 Monster/Enemy Trigger 배열을 삭제했다.
+- runtime reaction은 기존 Skill/Choice/Passive `Nodes`의 `SkillReactionOp`로 소유한다.
+- `SkillExecutionData`는 활성 Node에서 `SkillReaction`을 수집한다.
+- `SkillTrigger`는 source skill과 learned passive의 실행 snapshot에서 reaction을 읽고 사건·조건만 판단한다.
+- direct delivery는 `SkillCastEffect`, cross-skill은 `TargetSkillId`, 상태 명령은 `SkillReactionCommand`로 기존 실행/API에 위임한다.
+- hidden Trigger Definition Generation과 Chain hidden Definition은 없다.
+- 삭제된 `SkillTriggerDefinition` 타입 참조는 C# 정적 검색 결과 0이다.
+- solution build 오류 0, Unity Console 오류 0, EditMode 15/15 통과.
 
 ## Risk boundaries
 
@@ -830,9 +832,8 @@ SkillTrigger 공통 gate
 
 ## Next Actions
 
-- Code Builder가 Phase 8 obsolete Trigger Definition/배열/hidden Generation 계약을 삭제한다.
-- 각 Phase의 변경과 검증 결과를 별도 Git commit으로 기록한다.
-- Phase 8과 전체 검증 후 Code Reviewer 롤로 전환한다.
+- Phase 8 변경과 검증 결과를 별도 Git commit으로 기록한다.
+- Code Reviewer 롤로 전환해 Phase 1~8 전체 diff와 실행 경로를 검증한다.
 - Reviewer가 수정을 요구하면 Code Reviewer 롤로 수정·재검증하고 통과할 때까지 반복한다.
 - 기존 `SKILL_TRIGGER_EXECUTOR_REUSE_HANDOFF.md`는 현재 구현의 근거 기록으로 보존하며 삭제하지 않는다.
 
@@ -866,6 +867,7 @@ SkillTrigger 공통 gate
 - Phase 5 verification: runtime Trigger effect 57(피해 24, 상태 33), existing-skill reuse 4, command 21, outcome 누락 0; solution build error 0; Unity EditMode 14/14.
 - Phase 6 verification: passive source reaction 48(effect 24, skill reuse 4, command 20), cooldown refund 14, reload reduction 6; solution build error 0; Unity EditMode 15/15.
 - Phase 7 verification: `__chain` SkillDefinition 0, Chain 원본 Damage 참조/지연 0.5/배율 0.5/반경 7/primary 제외, Zone 지연 0.5/반경 0.6/지속 3/generation 1; solution build error 0; Unity EditMode 15/15.
+- Phase 8 verification: `SkillTriggerDefinition` C# 참조 0; Skill/Monster/Enemy runtime Trigger 배열 제거; reaction은 기존 Skill/Choice/Passive Node에서 수집; hidden Trigger Definition 0; solution build error 0; Unity Console error 0; Unity EditMode 15/15.
 
 ## History
 
@@ -884,3 +886,4 @@ SkillTrigger 공통 gate
 - 2026-07-31: Code Builder completed Phase 5 by replacing 40 hidden direct-delivery Definitions and restoring 17 incomplete event outcomes through the common cast-effect path.
 - 2026-07-31: Code Builder completed Phase 6 by fixing the final catalog's 48 passive source reactions and existing state commands as the Actor-less common-path baseline.
 - 2026-07-31: Code Builder completed Phase 7 by deleting the Chain hidden Definition and wiring Zone node delay into the common Trigger scheduler.
+- 2026-07-31: Code Builder completed Phase 8 by deleting the obsolete Trigger Definition and owner arrays and attaching the final reaction contract to existing Skill/Choice/Passive Nodes.
