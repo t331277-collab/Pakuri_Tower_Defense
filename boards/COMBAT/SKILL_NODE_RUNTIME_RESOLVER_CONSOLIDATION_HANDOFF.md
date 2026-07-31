@@ -48,7 +48,7 @@ Node 의미의 런타임 구현을 `SkillExecutionRuleResolver` 하나로 통합
 - Code Builder가 지적 1~7을 코드로 검증하고 handoff 보강 완료.
 - Phase 1 baseline/inventory 완료 및 커밋.
 - Phase 2 Node composition 구현 및 빌드 검증 완료.
-- Phase 3 data cleanup과 runtime state owner 이행 진행 중.
+- Phase 3 data cleanup과 runtime state owner 이행 완료; 다음은 SkillStatus·SingleSkillRules 흡수다.
 
 ## Selected Code Builder tracks
 
@@ -498,6 +498,8 @@ Status: complete. Phase 1 baseline commit: `8398d68`. Phase 2 verification: `rg`
 
 ### Phase 3 — remove active behavior from data
 
+Status: complete. SkillExecutionData now owns the former per-skill runtime state, UnitSkills owns active/passive runtime lists and lookup, SkillExecutionData has no Node extraction methods, C# callers contain no SkillUseState or SkillExecutionState, and dotnet build Pakuri/Assembly-CSharp.csproj --no-restore exits 0 with 0 errors.
+
 1. 생성자의 Node 적용을 제거한다.
 2. `ApplyChoiceSpec`, `ApplyNodes`, Node별 `Apply*Action`을 제거한다.
 3. Node 기반 계산은 Resolver로 옮기고, reaction/raw damage 같은 실행 조정은 `SkillExecution`에 둔다.
@@ -656,7 +658,7 @@ Unity-MCP로 editor compile과 console을 확인한다. Play Mode gameplay 검�
 1. Code Builder가 필수 역할·track 문서와 본 handoff를 읽는다.
 2. Phase 1의 baseline과 Node inventory를 기록한다.
 3. Phase 2부터 순서대로 구현한다.
-4. 각 Phase 뒤 최소 build와 구조 `rg`를 실행한다.
+4. 각 Phase 뒤 최소 build와 구조 `rg`를 실행하고 해당 Phase를 커밋한다.
 5. 완료 뒤 primary handoff의 Status, Evidence와 History를 갱신한다.
 6. 사용자가 요청한 경우에만 Code Reviewer를 실행한다.
 
@@ -714,3 +716,4 @@ Unity-MCP로 editor compile과 console을 확인한다. Play Mode gameplay 검�
 - 2026-07-31: Designer가 신규 파일 계획을 폐기하고 최종 Implementation 6개 고정, `SkillExecution` 단일 class, 기존 계약을 통한 상태값 치환, legacy type과 caller 삭제, class/줄 수 감소 기준으로 handoff를 수정했다.
 - 2026-07-31: Code Builder resumed with per-Phase GitHub commits; Phase 1 baseline/inventory was closed before runtime edits.
 - 2026-07-31: Phase 2 moved Node extraction and Node action value composition to Resolver; Assembly-CSharp build passed with 0 errors.
+- 2026-07-31: Phase 3 absorbed per-skill runtime state into SkillExecutionData, skill-list state into UnitSkills, removed SkillUseState and SkillExecutionState from C# callers, and passed Assembly-CSharp build with 0 errors.

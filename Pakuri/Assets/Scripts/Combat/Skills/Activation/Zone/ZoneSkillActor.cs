@@ -30,7 +30,7 @@ namespace Pakuri.InGame
         private float damage;
         private DamageAttribute attribute;
         private ProjectileStatusHitSpec statusSpec;
-        private SkillUseState runtime;
+        private SkillExecutionData runtime;
         private SkillExecutionData snapshot;
         private UnitCombatState sourceModel;
         private bool criticalAllowed;
@@ -55,7 +55,7 @@ namespace Pakuri.InGame
             float damagePerTick,
             DamageAttribute damageAttribute,
             ProjectileStatusHitSpec onTickStatus,
-            SkillUseState sourceRuntime,
+            SkillExecutionData sourceRuntime,
             SkillExecutionData executionData,
             UnitCombatState source,
             bool allowCritical,
@@ -199,7 +199,7 @@ namespace Pakuri.InGame
             ProjectileStatusHitSpec onHitStatus,
             UnitCombatState source,
             string sourceSkillId,
-            SkillUseState sourceRuntime,
+            SkillExecutionData sourceRuntime,
             bool criticalAllowed,
             float critChanceBonus,
             float critDamageBonus,
@@ -239,7 +239,7 @@ namespace Pakuri.InGame
         }
 
         /// 전달된 런타임 입력값을 사용해 SourceSkillId 결과값을 생성해 반환한다.
-        private static string SourceSkillId(SkillExecutionData executionData, SkillUseState sourceRuntime)
+        private static string SourceSkillId(SkillExecutionData executionData, SkillExecutionData sourceRuntime)
         {
             if (sourceRuntime != null && !string.IsNullOrWhiteSpace(sourceRuntime.SkillId))
             {

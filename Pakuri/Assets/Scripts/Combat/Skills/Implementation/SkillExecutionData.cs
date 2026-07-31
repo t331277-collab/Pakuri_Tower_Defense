@@ -513,6 +513,489 @@ public class SkillExecutionData
 		}
 	}
 
+	public UnitCombatState Owner { get; internal set; }
+
+	public SkillDefinition Data => Source;
+
+	public SkillSlot Slot => Source != null ? Source.Slot : default;
+
+	/// 실행 주체와 정의를 연결해 사용 상태를 만든다.
+	public SkillExecutionData(UnitCombatState owner, SkillDefinition source)
+		: this(source)
+	{
+		Owner = owner;
+		ResetRuntimeState();
+	}
+
+/// 스킬 정의와 소유자를 연결하고 초기 사용 상태를 준비한다.
+
+
+    public float CooldownRemaining { get; private set; }
+    public float CastRemaining { get; private set; }
+    public float ActiveDurationRemaining { get; private set; }
+    public float TickRemaining { get; private set; }
+    public float ReloadRemaining { get; private set; }
+    public int MagazineRemaining { get; private set; }
+    public int ProjectileLaunchCount { get; private set; }
+    public int SkillHitCount { get; private set; }
+    internal SkillExecutionData ActiveExecutionData { get; private set; }
+
+    private int effectiveMaxMagazineSize;
+    private int effectiveBurstProjectileCount;
+    private float effectiveReloadDuration;
+    private float effectiveTickInterval;
+    private float effectiveBurstInterval;
+    private float effectiveCooldownDuration;
+    private int queuedBurstShotsRemaining;
+    private string consecutiveHitTargetUnitId;
+    private int consecutiveHitRepeatCount;
+
+    public bool IsCasting => CastRemaining > 0f;
+    public bool IsActive => ActiveDurationRemaining > 0f;
+    public bool IsReloading => ReloadRemaining > 0f;
+    public bool IsBursting => queuedBurstShotsRemaining > 0;
+    public int MaxMagazineSize => effectiveMaxMagazineSize;
+    public float ReloadDuration => effectiveReloadDuration;
+    public float EffectiveCooldownDuration => effectiveCooldownDuration;
+    public int EffectiveBurstProjectileCount => effectiveBurstProjectileCount;
+    public bool UsesMagazine => MaxMagazineSize > 0;
+    public bool HasMagazine => !UsesMagazine || MagazineRemaining > 0;
+
+    public bool CanCast => CanCastWithData(null);
+
+    /// 모든 사용 제한과 누적 횟수를 초기 상태로 되돌린다.
+    public void ResetRuntimeState()
+    {
+        effectiveMaxMagazineSize = CalculateMaxMagazineSize(Data);
+        effectiveBurstProjectileCount = BurstProjectileCount(Data);
+        effectiveReloadDuration = CalculateReloadDuration(Data);
+        effectiveTickInterval = TickInterval(Data);
+        effectiveBurstInterval = BurstInterval(Data);
+        effectiveCooldownDuration = CooldownDuration(Data);
+        CooldownRemaining = 0f;
+        CastRemaining = 0f;
+        ActiveDurationRemaining = 0f;
+        TickRemaining = 0f;
+        ReloadRemaining = 0f;
+        MagazineRemaining = MaxMagazineSize;
+        queuedBurstShotsRemaining = 0;
+        ProjectileLaunchCount = 0;
+        SkillHitCount = 0;
+        ActiveExecutionData = null;
+        consecutiveHitTargetUnitId = string.Empty;
+        consecutiveHitRepeatCount = 0;
+    }
+
+    /// 발사 순번을 순환 범위 안에서 한 단계 진행한다.
+    public int AdvanceProjectileLaunchCount()
+    {
+        if (ProjectileLaunchCount == int.MaxValue)
+        {
+            ProjectileLaunchCount = 0;
+        }
+
+        ProjectileLaunchCount++;
+        return ProjectileLaunchCount;
+    }
+
+    /// 적중 순번을 순환 범위 안에서 한 단계 진행한다.
+    public int AdvanceSkillHitCount()
+    {
+        if (SkillHitCount == int.MaxValue)
+        {
+            SkillHitCount = 0;
+        }
+
+        SkillHitCount++;
+        return SkillHitCount;
+    }
+
+    /// 같은 대상을 연속 적중한 횟수에 따라 피해 배율을 계산한다.
+    public float ConsecutiveHitDamageMultiplier(UnitCombatState target, SkillExecutionData snapshot)
+    {
+        if (target == null)
+        {
+            return 1f;
+        }
+
+        var projectileData = Data as ProjectileSkillDefinition;
+        var bonusRate = 0f;
+        var bonusMax = 0f;
+        if (projectileData != null)
+        {
+            bonusRate = projectileData.ConsecutiveHitBonusRate;
+            bonusMax = projectileData.ConsecutiveHitMax;
+        }
+        if (snapshot != null && snapshot.ConsecutiveHitBonusRate > 0f)
+        {
+            bonusRate = snapshot.ConsecutiveHitBonusRate;
+        }
+        if (snapshot != null && snapshot.ConsecutiveHitMax > 0f)
+        {
+            bonusMax = snapshot.ConsecutiveHitMax;
+        }
+        if (bonusRate <= 0f || bonusMax <= 0f)
+        {
+            return 1f;
+        }
+
+        var unitId = string.Empty;
+        if (target.Identity != null)
+        {
+            unitId = target.Identity.UnitId;
+        }
+        if (string.IsNullOrWhiteSpace(unitId))
+        {
+            consecutiveHitTargetUnitId = string.Empty;
+            consecutiveHitRepeatCount = 0;
+            return 1f;
+        }
+
+        if (string.Equals(consecutiveHitTargetUnitId, unitId, StringComparison.Ordinal))
+        {
+            consecutiveHitRepeatCount = Math.Min(consecutiveHitRepeatCount + 1, int.MaxValue - 1);
+        }
+        else
+        {
+            consecutiveHitTargetUnitId = unitId;
+            consecutiveHitRepeatCount = 0;
+        }
+
+        var bonus = Mathf.Min(
+            Mathf.Max(0f, bonusMax),
+            Mathf.Max(0f, bonusRate) * consecutiveHitRepeatCount);
+        return 1f + bonus;
+    }
+
+    /// 시간 흐름에 따라 시전, 재사용, 재장전과 활성 대기값을 감소시킨다.
+    public void Tick(float deltaTime)
+    {
+        if (deltaTime <= 0f)
+        {
+            return;
+        }
+
+        var actionDeltaTime = deltaTime * StatusCombatRules.ActionSpeedMultiplier(Owner);
+        CooldownRemaining = TickDown(CooldownRemaining, actionDeltaTime);
+        CastRemaining = TickDown(CastRemaining, actionDeltaTime);
+        ActiveDurationRemaining = TickDown(ActiveDurationRemaining, deltaTime);
+        TickRemaining = TickDown(TickRemaining, actionDeltaTime);
+        ReloadRemaining = TickDown(ReloadRemaining, deltaTime);
+
+        if (UsesMagazine
+            && MagazineRemaining <= 0
+            && ReloadRemaining <= 0f
+            && CooldownRemaining <= 0f
+            && !IsBursting)
+        {
+            MagazineRemaining = MaxMagazineSize;
+        }
+    }
+
+    /// 현재 보정값과 사용 제한을 반영해 시전 가능 여부를 판단한다.
+    public bool CanCastWithData(SkillExecutionData snapshot)
+    {
+        RefreshRuntimeModifiers(snapshot);
+        if (Data == null
+            || !Data.IsActive
+            || IsCasting
+            || !IsCastIntervalReady())
+        {
+            return false;
+        }
+
+        if (IsBursting)
+        {
+            return !IsReloading;
+        }
+
+        return CooldownRemaining <= 0f
+            && !IsReloading
+            && HasMagazine;
+    }
+
+    /// 기본 보정값으로 시전 상태 진입을 시도한다.
+    public bool TryBeginCast()
+    {
+        return TryBeginCast(null);
+    }
+
+    /// 확정된 보정값을 반영해 탄약과 대기 상태를 소비한다.
+    public bool TryBeginCast(SkillExecutionData snapshot)
+    {
+        RefreshRuntimeModifiers(snapshot);
+        if (IsBursting)
+        {
+            queuedBurstShotsRemaining = Math.Max(0, queuedBurstShotsRemaining - 1);
+            if (IsBursting)
+            {
+                TickRemaining = effectiveBurstInterval;
+            }
+            else
+            {
+                TickRemaining = effectiveTickInterval;
+                BeginRecoveryIfNeeded();
+            }
+
+            ActiveExecutionData = snapshot;
+            return true;
+        }
+
+        if (!CanCastWithData(snapshot))
+        {
+            return false;
+        }
+
+
+        if (UsesMagazine)
+        {
+            MagazineRemaining = Math.Max(0, MagazineRemaining - 1);
+        }
+
+        var timing = Data.Timing;
+        ActiveDurationRemaining = Mathf.Max(0f, timing.ActiveDuration);
+        queuedBurstShotsRemaining = Math.Max(0, effectiveBurstProjectileCount - 1);
+        TickRemaining = effectiveTickInterval;
+        if (IsBursting)
+        {
+            TickRemaining = effectiveBurstInterval;
+        }
+
+        if (!IsBursting)
+        {
+            BeginRecoveryIfNeeded();
+        }
+
+        ActiveExecutionData = snapshot;
+        return true;
+    }
+
+    /// 진행 중인 지속 실행과 해당 실행 데이터를 종료한다.
+    public void StopActive()
+    {
+        ActiveDurationRemaining = 0f;
+        ActiveExecutionData = null;
+    }
+
+    /// 주기 효과를 다시 실행할 시점인지 확인한다.
+    public bool IsTickReady()
+    {
+        return Data.Timing.TickInterval > 0f && TickRemaining <= 0f;
+    }
+
+    /// 다음 주기 실행까지의 대기시간을 다시 설정한다.
+    public void ResetTickInterval()
+    {
+        TickRemaining = effectiveTickInterval;
+    }
+
+    /// 현재 연사 묶음에서 발사할 탄환 순번을 계산한다.
+    public int CurrentBurstProjectileIndex()
+    {
+        if (effectiveBurstProjectileCount <= 1 || !IsBursting)
+        {
+            return 1;
+        }
+
+        return Mathf.Clamp(
+            effectiveBurstProjectileCount - queuedBurstShotsRemaining + 1,
+            1,
+            effectiveBurstProjectileCount);
+    }
+
+    /// 재장전 대기시간을 줄이고 완료 시 탄창을 복구한다.
+    public bool ReduceReloadRemaining(float seconds)
+    {
+        if (seconds <= 0f || ReloadRemaining <= 0f)
+        {
+            return false;
+        }
+
+        ReloadRemaining = Mathf.Max(0f, ReloadRemaining - seconds);
+        if (ReloadRemaining <= 0f && UsesMagazine && MagazineRemaining <= 0 && CooldownRemaining <= 0f && !IsBursting)
+        {
+            MagazineRemaining = MaxMagazineSize;
+        }
+
+        return true;
+    }
+
+    /// 재사용 대기시간을 줄이고 사용 가능 상태를 복구한다.
+    public bool ReduceCooldownRemaining(float seconds)
+    {
+        if (seconds <= 0f || CooldownRemaining <= 0f)
+        {
+            return false;
+        }
+
+        CooldownRemaining = Mathf.Max(0f, CooldownRemaining - seconds);
+        if (CooldownRemaining <= 0f && UsesMagazine && MagazineRemaining <= 0 && ReloadRemaining <= 0f && !IsBursting)
+        {
+            MagazineRemaining = MaxMagazineSize;
+        }
+
+        return true;
+    }
+
+    /// 재사용 대기를 즉시 끝내고 필요한 탄창을 복구한다.
+    public void ResetCooldown()
+    {
+        CooldownRemaining = 0f;
+        if (UsesMagazine && MagazineRemaining <= 0 && ReloadRemaining <= 0f && !IsBursting)
+        {
+            MagazineRemaining = MaxMagazineSize;
+        }
+    }
+
+    /// 남은 시간을 0 아래로 내려가지 않게 감소시킨다.
+    private static float TickDown(float value, float deltaTime)
+    {
+        if (value > 0f)
+        {
+            return Mathf.Max(0f, value - deltaTime);
+        }
+
+        return 0f;
+    }
+
+    /// 다음 발사 간격이 지났는지 확인한다.
+    private bool IsCastIntervalReady()
+    {
+        return effectiveTickInterval <= 0f || TickRemaining <= 0f;
+    }
+
+    /// 이번 실행 보정에 맞춰 탄창, 연사와 대기시간 기준값을 갱신한다.
+    private void RefreshRuntimeModifiers(SkillExecutionData snapshot)
+    {
+        var previousMax = effectiveMaxMagazineSize;
+        var nextMax = CalculateMaxMagazineSize(Data);
+        var nextBurst = BurstProjectileCount(Data);
+        effectiveReloadDuration = CalculateReloadDuration(Data);
+        effectiveTickInterval = TickInterval(Data);
+        effectiveBurstInterval = BurstInterval(Data);
+        effectiveCooldownDuration = CooldownDuration(Data);
+
+        if (snapshot != null)
+        {
+            nextMax = Math.Max(0, nextMax + snapshot.MagazineBonus);
+            if (nextBurst > 1)
+            {
+                nextBurst += snapshot.AdditionalProjectileBonus;
+            }
+
+            effectiveReloadDuration *= Mathf.Max(0f, snapshot.ReloadTimeMultiplier);
+            effectiveTickInterval *= Mathf.Max(0f, snapshot.ShotIntervalMultiplier);
+            effectiveBurstInterval *= Mathf.Max(0f, snapshot.ShotIntervalMultiplier);
+            effectiveCooldownDuration *= Mathf.Max(0f, snapshot.CooldownMultiplier);
+        }
+
+        effectiveMaxMagazineSize = nextMax;
+        effectiveBurstProjectileCount = Math.Max(1, nextBurst);
+        if (previousMax == effectiveMaxMagazineSize)
+        {
+            return;
+        }
+
+        if (effectiveMaxMagazineSize <= 0)
+        {
+            MagazineRemaining = 0;
+            ReloadRemaining = 0f;
+            return;
+        }
+
+        if (previousMax <= 0)
+        {
+            MagazineRemaining = effectiveMaxMagazineSize;
+            return;
+        }
+
+        var delta = effectiveMaxMagazineSize - previousMax;
+        MagazineRemaining = Mathf.Clamp(MagazineRemaining + delta, 0, effectiveMaxMagazineSize);
+        if (MagazineRemaining > 0)
+        {
+            ReloadRemaining = 0f;
+        }
+    }
+
+    /// 정의된 탄창 용량을 유효한 범위로 보정한다.
+    private static int CalculateMaxMagazineSize(SkillDefinition data)
+    {
+        return Math.Max(0, data.MagazineCapacity);
+    }
+
+    /// 한 번의 시전에서 이어지는 발사 횟수를 구한다.
+    private static int BurstProjectileCount(SkillDefinition data)
+    {
+        var projectile = data as ProjectileSkillDefinition;
+        if (projectile != null && projectile.Projectile != null)
+        {
+            return Math.Max(1, projectile.Projectile.BurstProjectileCount);
+        }
+
+        return 1;
+    }
+
+    /// 재장전에 필요한 시간을 유효한 범위로 보정한다.
+    private static float CalculateReloadDuration(SkillDefinition data)
+    {
+        return Mathf.Max(0f, data.ReloadSeconds);
+    }
+
+    /// 연속 실행 사이의 간격을 유효한 범위로 보정한다.
+    private static float TickInterval(SkillDefinition data)
+    {
+        return Mathf.Max(0f, data.Timing.TickInterval);
+    }
+
+    /// 연사 간격을 구하고 별도 값이 없으면 기본 실행 간격을 사용한다.
+    private static float BurstInterval(SkillDefinition data)
+    {
+        var projectile = data as ProjectileSkillDefinition;
+        if (projectile != null && projectile.Projectile != null)
+        {
+            var burstInterval = projectile.Projectile.BurstIntervalSeconds;
+            if (burstInterval > 0f)
+            {
+                return burstInterval;
+            }
+        }
+
+        return TickInterval(data);
+    }
+
+    /// 재사용 대기시간을 유효한 범위로 보정한다.
+    private static float CooldownDuration(SkillDefinition data)
+    {
+        return Mathf.Max(0f, data.Timing.Cooldown);
+    }
+
+    /// 탄창 소모 상태에 맞춰 재사용 또는 재장전을 시작한다.
+    private void BeginRecoveryIfNeeded()
+    {
+        if (!UsesMagazine)
+        {
+            CooldownRemaining = effectiveCooldownDuration;
+            return;
+        }
+
+        if (MagazineRemaining > 0)
+        {
+            return;
+        }
+
+        CooldownRemaining = effectiveCooldownDuration;
+        if (ReloadDuration > 0f)
+        {
+            ReloadRemaining = ReloadDuration;
+            return;
+        }
+
+        if (CooldownRemaining <= 0f)
+        {
+            MagazineRemaining = MaxMagazineSize;
+        }
+    }
+
 	/// 실행 배율을 현재 값에 반영한다.
 	internal void ApplyDynamicDamageMultiplier(float multiplier)
 	{

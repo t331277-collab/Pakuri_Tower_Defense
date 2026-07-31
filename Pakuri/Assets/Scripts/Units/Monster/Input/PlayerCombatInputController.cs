@@ -199,7 +199,7 @@ namespace Pakuri.InGame
 
         /// 전달된 런타임 입력값을 사용해 SkillInput 조회를 시도하고 값이 있는지 반환한다.
         private bool TryGetSkillInput(
-            SkillUseState runtime,
+            SkillExecutionData runtime,
             bool isProjectile,
             bool pressed,
             bool held,
@@ -243,7 +243,7 @@ namespace Pakuri.InGame
         }
 
         /// 전달된 skills 값을 사용해 소유한 런타임 상태에 BurstingProjectile가 있는지 반환한다.
-        private static bool HasBurstingProjectile(IReadOnlyList<SkillUseState> skills)
+        private static bool HasBurstingProjectile(IReadOnlyList<SkillExecutionData> skills)
         {
             for (var i = 0; i < skills.Count; i++)
             {

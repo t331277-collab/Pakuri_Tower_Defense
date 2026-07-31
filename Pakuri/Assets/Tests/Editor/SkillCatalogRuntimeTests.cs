@@ -278,7 +278,7 @@ public sealed class SkillCatalogRuntimeTests
                     ActiveDuration = 5f
                 }
             };
-            var runtime = new SkillUseState(owner, charge);
+            var runtime = new SkillExecutionData(owner, charge);
             owner.SkillState.AddOrReplace(runtime);
             var entry = new CombatUnitEntry(owner, actorObject.transform);
             var executed = new SkillExecution().TryExecuteReaction(
@@ -338,7 +338,7 @@ public sealed class SkillCatalogRuntimeTests
                 EffectKind = BuffEffectKind.Charge
             };
             var sourceSnapshot = SkillExecutionRuleResolver.CreateDefinitionSnapshot(source);
-            var triggeredRuntime = new SkillUseState(owner, triggered);
+            var triggeredRuntime = new SkillExecutionData(owner, triggered);
             var context = new SkillExecutionContext(
                 null,
                 null,

@@ -232,7 +232,7 @@ internal static class SkillTrigger
 	/// 전달된 런타임 입력값을 사용해 CombatStart를 실행한다.
 	public static void ExecuteCombatStart(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source)
 	{
-		IReadOnlyList<SkillUseState> readOnlyList = null;
+		IReadOnlyList<SkillExecutionData> readOnlyList = null;
 		if (source != null && source.Skills != null)
 		{
 			readOnlyList = source.SkillState.ActiveSkills;
@@ -244,7 +244,7 @@ internal static class SkillTrigger
 		Vector2 eventCenter = UnitPosition(roster, source);
 		for (int i = 0; i < readOnlyList.Count; i++)
 		{
-			SkillUseState skillRuntimeInstance = readOnlyList[i];
+			SkillExecutionData skillRuntimeInstance = readOnlyList[i];
 			string text = ((skillRuntimeInstance != null && skillRuntimeInstance.Data != null) ? skillRuntimeInstance.Data.SkillId : string.Empty);
 			if (!string.IsNullOrWhiteSpace(text))
 			{
@@ -394,7 +394,7 @@ internal static class SkillTrigger
 		string sourceSkillId,
 		UnitSpawnManager roster)
 	{
-		SkillUseState sourceSkill = null;
+		SkillExecutionData sourceSkill = null;
 		if (source != null && source.Skills != null)
 		{
 			sourceSkill = source.SkillState.FindBySkillId(sourceSkillId);
@@ -428,7 +428,7 @@ internal static class SkillTrigger
 			{
 				continue;
 			}
-			IReadOnlyList<SkillUseState> passives = unitState.SkillState.PassiveSkills;
+			IReadOnlyList<SkillExecutionData> passives = unitState.SkillState.PassiveSkills;
 			for (int passiveIndex = 0; passiveIndex < passives.Count; passiveIndex++)
 			{
 				var passiveRuntime = passives[passiveIndex];
@@ -578,7 +578,7 @@ internal static class SkillTrigger
 		{
 			return false;
 		}
-		float num = SkillExecutionState.PassiveChoices(owner, trigger.SourceSkillId).TriggerProcChanceBonus(trigger.ReactionId);
+		float num = UnitSkills.PassiveChoices(owner, trigger.SourceSkillId).TriggerProcChanceBonus(trigger.ReactionId);
 		float num2 = ((trigger.ProcChance > 0f) ? Mathf.Clamp01(trigger.ProcChance + num) : Mathf.Clamp01(1f + num));
 		if (num2 <= 0f || UnityEngine.Random.value > num2)
 		{
@@ -778,7 +778,7 @@ internal static class SkillTrigger
 			return false;
 		}
 
-		SkillUseState sourceRuntime = source.SkillState.FindBySkillId(trigger.SourceSkillId);
+		SkillExecutionData sourceRuntime = source.SkillState.FindBySkillId(trigger.SourceSkillId);
 		var targetPoint = triggerContext.EventCenter;
 		if (trigger.CenterMode == SkillTriggerCenterMode.Caster
 			&& sourceEntry.Transform != null)
@@ -874,7 +874,7 @@ internal static class SkillTrigger
 		UnitSpawnManager roster,
 		CombatUnitEntry sourceEntry,
 		UnitCombatState source,
-		SkillUseState sourceRuntime,
+		SkillExecutionData sourceRuntime,
 		SkillReactionCommand command,
 		TriggerExecutionContext triggerContext)
 	{
@@ -967,7 +967,7 @@ internal static class SkillTrigger
 	}
 
 	/// 전달된 런타임 입력값을 사용해 CommandRuntimes 결과값을 생성해 반환한다.
-	private static IReadOnlyList<SkillUseState> CommandRuntimes(
+	private static IReadOnlyList<SkillExecutionData> CommandRuntimes(
 		UnitCombatState target,
 		string skillId)
 	{
@@ -976,7 +976,7 @@ internal static class SkillTrigger
 			var runtime = target.SkillState.FindBySkillId(skillId);
 			return runtime != null
 				? new[] { runtime }
-				: Array.Empty<SkillUseState>();
+				: Array.Empty<SkillExecutionData>();
 		}
 		return target.SkillState.ActiveSkills;
 	}

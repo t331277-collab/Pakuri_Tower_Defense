@@ -151,7 +151,7 @@ namespace Pakuri.InGame
             InGameCombatManager combatManager,
             UnitCombatState caster,
             CombatUnitEntry target,
-            SkillUseState runtime)
+            SkillExecutionData runtime)
         {
             var snapshot = runtime != null ? runtime.ActiveExecutionData : null;
             if (combatManager == null

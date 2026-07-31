@@ -32,7 +32,7 @@ namespace Pakuri.InGame
         private float damage;
         private DamageAttribute attribute;
         private ProjectileStatusHitSpec statusSpec;
-        private SkillUseState runtime;
+        private SkillExecutionData runtime;
         private SkillExecutionData executionData;
         private UnitCombatState sourceModel;
         private string sourceSkillId;
@@ -61,7 +61,7 @@ namespace Pakuri.InGame
             float damagePerTick,
             DamageAttribute damageAttribute,
             ProjectileStatusHitSpec onHitStatus,
-            SkillUseState sourceRuntime,
+            SkillExecutionData sourceRuntime,
             SkillExecutionData snapshot,
             UnitCombatState source,
             string skillId,

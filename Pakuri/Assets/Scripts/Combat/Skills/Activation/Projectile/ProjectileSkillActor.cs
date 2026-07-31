@@ -35,7 +35,7 @@ namespace Pakuri.InGame
         private int branchDamageCount;
         private float branchDamageMultiplier = 1f;
         private float branchDamageSearchRadius;
-        private SkillUseState runtime;
+        private SkillExecutionData runtime;
         private SkillExecutionData executionData;
         private string sourceSkillId;
         private bool isMagazineLastProjectile;
@@ -150,7 +150,7 @@ namespace Pakuri.InGame
             bool enableImpactArea,
             float impactAreaRadius,
             float delayedImpactDamage,
-            SkillUseState sourceRuntime,
+            SkillExecutionData sourceRuntime,
             SkillExecutionData snapshot,
             string ignoredUnitId = null,
             string skillId = null,

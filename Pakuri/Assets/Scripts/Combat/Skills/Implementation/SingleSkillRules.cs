@@ -64,7 +64,7 @@ namespace Pakuri.InGame
 
         /// 전달된 런타임 입력값을 사용해 KillRecovery를 처리한다.
         internal static void HandleKillRecovery(
-            SkillUseState sourceRuntime,
+            SkillExecutionData sourceRuntime,
             SkillExecutionData snapshot,
             InGameResourceChangeResult result,
             bool wasExecute)
@@ -186,7 +186,7 @@ namespace Pakuri.InGame
 
         /// 전달된 런타임 입력값을 사용해 ResetCooldown 작업을 시도하고 성공 여부를 반환한다.
         private static bool TryResetCooldown(
-            SkillUseState sourceRuntime,
+            SkillExecutionData sourceRuntime,
             SkillExecutionData snapshot,
             bool wasExecute)
         {
@@ -213,7 +213,7 @@ namespace Pakuri.InGame
 
         /// 전달된 런타임 입력값을 사용해 RefundCooldown 작업을 시도하고 성공 여부를 반환한다.
         private static bool TryRefundCooldown(
-            SkillUseState sourceRuntime,
+            SkillExecutionData sourceRuntime,
             SkillExecutionData snapshot)
         {
             var refundBonus = 0f;

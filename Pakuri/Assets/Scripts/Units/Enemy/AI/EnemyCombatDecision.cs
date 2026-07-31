@@ -106,10 +106,10 @@ namespace Pakuri.InGame
         }
 
         /// 전달된 런타임 입력값을 사용해 OffensiveSkill를 결정한다.
-        public static SkillUseState ResolveOffensiveSkill(
+        public static SkillExecutionData ResolveOffensiveSkill(
             CombatUnitEntry enemyEntry,
             EnemyCombatState enemyModel,
-            SkillUseState specialRuntime,
+            SkillExecutionData specialRuntime,
             bool canUseSpecialSkill,
             SkillExecution skillExecution,
             UnitSpawnManager registry)
@@ -134,7 +134,7 @@ namespace Pakuri.InGame
         }
 
         /// 전달된 런타임 입력값을 사용해 SelectableSkill를 결정한다.
-        public static SkillUseState ResolveSelectableSkill(EnemyCombatState enemyModel, SkillSlot slot)
+        public static SkillExecutionData ResolveSelectableSkill(EnemyCombatState enemyModel, SkillSlot slot)
         {
             var runtime = enemyModel.SkillState.FindBySlot(slot);
             if (HasCombatStartTrigger(runtime))
@@ -146,7 +146,7 @@ namespace Pakuri.InGame
         }
 
         /// 활성화된 Charge 버프 런타임을 반환한다.
-        public static SkillUseState ResolveActiveCharge(EnemyCombatState enemyModel)
+        public static SkillExecutionData ResolveActiveCharge(EnemyCombatState enemyModel)
         {
             var activeSkills = enemyModel.SkillState.ActiveSkills;
             for (var i = 0; i < activeSkills.Count; i++)
@@ -165,13 +165,13 @@ namespace Pakuri.InGame
         }
 
         /// 전달된 runtime 값을 사용해 SupportSkill 조건 충족 여부를 반환한다.
-        public static bool IsSupportSkill(SkillUseState runtime)
+        public static bool IsSupportSkill(SkillExecutionData runtime)
         {
             return runtime != null && runtime.Data.Targeting.TargetSide != SkillTargetSide.Enemy;
         }
 
         /// 전달된 런타임 입력값을 사용해 ExecuteSupportSkill 실행 가능 여부를 반환한다.
-        public static bool CanExecuteSupportSkill(SkillUseState runtime, UnitSpawnManager registry)
+        public static bool CanExecuteSupportSkill(SkillExecutionData runtime, UnitSpawnManager registry)
         {
             if (runtime.Data is BuffSkillDefinition buff
                 && buff.EffectKind == BuffEffectKind.Heal)
@@ -183,7 +183,7 @@ namespace Pakuri.InGame
         }
 
         /// 전달된 runtime 값을 사용해 소유한 런타임 상태에 CombatStartTrigger가 있는지 반환한다.
-        private static bool HasCombatStartTrigger(SkillUseState runtime)
+        private static bool HasCombatStartTrigger(SkillExecutionData runtime)
         {
             if (runtime == null)
             {

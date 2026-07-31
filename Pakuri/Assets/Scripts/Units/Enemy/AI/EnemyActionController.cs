@@ -130,7 +130,7 @@ namespace Pakuri.InGame
         /// 전달된 런타임 입력값을 사용해 UseSkill 작업을 시도하고 성공 여부를 반환한다.
         private bool TryUseSkill(
             CombatUnitEntry enemyEntry,
-            SkillUseState runtime)
+            SkillExecutionData runtime)
         {
             return skillExecution.TryExecuteSelected(
                 enemyEntry,
@@ -170,7 +170,7 @@ namespace Pakuri.InGame
             CombatUnitEntry enemyEntry,
             EnemyCombatState enemyModel,
             CombatUnitEntry target,
-            SkillUseState runtime,
+            SkillExecutionData runtime,
             float deltaTime)
         {
             if (TryApplyChargeContact(enemyEntry, enemyModel, runtime, Vector2.zero)
@@ -190,7 +190,7 @@ namespace Pakuri.InGame
         }
 
         /// Charge 이동 배율을 활성 경과 시간에 맞춰 계산한다.
-        private static float ChargeSpeedMultiplier(SkillUseState runtime)
+        private static float ChargeSpeedMultiplier(SkillExecutionData runtime)
         {
             var snapshot = runtime.ActiveExecutionData;
             if (snapshot == null)
@@ -215,7 +215,7 @@ namespace Pakuri.InGame
         private bool TryApplyChargeContact(
             CombatUnitEntry enemyEntry,
             EnemyCombatState enemyModel,
-            SkillUseState runtime,
+            SkillExecutionData runtime,
             Vector2 movement)
         {
             UnitCollisionResolver.CollectTargets(

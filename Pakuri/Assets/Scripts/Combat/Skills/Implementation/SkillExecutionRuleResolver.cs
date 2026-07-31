@@ -44,7 +44,7 @@ namespace Pakuri.InGame
         /// 소유자의 학습 상태까지 합성한 실행값을 만든다.
         internal static SkillExecutionData BuildExecutionData(
             UnitCombatState owner,
-            SkillUseState runtime,
+            SkillExecutionData runtime,
             UnitSpawnManager roster)
         {
             var skill = runtime != null ? runtime.Data : null;
@@ -847,7 +847,7 @@ namespace Pakuri.InGame
             ProjectileStatusHitSpec status,
             UnitCombatState source,
             string sourceSkillId,
-            SkillUseState runtime,
+            SkillExecutionData runtime,
             bool criticalAllowed,
             float critChanceBonus,
             float critDamageBonus,
@@ -935,7 +935,7 @@ namespace Pakuri.InGame
             ProjectileStatusHitSpec status,
             UnitCombatState source,
             string sourceSkillId,
-            SkillUseState runtime,
+            SkillExecutionData runtime,
             bool criticalAllowed,
             float critChanceBonus,
             float critDamageBonus,
@@ -1070,7 +1070,7 @@ namespace Pakuri.InGame
         internal static void ApplyHitEnhancements(
             InGameCombatManager manager,
             UnitSpawnManager roster,
-            SkillUseState runtime,
+            SkillExecutionData runtime,
             SkillExecutionData skillData,
             CombatUnitEntry sourceEntry,
             UnitCombatState source,

@@ -32,13 +32,14 @@ Code Builder for handoff correction and later implementation. Code Reviewer only
 
 ### Status
 
-User concerns 1-7 validated against current code and reflected in the primary handoff. Phase 1 baseline and inventory are recorded. Phase 2 Node composition is implemented and build-verified; Phase 3 data cleanup is next.
+User concerns 1-7 validated against current code and reflected in the primary handoff. Phase 1 baseline and inventory are recorded. Phase 2 Node composition and Phase 3 runtime-state ownership are implemented and build-verified; Phase 4 status and single-rule absorption is next.
 
 ### Next Actions
 
 - Phase 1 baseline is committed.
 - Phase 2 Resolver Node composition is committed and verified by `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore` with 0 errors.
-- Phase 3 removes remaining active behavior from data and migrates the runtime state owner.
+- Phase 3 removed remaining active behavior from data and migrated the runtime state owner into SkillExecutionData and UnitSkills.
+- Every completed Phase is committed separately; Phase 4 begins only after this Phase 3 baseline.
 - Add parity coverage for composition order, cast-time versus hit-time values, status results, Trigger asymmetry, recursion/generation, Definition-only reaction lookup, and snapshot immutability.
 - Do not alter Trigger gate asymmetry or command recursion behavior without a separate user decision.
 - Keep `SkillExecution.cs` as the only file for its responsibility and reduce its four current classes to the single `SkillExecution` class; do not create `SkillExecutionContext.cs`, `SkillUseState.cs`, or `SkillExecutionState.cs`.
@@ -69,6 +70,7 @@ User concerns 1-7 validated against current code and reflected in the primary ha
 - 2026-07-31: User corrected that the convention forbids new split files. Designer removed the same-name file plan and fixed the target to six existing Implementation scripts, one `SkillExecution` class, caller migration, legacy type deletion, and reduced class/line counts.
 - 2026-07-31: Code Builder resumed under the per-Phase commit rule and closed the baseline/inventory phase before runtime edits.
 - 2026-07-31: Phase 2 moved Node extraction and Node action value composition to Resolver; Assembly-CSharp build passed with 0 errors.
+- 2026-07-31: Phase 3 moved per-skill runtime state into SkillExecutionData, skill-list ownership into UnitSkills, removed the two legacy state types from C# callers, and passed Assembly-CSharp build with 0 errors.
 
 ## Task: 2026-07-28 Skill Trigger / Node Unification Design
 

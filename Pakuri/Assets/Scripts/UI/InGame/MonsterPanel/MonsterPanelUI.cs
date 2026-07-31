@@ -295,7 +295,7 @@ namespace Pakuri.InGame
             /// 전달된 model 값을 사용해 ActiveSlots를 현재 런타임 모델을 기준으로 갱신한다.
             private void RefreshActiveSlots(UnitCombatState model)
             {
-                System.Collections.Generic.IReadOnlyList<SkillUseState> runtimes = null;
+                System.Collections.Generic.IReadOnlyList<SkillExecutionData> runtimes = null;
                 if (model != null && model.Skills != null)
                 {
                     runtimes = model.SkillState.ActiveSkills;
@@ -315,7 +315,7 @@ namespace Pakuri.InGame
                         continue;
                     }
 
-                    SkillUseState runtime = null;
+                    SkillExecutionData runtime = null;
                     if (i < runtimeCount)
                     {
                         runtime = runtimes[i];
@@ -431,7 +431,7 @@ namespace Pakuri.InGame
             }
 
             /// 전달된 runtime 값을 사용해 Runtime를 갱신한다.
-            public void SetRuntime(SkillUseState runtime)
+            public void SetRuntime(SkillExecutionData runtime)
             {
                 ResolveChildren();
 
@@ -461,7 +461,7 @@ namespace Pakuri.InGame
             }
 
             /// 전달된 runtime 값을 사용해 Label를 현재 런타임 모델을 기준으로 갱신한다.
-            private void RefreshLabel(SkillUseState runtime)
+            private void RefreshLabel(SkillExecutionData runtime)
             {
                 if (label == null)
                 {
@@ -480,7 +480,7 @@ namespace Pakuri.InGame
             }
 
             /// 전달된 runtime 값을 사용해 CooldownOverlay를 현재 런타임 모델을 기준으로 갱신한다.
-            private void RefreshCooldownOverlay(SkillUseState runtime)
+            private void RefreshCooldownOverlay(SkillExecutionData runtime)
             {
                 if (cooldownOverlay == null)
                 {

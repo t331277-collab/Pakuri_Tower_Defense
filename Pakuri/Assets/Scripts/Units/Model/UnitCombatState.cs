@@ -102,7 +102,7 @@ namespace Pakuri.InGame
         public UnitDefenseStats Defenses = new UnitDefenseStats();
         public UnitCombatResources Resources = new UnitCombatResources();
         public UnitSkills Skills = new UnitSkills();
-        public SkillExecutionState SkillState = new SkillExecutionState();
+        public UnitSkills SkillState = new UnitSkills();
         public UnitStatusCollection Statuses = new UnitStatusCollection();
         public bool IsBoss;
         public bool AutoAttackEnabled = true;
