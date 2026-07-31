@@ -290,7 +290,7 @@ public class SkillExecutionData
 
 	internal DamageAttribute PreparedDamageAttribute { get; set; }
 
-	internal ProjectileStatusHitSpec PreparedStatus { get; set; }
+	internal StatusApplicationSpec PreparedStatus { get; set; }
 
 	internal StatusApplicationSpec OnHitStatusOverride { get; set; }
 
@@ -336,7 +336,7 @@ public class SkillExecutionData
 
 	internal bool PreparedMagazineLastProjectile { get; set; }
 
-	internal ProjectileStatusHitSpec PreparedImpactStatus { get; set; }
+	internal StatusApplicationSpec PreparedImpactStatus { get; set; }
 
 	internal RuntimeSkillVisualSpec PreparedImpactRuntimeVisual { get; set; }
 

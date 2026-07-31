@@ -67,7 +67,7 @@ namespace Pakuri.InGame
                     snapshot,
                     target,
                     "RuntimeBuffVisual",
-                    statusSpec.DurationSeconds,
+                    statusSpec.RuntimeDurationSeconds,
                     ref casterVisualSpawned);
                 routed = true;
             }

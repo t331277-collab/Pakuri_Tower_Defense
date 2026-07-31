@@ -30,7 +30,7 @@ namespace Pakuri.InGame
         private float maxLifetime;
         private int remainingHits = 1;
         private bool destroyWhenGreaterThanBoundary = true;
-        private ProjectileStatusHitSpec statusOnHit;
+        private StatusApplicationSpec statusOnHit;
         private float branchDamageChance;
         private int branchDamageCount;
         private float branchDamageMultiplier = 1f;
@@ -43,7 +43,7 @@ namespace Pakuri.InGame
         private bool criticalAllowed;
         private float critChanceBonus;
         private float critDamageBonus;
-        private ProjectileStatusHitSpec impactStatusOnHit;
+        private StatusApplicationSpec impactStatusOnHit;
         private bool contactDamageEnabled = true;
         private bool stopOnFirstHit;
         private float impactDelaySeconds;
@@ -137,12 +137,12 @@ namespace Pakuri.InGame
             int pierceCount,
             float boundaryX,
             float lifetimeSeconds,
-            ProjectileStatusHitSpec statusSpec,
+            StatusApplicationSpec statusSpec,
             float branchChance,
             int branchCount,
             float branchMultiplier,
             float branchSearchRadius,
-            ProjectileStatusHitSpec impactStatusSpec,
+            StatusApplicationSpec impactStatusSpec,
             bool enableContactDamage,
             bool stopAfterFirstHit,
             float impactDelay,

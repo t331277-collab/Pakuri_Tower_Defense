@@ -21,7 +21,7 @@ namespace Pakuri.InGame
         public static bool ApplyStatus(
             InGameCombatManager manager,
             UnitCombatState target,
-            ProjectileStatusHitSpec status,
+            StatusApplicationSpec status,
             UnitCombatState source = null)
         {
             if (manager == null || target == null || status == null || !status.Enabled)
@@ -43,11 +43,11 @@ namespace Pakuri.InGame
             var duration = DurationSeconds(status, source);
             var appliedStatus = manager.ApplyStatus(
                 target,
-                status.StatusData,
+                status.Status,
                 status.Stacks,
                 duration,
-                status.MaxStacks,
-                status.Permanent,
+                status.RuntimeResolved ? status.RuntimeMaxStacks : status.Status.MaxStacks,
+                status.RuntimeResolved ? status.RuntimePermanent : status.Status.Permanent,
                 status.RefreshDuration,
                 source);
             if (appliedStatus == null)
@@ -62,7 +62,7 @@ namespace Pakuri.InGame
         /// 전달된 런타임 입력값을 사용해 ApplicationChance 결과값을 생성해 반환한다.
         public static float ApplicationChance(
             UnitCombatState target,
-            ProjectileStatusHitSpec status,
+            StatusApplicationSpec status,
             UnitCombatState source = null)
         {
             if (status == null || !status.Enabled)
@@ -72,7 +72,7 @@ namespace Pakuri.InGame
 
             var chanceBonus = ConditionalStatusChanceBonus(source, target);
             var chance = Mathf.Clamp01(status.Chance + chanceBonus);
-            if (chance <= 0f || target == null || !IsDebuff(status.StatusData))
+            if (chance <= 0f || target == null || !IsDebuff(status.Status))
             {
                 return chance;
             }
@@ -81,10 +81,13 @@ namespace Pakuri.InGame
         }
 
         /// 전달된 런타임 입력값을 사용해 DurationSeconds 결과값을 생성해 반환한다.
-        private static float DurationSeconds(ProjectileStatusHitSpec status, UnitCombatState source)
+        private static float DurationSeconds(StatusApplicationSpec status, UnitCombatState source)
         {
-            var duration = Mathf.Max(0f, status.DurationSeconds);
-            var statusId = status.StatusData.StatusTag;
+            var duration = status.RuntimeResolved
+                ? status.RuntimeDurationSeconds
+                : status.Status.Duration;
+            duration = Mathf.Max(0f, duration);
+            var statusId = status.Status.StatusTag;
             if (!string.IsNullOrWhiteSpace(statusId))
             {
                 duration += AppliedStatusDurationBonus(source, statusId);
@@ -104,12 +107,12 @@ namespace Pakuri.InGame
         private static void ApplyThresholdStatus(
             InGameCombatManager manager,
             UnitCombatState target,
-            ProjectileStatusHitSpec status,
+            StatusApplicationSpec status,
             UnitCombatState source)
         {
             if (target.Statuses == null
-                || status.ThresholdStatusSpec == null
-                || !status.ThresholdStatusSpec.Enabled
+                || status.ThresholdStatus == null
+                || !status.ThresholdStatus.Enabled
                 || status.ThresholdSourceStatusKind == StatusEffectKind.None
                 || status.ThresholdSourceMinStacks <= 0)
             {
@@ -121,14 +124,20 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var thresholdStatus = status.ThresholdStatusSpec;
+            var thresholdStatus = status.ThresholdStatus;
             manager.ApplyStatus(
                 target,
-                thresholdStatus.StatusData,
+                thresholdStatus.Status,
                 thresholdStatus.Stacks,
-                thresholdStatus.DurationSeconds,
-                thresholdStatus.MaxStacks,
-                thresholdStatus.Permanent,
+                thresholdStatus.RuntimeResolved
+                    ? thresholdStatus.RuntimeDurationSeconds
+                    : thresholdStatus.Status.Duration,
+                thresholdStatus.RuntimeResolved
+                    ? thresholdStatus.RuntimeMaxStacks
+                    : thresholdStatus.Status.MaxStacks,
+                thresholdStatus.RuntimeResolved
+                    ? thresholdStatus.RuntimePermanent
+                    : thresholdStatus.Status.Permanent,
                 thresholdStatus.RefreshDuration,
                 source);
         }

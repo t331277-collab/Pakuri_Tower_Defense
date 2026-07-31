@@ -844,7 +844,7 @@ namespace Pakuri.InGame
             bool coverAll,
             float damage,
             DamageAttribute attribute,
-            ProjectileStatusHitSpec status,
+            StatusApplicationSpec status,
             UnitCombatState source,
             string sourceSkillId,
             SkillExecutionData runtime,
@@ -932,7 +932,7 @@ namespace Pakuri.InGame
             int maxTargets,
             float damage,
             DamageAttribute attribute,
-            ProjectileStatusHitSpec status,
+            StatusApplicationSpec status,
             UnitCombatState source,
             string sourceSkillId,
             SkillExecutionData runtime,
@@ -1382,6 +1382,401 @@ namespace Pakuri.InGame
             }
 
             return configuredIndex == projectileIndex;
+        }
+
+        /// 시전 전에 처형 조건을 충족하는 첫 대상을 확인한다.
+        internal static bool ShouldRejectCastForExecuteThreshold(
+            SkillExecutionContext context,
+            SkillExecutionData snapshot,
+            SingleSkillDefinition skill)
+        {
+            if (!skill.RequireExecuteThresholdToCast
+                || !TryResolveSingleThreshold(skill, snapshot, out var threshold))
+            {
+                return false;
+            }
+
+            var targets = SkillTargeting.OrderedTargets(context, skill.Targeting);
+            var target = targets.Count > 0 ? targets[0] : null;
+            return target == null || target.Model == null || !IsWithinSingleThreshold(target.Model, threshold);
+        }
+
+        /// 처형·보스 조건을 피해와 치명타 값에 반영한다.
+        internal static void ApplySingleDamageModifiers(
+            SkillExecutionData snapshot,
+            UnitCombatState target,
+            ref float damageMultiplier,
+            ref float critChanceBonus,
+            out bool isExecute)
+        {
+            isExecute = false;
+            if (snapshot != null && IsWithinSingleThreshold(target, snapshot.PreparedExecuteHealthRatioThreshold))
+            {
+                isExecute = true;
+                if (snapshot.PreparedExecuteDamageMultiplier > 0f)
+                {
+                    damageMultiplier *= snapshot.PreparedExecuteDamageMultiplier;
+                }
+
+                for (var i = 0; i < snapshot.DamageModifierOps.Count; i++)
+                {
+                    var op = snapshot.DamageModifierOps[i];
+                    if (op.Kind == DamageModifierOpKind.ExecuteMultiplier)
+                    {
+                        damageMultiplier *= op.Multiplier;
+                    }
+                }
+
+                for (var i = 0; i < snapshot.CritModifierOps.Count; i++)
+                {
+                    critChanceBonus += snapshot.CritModifierOps[i].ChanceBonus;
+                }
+            }
+
+            if (!target.IsBoss || snapshot == null)
+            {
+                return;
+            }
+
+            if (snapshot.PreparedBossDamageMultiplier > 0f)
+            {
+                damageMultiplier *= snapshot.PreparedBossDamageMultiplier;
+            }
+
+            for (var i = 0; i < snapshot.DamageModifierOps.Count; i++)
+            {
+                var op = snapshot.DamageModifierOps[i];
+                if (op.Kind == DamageModifierOpKind.BossMultiplier)
+                {
+                    damageMultiplier *= op.Multiplier;
+                }
+            }
+        }
+
+        private static bool TryResolveSingleThreshold(
+            SingleSkillDefinition skill,
+            SkillExecutionData snapshot,
+            out float threshold)
+        {
+            var bonus = 0f;
+            if (snapshot != null)
+            {
+                for (var i = 0; i < snapshot.CastConditionOps.Count; i++)
+                {
+                    bonus += snapshot.CastConditionOps[i].TargetHealthRatioBonus;
+                }
+            }
+
+            threshold = Mathf.Clamp01(Mathf.Max(0f, skill.ExecuteHealthRatioThreshold) + bonus);
+            return threshold > 0f;
+        }
+
+        private static bool IsWithinSingleThreshold(UnitCombatState target, float threshold)
+        {
+            var resources = target != null ? target.Resources : null;
+            var stats = target != null ? target.Stats : null;
+            if (resources == null || stats == null || stats.MaxHealth <= 0f || threshold <= 0f)
+            {
+                return false;
+            }
+
+            return resources.CurrentHealth / stats.MaxHealth <= threshold;
+        }
+
+        /// 전달된 런타임 입력값을 사용해 StatusSpec 결과값을 생성해 반환한다.
+        internal static StatusApplicationSpec StatusSpec(
+            StatusApplicationSpec baseStatus,
+            SkillExecutionData snapshot)
+        {
+            StatusRuntimeData statusData = null;
+            if (baseStatus != null)
+            {
+                statusData = baseStatus.Status;
+            }
+
+            if (statusData == null)
+            {
+                return null;
+            }
+
+            var kind = statusData.Kind;
+            var stacks = 1;
+            var chance = 1f;
+            var refreshDuration = true;
+            if (baseStatus != null)
+            {
+                stacks = Math.Max(0, baseStatus.Stacks);
+                chance = Mathf.Clamp01(baseStatus.Chance);
+                refreshDuration = baseStatus.RefreshDuration;
+            }
+
+            if (snapshot != null)
+            {
+                chance = Mathf.Clamp01(chance + snapshot.StatusChanceBonus);
+                if (snapshot.HasStatusStacksSet)
+                {
+                    stacks = Math.Max(0, snapshot.StatusStacksSet);
+                }
+                else
+                {
+                    stacks = Math.Max(0, stacks + snapshot.StatusStacksBonus);
+                }
+            }
+
+            if (stacks <= 0 || chance <= 0f)
+            {
+                return null;
+            }
+
+            if (statusData == null || statusData.Kind != kind)
+            {
+                statusData = CatalogStatusData(kind);
+            }
+
+            var resolvedStatusData = StatusData(statusData, kind, snapshot);
+            var duration = resolvedStatusData.Duration;
+            var maxStacks = resolvedStatusData.MaxStacks;
+            var maxStacksBonus = StatusMaxStacksBonus(snapshot, resolvedStatusData);
+            if (maxStacksBonus != 0)
+            {
+                maxStacks = Mathf.Max(0, maxStacks + maxStacksBonus);
+            }
+
+            var permanent = resolvedStatusData.Permanent;
+            if (snapshot != null
+                && (!Mathf.Approximately(snapshot.DurationMultiplier, 1f)
+                    || !Mathf.Approximately(snapshot.DurationBonus, 0f)))
+            {
+                duration = duration * Mathf.Max(0f, snapshot.DurationMultiplier) + snapshot.DurationBonus;
+                if (duration > 0f)
+                {
+                    permanent = false;
+                }
+            }
+
+            var durationBonus = StatusDurationBonus(snapshot, resolvedStatusData);
+            if (!Mathf.Approximately(durationBonus, 0f))
+            {
+                duration = Mathf.Max(0f, duration + durationBonus);
+                if (duration > 0f)
+                {
+                    permanent = false;
+                }
+            }
+
+            var thresholdStatusKind = StatusEffectKind.None;
+            var thresholdStatusMinStacks = 0;
+            if (snapshot != null)
+            {
+                thresholdStatusKind = snapshot.ThresholdStatusKind;
+                thresholdStatusMinStacks = snapshot.ThresholdStatusMinStacks;
+            }
+
+            return new StatusApplicationSpec
+            {
+                Enabled = true,
+                RuntimeResolved = true,
+                Status = resolvedStatusData,
+                Chance = chance,
+                Stacks = stacks,
+                RuntimeDurationSeconds = duration,
+                RuntimeMaxStacks = maxStacks,
+                RuntimePermanent = permanent,
+                RefreshDuration = refreshDuration,
+                ThresholdSourceStatusKind = thresholdStatusKind,
+                ThresholdSourceMinStacks = thresholdStatusMinStacks,
+                ThresholdStatus = ThresholdStatusSpec(snapshot)
+            };
+        }
+
+        /// 전달된 런타임 입력값을 사용해 DirectStatusSpec를 생성한다.
+        internal static StatusApplicationSpec CreateDirectStatusSpec(
+            StatusEffectKind kind,
+            int stacks,
+            SkillExecutionData snapshot)
+        {
+            if (kind == StatusEffectKind.None || stacks <= 0)
+            {
+                return null;
+            }
+
+            var statusData = CatalogStatusData(kind);
+            statusData = StatusData(statusData, kind, snapshot);
+            var duration = statusData.Duration;
+            var durationBonus = StatusDurationBonus(snapshot, statusData);
+            if (!Mathf.Approximately(durationBonus, 0f))
+            {
+                duration = Mathf.Max(0f, duration + durationBonus);
+            }
+
+            var maxStacks = statusData.MaxStacks;
+            var maxStacksBonus = StatusMaxStacksBonus(snapshot, statusData);
+            if (maxStacksBonus != 0)
+            {
+                maxStacks = Mathf.Max(0, maxStacks + maxStacksBonus);
+            }
+
+            return new StatusApplicationSpec
+            {
+                Enabled = true,
+                RuntimeResolved = true,
+                Status = statusData,
+                Chance = 1f,
+                Stacks = stacks,
+                RuntimeDurationSeconds = duration,
+                RuntimeMaxStacks = maxStacks,
+                RuntimePermanent = statusData.Permanent && duration <= 0f,
+                RefreshDuration = true
+            };
+        }
+
+        /// 전달된 런타임 입력값을 사용해 StatusData 결과값을 생성해 반환한다.
+        internal static StatusRuntimeData StatusData(
+            StatusRuntimeData statusData,
+            StatusEffectKind kind,
+            SkillExecutionData snapshot)
+        {
+            if (snapshot == null)
+            {
+                return statusData;
+            }
+
+            var actionSpeedBonus = snapshot.GetStatusActionSpeedBonus(statusData.StatusTag);
+            var hasActionSpeedBonus = !Mathf.Approximately(actionSpeedBonus, 0f);
+            var hasOverride = snapshot.HasStatusElementDamageTakenBonus
+                || snapshot.HasStatusCriticalDamageTakenBonus
+                || snapshot.HasStatusAilmentResistanceBonus
+                || snapshot.HasStatusDamageBonusRate
+                || snapshot.HasStatusShieldReceivedBonus
+                || snapshot.HasStatusCriticalChanceBonus
+                || snapshot.HasStatusDamageTakenBonus
+                || snapshot.HasStatusFlatElementResistReduction
+                || snapshot.HasStatusConditionalDamageTakenBonus
+                || snapshot.HasStatusAttackPowerBonus
+                || hasActionSpeedBonus;
+            if (!hasOverride)
+            {
+                return statusData;
+            }
+
+            var resolvedStatus = statusData.Clone();
+            if (snapshot.HasStatusElementDamageTakenBonus)
+            {
+                resolvedStatus.ElementDamageTakenBonus += snapshot.StatusElementDamageTakenBonus;
+            }
+
+            if (snapshot.HasStatusCriticalDamageTakenBonus)
+            {
+                resolvedStatus.CriticalDamageTakenBonus += snapshot.StatusCriticalDamageTakenBonus;
+            }
+
+            if (snapshot.HasStatusAilmentResistanceBonus)
+            {
+                resolvedStatus.AilmentResistanceBonus += snapshot.StatusAilmentResistanceBonus;
+            }
+
+            if (snapshot.HasStatusDamageBonusRate)
+            {
+                resolvedStatus.Modifiers.DamageBonusRate += snapshot.StatusDamageBonusRate;
+            }
+
+            if (snapshot.HasStatusShieldReceivedBonus)
+            {
+                resolvedStatus.Modifiers.ShieldReceivedBonus += snapshot.StatusShieldReceivedBonus;
+            }
+
+            if (snapshot.HasStatusCriticalChanceBonus)
+            {
+                resolvedStatus.Modifiers.CritChanceBonusRate += snapshot.StatusCriticalChanceBonus;
+            }
+
+            if (snapshot.HasStatusDamageTakenBonus)
+            {
+                resolvedStatus.DamageTakenBonus += snapshot.StatusDamageTakenBonus;
+            }
+
+            if (snapshot.HasStatusFlatElementResistReduction)
+            {
+                resolvedStatus.FlatElementResistReduction += snapshot.StatusFlatElementResistReduction;
+            }
+
+            if (snapshot.HasStatusConditionalDamageTakenBonus)
+            {
+                resolvedStatus.ConditionalSourceStatusKind = snapshot.StatusConditionalSourceStatusKind;
+                resolvedStatus.ConditionalDamageTakenBonus = snapshot.StatusConditionalDamageTakenBonus;
+            }
+
+            if (hasActionSpeedBonus)
+            {
+                resolvedStatus.Modifiers.ActionSpeedBonus += actionSpeedBonus;
+            }
+
+            if (snapshot.HasStatusAttackPowerBonus)
+            {
+                resolvedStatus.Modifiers.AttackPowerBonus += snapshot.StatusAttackPowerBonus;
+            }
+
+            return resolvedStatus;
+        }
+
+        /// 전달된 런타임 입력값을 사용해 StatusDurationBonus 결과값을 생성해 반환한다.
+        private static float StatusDurationBonus(SkillExecutionData snapshot, StatusRuntimeData statusData)
+        {
+            if (snapshot == null)
+            {
+                return 0f;
+            }
+
+            return snapshot.StatusDurationBonus(statusData.StatusTag);
+        }
+
+        /// 전달된 런타임 입력값을 사용해 StatusMaxStacksBonus 결과값을 생성해 반환한다.
+        private static int StatusMaxStacksBonus(SkillExecutionData snapshot, StatusRuntimeData statusData)
+        {
+            if (snapshot == null)
+            {
+                return 0;
+            }
+
+            return snapshot.StatusMaxStacksBonus(statusData.StatusTag);
+        }
+
+        /// 전달된 snapshot 값을 사용해 ThresholdStatusSpec 결과값을 생성해 반환한다.
+        private static StatusApplicationSpec ThresholdStatusSpec(SkillExecutionData snapshot)
+        {
+            if (snapshot == null || snapshot.ThresholdApplyStatusKind == StatusEffectKind.None)
+            {
+                return null;
+            }
+
+            var kind = snapshot.ThresholdApplyStatusKind;
+            var statusData = CatalogStatusData(kind);
+            var duration = statusData.Duration;
+            var durationBonus = StatusDurationBonus(snapshot, statusData);
+            if (!Mathf.Approximately(durationBonus, 0f))
+            {
+                duration = Mathf.Max(0f, duration + durationBonus);
+            }
+
+            return new StatusApplicationSpec
+            {
+                Enabled = true,
+                RuntimeResolved = true,
+                Status = statusData,
+                Chance = 1f,
+                Stacks = statusData.BaseStackAmount,
+                RuntimeDurationSeconds = duration,
+                RuntimeMaxStacks = statusData.MaxStacks,
+                RuntimePermanent = statusData.Permanent && duration <= 0f,
+                RefreshDuration = true
+            };
+        }
+
+        /// 전달된 kind 값을 사용해 CatalogStatusData 결과값을 생성해 반환한다.
+        private static StatusRuntimeData CatalogStatusData(StatusEffectKind kind)
+        {
+            return GameDataLoader.CurrentCatalog?.GetStatusRuntimeData(kind)
+                ?? throw new InvalidOperationException($"Status runtime data '{kind}' is not registered.");
         }
     }
 }

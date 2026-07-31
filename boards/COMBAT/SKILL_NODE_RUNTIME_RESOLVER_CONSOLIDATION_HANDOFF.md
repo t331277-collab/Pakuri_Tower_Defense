@@ -48,7 +48,7 @@ Node 의미의 런타임 구현을 `SkillExecutionRuleResolver` 하나로 통합
 - Code Builder가 지적 1~7을 코드로 검증하고 handoff 보강 완료.
 - Phase 1 baseline/inventory 완료 및 커밋.
 - Phase 2 Node composition 구현 및 빌드 검증 완료.
-- Phase 3 data cleanup과 runtime state owner 이행 완료; 다음은 SkillStatus·SingleSkillRules 흡수다.
+- Phase 4 SkillStatus·SingleSkillRules 흡수와 legacy type 삭제 완료; 다음은 Execution과 Actor의 Node 의미 정리다.
 
 ## Selected Code Builder tracks
 
@@ -509,6 +509,8 @@ Status: complete. SkillExecutionData now owns the former per-skill runtime state
 
 ### Phase 4 — absorb `SkillStatus` and `SingleSkillRules`
 
+Status: complete. Resolved status values now use the existing StatusApplicationSpec contract, status calculation lives in SkillExecutionRuleResolver, SingleSkillRules values are returned through existing execution data and Resolver methods, both legacy scripts and meta files are deleted, Assembly-CSharp builds with 0 errors, and Implementation remains at the six existing scripts.
+
 1. `SkillStatus`의 Node 기반 상태 스펙 계산을 Resolver로 이동한다.
 2. 실제 상태 적용은 `StatusCombatRules.ApplyStatus` 공통 경로에 유지한다.
 3. `SingleSkillRules`의 처형·보스·처치 회복 계산을 family 중립 Resolver 결과로 이동한다.
@@ -717,3 +719,4 @@ Unity-MCP로 editor compile과 console을 확인한다. Play Mode gameplay 검�
 - 2026-07-31: Code Builder resumed with per-Phase GitHub commits; Phase 1 baseline/inventory was closed before runtime edits.
 - 2026-07-31: Phase 2 moved Node extraction and Node action value composition to Resolver; Assembly-CSharp build passed with 0 errors.
 - 2026-07-31: Phase 3 absorbed per-skill runtime state into SkillExecutionData, skill-list state into UnitSkills, removed SkillUseState and SkillExecutionState from C# callers, and passed Assembly-CSharp build with 0 errors.
+- 2026-07-31: Phase 4 moved status calculation into SkillExecutionRuleResolver, reused StatusApplicationSpec for resolved status values, moved Single damage calculation and recovery orchestration to existing owners, deleted SkillStatus and SingleSkillRules with their meta files, and passed Assembly-CSharp build with 0 errors.

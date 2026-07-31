@@ -309,7 +309,7 @@ public partial class SingleSkillActor
 		bool coverAll = snapshot.PreparedCoverAll;
 		float damage = snapshot.PreparedDamage;
 		DamageAttribute attribute = snapshot.PreparedDamageAttribute;
-		ProjectileStatusHitSpec statusSpec = snapshot.PreparedStatus;
+		StatusApplicationSpec statusSpec = snapshot.PreparedStatus;
 		float critChanceBonus = snapshot?.CritChanceBonus ?? 0f;
 		float critDamageBonus = snapshot?.CritDamageBonus ?? 0f;
 		int num = snapshot.PreparedHitTargetCount;
@@ -394,7 +394,7 @@ public partial class SingleSkillActor
 	}
 
 	/// 전달된 런타임 입력값을 사용해 NonPrefabTargets를 적용한다.
-	private static bool ApplyNonPrefabTargets(SkillExecutionContext context, SkillExecutionData snapshot, Vector2 center, float radius, bool coverAll, int effectiveHitTargetCount, float damage, DamageAttribute attribute, ProjectileStatusHitSpec statusSpec, SkillExecutionData onHitRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets)
+	private static bool ApplyNonPrefabTargets(SkillExecutionContext context, SkillExecutionData snapshot, Vector2 center, float radius, bool coverAll, int effectiveHitTargetCount, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, SkillExecutionData onHitRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets)
 	{
 		if (context == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null)
 		{
@@ -408,7 +408,7 @@ public partial class SingleSkillActor
 	}
 
 	/// 전달된 런타임 입력값을 사용해 NonPrefabTargetsAfterDelay를 적용한다.
-	private IEnumerator ApplyNonPrefabTargetsAfterDelay(SkillExecutionContext context, SkillExecutionData snapshot, Vector2 center, float radius, bool coverAll, int effectiveHitTargetCount, float damage, DamageAttribute attribute, ProjectileStatusHitSpec statusSpec, SkillExecutionData onHitRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets, float delaySeconds, bool allowConditionalFollowUp)
+	private IEnumerator ApplyNonPrefabTargetsAfterDelay(SkillExecutionContext context, SkillExecutionData snapshot, Vector2 center, float radius, bool coverAll, int effectiveHitTargetCount, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, SkillExecutionData onHitRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets, float delaySeconds, bool allowConditionalFollowUp)
 	{
 		yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
 		ApplyNonPrefabTargets(context, snapshot, center, radius, coverAll, effectiveHitTargetCount, damage, attribute, statusSpec, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, followUpSpec, followUpTargets);
@@ -419,7 +419,7 @@ public partial class SingleSkillActor
 	}
 
 	/// 전달된 런타임 입력값을 사용해 PrefabHitboxAfterDelay를 적용한다.
-	private IEnumerator ApplyPrefabHitboxAfterDelay(SkillExecutionContext context, SkillExecutionData snapshot, GameObject instance, int effectiveHitTargetCount, float damage, DamageAttribute attribute, ProjectileStatusHitSpec statusSpec, SkillExecutionData onHitRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets, float delaySeconds, bool allowConditionalFollowUp)
+	private IEnumerator ApplyPrefabHitboxAfterDelay(SkillExecutionContext context, SkillExecutionData snapshot, GameObject instance, int effectiveHitTargetCount, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, SkillExecutionData onHitRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets, float delaySeconds, bool allowConditionalFollowUp)
 	{
 		yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
 		if (context != null && !(context.CombatManager == null) && context.CasterEntry != null && context.Roster != null && !(instance == null))
@@ -433,7 +433,7 @@ public partial class SingleSkillActor
 	}
 
 	/// 전달된 런타임 입력값을 사용해 PrefabHitbox를 적용한다.
-	private static bool ApplyPrefabHitbox(InGameCombatManager manager, CombatUnitEntry sourceEntry, UnitSpawnManager unitRoster, SkillTargetingSpec targetingSpec, GameObject hitboxObject, int maxTargets, float damage, DamageAttribute attribute, ProjectileStatusHitSpec statusSpec, UnitCombatState source, string sourceSkillId, SkillExecutionData sourceRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SkillExecutionData snapshot, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets, UnitCombatState eventTarget, bool lockToEventTarget)
+	private static bool ApplyPrefabHitbox(InGameCombatManager manager, CombatUnitEntry sourceEntry, UnitSpawnManager unitRoster, SkillTargetingSpec targetingSpec, GameObject hitboxObject, int maxTargets, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, UnitCombatState source, string sourceSkillId, SkillExecutionData sourceRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SkillExecutionData snapshot, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets, UnitCombatState eventTarget, bool lockToEventTarget)
 	{
 		if (manager == null || sourceEntry == null || unitRoster == null || hitboxObject == null || maxTargets <= 0)
 		{
@@ -466,7 +466,7 @@ public partial class SingleSkillActor
 				TargetDamageResolution damageResolution = TargetDamage(snapshot, damage, unitEntry.Model, critChanceBonus, isCoreHit);
 				InGameResourceChangeResult result2 = manager.ApplyDamage(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, critDamageBonus, sourceSkillId, suppressOutgoingDamageTriggers: false, damageResolution.IsExecute, finalDamageMultiplier: damageResolution.FinalDamageMultiplier);
 				int consumedStacks = ConsumePendingTargetStatusStacks(manager, unitEntry.Model, snapshot, damageResolution);
-				SingleSkillRules.HandleKillRecovery(sourceRuntime, snapshot, result2, damageResolution.IsExecute);
+				SkillExecution.HandleSingleKillRecovery(sourceRuntime, snapshot, result2, damageResolution.IsExecute);
 				TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry, result2, consumedStacks);
 				if (!result2.IsDead)
 				{
@@ -488,7 +488,7 @@ public partial class SingleSkillActor
 	}
 
 	/// 전달된 런타임 입력값을 사용해 LimitedTargets를 적용한다.
-	private static bool ApplyLimitedTargets(InGameCombatManager manager, CombatUnitEntry sourceEntry, UnitSpawnManager unitRoster, SkillTargetingSpec targetingSpec, int maxTargets, float damage, DamageAttribute attribute, ProjectileStatusHitSpec statusSpec, UnitCombatState source, string sourceSkillId, SkillExecutionData sourceRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SkillExecutionData snapshot, Vector2 center, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets, UnitCombatState eventTarget, bool lockToEventTarget)
+	private static bool ApplyLimitedTargets(InGameCombatManager manager, CombatUnitEntry sourceEntry, UnitSpawnManager unitRoster, SkillTargetingSpec targetingSpec, int maxTargets, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, UnitCombatState source, string sourceSkillId, SkillExecutionData sourceRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SkillExecutionData snapshot, Vector2 center, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets, UnitCombatState eventTarget, bool lockToEventTarget)
 	{
 		if (manager == null || sourceEntry == null || unitRoster == null || maxTargets <= 0)
 		{
@@ -505,7 +505,7 @@ public partial class SingleSkillActor
 			TargetDamageResolution damageResolution = TargetDamage(snapshot, damage, unitEntry.Model, critChanceBonus, isCoreHit: false);
 			InGameResourceChangeResult result2 = manager.ApplyDamage(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, critDamageBonus, sourceSkillId, suppressOutgoingDamageTriggers: false, damageResolution.IsExecute, finalDamageMultiplier: damageResolution.FinalDamageMultiplier);
 			int consumedStacks = ConsumePendingTargetStatusStacks(manager, unitEntry.Model, snapshot, damageResolution);
-			SingleSkillRules.HandleKillRecovery(sourceRuntime, snapshot, result2, damageResolution.IsExecute);
+			SkillExecution.HandleSingleKillRecovery(sourceRuntime, snapshot, result2, damageResolution.IsExecute);
 			TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry, result2, consumedStacks);
 			if (!result2.IsDead)
 			{
@@ -525,7 +525,7 @@ public partial class SingleSkillActor
 	}
 
 	/// 전달된 런타임 입력값을 사용해 AreaTargets를 적용한다.
-	private static bool ApplyAreaTargets(InGameCombatManager manager, CombatUnitEntry sourceEntry, UnitSpawnManager unitRoster, SkillTargetingSpec targetingSpec, Vector2 center, float radius, bool coverAll, float damage, DamageAttribute attribute, ProjectileStatusHitSpec statusSpec, UnitCombatState source, string sourceSkillId, SkillExecutionData sourceRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SkillExecutionData snapshot, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets, UnitCombatState eventTarget, bool lockToEventTarget)
+	private static bool ApplyAreaTargets(InGameCombatManager manager, CombatUnitEntry sourceEntry, UnitSpawnManager unitRoster, SkillTargetingSpec targetingSpec, Vector2 center, float radius, bool coverAll, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, UnitCombatState source, string sourceSkillId, SkillExecutionData sourceRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SkillExecutionData snapshot, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets, UnitCombatState eventTarget, bool lockToEventTarget)
 	{
 		if (manager == null || sourceEntry == null || unitRoster == null)
 		{
@@ -544,7 +544,7 @@ public partial class SingleSkillActor
 			TargetDamageResolution damageResolution = TargetDamage(snapshot, damage, unitEntry.Model, critChanceBonus, isCoreHit: false);
 			InGameResourceChangeResult result = manager.ApplyDamage(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, critDamageBonus, sourceSkillId, suppressOutgoingDamageTriggers: false, damageResolution.IsExecute, finalDamageMultiplier: damageResolution.FinalDamageMultiplier);
 			int consumedStacks = ConsumePendingTargetStatusStacks(manager, unitEntry.Model, snapshot, damageResolution);
-			SingleSkillRules.HandleKillRecovery(sourceRuntime, snapshot, result, damageResolution.IsExecute);
+			SkillExecution.HandleSingleKillRecovery(sourceRuntime, snapshot, result, damageResolution.IsExecute);
 			TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry, result, consumedStacks);
 			if (!result.IsDead)
 			{
@@ -568,7 +568,7 @@ public partial class SingleSkillActor
 				TargetDamageResolution damageResolution2 = TargetDamage(snapshot, damage, unitEntry2.Model, critChanceBonus, isCoreHit: false);
 				InGameResourceChangeResult result3 = manager.ApplyDamage(unitEntry2.Model, damageResolution2.Damage, attribute, source, criticalAllowed, damageResolution2.CritChanceBonus, critDamageBonus, sourceSkillId, suppressOutgoingDamageTriggers: false, damageResolution2.IsExecute, finalDamageMultiplier: damageResolution2.FinalDamageMultiplier);
 				int consumedStacks2 = ConsumePendingTargetStatusStacks(manager, unitEntry2.Model, snapshot, damageResolution2);
-				SingleSkillRules.HandleKillRecovery(sourceRuntime, snapshot, result3, damageResolution2.IsExecute);
+				SkillExecution.HandleSingleKillRecovery(sourceRuntime, snapshot, result3, damageResolution2.IsExecute);
 				TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry2, result3, consumedStacks2);
 				if (!result3.IsDead)
 				{
@@ -660,17 +660,17 @@ public partial class SingleSkillActor
 	}
 
 	/// 전달된 런타임 입력값을 사용해 FollowUpSpec 결과값을 생성해 반환한다.
-	private static SingleFollowUpSpec? FollowUpSpec(SkillExecutionData snapshot, ProjectileStatusHitSpec statusSpec, GameObject prefab)
+	private static SingleFollowUpSpec? FollowUpSpec(SkillExecutionData snapshot, StatusApplicationSpec statusSpec, GameObject prefab)
 	{
 		if (snapshot == null || !snapshot.HasBranchCount || snapshot.BranchCount <= 0 || !snapshot.HasBranchDamageMultiplier || snapshot.BranchDamageMultiplier <= 0f || !snapshot.HasBranchSearchRadius || snapshot.BranchSearchRadius <= 0f)
 		{
 			return null;
 		}
-		if (statusSpec == null || statusSpec.Kind == StatusEffectKind.None)
+		if (statusSpec == null || statusSpec.Status == null || statusSpec.Status.Kind == StatusEffectKind.None)
 		{
 			return null;
 		}
-		return new SingleFollowUpSpec(statusSpec.Kind, snapshot.BranchCount, snapshot.BranchSearchRadius, snapshot.BranchDamageMultiplier, prefab);
+		return new SingleFollowUpSpec(statusSpec.Status.Kind, snapshot.BranchCount, snapshot.BranchSearchRadius, snapshot.BranchDamageMultiplier, prefab);
 	}
 
 	/// 전달된 런타임 입력값을 사용해 FollowUpTarget를 소유 런타임 Registry에 등록한다.
@@ -742,10 +742,12 @@ public partial class SingleSkillActor
 		{
 			num2 *= snapshot.CoreDamageMultiplier;
 		}
-		SingleDamageModifierState singleDamageModifierState = SingleSkillRules.ApplyDamageModifiers(snapshot, target, num2, critChanceBonus);
-		num2 = singleDamageModifierState.DamageMultiplier;
-		critChanceBonus = singleDamageModifierState.CritChanceBonus;
-		flag = singleDamageModifierState.IsExecute;
+		SkillExecutionRuleResolver.ApplySingleDamageModifiers(
+			snapshot,
+			target,
+			ref num2,
+			ref critChanceBonus,
+			out flag);
 		return new TargetDamageResolution(Mathf.Max(0f, num), Mathf.Max(0f, num2), critChanceBonus, flag, pendingConsumedStacks);
 	}
 
@@ -835,7 +837,7 @@ public partial class SingleSkillActor
 			}
 			if (unitEntry != null && unitEntry.Model != null && num4 > 0)
 			{
-				ProjectileStatusHitSpec projectileStatusHitSpec = SkillStatus.CreateDirectStatusSpec(snapshot.RedistributeConsumedStatusKind, num4, snapshot);
+				StatusApplicationSpec projectileStatusHitSpec = SkillExecutionRuleResolver.CreateDirectStatusSpec(snapshot.RedistributeConsumedStatusKind, num4, snapshot);
 				if (projectileStatusHitSpec != null)
 				{
 					StatusCombatRules.ApplyStatus(manager, unitEntry.Model, projectileStatusHitSpec, source);
@@ -914,7 +916,7 @@ public partial class SingleSkillActor
 	}
 
 	/// 전달된 런타임 입력값을 사용해 ApplyStatus 작업을 시도하고 성공 여부를 반환한다.
-	private static void TryApplyStatus(InGameCombatManager manager, UnitCombatState target, ProjectileStatusHitSpec statusSpec, UnitCombatState source)
+	private static void TryApplyStatus(InGameCombatManager manager, UnitCombatState target, StatusApplicationSpec statusSpec, UnitCombatState source)
 	{
 		StatusCombatRules.ApplyStatus(manager, target, statusSpec, source);
 	}

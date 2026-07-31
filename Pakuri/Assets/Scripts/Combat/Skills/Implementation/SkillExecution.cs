@@ -371,7 +371,7 @@ namespace Pakuri.InGame
                 return false;
             }
             if (definition is SingleSkillDefinition single
-                && SingleSkillRules.ShouldRejectCastForExecuteThreshold(context, snapshot, single))
+                && SkillExecutionRuleResolver.ShouldRejectCastForExecuteThreshold(context, snapshot, single))
             {
                 return false;
             }
@@ -672,7 +672,7 @@ namespace Pakuri.InGame
                         context.Caster,
                         effect.Damage);
                 snapshot.PreparedDamageAttribute = effect.Damage.Element;
-                snapshot.PreparedStatus = SkillStatus.StatusSpec(effect.Status, snapshot);
+                snapshot.PreparedStatus = SkillExecutionRuleResolver.StatusSpec(effect.Status, snapshot);
                 snapshot.PreparedCriticalAllowed = effect.Damage.CriticalAllowed;
                 snapshot.PreparedHitTargetCount = snapshot.PreparedCoverAll
                     ? int.MaxValue
@@ -725,7 +725,7 @@ namespace Pakuri.InGame
             if (effect.HasStatus)
             {
                 snapshot.PreparedBuffEffectKind = BuffEffectKind.Status;
-                snapshot.PreparedStatus = SkillStatus.StatusSpec(effect.Status, snapshot);
+                snapshot.PreparedStatus = SkillExecutionRuleResolver.StatusSpec(effect.Status, snapshot);
                 return BuffSkillExecutor.Execute(context, snapshot);
             }
 
@@ -961,7 +961,7 @@ namespace Pakuri.InGame
             snapshot.PreparedDamageAttribute = skill.DamagePerTick != null
                 ? skill.DamagePerTick.Element
                 : skill.Element;
-            snapshot.PreparedStatus = SkillStatus.StatusSpec(
+            snapshot.PreparedStatus = SkillExecutionRuleResolver.StatusSpec(
                 snapshot.OnHitStatusOverride ?? skill.OnHitStatus,
                 snapshot);
             snapshot.PreparedLength = Mathf.Max(0.1f, skill.LineLength);
@@ -1053,7 +1053,7 @@ namespace Pakuri.InGame
             snapshot.PreparedDamageAttribute = skill.DamagePerTick != null
                 ? skill.DamagePerTick.Element
                 : skill.Element;
-            snapshot.PreparedStatus = SkillStatus.StatusSpec(skill.OnTickStatus, snapshot);
+            snapshot.PreparedStatus = SkillExecutionRuleResolver.StatusSpec(skill.OnTickStatus, snapshot);
             snapshot.PreparedBaseRadius = baseRadius;
             snapshot.PreparedVisualRadiusMultiplier = radiusMultiplier;
             snapshot.PreparedRadius = Mathf.Max(0f, radius);
@@ -1139,7 +1139,7 @@ namespace Pakuri.InGame
                 burstIndex,
                 burstCount);
 
-            var status = SkillStatus.StatusSpec(skill.OnHitStatus, snapshot);
+            var status = SkillExecutionRuleResolver.StatusSpec(skill.OnHitStatus, snapshot);
             var stacksBonus = SkillExecutionRuleResolver.BurstStatusStacksBonus(
                 snapshot,
                 burstIndex,
@@ -1202,7 +1202,7 @@ namespace Pakuri.InGame
             snapshot.PreparedBranchCounts = branchCounts;
             snapshot.PreparedBranchDamageMultipliers = branchDamageMultipliers;
             snapshot.PreparedBranchSearchRadii = branchSearchRadii;
-            snapshot.PreparedImpactStatus = SkillStatus.StatusSpec(skill.ImpactStatus, snapshot);
+            snapshot.PreparedImpactStatus = SkillExecutionRuleResolver.StatusSpec(skill.ImpactStatus, snapshot);
             snapshot.PreparedImpactRuntimeVisual = skill.ImpactRuntimeVisual;
             snapshot.PreparedImpactTargeting = new SkillTargetingSpec
             {
@@ -1297,7 +1297,7 @@ namespace Pakuri.InGame
             snapshot.PreparedDamageAttribute = skill.Damage != null
                 ? skill.Damage.Element
                 : skill.Element;
-            snapshot.PreparedStatus = SkillStatus.StatusSpec(skill.OnHitStatus, snapshot);
+            snapshot.PreparedStatus = SkillExecutionRuleResolver.StatusSpec(skill.OnHitStatus, snapshot);
             snapshot.PreparedCriticalAllowed = skill.Damage != null && skill.Damage.CriticalAllowed;
             snapshot.PreparedHitTargetCount = skill.HitAllTargets || skill.HitTargetCount == int.MaxValue
                 ? int.MaxValue
@@ -1348,7 +1348,7 @@ namespace Pakuri.InGame
                     skill.Target,
                     skill.UseConfiguredTargeting,
                     skill.Targeting);
-            snapshot.PreparedStatus = SkillStatus.StatusSpec(skill.AttachedStatus, snapshot);
+            snapshot.PreparedStatus = SkillExecutionRuleResolver.StatusSpec(skill.AttachedStatus, snapshot);
             snapshot.PreparedSkillEffectPrefab = snapshot.SkillEffectPrefab != null
                 ? snapshot.SkillEffectPrefab
                 : skill.SkillEffectPrefab;
@@ -1393,7 +1393,7 @@ namespace Pakuri.InGame
                 snapshot.PreparedDuration =
                     shieldDuration * Mathf.Max(0f, snapshot.DurationMultiplier)
                     + snapshot.DurationBonus;
-                snapshot.PreparedShieldStatusData = SkillStatus.StatusData(
+                snapshot.PreparedShieldStatusData = SkillExecutionRuleResolver.StatusData(
                     skill.ShieldStatus,
                     StatusEffectKind.Shield,
                     snapshot);
@@ -1434,25 +1434,74 @@ namespace Pakuri.InGame
                 : configuredIndex > 0 && configuredIndex == projectileIndex;
         }
 
-        private static ProjectileStatusHitSpec CloneStatusWithStacks(
-            ProjectileStatusHitSpec source,
+        private static StatusApplicationSpec CloneStatusWithStacks(
+            StatusApplicationSpec source,
             int stacks)
         {
-            return new ProjectileStatusHitSpec
+            return new StatusApplicationSpec
             {
                 Enabled = source.Enabled,
-                Kind = source.Kind,
-                StatusData = source.StatusData,
+                RuntimeResolved = source.RuntimeResolved,
+                Status = source.Status,
                 Chance = source.Chance,
                 Stacks = stacks,
-                DurationSeconds = source.DurationSeconds,
-                MaxStacks = source.MaxStacks,
-                Permanent = source.Permanent,
+                RuntimeDurationSeconds = source.RuntimeDurationSeconds,
+                RuntimeMaxStacks = source.RuntimeMaxStacks,
+                RuntimePermanent = source.RuntimePermanent,
                 RefreshDuration = source.RefreshDuration,
                 ThresholdSourceStatusKind = source.ThresholdSourceStatusKind,
                 ThresholdSourceMinStacks = source.ThresholdSourceMinStacks,
-                ThresholdStatusSpec = source.ThresholdStatusSpec
+                ThresholdStatus = source.ThresholdStatus
             };
+        }
+
+        /// 단일 적 처치 결과에 따라 재사용 대기를 조정한다.
+        internal static void HandleSingleKillRecovery(
+            SkillExecutionData sourceRuntime,
+            SkillExecutionData snapshot,
+            InGameResourceChangeResult result,
+            bool wasExecute)
+        {
+            if (sourceRuntime == null || !result.IsDead)
+            {
+                return;
+            }
+
+            if (snapshot != null)
+            {
+                for (var i = 0; i < snapshot.KillActionOps.Count; i++)
+                {
+                    var action = snapshot.KillActionOps[i];
+                    if (action.Kind != KillActionOpKind.CooldownReset
+                        || (action.RequiresExecute && !wasExecute))
+                    {
+                        continue;
+                    }
+
+                    sourceRuntime.ResetCooldown();
+                    return;
+                }
+            }
+
+            var refundBonus = 0f;
+            if (snapshot != null)
+            {
+                for (var i = 0; i < snapshot.KillActionOps.Count; i++)
+                {
+                    var action = snapshot.KillActionOps[i];
+                    if (action.Kind == KillActionOpKind.CooldownRefundBonus)
+                    {
+                        refundBonus += action.RatioBonus;
+                    }
+                }
+            }
+
+            var refundRatio = Mathf.Clamp01(
+                (snapshot != null ? snapshot.PreparedKillCooldownRefundRatio : 0f) + refundBonus);
+            if (refundRatio > 0f)
+            {
+                sourceRuntime.ReduceCooldownRemaining(sourceRuntime.EffectiveCooldownDuration * refundRatio);
+            }
         }
 
         /// 보유한 스킬 목록을 데이터 카탈로그 기준으로 다시 구성한다.

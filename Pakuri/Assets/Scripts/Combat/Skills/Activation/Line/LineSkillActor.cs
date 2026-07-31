@@ -31,7 +31,7 @@ namespace Pakuri.InGame
         private float tickRemaining;
         private float damage;
         private DamageAttribute attribute;
-        private ProjectileStatusHitSpec statusSpec;
+        private StatusApplicationSpec statusSpec;
         private SkillExecutionData runtime;
         private SkillExecutionData executionData;
         private UnitCombatState sourceModel;
@@ -60,7 +60,7 @@ namespace Pakuri.InGame
             float tickIntervalSeconds,
             float damagePerTick,
             DamageAttribute damageAttribute,
-            ProjectileStatusHitSpec onHitStatus,
+            StatusApplicationSpec onHitStatus,
             SkillExecutionData sourceRuntime,
             SkillExecutionData snapshot,
             UnitCombatState source,
@@ -204,7 +204,7 @@ namespace Pakuri.InGame
         private static void TryApplyStatus(
             InGameCombatManager manager,
             UnitCombatState target,
-            ProjectileStatusHitSpec status,
+            StatusApplicationSpec status,
             UnitCombatState source,
             string targetKey,
             HashSet<string> appliedTargets)

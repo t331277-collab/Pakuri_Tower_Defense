@@ -124,10 +124,18 @@ namespace Pakuri.InGame
     [Serializable]
     public class StatusApplicationSpec
     {
+        public bool Enabled = true;
         public StatusRuntimeData Status;
         public float Chance = 1f;
         public int Stacks = 1;
         public bool RefreshDuration = true;
+        public bool RuntimeResolved;
+        public float RuntimeDurationSeconds;
+        public int RuntimeMaxStacks;
+        public bool RuntimePermanent;
+        public StatusEffectKind ThresholdSourceStatusKind;
+        public int ThresholdSourceMinStacks;
+        public StatusApplicationSpec ThresholdStatus;
     }
 
     [Serializable]

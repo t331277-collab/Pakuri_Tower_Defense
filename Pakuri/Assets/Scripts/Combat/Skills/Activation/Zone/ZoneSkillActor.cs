@@ -29,7 +29,7 @@ namespace Pakuri.InGame
         private int maxHitTargetCount;
         private float damage;
         private DamageAttribute attribute;
-        private ProjectileStatusHitSpec statusSpec;
+        private StatusApplicationSpec statusSpec;
         private SkillExecutionData runtime;
         private SkillExecutionData snapshot;
         private UnitCombatState sourceModel;
@@ -54,7 +54,7 @@ namespace Pakuri.InGame
             int maxTargetsPerTick,
             float damagePerTick,
             DamageAttribute damageAttribute,
-            ProjectileStatusHitSpec onTickStatus,
+            StatusApplicationSpec onTickStatus,
             SkillExecutionData sourceRuntime,
             SkillExecutionData executionData,
             UnitCombatState source,
@@ -196,7 +196,7 @@ namespace Pakuri.InGame
             int maxTargetsPerTick,
             float damagePerTick,
             DamageAttribute damageAttribute,
-            ProjectileStatusHitSpec onHitStatus,
+            StatusApplicationSpec onHitStatus,
             UnitCombatState source,
             string sourceSkillId,
             SkillExecutionData sourceRuntime,
