@@ -1,18 +1,20 @@
-# Skill Node Runtime Resolver Consolidation Handoff
+# Skill Node Runtime Resolver Consolidation And Common Recast Handoff
 
 ## Task title
 
-Node 의미의 런타임 구현을 `SkillExecutionRuleResolver` 하나로 통합한다.
+Node 의미의 런타임 구현을 Resolver로 통합하고 일반 시전과 조건부 재시전을 하나의 실행 경로로 만든다.
 
 ## Goals
 
 - `Definitions/Nodes`의 `GetOperation<T>()` 해제와 Node 기반 값 계산을 `SkillExecutionRuleResolver`가 유일하게 소유한다.
-- `SkillExecution`은 시전 검증, 학습 상태 전달, family/command 실행 조정, 기존 runtime API 호출과 Executor 분배를 담당한다.
+- `SkillExecution`은 시전 검증, 실행값 생성 요청, 공통 family 분배와 시전 상태 확정을 담당한다.
 - `SkillExecutionData`는 Resolver가 완성한 실행값과 진행 상태를 보관하고 전달하며, 상태 진행 제어는 `SkillExecution`이 담당한다.
-- `SkillTrigger`는 Resolver가 추출한 반응 정의를 받아 사건 gate를 판정하고, 성공한 반응을 `SkillExecution`으로 되돌려보낸다.
+- `SkillTrigger`는 Resolver가 추출한 반응 정의를 받아 사건 gate와 지연·반복을 판정하고, 성공한 스킬 결과를 `SkillExecution`의 일반 실행 진입점으로 되돌려보낸다.
 - `SkillTargeting`은 대상 조건을 받아 실제 대상 목록과 중심을 반환한다.
 - `SkillStatus.cs`와 `SingleSkillRules.cs`의 Node 기반 계산을 Resolver로 옮긴 뒤 두 스크립트를 삭제한다.
-- Executor와 Actor는 Node 의미를 해석하지 않고 확정된 실행값으로 물리적 실행만 수행한다.
+- 실제 스킬 반응은 raw effect를 직접 실행하지 않고 concrete family `SkillDefinition`을 통해 기본 스킬과 같은 `SkillExecution -> Executor -> Actor` 경로를 사용한다.
+- Executor는 확정된 실행값을 family Actor에 전달하며 피해를 직접 적용하지 않는다. Actor는 충돌·적중을 확정하고 `DamageCalculator`와 `InGameCombatManager.ApplyDamage` 경로를 사용한다.
+- 비공간 상태 명령은 스킬로 위장하지 않는다. `RecastZone`은 Zone 재시전으로 통합하고, 쿨다운·재장전·상태 지속시간 변경은 typed command로 보존하되 Trigger와 Resolver가 직접 적용하지 않는다.
 
 ## Constraints
 
@@ -21,13 +23,15 @@ Node 의미의 런타임 구현을 `SkillExecutionRuleResolver` 하나로 통합
 - 새 Node별 handler, interface, factory, registry 또는 별도 runtime rule 스크립트를 만들지 않는다.
 - Node operation 해제와 Node 기반 값 계산을 여러 Actor, Executor, Trigger, 상태 helper에 다시 분산하지 않는다.
 - 기존 `SkillNode`, Node operation struct, `SkillActionContext`, `SkillExecutionData`, family Executor와 Actor를 재사용한다. 삭제 대상 context/state class를 유지하지 않는다.
-- Node 데이터 계약, CSV, ID, 수치, 확률, 대상 결과, 지연, 반복, 내부 쿨다운과 재귀 제한을 보존한다.
+- CSV schema와 authored ID·수치·확률·대상 결과·지연·반복·내부 쿨다운을 보존한다. Generation 결과 계약은 common recast를 위해 변경할 수 있다.
 - Projectile, Line, Single, Zone, Buff의 이동·충돌·히트박스·수명·Visual 실행은 기존 Executor와 Actor가 유지한다.
-- 일반 시전과 Trigger 재실행은 같은 `SkillExecution -> Resolver -> SkillExecutionData -> Executor` 경로를 사용한다.
+- 일반 시전과 실제 스킬 Trigger 재실행은 같은 `SkillExecution -> Resolver -> SkillExecutionData -> Executor -> Actor` 경로를 사용한다.
 - Trigger가 직접 피해, 상태, 쿨다운, 재장전 또는 Zone 재시전을 실행하지 않는다.
+- `SkillExecution.TryExecuteReactionEffect -> ExecuteCastEffect -> family Executor` 같은 Trigger 전용 payload 실행 경로를 최종 구조에 남기지 않는다.
+- `SkillExecution`, Projectile/Line/Single/Zone Executor와 Buff charge contact helper는 `InGameCombatManager.ApplyDamage`를 직접 호출하지 않는다.
 - Resolver는 피해·상태·쿨다운·재장전·재시전 runtime API를 직접 호출하지 않는다.
 - 상태 실제 적용은 `StatusCombatRules.ApplyStatus`, 피해 실제 적용은 `InGameCombatManager.ApplyDamage` 공통 경로를 유지한다.
-- Trigger의 source-owned/passive-owned gate 비대칭과 재귀 제한 범위는 Phase 1 기준선으로 고정하며, 사용자 결정 없이 통합 과정에서 바꾸지 않는다.
+- Trigger의 source-owned/passive-owned event/source/status/choice/scope 비대칭과 재귀 제한 범위는 보존한다. count/proc/internal-cooldown만 현재 active-skill authoring의 non-default 값이 0임을 Phase 10 테스트로 재확인한 뒤 공통화할 수 있다.
 - 구 Node 조합 경로와 Resolver 조합 경로를 같은 snapshot에 함께 적용하지 않는다.
 - 이번 작업에서 `Implementation` 스크립트 수를 늘리지 않는다. 임시 migration 파일도 만들지 않는다.
 - 코드 컨벤션은 가능한 한 기존 `.cs` 파일 하나를 책임 class 하나로 줄이는 것이다. 여러 class를 same-name 신규 파일로 분리하지 않는다.
@@ -35,6 +39,7 @@ Node 의미의 런타임 구현을 `SkillExecutionRuleResolver` 하나로 통합
 - 책임을 잃은 class, field, method, wrapper와 호환성 facade는 실제 참조가 0이고 public/serialization 호환성 검토가 끝난 뒤 삭제한다. 미래 사용 가능성만으로 남기지 않는다.
 - Unity Play Mode gameplay 검증은 사용자 소유다.
 - `Skill Builder`는 비활성 역할이므로 이 작업에 사용하지 않는다.
+- 각 신규 Phase는 별도 Git commit으로 완료하며, 한 Phase 안에서 legacy와 신규 runtime 경로를 동시에 활성화하지 않는다.
 
 ## Role Owner
 
@@ -51,6 +56,7 @@ Node 의미의 런타임 구현을 `SkillExecutionRuleResolver` 하나로 통합
 - Phase 7 Context 제거, 주석 추상화, 최종 정적 검증 완료.
 - Phase 8 Code Reviewer 책임 수정 완료: `SkillExecutionData` 런타임 lifecycle 조정을 `SkillExecution`으로 이동하고 Core/Editor 프로젝트 빌드를 오류 0개로 통과했다.
 - Phase 9 학습 런타임 목록 재구성 책임을 `UnitSkills`로 이관하고 Core/Editor 프로젝트 빌드를 오류 0개로 통과했다.
+- 일반 시전과 조건부 스킬 결과의 완전한 공통 재시전 및 Actor 피해 적용 정리는 새 승인 범위이며 Phase 10 이후 pending이다.
 
 ## Selected Code Builder tracks
 
@@ -126,11 +132,12 @@ Node operation 해제와 Node 기반 값 계산의 유일한 런타임 해석기
 책임:
 
 - 시전자, runtime, 전투 행동 가능 여부, 쿨다운, 탄창과 시전 간격을 검증한다.
-- Resolver에 실행에 필요한 명시적 입력, Skill Definition, 학습·선택 상태와 사건 문맥을 전달한다. 삭제 대상 `SkillExecutionContext` class에 의존하지 않는다.
+- Resolver에 실행에 필요한 명시적 입력, concrete family `SkillDefinition`, 학습·선택 상태와 사건 문맥을 전달한다. 삭제 대상 `SkillExecutionContext` class에 의존하지 않는다.
 - Resolver가 반환한 `SkillExecutionData`가 실행 가능한지 확인한다.
 - `SkillRuntimeKind`에 맞는 기존 Executor로 분배한다.
-- Actor가 전달한 적중 문맥과 Resolver 계산 결과를 받아 기존 피해·상태 공통 API를 호출한다.
-- Trigger가 통과시킨 effect와 command를 조정하고 기존 쿨다운·재장전·상태 연장·Zone 재시전 API를 호출한다.
+- 수동·자동·Trigger 입력을 하나의 private 실행 흐름으로 정규화한다. public/manual/AI/Trigger 진입점은 얇은 adapter만 허용한다.
+- Trigger가 통과시킨 실제 스킬 결과는 raw effect 분기 없이 같은 snapshot 생성, `ExecutePrepared`, family 분배를 사용한다.
+- typed non-skill command는 스킬 실행과 구분해 기존 상태 소유 API로 전달한다. 이를 위한 Actor, prefab 또는 hidden runtime kind를 만들지 않는다.
 - 실행 성공 뒤 탄창·쿨다운·연사 상태와 lifecycle을 확정한다.
 - 런타임 상태 초기화, 시간 진행, 시전 진입, 적중·발사 순번과 탄창·쿨다운·재장전 진행을 조정한다.
 - 일반 시전과 Trigger 재실행의 공통 진입점을 유지한다.
@@ -139,6 +146,7 @@ Node operation 해제와 Node 기반 값 계산의 유일한 런타임 해석기
 
 - `SkillNode.GetOperation<T>()` 호출.
 - 특정 Node operation 직접 해석. 단, Resolver 결과를 기존 runtime API에 전달하는 실행 책임은 유지한다.
+- 직접 피해 적용, 적중 대상 순회, Trigger 전용 `SkillCastEffect` payload 실행.
 
 ### `SkillExecutionData`
 
@@ -169,16 +177,16 @@ Node operation 해제와 Node 기반 값 계산의 유일한 런타임 해석기
 
 - Actor와 전투 시스템이 전달한 `SkillActionContext`를 받는다.
 - 사건 종류, source scope, 선택 여부, 상태, 속성, 확률, 내부 쿨다운, 횟수, 지연과 반복을 판정한다.
-- 조건을 통과한 반응을 `SkillExecution`의 공통 반응 진입점으로 전달한다.
+- 조건을 통과한 반응의 concrete family `SkillDefinition`과 사건 문맥을 `SkillExecution`의 일반 실행 진입점으로 전달한다.
 - 반응 정의가 필요하면 Resolver가 이미 해석한 reaction 목록을 사용한다.
 - `SkillReaction` 필드의 사건 gate 의미는 Trigger가 소유하며 Resolver가 대신 판정하지 않는다.
-- source-owned와 passive-owned의 현재 gate 차이는 별도 승인 전까지 그대로 보존한다.
+- source-owned와 passive-owned의 event/source/status/choice/scope 차이는 보존한다. count/proc/internal-cooldown은 generated OnHit outcome을 위해 공통 gate로 올리되 Phase 10 authoring baseline과 회귀 테스트를 먼저 고정한다.
 
 이동 대상:
 
-- `TryExecuteOutcome`의 효과 실행 결정.
-- `ExecuteCommand`의 대상 탐색과 상태·쿨다운·재장전 변경.
-- `ResolveTriggeredRawDamage`의 event 값 계산은 `SkillExecution` 반응 조정 경로로 이동한다.
+- `TryExecuteOutcome`의 효과 실행 결정은 삭제하고 Generation이 확정한 outcome 계약만 전달한다.
+- `ExecuteCommand`의 대상 탐색과 상태·쿨다운·재장전 변경은 typed command 조정 경로로 이동한다.
+- event 값은 사건 발생 시 snapshot으로 고정해 공통 실행 입력의 raw damage override로 전달한다.
 - 직접 `new SkillExecutionData(...)` 또는 `SkillExecutionState.CreateExecutionData(...)`로 Node를 조합하는 경로.
 
 ### `SkillTargeting`
@@ -193,9 +201,11 @@ Node operation 해제와 Node 기반 값 계산의 유일한 런타임 해석기
 
 ### Executor and Actor
 
-- Executor는 완성된 `SkillExecutionData`를 받아 기존 family Actor를 생성하거나 즉시 효과를 전달한다.
-- Actor는 이동, 충돌, 히트박스, Tick, 만료와 Visual 수명을 담당한다.
-- Actor는 물리적으로 발생한 사건 문맥을 `SkillExecution`과 Trigger에 전달한다.
+- Projectile, Line, Single, Zone Executor는 완성된 `SkillExecutionData`를 받아 기존 family Actor를 생성하고 초기화한다.
+- Buff Executor는 상태·회복·보호막처럼 충돌 없는 지원 효과를 적용할 수 있지만 피해는 직접 적용하지 않는다.
+- Actor는 이동, 충돌, 히트박스, Tick, 만료, Visual 수명과 물리적 적중 확정을 담당한다.
+- 피해가 있는 스킬은 Actor가 `DamageCalculator`의 결과를 사용해 `InGameCombatManager.ApplyDamage`를 호출한다.
+- Actor는 물리적으로 발생한 사건 문맥을 Trigger에 전달하고, Trigger가 통과시킨 후속 스킬은 다시 `SkillExecution` 일반 경로로 들어간다.
 - Actor와 Executor는 Node operation 타입을 직접 검사하지 않는다.
 
 ## Target execution flow
@@ -213,7 +223,7 @@ input / auto route
      - final execution values
   -> SkillExecutionData
   -> family Executor
-  -> Actor or immediate family effect
+  -> family Actor for physical skills / immediate support application for non-damage Buff
   -> SkillExecution commits runtime state
 ```
 
@@ -221,19 +231,16 @@ input / auto route
 
 ```text
 Actor detects collision/tick/hit
-  -> runtime hit context
-  -> SkillExecution hit entry
   -> SkillExecutionRuleResolver
      - target status
      - conditional damage/critical
      - consecutive/burst/branch index
-     - additional/chain/core/kill/reload effects
-  -> resolved generic hit values
-  -> SkillExecution invokes existing combat/status APIs
-  -> Actor publishes event context
+     - hit-time resolved values
+  -> Actor applies damage through InGameCombatManager
+  -> Actor publishes event context to SkillTrigger
 ```
 
-Node 의미는 Resolver가 계산한다. Actor는 충돌과 수명 사실만 제공하고, 실제 피해와 상태는 기존 공통 API가 적용한다.
+Node 의미와 피해값은 Resolver와 `DamageCalculator`가 계산한다. Actor는 충돌·적중을 확정하고 기존 combat API로 피해를 적용한다. Executor와 `SkillExecution`은 피해를 직접 적용하지 않는다.
 
 ### Trigger reaction
 
@@ -241,16 +248,35 @@ Node 의미는 Resolver가 계산한다. Actor는 충돌과 수명 사실만 제
 Actor or combat system event
   -> SkillTrigger
      - event/source/status/choice/proc/count/cooldown/delay/repeat gate
-  -> SkillExecution reaction entry
+     - generated concrete outcome Definition and event snapshot forwarding
+  -> SkillExecution common cast entry
   -> SkillExecutionRuleResolver
-     - reaction이 참조하는 Node 기반 실행값
-  -> SkillExecution
-     - event target/center/raw event value 조정
-     - family effect는 SkillExecutionData와 기존 Executor로 분배
-     - command는 기존 runtime API로 실행
+     - ordinary Definition + learned modifiers + event override
+  -> SkillExecutionData
+  -> same family Executor used by an initial cast
+  -> new family Actor
 ```
 
-`RefundCooldown`, `ReduceReload`, `ExtendStatusDuration`처럼 family Executor로 표현되지 않는 현재 command는 Trigger와 Resolver가 직접 실행하지 않는다. `SkillExecution`이 Resolver 계산 뒤 기존 runtime API로 처리하고 성공 여부를 반환한다. 이 예외를 위한 새 Executor는 만들지 않는다.
+실제 스킬 outcome만 위 common cast를 사용한다. `RefundCooldown`, `ReduceReload`, `ExtendStatusDuration`은 물리적 스킬이 아닌 typed state command이므로 Actor로 위장하지 않는다. Trigger와 Resolver는 직접 적용하지 않고 `SkillExecution`이 기존 `UnitSkills`/combat 상태 API로 전달한다. `RecastZone`은 command 예외에서 제거하고 concrete Zone Definition의 common recast로 전환한다.
+
+`SkillReaction.Effect`처럼 runtime에 raw damage/status/shield payload를 남기지 않는다. Generation이 payload를 existing family concrete `SkillDefinition`으로 한 번 materialize하고, reaction은 그 Definition을 직접 참조한다. 이미 학습된 스킬 재시전도 같은 reference 계약을 사용한다. 이를 통해 Trigger 시점의 catalog 문자열 재조회와 `UnitSkills.FindBySkillId` 의존을 피한다.
+
+## Final outcome mapping
+
+| 현재 runtime outcome | 최종 계약 | 보존 기준 |
+|---|---|---|
+| `SkillReaction.TargetSkillId` | existing concrete Definition을 가리키는 resolved `SkillCastEffect` link | learned runtime lookup 없이 같은 Definition과 source attribution 사용 |
+| raw `SkillCastEffect.Damage` | generated `SingleSkillDefinition` link | 현재 `ExecuteCastEffect`가 area 설정과 무관하게 `SingleSkillExecutor`를 사용하므로 임의로 Zone으로 변경하지 않음 |
+| raw status-only effect | generated `BuffSkillDefinition` with `BuffEffectKind.Status` | 대상, status clone, chance, stacks, refresh, Visual 보존 |
+| raw shield effect | generated `BuffSkillDefinition` with `BuffEffectKind.Shield` | base/coefficient/stat source, duration, status data, Visual 보존 |
+| normal cast `SkillCastEffectOp` | 같은 resolved Definition link | delay, source aim/center inheritance와 lifecycle policy 보존 |
+| `RecastZone` command | source Zone Definition common recast link | inherited snapshot, center, radius multiplier, duration, max generation 보존 |
+| `RefundCooldown` | typed non-skill command | target skill, ratio, target selection 보존; Actor/Executor 생성 없음 |
+| `ReduceReload` | typed non-skill command | target skill, ratio, target selection 보존; Actor/Executor 생성 없음 |
+| `ExtendStatusDuration` | typed non-skill command | status kind, duration, target selection 보존; Actor/Executor 생성 없음 |
+| `ApplyHitEnhancements` additional/chain damage | generated OnHit `SingleSkillDefinition` link | chance, hit period, damage multiplier, attribute, chain target/radius와 lifecycle suppression 보존 |
+
+`SkillCastEffect`는 위 link에 필요한 Definition reference와 실행 metadata만 남긴다. raw payload를 다른 파일이나 nested class로 옮기지 않는다.
 
 ## Baseline evidence before Resolver migration
 
@@ -333,7 +359,7 @@ Actor or combat system event
 - 전역 `MaxTriggeredExecutionDepth = 8`은 `SkillExecution.TryExecuteReaction`과 `TryExecuteReactionEffect`에만 적용된다.
 - command는 `SkillTrigger.ExecuteCommand`에서 전역 깊이 제한을 거치지 않는다. `RecastZone`만 `MaxGeneration`을 별도로 확인한다.
 
-통합은 이 비대칭을 현행 기준선으로 보존한다. source-owned gate 통일이나 command 재귀 제한 추가는 별도 버그 수정이며 사용자 승인 전 수행하지 않는다.
+Phase 1~9는 이 비대칭 전체를 현행 기준선으로 보존했다. 새 Phase 13은 inspected authoring에서 active-skill non-default가 0인 count/proc/internal-cooldown만 공통화할 수 있으며 event/source/status/choice/scope 차이와 command 재귀 정책은 그대로 유지한다.
 
 ### Dual-path comparison boundary
 
@@ -389,9 +415,10 @@ Actor or combat system event
 
 | Contract | 저장 위치 | 현재 reader | 책임 경계 |
 |---|---|---|---|
-| `SkillReaction` | `SkillReactionOp`에서 `reactions`로 저장 | `SkillTrigger`와 `SkillExecution` | Resolver는 추출만, Trigger는 gate, Execution은 outcome 조정 |
+| `SkillReaction` | `SkillReactionOp`에서 `reactions`로 저장 | `SkillTrigger`와 `SkillExecution` | Resolver는 추출만, Trigger는 gate/예약, Execution은 generated Definition을 공통 시전 |
 | `StatusStackCondition` | 조건 operation 내부 값 | Resolver, Trigger, 기존 Single 규칙 | 사용 시점의 source/target 상태 판정 |
-| `SkillReactionCommand` | `SkillReaction.Command` | 현재 `SkillTrigger.ExecuteCommand` | 목표 구조에서는 Trigger gate 뒤 `SkillExecution`이 기존 runtime API 호출 |
+| generated outcome Definition | Generation이 raw `SkillCastEffect`를 concrete family Definition으로 materialize | `SkillExecution` 공통 시전 | 실제 스킬 outcome의 유일한 실행 계약 |
+| `SkillReactionCommand` | `SkillReaction.Command` | `SkillExecution` typed command 조정 | 비공간 상태 변경만 허용; `RecastZone` 제외 |
 
 ### Reader exists but writer is absent
 
@@ -419,13 +446,16 @@ Phase 1은 이 기본값을 기준선으로 기록한다. 보존 또는 삭제�
 ### Reduce
 
 - `Pakuri/Assets/Scripts/Combat/Skills/Implementation/SkillExecution.cs`
-  - 검증, Resolver 호출, family/command 조정, 기존 runtime API 호출, Executor 분배와 성공 상태 확정을 맡는다.
+  - 검증, Resolver 호출, 공통 family 분배, typed non-skill command 조정과 성공 상태 확정을 맡는다.
+  - `TryExecuteSelected`, `TryExecuteManual`, Trigger adapter가 하나의 snapshot 생성과 `ExecutePrepared`를 사용하게 한다.
+  - `TryExecuteReactionEffect`, raw `ExecuteCastEffect`, Trigger outcome dispatcher와 직접 hit application helper를 caller migration 뒤 삭제한다.
 - `Pakuri/Assets/Scripts/Combat/Skills/Implementation/SkillExecutionData.cs`
   - 값 보관과 조회만 남긴다.
 - `Pakuri/Assets/Scripts/Combat/Skills/Implementation/SkillTrigger.cs`
   - 사건 gate와 `SkillExecution` 재진입만 남긴다.
 - `Pakuri/Assets/Scripts/Combat/Skills/Activation/*`
   - Node별 분기를 제거하고 generic prepared value 실행만 남긴다.
+  - Projectile, Line, Single, Zone Actor가 적중과 피해 적용을 소유한다. Executor의 직접 `ApplyDamage`는 0건으로 만든다.
 
 ### Keep responsibility
 
@@ -437,6 +467,8 @@ Phase 1은 이 기본값을 기준선으로 기록한다. 보존 또는 삭제�
 - `Pakuri/Assets/Scripts/Combat/Skills/Activation/Buff/BuffSkillExecutor.cs`
 - 각 family Actor의 이동·충돌·수명 책임.
 
+`BuffSkillExecutor`의 상태·회복·보호막 즉시 적용은 충돌 없는 support family의 기존 동작으로 유지한다. `ApplyChargeContact`의 피해 적용은 접촉을 확정한 Actor 쪽으로 옮기고 Executor에는 prepared value 전달만 남긴다.
+
 ### Migrate external callers
 
 - `Pakuri/Assets/Scripts/Units/Enemy/AI/EnemyCombatDecision.cs`
@@ -446,8 +478,10 @@ Phase 1은 이 기본값을 기준선으로 기록한다. 보존 또는 삭제�
 - `Pakuri/Assets/Scripts/UI/InGame/DamageMeter/DamageMeterUIController.cs`
 - `Pakuri/Assets/Scripts/UI/InGame/MonsterPanel/MonsterPanelUI.cs`
 - `Pakuri/Assets/Tests/Editor/SkillCatalogRuntimeTests.cs`
+- `Pakuri/Assets/Scripts/Loading/Generation/GameDataCatalogBuilder.cs`
+- `Pakuri/Assets/Scripts/Loading/Generation/GameDataCatalogBuilder.Nodes.cs`
 
-AI와 DamageMeter의 Definition-only 조회는 Resolver 진입점으로 옮긴다. `SkillUseState`와 `SkillExecutionState`를 소비하는 Unit/UI caller는 새 파일이나 호환 wrapper 없이 승인된 기존 `SkillExecution`·unit state API로 migration한다. Editor 테스트는 삭제 예정 데이터 API 대신 최종 책임 API를 검증한다.
+AI와 DamageMeter의 Definition-only 조회는 Resolver 진입점으로 옮긴다. `SkillUseState`와 `SkillExecutionState`를 소비하는 Unit/UI caller는 새 파일이나 호환 wrapper 없이 승인된 기존 `SkillExecution`·unit state API로 migration한다. Generation은 raw reaction payload를 final family Definition reference로 바꾸고, Editor 테스트는 `Effect/Command/TargetSkillId` 분기 수가 아니라 final skill outcome/typed state command 계약을 검증한다.
 
 ### Consolidate without adding files
 
@@ -572,6 +606,79 @@ Status: complete. `RebuildLearnedSkillState` was removed from `SkillExecution` a
 3. `SkillExecution` no longer owns catalog lookup, active-slot selection, or learned-state reconstruction.
 4. Existing behavior and caller coverage remain unchanged; no new script or compatibility facade was added.
 
+### Phase 10 — common recast baseline and contract
+
+Status: pending. Commit this Phase before changing runtime behavior.
+
+1. Fix the current reaction outcome baseline from Generation and Editor tests: raw effect, learned-skill reference, typed command, and missing outcome counts.
+2. Record every caller of `TryExecuteReaction`, `TryExecuteReactionEffect`, `ExecuteCastEffect`, `ExecuteTriggeredReaction`, `ApplyResolvedHits`, and `ApplyHitEnhancements`.
+3. Record every direct `InGameCombatManager.ApplyDamage` call under `SkillExecution`, family Executors, and family Actors.
+4. Fix normal cast and Trigger cast differences for cast-state consumption, lifecycle publication, target locking, event center, damage override, depth, and recast generation.
+5. Add a focused test that proves the current learned-skill reaction reaches `ExecutePrepared -> ExecuteSkill` and another that proves a raw effect currently bypasses it. The second test is the migration baseline, not the final expectation.
+6. Commit the inventory and tests separately.
+
+### Phase 11 — materialize skill outcomes during Generation
+
+Status: pending.
+
+1. Reuse `SkillCastEffect` as a small resolved execution link instead of adding a new outcome class or script.
+2. The final link stores a concrete family `SkillDefinition` plus only execution metadata that cannot live in the Definition: delay, damage multiplier, source aim/center inheritance, event-target lock, lifecycle policy, and optional event damage override policy.
+3. Remove raw damage, status, shield, targeting, area, prefab, visual, duration, and status-extension payload ownership from the runtime `SkillCastEffect`; Generation writes those values into the concrete family Definition once.
+4. Existing learned-skill outcomes point to the existing Definition. Raw effect outcomes materialize an auxiliary Single, Zone, or Buff Definition but do not register it as a learned active skill or add a runtime kind/Executor.
+5. Replace the `SkillReaction.TargetSkillId`/raw `Effect` dual path with one resolved skill outcome link. Keep one typed non-skill command alternative.
+6. Convert `RecastZone` to a resolved Zone outcome link while preserving inherited snapshot, radius, duration, center and max-generation values.
+7. Preserve current CSV schema and authored values. Only Generation and runtime contracts change.
+8. Commit Generation and catalog tests before routing runtime execution through the new link.
+9. Inventory `AdditionalDamageActionOp` and `HitChainDamageActionOp` values consumed by `ApplyHitEnhancements`. If they become generated OnHit skill outcomes, materialize their concrete Definitions in this Phase instead of retaining raw damage fields.
+
+### Phase 12 — one SkillExecution cast pipeline
+
+Status: pending.
+
+1. Refactor the existing `TryExecuteSkill` rather than adding a request class, interface, factory, or new script.
+2. `TryExecuteSelected`, `TryExecuteManual`, AI routing and Trigger execution become thin adapters into the same snapshot creation and `ExecutePrepared` path.
+3. Separate persistent cast-state ownership from the executed Definition. Normal casts use their learned runtime and consume cast state; generated reaction Definitions can execute without entering `UnitSkills` and without consuming an unrelated skill cooldown.
+4. Preserve `beginCast` behavior under a clearer cast-state flag. Same path does not mean every Trigger reaction consumes cooldown, magazine or cast interval.
+5. Apply event target, center, raw damage override, damage multiplier, lifecycle policy, recast generation and recursion depth before `ExecutePrepared`.
+6. Remove direct family Executor selection from the Trigger/cast-effect adapter. `ExecuteSkill` remains the only family switch.
+7. Commit after Core and Editor builds pass and both normal/Trigger tests reach the same `ExecutePrepared -> ExecuteSkill` path.
+
+### Phase 13 — Trigger gate and scheduling only
+
+Status: pending.
+
+1. Keep event, source scope, status, attribute, choice, count, proc, internal cooldown, delay and repeat ownership in `SkillTrigger`.
+2. Snapshot event-derived values before delay so later shield/status changes do not alter the queued reaction.
+3. After the gate and delay, forward the resolved skill outcome link and event snapshot to the common `SkillExecution` entry.
+4. Delete `ExecuteTriggeredReaction`, `ExecuteTriggeredReactionOnce`, `ExecuteTriggeredOutcome`, `TryExecuteReactionEffect`, raw `ExecuteCastEffect` branches and `ResolveTriggeredRawDamage` after callers reach the common entry.
+5. Keep typed non-skill commands outside the Actor path. Delete the Trigger-specific outcome switch; one generic command adjustment path may remain in `SkillExecution` for cooldown, reload and status-duration changes.
+6. Before using `ProcChance`, `EveryCount` or `InternalCooldownSeconds` for generated source-owned OnHit outcomes, re-run the current authoring inventory. The inspected baseline is active-skill reactions 37/non-default 0 and passive reactions 126/non-default 13.
+7. If the Phase 10 inventory matches, apply count/proc/internal-cooldown through one shared gate for source-owned and passive-owned reactions. Preserve all other source/passive gate differences.
+8. Commit after depth, delay/repeat, proc/count and recast-generation tests pass.
+
+### Phase 14 — Actor owns physical hit application
+
+Status: pending.
+
+1. Projectile, Line, Single and Zone Actors retain collision/target confirmation and call the common damage calculator/combat manager path.
+2. Replace `ZoneSkillActor -> SkillExecution.ApplyResolvedHits` with Zone Actor-owned target iteration using existing `SkillTargeting` and Resolver values; do not add an Actor base class for one shared helper.
+3. Replace Actor calls to `SkillExecution.ApplyHitEnhancements`. Actual additional/chain skill outcomes re-enter `SkillTrigger -> SkillExecution` as resolved skill outcomes; cooldown/reload adjustments remain typed non-skill behavior.
+4. Move Buff charge contact damage out of `BuffSkillExecutor.ApplyChargeContact` to the contact-owning Actor path. Keep status, heal and shield support execution unchanged unless their behavior requires an Actor.
+5. Delete `ApplyResolvedHits` and `ApplyHitEnhancements` after references reach zero.
+6. Verify that `SkillExecution` and every `*SkillExecutor.cs` contain zero `ApplyDamage` calls.
+7. Commit after physical Actor and support-family tests/builds pass.
+
+### Phase 15 — dead contract removal and final verification
+
+Status: pending.
+
+1. Remove obsolete `SkillReaction.TargetSkillId`, raw `SkillReaction.Effect` payload fields, unsupported `RecastZone` command shape and runtime readers after Generation migration.
+2. Remove obsolete raw fields from `SkillCastEffect`; keep only the resolved Definition link and required execution metadata if normal cast follow-ups still use it.
+3. Update `SkillCatalogRuntimeTests` from outcome-kind counts to concrete Definition family/reference, typed command, dynamic-value, target, visual and timing parity.
+4. Confirm no new `.cs`, runtime kind, Executor, Actor base class, compatibility wrapper or catalog lookup layer was introduced.
+5. Run static searches, Core/Editor builds, Unity compile/console and focused EditMode tests.
+6. Update COMBAT and DATA boards with actual command output and commit the final cleanup separately.
+
 ## Compatibility requirements
 
 - 모든 기존 Node operation의 계산 순서와 합산·곱산 방식을 보존한다.
@@ -582,11 +689,13 @@ Status: complete. `RebuildLearnedSkillState` was removed from `SkillExecution` a
   - burst/launch 조건: 해당 발사 순번 확정 시점.
   - kill 효과: 피해 결과가 사망으로 확정된 뒤.
   - Trigger gate: 사건 발생 뒤, 지연 시작 전 필요한 사건값을 고정.
-- `MaxTriggeredExecutionDepth`, recast generation과 lifecycle 발행 정책을 약화하지 않는다.
-- source-owned/passive-owned Trigger gate의 현재 비대칭을 behavior baseline으로 보존한다.
+- `MaxTriggeredExecutionDepth`, recast generation과 lifecycle 발행 정책을 약화하지 않는다. 공통 진입점으로 옮길 때 command가 새 재귀 우회로를 만들지 않게 한다.
+- source-owned/passive-owned Trigger의 event/source/status/choice/scope 비대칭은 behavior baseline으로 보존한다. count/proc/internal-cooldown은 active-skill non-default 0 baseline이 유지될 때만 공통화한다.
 - player-facing behavior, Unity serialization, prefab와 asset 참조를 보존한다.
 - 삭제 대상 public type의 저장소 내부 caller는 새 책임 API로 모두 migration한다. 구 type 이름을 보존하기 위한 wrapper는 만들지 않는다.
-- CSV와 생성 데이터는 이 구조 작업에서 변경하지 않는다.
+- CSV schema와 authored 값은 변경하지 않는다. Generation 결과는 raw runtime payload에서 resolved concrete Definition link로 변경한다.
+- Trigger outcome Definition이 학습 목록에 없어도 passive/enhancement/master 보정, source skill attribution, DamageMeter 이름, lifecycle과 kill/outgoing-damage source ID가 현재 결과와 같아야 한다.
+- 지원형 Buff의 상태·회복·보호막 즉시 적용은 보존한다. “Executor는 피해를 적용하지 않는다”를 “모든 지원 효과도 Actor를 만들어야 한다”로 확대 해석하지 않는다.
 
 ## Edge cases and risks
 
@@ -594,14 +703,33 @@ Status: complete. `RebuildLearnedSkillState` was removed from `SkillExecution` a
 - cast-time과 hit-time 값을 한 시점에 강제로 확정하지 않는다.
 - Trigger reaction 목록은 Trigger가 Node를 직접 읽지 않도록 Resolver가 제공한다.
 - passive Trigger는 활성 Actor snapshot이 없어도 Resolver를 통해 학습 상태에서 reaction을 얻을 수 있어야 한다.
-- command outcome을 새 hidden skill이나 새 Executor로 변환하지 않는다.
+- 현재 raw effect outcome은 학습 runtime이 없으므로 `UnitSkills.FindBySkillId`만으로 공통 시전할 수 없다. Generation이 concrete family Definition reference를 만들고 `SkillExecution`이 persistent runtime과 executed Definition을 분리해야 한다.
+- auxiliary outcome Definition은 실행을 위해 필요하지만 learned catalog/slot에 등록하지 않는다. 이를 UI 노출, 쿨다운 소유 또는 별도 스킬 학습으로 취급하지 않는다.
+- `RefundCooldown`, `ReduceReload`, `ExtendStatusDuration`을 Actor skill로 위장하지 않는다. 이들은 typed non-skill command이며 공통 스킬 시전 보장의 적용 대상이 아니다.
+- `RecastZone`은 실제 스킬 재시전이므로 typed command에 남기지 않는다. inherited snapshot, radius, duration과 generation을 잃으면 무한 recast 또는 수치 회귀가 생긴다.
 - 상태 데이터 clone과 catalog fallback을 보존한다.
 - `SkillExecutionData` copy 시 컬렉션을 수정하지 않는 불변 조건으로 원본 실행값 오염을 막는다. 이후 변경이 필요해질 때만 deep copy를 추가한다.
 - Actor가 같은 적중을 Resolver와 Trigger에 중복 전달하지 않게 한다.
 - 일반 시전과 Trigger 재실행의 쿨다운·탄창 소비 차이를 보존한다.
+- 사건 피해, 보호막 적용량·잔량·흡수량과 추적 피해는 delay 전에 값으로 고정한다. 지연 뒤 live 상태를 다시 읽지 않는다.
+- generated outcome의 `SourceSkillId`와 표시 ID를 분리하지 않으면 DamageMeter, kill/outgoing-damage Trigger, lifecycle source 판정이 바뀔 수 있다.
+- lifecycle을 켠 Trigger outcome은 다시 `OnCast`/`OnHit` 반응을 만들 수 있다. depth 8과 recast generation을 공통 진입점에서 검사해 무한 루프를 막는다.
+- raw effect에서 concrete Definition으로 옮길 때 targeting, center inheritance, event-target lock, visual prefab/runtime visual, duration, status clone과 critical policy가 누락되기 쉽다. operation별 migration 표와 parity test가 필요하다.
+- `ApplyHitEnhancements`는 OnHit publication, hit counter, reload reduction, additional damage와 chain damage를 함께 갖는다. 메소드만 삭제하지 말고 각 동작을 skill outcome, typed command 또는 Actor event로 분류해 이관한다.
+- additional/chain 값을 일반 source-owned reaction으로 옮길 경우 현재 source-owned gate에는 passive와 같은 count/proc/internal-cooldown 판정이 없다. inspected CSV는 active-skill 37개 모두 default이고 passive 126개 중 13개만 non-default이므로, Phase 10 재확인 뒤 이 세 gate만 공통화하는 것이 별도 hit-enhancement counter를 남기는 것보다 단순하다.
+- `BuffSkillExecutor`는 상태·회복·보호막도 직접 적용한다. 피해 금지 규칙은 charge contact `ApplyDamage`에 적용하고 support effect까지 가짜 Actor로 만들지 않는다.
+- normal cast의 `SkillCastEffectOp`도 같은 raw payload 타입을 사용한다. Trigger reader만 먼저 삭제하면 일반 cast follow-up이 손실되므로 Generation과 runtime reader를 함께 inventory한다.
+- migration 중 raw effect와 generated Definition을 동시에 실행하면 피해·상태·Visual이 이중 적용된다. 각 Phase runtime은 한 outcome 경로만 사용한다.
 - Resolver 비교용 snapshot을 실제 runtime snapshot에 덧씌우지 않는다.
 - 물리적 class 이동만으로 책임 통합이 끝났다고 판단하지 않는다. caller와 계산 소유권이 목표 경계로 바뀌어야 한다.
 - 삭제 후보를 빈 wrapper나 forwarding method로 남기지 않는다. 실제 public/serialization 호환성 근거가 있는 경우만 예외를 기록한다.
+
+### Validated better choices
+
+- 새 execution request class보다 기존 `TryExecuteSkill`과 `ExecutePrepared`를 확장하는 편이 파일·추상화·분기 수가 적다.
+- runtime `TargetSkillId` 재조회보다 Generation이 확정한 `SkillDefinition` direct reference가 안전하다. learned skill과 auxiliary outcome을 같은 계약으로 실행하고 missing catalog/learned-runtime 분기를 없앤다.
+- 모든 reaction 결과를 Actor로 강제하는 것보다 실제 skill outcome과 typed state command를 분리하는 편이 책임에 맞다. 동일 경로 보장은 피해·상태·방어막 등 family skill outcome에 적용하고, 쿨다운·재장전·상태 지속시간 변경은 command 예외로 명시한다.
+- support Buff는 현재 즉시 적용을 유지하고 피해가 있는 charge contact만 Actor hit path로 옮기는 것이 최소 변경이다.
 
 ## Acceptance criteria
 
@@ -611,14 +739,14 @@ Status: complete. `RebuildLearnedSkillState` was removed from `SkillExecution` a
 4. `SkillStatus.cs`, `SkillStatus.cs.meta`, `SingleSkillRules.cs`, `SingleSkillRules.cs.meta`가 삭제된다.
 5. `SkillStatus.`와 `SingleSkillRules.` 참조가 0건이다.
 6. `SkillTrigger`가 직접 피해·상태·쿨다운·재장전·재시전을 적용하지 않는다.
-7. Trigger 조건 통과 결과가 `SkillExecution` 공통 진입점으로 전달된다.
+7. Trigger 조건을 통과한 actual skill outcome이 일반 시전과 같은 `SkillExecution -> ExecutePrepared -> ExecuteSkill -> family Executor` 경로를 사용한다.
 8. Trigger가 사건 gate를 소유하고 Resolver는 gate를 대신 판정하지 않는다.
 9. `SkillExecutionRuleResolver`에 피해·상태·쿨다운·재장전·재시전 runtime API 호출이 없다.
-10. `SkillExecution`이 family/command 실행을 조정하고 기존 runtime API를 호출한다.
+10. `SkillExecution`과 모든 `*SkillExecutor.cs`에 직접 `ApplyDamage` 호출이 없다.
 11. Definition-only Resolver 진입점으로 Enemy AI와 DamageMeter 반응 조회가 유지된다.
 12. owner/runtime Resolver 진입점이 기본 → passive → enhancement → master 순서를 유지한다.
 13. 실제 runtime snapshot에는 구 Node 경로와 Resolver 경로 중 하나만 적용된다.
-14. source/passive Trigger gate와 command 재귀 기준선이 승인 없이 바뀌지 않는다.
+14. source/passive Trigger의 event/source/status/choice/scope 비대칭은 유지되고, count/proc/internal-cooldown만 active-skill non-default 0 baseline 아래 공통화된다.
 15. snapshot copy 뒤 원본 컬렉션과 결과가 변경되지 않는다.
 16. `SkillExecution.cs`에는 `SkillExecution` class 하나만 남고 `SkillExecutionContext`, `SkillUseState`, `SkillExecutionState` type과 참조는 저장소에 없다.
 17. `ProjectileStatusHitSpec`, `SingleDamageModifierState`, `SkillStatus`, `SingleSkillRules` type과 참조가 저장소에 없다.
@@ -631,6 +759,19 @@ Status: complete. `RebuildLearnedSkillState` was removed from `SkillExecution` a
 24. 관련 C# 프로젝트 빌드가 성공한다.
 25. Unity console에 이 변경으로 생긴 compile error가 없다.
 26. `SkillExecutionData`에는 runtime lifecycle method declaration이 없고, 해당 조정 method는 `SkillExecution`에만 있다.
+27. runtime raw effect outcome이 concrete Single/Zone/Buff Definition link로 materialize되며 Trigger 시점에 family Executor를 직접 고르지 않는다.
+28. learned-skill outcome과 auxiliary generated outcome이 같은 common cast entry를 사용한다.
+29. auxiliary outcome Definition은 `UnitSkills` active/passive 목록과 플레이어 선택 슬롯에 등록되지 않는다.
+30. `RecastZone`은 typed command가 아니라 common Zone recast이며 max generation, inherited snapshot, center, radius와 duration을 보존한다.
+31. typed command에는 cooldown refund, reload reduction, status-duration extension 같은 비공간 상태 변경만 남는다.
+32. `TryExecuteReactionEffect`, raw `ExecuteCastEffect` family branches, `ExecuteTriggeredReaction`, `ExecuteTriggeredReactionOnce`, `ExecuteTriggeredOutcome`, `ExecuteTriggeredCommand`, `CommandRuntimes`, `ResolveTriggeredRawDamage`, `ApplyResolvedHits`, `ApplyHitEnhancements`와 해당 참조가 0건이다.
+33. event-derived raw damage 값은 delay 전 snapshot으로 고정되고 common execution data override로 전달된다.
+34. Projectile, Line, Single, Zone과 Buff charge 피해는 Actor가 확정한 적중 뒤 기존 combat API로 한 번만 적용된다.
+35. Buff status/heal/shield 결과는 기존 값·대상·Visual·지속시간을 유지하며 불필요한 Actor를 새로 만들지 않는다.
+36. 새 runtime kind, Executor, Actor base class, request class, interface, factory, registry, compatibility wrapper가 없다.
+37. `SkillCatalogRuntimeTests`가 기존 raw effect/learned reference/command count 대신 final Definition family/reference와 typed command parity를 검증한다.
+38. 각 Phase가 별도 commit이며 Phase별 build/test 결과와 commit hash가 이 문서와 관련 board에 기록된다.
+39. `ApplyHitEnhancements`의 additional chance, hit-chain period, hit count, reload reduction과 OnHit 순서가 보존되고 source-owned Trigger에는 검증된 count/proc/internal-cooldown 공통 gate 외 다른 passive gate가 추가되지 않는다.
 
 ## Verification expected from Code Builder
 
@@ -643,6 +784,10 @@ rg -n "new SkillExecutionData|CreateExecutionData|ApplyChoiceSpec|ApplyNodes|App
 rg -n "^\s*(public|internal|private|protected)?\s*(static\s+|sealed\s+|partial\s+)*class\s+" Pakuri\Assets\Scripts\Combat\Skills\Implementation\SkillExecution.cs
 rg -n "^\s*(public|internal|private|protected).*\b(ResetRuntimeState|AdvanceProjectileLaunchCount|AdvanceSkillHitCount|ConsecutiveHitDamageMultiplier|Tick|CanCastWithData|TryBeginCast|StopActive|CurrentBurstProjectileIndex|ReduceReloadRemaining|ReduceCooldownRemaining|ResetCooldown|TickDown|RefreshRuntimeModifiers|BeginRecoveryIfNeeded)\s*\(" Pakuri\Assets\Scripts\Combat\Skills\Implementation\SkillExecutionData.cs
 rg -n "SkillExecutionContext|SkillUseState|SkillExecutionState|ProjectileStatusHitSpec|SingleDamageModifierState|class SkillStatus|class SingleSkillRules" Pakuri\Assets\Scripts --glob "*.cs"
+rg -n "TryExecuteReactionEffect|ExecuteTriggeredReaction|ExecuteTriggeredOutcome|ExecuteTriggeredCommand|CommandRuntimes|ResolveTriggeredRawDamage|ApplyResolvedHits|ApplyHitEnhancements" Pakuri\Assets --glob "*.cs"
+rg -n "ApplyDamage\(" Pakuri\Assets\Scripts\Combat\Skills\Implementation Pakuri\Assets\Scripts\Combat\Skills\Activation --glob "*SkillExecutor.cs"
+rg -n "SingleSkillExecutor\.Execute|BuffSkillExecutor\.Execute|ZoneSkillExecutor\.Execute|ProjectileSkillExecutor\.Execute|LineSkillExecutor\.Execute" Pakuri\Assets\Scripts\Combat\Skills\Implementation\SkillExecution.cs
+rg -n "new SkillCastEffect|\.Effect\b|\.Command\b|TargetSkillId" Pakuri\Assets\Scripts\Loading\Generation Pakuri\Assets\Scripts\Combat\Skills Pakuri\Assets\Tests --glob "*.cs"
 rg --files Pakuri\Assets\Scripts\Combat\Skills\Implementation -g "*.cs"
 dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false
 dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false
@@ -659,6 +804,10 @@ Expected structural result:
 - 다섯 번째 `rg`: 승인된 DTO copy/조회 또는 Resolver 진입점 외 삭제 예정 생성·변형 API가 출력되지 않음.
 - 여섯 번째 `rg`: `SkillExecution` class 한 건만 출력.
 - 일곱 번째 `rg`: 출력 없음.
+- Trigger 전용 실행/helper 검색: 출력 없음.
+- `ApplyDamage` 검색: `SkillExecution`과 모든 Executor에서 출력 없음. Projectile/Line/Single/Zone 및 charge contact 소유 Actor의 승인된 호출만 남음.
+- family Executor 호출 검색: `SkillExecution.ExecuteSkill`의 한 family switch에서만 출력되고 raw cast-effect/Trigger branch에는 출력 없음.
+- reaction contract 검색: raw runtime payload writer/reader가 없고, typed non-skill command와 Generation의 resolved Definition link만 출력.
 - `rg --files`: 승인된 6개 `.cs`만 출력.
 - baseline과 final 줄 수·class 선언 수 비교: 둘 다 감소.
 - 두 build: 성공.
@@ -671,8 +820,15 @@ Unity-MCP로 editor compile과 console을 확인한다. Play Mode gameplay 검�
 - 기본 Definition → passive base modifier → enhancement → master 적용 순서와 계산 parity.
 - cast-time 값과 hit-time 조건 계산 분리.
 - 상태 데이터 clone, 지속시간, 중첩, 최대 중첩 결과.
-- source-owned/passive-owned Trigger gate 비대칭 기준선.
+- source-owned/passive-owned Trigger의 event/source/status/choice/scope 비대칭 기준선과 count/proc/internal-cooldown 공통화 결과.
 - effect/skill 반응의 depth 8과 command의 현행 재귀·recast generation 기준선.
+- normal/manual/AI/learned-reaction/generated-reaction이 같은 `ExecutePrepared -> ExecuteSkill` 경로를 사용함.
+- generated Single/Zone/Buff outcome의 damage/status/shield, targeting, visual, duration과 source attribution parity.
+- event damage/shield 값이 delay 전에 고정되고 지연 실행 뒤 바뀌지 않음.
+- `RecastZone`의 inherited snapshot, center, radius, duration과 max generation.
+- Actor 적중당 피해·OnHit publication이 정확히 한 번이고 추가/chain outcome이 common recast를 사용함.
+- typed cooldown/reload/status-duration command가 Actor나 family Executor를 생성하지 않고 기존 결과를 유지함.
+- source-owned reaction의 current non-default proc/count/internal-cooldown inventory와 migrated additional/chain outcome parity.
 - Definition-only 반응 조회로 Enemy AI `CombatStart`와 DamageMeter reaction ID 해석 유지.
 - snapshot copy 뒤 원본 scalar와 컬렉션 불변.
 
@@ -681,16 +837,19 @@ Unity-MCP로 editor compile과 console을 확인한다. Play Mode gameplay 검�
 - Primary: `boards/COMBAT/SKILL_NODE_RUNTIME_RESOLVER_CONSOLIDATION_HANDOFF.md`
 - Related completed baseline: `boards/COMBAT/SKILL_TRIGGER_REACTION_LOGIC_CONSOLIDATION_HANDOFF.md`
 - Combat status follow-up: `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`
+- Data contract follow-up: `boards/DATA/DATA_BLACKBOARD.md`
 - Routing index: `MDTREE.md`
 
 구현 중 사실이 바뀌면 primary handoff를 갱신한다. 상태 효과 동작이나 Trigger baseline이 달라지면 관련 COMBAT board도 같은 turn에 갱신한다.
 
 ## Next Actions
 
-1. Phase 1~9 구현과 각 Phase 커밋이 완료되었다.
-2. Code Reviewer가 확인한 `SkillExecutionData` 책임 위반을 Code Builder가 수정했다.
-3. Assembly-CSharp 빌드와 정적 경계 검증이 완료되었다.
-4. Unity EditMode 회귀 테스트와 추가 gameplay 검증은 아직 실행하지 않았으며, Play Mode는 사용자가 수행한다.
+1. Phase 1~9 구현과 각 Phase 커밋은 기존 완료 baseline이다.
+2. Code Builder는 Phase 10 current outcome/caller/damage-owner baseline부터 시작하고 Phase마다 별도 commit한다.
+3. Phase 11 전에 current raw effect/learned-skill/command outcomes를 concrete Definition 또는 typed command로 전부 분류한다.
+4. actual skill outcome은 common recast로, 비공간 state command는 typed command 예외로 구현한다. `RecastZone`은 common Zone recast로 바꾼다.
+5. Phase 12~14에서 common cast, Trigger gate-only forwarding과 Actor hit ownership을 순서대로 전환하며 runtime에 두 경로를 동시에 켜지 않는다.
+6. Unity EditMode 회귀 테스트와 additional gameplay 검증을 수행한다. Play Mode gameplay 검증은 사용자가 수행한다.
 
 ## Evidence
 
@@ -737,6 +896,16 @@ Unity-MCP로 editor compile과 console을 확인한다. Play Mode gameplay 검�
   - 새 `UnitSkills` 인스턴스 API와 모든 저장소 호출부가 연결됨을 확인했다.
 - `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore -v:minimal /p:UseSharedCompilation=false`, `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore -v:minimal /p:UseSharedCompilation=false`
   - 두 프로젝트 모두 오류 0개, 기존 참조 경고 2개로 통과했다.
+- 2026-07-31 common recast 설계 재검증:
+  - `TryExecuteSelected`와 `TryExecuteManual`은 `TryExecuteSkill -> ExecutePrepared -> ExecuteSkill`을 사용한다.
+  - `SkillReaction.TargetSkillId` 경로는 `TryExecuteReaction -> ExecutePrepared`에 도달하지만 raw `SkillReaction.Effect`는 `TryExecuteReactionEffect -> ExecuteCastEffect`에서 family Executor를 직접 선택한다.
+  - `SkillTrigger.cs:383,451`은 gate 통과 뒤 `SkillExecution.ExecuteTriggeredReaction`을 호출한다.
+  - `SkillExecution.cs:2030,2112`의 `ApplyResolvedHits`와 `ApplyHitEnhancements`가 직접 피해를 적용하며 Zone/Projectile/Line/Single Actor caller가 남아 있다.
+  - `BuffSkillExecutor.cs:173`의 charge contact path가 Executor에서 직접 피해를 적용한다. 같은 Executor의 status/heal/shield는 충돌 없는 support 적용이므로 별도 보존 대상이다.
+  - `GameDataCatalogBuilder.Nodes.cs`는 `EffectDamage`, `ApplyStatus`, `ApplyShield`, `RecastZone`, `RefundCooldown`, `ReduceReload`, `ExtendStatusDuration`을 raw effect 또는 typed command로 생성한다.
+  - `SkillCatalogRuntimeTests.cs`는 `Effect`, `TargetSkillId`, `Command` outcome 분포와 RecastZone command 값을 직접 검증하므로 contract migration surface다.
+  - current DATA board baseline은 final reactions를 effect 57, learned-skill reference 4, command 21, missing 0으로 기록한다. Code Builder가 Phase 10에서 현재 실행 결과로 재확정한다.
+  - Trigger CSV `Import-Csv` 집계는 active-skill files 37 rows/non-default proc·count·internal-cooldown 0, passive file 126 rows/non-default 13이다. generated additional/chain outcome을 위해 이 세 gate만 공통화해도 current active authoring 결과는 바뀌지 않는다.
 
 ## History
 
@@ -759,3 +928,6 @@ Unity-MCP로 editor compile과 console을 확인한다. Play Mode gameplay 검�
 - 2026-07-31: Phase 7 absorbed `SkillExecutionContext` into existing `SkillActionContext`, normalized concise abstract comments across `Combat/Skills`, confirmed six Implementation scripts and one `SkillExecution` class, found zero legacy symbols and zero runtime-application calls in Resolver, and passed `git diff --check` plus `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore` with 0 errors and 2 existing reference warnings.
 - 2026-07-31: Code Reviewer found runtime lifecycle methods still owned by `SkillExecutionData`; Code Builder moved them into `SkillExecution`, migrated repository callers, exposed the Definition-only Resolver entry points, changed the Editor test to inspect the internal data mutator through its existing reflection pattern, confirmed zero lifecycle method declarations remain in `SkillExecutionData`, and passed both Core and Editor builds with 0 errors and 2 existing reference warnings each.
 - 2026-07-31: Code Builder moved learned runtime-state reconstruction from `SkillExecution` into the existing `UnitSkills` class, reused its existing learning checks and runtime-list APIs, migrated spawn/UI/Editor callers, and passed Core/Editor builds with 0 errors and 2 existing reference warnings each.
+- 2026-07-31: 사용자가 조건부 스킬 결과도 Actor 사건 뒤 기본 스킬과 동일한 `SkillExecution -> Executor -> Actor` 경로로 다시 시전하고 Executor가 피해를 직접 적용하지 않도록 구조를 정정했다.
+- 2026-07-31: Designer가 current normal/learned reaction/raw effect/command 경로와 direct damage caller를 재검증하고 Phase 10~15 common recast handoff를 추가했다.
+- 2026-07-31: 자체 검증에서 raw effect는 learned runtime이 없어 direct `TargetSkillId` lookup만으로 실행할 수 없고, non-spatial command를 Actor로 강제하면 가짜 스킬이 필요함을 확인했다. 최종 설계는 Generation-resolved concrete Definition link와 typed state-command 예외를 사용한다.

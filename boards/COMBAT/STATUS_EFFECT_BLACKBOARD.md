@@ -4,6 +4,55 @@
 
 The pre-cleanup file, including all completed July tasks, is preserved at `boards/ARCHIVE/ACTIVE_BOARD_SNAPSHOT_2026-07-28/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
 
+## Task: 2026-07-31 Common Trigger Skill Recast And Actor Hit Ownership
+
+### Task title
+
+Route conditional skill outcomes through the normal cast pipeline and keep physical damage in Actors.
+
+### Goals
+
+- Route Actor/combat events through `SkillTrigger` gates and back into the same `SkillExecution -> ExecutePrepared -> ExecuteSkill -> family Executor` path used by ordinary casts.
+- Replace runtime raw reaction effects with Generation-resolved concrete family Definition links.
+- Remove direct damage application from `SkillExecution` and family Executors after Actor caller migration.
+
+### Constraints
+
+- Reuse the existing `TryExecuteSkill`, `ExecutePrepared`, family Definitions, Executors and Actors; add no request class, runtime kind, Executor, Actor base class or Skill Implementation script.
+- Preserve CSV schema, authored values, gate asymmetry, dynamic event snapshots, recursion depth, recast generation, targeting, Visual and status behavior.
+- Do not turn cooldown, reload or status-duration state commands into fake Actor skills. Convert `RecastZone` to common Zone recast and keep the remaining non-spatial commands as an explicit typed exception.
+- Phase 10 must reverify the inspected active-skill 37/non-default proc-count-cooldown 0 baseline before sharing those three gates with source-owned reactions. Preserve all other source/passive gate asymmetry.
+- Commit every Phase separately and never activate raw effect and generated Definition execution on the same runtime path.
+
+### Role Owner
+
+Designer for the corrected handoff; Code Builder for Phase 10~15 implementation; Code Reviewer only by explicit user request.
+
+### Status
+
+Design written and code-backed risk review complete. Runtime implementation has not started.
+
+### Next Actions
+
+- Code Builder starts with Phase 10 baseline and commits current outcome counts, callers, direct damage owners and path tests.
+- Follow `boards/COMBAT/SKILL_NODE_RUNTIME_RESOLVER_CONSOLIDATION_HANDOFF.md` Phase 10~15.
+- Update this block and the DATA task after every Phase with command output and commit hash.
+
+### Evidence
+
+- Normal/manual casts use `TryExecuteSkill -> ExecutePrepared -> ExecuteSkill`; learned-skill reactions reach `ExecutePrepared`, while raw effects enter `TryExecuteReactionEffect -> ExecuteCastEffect` and directly choose a family Executor.
+- `SkillTrigger.cs:383,451` sends accepted reactions to `SkillExecution.ExecuteTriggeredReaction`.
+- `SkillExecution.cs:2030,2112` owns direct hit helpers called by Zone, Projectile, Line and Single Actors.
+- `BuffSkillExecutor.cs:173` applies charge contact damage directly; status, heal and shield paths are non-hit support behavior.
+- Generation currently writes raw effects and typed commands, and Editor tests inspect `Effect`, `TargetSkillId` and `Command` separately.
+- `ApplyHitEnhancements` combines OnHit publication, hit count, reload reduction, additional-damage chance and chain period, while current source-owned Trigger gates do not apply the passive count/proc/internal-cooldown sequence.
+- Trigger CSV inspection found active-skill reactions 37/non-default proc-count-internal-cooldown 0 and passive reactions 126/non-default 13, so sharing only those three gates has no current authored active-skill behavior change if Phase 10 reproduces the count.
+
+### History
+
+- 2026-07-31: User clarified that conditional skills must be recast through the normal Executor/Actor route after Actor events pass `SkillTrigger`, even if the base cast path needs refactoring.
+- 2026-07-31: Designer validated the call graph, documented the common recast migration, and separated actual skill outcomes from non-spatial typed commands.
+
 ## Task: 2026-07-31 Skill Node Runtime Resolver Consolidation Handoff Correction
 
 ### Task title

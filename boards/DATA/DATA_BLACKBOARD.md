@@ -542,3 +542,50 @@ User approved Generation/runtime implementation. Phases 1-8 complete. Code Revie
 - 2026-07-31: Code Builder applied Reviewer correction 3 without data-contract changes; reaction multiplier now composes multiplicatively with existing skill modifiers.
 - 2026-07-31: Code Builder applied Reviewer correction 4 without data-contract changes; removed unused catalog access from `SkillTrigger`.
 - 2026-07-31: Code Reviewer completed final PASS; data/CSV path remains unchanged.
+
+## Task: 2026-07-31 Reaction Outcome Definition Materialization
+
+### Task title
+
+Materialize skill-like reaction payloads as concrete family Definitions for the common cast path.
+
+### Goals
+
+- Preserve current Trigger and graph CSV schema while changing Generation output from raw runtime effect payloads to resolved Single, Zone or Buff Definition links.
+- Reuse existing learned Definitions when a reaction executes an existing skill.
+- Keep cooldown, reload and status-duration changes as typed non-skill commands and convert `RecastZone` to a Zone skill outcome.
+
+### Constraints
+
+- Preserve IDs, values, targeting, timing, source attribution, visuals, dynamic event-value policies and current outcome count parity.
+- Do not register auxiliary outcome Definitions in learned active/passive slots or add a runtime kind, Executor, Actor or C# script.
+- Do not enable raw effect and generated Definition outcomes simultaneously.
+- Keep Parsing and authored CSV unchanged unless Phase 10 evidence proves a required value has no existing source.
+
+### Role Owner
+
+Designer for data-contract handoff; Code Builder for Generation and Editor-test migration.
+
+### Status
+
+Design pending implementation. The current completed baseline remains effect 57, learned-skill reference 4, command 21, missing 0 and must be reverified in Phase 10.
+
+### Next Actions
+
+- Inventory every raw effect field and map it to its concrete family Definition field before deleting runtime payload fields.
+- Inventory additional-damage and hit-chain Node payloads currently consumed by `ApplyHitEnhancements`; materialize Definitions only after their proc/count semantics are fixed by tests.
+- Change Editor tests to verify final Definition family/reference and typed command parity instead of the current `Effect`/`TargetSkillId`/`Command` shape.
+- Record each Phase commit and build/EditMode result here and in the primary COMBAT handoff.
+
+### Evidence
+
+- `GameDataCatalogBuilder.Nodes.cs` currently creates raw `SkillCastEffect` values for damage, status and shield outcomes.
+- The same builder creates `RecastZone`, `RefundCooldown`, `ReduceReload` and `ExtendStatusDuration` commands.
+- `SkillCatalogRuntimeTests.cs` directly asserts raw effect fields, command kinds, RecastZone values and outcome-kind counts.
+- `SkillExecution.TryExecuteReaction` currently requires learned runtime data, so raw effects without learned runtimes cannot be migrated by `TargetSkillId` lookup alone.
+- Trigger CSV inspection found 37 active-skill reactions with zero non-default proc/count/internal-cooldown rows and 126 passive reactions with 13 non-default rows; Phase 10 must fix this as the gate-migration baseline.
+
+### History
+
+- 2026-07-31: User approved normal-cast-path reuse for conditional skills.
+- 2026-07-31: Designer selected Generation-resolved Definition references to avoid runtime payload interpretation and runtime catalog lookup, while retaining typed non-spatial command exceptions.
