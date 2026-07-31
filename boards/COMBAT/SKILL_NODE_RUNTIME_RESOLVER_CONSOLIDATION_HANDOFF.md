@@ -56,7 +56,7 @@ Node 의미의 런타임 구현을 Resolver로 통합하고 일반 시전과 조
 - Phase 7 Context 제거, 주석 추상화, 최종 정적 검증 완료.
 - Phase 8 Code Reviewer 책임 수정 완료: `SkillExecutionData` 런타임 lifecycle 조정을 `SkillExecution`으로 이동하고 Core/Editor 프로젝트 빌드를 오류 0개로 통과했다.
 - Phase 9 학습 런타임 목록 재구성 책임을 `UnitSkills`로 이관하고 Core/Editor 프로젝트 빌드를 오류 0개로 통과했다.
-- 일반 시전과 조건부 스킬 결과의 완전한 공통 재시전 및 Actor 피해 적용 정리는 새 승인 범위이며 Phase 10 이후 pending이다.
+- Phase 10~15 공통 재시전, resolved Definition materialization, Trigger forwarding, Actor 피해 적용과 dead contract 정리가 완료됐다. 최종 Code Reviewer 1회 지적은 `b7037d1`에서 수정됐다.
 
 ## Selected Code Builder tracks
 
@@ -670,14 +670,14 @@ Status: complete. Actor physical-hit ownership commit: `6e7ba5a`; `SkillExecutio
 
 ### Phase 15 — dead contract removal and final verification
 
-Status: pending.
+Status: complete. Final cleanup commit: `5213b14`; Code Reviewer found one recast-generation guard regression and Code Builder fixed it in `b7037d1`. Core/Editor builds passed with 0 errors; Unity EditMode remains blocked by another Unity instance using the project.
 
 1. Remove obsolete `SkillReaction.TargetSkillId`, raw `SkillReaction.Effect` payload fields, unsupported `RecastZone` command shape and runtime readers after Generation migration.
 2. Remove obsolete raw fields from `SkillCastEffect`; keep only the resolved Definition link and required execution metadata if normal cast follow-ups still use it.
 3. Update `SkillCatalogRuntimeTests` from outcome-kind counts to concrete Definition family/reference, typed command, dynamic-value, target, visual and timing parity.
 4. Confirm no new `.cs`, runtime kind, Executor, Actor base class, compatibility wrapper or catalog lookup layer was introduced.
 5. Run static searches, Core/Editor builds, Unity compile/console and focused EditMode tests.
-6. Update COMBAT and DATA boards with actual command output and commit the final cleanup separately.
+6. Keep Play Mode gameplay verification user-owned; no further runtime implementation remains in this Phase.
 
 ## Compatibility requirements
 
@@ -844,12 +844,10 @@ Unity-MCP로 editor compile과 console을 확인한다. Play Mode gameplay 검�
 
 ## Next Actions
 
-1. Phase 1~9 구현과 각 Phase 커밋은 기존 완료 baseline이다.
-2. Code Builder는 Phase 10 current outcome/caller/damage-owner baseline부터 시작하고 Phase마다 별도 commit한다.
-3. Phase 11 전에 current raw effect/learned-skill/command outcomes를 concrete Definition 또는 typed command로 전부 분류한다.
-4. actual skill outcome은 common recast로, 비공간 state command는 typed command 예외로 구현한다. `RecastZone`은 common Zone recast로 바꾼다.
-5. Phase 12~14에서 common cast, Trigger gate-only forwarding과 Actor hit ownership을 순서대로 전환하며 runtime에 두 경로를 동시에 켜지 않는다.
-6. Unity EditMode 회귀 테스트와 additional gameplay 검증을 수행한다. Play Mode gameplay 검증은 사용자가 수행한다.
+1. Phase 1~15 구현과 각 Phase 기록 커밋은 완료됐다.
+2. Core/Editor 빌드와 정적 경계 검증은 완료됐다.
+3. Unity EditMode는 다른 Unity 인스턴스가 프로젝트를 점유해 실행하지 못했으므로 사용자 환경에서 재실행한다.
+4. Play Mode gameplay 검증은 사용자가 수행한다.
 
 ## Evidence
 
@@ -906,6 +904,11 @@ Unity-MCP로 editor compile과 console을 확인한다. Play Mode gameplay 검�
   - `SkillCatalogRuntimeTests.cs`는 `Effect`, `TargetSkillId`, `Command` outcome 분포와 RecastZone command 값을 직접 검증하므로 contract migration surface다.
   - current DATA board baseline은 final reactions를 effect 57, learned-skill reference 4, command 21, missing 0으로 기록한다. Code Builder가 Phase 10에서 현재 실행 결과로 재확정한다.
   - Trigger CSV `Import-Csv` 집계는 active-skill files 37 rows/non-default proc·count·internal-cooldown 0, passive file 126 rows/non-default 13이다. generated additional/chain outcome을 위해 이 세 gate만 공통화해도 current active authoring 결과는 바뀌지 않는다.
+- 2026-07-31 Phase 10~14 기록 commits: `05e5b22`, `22e8516`, `3075a5d`, `55ca337`, `dfa7d53`; runtime implementation commits: `e81d7ed`, `6e7ba5a`.
+- 2026-07-31 Phase 15 `5213b14`: `SkillCastEffect`를 resolved Definition link와 실행 metadata로 축소하고, Generation에서 Single/Zone/Buff 결과를 직접 materialize했으며, RecastZone을 공통 Zone 결과로 전환했다.
+- 2026-07-31 Code Reviewer 1회: `MaxGeneration`이 resolved recast 진입점에서 검사되지 않는 문제를 지적했다. Code Builder가 `TryExecuteResolvedEffect`에 `recastGeneration >= MaxGeneration` guard를 복원해 `b7037d1`로 커밋했다.
+- 2026-07-31 수정 후 `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false`와 `Assembly-CSharp-Editor.csproj`가 각각 `빌드했습니다.`로 종료했다. legacy helper/legacy type/direct `ApplyDamage` 경계 검색은 출력이 없었고 `git diff --check`도 통과했다.
+- 2026-07-31 Unity EditMode 실행은 다른 Unity 인스턴스가 같은 프로젝트를 열고 있어 batchmode가 중단됐다. Play Mode와 실제 gameplay 검증은 사용자 소유다.
 
 ## History
 

@@ -4,6 +4,50 @@
 
 The pre-cleanup file, including completed and superseded data tasks, is preserved at `boards/ARCHIVE/ACTIVE_BOARD_SNAPSHOT_2026-07-28/DATA/DATA_BLACKBOARD.md`.
 
+## Task: 2026-07-31 Resolved Skill Outcome Materialization
+
+### Task title
+
+Materialize Trigger skill outcomes as concrete family Definitions during Generation.
+
+### Goals
+
+- Keep `SkillCastEffect` as a small resolved execution link instead of a second raw payload model.
+- Generate Single, Zone and Buff Definitions once, then route learned and generated outcomes through the common runtime path.
+- Preserve authored CSV values, targeting, visual, status, shield, timing and recast metadata.
+
+### Constraints
+
+- Do not change the CSV schema or add a runtime kind, Executor, Actor base class, catalog lookup layer or new Implementation script.
+- Keep cooldown refund, reload reduction and status-duration extension as typed non-spatial commands.
+- Auxiliary generated Definitions must not enter `UnitSkills` learned active/passive lists.
+- Use the existing Generation builders, `UnitSkills.FindByDefinition`, `SkillExecution` and family Executors.
+
+### Role Owner
+
+Code Builder for implementation; Code Reviewer ran once after implementation by explicit user request.
+
+### Status
+
+Complete. Phase records: `05e5b22`, `22e8516`, `3075a5d`, `55ca337`, `dfa7d53`; implementation `5213b14`; recast guard fix `b7037d1`.
+
+### Next Actions
+
+- User performs Unity Play Mode and gameplay parity verification.
+- Reopen this task only if runtime evidence identifies a data-generation regression.
+
+### Evidence
+
+- `GameDataCatalogBuilder.Nodes.cs` now writes concrete Single/Zone/Buff Definition references into `SkillCastEffect`.
+- `SkillReaction.TargetSkillId` and raw `SkillCastEffect` damage/status/shield/targeting payload fields have no runtime readers.
+- Core and Editor project builds both ended with `빌드했습니다.`; static legacy-contract and direct-damage boundary searches returned no output.
+- Unity EditMode batchmode was blocked because another Unity instance had this project open.
+
+### History
+
+- 2026-07-31: Code Builder completed Generation materialization, common execution routing, Actor hit ownership and raw contract cleanup with per-Phase commits.
+- 2026-07-31: Code Reviewer found the resolved Recast path did not enforce `MaxGeneration`; Code Builder restored the guard in `b7037d1`.
+
 ## Task: 2026-07-28 Skill Trigger / Node Data Contract Design
 
 ### Task title

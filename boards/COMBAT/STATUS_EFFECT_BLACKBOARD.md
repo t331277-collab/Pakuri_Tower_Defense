@@ -30,13 +30,12 @@ Designer for the corrected handoff; Code Builder for Phase 10~15 implementation;
 
 ### Status
 
-Design written and code-backed risk review complete. Runtime implementation has not started.
+Phase 10~15 implementation complete. Phase records: `05e5b22`, `22e8516`, `3075a5d`, `55ca337`, `dfa7d53`; runtime cleanup: `5213b14`; reviewer fix: `b7037d1`. Core/Editor builds pass with 0 errors. Unity EditMode is blocked by another Unity instance; Play Mode remains user-owned.
 
 ### Next Actions
 
-- Code Builder starts with Phase 10 baseline and commits current outcome counts, callers, direct damage owners and path tests.
-- Follow `boards/COMBAT/SKILL_NODE_RUNTIME_RESOLVER_CONSOLIDATION_HANDOFF.md` Phase 10~15.
-- Update this block and the DATA task after every Phase with command output and commit hash.
+- User performs Unity Play Mode gameplay verification for normal casts, Trigger reactions, recast generation, delay/repeat, targeting and dynamic damage.
+- No further Code Builder runtime phase remains unless gameplay verification finds a code-backed regression.
 
 ### Evidence
 
@@ -47,11 +46,16 @@ Design written and code-backed risk review complete. Runtime implementation has 
 - Generation currently writes raw effects and typed commands, and Editor tests inspect `Effect`, `TargetSkillId` and `Command` separately.
 - `ApplyHitEnhancements` combines OnHit publication, hit count, reload reduction, additional-damage chance and chain period, while current source-owned Trigger gates do not apply the passive count/proc/internal-cooldown sequence.
 - Trigger CSV inspection found active-skill reactions 37/non-default proc-count-internal-cooldown 0 and passive reactions 126/non-default 13, so sharing only those three gates has no current authored active-skill behavior change if Phase 10 reproduces the count.
+- Phase 10~15 implementation used the existing six Implementation scripts; no new Skill Implementation script, runtime kind, Executor or Actor base class was added.
+- Final static checks found zero `TryExecuteReactionEffect`, Trigger-specific outcome helpers, `ApplyResolvedHits`, `ApplyHitEnhancements`, `SkillStatus`, `SingleSkillRules`, or direct `ApplyDamage` calls in `SkillExecution` and family Executors.
+- Core and Editor project builds both ended with `빌드했습니다.`; `git diff --check` passed. Unity batchmode was blocked by an already-open Unity instance for this project.
 
 ### History
 
 - 2026-07-31: User clarified that conditional skills must be recast through the normal Executor/Actor route after Actor events pass `SkillTrigger`, even if the base cast path needs refactoring.
 - 2026-07-31: Designer validated the call graph, documented the common recast migration, and separated actual skill outcomes from non-spatial typed commands.
+- 2026-07-31: Code Builder completed Phase 10~14 and committed each phase record, then committed Phase 15 resolved-outcome contract cleanup in `5213b14`.
+- 2026-07-31: Code Reviewer ran once, found the missing Recast `MaxGeneration` guard, and Code Builder fixed it in `b7037d1`.
 
 ## Task: 2026-07-31 Skill Node Runtime Resolver Consolidation Handoff Correction
 
