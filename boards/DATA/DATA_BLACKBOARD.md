@@ -454,3 +454,57 @@ Code implementation and non-Play-Mode verification complete.
 
 - 2026-07-30: User approved final family Generation and requested implementation after a written handoff.
 - 2026-07-30: Code Builder completed final family Generation and catalog verification.
+
+## Task: 2026-07-31 Trigger Reaction Generation Consolidation Design
+
+### Task title
+
+Generate Trigger conditions as existing skill/passive/Choice reaction Nodes instead of runtime Trigger Definitions.
+
+### Goals
+
+- Keep current Trigger CSV and Trigger-owned graph CSV as the first migration authoring source.
+- Attach generated reaction conditions and execution-data adjustments to existing Skill, Passive, and Choice Node ownership.
+- Stop generating hidden Trigger SkillDefinitions after the common runtime path is verified.
+
+### Constraints
+
+- Add no authoring schema or C# script in the first migration.
+- Preserve the single Parsing -> Validation -> Generation -> RuntimeCatalog flow.
+- Preserve IDs, values, ordering, asset paths, and current working outcomes.
+- Restore the approved 17 event outcomes and 64 normal cast outcomes without mixing their ownership.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+User approved Generation/runtime implementation. Phase 1 semantic catalog baseline and verification complete.
+
+### Next Actions
+
+- Preserve the current Parsing/Validation source contract while Phase 2 verifies snapshot routing.
+- Fold Trigger results into existing Skill/Choice/Passive generation in later phases.
+
+### Evidence
+
+- Full design: `boards/COMBAT/SKILL_TRIGGER_REACTION_LOGIC_CONSOLIDATION_HANDOFF.md`.
+- Current `GameDataCatalogBuilder` builds `SkillTriggerDefinition`, hidden direct-delivery Definitions, one RecastZone command, and a hidden ChainLightning Definition.
+- Current authoring contains 158 Trigger rows and 606 Trigger-owned graph Nodes.
+- Current runtime outcomes are 55 skill deliveries and 22 typed commands including one Zone recast; 81 owners have no runtime outcome.
+- Trigger CSV and graph Node contracts already contain the required event, condition, targeting, value-source, timing, and visual data, so the first migration needs no new schema.
+- Semantic audit found 65 working Trigger reactions, 17 event-driven rows with no final outcome, and 76 rows that belong to ordinary Skill/Choice/Passive execution.
+- The 76 non-Trigger rows are 75 OnCast rows plus `vega-b-master1-second-slash`, a same-source follow-up.
+- The technical no-outcome 81 split into 64 OnCast modifiers and 17 incomplete event reactions; Generation must not treat those groups the same.
+- `SkillCatalogRuntimeTests.TriggerSemanticClassificationBaselineIsStable` fixes the Generation result classification at `65/17/76`.
+- Phase 1 solution build completed with error 0; Unity focused EditMode test passed 1/1 and loaded catalog 5/8/8.
+
+### History
+
+- 2026-07-31: User required integration rather than moving the old runtime class to another script.
+- 2026-07-31: Designer recorded a Generation migration that retains the current authoring source while removing the final runtime Trigger Definition and hidden skill output.
+- 2026-07-31: User clarified the semantic boundary using Ariel-B trait 4 versus traits 1~3 and 5.
+- 2026-07-31: Designer corrected the Generation plan so ordinary cast/modifier rows do not become Trigger reactions.
+- 2026-07-31: User approved restoration of both the 17 event outcomes and 64 normal cast outcomes and assigned Code Builder.
+- 2026-07-31: Code Builder completed Phase 1 semantic catalog baseline verification.

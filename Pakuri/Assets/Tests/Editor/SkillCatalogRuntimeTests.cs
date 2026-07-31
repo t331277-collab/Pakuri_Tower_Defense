@@ -432,7 +432,51 @@ public sealed class SkillCatalogRuntimeTests
             triggers.FindAll(trigger =>
                 trigger.TriggeredSkill is BuffSkillDefinition buff
                 && buff.EffectKind == BuffEffectKind.Shield),
-            Has.Count.EqualTo(3));
+                Has.Count.EqualTo(3));
+    }
+
+    [Test]
+    public void TriggerSemanticClassificationBaselineIsStable()
+    {
+        GameDataLoader.EnsureInitialized();
+        var triggers = new List<SkillTriggerDefinition>();
+        foreach (var monster in GameDataLoader.CurrentCatalog.Monsters)
+        {
+            triggers.AddRange(monster.SkillTriggers);
+        }
+
+        var nonTriggers = triggers.FindAll(trigger =>
+            trigger.TriggerEvent == SkillTriggerEvent.OnCast
+            || (trigger.TriggerEvent == SkillTriggerEvent.OnSkillCast
+                && (trigger.EventSkillIds == null || trigger.EventSkillIds.Length == 0)));
+        var semanticTriggers = triggers.FindAll(trigger => !nonTriggers.Contains(trigger));
+        var workingTriggers = semanticTriggers.FindAll(trigger =>
+            trigger.TriggeredSkill != null || trigger.Command != null);
+        var incompleteTriggers = semanticTriggers.FindAll(trigger =>
+            trigger.TriggeredSkill == null && trigger.Command == null);
+
+        Assert.That(workingTriggers, Has.Count.EqualTo(65));
+        Assert.That(incompleteTriggers, Has.Count.EqualTo(17));
+        Assert.That(nonTriggers, Has.Count.EqualTo(76));
+        Assert.That(
+            nonTriggers.FindAll(trigger => trigger.TriggerEvent == SkillTriggerEvent.OnCast),
+            Has.Count.EqualTo(75));
+        Assert.That(
+            nonTriggers.FindAll(trigger =>
+                trigger.TriggerId == "vega-b-master1-second-slash"),
+            Has.Count.EqualTo(1));
+        Assert.That(
+            workingTriggers.Exists(trigger =>
+                trigger.TriggerId == "ariel-b-trait4-shield-expire"),
+            Is.True);
+        Assert.That(
+            incompleteTriggers.Exists(trigger =>
+                trigger.TriggerId == "eve-b-master-2"),
+            Is.True);
+        Assert.That(
+            nonTriggers.Exists(trigger =>
+                trigger.TriggerId == "ariel-b-trait-5"),
+            Is.True);
     }
 
     [Test]

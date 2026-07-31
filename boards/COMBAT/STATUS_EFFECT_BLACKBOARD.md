@@ -883,3 +883,59 @@ Complete.
 
 - 2026-07-31: User requested a minimal formula-only Code Builder fix.
 - 2026-07-31: Code Builder changed both shared `LowestHealth` comparison paths without adding a class or targeting mode.
+
+## Task: 2026-07-31 Skill Trigger Reaction Logic Consolidation Design
+
+### Task title
+
+Remove the separate Trigger skill Definition and consolidate reactions through existing skill snapshots and Executors.
+
+### Goals
+
+- Keep `SkillTrigger.cs` as the single event and condition judge.
+- Replace hidden TriggeredSkill Definitions with original or explicitly targeted skill snapshots.
+- Record common-path conversions for cross-skill passives, event-derived damage, direct delivery, Actor-less passives, Zone recast, ChainLightning, and recursion.
+
+### Constraints
+
+- Add no C# script, Trigger Executor, Trigger Actor, event bus, or replacement Definition hierarchy.
+- Do not copy `SkillTriggerDefinition` into another script.
+- Preserve current working outcomes while restoring the approved 17 event effects and 64 normal cast effects.
+- Keep event conditions in `SkillTrigger` and effect ownership in existing Skill/Choice/Passive execution.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+User approved effect restoration and Code Builder implementation. Phase 1 baseline test and verification complete.
+
+### Next Actions
+
+- Implement Phase 2 snapshot-driven executor routing.
+- Commit and verify each remaining phase separately.
+- Run the approved Code Reviewer loop after Phase 8.
+
+### Evidence
+
+- Current design: `boards/COMBAT/SKILL_TRIGGER_REACTION_LOGIC_CONSOLIDATION_HANDOFF.md`.
+- Inspected CSV join found 158 Trigger rows, 606 Trigger-owned Nodes, 77 runtime outcomes, and 81 no-runtime-outcome owners.
+- The 77 outcomes are 27 damage, 21 status, 3 shield, 4 existing-skill execution, and 22 typed commands.
+- The 27 damage outcomes split into 7 event-value reactions and 20 independently targeted/ranged/visual reactions.
+- Learned passive source skills own 40 runtime outcomes.
+- Existing code retains depth 8 in `SkillExecution`, generation 1 for `eve-e-master-1`, and ChainLightning delay 0.5, multiplier 0.5, radius 7, and primary exclusion.
+- Semantic re-audit split the 158 rows into 65 working Trigger reactions, 17 Trigger-intent rows with no runtime outcome, and 76 non-Trigger rows.
+- The 76 non-Trigger rows are 75 OnCast rows and one same-source OnSkillCast follow-up.
+- Ariel-B trait 1~3 are direct Choice modifiers, trait 4 is an OnShieldExpire damage Trigger, trait 5 is an OnCast status modifier with no current runtime outcome, and master 2 is an OnShieldAbsorb damage Trigger.
+- `SkillCatalogRuntimeTests.TriggerSemanticClassificationBaselineIsStable` fixes the semantic `65/17/76` owner classification.
+- Phase 1 solution build completed with error 0; Unity focused EditMode test passed 1/1 and loaded catalog 5/8/8.
+
+### History
+
+- 2026-07-31: User required an MD that integrates the existing blockers without adding scripts or relocating the old class contents.
+- 2026-07-31: Designer wrote the common snapshot and existing-Executor consolidation handoff and preserved the earlier implemented handoff as baseline evidence.
+- 2026-07-31: User clarified that ordinary modifiers and cast-time payloads are not Trigger reactions.
+- 2026-07-31: Designer re-audited all 158 rows and corrected the handoff to separate working Triggers, incomplete Trigger intent, and non-Trigger authoring.
+- 2026-07-31: User approved restoring the 17 event-driven effects and 64 normal cast effects, assigned Code Builder, and required per-phase commits plus Reviewer approval.
+- 2026-07-31: Code Builder completed the Phase 1 classification baseline.

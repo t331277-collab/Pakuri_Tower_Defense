@@ -42,7 +42,8 @@ Code Builder tracks:
 
 ### Skill Trigger Executor Reuse
 
-- Approved design handoff: `boards/COMBAT/SKILL_TRIGGER_EXECUTOR_REUSE_HANDOFF.md`
+- Current consolidation design: `boards/COMBAT/SKILL_TRIGGER_REACTION_LOGIC_CONSOLIDATION_HANDOFF.md`
+- Implemented baseline handoff: `boards/COMBAT/SKILL_TRIGGER_EXECUTOR_REUSE_HANDOFF.md`
 - Combat-side current task: `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`
 - Data-contract current task: `boards/DATA/DATA_BLACKBOARD.md`
 
