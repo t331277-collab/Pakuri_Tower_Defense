@@ -909,11 +909,11 @@ Code Builder.
 
 ### Status
 
-User approved effect restoration and Code Builder implementation. Phases 1-8 complete. Code Reviewer correction 1 is implemented and awaits re-review.
+User approved effect restoration and Code Builder implementation. Phases 1-8 complete. Code Reviewer corrections 1-2 are implemented and await re-review.
 
 ### Next Actions
 
-- Commit Code Reviewer correction 1 separately.
+- Commit Code Reviewer correction 2 separately.
 - Re-run Code Reviewer and correct findings until approval.
 
 ### Evidence
@@ -952,6 +952,7 @@ User approved effect restoration and Code Builder implementation. Phases 1-8 com
 - C# search finds zero `SkillTriggerDefinition` references; solution build error 0, Unity Console error 0, and full EditMode tests passed 15/15.
 - Reviewer correction 1 removes the duplicate `ariel-a-master-2` cast payload, restores Vega B's delayed 0.45 same-skill line follow-up with silence and prepared aim, preserves Ariel C's prepared center, and reapplies passive effects after runtime Choice rebuild.
 - Final normal cast/passive payload count is 73; solution build error 0, Unity Console error 0, and full EditMode tests passed 15/15.
+- Reviewer correction 2 prevents Vega B's delayed self-reuse from scheduling the same normal follow-up again; other common reaction executions retain normal cast effects.
 
 ### History
 
@@ -969,3 +970,4 @@ User approved effect restoration and Code Builder implementation. Phases 1-8 com
 - 2026-07-31: Code Builder completed Phase 7 Zone and Chain snapshot reuse.
 - 2026-07-31: Code Builder completed Phase 8 obsolete contract deletion and existing-node reaction ownership.
 - 2026-07-31: Code Reviewer requested four behavior corrections; Code Builder implemented them through existing common paths.
+- 2026-07-31: Code Reviewer found the Vega B asynchronous self-follow-up recursion; Code Builder disabled nested cast effects for that one reuse.

@@ -221,7 +221,8 @@ namespace Pakuri.InGame
             bool lockToEventTarget,
             bool publishSkillLifecycleEvents,
             bool beginCast,
-            StatusApplicationSpec onHitStatusOverride = null)
+            StatusApplicationSpec onHitStatusOverride = null,
+            bool executeCastEffects = true)
         {
             if (entry == null
                 || runtime == null
@@ -268,7 +269,8 @@ namespace Pakuri.InGame
                     eventTarget,
                     lockToEventTarget,
                     publishSkillLifecycleEvents,
-                    recastGeneration);
+                    recastGeneration,
+                    executeCastEffects);
             }
             finally
             {
@@ -338,7 +340,8 @@ namespace Pakuri.InGame
             UnitCombatState eventTarget = null,
             bool lockToEventTarget = false,
             bool publishSkillLifecycleEvents = true,
-            int recastGeneration = 0)
+            int recastGeneration = 0,
+            bool executeCastEffects = true)
         {
             if (beginCast && !runtime.CanCastWithData(snapshot))
             {
@@ -409,7 +412,10 @@ namespace Pakuri.InGame
                     monsterActor.TryPlayActiveSkillAnimation();
                 }
 
-                ExecuteCastEffects(context, snapshot);
+                if (executeCastEffects)
+                {
+                    ExecuteCastEffects(context, snapshot);
+                }
 
                 if (publishSkillLifecycleEvents)
                 {
@@ -631,7 +637,8 @@ namespace Pakuri.InGame
                     false,
                     false,
                     false,
-                    effect.OnHitStatusOverride);
+                    effect.OnHitStatusOverride,
+                    false);
             }
 
             var snapshot = sourceSnapshot.CopyWithDamageMultiplier(1f);
