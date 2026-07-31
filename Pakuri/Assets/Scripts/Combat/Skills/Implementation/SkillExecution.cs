@@ -931,7 +931,8 @@ namespace Pakuri.InGame
             if (effect.IsRecast)
             {
                 var zone = effect.ResolvedDefinition as ZoneSkillDefinition;
-                if (zone == null)
+                if (zone == null
+                    || recastGeneration >= Math.Max(1, effect.MaxGeneration))
                 {
                     return false;
                 }
