@@ -645,7 +645,7 @@ Status: complete. Common cast routing implementation commit: `e81d7ed`; normal a
 
 ### Phase 13 — Trigger gate and scheduling only
 
-Status: pending.
+Status: complete. Trigger forwarding and scheduling implementation commit: `e81d7ed`; gate asymmetry remains explicit, accepted skill outcomes use the resolved common execution entry, and typed state commands remain the non-skill exception. Core/Editor build: 0 errors.
 
 1. Keep event, source scope, status, attribute, choice, count, proc, internal cooldown, delay and repeat ownership in `SkillTrigger`.
 2. Snapshot event-derived values before delay so later shield/status changes do not alter the queued reaction.
