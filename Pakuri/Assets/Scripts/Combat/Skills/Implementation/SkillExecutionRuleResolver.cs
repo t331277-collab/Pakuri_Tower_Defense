@@ -60,6 +60,127 @@ namespace Pakuri.InGame
             return snapshot;
         }
 
+        /// 학습이 끝난 스킬의 고정 실행값을 런타임 상태에 기록한다.
+        internal static void InitializeRuntimeValues(
+            SkillExecutionData runtime,
+            SkillExecutionData snapshot)
+        {
+            if (runtime == null)
+            {
+                return;
+            }
+
+            var previousMax = runtime.effectiveMaxMagazineSize;
+            var nextMax = CalculateMaxMagazineSize(runtime.Data);
+            var nextBurst = BurstProjectileCount(runtime.Data);
+            runtime.effectiveReloadDuration = CalculateReloadDuration(runtime.Data);
+            runtime.effectiveTickInterval = TickInterval(runtime.Data);
+            runtime.effectiveBurstInterval = BurstInterval(runtime.Data);
+            runtime.effectiveCooldownDuration = CooldownDuration(runtime.Data);
+
+            if (snapshot != null)
+            {
+                nextMax = Math.Max(0, nextMax + snapshot.MagazineBonus);
+                if (nextBurst > 1)
+                {
+                    nextBurst += snapshot.AdditionalProjectileBonus;
+                }
+
+                runtime.effectiveReloadDuration *= Mathf.Max(
+                    0f,
+                    snapshot.ReloadTimeMultiplier);
+                runtime.effectiveTickInterval *= Mathf.Max(
+                    0f,
+                    snapshot.ShotIntervalMultiplier);
+                runtime.effectiveBurstInterval *= Mathf.Max(
+                    0f,
+                    snapshot.ShotIntervalMultiplier);
+                runtime.effectiveCooldownDuration *= Mathf.Max(
+                    0f,
+                    snapshot.CooldownMultiplier);
+            }
+
+            runtime.effectiveMaxMagazineSize = nextMax;
+            runtime.effectiveBurstProjectileCount = Math.Max(1, nextBurst);
+            if (previousMax == runtime.effectiveMaxMagazineSize)
+            {
+                return;
+            }
+
+            if (runtime.effectiveMaxMagazineSize <= 0)
+            {
+                runtime.MagazineRemaining = 0;
+                runtime.ReloadRemaining = 0f;
+                return;
+            }
+
+            if (previousMax <= 0)
+            {
+                runtime.MagazineRemaining = runtime.effectiveMaxMagazineSize;
+                return;
+            }
+
+            var delta = runtime.effectiveMaxMagazineSize - previousMax;
+            runtime.MagazineRemaining = Mathf.Clamp(
+                runtime.MagazineRemaining + delta,
+                0,
+                runtime.effectiveMaxMagazineSize);
+            if (runtime.MagazineRemaining > 0)
+            {
+                runtime.ReloadRemaining = 0f;
+            }
+        }
+
+        /// 정의된 탄창 용량을 실행 가능한 값으로 만든다.
+        private static int CalculateMaxMagazineSize(SkillDefinition data)
+        {
+            return data != null ? Math.Max(0, data.MagazineCapacity) : 0;
+        }
+
+        /// 한 시전에 이어지는 발사 횟수를 계산한다.
+        private static int BurstProjectileCount(SkillDefinition data)
+        {
+            var projectile = data as ProjectileSkillDefinition;
+            return projectile?.Projectile != null
+                ? Math.Max(1, projectile.Projectile.BurstProjectileCount)
+                : 1;
+        }
+
+        /// 재장전 시간을 실행 가능한 값으로 만든다.
+        private static float CalculateReloadDuration(SkillDefinition data)
+        {
+            return data != null ? Mathf.Max(0f, data.ReloadSeconds) : 0f;
+        }
+
+        /// 주기 실행 간격을 계산한다.
+        private static float TickInterval(SkillDefinition data)
+        {
+            return data?.Timing != null
+                ? Mathf.Max(0f, data.Timing.TickInterval)
+                : 0f;
+        }
+
+        /// 연사 간격을 계산한다.
+        private static float BurstInterval(SkillDefinition data)
+        {
+            var projectile = data as ProjectileSkillDefinition;
+            if (projectile?.Projectile != null
+                && projectile.Projectile.BurstIntervalSeconds > 0f)
+            {
+                return projectile.Projectile.BurstIntervalSeconds;
+            }
+
+            return TickInterval(data);
+        }
+
+        /// 재사용 대기시간을 계산한다.
+        private static float CooldownDuration(SkillDefinition data)
+        {
+            return data?.Timing != null
+                ? Mathf.Max(0f, data.Timing.Cooldown)
+                : 0f;
+        }
+
         /// 지속 강화의 공통 보정을 실행값에 합친다.
         private static void ApplyPassiveBaseModifiers(
             SkillExecutionData snapshot,
@@ -107,8 +228,7 @@ namespace Pakuri.InGame
             foreach (var choiceId in choiceIds)
             {
                 var choice = owner.SkillState.FindChoice(choiceId);
-                if (AppliesToSkill(choice, skill)
-                    && MeetsSourceStatusRequirements(choice, skill.SkillId, owner))
+                if (AppliesToSkill(choice, skill))
                 {
                     snapshot.AddActiveChoiceId(choice.ChoiceId);
                     ApplyChoice(snapshot, choice);
@@ -1290,65 +1410,6 @@ namespace Pakuri.InGame
             }
 
             return bonus;
-        }
-
-        /// 시전자의 상태 조건을 모두 판정한다.
-        internal static bool MeetsSourceStatusRequirements(
-            SkillChoice choice,
-            string targetSkillId,
-            UnitCombatState owner)
-        {
-            if (choice == null || choice.Nodes == null)
-            {
-                return false;
-            }
-
-            SkillNode[] nodes = choice.Nodes;
-            for (var i = 0; i < nodes.Length; i++)
-            {
-                if (nodes[i] == null
-                    || !string.Equals(nodes[i].TargetSkillId, targetSkillId, System.StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                SourceStatusRequirementOp? requirement = nodes[i].GetOperation<SourceStatusRequirementOp>();
-                if (!requirement.HasValue)
-                {
-                    continue;
-                }
-
-                if (!HasSourceStatus(
-                    owner,
-                    requirement.Value.Condition.StatusKind,
-                    requirement.Value.Condition.MinimumStacks))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        /// 시전자가 요구 상태를 보유하는지 확인한다.
-        private static bool HasSourceStatus(
-            UnitCombatState owner,
-            StatusEffectKind statusKind,
-            int minimumStacks)
-        {
-            if (statusKind == StatusEffectKind.None)
-            {
-                return true;
-            }
-            if (statusKind == StatusEffectKind.Shield)
-            {
-                return owner != null
-                    && owner.Resources != null
-                    && owner.Resources.CurrentShield > 0f;
-            }
-            return owner != null
-                && owner.Statuses != null
-                && owner.Statuses.GetStacks(statusKind) >= Mathf.Max(1, minimumStacks);
         }
 
         /// 대상이 요구 중첩을 충족하는지 확인한다.

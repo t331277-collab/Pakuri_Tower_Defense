@@ -188,15 +188,4 @@ namespace Pakuri.InGame
         public float TargetHealthRatioBonus { get; }
     }
 
-    /// 시전자에게 요구되는 상태 조건을 나타낸다.
-    public readonly struct SourceStatusRequirementOp
-    {
-        /// 시전자에게 필요한 상태 조건을 고정한다.
-        public SourceStatusRequirementOp(StatusEffectKind statusKind, int minimumStacks)
-        {
-            Condition = new StatusStackCondition(statusKind, minimumStacks);
-        }
-
-        public StatusStackCondition Condition { get; }
-    }
 }

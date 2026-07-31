@@ -250,6 +250,9 @@ namespace Pakuri.InGame
                     }
                 }
             }
+
+            InitializeLearnedRuntimeValues(owner, activeSkills);
+            InitializeLearnedRuntimeValues(owner, passiveSkills);
         }
 
         private readonly List<SkillExecutionData> activeSkills = new List<SkillExecutionData>();
@@ -320,6 +323,32 @@ namespace Pakuri.InGame
             }
 
             skills.Add(instance);
+        }
+
+        /// 학습이 끝난 스킬의 고정 실행값을 한 번 계산한다.
+        private static void InitializeLearnedRuntimeValues(
+            UnitCombatState owner,
+            IReadOnlyList<SkillExecutionData> skills)
+        {
+            if (owner == null || skills == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < skills.Count; i++)
+            {
+                var runtime = skills[i];
+                if (runtime == null)
+                {
+                    continue;
+                }
+
+                var snapshot = SkillExecutionRuleResolver.BuildExecutionData(
+                    owner,
+                    runtime,
+                    null);
+                SkillExecutionRuleResolver.InitializeRuntimeValues(runtime, snapshot);
+            }
         }
 
         /// 활성·지속 목록에서 식별자가 같은 스킬을 찾는다.
@@ -562,8 +591,7 @@ namespace Pakuri.InGame
                     choiceSkillId = choice.TargetSkillId;
                 }
 
-                if (!string.Equals(choiceSkillId, skillId, StringComparison.OrdinalIgnoreCase)
-                    || !SkillExecutionRuleResolver.MeetsSourceStatusRequirements(choice, skillId, owner))
+                if (!string.Equals(choiceSkillId, skillId, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }

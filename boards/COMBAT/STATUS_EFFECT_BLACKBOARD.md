@@ -1258,3 +1258,51 @@ Complete. 전체 주석 정비와 비게임플레이 검증을 완료했다.
 
 - 2026-08-01: 사용자가 Code Builder에게 Combat Skills 전체 코드의 역할, 책임, 메소드 주석을 추상적이고 간결한 표현으로 정비하도록 요청했다.
 - 2026-08-01: Code Builder가 Definitions, Implementation, Activation 28개 파일을 모두 읽고 주석만 수정한 뒤 선언 누락, 금지 문자, 본문 불변과 솔루션 빌드를 검증했다.
+
+## Task: 2026-08-01 Learned Skill Runtime Initialization
+
+### Task title
+
+학습 시점에 스킬 실행값을 확정하고 전투 중 학습 강화 재판정을 제거한다.
+
+### Goals
+
+- 학습된 스킬의 쿨다운, 재장전, 연사, 탄창 실행값을 `RebuildLearnedSkillState` 완료 시 한 번 계산한다.
+- 매 시전마다 실행값을 다시 반영하던 `RefreshRuntimeModifiers`를 제거한다.
+- 학습 선택에 붙은 `RequiredSourceStatus`가 전투 중 강화 적용 여부를 바꾸지 않도록 고정한다.
+- Trigger 사건의 `RequiredSourceStatus` 게이트와 적중 대상 상태 기반 효과는 별도 의미이므로 보존한다.
+
+### Constraints
+
+- 전투 중 학습과 강화 획득은 발생하지 않는다는 사용자 규칙을 기준으로 한다.
+- `SkillExecutionData`의 스킬별 진행 상태와 `UnitSkills`의 스킬 목록 구조를 유지한다.
+- 새 스크립트를 만들지 않고 기존 Resolver, `UnitSkills`, `SkillExecutionData` 경로를 재사용한다.
+- Unity Play Mode gameplay 검증은 사용자 소유다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation complete. 솔루션 빌드와 정적 잔존 경로 검사를 완료했다.
+
+### Next Actions
+
+- 사용자 Play Mode에서 학습 강화가 스킬 시작 시점에만 반영되는지 확인한다.
+- Trigger 상태 게이트가 기존 사건 경로에서 계속 판정되는지 확인한다.
+
+### Evidence
+
+- `UnitSkills.RebuildLearnedSkillState`가 active, passive 런타임 목록을 구성한 뒤 `SkillExecutionRuleResolver.BuildExecutionData`와 `InitializeRuntimeValues`를 호출한다.
+- `SkillExecution.ResetRuntimeState`는 기본 실행값을 Resolver의 초기화 경로로 넘기며, `CanCastWithData`와 `TryBeginCast`에는 `RefreshRuntimeModifiers` 호출이 없다.
+- `rg -n "RefreshRuntimeModifiers|MeetsSourceStatusRequirements|SourceStatusRequirementOp" Pakuri/Assets/Scripts Pakuri/Assets/Tests` 결과는 0건이다.
+- 학습 Choice CSV의 `RequiredSourceStatus` 행은 0건이며, Trigger CSV의 동일 조건 행 4건은 보존했다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:q`는 오류 0개, 기존 참조 충돌 경고 2개로 완료했다.
+- `git diff --check`가 통과했다.
+
+### History
+
+- 2026-08-01: 사용자가 학습 시점에만 강화 조건과 유효 실행값을 판정하고 전투 중 재판정을 제거하도록 요청했다.
+- 2026-08-01: Code Builder가 유효 실행값 계산을 Resolver의 초기화 경로로 이동하고 `RefreshRuntimeModifiers`, 학습 Choice 상태 게이트와 관련 Node 경로를 제거했다.
+- 2026-08-01: Trigger 상태 게이트와 적중 대상 상태 기반 Node는 별도 사건 의미로 분류해 보존하고 빌드와 정적 검사를 통과시켰다.

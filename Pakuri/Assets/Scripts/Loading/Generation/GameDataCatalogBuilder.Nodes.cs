@@ -1162,13 +1162,6 @@ namespace Pakuri.Data
 				GetParam(node, "target_skill_id"),
 				GetFloatParam(node, "seconds_per_hit", 0f)));
 		}
-		if (string.Equals(text, "RequiredSourceStatus", StringComparison.OrdinalIgnoreCase))
-		{
-			StatusEffectKind statusKind = StatusValueParser.ParseStatusKind(GetParam(node, "status_id"));
-			return SkillNode.FromOperation(new SourceStatusRequirementOp(
-				statusKind,
-				GetIntParam(node, "min_stacks", 1)));
-		}
 		var skillActionOp = MapSkillActionOp(node, text);
 		return SkillNode.FromOperation(skillActionOp);
 	}
