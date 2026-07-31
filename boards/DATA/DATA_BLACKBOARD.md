@@ -480,12 +480,11 @@ Code Builder.
 
 ### Status
 
-User approved Generation/runtime implementation. Phase 1 semantic catalog baseline and verification complete.
+User approved Generation/runtime implementation. Phases 1-2 complete; Parsing and Generation contracts remain unchanged.
 
 ### Next Actions
 
-- Preserve the current Parsing/Validation source contract while Phase 2 verifies snapshot routing.
-- Fold Trigger results into existing Skill/Choice/Passive generation in later phases.
+- Implement Phase 3 existing-skill reactions without changing the authoring schema.
 
 ### Evidence
 
@@ -499,6 +498,7 @@ User approved Generation/runtime implementation. Phase 1 semantic catalog baseli
 - The technical no-outcome 81 split into 64 OnCast modifiers and 17 incomplete event reactions; Generation must not treat those groups the same.
 - `SkillCatalogRuntimeTests.TriggerSemanticClassificationBaselineIsStable` fixes the Generation result classification at `65/17/76`.
 - Phase 1 solution build completed with error 0; Unity focused EditMode test passed 1/1 and loaded catalog 5/8/8.
+- Phase 2 changed no CSV, Parsing, Validation, or Generation contract; runtime-kind family verification passed 13/13.
 
 ### History
 
@@ -508,3 +508,4 @@ User approved Generation/runtime implementation. Phase 1 semantic catalog baseli
 - 2026-07-31: Designer corrected the Generation plan so ordinary cast/modifier rows do not become Trigger reactions.
 - 2026-07-31: User approved restoration of both the 17 event outcomes and 64 normal cast outcomes and assigned Code Builder.
 - 2026-07-31: Code Builder completed Phase 1 semantic catalog baseline verification.
+- 2026-07-31: Code Builder completed Phase 2 without changing the data contract.

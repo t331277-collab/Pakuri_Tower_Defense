@@ -688,6 +688,11 @@ SkillTrigger 공통 gate
 
 - 일반 스킬 동작을 바꾸지 않고 `SkillExecutionData`의 기존 runtime kind로 같은 family Executor가 선택되는지 검증.
 - 모든 일반 skill family 회귀를 먼저 통과.
+- 완료 증거:
+  - `SkillExecution`의 preparation과 Executor 분배가 `SkillRuntimeKind`를 공통 기준으로 사용한다.
+  - 기존 concrete Definition은 family 값 검증에만 사용하며 새 Executor나 Definition을 추가하지 않았다.
+  - `RuntimeKindsMatchExistingExecutorFamilies`가 Monster, Enemy, Trigger 결과 Definition 전체의 kind/family 대응을 검증한다.
+  - solution build 오류 0, Unity EditMode 13/13 통과.
 
 ### Phase 3: Existing-skill reactions
 
@@ -830,3 +835,4 @@ SkillTrigger 공통 gate
 - 2026-07-31: User approved preserving event conditions, restoring the 17 incomplete Trigger effects through existing effect execution, and restoring the 64 non-Trigger modifiers through normal Skill/Choice/Passive execution.
 - 2026-07-31: User assigned Code Builder, required one Git commit per Phase, and approved repeated Code Reviewer correction passes until approval.
 - 2026-07-31: Code Builder completed Phase 1 semantic baseline test and non-Play-Mode verification.
+- 2026-07-31: Code Builder completed Phase 2 runtime-kind executor routing and full EditMode verification.

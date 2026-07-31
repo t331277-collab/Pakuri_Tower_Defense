@@ -909,11 +909,11 @@ Code Builder.
 
 ### Status
 
-User approved effect restoration and Code Builder implementation. Phase 1 baseline test and verification complete.
+User approved effect restoration and Code Builder implementation. Phases 1-2 complete.
 
 ### Next Actions
 
-- Implement Phase 2 snapshot-driven executor routing.
+- Implement Phase 3 existing-skill reactions.
 - Commit and verify each remaining phase separately.
 - Run the approved Code Reviewer loop after Phase 8.
 
@@ -930,6 +930,7 @@ User approved effect restoration and Code Builder implementation. Phase 1 baseli
 - Ariel-B trait 1~3 are direct Choice modifiers, trait 4 is an OnShieldExpire damage Trigger, trait 5 is an OnCast status modifier with no current runtime outcome, and master 2 is an OnShieldAbsorb damage Trigger.
 - `SkillCatalogRuntimeTests.TriggerSemanticClassificationBaselineIsStable` fixes the semantic `65/17/76` owner classification.
 - Phase 1 solution build completed with error 0; Unity focused EditMode test passed 1/1 and loaded catalog 5/8/8.
+- Phase 2 routes preparation and Executors by existing `SkillRuntimeKind`; solution build error 0 and Unity EditMode 13/13.
 
 ### History
 
@@ -939,3 +940,4 @@ User approved effect restoration and Code Builder implementation. Phase 1 baseli
 - 2026-07-31: Designer re-audited all 158 rows and corrected the handoff to separate working Triggers, incomplete Trigger intent, and non-Trigger authoring.
 - 2026-07-31: User approved restoring the 17 event-driven effects and 64 normal cast effects, assigned Code Builder, and required per-phase commits plus Reviewer approval.
 - 2026-07-31: Code Builder completed the Phase 1 classification baseline.
+- 2026-07-31: Code Builder completed Phase 2 runtime-kind executor routing.

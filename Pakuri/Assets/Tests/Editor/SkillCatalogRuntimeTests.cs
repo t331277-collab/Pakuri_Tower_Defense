@@ -245,6 +245,7 @@ public sealed class SkillCatalogRuntimeTests
             {
                 SkillId = "charge",
                 IsActive = true,
+                RuntimeKind = SkillRuntimeKind.Buff,
                 EffectKind = BuffEffectKind.Charge,
                 Timing = new SkillTimingSpec
                 {
@@ -310,6 +311,7 @@ public sealed class SkillCatalogRuntimeTests
             var triggered = new BuffSkillDefinition
             {
                 SkillId = "triggered-charge",
+                RuntimeKind = SkillRuntimeKind.Buff,
                 EffectKind = BuffEffectKind.Charge
             };
             var sourceSnapshot = new SkillExecutionData(source);
@@ -477,6 +479,72 @@ public sealed class SkillCatalogRuntimeTests
             nonTriggers.Exists(trigger =>
                 trigger.TriggerId == "ariel-b-trait-5"),
             Is.True);
+    }
+
+    [Test]
+    public void RuntimeKindsMatchExistingExecutorFamilies()
+    {
+        GameDataLoader.EnsureInitialized();
+        var definitions = new List<SkillDefinition>();
+        foreach (var monster in GameDataLoader.CurrentCatalog.Monsters)
+        {
+            definitions.AddRange(monster.ActiveSkills);
+            foreach (var trigger in monster.SkillTriggers)
+            {
+                if (trigger.TriggeredSkill != null && !definitions.Contains(trigger.TriggeredSkill))
+                {
+                    definitions.Add(trigger.TriggeredSkill);
+                }
+            }
+        }
+        foreach (var enemy in GameDataLoader.CurrentCatalog.StageOneEnemies)
+        {
+            definitions.AddRange(enemy.ActiveSkills);
+        }
+        foreach (var enemy in GameDataLoader.CurrentCatalog.StageTwoEnemies)
+        {
+            definitions.AddRange(enemy.ActiveSkills);
+            foreach (var trigger in enemy.SkillTriggers)
+            {
+                if (trigger.TriggeredSkill != null && !definitions.Contains(trigger.TriggeredSkill))
+                {
+                    definitions.Add(trigger.TriggeredSkill);
+                }
+            }
+        }
+
+        foreach (var definition in definitions)
+        {
+            switch (definition.RuntimeKind)
+            {
+                case SkillRuntimeKind.MagazineProjectile:
+                case SkillRuntimeKind.CooldownProjectile:
+                    Assert.That(definition, Is.TypeOf<ProjectileSkillDefinition>(), definition.SkillId);
+                    break;
+                case SkillRuntimeKind.LineAttack:
+                    Assert.That(definition, Is.TypeOf<LineSkillDefinition>(), definition.SkillId);
+                    break;
+                case SkillRuntimeKind.SingleAttack:
+                case SkillRuntimeKind.Mark:
+                case SkillRuntimeKind.Execute:
+                    Assert.That(definition, Is.TypeOf<SingleSkillDefinition>(), definition.SkillId);
+                    break;
+                case SkillRuntimeKind.AreaAttack:
+                case SkillRuntimeKind.Field:
+                    Assert.That(definition, Is.TypeOf<ZoneSkillDefinition>(), definition.SkillId);
+                    break;
+                case SkillRuntimeKind.Buff:
+                case SkillRuntimeKind.Shield:
+                case SkillRuntimeKind.Heal:
+                    Assert.That(definition, Is.TypeOf<BuffSkillDefinition>(), definition.SkillId);
+                    break;
+                default:
+                    Assert.Fail(
+                        definition.SkillId + " has unsupported runtime kind "
+                        + definition.RuntimeKind);
+                    break;
+            }
+        }
     }
 
     [Test]

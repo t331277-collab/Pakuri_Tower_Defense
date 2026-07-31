@@ -473,33 +473,33 @@ namespace Pakuri.InGame
             SkillExecutionData snapshot,
             SkillDefinition skillData)
         {
-
-            if (skillData is ProjectileSkillDefinition projectile)
+            switch (skillData.RuntimeKind)
             {
-                return ProjectileSkillExecutor.Execute(context, snapshot);
+                case SkillRuntimeKind.MagazineProjectile:
+                case SkillRuntimeKind.CooldownProjectile:
+                    RequireDefinition<ProjectileSkillDefinition>(skillData);
+                    return ProjectileSkillExecutor.Execute(context, snapshot);
+                case SkillRuntimeKind.LineAttack:
+                    RequireDefinition<LineSkillDefinition>(skillData);
+                    return LineSkillExecutor.Execute(context, snapshot);
+                case SkillRuntimeKind.SingleAttack:
+                case SkillRuntimeKind.Mark:
+                case SkillRuntimeKind.Execute:
+                    RequireDefinition<SingleSkillDefinition>(skillData);
+                    return SingleSkillExecutor.Execute(context, snapshot);
+                case SkillRuntimeKind.AreaAttack:
+                case SkillRuntimeKind.Field:
+                    RequireDefinition<ZoneSkillDefinition>(skillData);
+                    return ZoneSkillExecutor.Execute(context, snapshot);
+                case SkillRuntimeKind.Buff:
+                case SkillRuntimeKind.Shield:
+                case SkillRuntimeKind.Heal:
+                    RequireDefinition<BuffSkillDefinition>(skillData);
+                    return BuffSkillExecutor.Execute(context, snapshot);
+                default:
+                    throw new InvalidOperationException(
+                        "Unsupported skill runtime kind: " + skillData.RuntimeKind);
             }
-
-            if (skillData is LineSkillDefinition line)
-            {
-                return LineSkillExecutor.Execute(context, snapshot);
-            }
-
-            if (skillData is SingleSkillDefinition single)
-            {
-                return SingleSkillExecutor.Execute(context, snapshot);
-            }
-
-            if (skillData is ZoneSkillDefinition zone)
-            {
-                return ZoneSkillExecutor.Execute(context, snapshot);
-            }
-
-            if (skillData is BuffSkillDefinition buff)
-            {
-                return BuffSkillExecutor.Execute(context, snapshot);
-            }
-
-            throw new InvalidOperationException("Unsupported compiled skill data: " + skillData.GetType().Name);
         }
 
         private static bool PrepareExecutionData(
@@ -513,28 +513,57 @@ namespace Pakuri.InGame
             }
 
             snapshot.PreparedSkillId = definition.SkillId;
-            if (definition is LineSkillDefinition line)
+            switch (definition.RuntimeKind)
             {
-                return PrepareLineExecutionData(context, snapshot, line);
+                case SkillRuntimeKind.MagazineProjectile:
+                case SkillRuntimeKind.CooldownProjectile:
+                    return PrepareProjectileExecutionData(
+                        context,
+                        snapshot,
+                        RequireDefinition<ProjectileSkillDefinition>(definition));
+                case SkillRuntimeKind.LineAttack:
+                    return PrepareLineExecutionData(
+                        context,
+                        snapshot,
+                        RequireDefinition<LineSkillDefinition>(definition));
+                case SkillRuntimeKind.SingleAttack:
+                case SkillRuntimeKind.Mark:
+                case SkillRuntimeKind.Execute:
+                    return PrepareSingleExecutionData(
+                        context,
+                        snapshot,
+                        RequireDefinition<SingleSkillDefinition>(definition));
+                case SkillRuntimeKind.AreaAttack:
+                case SkillRuntimeKind.Field:
+                    return PrepareZoneExecutionData(
+                        context,
+                        snapshot,
+                        RequireDefinition<ZoneSkillDefinition>(definition),
+                        null,
+                        null);
+                case SkillRuntimeKind.Buff:
+                case SkillRuntimeKind.Shield:
+                case SkillRuntimeKind.Heal:
+                    return PrepareBuffExecutionData(
+                        context,
+                        snapshot,
+                        RequireDefinition<BuffSkillDefinition>(definition));
+                default:
+                    return false;
             }
-            if (definition is ZoneSkillDefinition zone)
+        }
+
+        private static T RequireDefinition<T>(SkillDefinition definition)
+            where T : SkillDefinition
+        {
+            if (definition is T typed)
             {
-                return PrepareZoneExecutionData(context, snapshot, zone, null, null);
-            }
-            if (definition is ProjectileSkillDefinition projectile)
-            {
-                return PrepareProjectileExecutionData(context, snapshot, projectile);
-            }
-            if (definition is SingleSkillDefinition single)
-            {
-                return PrepareSingleExecutionData(context, snapshot, single);
-            }
-            if (definition is BuffSkillDefinition buff)
-            {
-                return PrepareBuffExecutionData(context, snapshot, buff);
+                return typed;
             }
 
-            return true;
+            throw new InvalidOperationException(
+                definition.RuntimeKind + " requires " + typeof(T).Name
+                + ", got " + definition.GetType().Name);
         }
 
         internal bool TryExecuteRecast(
