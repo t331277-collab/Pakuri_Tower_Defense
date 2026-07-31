@@ -1801,6 +1801,313 @@ namespace Pakuri.InGame
             }
         }
 
+        internal static void ExecuteTriggeredReaction(
+            InGameCombatManager combatManager,
+            UnitSpawnManager roster,
+            CombatUnitEntry sourceEntry,
+            UnitCombatState source,
+            SkillReaction trigger,
+            SkillTrigger.TriggerExecutionContext triggerContext)
+        {
+            if (combatManager == null || roster == null || sourceEntry == null || source == null || trigger == null)
+            {
+                return;
+            }
+
+            var repeatCount = Mathf.Max(1, trigger.RepeatCount);
+            for (var i = 0; i < repeatCount; i++)
+            {
+                var delaySeconds = Mathf.Max(0f, trigger.DelaySeconds)
+                    + (i > 0 ? Mathf.Max(0f, trigger.RepeatIntervalSeconds) * i : 0f);
+                if (delaySeconds <= 0f)
+                {
+                    ExecuteTriggeredReactionOnce(
+                        combatManager,
+                        roster,
+                        sourceEntry,
+                        source,
+                        trigger,
+                        triggerContext);
+                }
+                else
+                {
+                    combatManager.StartCoroutine(
+                        ExecuteTriggeredReactionDelayed(
+                            combatManager,
+                            roster,
+                            sourceEntry,
+                            source,
+                            trigger,
+                            triggerContext,
+                            delaySeconds));
+                }
+            }
+        }
+
+        private static IEnumerator ExecuteTriggeredReactionDelayed(
+            InGameCombatManager combatManager,
+            UnitSpawnManager roster,
+            CombatUnitEntry sourceEntry,
+            UnitCombatState source,
+            SkillReaction trigger,
+            SkillTrigger.TriggerExecutionContext triggerContext,
+            float delaySeconds)
+        {
+            yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
+            ExecuteTriggeredReactionOnce(
+                combatManager,
+                roster,
+                sourceEntry,
+                source,
+                trigger,
+                triggerContext);
+        }
+
+        private static void ExecuteTriggeredReactionOnce(
+            InGameCombatManager combatManager,
+            UnitSpawnManager roster,
+            CombatUnitEntry sourceEntry,
+            UnitCombatState source,
+            SkillReaction trigger,
+            SkillTrigger.TriggerExecutionContext triggerContext)
+        {
+            ExecuteTriggeredOutcome(
+                combatManager,
+                roster,
+                sourceEntry,
+                source,
+                trigger,
+                triggerContext);
+        }
+
+        private static bool ExecuteTriggeredOutcome(
+            InGameCombatManager combatManager,
+            UnitSpawnManager roster,
+            CombatUnitEntry sourceEntry,
+            UnitCombatState source,
+            SkillReaction trigger,
+            SkillTrigger.TriggerExecutionContext triggerContext)
+        {
+            if (combatManager == null || roster == null || sourceEntry == null || source == null || trigger == null)
+            {
+                return false;
+            }
+
+            var sourceRuntime = source.SkillState.FindBySkillId(trigger.SourceSkillId);
+            var targetPoint = triggerContext.EventCenter;
+            if (trigger.CenterMode == SkillTriggerCenterMode.Caster && sourceEntry.Transform != null)
+            {
+                targetPoint = sourceEntry.Transform.position;
+            }
+            else if (trigger.CenterMode == SkillTriggerCenterMode.EventTarget && triggerContext.EventTarget != null)
+            {
+                var targetEntry = roster.Find(triggerContext.EventTarget);
+                if (targetEntry != null && targetEntry.Transform != null)
+                {
+                    targetPoint = targetEntry.Transform.position;
+                }
+            }
+
+            if (trigger.Effect != null)
+            {
+                return sourceRuntime != null
+                    && combatManager.SkillExecution.TryExecuteReactionEffect(
+                        sourceEntry,
+                        sourceRuntime,
+                        roster,
+                        combatManager,
+                        trigger.Effect,
+                        triggerContext.EventTarget,
+                        targetPoint,
+                        triggerContext.RecastGeneration,
+                        trigger.SourceSkillId,
+                        trigger.LockToEventTarget,
+                        trigger.DamageMultiplier,
+                        trigger.DamageValueSource != SkillTriggerDamageValueSource.Fixed,
+                        ResolveTriggeredRawDamage(trigger, triggerContext));
+            }
+
+            if (!string.IsNullOrWhiteSpace(trigger.TargetSkillId))
+            {
+                if (sourceRuntime == null)
+                {
+                    return false;
+                }
+
+                var runtime = source.SkillState.FindBySkillId(trigger.TargetSkillId);
+                if (runtime == null)
+                {
+                    return false;
+                }
+
+                var hasRawDamageOverride = trigger.DamageValueSource != SkillTriggerDamageValueSource.Fixed;
+                var beginCast = runtime.Data is BuffSkillDefinition triggeredBuff
+                    && triggeredBuff.EffectKind == BuffEffectKind.Charge;
+                return combatManager.SkillExecution.TryExecuteReaction(
+                    sourceEntry,
+                    runtime,
+                    runtime,
+                    runtime.Data,
+                    roster,
+                    combatManager,
+                    triggerContext.EventTarget,
+                    targetPoint,
+                    true,
+                    hasRawDamageOverride,
+                    ResolveTriggeredRawDamage(trigger, triggerContext),
+                    triggerContext.RecastGeneration,
+                    trigger.DamageMultiplier,
+                    trigger.SourceSkillId,
+                    trigger.LockToEventTarget,
+                    trigger.PublishSkillLifecycleEvents,
+                    beginCast);
+            }
+
+            return trigger.Command != null
+                && ExecuteTriggeredCommand(
+                    combatManager,
+                    roster,
+                    sourceEntry,
+                    source,
+                    sourceRuntime,
+                    trigger.Command,
+                    triggerContext);
+        }
+
+        private static bool ExecuteTriggeredCommand(
+            InGameCombatManager combatManager,
+            UnitSpawnManager roster,
+            CombatUnitEntry source,
+            UnitCombatState sourceState,
+            SkillExecutionData sourceRuntime,
+            SkillReactionCommand command,
+            SkillTrigger.TriggerExecutionContext triggerContext)
+        {
+            if (command == null || sourceRuntime == null)
+            {
+                return false;
+            }
+
+            var context = new SkillExecutionContext(
+                combatManager,
+                roster,
+                source,
+                sourceRuntime,
+                triggerContext.EventTarget,
+                recastGeneration: triggerContext.RecastGeneration,
+                lockToEventTarget: command.LockToEventTarget,
+                publishSkillLifecycleEvents: false);
+            if (command.Kind == SkillReactionCommandKind.RecastZone)
+            {
+                var skill = sourceRuntime.Data as ZoneSkillDefinition;
+                if (skill == null
+                    || (!string.IsNullOrWhiteSpace(command.TargetId)
+                        && !string.Equals(command.TargetId, skill.SkillId, StringComparison.OrdinalIgnoreCase))
+                    || context.RecastGeneration >= Math.Max(1, command.MaxGeneration))
+                {
+                    return false;
+                }
+
+                var inheritedSnapshot = sourceState.SkillState.CreateExecutionData(
+                    sourceState,
+                    sourceRuntime,
+                    roster);
+                var snapshot = command.InheritSnapshot
+                    ? inheritedSnapshot
+                    : SkillExecutionRuleResolver.CreateDefinitionSnapshot(skill);
+                return combatManager.SkillExecution.TryExecuteRecast(
+                    context,
+                    snapshot,
+                    skill,
+                    command,
+                    triggerContext.EventCenter);
+            }
+
+            var targets = SkillTargeting.OrderedTargets(context, command.Targeting);
+            var limit = command.Targeting != null && command.Targeting.Shape == SkillTargetShape.Single
+                ? 1
+                : command.MaxTargets > 0 ? command.MaxTargets : targets.Count;
+            var changed = false;
+            for (var i = 0; i < targets.Count && i < limit; i++)
+            {
+                var target = targets[i] != null ? targets[i].Model : null;
+                if (target == null)
+                {
+                    continue;
+                }
+
+                if (command.Kind == SkillReactionCommandKind.ExtendStatusDuration)
+                {
+                    changed |= combatManager.ExtendStatusDuration(
+                        target,
+                        command.StatusKind,
+                        command.DurationSeconds);
+                    continue;
+                }
+                if (target.Skills == null)
+                {
+                    continue;
+                }
+
+                var runtimes = CommandRuntimes(target, command.TargetId);
+                for (var runtimeIndex = 0; runtimeIndex < runtimes.Count; runtimeIndex++)
+                {
+                    var targetRuntime = runtimes[runtimeIndex];
+                    if (command.Kind == SkillReactionCommandKind.RefundCooldown)
+                    {
+                        changed |= targetRuntime.ReduceCooldownRemaining(
+                            targetRuntime.EffectiveCooldownDuration * command.Ratio);
+                    }
+                    else if (command.Kind == SkillReactionCommandKind.ReduceReload)
+                    {
+                        changed |= targetRuntime.ReduceReloadRemaining(
+                            targetRuntime.ReloadDuration * command.Ratio);
+                    }
+                }
+            }
+            return changed;
+        }
+
+        private static IReadOnlyList<SkillExecutionData> CommandRuntimes(
+            UnitCombatState target,
+            string skillId)
+        {
+            if (!string.IsNullOrWhiteSpace(skillId))
+            {
+                var runtime = target.SkillState.FindBySkillId(skillId);
+                return runtime != null
+                    ? new[] { runtime }
+                    : Array.Empty<SkillExecutionData>();
+            }
+            return target.SkillState.ActiveSkills;
+        }
+
+        private static float ResolveTriggeredRawDamage(
+            SkillReaction trigger,
+            SkillTrigger.TriggerExecutionContext context)
+        {
+            var value = 0f;
+            switch (trigger.DamageValueSource)
+            {
+                case SkillTriggerDamageValueSource.ShieldAppliedAmount:
+                    value = context.ShieldAppliedAmount;
+                    break;
+                case SkillTriggerDamageValueSource.ShieldRemainingAmount:
+                    value = context.ShieldRemainingAmount;
+                    break;
+                case SkillTriggerDamageValueSource.ShieldAbsorbedAmount:
+                    value = context.ShieldAbsorbedAmount;
+                    break;
+                case SkillTriggerDamageValueSource.TrackedIncomingDamage:
+                    value = context.TrackedIncomingDamage(trigger.TrackedDamageAttribute);
+                    break;
+                case SkillTriggerDamageValueSource.EventAppliedDamage:
+                    value = context.EventAppliedDamage;
+                    break;
+            }
+            return Mathf.Max(0f, value) * Mathf.Max(0f, trigger.DamageValueMultiplier);
+        }
+
         /// 보유한 스킬 목록을 데이터 카탈로그 기준으로 다시 구성한다.
         public static void RebuildLearnedSkillState(UnitCombatState owner)
         {

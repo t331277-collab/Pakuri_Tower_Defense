@@ -32,7 +32,7 @@ Code Builder for handoff correction and later implementation. Code Reviewer only
 
 ### Status
 
-User concerns 1-7 validated against current code and reflected in the primary handoff. Phase 1 baseline and inventory are recorded. Phase 2 Node composition, Phase 3 runtime-state ownership, Phase 4 status/single-rule absorption, and Phase 5 execution/Actor Node meaning separation are implemented and build-verified; Phase 6 Trigger gate-only work is next.
+User concerns 1-7 validated against current code and reflected in the primary handoff. Phase 1 baseline and inventory are recorded. Phase 2 Node composition, Phase 3 runtime-state ownership, Phase 4 status/single-rule absorption, Phase 5 execution/Actor Node meaning separation, and Phase 6 Trigger gate-only routing are implemented and build-verified; Context cleanup and final verification are next.
 
 ### Next Actions
 
@@ -41,7 +41,8 @@ User concerns 1-7 validated against current code and reflected in the primary ha
 - Phase 3 removed remaining active behavior from data and migrated the runtime state owner into SkillExecutionData and UnitSkills.
 - Phase 4 removed SkillStatus and SingleSkillRules after moving status calculation to Resolver and single damage/recovery values to existing owners.
 - Phase 5 moved direct Node reads and runtime hit application out of Resolver/Actors into the existing Resolver and SkillExecution responsibilities.
-- Every completed Phase is committed separately; Phase 6 begins only after this Phase 5 baseline.
+- Phase 6 moved reaction delay/repeat/outcome/command application into SkillExecution while preserving the existing Trigger gate asymmetry and command generation limit.
+- Every completed Phase is committed separately; final cleanup begins only after this Phase 6 baseline.
 - Add parity coverage for composition order, cast-time versus hit-time values, status results, Trigger asymmetry, recursion/generation, Definition-only reaction lookup, and snapshot immutability.
 - Do not alter Trigger gate asymmetry or command recursion behavior without a separate user decision.
 - Keep `SkillExecution.cs` as the only file for its responsibility and reduce its four current classes to the single `SkillExecution` class; do not create `SkillExecutionContext.cs`, `SkillUseState.cs`, or `SkillExecutionState.cs`.
@@ -75,6 +76,7 @@ User concerns 1-7 validated against current code and reflected in the primary ha
 - 2026-07-31: Phase 3 moved per-skill runtime state into SkillExecutionData, skill-list ownership into UnitSkills, removed the two legacy state types from C# callers, and passed Assembly-CSharp build with 0 errors.
 - 2026-07-31: Phase 4 moved status calculation to SkillExecutionRuleResolver, reused StatusApplicationSpec for resolved status values, deleted SkillStatus and SingleSkillRules with their meta files, and passed Assembly-CSharp build with 0 errors.
 - 2026-07-31: Phase 5 moved cast/repeat/core/status/refund value resolution to SkillExecutionRuleResolver, moved shared damage/status/trigger/reload application to SkillExecution, unified family hit multipliers, and passed Assembly-CSharp build with 0 errors.
+- 2026-07-31: Phase 6 left Trigger as the gate owner and routed accepted reactions to SkillExecution for delay, repeat, outcome, command, targeting, and runtime application; Assembly-CSharp build passed with 0 errors.
 
 ## Task: 2026-07-28 Skill Trigger / Node Unification Design
 

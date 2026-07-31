@@ -4,7 +4,6 @@
  */
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Pakuri.Combat;
@@ -383,7 +382,13 @@ internal static class SkillTrigger
 		{
 			if (ShouldRunSourceOwnedTrigger(trigger, source, sourceSkillId, triggerEvent, triggerContext))
 			{
-				ExecuteTrigger(combatManager, roster, roster.Find(source), source, trigger, triggerContext);
+				SkillExecution.ExecuteTriggeredReaction(
+					combatManager,
+					roster,
+					roster.Find(source),
+					source,
+					trigger,
+					triggerContext);
 			}
 		}
 	}
@@ -445,7 +450,13 @@ internal static class SkillTrigger
 					SkillReaction trigger = triggers[triggerIndex];
 					if (ShouldRunPassiveOwnerTrigger(trigger, unitState, triggerEvent, triggerContext) && PassesCountGate(combatManager, unitState, trigger) && PassesProcGate(combatManager, unitState, trigger))
 					{
-						ExecuteTrigger(combatManager, roster, unitEntry, unitState, trigger, triggerContext);
+						SkillExecution.ExecuteTriggeredReaction(
+							combatManager,
+							roster,
+							unitEntry,
+							unitState,
+							trigger,
+							triggerContext);
 					}
 				}
 			}
@@ -723,289 +734,6 @@ internal static class SkillTrigger
 		string obj = ((owner != null && owner.Identity != null && !string.IsNullOrWhiteSpace(owner.Identity.UnitId)) ? owner.Identity.UnitId : ((owner != null) ? owner.GetHashCode().ToString() : "unknown"));
 		string text = ((trigger != null && !string.IsNullOrWhiteSpace(trigger.ReactionId)) ? trigger.ReactionId : ((trigger != null) ? trigger.SourceSkillId : "unknown"));
 		return obj + ":" + text;
-	}
-
-	/// 전달된 런타임 입력값을 사용해 Trigger를 실행한다.
-	private static void ExecuteTrigger(InGameCombatManager combatManager, UnitSpawnManager roster, CombatUnitEntry sourceEntry, UnitCombatState source, SkillReaction trigger, TriggerExecutionContext triggerContext)
-	{
-		if (trigger == null)
-		{
-			return;
-		}
-		int num = Mathf.Max(1, trigger.RepeatCount);
-		for (int i = 0; i < num; i++)
-		{
-			float num2 = Mathf.Max(0f, trigger.DelaySeconds) + ((i > 0) ? (Mathf.Max(0f, trigger.RepeatIntervalSeconds) * (float)i) : 0f);
-			if (num2 <= 0f)
-			{
-				ExecuteOnce(combatManager, roster, sourceEntry, source, trigger, triggerContext);
-			}
-			else
-			{
-				combatManager.StartCoroutine(ExecuteDelayed(combatManager, roster, sourceEntry, source, trigger, triggerContext, num2));
-			}
-		}
-	}
-
-	/// 전달된 런타임 입력값을 사용해 Delayed를 실행한다.
-	private static IEnumerator ExecuteDelayed(InGameCombatManager combatManager, UnitSpawnManager roster, CombatUnitEntry sourceEntry, UnitCombatState source, SkillReaction trigger, TriggerExecutionContext triggerContext, float delaySeconds)
-	{
-		yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
-		ExecuteOnce(combatManager, roster, sourceEntry, source, trigger, triggerContext);
-	}
-
-	/// 전달된 런타임 입력값을 사용해 Once를 실행한다.
-	private static void ExecuteOnce(InGameCombatManager combatManager, UnitSpawnManager roster, CombatUnitEntry sourceEntry, UnitCombatState source, SkillReaction trigger, TriggerExecutionContext triggerContext)
-	{
-		TryExecuteOutcome(combatManager, roster, sourceEntry, source, trigger, triggerContext);
-	}
-
-	/// 전달된 런타임 입력값을 사용해 ExecuteOutcome 작업을 시도하고 성공 여부를 반환한다.
-	private static bool TryExecuteOutcome(
-		InGameCombatManager combatManager,
-		UnitSpawnManager roster,
-		CombatUnitEntry sourceEntry,
-		UnitCombatState source,
-		SkillReaction trigger,
-		TriggerExecutionContext triggerContext)
-	{
-		if (combatManager == null
-			|| roster == null
-			|| sourceEntry == null
-			|| source == null
-			|| trigger == null)
-		{
-			return false;
-		}
-
-		SkillExecutionData sourceRuntime = source.SkillState.FindBySkillId(trigger.SourceSkillId);
-		var targetPoint = triggerContext.EventCenter;
-		if (trigger.CenterMode == SkillTriggerCenterMode.Caster
-			&& sourceEntry.Transform != null)
-		{
-			targetPoint = sourceEntry.Transform.position;
-		}
-		else if (trigger.CenterMode == SkillTriggerCenterMode.EventTarget
-			&& triggerContext.EventTarget != null)
-		{
-			var targetEntry = roster.Find(triggerContext.EventTarget);
-			if (targetEntry != null && targetEntry.Transform != null)
-			{
-				targetPoint = targetEntry.Transform.position;
-			}
-		}
-
-		if (trigger.Effect != null)
-		{
-			return sourceRuntime != null
-				&& combatManager.SkillExecution.TryExecuteReactionEffect(
-					sourceEntry,
-					sourceRuntime,
-					roster,
-					combatManager,
-					trigger.Effect,
-					triggerContext.EventTarget,
-					targetPoint,
-					triggerContext.RecastGeneration,
-					trigger.SourceSkillId,
-					trigger.LockToEventTarget,
-					trigger.DamageMultiplier,
-					trigger.DamageValueSource
-						!= SkillTriggerDamageValueSource.Fixed,
-					ResolveTriggeredRawDamage(trigger, triggerContext));
-		}
-
-		if (!string.IsNullOrWhiteSpace(trigger.TargetSkillId))
-		{
-			if (sourceRuntime == null)
-			{
-				return false;
-			}
-
-			var runtime = source.SkillState.FindBySkillId(trigger.TargetSkillId);
-			if (runtime == null)
-			{
-				return false;
-			}
-			var snapshotRuntime = runtime;
-
-			var hasRawDamageOverride =
-				trigger.DamageValueSource != SkillTriggerDamageValueSource.Fixed;
-			var beginCast = runtime.Data is BuffSkillDefinition triggeredBuff
-				&& triggeredBuff.EffectKind == BuffEffectKind.Charge;
-			return combatManager.SkillExecution.TryExecuteReaction(
-				sourceEntry,
-				runtime,
-				snapshotRuntime,
-				runtime.Data,
-				roster,
-				combatManager,
-				triggerContext.EventTarget,
-				targetPoint,
-				true,
-				hasRawDamageOverride,
-				ResolveTriggeredRawDamage(trigger, triggerContext),
-				triggerContext.RecastGeneration,
-				trigger.DamageMultiplier,
-				trigger.SourceSkillId,
-				trigger.LockToEventTarget,
-				trigger.PublishSkillLifecycleEvents,
-				beginCast);
-		}
-
-		if (trigger.Command != null)
-		{
-			return ExecuteCommand(
-				combatManager,
-				roster,
-				sourceEntry,
-				source,
-				sourceRuntime,
-				trigger.Command,
-				triggerContext);
-		}
-
-		return false;
-	}
-
-	/// 전달된 런타임 입력값을 사용해 Command를 실행한다.
-	private static bool ExecuteCommand(
-		InGameCombatManager combatManager,
-		UnitSpawnManager roster,
-		CombatUnitEntry sourceEntry,
-		UnitCombatState source,
-		SkillExecutionData sourceRuntime,
-		SkillReactionCommand command,
-		TriggerExecutionContext triggerContext)
-	{
-		if (command == null || sourceRuntime == null)
-		{
-			return false;
-		}
-
-		var context = new SkillExecutionContext(
-			combatManager,
-			roster,
-			sourceEntry,
-			sourceRuntime,
-			triggerContext.EventTarget,
-			recastGeneration: triggerContext.RecastGeneration,
-			lockToEventTarget: command.LockToEventTarget,
-			publishSkillLifecycleEvents: false);
-		if (command.Kind == SkillReactionCommandKind.RecastZone)
-		{
-			var skill = sourceRuntime.Data as ZoneSkillDefinition;
-			if (skill == null
-				|| (!string.IsNullOrWhiteSpace(command.TargetId)
-					&& !string.Equals(command.TargetId, skill.SkillId, StringComparison.OrdinalIgnoreCase))
-				|| context.RecastGeneration >= Math.Max(1, command.MaxGeneration))
-			{
-				return false;
-			}
-
-			var inheritedSnapshot = source.SkillState.CreateExecutionData(
-				source,
-				sourceRuntime,
-				roster);
-			var snapshot = command.InheritSnapshot
-				? inheritedSnapshot
-				: SkillExecutionRuleResolver.CreateDefinitionSnapshot(skill);
-			return combatManager.SkillExecution.TryExecuteRecast(
-				context,
-				snapshot,
-				skill,
-				command,
-				triggerContext.EventCenter);
-		}
-
-		var targets = SkillTargeting.OrderedTargets(context, command.Targeting);
-		var limit = command.Targeting != null
-			&& command.Targeting.Shape == SkillTargetShape.Single
-				? 1
-				: command.MaxTargets > 0
-					? command.MaxTargets
-					: targets.Count;
-		var changed = false;
-		for (var i = 0; i < targets.Count && i < limit; i++)
-		{
-			var target = targets[i] != null ? targets[i].Model : null;
-			if (target == null)
-			{
-				continue;
-			}
-
-			if (command.Kind == SkillReactionCommandKind.ExtendStatusDuration)
-			{
-				changed |= combatManager.ExtendStatusDuration(
-					target,
-					command.StatusKind,
-					command.DurationSeconds);
-				continue;
-			}
-			if (target.Skills == null)
-			{
-				continue;
-			}
-
-			var runtimes = CommandRuntimes(target, command.TargetId);
-			for (var runtimeIndex = 0; runtimeIndex < runtimes.Count; runtimeIndex++)
-			{
-				var targetRuntime = runtimes[runtimeIndex];
-				if (command.Kind == SkillReactionCommandKind.RefundCooldown)
-				{
-					changed |= targetRuntime.ReduceCooldownRemaining(
-						targetRuntime.EffectiveCooldownDuration * command.Ratio);
-				}
-				else if (command.Kind == SkillReactionCommandKind.ReduceReload)
-				{
-					changed |= targetRuntime.ReduceReloadRemaining(
-						targetRuntime.ReloadDuration * command.Ratio);
-				}
-			}
-		}
-		return changed;
-	}
-
-	/// 전달된 런타임 입력값을 사용해 CommandRuntimes 결과값을 생성해 반환한다.
-	private static IReadOnlyList<SkillExecutionData> CommandRuntimes(
-		UnitCombatState target,
-		string skillId)
-	{
-		if (!string.IsNullOrWhiteSpace(skillId))
-		{
-			var runtime = target.SkillState.FindBySkillId(skillId);
-			return runtime != null
-				? new[] { runtime }
-				: Array.Empty<SkillExecutionData>();
-		}
-		return target.SkillState.ActiveSkills;
-	}
-
-	/// 전달된 런타임 입력값을 사용해 TriggeredRawDamage를 결정한다.
-	private static float ResolveTriggeredRawDamage(
-		SkillReaction trigger,
-		TriggerExecutionContext context)
-	{
-		var value = 0f;
-		switch (trigger.DamageValueSource)
-		{
-			case SkillTriggerDamageValueSource.ShieldAppliedAmount:
-				value = context.ShieldAppliedAmount;
-				break;
-			case SkillTriggerDamageValueSource.ShieldRemainingAmount:
-				value = context.ShieldRemainingAmount;
-				break;
-			case SkillTriggerDamageValueSource.ShieldAbsorbedAmount:
-				value = context.ShieldAbsorbedAmount;
-				break;
-			case SkillTriggerDamageValueSource.TrackedIncomingDamage:
-				value = context.TrackedIncomingDamage(trigger.TrackedDamageAttribute);
-				break;
-			case SkillTriggerDamageValueSource.EventAppliedDamage:
-				value = context.EventAppliedDamage;
-				break;
-		}
-		return Mathf.Max(0f, value) * Mathf.Max(0f, trigger.DamageValueMultiplier);
 	}
 
 	/// 전달된 런타임 입력값을 사용해 SourceModel 결과값을 생성해 반환한다.

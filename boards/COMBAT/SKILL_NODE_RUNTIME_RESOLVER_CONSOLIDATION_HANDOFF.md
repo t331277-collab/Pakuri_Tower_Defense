@@ -48,7 +48,7 @@ Node 의미의 런타임 구현을 `SkillExecutionRuleResolver` 하나로 통합
 - Code Builder가 지적 1~7을 코드로 검증하고 handoff 보강 완료.
 - Phase 1 baseline/inventory 완료 및 커밋.
 - Phase 2 Node composition 구현 및 빌드 검증 완료.
-- Phase 5 Execution·Actor의 Node 의미 정리와 Resolver runtime 적용 분리 완료; 다음은 Trigger gate-only 전환이다.
+- Phase 6 Trigger gate-only 전환 완료; 다음은 Context 정리와 최종 검증이다.
 
 ## Selected Code Builder tracks
 
@@ -530,6 +530,8 @@ Status: complete. Cast effect and cast-condition reads now enter through Resolve
 
 ### Phase 6 — Trigger becomes gate-only
 
+Status: complete. Trigger retains source/passive gate asymmetry, count/proc/cooldown gates, and command generation limits, while accepted reactions now enter SkillExecution for delay, repeat, outcome, command, targeting, and runtime application. Assembly-CSharp builds with 0 errors.
+
 1. Trigger의 Node extraction은 Resolver로, outcome/command 실행 조정은 SkillExecution 반응 경로로 이동한다.
 2. Trigger의 직접 대상 탐색과 runtime 상태 변경을 제거한다.
 3. Trigger가 통과한 사건은 항상 SkillExecution으로 반환한다.
@@ -723,3 +725,4 @@ Unity-MCP로 editor compile과 console을 확인한다. Play Mode gameplay 검�
 - 2026-07-31: Phase 3 absorbed per-skill runtime state into SkillExecutionData, skill-list state into UnitSkills, removed SkillUseState and SkillExecutionState from C# callers, and passed Assembly-CSharp build with 0 errors.
 - 2026-07-31: Phase 4 moved status calculation into SkillExecutionRuleResolver, reused StatusApplicationSpec for resolved status values, moved Single damage calculation and recovery orchestration to existing owners, deleted SkillStatus and SingleSkillRules with their meta files, and passed Assembly-CSharp build with 0 errors.
 - 2026-07-31: Phase 5 moved cast/repeat/core/status/refund value resolution into SkillExecutionRuleResolver, moved shared damage/status/trigger/reload application into SkillExecution, unified family hit multipliers, and passed Assembly-CSharp build with 0 errors.
+- 2026-07-31: Phase 6 kept Trigger gate asymmetry and command generation limits, routed accepted reactions to SkillExecution for delay/repeat/outcome/command/targeting/runtime application, and passed Assembly-CSharp build with 0 errors.
