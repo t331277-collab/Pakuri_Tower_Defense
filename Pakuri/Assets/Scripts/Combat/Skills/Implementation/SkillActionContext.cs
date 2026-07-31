@@ -9,11 +9,11 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// 시전과 사건 경계를 넘어 같은 판단 기준을 전달한다.
+    /// 기본 스킬과 조건부 스킬이 같은 판단 기준을 공유하게 한다.
     public sealed class SkillActionContext
     {
 
-        /// 일반 시전에 필요한 전투 기준을 한 시점의 입력으로 고정한다.
+        /// 일반 시전과 조건부 시전에 필요한 전투 기준을 한 입력으로 고정한다.
         public SkillActionContext(
             InGameCombatManager combatManager,
             UnitSpawnManager roster,
