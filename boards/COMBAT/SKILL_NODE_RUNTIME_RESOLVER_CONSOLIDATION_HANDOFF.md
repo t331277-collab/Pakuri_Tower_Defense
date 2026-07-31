@@ -633,7 +633,7 @@ Status: complete. Generation materialization implementation commit: `e81d7ed`; c
 
 ### Phase 12 — one SkillExecution cast pipeline
 
-Status: pending.
+Status: complete. Common cast routing implementation commit: `e81d7ed`; normal and resolved reactions now enter `ExecutePrepared` and use the single `ExecuteSkill` family switch. Core/Editor build: 0 errors.
 
 1. Refactor the existing `TryExecuteSkill` rather than adding a request class, interface, factory, or new script.
 2. `TryExecuteSelected`, `TryExecuteManual`, AI routing and Trigger execution become thin adapters into the same snapshot creation and `ExecutePrepared` path.
