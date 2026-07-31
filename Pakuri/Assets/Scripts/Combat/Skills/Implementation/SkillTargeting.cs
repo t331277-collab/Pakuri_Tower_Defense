@@ -35,7 +35,7 @@ namespace Pakuri.InGame
 
         /// 전달된 런타임 입력값을 사용해 OrderedTargets 결과값을 생성해 반환한다.
         public static List<CombatUnitEntry> OrderedTargets(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillTargetingSpec targetingSpec)
         {
             if (context == null)
@@ -437,7 +437,7 @@ namespace Pakuri.InGame
 
         /// 전달된 런타임 입력값을 사용해 AreaCenter 결과값을 생성해 반환한다.
         public static Vector2 AreaCenter(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillTargetingSpec targeting,
             AreaBlueprintSpec area)
         {
@@ -501,7 +501,7 @@ namespace Pakuri.InGame
 
         /// 전달된 런타임 입력값을 사용해 TargetAnchoredCenters 결과값을 생성해 반환한다.
         public static List<Vector2> TargetAnchoredCenters(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillTargetingSpec targeting,
             Vector2 primaryCenter,
             int deploymentCount,
@@ -806,7 +806,7 @@ namespace Pakuri.InGame
         }
 
         internal static IReadOnlyList<CombatUnitEntry> BuffTargets(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillTargetSide targetMode,
             bool useConfiguredTargeting,
             SkillTargetingSpec targeting)

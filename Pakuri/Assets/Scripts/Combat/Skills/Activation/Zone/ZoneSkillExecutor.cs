@@ -14,7 +14,7 @@ namespace Pakuri.InGame
     internal static class ZoneSkillExecutor
     {
         internal static bool Execute(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData snapshot)
         {
             var effects = context.CombatManager.Effects;

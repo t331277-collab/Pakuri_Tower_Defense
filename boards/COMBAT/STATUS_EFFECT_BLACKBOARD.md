@@ -32,7 +32,7 @@ Code Builder for handoff correction and later implementation. Code Reviewer only
 
 ### Status
 
-User concerns 1-7 validated against current code and reflected in the primary handoff. Phase 1 baseline and inventory are recorded. Phase 2 Node composition, Phase 3 runtime-state ownership, Phase 4 status/single-rule absorption, Phase 5 execution/Actor Node meaning separation, and Phase 6 Trigger gate-only routing are implemented and build-verified; Context cleanup and final verification are next.
+User concerns 1-7 validated against current code and reflected in the primary handoff. Phase 1 baseline and inventory are recorded. Phase 2 Node composition, Phase 3 runtime-state ownership, Phase 4 status/single-rule absorption, Phase 5 execution/Actor Node meaning separation, and Phase 6 Trigger gate-only routing are implemented and build-verified; Phase 7 Context cleanup is implemented and comment/final verification is in progress.
 
 ### Next Actions
 
@@ -42,7 +42,8 @@ User concerns 1-7 validated against current code and reflected in the primary ha
 - Phase 4 removed SkillStatus and SingleSkillRules after moving status calculation to Resolver and single damage/recovery values to existing owners.
 - Phase 5 moved direct Node reads and runtime hit application out of Resolver/Actors into the existing Resolver and SkillExecution responsibilities.
 - Phase 6 moved reaction delay/repeat/outcome/command application into SkillExecution while preserving the existing Trigger gate asymmetry and command generation limit.
-- Every completed Phase is committed separately; final cleanup begins only after this Phase 6 baseline.
+- Phase 7 removed `SkillExecutionContext` by absorbing its execution values into the existing `SkillActionContext`.
+- Every completed Phase is committed separately; comment normalization and final verification follow this Phase 7 code baseline.
 - Add parity coverage for composition order, cast-time versus hit-time values, status results, Trigger asymmetry, recursion/generation, Definition-only reaction lookup, and snapshot immutability.
 - Do not alter Trigger gate asymmetry or command recursion behavior without a separate user decision.
 - Keep `SkillExecution.cs` as the only file for its responsibility and reduce its four current classes to the single `SkillExecution` class; do not create `SkillExecutionContext.cs`, `SkillUseState.cs`, or `SkillExecutionState.cs`.

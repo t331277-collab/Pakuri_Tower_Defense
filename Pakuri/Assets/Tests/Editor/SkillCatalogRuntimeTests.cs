@@ -339,7 +339,7 @@ public sealed class SkillCatalogRuntimeTests
             };
             var sourceSnapshot = SkillExecutionRuleResolver.CreateDefinitionSnapshot(source);
             var triggeredRuntime = new SkillExecutionData(owner, triggered);
-            var context = new SkillExecutionContext(
+            var context = new SkillActionContext(
                 null,
                 null,
                 new CombatUnitEntry(owner, actorObject.transform),

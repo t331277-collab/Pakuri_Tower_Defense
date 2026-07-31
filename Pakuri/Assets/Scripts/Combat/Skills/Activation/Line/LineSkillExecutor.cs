@@ -18,7 +18,7 @@ namespace Pakuri.InGame
         private EffectManager effects;
 
         internal static bool Execute(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData snapshot)
         {
             var effects = context.CombatManager.Effects;
@@ -50,7 +50,7 @@ namespace Pakuri.InGame
         }
 
         private bool Initialize(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData snapshot)
         {
             effects = context.CombatManager.Effects;
@@ -74,7 +74,7 @@ namespace Pakuri.InGame
         }
 
         private IEnumerator ExecuteRepeatedLineCasts(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData snapshot,
             IReadOnlyList<Vector2> directions)
         {
@@ -94,7 +94,7 @@ namespace Pakuri.InGame
         }
 
         private static bool ExecuteOnce(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData snapshot,
             Vector2 direction)
         {

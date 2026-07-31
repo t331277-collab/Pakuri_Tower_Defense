@@ -610,7 +610,7 @@ namespace Pakuri.InGame
             if (combatManager != null && combatManager.Units != null && owner != null)
             {
                 var lifecycleSourceEntry = combatManager.Units.Find(owner);
-                var lifecycleContext = new SkillExecutionContext(
+                var lifecycleContext = new SkillActionContext(
                     combatManager,
                     combatManager.Units,
                     lifecycleSourceEntry,

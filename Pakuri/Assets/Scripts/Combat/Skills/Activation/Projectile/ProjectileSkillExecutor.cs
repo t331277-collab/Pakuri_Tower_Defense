@@ -17,7 +17,7 @@ namespace Pakuri.InGame
         private EffectManager effects;
 
         internal static bool Execute(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData snapshot)
         {
             var effects = context.CombatManager.Effects;
@@ -48,7 +48,7 @@ namespace Pakuri.InGame
         }
 
         private bool Initialize(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData snapshot)
         {
             effects = context.CombatManager.Effects;
@@ -84,7 +84,7 @@ namespace Pakuri.InGame
         }
 
         private IEnumerator ExecuteFollowUpProjectilesAfterDelay(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData snapshot)
         {
             if (snapshot.FollowUpProjectileDelaySeconds > 0f)
@@ -131,7 +131,7 @@ namespace Pakuri.InGame
         }
 
         private static void SpawnProjectileActor(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData snapshot,
             SkillExecutionData launchSnapshot,
             Vector2 direction,

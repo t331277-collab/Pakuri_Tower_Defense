@@ -181,14 +181,12 @@ internal static class SkillTrigger
 	{
 		if (actionContext == null
 			|| actionContext.Source == null
-			|| actionContext.ExecutionContext == null
-			|| !actionContext.ExecutionContext.PublishSkillLifecycleEvents)
+			|| !actionContext.PublishSkillLifecycleEvents)
 		{
 			return;
 		}
 
-		SkillExecutionContext executionContext = actionContext.ExecutionContext;
-		if (executionContext.CombatManager == null || executionContext.Roster == null)
+		if (actionContext.CombatManager == null || actionContext.Roster == null)
 		{
 			return;
 		}
@@ -204,17 +202,17 @@ internal static class SkillTrigger
 			actionContext.SourceSkillId,
 			actionContext.Source,
 			eventHitCount: actionContext.HitCount,
-			recastGeneration: executionContext.RecastGeneration);
+			recastGeneration: actionContext.RecastGeneration);
 		ExecuteSourceOwnedTriggers(
-			executionContext.CombatManager,
-			executionContext.Roster,
+			actionContext.CombatManager,
+			actionContext.Roster,
 			actionContext.Source,
 			actionContext.SourceSkillId,
 			triggerEvent,
 			triggerContext);
 		ExecutePassiveOwnerTriggers(
-			executionContext.CombatManager,
-			executionContext.Roster,
+			actionContext.CombatManager,
+			actionContext.Roster,
 			triggerEvent,
 			triggerContext);
 	}

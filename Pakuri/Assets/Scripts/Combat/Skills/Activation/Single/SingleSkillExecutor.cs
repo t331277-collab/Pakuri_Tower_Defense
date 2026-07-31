@@ -12,7 +12,7 @@ namespace Pakuri.InGame
 internal static class SingleSkillExecutor
 {
 	internal static bool Execute(
-		SkillExecutionContext context,
+		SkillActionContext context,
 		SkillExecutionData snapshot)
 	{
 		var effects = context.CombatManager.Effects;

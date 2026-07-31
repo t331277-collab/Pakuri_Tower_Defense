@@ -249,7 +249,7 @@ public partial class SingleSkillActor
 
 	/// 전달된 런타임 입력값으로 Single 실행을 초기화한다.
 	/// 전달된 런타임 입력값을 사용해 ScheduleRepeatedDeployments 작업을 수행한다.
-	internal void ScheduleRepeatedDeployments(SkillExecutionContext context, SkillExecutionData snapshot, Vector2 center, RuntimeSkillVisualSpec runtimeVisual, GameObject prefab)
+	internal void ScheduleRepeatedDeployments(SkillActionContext context, SkillExecutionData snapshot, Vector2 center, RuntimeSkillVisualSpec runtimeVisual, GameObject prefab)
 	{
 		if (context == null || context.CombatManager == null
 			|| !SkillExecutionRuleResolver.ResolveRepeat(
@@ -281,7 +281,7 @@ public partial class SingleSkillActor
 	}
 
 	/// 전달된 런타임 입력값을 사용해 RepeatedDeploymentAfterDelay를 실행한다.
-	private IEnumerator ExecuteRepeatedDeploymentAfterDelay(SkillExecutionContext context, SkillExecutionData snapshot, Vector2 center, RuntimeSkillVisualSpec runtimeVisual, GameObject prefab, float delaySeconds)
+	private IEnumerator ExecuteRepeatedDeploymentAfterDelay(SkillActionContext context, SkillExecutionData snapshot, Vector2 center, RuntimeSkillVisualSpec runtimeVisual, GameObject prefab, float delaySeconds)
 	{
 		yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
 		if (context != null && !(context.CombatManager == null) && context.Roster != null && context.CasterEntry != null && context.Caster != null)
@@ -293,7 +293,7 @@ public partial class SingleSkillActor
 
 	/// 전달된 런타임 입력값을 사용해 PublishDeploymentLifecycle 작업을 수행한다.
 	internal static void PublishDeploymentLifecycle(
-		SkillExecutionContext context,
+		SkillActionContext context,
 		SkillExecutionData snapshot,
 		Vector2 center)
 	{
@@ -308,7 +308,7 @@ public partial class SingleSkillActor
 	}
 
 	/// 전달된 런타임 입력값을 사용해 AtCenter를 실행한다.
-	internal SingleExecutionOutcome ExecuteAtCenter(SkillExecutionContext context, SkillExecutionData snapshot, Vector2 center, RuntimeSkillVisualSpec runtimeVisual, GameObject prefab, bool allowConditionalFollowUp)
+	internal SingleExecutionOutcome ExecuteAtCenter(SkillActionContext context, SkillExecutionData snapshot, Vector2 center, RuntimeSkillVisualSpec runtimeVisual, GameObject prefab, bool allowConditionalFollowUp)
 	{
 		float radius = snapshot.PreparedRadius;
 		bool coverAll = snapshot.PreparedCoverAll;
@@ -399,7 +399,7 @@ public partial class SingleSkillActor
 	}
 
 	/// 전달된 런타임 입력값을 사용해 NonPrefabTargets를 적용한다.
-	private static bool ApplyNonPrefabTargets(SkillExecutionContext context, SkillExecutionData snapshot, Vector2 center, float radius, bool coverAll, int effectiveHitTargetCount, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, SkillExecutionData onHitRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets)
+	private static bool ApplyNonPrefabTargets(SkillActionContext context, SkillExecutionData snapshot, Vector2 center, float radius, bool coverAll, int effectiveHitTargetCount, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, SkillExecutionData onHitRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets)
 	{
 		if (context == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null)
 		{
@@ -413,7 +413,7 @@ public partial class SingleSkillActor
 	}
 
 	/// 전달된 런타임 입력값을 사용해 NonPrefabTargetsAfterDelay를 적용한다.
-	private IEnumerator ApplyNonPrefabTargetsAfterDelay(SkillExecutionContext context, SkillExecutionData snapshot, Vector2 center, float radius, bool coverAll, int effectiveHitTargetCount, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, SkillExecutionData onHitRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets, float delaySeconds, bool allowConditionalFollowUp)
+	private IEnumerator ApplyNonPrefabTargetsAfterDelay(SkillActionContext context, SkillExecutionData snapshot, Vector2 center, float radius, bool coverAll, int effectiveHitTargetCount, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, SkillExecutionData onHitRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets, float delaySeconds, bool allowConditionalFollowUp)
 	{
 		yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
 		ApplyNonPrefabTargets(context, snapshot, center, radius, coverAll, effectiveHitTargetCount, damage, attribute, statusSpec, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, followUpSpec, followUpTargets);
@@ -424,7 +424,7 @@ public partial class SingleSkillActor
 	}
 
 	/// 전달된 런타임 입력값을 사용해 PrefabHitboxAfterDelay를 적용한다.
-	private IEnumerator ApplyPrefabHitboxAfterDelay(SkillExecutionContext context, SkillExecutionData snapshot, GameObject instance, int effectiveHitTargetCount, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, SkillExecutionData onHitRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets, float delaySeconds, bool allowConditionalFollowUp)
+	private IEnumerator ApplyPrefabHitboxAfterDelay(SkillActionContext context, SkillExecutionData snapshot, GameObject instance, int effectiveHitTargetCount, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, SkillExecutionData onHitRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets, float delaySeconds, bool allowConditionalFollowUp)
 	{
 		yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
 		if (context != null && !(context.CombatManager == null) && context.CasterEntry != null && context.Roster != null && !(instance == null))
@@ -654,7 +654,7 @@ public partial class SingleSkillActor
 	{
 		if (!(manager == null) && roster != null && sourceEntry != null && hitCount > 0)
 		{
-			var executionContext = new SkillExecutionContext(
+			var executionContext = new SkillActionContext(
 				manager,
 				roster,
 				sourceEntry,
@@ -710,7 +710,7 @@ public partial class SingleSkillActor
 	}
 
 	/// 전달된 런타임 입력값을 사용해 ScheduleConditionalFollowUps 작업을 수행한다.
-	private void ScheduleConditionalFollowUps(SkillExecutionContext context, SkillExecutionData snapshot, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets)
+	private void ScheduleConditionalFollowUps(SkillActionContext context, SkillExecutionData snapshot, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets)
 	{
 		if (context == null || context.CombatManager == null || context.Roster == null || context.CasterEntry == null || context.Caster == null || !followUpSpec.HasValue || followUpTargets == null || followUpTargets.Count == 0)
 		{
@@ -728,7 +728,7 @@ public partial class SingleSkillActor
 	}
 
 	/// 전달된 런타임 입력값을 사용해 ConditionalFollowUpAfterDelay를 실행한다.
-	private IEnumerator ExecuteConditionalFollowUpAfterDelay(SkillExecutionContext context, SkillExecutionData snapshot, SingleFollowUpTarget followUpTarget, SingleFollowUpSpec followUpSpec, float delaySeconds)
+	private IEnumerator ExecuteConditionalFollowUpAfterDelay(SkillActionContext context, SkillExecutionData snapshot, SingleFollowUpTarget followUpTarget, SingleFollowUpSpec followUpSpec, float delaySeconds)
 	{
 		yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
 		if (context != null && !(context.CombatManager == null) && context.Roster != null && context.CasterEntry != null && context.Caster != null)

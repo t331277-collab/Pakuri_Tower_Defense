@@ -15,7 +15,7 @@ namespace Pakuri.InGame
 
         /// 설정된 버프 효과를 실행한다.
         internal static bool Execute(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData snapshot)
         {
             switch (snapshot.PreparedBuffEffectKind)
@@ -32,7 +32,7 @@ namespace Pakuri.InGame
         }
 
         private static bool ExecuteStatus(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData snapshot)
         {
             var statusSpec = snapshot.PreparedStatus;
@@ -76,7 +76,7 @@ namespace Pakuri.InGame
         }
 
         private static bool ExecuteHeal(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData snapshot)
         {
             var target = snapshot.PreparedTargets.Count > 0
@@ -100,7 +100,7 @@ namespace Pakuri.InGame
         }
 
         private static bool ExecuteShield(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData snapshot)
         {
             if (snapshot.PreparedShieldStatusData == null || snapshot.PreparedDuration <= 0f)
@@ -141,7 +141,7 @@ namespace Pakuri.InGame
             return routed;
         }
 
-        private static bool ExecuteCharge(SkillExecutionContext context)
+        private static bool ExecuteCharge(SkillActionContext context)
         {
             return context.Caster != null && context.Runtime != null;
         }
@@ -192,7 +192,7 @@ namespace Pakuri.InGame
         }
 
         private static void SpawnVisual(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData snapshot,
             CombatUnitEntry target,
             string namePrefix,

@@ -1329,7 +1329,7 @@ namespace Pakuri.InGame
 
         /// 시전 전에 처형 조건을 충족하는 첫 대상을 확인한다.
         internal static bool ShouldRejectCastForExecuteThreshold(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData snapshot,
             SingleSkillDefinition skill)
         {

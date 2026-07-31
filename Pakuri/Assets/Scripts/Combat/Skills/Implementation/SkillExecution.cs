@@ -13,76 +13,6 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// 한 번의 시전에 필요한 참여자, 목표, 조준 정보와 실행 정책을 묶는다.
-    public class SkillExecutionContext
-    {
-
-        /// 시전 입력을 이후 단계에서 공유할 실행 정보로 고정한다.
-        public SkillExecutionContext(
-            InGameCombatManager combatManager,
-            UnitSpawnManager roster,
-            CombatUnitEntry casterEntry,
-            SkillExecutionData runtime,
-            UnitCombatState eventTarget = null,
-            bool hasManualAimDirection = false,
-            Vector2 manualAimDirection = default,
-            bool hasManualTargetPoint = false,
-            Vector2 manualTargetPoint = default,
-            int recastGeneration = 0,
-            bool lockToEventTarget = false,
-            bool publishSkillLifecycleEvents = true,
-            bool applyDamageMultiplierToShield = true,
-            string sourceSkillId = null)
-        {
-            CombatManager = combatManager;
-            Roster = roster;
-            CasterEntry = casterEntry;
-            Runtime = runtime;
-            EventTarget = eventTarget;
-            HasManualAimDirection = hasManualAimDirection;
-            ManualAimDirection = manualAimDirection;
-            HasManualTargetPoint = hasManualTargetPoint;
-            ManualTargetPoint = manualTargetPoint;
-            RecastGeneration = Mathf.Max(0, recastGeneration);
-            LockToEventTarget = lockToEventTarget;
-            PublishSkillLifecycleEvents = publishSkillLifecycleEvents;
-            ApplyDamageMultiplierToShield = applyDamageMultiplierToShield;
-            SourceSkillId = string.IsNullOrWhiteSpace(sourceSkillId)
-                ? runtime != null && runtime.Data != null
-                    ? runtime.Data.SkillId
-                    : string.Empty
-                : sourceSkillId;
-        }
-
-        public InGameCombatManager CombatManager { get; }
-        public UnitSpawnManager Roster { get; }
-        public CombatUnitEntry CasterEntry { get; }
-        public SkillExecutionData Runtime { get; }
-        public UnitCombatState EventTarget { get; }
-        public bool HasManualAimDirection { get; }
-        public Vector2 ManualAimDirection { get; }
-        public bool HasManualTargetPoint { get; }
-        public Vector2 ManualTargetPoint { get; }
-        public int RecastGeneration { get; }
-        public bool LockToEventTarget { get; }
-        public bool PublishSkillLifecycleEvents { get; }
-        public bool ApplyDamageMultiplierToShield { get; }
-        public string SourceSkillId { get; }
-
-        public UnitCombatState Caster
-        {
-            get
-            {
-                if (CasterEntry == null)
-                {
-                    return null;
-                }
-
-                return CasterEntry.Model;
-            }
-        }
-    }
-
     /// 시전 가능 여부를 확인하고 확정된 효과를 실행 방식에 맞게 분배한다.
     public class SkillExecution
     {
@@ -349,7 +279,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var context = new SkillExecutionContext(
+            var context = new SkillActionContext(
                 combatManager,
                 roster,
                 entry,
@@ -470,7 +400,7 @@ namespace Pakuri.InGame
                 }
 
                 var snapshot = owner.SkillState.CreateExecutionData(owner, runtime, roster);
-                var context = new SkillExecutionContext(
+                var context = new SkillActionContext(
                     combatManager,
                     roster,
                     ownerEntry,
@@ -512,7 +442,7 @@ namespace Pakuri.InGame
             {
                 snapshot.ScaleDamageMultiplier(damageMultiplier);
             }
-            var context = new SkillExecutionContext(
+            var context = new SkillActionContext(
                 combatManager,
                 roster,
                 entry,
@@ -541,7 +471,7 @@ namespace Pakuri.InGame
         }
 
         private static void ExecuteCastEffects(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData sourceSnapshot,
             bool enemyTargetsOnly = false)
         {
@@ -576,7 +506,7 @@ namespace Pakuri.InGame
         }
 
         private static IEnumerator ExecuteCastEffectDelayed(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData sourceSnapshot,
             SkillCastEffect effect)
         {
@@ -588,7 +518,7 @@ namespace Pakuri.InGame
         }
 
         private static bool ExecuteCastEffect(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData sourceSnapshot,
             SkillCastEffect effect,
             bool hasRawDamageOverride = false,
@@ -741,7 +671,7 @@ namespace Pakuri.InGame
             UnitSpawnManager roster,
             CombatUnitEntry entry,
             SkillExecutionData runtime,
-            SkillExecutionContext context,
+            SkillActionContext context,
             string triggerSourceSkillId = null)
         {
             var center = Vector2.zero;
@@ -764,7 +694,7 @@ namespace Pakuri.InGame
 
         /// 스킬 전달 방식에 맞는 실행기로 분배한다.
         private static bool ExecuteSkill(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData snapshot,
             SkillDefinition skillData)
         {
@@ -804,7 +734,7 @@ namespace Pakuri.InGame
         }
 
         private static bool PrepareExecutionData(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData snapshot,
             SkillDefinition definition)
         {
@@ -878,7 +808,7 @@ namespace Pakuri.InGame
         }
 
         internal bool TryExecuteRecast(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData snapshot,
             ZoneSkillDefinition skill,
             SkillReactionCommand command,
@@ -889,7 +819,7 @@ namespace Pakuri.InGame
         }
 
         private static bool PrepareLineExecutionData(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData snapshot,
             LineSkillDefinition skill)
         {
@@ -985,7 +915,7 @@ namespace Pakuri.InGame
         }
 
         private static bool PrepareZoneExecutionData(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData snapshot,
             ZoneSkillDefinition skill,
             SkillReactionCommand command,
@@ -1074,7 +1004,7 @@ namespace Pakuri.InGame
         }
 
         private static bool PrepareProjectileExecutionData(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData snapshot,
             ProjectileSkillDefinition skill)
         {
@@ -1231,7 +1161,7 @@ namespace Pakuri.InGame
         }
 
         private static bool PrepareSingleExecutionData(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData snapshot,
             SingleSkillDefinition skill)
         {
@@ -1332,7 +1262,7 @@ namespace Pakuri.InGame
         }
 
         private static bool PrepareBuffExecutionData(
-            SkillExecutionContext context,
+            SkillActionContext context,
             SkillExecutionData snapshot,
             BuffSkillDefinition skill)
         {
@@ -1686,7 +1616,7 @@ namespace Pakuri.InGame
         {
             if (manager != null && roster != null && source != null && hitTarget != null && hitTarget.Model != null)
             {
-                var actionExecutionContext = new SkillExecutionContext(
+                var actionExecutionContext = new SkillActionContext(
                     manager,
                     roster,
                     sourceEntry,
@@ -1988,7 +1918,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var context = new SkillExecutionContext(
+            var context = new SkillActionContext(
                 combatManager,
                 roster,
                 source,

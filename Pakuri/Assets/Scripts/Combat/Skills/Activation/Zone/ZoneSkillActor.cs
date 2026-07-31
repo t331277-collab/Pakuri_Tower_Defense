@@ -121,7 +121,7 @@ namespace Pakuri.InGame
         {
             if (combatManager != null && casterEntry != null && roster != null)
             {
-                var lifecycleContext = new SkillExecutionContext(
+                var lifecycleContext = new SkillActionContext(
                     combatManager,
                     roster,
                     casterEntry,
