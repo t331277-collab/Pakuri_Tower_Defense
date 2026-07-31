@@ -915,6 +915,25 @@ namespace Pakuri.Data
                     normalizedNodes,
                     activeSkills,
                     statusDefinitions);
+                if (definitions[i].TriggeredSkill != null
+                    && !definitions[i].UsesExistingSkillRuntime)
+                {
+                    definitions[i].Effect = BuildCastEffect(
+                        definitions[i],
+                        trigger.Id,
+                        0f);
+                    definitions[i].TriggeredSkill = null;
+                }
+                else if (definitions[i].TriggeredSkill == null
+                    && definitions[i].Command == null
+                    && HasHandler(normalizedNodes, "StatusModifier"))
+                {
+                    definitions[i].Effect = BuildNormalStatusModifierEffect(
+                        trigger,
+                        normalizedNodes,
+                        statusDefinitions);
+                    definitions[i].Effect.DelaySeconds = 0f;
+                }
             }
 
             return definitions;

@@ -770,6 +770,41 @@ internal static class SkillTrigger
 		}
 
 		SkillUseState sourceRuntime = source.SkillState.FindBySkillId(trigger.SourceSkillId);
+		var targetPoint = triggerContext.EventCenter;
+		if (trigger.CenterMode == SkillTriggerCenterMode.Caster
+			&& sourceEntry.Transform != null)
+		{
+			targetPoint = sourceEntry.Transform.position;
+		}
+		else if (trigger.CenterMode == SkillTriggerCenterMode.EventTarget
+			&& triggerContext.EventTarget != null)
+		{
+			var targetEntry = roster.Find(triggerContext.EventTarget);
+			if (targetEntry != null && targetEntry.Transform != null)
+			{
+				targetPoint = targetEntry.Transform.position;
+			}
+		}
+
+		if (trigger.Effect != null)
+		{
+			return sourceRuntime != null
+				&& combatManager.SkillExecution.TryExecuteReactionEffect(
+					sourceEntry,
+					sourceRuntime,
+					roster,
+					combatManager,
+					trigger.Effect,
+					triggerContext.EventTarget,
+					targetPoint,
+					triggerContext.RecastGeneration,
+					trigger.SourceSkillId,
+					trigger.LockToEventTarget,
+					trigger.DamageValueSource
+						!= SkillTriggerDamageValueSource.Fixed,
+					ResolveTriggeredRawDamage(trigger, triggerContext));
+		}
+
 		if (trigger.TriggeredSkill != null)
 		{
 			if (sourceRuntime == null)
@@ -787,22 +822,6 @@ internal static class SkillTrigger
 			var snapshotRuntime = trigger.UsesExistingSkillRuntime
 				? runtime
 				: sourceRuntime;
-
-			var targetPoint = triggerContext.EventCenter;
-			if (trigger.CenterMode == SkillTriggerCenterMode.Caster
-				&& sourceEntry.Transform != null)
-			{
-				targetPoint = sourceEntry.Transform.position;
-			}
-			else if (trigger.CenterMode == SkillTriggerCenterMode.EventTarget
-				&& triggerContext.EventTarget != null)
-			{
-				var targetEntry = roster.Find(triggerContext.EventTarget);
-				if (targetEntry != null && targetEntry.Transform != null)
-				{
-					targetPoint = targetEntry.Transform.position;
-				}
-			}
 
 			var hasRawDamageOverride =
 				trigger.DamageValueSource != SkillTriggerDamageValueSource.Fixed;

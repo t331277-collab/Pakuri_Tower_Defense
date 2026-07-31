@@ -311,13 +311,37 @@ namespace Pakuri.Data
 		};
 		BuildTriggerOutcome(trigger, nodes, activeSkills, statusDefinitions);
 
+		var effect = BuildCastEffect(
+			trigger,
+			row.Id,
+			Mathf.Max(0f, row.TriggerDelaySeconds));
+		if (effect == null && HasHandler(nodes, "StatusModifier"))
+		{
+			effect = BuildNormalStatusModifierEffect(
+				row,
+				nodes,
+				statusDefinitions);
+		}
+
+		return effect != null
+			? SkillNode.FromOperation(
+				new SkillCastEffectOp(effect),
+				row.SourceSkillId)
+			: null;
+	}
+
+	private static SkillCastEffect BuildCastEffect(
+		SkillTriggerDefinition trigger,
+		string effectId,
+		float delaySeconds)
+	{
 		SkillCastEffect effect = null;
 		if (trigger.TriggeredSkill is SingleSkillDefinition single)
 		{
 			effect = new SkillCastEffect
 			{
-				EffectId = row.Id,
-				DelaySeconds = Mathf.Max(0f, row.TriggerDelaySeconds),
+				EffectId = effectId,
+				DelaySeconds = delaySeconds,
 				Targeting = single.Targeting,
 				Area = single.Area,
 				Damage = single.Damage,
@@ -330,8 +354,8 @@ namespace Pakuri.Data
 		{
 			effect = new SkillCastEffect
 			{
-				EffectId = row.Id,
-				DelaySeconds = Mathf.Max(0f, row.TriggerDelaySeconds),
+				EffectId = effectId,
+				DelaySeconds = delaySeconds,
 				Targeting = buff.Targeting,
 				Status = buff.EffectKind == BuffEffectKind.Status
 					? buff.AttachedStatus
@@ -354,26 +378,14 @@ namespace Pakuri.Data
 		{
 			effect = new SkillCastEffect
 			{
-				EffectId = row.Id,
-				DelaySeconds = Mathf.Max(0f, row.TriggerDelaySeconds),
+				EffectId = effectId,
+				DelaySeconds = delaySeconds,
 				Targeting = trigger.Command.Targeting,
 				ExtendStatusKind = trigger.Command.StatusKind,
 				DurationSeconds = trigger.Command.DurationSeconds
 			};
 		}
-		else if (HasHandler(nodes, "StatusModifier"))
-		{
-			effect = BuildNormalStatusModifierEffect(
-				row,
-				nodes,
-				statusDefinitions);
-		}
-
-		return effect != null
-			? SkillNode.FromOperation(
-				new SkillCastEffectOp(effect),
-				row.SourceSkillId)
-			: null;
+		return effect;
 	}
 
 	private static SkillCastEffect BuildNormalStatusModifierEffect(

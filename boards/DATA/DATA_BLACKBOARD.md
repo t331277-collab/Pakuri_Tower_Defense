@@ -504,6 +504,9 @@ User approved Generation/runtime implementation. Phases 1-4 complete; Parsing an
 - Phase 4 Generation excludes all 76 semantic non-Triggers from final Trigger arrays, attaches 74 normal cast/passive payloads to existing Nodes, and maps `ariel-e-trait-4` to the existing conditional-damage Choice handler.
 - Phase 4 retains the current Trigger CSV schema; the `ariel-e-trait-4` graph owner/handler/value is corrected from separate Trigger damage to Choice `ConditionalDamageMultiplier(holy-exposure, 1, 1.5)`.
 - Phase 4 solution build completed with error 0; Unity forced script compile and full EditMode tests passed 14/14.
+- Phase 5 Generation converts 40 direct-delivery outcomes to common effect payloads and materializes the 17 previously incomplete `StatusModifier` outcomes without changing CSV schema.
+- Phase 5 final runtime counts are effect 57, learned-skill reference 4, command 21, and missing outcome 0.
+- Phase 5 solution build completed with error 0; Unity full EditMode tests passed 14/14.
 
 ### History
 
@@ -516,3 +519,4 @@ User approved Generation/runtime implementation. Phases 1-4 complete; Parsing an
 - 2026-07-31: Code Builder completed Phase 2 without changing the data contract.
 - 2026-07-31: Code Builder completed Phase 3 existing-skill runtime reuse without changing the authoring schema.
 - 2026-07-31: Code Builder completed Phase 4 final ownership separation without changing the authoring schema.
+- 2026-07-31: Code Builder completed Phase 5 direct-delivery and incomplete event-outcome Generation.

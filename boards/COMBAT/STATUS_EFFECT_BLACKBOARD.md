@@ -909,11 +909,11 @@ Code Builder.
 
 ### Status
 
-User approved effect restoration and Code Builder implementation. Phases 1-4 complete.
+User approved effect restoration and Code Builder implementation. Phases 1-5 complete.
 
 ### Next Actions
 
-- Implement Phase 5 direct-delivery reactions and restore the 17 incomplete event outcomes.
+- Implement Phase 6 Actor-less and state reactions.
 - Commit and verify each remaining phase separately.
 - Run the approved Code Reviewer loop after Phase 8.
 
@@ -938,6 +938,9 @@ User approved effect restoration and Code Builder implementation. Phases 1-4 com
 - Phase 4 attaches 74 normal cast/passive payloads to existing Skill/Choice/Passive Nodes; `ariel-e-trait-4` uses the existing conditional-damage Choice operation and duplicate `eve-h-trait-3` is excluded.
 - Phase 4 restores 64 `StatusModifier` payloads as normal `PassiveBuff` effects with authored target, status, source-skill, health-ratio, duration, and mutation conditions.
 - Phase 4 solution build completed with error 0; Unity forced script compile and full EditMode tests passed 14/14.
+- Phase 5 replaces 40 hidden direct-delivery Definitions with 57 common event effects: damage 24 and status 33, including the restored 17 incomplete status outcomes.
+- Phase 5 leaves only 4 learned cross-skill references and 21 state commands; all 82 runtime reactions now have an outcome.
+- Phase 5 solution build completed with error 0; Unity full EditMode tests passed 14/14.
 
 ### History
 
@@ -950,3 +953,4 @@ User approved effect restoration and Code Builder implementation. Phases 1-4 com
 - 2026-07-31: Code Builder completed Phase 2 runtime-kind executor routing.
 - 2026-07-31: Code Builder completed Phase 3 existing-skill runtime reuse.
 - 2026-07-31: Code Builder completed Phase 4 non-Trigger extraction and normal effect ownership restoration.
+- 2026-07-31: Code Builder completed Phase 5 direct-delivery consolidation and incomplete event-effect restoration.

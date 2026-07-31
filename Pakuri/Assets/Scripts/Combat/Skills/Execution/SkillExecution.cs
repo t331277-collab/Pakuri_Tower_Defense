@@ -472,6 +472,60 @@ namespace Pakuri.InGame
             }
         }
 
+        internal bool TryExecuteReactionEffect(
+            CombatUnitEntry entry,
+            SkillUseState sourceRuntime,
+            UnitSpawnManager roster,
+            InGameCombatManager combatManager,
+            SkillCastEffect effect,
+            UnitCombatState eventTarget,
+            Vector2 targetPoint,
+            int recastGeneration,
+            string sourceSkillId,
+            bool lockToEventTarget,
+            bool hasRawDamageOverride,
+            float rawDamageOverride)
+        {
+            if (entry?.Model == null
+                || sourceRuntime == null
+                || effect == null
+                || triggeredExecutionDepth >= MaxTriggeredExecutionDepth)
+            {
+                return false;
+            }
+
+            var snapshot = entry.Model.SkillState.CreateExecutionData(
+                entry.Model,
+                sourceRuntime,
+                roster);
+            var context = new SkillExecutionContext(
+                combatManager,
+                roster,
+                entry,
+                sourceRuntime,
+                eventTarget,
+                hasManualTargetPoint: true,
+                manualTargetPoint: targetPoint,
+                recastGeneration: recastGeneration,
+                lockToEventTarget: lockToEventTarget,
+                publishSkillLifecycleEvents: false,
+                sourceSkillId: sourceSkillId);
+            try
+            {
+                triggeredExecutionDepth++;
+                return ExecuteCastEffect(
+                    context,
+                    snapshot,
+                    effect,
+                    hasRawDamageOverride,
+                    rawDamageOverride);
+            }
+            finally
+            {
+                triggeredExecutionDepth--;
+            }
+        }
+
         private static void ExecuteCastEffects(
             SkillExecutionContext context,
             SkillExecutionData sourceSnapshot,
@@ -520,7 +574,9 @@ namespace Pakuri.InGame
         private static bool ExecuteCastEffect(
             SkillExecutionContext context,
             SkillExecutionData sourceSnapshot,
-            SkillCastEffect effect)
+            SkillCastEffect effect,
+            bool hasRawDamageOverride = false,
+            float rawDamageOverride = 0f)
         {
             if (context == null || sourceSnapshot == null || effect == null)
             {
@@ -548,9 +604,11 @@ namespace Pakuri.InGame
                     snapshot.RadiusBonus);
                 snapshot.PreparedCoverAll = effect.Targeting != null
                     && effect.Targeting.CoverAll;
-                snapshot.PreparedDamage = DamageCalculator.CalculateRawDamage(
-                    context.Caster,
-                    effect.Damage);
+                snapshot.PreparedDamage = hasRawDamageOverride
+                    ? Mathf.Max(0f, rawDamageOverride)
+                    : DamageCalculator.CalculateRawDamage(
+                        context.Caster,
+                        effect.Damage);
                 snapshot.PreparedDamageAttribute = effect.Damage.Element;
                 snapshot.PreparedStatus = SkillStatus.StatusSpec(effect.Status, snapshot);
                 snapshot.PreparedCriticalAllowed = effect.Damage.CriticalAllowed;

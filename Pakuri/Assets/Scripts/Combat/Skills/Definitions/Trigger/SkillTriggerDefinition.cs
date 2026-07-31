@@ -131,6 +131,7 @@ namespace Pakuri.Data
         public float RepeatIntervalSeconds;
         public bool RequireEventExecute;
         public Pakuri.InGame.SkillDefinition TriggeredSkill;
+        public Pakuri.InGame.SkillCastEffect Effect;
         public SkillTriggerCommand Command;
         public bool UsesExistingSkillRuntime;
         public float TriggeredDamageMultiplier = 1f;

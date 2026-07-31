@@ -380,7 +380,10 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(triggers, Has.Count.EqualTo(82));
         Assert.That(
             triggers.FindAll(trigger => trigger.TriggeredSkill != null),
-            Has.Count.EqualTo(44));
+            Has.Count.EqualTo(4));
+        Assert.That(
+            triggers.FindAll(trigger => trigger.Effect != null),
+            Has.Count.EqualTo(57));
         Assert.That(
             triggers.FindAll(trigger => trigger.Command != null),
             Has.Count.EqualTo(21));
@@ -402,8 +405,10 @@ public sealed class SkillCatalogRuntimeTests
             Is.Empty);
         Assert.That(
             triggers.FindAll(trigger =>
-                trigger.TriggeredSkill == null && trigger.Command == null),
-            Has.Count.EqualTo(17));
+                trigger.TriggeredSkill == null
+                && trigger.Effect == null
+                && trigger.Command == null),
+            Is.Empty);
         Assert.That(
             triggers.FindAll(trigger =>
                 trigger.DamageValueSource != SkillTriggerDamageValueSource.Fixed),
@@ -422,12 +427,12 @@ public sealed class SkillCatalogRuntimeTests
             Is.Empty);
         Assert.That(
             triggers.FindAll(trigger =>
-                trigger.TriggeredSkill is SingleSkillDefinition),
+                trigger.Effect?.HasDamage == true),
             Has.Count.EqualTo(24));
         Assert.That(
             triggers.FindAll(trigger =>
-                trigger.TriggeredSkill is BuffSkillDefinition),
-            Has.Count.EqualTo(16));
+                trigger.Effect?.HasStatus == true),
+            Has.Count.EqualTo(33));
         Assert.That(
             triggers.FindAll(trigger =>
                 trigger.TriggeredSkill is BuffSkillDefinition buff
@@ -450,9 +455,13 @@ public sealed class SkillCatalogRuntimeTests
             || (trigger.TriggerEvent == SkillTriggerEvent.OnSkillCast
                 && (trigger.EventSkillIds == null || trigger.EventSkillIds.Length == 0)));
         var workingTriggers = triggers.FindAll(trigger =>
-            trigger.TriggeredSkill != null || trigger.Command != null);
+            trigger.TriggeredSkill != null
+            || trigger.Effect != null
+            || trigger.Command != null);
         var incompleteTriggers = triggers.FindAll(trigger =>
-            trigger.TriggeredSkill == null && trigger.Command == null);
+            trigger.TriggeredSkill == null
+            && trigger.Effect == null
+            && trigger.Command == null);
         var castEffects = new List<SkillCastEffect>();
         foreach (var monster in GameDataLoader.CurrentCatalog.Monsters)
         {
@@ -466,8 +475,8 @@ public sealed class SkillCatalogRuntimeTests
             }
         }
 
-        Assert.That(workingTriggers, Has.Count.EqualTo(65));
-        Assert.That(incompleteTriggers, Has.Count.EqualTo(17));
+        Assert.That(workingTriggers, Has.Count.EqualTo(82));
+        Assert.That(incompleteTriggers, Is.Empty);
         Assert.That(leakedNonTriggers, Is.Empty);
         Assert.That(castEffects, Has.Count.EqualTo(74));
         Assert.That(
@@ -483,8 +492,8 @@ public sealed class SkillCatalogRuntimeTests
                 effect.EffectId == "ariel-b-trait-5"
                 && effect.Status?.Status != null
                 && effect.Status.Status.Modifiers.DamageBonusRate == 0.12f
-                && effect.Status.Status.Modifiers.HasElementModifierTarget
-                && effect.Status.Status.Modifiers.ElementModifierTarget == DamageAttribute.Holy
+                && effect.Status.Status.HasElementModifierTarget
+                && effect.Status.Status.ElementModifierTarget == DamageAttribute.Holy
                 && effect.Status.Status.Duration == 5f
                 && effect.Targeting.TargetSide == SkillTargetSide.AllAllies
                 && effect.Status.Status.ConditionalTargetStatusGroups.Length == 1

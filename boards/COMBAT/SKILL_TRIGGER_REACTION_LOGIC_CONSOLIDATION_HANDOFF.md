@@ -728,6 +728,12 @@ SkillTrigger 공통 gate
 - 의미상 Trigger delivery 피해 17개를 Single snapshot 보정으로 이전.
 - 의미상 Trigger status 16개를 Buff snapshot 보정으로 이전.
 - Trigger-intent no-outcome 17개는 사건 조건을 유지하고 기존 상태 효과 경로로 outcome 연결.
+- 완료 증거:
+  - hidden direct-delivery Definition 40개를 제거하고 `SkillCastEffect` 57개(피해 24, 상태 33)로 통합했다.
+  - 사건값 피해 7개는 지연 전에 복사된 `TriggerExecutionContext` 값으로 raw damage를 결정한다.
+  - 미완성 17개 `StatusModifier`는 기존 상태 적용 API로 연결되며 원래 Trigger 조건·지연·반복 판정은 `SkillTrigger`에 남는다.
+  - runtime Trigger 82개 모두 outcome을 가지며 남은 `TriggeredSkill` 4개는 실제 learned cross-skill 재사용뿐이다.
+  - solution build 오류 0, Unity EditMode 14/14 통과.
 
 ### Phase 6: Actor-less and state reactions
 
@@ -810,7 +816,7 @@ SkillTrigger 공통 gate
 
 ## Next Actions
 
-- Code Builder가 Phase 5 direct delivery reaction과 incomplete Trigger 17개 효과 복구를 구현한다.
+- Code Builder가 Phase 6 Actor-less/state reaction을 구현한다.
 - 각 Phase의 변경과 검증 결과를 별도 Git commit으로 기록한다.
 - Phase 8과 전체 검증 후 Code Reviewer 롤로 전환한다.
 - Reviewer가 수정을 요구하면 Code Reviewer 롤로 수정·재검증하고 통과할 때까지 반복한다.
@@ -843,6 +849,7 @@ SkillTrigger 공통 gate
 - Phase 2 family exception: authored `Slash`와 `FireDragonSlash`는 `SkillRuntimeKind.AreaAttack`이지만 CSV `DamageArea` Generation 결과가 `SingleSkillDefinition`이다. 따라서 현재 `AreaAttack`은 기존 Definition family를 검증해 Single 또는 Zone Executor를 선택한다.
 - Phase 3 verification: `TryExecuteTriggered` 참조 0; `TryExecuteReaction`이 Trigger Definition 없이 기존 runtime/Definition을 받는다; solution build error 0; Unity EditMode 14/14.
 - Phase 4 verification: runtime Trigger 82, leaked OnCast/same-source Trigger 0, 일반 Skill/Choice/Passive cast effect 74 + 기존 조건부 위력 Choice 1, `eve-h-trait-3` 중복 0; solution build error 0; Unity EditMode 14/14.
+- Phase 5 verification: runtime Trigger effect 57(피해 24, 상태 33), existing-skill reuse 4, command 21, outcome 누락 0; solution build error 0; Unity EditMode 14/14.
 
 ## History
 
@@ -858,3 +865,4 @@ SkillTrigger 공통 gate
 - 2026-07-31: Code Builder completed Phase 2 runtime-kind executor routing and full EditMode verification.
 - 2026-07-31: Code Builder completed Phase 3 existing-skill runtime reuse and removed the common execution entry point's dependency on `SkillTriggerDefinition`.
 - 2026-07-31: Code Builder completed Phase 4 by removing 76 semantic non-Triggers from runtime reaction registration and restoring 75 non-duplicate normal effects through existing Skill/Choice/Passive Nodes.
+- 2026-07-31: Code Builder completed Phase 5 by replacing 40 hidden direct-delivery Definitions and restoring 17 incomplete event outcomes through the common cast-effect path.
