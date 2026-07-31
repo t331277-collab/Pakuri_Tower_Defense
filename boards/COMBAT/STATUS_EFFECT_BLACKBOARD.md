@@ -32,11 +32,13 @@ Code Builder for handoff correction and later implementation. Code Reviewer only
 
 ### Status
 
-User concerns 1-7 validated against current code and reflected in the primary handoff. Phase 1 baseline and inventory are recorded; Node composition implementation is now in progress.
+User concerns 1-7 validated against current code and reflected in the primary handoff. Phase 1 baseline and inventory are recorded. Phase 2 Node composition is implemented and build-verified; Phase 3 data cleanup is next.
 
 ### Next Actions
 
-- Phase 1 baseline is committed; Phase 2 owns Resolver Node composition and is verified by the Assembly-CSharp build.
+- Phase 1 baseline is committed.
+- Phase 2 Resolver Node composition is committed and verified by `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore` with 0 errors.
+- Phase 3 removes remaining active behavior from data and migrates the runtime state owner.
 - Add parity coverage for composition order, cast-time versus hit-time values, status results, Trigger asymmetry, recursion/generation, Definition-only reaction lookup, and snapshot immutability.
 - Do not alter Trigger gate asymmetry or command recursion behavior without a separate user decision.
 - Keep `SkillExecution.cs` as the only file for its responsibility and reduce its four current classes to the single `SkillExecution` class; do not create `SkillExecutionContext.cs`, `SkillUseState.cs`, or `SkillExecutionState.cs`.
@@ -49,6 +51,9 @@ User concerns 1-7 validated against current code and reflected in the primary ha
 - Primary handoff: `boards/COMBAT/SKILL_NODE_RUNTIME_RESOLVER_CONSOLIDATION_HANDOFF.md`.
 - Before Phase 2, `SkillExecutionData` constructed source Nodes directly and `MemberwiseClone` handled damage-adjusted copies.
 - Phase 1 baseline commit records the full caller inventory and fixed six-file target from the handoff.
+- `SkillExecutionData` no longer contains `GetOperation<T>()`, `ApplyNodes`, or Node action handlers; Resolver now owns those operations.
+- `SkillExecutionData.CopyWithDamageMultiplier` remains as the mechanical snapshot copy path.
+- `rg -n "GetOperation<" Pakuri/Assets/Scripts/Combat/Skills/Implementation --glob "*.cs"` returns only `SkillExecutionRuleResolver.cs`.
 - `EnemyCombatDecision.cs:193` and `DamageMeterUIController.cs:255,271` read reactions through the constructor outside Combat runtime orchestration.
 - `SkillCatalogRuntimeTests.cs` directly calls the constructor and APIs planned for removal at multiple locations.
 - `SkillTrigger.cs:384` executes source-owned reactions after its basic gate; `:446` applies additional passive count/proc/internal-cooldown gates.
@@ -63,6 +68,7 @@ User concerns 1-7 validated against current code and reflected in the primary ha
 - 2026-07-31: User added the one-script/one-class preference and required responsibility-based integration instead of physical class-body movement; Designer added the convention, split targets, deletion rules, and acceptance checks.
 - 2026-07-31: User corrected that the convention forbids new split files. Designer removed the same-name file plan and fixed the target to six existing Implementation scripts, one `SkillExecution` class, caller migration, legacy type deletion, and reduced class/line counts.
 - 2026-07-31: Code Builder resumed under the per-Phase commit rule and closed the baseline/inventory phase before runtime edits.
+- 2026-07-31: Phase 2 moved Node extraction and Node action value composition to Resolver; Assembly-CSharp build passed with 0 errors.
 
 ## Task: 2026-07-28 Skill Trigger / Node Unification Design
 

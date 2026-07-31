@@ -21,9 +21,9 @@ public sealed class SkillCatalogRuntimeTests
                 SkillNode.FromOperation(new DamageModifierOp(DamageModifierOpKind.BossMultiplier, 3f), "skill-b")
             }
         };
-        var data = new SkillExecutionData(skill);
+        var data = SkillExecutionRuleResolver.CreateDefinitionSnapshot(skill);
 
-        data.ApplyChoiceSpec(choice);
+        SkillExecutionRuleResolver.ApplyChoice(data, choice);
 
         Assert.That(data.DamageModifierOps, Has.Count.EqualTo(1));
         Assert.That(data.DamageModifierOps[0].Multiplier, Is.EqualTo(2f));
@@ -337,7 +337,7 @@ public sealed class SkillCatalogRuntimeTests
                 RuntimeKind = SkillRuntimeKind.Buff,
                 EffectKind = BuffEffectKind.Charge
             };
-            var sourceSnapshot = new SkillExecutionData(source);
+            var sourceSnapshot = SkillExecutionRuleResolver.CreateDefinitionSnapshot(source);
             var triggeredRuntime = new SkillUseState(owner, triggered);
             var context = new SkillExecutionContext(
                 null,
@@ -716,7 +716,7 @@ public sealed class SkillCatalogRuntimeTests
         {
             return;
         }
-        effects.AddRange(new SkillExecutionData(skill).CastEffects);
+        effects.AddRange(SkillExecutionRuleResolver.CreateDefinitionSnapshot(skill).CastEffects);
         CollectCastEffects(skill.EnhancementChoices, effects);
         CollectCastEffects(skill.MasterChoices, effects);
         if (skill is PassiveSkillDefinition passive)
@@ -734,7 +734,7 @@ public sealed class SkillCatalogRuntimeTests
             if (choices[i] != null)
             {
                 var snapshot = new SkillExecutionData(null);
-                snapshot.ApplyChoiceSpec(choices[i]);
+                SkillExecutionRuleResolver.ApplyChoice(snapshot, choices[i]);
                 effects.AddRange(snapshot.CastEffects);
             }
         }
@@ -749,14 +749,14 @@ public sealed class SkillCatalogRuntimeTests
         {
             if (skills[i] != null)
             {
-                reactions.AddRange(new SkillExecutionData(skills[i]).Reactions);
+                reactions.AddRange(SkillExecutionRuleResolver.CreateDefinitionSnapshot(skills[i]).Reactions);
             }
         }
         for (var i = 0; passives != null && i < passives.Length; i++)
         {
             if (passives[i] != null)
             {
-                reactions.AddRange(new SkillExecutionData(passives[i]).Reactions);
+                reactions.AddRange(SkillExecutionRuleResolver.CreateDefinitionSnapshot(passives[i]).Reactions);
             }
         }
         return reactions;

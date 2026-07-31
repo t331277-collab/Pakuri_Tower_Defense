@@ -909,7 +909,7 @@ internal static class SkillTrigger
 				roster);
 			var snapshot = command.InheritSnapshot
 				? inheritedSnapshot
-				: new SkillExecutionData(skill);
+				: SkillExecutionRuleResolver.CreateDefinitionSnapshot(skill);
 			return combatManager.SkillExecution.TryExecuteRecast(
 				context,
 				snapshot,

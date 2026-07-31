@@ -1,6 +1,6 @@
 /*
- * 역할: 런타임 스킬 실행의 중앙 처리.
- * 책임: 시전 상태를 구성하고 전달 방식을 분배하며 결과 적용과 실행 상태 갱신을 소유한다.
+ * 스킬 사용 조건을 검증하고 확정된 효과를 알맞은 실행 경로로 전달한다.
+ * 개별 스킬의 대기시간과 학습·선택 보정 상태도 함께 관리한다.
  */
 
 using System;
@@ -13,11 +13,11 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// SkillExecutionContext 처리에 필요한 불변 실행 문맥을 전달한다.
+    /// 한 번의 시전에 필요한 참여자, 목표, 조준 정보와 실행 정책을 묶는다.
     public class SkillExecutionContext
     {
 
-        /// SkillExecutionContext 인스턴스를 전달된 런타임 입력값으로 초기화한다.
+        /// 시전 입력을 이후 단계에서 공유할 실행 정보로 고정한다.
         public SkillExecutionContext(
             InGameCombatManager combatManager,
             UnitSpawnManager roster,
@@ -83,7 +83,7 @@ namespace Pakuri.InGame
         }
     }
 
-    /// 확정된 스킬 시전을 조정하고 설정된 전달 경로로 실행을 분배한다.
+    /// 시전 가능 여부를 확인하고 확정된 효과를 실행 방식에 맞게 분배한다.
     public class SkillExecution
     {
         private const int MaxTriggeredExecutionDepth = 8;
@@ -98,10 +98,10 @@ namespace Pakuri.InGame
             SkillSlot.E
         };
 
-        /// SkillAutoRoutePredicate 사건을 전달하는 콜백 시그니처를 정의한다.
+        /// 자동 시전 후보를 외부 정책으로 선별한다.
         public delegate bool SkillAutoRoutePredicate(CombatUnitEntry entry, SkillUseState runtime);
 
-        /// 전달된 런타임 입력값을 사용해 ExecuteAutomaticSkills 작업을 시도하고 성공 여부를 반환한다.
+        /// 행동 가능한 유닛의 준비된 스킬을 자동으로 시전한다.
         public void TryExecuteAutomaticSkills(
             UnitSpawnManager roster,
             InGameCombatManager combatManager,
@@ -141,7 +141,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 전달된 런타임 입력값을 사용해 ExecuteManual 작업을 시도하고 성공 여부를 반환한다.
+        /// 수동 조준 정보로 선택한 스킬의 시전을 요청한다.
         public bool TryExecuteManual(
             CombatUnitEntry entry,
             SkillUseState runtime,
@@ -164,7 +164,7 @@ namespace Pakuri.InGame
                 null);
         }
 
-        /// 전달된 런타임 입력값을 사용해 ExecuteSelected 실행 가능 여부를 반환한다.
+        /// 현재 전투 상태와 대기 상태에서 선택한 스킬을 사용할 수 있는지 확인한다.
         public bool CanExecuteSelected(
             CombatUnitEntry entry,
             SkillUseState runtime,
@@ -181,7 +181,7 @@ namespace Pakuri.InGame
             return runtime.CanCastWithData(snapshot);
         }
 
-        /// 전달된 런타임 입력값을 사용해 ExecuteSelected 작업을 시도하고 성공 여부를 반환한다.
+        /// 자동 조준으로 선택한 스킬의 시전을 요청한다.
         public bool TryExecuteSelected(
             CombatUnitEntry entry,
             SkillUseState runtime,
@@ -202,7 +202,7 @@ namespace Pakuri.InGame
                 null);
         }
 
-        /// 전달된 런타임 입력값을 사용해 Reaction 작업을 시도하고 성공 여부를 반환한다.
+        /// 전투 사건에서 파생된 보정값으로 기존 실행 경로에 재진입한다.
         public bool TryExecuteReaction(
             CombatUnitEntry entry,
             SkillUseState runtime,
@@ -278,7 +278,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 전달된 런타임 입력값을 사용해 ExecuteSkill 작업을 시도하고 성공 여부를 반환한다.
+        /// 일반 시전 입력으로 최종 실행값을 만들고 공통 실행 경로에 넘긴다.
         private bool TryExecuteSkill(
             CombatUnitEntry entry,
             SkillUseState runtime,
@@ -323,7 +323,7 @@ namespace Pakuri.InGame
                 triggerSourceSkillId);
         }
 
-        /// 전달된 런타임 입력값을 사용해 Prepared를 실행한다.
+        /// 확정된 실행값을 검증한 뒤 효과 적용, 상태 소비와 사건 발행을 조정한다.
         private bool ExecutePrepared(
             CombatUnitEntry entry,
             SkillUseState runtime,
@@ -443,7 +443,7 @@ namespace Pakuri.InGame
             return routed;
         }
 
-        /// 학습한 passive의 일반 효과를 전투 시작 시 기존 효과 경로로 적용한다.
+        /// 학습한 지속 효과를 전투 시작 시 공통 효과 경로로 적용한다.
         public void ExecutePassiveEffects(
             InGameCombatManager combatManager,
             UnitSpawnManager roster,
@@ -732,7 +732,7 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /// 전달된 런타임 입력값을 사용해 SkillCastTriggers를 관련 런타임 시스템에 알린다.
+        /// 성공한 시전을 후속 반응 시스템에 알린다.
         private static void NotifySkillCastTriggers(
             InGameCombatManager combatManager,
             UnitSpawnManager roster,
@@ -759,7 +759,7 @@ namespace Pakuri.InGame
                 triggerSourceSkillId);
         }
 
-        /// 전달된 런타임 입력값을 사용해 Skill를 실행한다.
+        /// 스킬 전달 방식에 맞는 실행기로 분배한다.
         private static bool ExecuteSkill(
             SkillExecutionContext context,
             SkillExecutionData snapshot,
@@ -1455,7 +1455,7 @@ namespace Pakuri.InGame
             };
         }
 
-        /// 전달된 owner 값을 사용해 RebuildLearnedSkillState 작업을 수행한다.
+        /// 보유한 스킬 목록을 데이터 카탈로그 기준으로 다시 구성한다.
         public static void RebuildLearnedSkillState(UnitCombatState owner)
         {
             if (owner == null)
@@ -1490,7 +1490,7 @@ namespace Pakuri.InGame
                 GameDataLoader.CurrentCatalog.GetPassiveSkills(monsterId));
         }
 
-        /// 전달된 런타임 입력값을 사용해 RebuildLearnedSkillState 작업을 수행한다.
+        /// 학습 여부와 정의 목록을 대조해 실행 상태를 다시 구성한다.
         public static void RebuildLearnedSkillState(
             UnitCombatState owner,
             SkillDefinition[] activeDefinitions,
@@ -1538,11 +1538,11 @@ namespace Pakuri.InGame
 namespace Pakuri.InGame
 {
 
-    /// SkillUseState의 변경 가능한 런타임 상태를 보관한다.
+    /// 개별 스킬의 대기시간, 탄창, 연사와 활성 상태를 추적한다.
     public class SkillUseState
     {
 
-        /// SkillUseState 인스턴스를 전달된 런타임 입력값으로 초기화한다.
+        /// 스킬 정의와 소유자를 연결하고 초기 사용 상태를 준비한다.
         public SkillUseState(UnitCombatState owner, SkillDefinition data)
         {
             Owner = owner;
@@ -1587,7 +1587,7 @@ namespace Pakuri.InGame
 
         public bool CanCast => CanCastWithData(null);
 
-        /// RuntimeState를 초기 런타임 상태로 되돌린다.
+        /// 모든 사용 제한과 누적 횟수를 초기 상태로 되돌린다.
         public void ResetRuntimeState()
         {
             effectiveMaxMagazineSize = CalculateMaxMagazineSize(Data);
@@ -1610,7 +1610,7 @@ namespace Pakuri.InGame
             consecutiveHitRepeatCount = 0;
         }
 
-        /// AdvanceProjectileLaunchCount 결과값을 생성해 반환한다.
+        /// 발사 순번을 순환 범위 안에서 한 단계 진행한다.
         public int AdvanceProjectileLaunchCount()
         {
             if (ProjectileLaunchCount == int.MaxValue)
@@ -1622,7 +1622,7 @@ namespace Pakuri.InGame
             return ProjectileLaunchCount;
         }
 
-        /// AdvanceSkillHitCount 결과값을 생성해 반환한다.
+        /// 적중 순번을 순환 범위 안에서 한 단계 진행한다.
         public int AdvanceSkillHitCount()
         {
             if (SkillHitCount == int.MaxValue)
@@ -1634,7 +1634,7 @@ namespace Pakuri.InGame
             return SkillHitCount;
         }
 
-        /// 전달된 런타임 입력값을 사용해 ConsecutiveHitDamageMultiplier 결과값을 생성해 반환한다.
+        /// 같은 대상을 연속 적중한 횟수에 따라 피해 배율을 계산한다.
         public float ConsecutiveHitDamageMultiplier(UnitCombatState target, SkillExecutionData snapshot)
         {
             if (target == null)
@@ -1691,7 +1691,7 @@ namespace Pakuri.InGame
             return 1f + bonus;
         }
 
-        /// 전달된 deltaTime 값을 사용해 요청값를 경과 시간 기준으로 갱신한다.
+        /// 시간 흐름에 따라 시전, 재사용, 재장전과 활성 대기값을 감소시킨다.
         public void Tick(float deltaTime)
         {
             if (deltaTime <= 0f)
@@ -1716,7 +1716,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 전달된 snapshot 값을 사용해 CastWithData 실행 가능 여부를 반환한다.
+        /// 현재 보정값과 사용 제한을 반영해 시전 가능 여부를 판단한다.
         public bool CanCastWithData(SkillExecutionData snapshot)
         {
             RefreshRuntimeModifiers(snapshot);
@@ -1738,13 +1738,13 @@ namespace Pakuri.InGame
                 && HasMagazine;
         }
 
-        /// BeginCast 작업을 시도하고 성공 여부를 반환한다.
+        /// 기본 보정값으로 시전 상태 진입을 시도한다.
         public bool TryBeginCast()
         {
             return TryBeginCast(null);
         }
 
-        /// 전달된 snapshot 값을 사용해 BeginCast 작업을 시도하고 성공 여부를 반환한다.
+        /// 확정된 보정값을 반영해 탄약과 대기 상태를 소비한다.
         public bool TryBeginCast(SkillExecutionData snapshot)
         {
             RefreshRuntimeModifiers(snapshot);
@@ -1793,26 +1793,26 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /// 진행 중인 ActiveDuration을 종료한다.
+        /// 진행 중인 지속 실행과 해당 실행 데이터를 종료한다.
         public void StopActive()
         {
             ActiveDurationRemaining = 0f;
             ActiveExecutionData = null;
         }
 
-        /// TickReady 조건 충족 여부를 반환한다.
+        /// 주기 효과를 다시 실행할 시점인지 확인한다.
         public bool IsTickReady()
         {
             return Data.Timing.TickInterval > 0f && TickRemaining <= 0f;
         }
 
-        /// TickInterval를 초기 런타임 상태로 되돌린다.
+        /// 다음 주기 실행까지의 대기시간을 다시 설정한다.
         public void ResetTickInterval()
         {
             TickRemaining = effectiveTickInterval;
         }
 
-        /// CurrentBurstProjectileIndex 결과값을 생성해 반환한다.
+        /// 현재 연사 묶음에서 발사할 탄환 순번을 계산한다.
         public int CurrentBurstProjectileIndex()
         {
             if (effectiveBurstProjectileCount <= 1 || !IsBursting)
@@ -1826,7 +1826,7 @@ namespace Pakuri.InGame
                 effectiveBurstProjectileCount);
         }
 
-        /// 전달된 seconds 값을 사용해 ReduceReloadRemaining 조건을 평가하고 결과를 반환한다.
+        /// 재장전 대기시간을 줄이고 완료 시 탄창을 복구한다.
         public bool ReduceReloadRemaining(float seconds)
         {
             if (seconds <= 0f || ReloadRemaining <= 0f)
@@ -1843,7 +1843,7 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /// 전달된 seconds 값을 사용해 ReduceCooldownRemaining 조건을 평가하고 결과를 반환한다.
+        /// 재사용 대기시간을 줄이고 사용 가능 상태를 복구한다.
         public bool ReduceCooldownRemaining(float seconds)
         {
             if (seconds <= 0f || CooldownRemaining <= 0f)
@@ -1860,7 +1860,7 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /// Cooldown를 초기 런타임 상태로 되돌린다.
+        /// 재사용 대기를 즉시 끝내고 필요한 탄창을 복구한다.
         public void ResetCooldown()
         {
             CooldownRemaining = 0f;
@@ -1870,7 +1870,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 전달된 런타임 입력값을 사용해 Down를 경과 시간 기준으로 갱신한다.
+        /// 남은 시간을 0 아래로 내려가지 않게 감소시킨다.
         private static float TickDown(float value, float deltaTime)
         {
             if (value > 0f)
@@ -1881,13 +1881,13 @@ namespace Pakuri.InGame
             return 0f;
         }
 
-        /// CastIntervalReady 조건 충족 여부를 반환한다.
+        /// 다음 발사 간격이 지났는지 확인한다.
         private bool IsCastIntervalReady()
         {
             return effectiveTickInterval <= 0f || TickRemaining <= 0f;
         }
 
-        /// 전달된 snapshot 값을 사용해 RuntimeModifiers를 현재 런타임 모델을 기준으로 갱신한다.
+        /// 이번 실행 보정에 맞춰 탄창, 연사와 대기시간 기준값을 갱신한다.
         private void RefreshRuntimeModifiers(SkillExecutionData snapshot)
         {
             var previousMax = effectiveMaxMagazineSize;
@@ -1940,13 +1940,13 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 전달된 data 값을 사용해 MaxMagazineSize를 계산한다.
+        /// 정의된 탄창 용량을 유효한 범위로 보정한다.
         private static int CalculateMaxMagazineSize(SkillDefinition data)
         {
             return Math.Max(0, data.MagazineCapacity);
         }
 
-        /// 전달된 data 값을 사용해 BurstProjectileCount 결과값을 생성해 반환한다.
+        /// 한 번의 시전에서 이어지는 발사 횟수를 구한다.
         private static int BurstProjectileCount(SkillDefinition data)
         {
             var projectile = data as ProjectileSkillDefinition;
@@ -1958,19 +1958,19 @@ namespace Pakuri.InGame
             return 1;
         }
 
-        /// 전달된 data 값을 사용해 ReloadDuration를 계산한다.
+        /// 재장전에 필요한 시간을 유효한 범위로 보정한다.
         private static float CalculateReloadDuration(SkillDefinition data)
         {
             return Mathf.Max(0f, data.ReloadSeconds);
         }
 
-        /// 전달된 data 값을 사용해 Interval를 경과 시간 기준으로 갱신한다.
+        /// 연속 실행 사이의 간격을 유효한 범위로 보정한다.
         private static float TickInterval(SkillDefinition data)
         {
             return Mathf.Max(0f, data.Timing.TickInterval);
         }
 
-        /// 전달된 data 값을 사용해 BurstInterval 결과값을 생성해 반환한다.
+        /// 연사 간격을 구하고 별도 값이 없으면 기본 실행 간격을 사용한다.
         private static float BurstInterval(SkillDefinition data)
         {
             var projectile = data as ProjectileSkillDefinition;
@@ -1986,13 +1986,13 @@ namespace Pakuri.InGame
             return TickInterval(data);
         }
 
-        /// 전달된 data 값을 사용해 CooldownDuration 결과값을 생성해 반환한다.
+        /// 재사용 대기시간을 유효한 범위로 보정한다.
         private static float CooldownDuration(SkillDefinition data)
         {
             return Mathf.Max(0f, data.Timing.Cooldown);
         }
 
-        /// BeginRecoveryIfNeeded 작업을 수행한다.
+        /// 탄창 소모 상태에 맞춰 재사용 또는 재장전을 시작한다.
         private void BeginRecoveryIfNeeded()
         {
             if (!UsesMagazine)
@@ -2024,7 +2024,7 @@ namespace Pakuri.InGame
 namespace Pakuri.InGame
 {
 
-    /// SkillExecutionState의 변경 가능한 런타임 상태를 보관한다.
+    /// 유닛이 보유한 활성·지속 스킬과 각 실행 상태를 관리한다.
     public class SkillExecutionState
     {
         private readonly List<SkillUseState> activeSkills = new List<SkillUseState>();
@@ -2034,43 +2034,43 @@ namespace Pakuri.InGame
         public IReadOnlyList<SkillUseState> PassiveSkills => passiveSkills;
         public int Count => activeSkills.Count + passiveSkills.Count;
 
-        /// 전달된 attribute 값을 사용해 PassiveOutgoingDamageBonus 결과값을 생성해 반환한다.
+        /// 학습한 지속 효과를 합산해 속성별 추가 피해율을 구한다.
         public float PassiveOutgoingDamageBonus(DamageAttribute attribute)
         {
             return PassiveMultiplier(PassiveModifierKind.DamageUp, attribute, false) - 1f;
         }
 
-        /// 전달된 attribute 값을 사용해 PassiveDefenseMultiplier 결과값을 생성해 반환한다.
+        /// 학습한 지속 효과를 합성해 속성별 방어 배율을 구한다.
         public float PassiveDefenseMultiplier(DamageAttribute attribute)
         {
             return PassiveMultiplier(PassiveModifierKind.DefenseUp, attribute, false);
         }
 
-        /// PassiveCriticalChanceBonus 결과값을 생성해 반환한다.
+        /// 학습한 지속 효과에서 치명타 확률 보너스를 합산한다.
         public float PassiveCriticalChanceBonus()
         {
             return PassiveBonus(PassiveModifierKind.CritChanceUp);
         }
 
-        /// PassiveCriticalDamageBonus 결과값을 생성해 반환한다.
+        /// 학습한 지속 효과에서 치명타 피해 보너스를 합산한다.
         public float PassiveCriticalDamageBonus()
         {
             return PassiveBonus(PassiveModifierKind.CritDamageUp);
         }
 
-        /// PassiveHealingMultiplier 결과값을 생성해 반환한다.
+        /// 학습한 지속 효과를 합성해 회복량 배율을 구한다.
         public float PassiveHealingMultiplier()
         {
             return PassiveMultiplier(PassiveModifierKind.HealingUp, DamageAttribute.Physical, false);
         }
 
-        /// PassiveIncomingDamageBonus 결과값을 생성해 반환한다.
+        /// 학습한 피해 감소 효과를 합성해 받는 피해 보정률을 구한다.
         public float PassiveIncomingDamageBonus()
         {
             return PassiveMultiplier(PassiveModifierKind.IncomingDamageDown, DamageAttribute.Physical, true) - 1f;
         }
 
-        /// 전달된 런타임 입력값을 사용해 ExecutionData를 생성한다.
+        /// 기본 정의에 지속 효과와 선택 효과를 반영한 이번 시전값을 만든다.
         public SkillExecutionData CreateExecutionData(
             UnitCombatState owner,
             SkillUseState skill,
@@ -2079,14 +2079,14 @@ namespace Pakuri.InGame
             return BuildExecutionData(owner, skill, roster);
         }
 
-        /// 소유한 모든 런타임 값를 소유한 런타임 상태에서 비운다.
+        /// 보유한 모든 스킬 실행 상태를 제거한다.
         public void Clear()
         {
             activeSkills.Clear();
             passiveSkills.Clear();
         }
 
-        /// 전달된 instance 값을 사용해 OrReplace를 소유한 런타임 상태에 추가한다.
+        /// 스킬을 활성·지속 목록에 분류하고 같은 항목은 교체한다.
         public void AddOrReplace(SkillUseState instance)
         {
             var skills = passiveSkills;
@@ -2104,7 +2104,7 @@ namespace Pakuri.InGame
             skills.Add(instance);
         }
 
-        /// 전달된 skillId 값을 사용해 BySkillId를 찾는다.
+        /// 활성·지속 목록에서 식별자가 같은 스킬을 찾는다.
         public SkillUseState FindBySkillId(string skillId)
         {
             var index = FindIndexBySkillId(activeSkills, skillId);
@@ -2122,7 +2122,7 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /// 전달된 choiceId 값을 사용해 Choice를 찾는다.
+        /// 보유 스킬 전체에서 식별자가 같은 선택 효과를 찾는다.
         public SkillChoice FindChoice(string choiceId)
         {
             for (var i = 0; i < activeSkills.Count; i++)
@@ -2146,7 +2146,7 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /// 전달된 slot 값을 사용해 BySlot를 찾는다.
+        /// 활성 스킬 목록에서 지정 슬롯의 스킬을 찾는다.
         public SkillUseState FindBySlot(SkillSlot slot)
         {
             for (var i = 0; i < activeSkills.Count; i++)
@@ -2160,7 +2160,7 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /// 전달된 deltaTime 값을 사용해 요청값를 경과 시간 기준으로 갱신한다.
+        /// 모든 활성 스킬의 시간 기반 상태를 진행한다.
         public void Tick(float deltaTime)
         {
             if (deltaTime <= 0f)
@@ -2174,7 +2174,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 전달된 런타임 입력값을 사용해 IndexBySkillId를 찾는다.
+        /// 목록에서 식별자가 같은 스킬의 위치를 찾는다.
         private static int FindIndexBySkillId(List<SkillUseState> skills, string skillId)
         {
             for (var i = 0; i < skills.Count; i++)
@@ -2189,7 +2189,7 @@ namespace Pakuri.InGame
             return -1;
         }
 
-        /// 전달된 kind 값을 사용해 PassiveBonus 결과값을 생성해 반환한다.
+        /// 같은 종류의 지속 효과 값을 합산한다.
         private float PassiveBonus(PassiveModifierKind kind)
         {
             var bonus = 0f;
@@ -2205,7 +2205,7 @@ namespace Pakuri.InGame
             return bonus;
         }
 
-        /// 전달된 런타임 입력값을 사용해 PassiveMultiplier 결과값을 생성해 반환한다.
+        /// 조건에 맞는 지속 효과를 순차 합성해 최종 배율을 구한다.
         private float PassiveMultiplier(
             PassiveModifierKind kind,
             DamageAttribute attribute,
@@ -2231,7 +2231,7 @@ namespace Pakuri.InGame
             return multiplier;
         }
 
-        /// 전달된 런타임 입력값을 사용해 Choice를 찾는다.
+        /// 한 스킬의 강화·마스터·지속 선택지에서 식별자가 같은 항목을 찾는다.
         private static SkillChoice FindChoice(SkillDefinition skill, string choiceId)
         {
             var choice = FindChoice(skill.EnhancementChoices, choiceId);
@@ -2255,7 +2255,7 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /// 전달된 런타임 입력값을 사용해 Choice를 찾는다.
+        /// 선택지 목록에서 식별자가 같은 항목을 찾는다.
         private static SkillChoice FindChoice(SkillChoice[] choices, string choiceId)
         {
             for (var i = 0; i < choices.Length; i++)
@@ -2269,28 +2269,13 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /// 전달된 런타임 입력값을 사용해 ExecutionData를 구성한다.
+        /// 학습 상태를 포함한 최종 실행값을 만든다.
         private SkillExecutionData BuildExecutionData(UnitCombatState owner, SkillUseState runtime, UnitSpawnManager roster)
         {
-
-            SkillDefinition skillData = null;
-            if (runtime != null)
-            {
-                skillData = runtime.Data;
-            }
-            var snapshot = new SkillExecutionData(skillData);
-            ApplyPassiveBaseModifiers(snapshot, owner, skillData);
-            if (skillData == null || owner == null || owner.Skills == null)
-            {
-                return snapshot;
-            }
-
-            ApplyChoices(snapshot, owner.Skills.ChosenEnhancementIds, skillData, owner, roster);
-            ApplyChoices(snapshot, owner.Skills.ChosenMasterSkillIds, skillData, owner, roster);
-            return snapshot;
+            return SkillExecutionRuleResolver.BuildExecutionData(owner, runtime, roster);
         }
 
-        /// 전달된 런타임 입력값을 사용해 PassiveBaseModifiers를 적용한다.
+        /// 현재 스킬을 대상으로 하는 학습 지속 효과의 기본 보정을 적용한다.
         private static void ApplyPassiveBaseModifiers(
             SkillExecutionData snapshot,
             UnitCombatState owner,
@@ -2323,13 +2308,13 @@ namespace Pakuri.InGame
                     var modifier = passive.BaseModifierChoices[i];
                     if (modifier != null && AppliesToSkill(modifier, skillData))
                     {
-                        snapshot.ApplyChoiceSpec(modifier);
+SkillExecutionRuleResolver.ApplyChoice(snapshot, modifier);
                     }
                 }
             }
         }
 
-        /// 전달된 런타임 입력값을 사용해 Choices를 적용한다.
+        /// 선택·상태 조건을 충족하는 강화 효과를 이번 실행값에 반영한다.
         private static void ApplyChoices(
             SkillExecutionData snapshot,
             System.Collections.Generic.IReadOnlyCollection<string> chosenChoiceIds,
@@ -2350,51 +2335,23 @@ namespace Pakuri.InGame
                     && SkillExecutionRuleResolver.MeetsSourceStatusRequirements(choice, skillData.SkillId, owner))
                 {
                     snapshot.AddActiveChoiceId(choice.ChoiceId);
-                    snapshot.ApplyChoiceSpec(choice);
+SkillExecutionRuleResolver.ApplyChoice(snapshot, choice);
                     ApplyDynamicChoiceRules(snapshot, choice, owner, roster);
                 }
             }
         }
 
-        /// 전달된 런타임 입력값을 사용해 DynamicChoiceRules를 적용한다.
+        /// 전투 상태에 따라 달라지는 선택 효과를 Resolver에 위임한다.
         private static void ApplyDynamicChoiceRules(
             SkillExecutionData snapshot,
             SkillChoice choice,
             UnitCombatState owner,
             UnitSpawnManager roster)
         {
-            if (snapshot == null || choice == null || roster == null)
-            {
-                return;
-            }
-
-            SkillNode[] nodes = choice.Nodes;
-            for (int i = 0; i < nodes.Length; i++)
-            {
-                if (nodes[i] == null
-                    || !string.Equals(nodes[i].TargetSkillId, snapshot.SkillId, StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                CountStatusDamageActionOp? action = nodes[i].GetOperation<CountStatusDamageActionOp>();
-                if (!action.HasValue)
-                {
-                    continue;
-                }
-
-                ApplyCountStatusDamageMultiplier(
-                    snapshot,
-                    owner,
-                    roster,
-                    action.Value.TargetSide,
-                    action.Value.StatusKind,
-                    action.Value.AmountPerCount,
-                    action.Value.MaximumCount);
-            }
+            SkillExecutionRuleResolver.ApplyDynamicChoiceRules(snapshot, choice, owner, roster);
         }
 
-        /// 전달된 런타임 입력값을 사용해 CountStatusDamageMultiplier를 적용한다.
+        /// 조건을 충족한 대상 수만큼 피해 배율을 높인다.
         private static void ApplyCountStatusDamageMultiplier(
             SkillExecutionData snapshot,
             UnitCombatState owner,
@@ -2426,7 +2383,7 @@ namespace Pakuri.InGame
             snapshot.ApplyDynamicDamageMultiplier(1f + count * amountPerCount);
         }
 
-        /// 전달된 런타임 입력값을 사용해 CountMatchingTargets 결과값을 생성해 반환한다.
+        /// 지정 진영에서 요구 상태를 가진 생존 대상을 센다.
         private static int CountMatchingTargets(
             UnitCombatState owner,
             UnitSpawnManager roster,
@@ -2457,7 +2414,7 @@ namespace Pakuri.InGame
             return count;
         }
 
-        /// 전달된 런타임 입력값을 사용해 CountEntries 결과값을 생성해 반환한다.
+        /// 시전자 진영과 대상 범위에 맞는 후보 목록을 고른다.
         private static System.Collections.Generic.IReadOnlyList<CombatUnitEntry> CountEntries(
             UnitCombatState owner,
             UnitSpawnManager roster,
@@ -2498,7 +2455,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 전달된 entries 값을 사용해 FilterSkillTargets 결과값을 생성해 반환한다.
+        /// 전투 목표로 취급할 수 있는 유닛만 남긴다.
         private static System.Collections.Generic.IReadOnlyList<CombatUnitEntry> FilterSkillTargets(
             System.Collections.Generic.IReadOnlyList<CombatUnitEntry> entries)
         {
@@ -2522,7 +2479,7 @@ namespace Pakuri.InGame
             return filtered;
         }
 
-        /// 전달된 entry 값을 사용해 SkillTarget 조건 충족 여부를 반환한다.
+        /// 핵심 오브젝트를 제외한 유효 전투 대상인지 확인한다.
         private static bool IsSkillTarget(CombatUnitEntry entry)
         {
             UnitIdentity identity = null;
@@ -2533,7 +2490,7 @@ namespace Pakuri.InGame
             return entry != null && (identity == null || identity.Role != UnitRole.Nexus);
         }
 
-        /// 전달된 런타임 입력값을 사용해 EntryForModel를 찾는다.
+        /// 같은 전투 모델을 가리키는 명단 항목을 찾는다.
         private static CombatUnitEntry FindEntryForModel(
             UnitCombatState model,
             System.Collections.Generic.IReadOnlyList<CombatUnitEntry> entries)
@@ -2554,7 +2511,7 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /// 전달된 런타임 입력값을 사용해 소유한 런타임 상태에 Status가 있는지 반환한다.
+        /// 방어막 또는 상태 중첩이 요구량 이상인지 확인한다.
         private static bool HasStatus(UnitCombatState model, StatusEffectKind statusKind, int minimumStacks = 1)
         {
             if (model == null || statusKind == StatusEffectKind.None || minimumStacks <= 0)
@@ -2570,7 +2527,7 @@ namespace Pakuri.InGame
             return model.Statuses != null && model.Statuses.GetStacks(statusKind) >= minimumStacks;
         }
 
-        /// 전달된 런타임 입력값을 사용해 AppliesToSkill 조건을 평가하고 결과를 반환한다.
+        /// 선택 효과가 현재 스킬을 대상으로 하는지 확인한다.
         private static bool AppliesToSkill(SkillChoice choice, SkillDefinition skillData)
         {
             if (choice == null || skillData == null)
@@ -2603,19 +2560,19 @@ namespace Pakuri.InGame
                 && string.Equals(targetSkillId, skillData.SkillId, System.StringComparison.OrdinalIgnoreCase);
         }
 
-        /// 전달된 런타임 입력값을 사용해 PassiveChoices 결과값을 생성해 반환한다.
+        /// 특정 지속 스킬에 적용되는 선택 효과를 실행값으로 모은다.
         public static SkillExecutionData PassiveChoices(UnitCombatState owner, string passiveId)
         {
             return Choices(owner, passiveId, true);
         }
 
-        /// 전달된 런타임 입력값을 사용해 ActiveChoices 결과값을 생성해 반환한다.
+        /// 특정 활성 스킬에 적용되는 선택 효과를 실행값으로 모은다.
         public static SkillExecutionData ActiveChoices(UnitCombatState owner, string skillId)
         {
             return Choices(owner, skillId, false);
         }
 
-        /// 전달된 런타임 입력값을 사용해 Choices 결과값을 생성해 반환한다.
+        /// 선택한 강화·마스터 효과 중 지정 스킬에 적용할 항목을 모은다.
         private static SkillExecutionData Choices(UnitCombatState owner, string skillId, bool useTargetSkillId)
         {
             var snapshot = new SkillExecutionData(null);
@@ -2629,7 +2586,7 @@ namespace Pakuri.InGame
             return snapshot;
         }
 
-        /// 전달된 런타임 입력값을 사용해 ResolvedChoices를 적용한다.
+        /// 식별자와 상태 조건이 맞는 선택 효과를 실행값에 반영한다.
         private static void ApplyResolvedChoices(
             SkillExecutionData snapshot,
             UnitCombatState owner,
@@ -2658,7 +2615,7 @@ namespace Pakuri.InGame
                 }
 
                 snapshot.AddActiveChoiceId(choice.ChoiceId);
-                snapshot.ApplyChoiceSpec(choice);
+SkillExecutionRuleResolver.ApplyChoice(snapshot, choice);
             }
         }
     }

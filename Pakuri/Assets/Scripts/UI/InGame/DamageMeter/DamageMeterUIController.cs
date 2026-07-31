@@ -252,7 +252,7 @@ namespace Pakuri.InGame
             for (var i = 0; monster?.ActiveSkills != null
                 && i < monster.ActiveSkills.Length; i++)
             {
-                var reactions = new SkillExecutionData(
+                var reactions = SkillExecutionRuleResolver.CreateDefinitionSnapshot(
                     monster.ActiveSkills[i]).Reactions;
                 for (var j = 0; j < reactions.Count; j++)
                 {
@@ -268,7 +268,7 @@ namespace Pakuri.InGame
             for (var i = 0; monster?.PassiveSkills != null
                 && i < monster.PassiveSkills.Length; i++)
             {
-                var reactions = new SkillExecutionData(
+                var reactions = SkillExecutionRuleResolver.CreateDefinitionSnapshot(
                     monster.PassiveSkills[i]).Reactions;
                 for (var j = 0; j < reactions.Count; j++)
                 {

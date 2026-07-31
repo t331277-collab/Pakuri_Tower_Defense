@@ -47,7 +47,8 @@ Node 의미의 런타임 구현을 `SkillExecutionRuleResolver` 하나로 통합
 - 사용자 구조 승인 완료.
 - Code Builder가 지적 1~7을 코드로 검증하고 handoff 보강 완료.
 - Phase 1 baseline/inventory 완료 및 커밋.
-- Phase 2 Node composition 구현 진행 중.
+- Phase 2 Node composition 구현 및 빌드 검증 완료.
+- Phase 3 data cleanup과 runtime state owner 이행 진행 중.
 
 ## Selected Code Builder tracks
 
@@ -487,7 +488,7 @@ AI와 DamageMeter의 Definition-only 조회는 Resolver 진입점으로 옮긴�
 
 ### Phase 2 — Resolver owns Node composition
 
-Status: in progress. Phase 1 baseline is committed. Current verification: `rg` shows `GetOperation<T>()` only in this Resolver; `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore` exits 0 with 0 errors.
+Status: complete. Phase 1 baseline commit: `8398d68`. Phase 2 verification: `rg` shows `GetOperation<T>()` only in this Resolver; `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore` exits 0 with 0 errors.
 
 1. `SkillExecutionData.ApplyNodes`와 Node별 `Apply*Action` 내용을 Resolver로 이동한다.
 2. 기본 Skill Node, passive base modifier, enhancement와 master choice의 합성 순서를 보존한다.
@@ -712,3 +713,4 @@ Unity-MCP로 editor compile과 console을 확인한다. Play Mode gameplay 검�
 - 2026-07-31: 사용자가 same-name 파일 분리가 아니라 스킬 파일 수 고정과 한 기존 class로의 책임 흡수·축소가 목적이라고 정정했다.
 - 2026-07-31: Designer가 신규 파일 계획을 폐기하고 최종 Implementation 6개 고정, `SkillExecution` 단일 class, 기존 계약을 통한 상태값 치환, legacy type과 caller 삭제, class/줄 수 감소 기준으로 handoff를 수정했다.
 - 2026-07-31: Code Builder resumed with per-Phase GitHub commits; Phase 1 baseline/inventory was closed before runtime edits.
+- 2026-07-31: Phase 2 moved Node extraction and Node action value composition to Resolver; Assembly-CSharp build passed with 0 errors.
