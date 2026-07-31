@@ -909,12 +909,12 @@ Code Builder.
 
 ### Status
 
-User approved effect restoration and Code Builder implementation. Phases 1-8 complete. Code Reviewer corrections 1-4 are implemented and await re-review.
+User approved effect restoration and Code Builder implementation. Phases 1-8 complete. Code Reviewer corrections 1-4 are implemented and final PASS.
 
 ### Next Actions
 
-- Commit Code Reviewer correction 4 separately.
-- Re-run Code Reviewer and correct findings until approval.
+- User Play Mode gameplay verification.
+- Push local commits when repository access is available.
 
 ### Evidence
 
@@ -956,6 +956,7 @@ User approved effect restoration and Code Builder implementation. Phases 1-8 com
 - Reviewer correction 3 separates reaction multiplier multiplication from normal additive Choice modifier accumulation; Vega B `1.25 × 0.45` regression is `0.5625`.
 - Reviewer correction 3 solution build error 0; Unity EditMode tests passed 16/16; no compile-error console entry.
 - Reviewer correction 4 removes the unused source catalog lookup from `SkillTrigger`; solution build error 0; Unity EditMode tests passed 16/16.
+- Code Reviewer final PASS: obsolete Trigger symbols 0, diff check passed, build error 0, EditMode `TestResults.xml` 16/16; Play Mode remains user-owned.
 
 ### History
 
@@ -976,3 +977,4 @@ User approved effect restoration and Code Builder implementation. Phases 1-8 com
 - 2026-07-31: Code Reviewer found the Vega B asynchronous self-follow-up recursion; Code Builder disabled nested cast effects for that one reuse.
 - 2026-07-31: Code Reviewer found reaction scaling incorrectly added to existing Choice damage modifiers; Code Builder added the shared reaction-only multiplication path and regression test.
 - 2026-07-31: Code Reviewer found an unused source catalog lookup in `SkillTrigger`; Code Builder removed the dead dependency.
+- 2026-07-31: Code Reviewer completed final PASS after correction 4; only user-owned Play Mode verification remains.

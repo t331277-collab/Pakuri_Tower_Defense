@@ -38,7 +38,7 @@
 
 ## Status
 
-사용자가 `65 working / 17 incomplete / 76 non-Trigger` 분류, 17개 Trigger 효과 복구, 64개 일반 Choice/base/passive 효과 복구를 승인했다. Code Builder Phase 1~8 구현 완료. Code Reviewer 1~4차 수정 요청을 Code Builder가 반영했으며 재검토 대기.
+사용자가 `65 working / 17 incomplete / 76 non-Trigger` 분류, 17개 Trigger 효과 복구, 64개 일반 Choice/base/passive 효과 복구를 승인했다. Code Builder Phase 1~8 구현 완료. Code Reviewer 1~4차 수정 요청을 Code Builder가 반영했고 최종 PASS했다.
 
 ## Core decision
 
@@ -816,6 +816,13 @@ SkillTrigger 공통 gate
 - modifier 64개는 OnCast Trigger를 제거하고 원본 시전 효과로만 활성화한다.
 - incomplete Trigger 17개는 원래 사건 조건을 통과한 경우에만 활성화한다.
 
+## Code Reviewer final decision
+
+- 결과: PASS.
+- 검토 범위: Phase 1~8 통합과 Reviewer correction 1~4의 변경 파일, 호출자, null guard, 재귀 제한, 기존 Choice 배율 합성, 정적 참조 제거.
+- 근거: `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal` 오류 0; Unity EditMode `TestResults.xml` `total=16 passed=16 failed=0`; C# obsolete Trigger symbol 검색 0; 최신 diff `git diff --check` 통과.
+- 남은 검증: Unity Play Mode 실제 전투 동작은 사용자 확인.
+
 ## Acceptance criteria
 
 - `SkillTriggerDefinition` 참조 검색 결과가 0이다.
@@ -925,3 +932,4 @@ SkillTrigger 공통 gate
 - 2026-07-31: Code Reviewer found the delayed self-follow-up recursion path; Code Builder disabled nested cast effects only for that reuse call.
 - 2026-07-31: Code Reviewer found reaction scaling was additive against existing Choice damage modifiers; Code Builder separated reaction multiplication from normal additive modifier accumulation and passed the 16-test EditMode suite.
 - 2026-07-31: Code Reviewer found an unused source catalog lookup in `SkillTrigger`; Code Builder removed it without changing event or outcome behavior.
+- 2026-07-31: Code Reviewer completed final PASS after correction 4; Play Mode remains user-owned.
