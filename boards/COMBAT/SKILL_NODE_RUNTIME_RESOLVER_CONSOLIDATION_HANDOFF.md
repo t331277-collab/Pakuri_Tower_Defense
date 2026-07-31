@@ -619,7 +619,7 @@ Status: complete. Baseline/inventory commit: `593f70c`. Current build baseline: 
 
 ### Phase 11 — materialize skill outcomes during Generation
 
-Status: pending.
+Status: complete. Generation materialization implementation commit: `e81d7ed`; current Phase 15 cleanup removes the remaining raw payload contract. Core/Editor build remains 0 errors.
 
 1. Reuse `SkillCastEffect` as a small resolved execution link instead of adding a new outcome class or script.
 2. The final link stores a concrete family `SkillDefinition` plus only execution metadata that cannot live in the Definition: delay, damage multiplier, source aim/center inheritance, event-target lock, lifecycle policy, and optional event damage override policy.
