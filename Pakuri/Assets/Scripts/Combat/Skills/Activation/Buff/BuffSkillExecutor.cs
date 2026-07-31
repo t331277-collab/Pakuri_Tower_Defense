@@ -186,7 +186,7 @@ namespace Pakuri.InGame
                 StatusCombatRules.ApplyStatus(combatManager, target.Model, statusSpec, caster);
             }
 
-            runtime.StopActive();
+            SkillExecution.StopActive(runtime);
             return true;
         }
 

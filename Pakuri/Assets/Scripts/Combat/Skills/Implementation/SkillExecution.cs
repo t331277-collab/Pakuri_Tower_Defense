@@ -32,6 +32,496 @@ namespace Pakuri.InGame
         /// 자동 시전 후보를 외부 정책으로 선별한다.
         public delegate bool SkillAutoRoutePredicate(CombatUnitEntry entry, SkillExecutionData runtime);
 
+        /// 실행 상태의 기준값과 진행값을 초기화한다.
+        public static void ResetRuntimeState(SkillExecutionData runtime)
+        {
+            if (runtime == null)
+            {
+                return;
+            }
+
+            runtime.effectiveMaxMagazineSize = CalculateMaxMagazineSize(runtime.Data);
+            runtime.effectiveBurstProjectileCount = BurstProjectileCount(runtime.Data);
+            runtime.effectiveReloadDuration = CalculateReloadDuration(runtime.Data);
+            runtime.effectiveTickInterval = TickInterval(runtime.Data);
+            runtime.effectiveBurstInterval = BurstInterval(runtime.Data);
+            runtime.effectiveCooldownDuration = CooldownDuration(runtime.Data);
+            runtime.CooldownRemaining = 0f;
+            runtime.CastRemaining = 0f;
+            runtime.ActiveDurationRemaining = 0f;
+            runtime.TickRemaining = 0f;
+            runtime.ReloadRemaining = 0f;
+            runtime.MagazineRemaining = runtime.MaxMagazineSize;
+            runtime.queuedBurstShotsRemaining = 0;
+            runtime.ProjectileLaunchCount = 0;
+            runtime.SkillHitCount = 0;
+            runtime.ActiveExecutionData = null;
+            runtime.consecutiveHitTargetUnitId = string.Empty;
+            runtime.consecutiveHitRepeatCount = 0;
+        }
+
+        /// 다음 투사체 순번을 기록한다.
+        public static int AdvanceProjectileLaunchCount(SkillExecutionData runtime)
+        {
+            if (runtime == null)
+            {
+                return 0;
+            }
+
+            if (runtime.ProjectileLaunchCount == int.MaxValue)
+            {
+                runtime.ProjectileLaunchCount = 0;
+            }
+
+            runtime.ProjectileLaunchCount++;
+            return runtime.ProjectileLaunchCount;
+        }
+
+        /// 다음 적중 순번을 기록한다.
+        public static int AdvanceSkillHitCount(SkillExecutionData runtime)
+        {
+            if (runtime == null)
+            {
+                return 0;
+            }
+
+            if (runtime.SkillHitCount == int.MaxValue)
+            {
+                runtime.SkillHitCount = 0;
+            }
+
+            runtime.SkillHitCount++;
+            return runtime.SkillHitCount;
+        }
+
+        /// 연속 적중 흐름에 맞는 피해 배율을 계산한다.
+        public static float ConsecutiveHitDamageMultiplier(
+            SkillExecutionData runtime,
+            SkillExecutionData snapshot,
+            UnitCombatState target)
+        {
+            if (runtime == null || target == null)
+            {
+                return 1f;
+            }
+
+            var projectileData = runtime.Data as ProjectileSkillDefinition;
+            var bonusRate = projectileData != null ? projectileData.ConsecutiveHitBonusRate : 0f;
+            var bonusMax = projectileData != null ? projectileData.ConsecutiveHitMax : 0f;
+            if (snapshot != null && snapshot.ConsecutiveHitBonusRate > 0f)
+            {
+                bonusRate = snapshot.ConsecutiveHitBonusRate;
+            }
+            if (snapshot != null && snapshot.ConsecutiveHitMax > 0f)
+            {
+                bonusMax = snapshot.ConsecutiveHitMax;
+            }
+            if (bonusRate <= 0f || bonusMax <= 0f)
+            {
+                return 1f;
+            }
+
+            var unitId = target.Identity != null ? target.Identity.UnitId : string.Empty;
+            if (string.IsNullOrWhiteSpace(unitId))
+            {
+                runtime.consecutiveHitTargetUnitId = string.Empty;
+                runtime.consecutiveHitRepeatCount = 0;
+                return 1f;
+            }
+
+            if (string.Equals(runtime.consecutiveHitTargetUnitId, unitId, StringComparison.Ordinal))
+            {
+                runtime.consecutiveHitRepeatCount = Math.Min(
+                    runtime.consecutiveHitRepeatCount + 1,
+                    int.MaxValue - 1);
+            }
+            else
+            {
+                runtime.consecutiveHitTargetUnitId = unitId;
+                runtime.consecutiveHitRepeatCount = 0;
+            }
+
+            var bonus = Mathf.Min(
+                Mathf.Max(0f, bonusMax),
+                Mathf.Max(0f, bonusRate) * runtime.consecutiveHitRepeatCount);
+            return 1f + bonus;
+        }
+
+        /// 시간 경과를 실행 상태에 반영한다.
+        public static void Tick(SkillExecutionData runtime, float deltaTime)
+        {
+            if (runtime == null || deltaTime <= 0f)
+            {
+                return;
+            }
+
+            var actionDeltaTime = deltaTime
+                * StatusCombatRules.ActionSpeedMultiplier(runtime.Owner);
+            runtime.CooldownRemaining = TickDown(runtime.CooldownRemaining, actionDeltaTime);
+            runtime.CastRemaining = TickDown(runtime.CastRemaining, actionDeltaTime);
+            runtime.ActiveDurationRemaining = TickDown(
+                runtime.ActiveDurationRemaining,
+                deltaTime);
+            runtime.TickRemaining = TickDown(runtime.TickRemaining, actionDeltaTime);
+            runtime.ReloadRemaining = TickDown(runtime.ReloadRemaining, deltaTime);
+
+            if (runtime.UsesMagazine
+                && runtime.MagazineRemaining <= 0
+                && runtime.ReloadRemaining <= 0f
+                && runtime.CooldownRemaining <= 0f
+                && !runtime.IsBursting)
+            {
+                runtime.MagazineRemaining = runtime.MaxMagazineSize;
+            }
+        }
+
+        /// 현재 실행값으로 시전 가능 여부를 판정한다.
+        public static bool CanCastWithData(
+            SkillExecutionData runtime,
+            SkillExecutionData snapshot)
+        {
+            if (runtime == null)
+            {
+                return false;
+            }
+
+            RefreshRuntimeModifiers(runtime, snapshot);
+            if (runtime.Data == null
+                || !runtime.Data.IsActive
+                || runtime.IsCasting
+                || !IsCastIntervalReady(runtime))
+            {
+                return false;
+            }
+
+            if (runtime.IsBursting)
+            {
+                return !runtime.IsReloading;
+            }
+
+            return runtime.CooldownRemaining <= 0f
+                && !runtime.IsReloading
+                && runtime.HasMagazine;
+        }
+
+        /// 확정 실행값으로 탄약과 대기를 소비한다.
+        public static bool TryBeginCast(
+            SkillExecutionData runtime,
+            SkillExecutionData snapshot)
+        {
+            if (runtime == null)
+            {
+                return false;
+            }
+
+            RefreshRuntimeModifiers(runtime, snapshot);
+            if (runtime.IsBursting)
+            {
+                runtime.queuedBurstShotsRemaining = Math.Max(
+                    0,
+                    runtime.queuedBurstShotsRemaining - 1);
+                runtime.TickRemaining = runtime.IsBursting
+                    ? runtime.effectiveBurstInterval
+                    : runtime.effectiveTickInterval;
+                if (!runtime.IsBursting)
+                {
+                    BeginRecoveryIfNeeded(runtime);
+                }
+
+                runtime.ActiveExecutionData = snapshot;
+                return true;
+            }
+
+            if (!CanCastWithData(runtime, snapshot))
+            {
+                return false;
+            }
+
+            if (runtime.UsesMagazine)
+            {
+                runtime.MagazineRemaining = Math.Max(
+                    0,
+                    runtime.MagazineRemaining - 1);
+            }
+
+            var timing = runtime.Data.Timing;
+            runtime.ActiveDurationRemaining = timing != null
+                ? Mathf.Max(0f, timing.ActiveDuration)
+                : 0f;
+            runtime.queuedBurstShotsRemaining = Math.Max(
+                0,
+                runtime.effectiveBurstProjectileCount - 1);
+            runtime.TickRemaining = runtime.IsBursting
+                ? runtime.effectiveBurstInterval
+                : runtime.effectiveTickInterval;
+            if (!runtime.IsBursting)
+            {
+                BeginRecoveryIfNeeded(runtime);
+            }
+
+            runtime.ActiveExecutionData = snapshot;
+            return true;
+        }
+
+        /// 진행 중인 지속 실행을 끝낸다.
+        public static void StopActive(SkillExecutionData runtime)
+        {
+            if (runtime == null)
+            {
+                return;
+            }
+
+            runtime.ActiveDurationRemaining = 0f;
+            runtime.ActiveExecutionData = null;
+        }
+
+        /// 현재 연사 묶음의 투사체 순번을 계산한다.
+        public static int CurrentBurstProjectileIndex(SkillExecutionData runtime)
+        {
+            if (runtime == null
+                || runtime.effectiveBurstProjectileCount <= 1
+                || !runtime.IsBursting)
+            {
+                return 1;
+            }
+
+            return Mathf.Clamp(
+                runtime.effectiveBurstProjectileCount
+                    - runtime.queuedBurstShotsRemaining
+                    + 1,
+                1,
+                runtime.effectiveBurstProjectileCount);
+        }
+
+        /// 재장전 대기를 줄이고 완료 상태를 갱신한다.
+        public static bool ReduceReloadRemaining(
+            SkillExecutionData runtime,
+            float seconds)
+        {
+            if (runtime == null
+                || seconds <= 0f
+                || runtime.ReloadRemaining <= 0f)
+            {
+                return false;
+            }
+
+            runtime.ReloadRemaining = Mathf.Max(
+                0f,
+                runtime.ReloadRemaining - seconds);
+            if (runtime.ReloadRemaining <= 0f
+                && runtime.UsesMagazine
+                && runtime.MagazineRemaining <= 0
+                && runtime.CooldownRemaining <= 0f
+                && !runtime.IsBursting)
+            {
+                runtime.MagazineRemaining = runtime.MaxMagazineSize;
+            }
+
+            return true;
+        }
+
+        /// 재사용 대기를 줄이고 사용 가능 상태를 갱신한다.
+        public static bool ReduceCooldownRemaining(
+            SkillExecutionData runtime,
+            float seconds)
+        {
+            if (runtime == null
+                || seconds <= 0f
+                || runtime.CooldownRemaining <= 0f)
+            {
+                return false;
+            }
+
+            runtime.CooldownRemaining = Mathf.Max(
+                0f,
+                runtime.CooldownRemaining - seconds);
+            if (runtime.CooldownRemaining <= 0f
+                && runtime.UsesMagazine
+                && runtime.MagazineRemaining <= 0
+                && runtime.ReloadRemaining <= 0f
+                && !runtime.IsBursting)
+            {
+                runtime.MagazineRemaining = runtime.MaxMagazineSize;
+            }
+
+            return true;
+        }
+
+        /// 재사용 대기를 즉시 끝낸다.
+        public static void ResetCooldown(SkillExecutionData runtime)
+        {
+            if (runtime == null)
+            {
+                return;
+            }
+
+            runtime.CooldownRemaining = 0f;
+            if (runtime.UsesMagazine
+                && runtime.MagazineRemaining <= 0
+                && runtime.ReloadRemaining <= 0f
+                && !runtime.IsBursting)
+            {
+                runtime.MagazineRemaining = runtime.MaxMagazineSize;
+            }
+        }
+
+        /// 남은 시간을 0 아래로 내려가지 않게 줄인다.
+        private static float TickDown(float value, float deltaTime)
+        {
+            return value > 0f
+                ? Mathf.Max(0f, value - deltaTime)
+                : 0f;
+        }
+
+        /// 다음 발사 간격이 지났는지 확인한다.
+        private static bool IsCastIntervalReady(SkillExecutionData runtime)
+        {
+            return runtime.effectiveTickInterval <= 0f
+                || runtime.TickRemaining <= 0f;
+        }
+
+        /// 이번 실행의 보정값으로 상태 기준을 갱신한다.
+        private static void RefreshRuntimeModifiers(
+            SkillExecutionData runtime,
+            SkillExecutionData snapshot)
+        {
+            var previousMax = runtime.effectiveMaxMagazineSize;
+            var nextMax = CalculateMaxMagazineSize(runtime.Data);
+            var nextBurst = BurstProjectileCount(runtime.Data);
+            runtime.effectiveReloadDuration = CalculateReloadDuration(runtime.Data);
+            runtime.effectiveTickInterval = TickInterval(runtime.Data);
+            runtime.effectiveBurstInterval = BurstInterval(runtime.Data);
+            runtime.effectiveCooldownDuration = CooldownDuration(runtime.Data);
+
+            if (snapshot != null)
+            {
+                nextMax = Math.Max(0, nextMax + snapshot.MagazineBonus);
+                if (nextBurst > 1)
+                {
+                    nextBurst += snapshot.AdditionalProjectileBonus;
+                }
+
+                runtime.effectiveReloadDuration *= Mathf.Max(
+                    0f,
+                    snapshot.ReloadTimeMultiplier);
+                runtime.effectiveTickInterval *= Mathf.Max(
+                    0f,
+                    snapshot.ShotIntervalMultiplier);
+                runtime.effectiveBurstInterval *= Mathf.Max(
+                    0f,
+                    snapshot.ShotIntervalMultiplier);
+                runtime.effectiveCooldownDuration *= Mathf.Max(
+                    0f,
+                    snapshot.CooldownMultiplier);
+            }
+
+            runtime.effectiveMaxMagazineSize = nextMax;
+            runtime.effectiveBurstProjectileCount = Math.Max(1, nextBurst);
+            if (previousMax == runtime.effectiveMaxMagazineSize)
+            {
+                return;
+            }
+
+            if (runtime.effectiveMaxMagazineSize <= 0)
+            {
+                runtime.MagazineRemaining = 0;
+                runtime.ReloadRemaining = 0f;
+                return;
+            }
+
+            if (previousMax <= 0)
+            {
+                runtime.MagazineRemaining = runtime.effectiveMaxMagazineSize;
+                return;
+            }
+
+            var delta = runtime.effectiveMaxMagazineSize - previousMax;
+            runtime.MagazineRemaining = Mathf.Clamp(
+                runtime.MagazineRemaining + delta,
+                0,
+                runtime.effectiveMaxMagazineSize);
+            if (runtime.MagazineRemaining > 0)
+            {
+                runtime.ReloadRemaining = 0f;
+            }
+        }
+
+        /// 정의된 탄창 용량을 실행 가능한 값으로 만든다.
+        private static int CalculateMaxMagazineSize(SkillDefinition data)
+        {
+            return data != null ? Math.Max(0, data.MagazineCapacity) : 0;
+        }
+
+        /// 한 시전에 이어지는 발사 횟수를 계산한다.
+        private static int BurstProjectileCount(SkillDefinition data)
+        {
+            var projectile = data as ProjectileSkillDefinition;
+            return projectile?.Projectile != null
+                ? Math.Max(1, projectile.Projectile.BurstProjectileCount)
+                : 1;
+        }
+
+        /// 재장전 시간을 실행 가능한 값으로 만든다.
+        private static float CalculateReloadDuration(SkillDefinition data)
+        {
+            return data != null ? Mathf.Max(0f, data.ReloadSeconds) : 0f;
+        }
+
+        /// 주기 실행 간격을 계산한다.
+        private static float TickInterval(SkillDefinition data)
+        {
+            return data?.Timing != null
+                ? Mathf.Max(0f, data.Timing.TickInterval)
+                : 0f;
+        }
+
+        /// 연사 간격을 계산한다.
+        private static float BurstInterval(SkillDefinition data)
+        {
+            var projectile = data as ProjectileSkillDefinition;
+            if (projectile?.Projectile != null
+                && projectile.Projectile.BurstIntervalSeconds > 0f)
+            {
+                return projectile.Projectile.BurstIntervalSeconds;
+            }
+
+            return TickInterval(data);
+        }
+
+        /// 재사용 대기시간을 계산한다.
+        private static float CooldownDuration(SkillDefinition data)
+        {
+            return data?.Timing != null
+                ? Mathf.Max(0f, data.Timing.Cooldown)
+                : 0f;
+        }
+
+        /// 탄창 소모 결과에 맞는 회복을 시작한다.
+        private static void BeginRecoveryIfNeeded(SkillExecutionData runtime)
+        {
+            if (!runtime.UsesMagazine)
+            {
+                runtime.CooldownRemaining = runtime.effectiveCooldownDuration;
+                return;
+            }
+
+            if (runtime.MagazineRemaining > 0)
+            {
+                return;
+            }
+
+            runtime.CooldownRemaining = runtime.effectiveCooldownDuration;
+            if (runtime.ReloadDuration > 0f)
+            {
+                runtime.ReloadRemaining = runtime.ReloadDuration;
+                return;
+            }
+
+            if (runtime.CooldownRemaining <= 0f)
+            {
+                runtime.MagazineRemaining = runtime.MaxMagazineSize;
+            }
+        }
         /// 자동 시전 가능한 스킬만 실행 흐름에 올린다.
         public void TryExecuteAutomaticSkills(
             UnitSpawnManager roster,
@@ -109,7 +599,7 @@ namespace Pakuri.InGame
             }
 
             var snapshot = entry.Model.SkillState.CreateExecutionData(entry.Model, runtime, roster);
-            return runtime.CanCastWithData(snapshot);
+            return CanCastWithData(runtime, snapshot);
         }
 
         /// 자동 조준으로 선택한 스킬을 실행 흐름에 올린다.
@@ -274,7 +764,7 @@ namespace Pakuri.InGame
             int recastGeneration = 0,
             bool executeCastEffects = true)
         {
-            if (beginCast && !runtime.CanCastWithData(snapshot))
+            if (beginCast && !CanCastWithData(runtime, snapshot))
             {
                 return false;
             }
@@ -332,7 +822,7 @@ namespace Pakuri.InGame
             var routed = ExecuteSkill(context, snapshot, definition);
             if (routed)
             {
-                if (beginCast && !runtime.TryBeginCast(snapshot))
+                if (beginCast && !TryBeginCast(runtime, snapshot))
                 {
                     return false;
                 }
@@ -1040,7 +1530,7 @@ namespace Pakuri.InGame
             var projectile = skill.Projectile;
             var burstCount = projectile != null ? Math.Max(1, projectile.BurstProjectileCount) : 1;
             var burstIndex = context.Runtime != null
-                ? context.Runtime.CurrentBurstProjectileIndex()
+                ? CurrentBurstProjectileIndex(context.Runtime)
                 : 1;
             var projectileCount = projectile != null ? Math.Max(1, projectile.ProjectilesPerShot) : 1;
             var pierce = projectile != null ? projectile.PierceCount : 0;
@@ -1418,12 +1908,14 @@ namespace Pakuri.InGame
                 out var refundRatio);
             if (resetCooldown)
             {
-                sourceRuntime.ResetCooldown();
+                ResetCooldown(sourceRuntime);
                 return;
             }
             if (refundRatio > 0f)
             {
-                sourceRuntime.ReduceCooldownRemaining(sourceRuntime.EffectiveCooldownDuration * refundRatio);
+                ReduceCooldownRemaining(
+                    sourceRuntime,
+                    sourceRuntime.EffectiveCooldownDuration * refundRatio);
             }
         }
 
@@ -1444,7 +1936,12 @@ namespace Pakuri.InGame
             }
 
             var targetRuntime = sourceRuntime.Owner.SkillState.FindBySkillId(targetSkillId);
-            targetRuntime?.ReduceCooldownRemaining(targetRuntime.EffectiveCooldownDuration * secondsRatio);
+            if (targetRuntime != null)
+            {
+                ReduceCooldownRemaining(
+                    targetRuntime,
+                    targetRuntime.EffectiveCooldownDuration * secondsRatio);
+            }
         }
 
         /// 범위 판정을 공통 적중 경로에 연결한다.
@@ -1676,7 +2173,7 @@ namespace Pakuri.InGame
             }
 
             var hitIndex = runtime != null
-                ? runtime.AdvanceSkillHitCount()
+                ? AdvanceSkillHitCount(runtime)
                 : 0;
 
             applyingHitEnhancement = true;
@@ -1687,7 +2184,9 @@ namespace Pakuri.InGame
                     var reloadSkill = runtime.Owner.SkillState.FindBySkillId(skillData.ReloadReduceTargetSkillId);
                     if (reloadSkill != null && reloadSkill.IsReloading)
                     {
-                        reloadSkill.ReduceReloadRemaining(skillData.ReloadReduceSecondsPerHit);
+                        ReduceReloadRemaining(
+                            reloadSkill,
+                            skillData.ReloadReduceSecondsPerHit);
                     }
                 }
 
@@ -2009,12 +2508,14 @@ namespace Pakuri.InGame
                     var targetRuntime = runtimes[runtimeIndex];
                     if (command.Kind == SkillReactionCommandKind.RefundCooldown)
                     {
-                        changed |= targetRuntime.ReduceCooldownRemaining(
+                        changed |= ReduceCooldownRemaining(
+                            targetRuntime,
                             targetRuntime.EffectiveCooldownDuration * command.Ratio);
                     }
                     else if (command.Kind == SkillReactionCommandKind.ReduceReload)
                     {
-                        changed |= targetRuntime.ReduceReloadRemaining(
+                        changed |= ReduceReloadRemaining(
+                            targetRuntime,
                             targetRuntime.ReloadDuration * command.Ratio);
                     }
                 }

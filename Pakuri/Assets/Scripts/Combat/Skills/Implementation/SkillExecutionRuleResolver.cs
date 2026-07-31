@@ -13,11 +13,11 @@ namespace Pakuri.InGame
 {
 
     /// 정의의 의미를 실행값과 판정값으로 확정한다.
-    internal static class SkillExecutionRuleResolver
+    public static class SkillExecutionRuleResolver
     {
 
         /// 정의가 런타임에서 사용할 기본 골격을 만든다.
-        internal static SkillExecutionData CreateDefinitionSnapshot(SkillDefinition source)
+        public static SkillExecutionData CreateDefinitionSnapshot(SkillDefinition source)
         {
             var snapshot = new SkillExecutionData(source);
             if (source != null)
@@ -28,7 +28,7 @@ namespace Pakuri.InGame
         }
 
         /// 선택된 강화 의미를 실행값에 합친다.
-        internal static void ApplyChoice(SkillExecutionData snapshot, SkillChoice choice)
+        public static void ApplyChoice(SkillExecutionData snapshot, SkillChoice choice)
         {
             if (snapshot == null || choice == null || choice.Nodes == null)
             {

@@ -32,13 +32,13 @@ Code Builder for handoff correction and later implementation. Code Reviewer only
 
 ### Status
 
-User concerns 1-7 validated against current code and reflected in the primary handoff. Phase 1 baseline and inventory are recorded. Phase 2 Node composition, Phase 3 runtime-state ownership, Phase 4 status/single-rule absorption, Phase 5 execution/Actor Node meaning separation, Phase 6 Trigger gate-only routing, and Phase 7 Context/comment cleanup are implemented and build-verified.
+User concerns 1-7 validated against current code and reflected in the primary handoff. Phase 1 baseline and inventory are recorded. Phase 2 Node composition, Phase 3 runtime-state storage, Phase 4 status/single-rule absorption, Phase 5 execution/Actor Node meaning separation, Phase 6 Trigger gate-only routing, Phase 7 Context/comment cleanup, and the Code Reviewer runtime-state ownership correction are implemented and build-verified.
 
 ### Next Actions
 
 - Phase 1 baseline is committed.
 - Phase 2 Resolver Node composition is committed and verified by `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore` with 0 errors.
-- Phase 3 removed remaining active behavior from data and migrated the runtime state owner into SkillExecutionData and UnitSkills.
+- Phase 3 moved per-skill runtime state storage into SkillExecutionData and skill-list ownership into UnitSkills; runtime-state progression is owned by SkillExecution.
 - Phase 4 removed SkillStatus and SingleSkillRules after moving status calculation to Resolver and single damage/recovery values to existing owners.
 - Phase 5 moved direct Node reads and runtime hit application out of Resolver/Actors into the existing Resolver and SkillExecution responsibilities.
 - Phase 6 moved reaction delay/repeat/outcome/command application into SkillExecution while preserving the existing Trigger gate asymmetry and command generation limit.
@@ -68,6 +68,8 @@ User concerns 1-7 validated against current code and reflected in the primary ha
 - Final static checks found zero legacy symbols, six Implementation `.cs` files, one top-level `SkillExecution` class, and no runtime application calls in `SkillExecutionRuleResolver`.
 - Every method under `Pakuri/Assets/Scripts/Combat/Skills` has a concise abstract comment; the mechanical-comment search returned no matches.
 - `git diff --check` passed; `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore` passed with 0 errors and 2 existing reference warnings.
+- Code Reviewer found runtime lifecycle declarations in `SkillExecutionData`; Code Builder moved reset, tick, cast, hit/launch, burst, cooldown, and reload coordination to `SkillExecution`, exposed the Definition-only Resolver entry points required by Editor tests, and passed Core/Editor builds with 0 errors.
+- `rg` declaration search returns no runtime lifecycle method declarations in `SkillExecutionData`; the six-file Implementation set and one-class `SkillExecution` boundary remain unchanged.
 
 ### History
 
@@ -78,6 +80,7 @@ User concerns 1-7 validated against current code and reflected in the primary ha
 - 2026-07-31: Code Builder resumed under the per-Phase commit rule and closed the baseline/inventory phase before runtime edits.
 - 2026-07-31: Phase 2 moved Node extraction and Node action value composition to Resolver; Assembly-CSharp build passed with 0 errors.
 - 2026-07-31: Phase 3 moved per-skill runtime state into SkillExecutionData, skill-list ownership into UnitSkills, removed the two legacy state types from C# callers, and passed Assembly-CSharp build with 0 errors.
+- 2026-07-31: Code Reviewer found that SkillExecutionData still owned runtime lifecycle behavior; Code Builder moved that behavior into SkillExecution, migrated all callers, exposed the Definition-only Resolver entry points, and passed Core/Editor builds with 0 errors and 2 existing reference warnings each.
 - 2026-07-31: Phase 4 moved status calculation to SkillExecutionRuleResolver, reused StatusApplicationSpec for resolved status values, deleted SkillStatus and SingleSkillRules with their meta files, and passed Assembly-CSharp build with 0 errors.
 - 2026-07-31: Phase 5 moved cast/repeat/core/status/refund value resolution to SkillExecutionRuleResolver, moved shared damage/status/trigger/reload application to SkillExecution, unified family hit multipliers, and passed Assembly-CSharp build with 0 errors.
 - 2026-07-31: Phase 6 left Trigger as the gate owner and routed accepted reactions to SkillExecution for delay, repeat, outcome, command, targeting, and runtime application; Assembly-CSharp build passed with 0 errors.

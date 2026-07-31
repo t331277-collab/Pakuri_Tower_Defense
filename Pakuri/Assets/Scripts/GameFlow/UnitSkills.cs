@@ -315,7 +315,7 @@ namespace Pakuri.InGame
 
             for (var i = 0; i < activeSkills.Count; i++)
             {
-                activeSkills[i].Tick(deltaTime);
+                SkillExecution.Tick(activeSkills[i], deltaTime);
             }
         }
 

@@ -152,7 +152,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            context.Runtime?.AdvanceProjectileLaunchCount();
+            SkillExecution.AdvanceProjectileLaunchCount(context.Runtime);
             var skillId = !string.IsNullOrWhiteSpace(snapshot.PreparedSkillId)
                 ? snapshot.PreparedSkillId
                 : snapshot.SkillId;

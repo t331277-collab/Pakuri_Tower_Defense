@@ -35,7 +35,12 @@ public sealed class SkillCatalogRuntimeTests
     public void ReactionDamageMultiplierScalesExistingSkillModifier()
     {
         var data = new SkillExecutionData(new SkillDefinition { SkillId = "vega-b" });
-        data.ApplyDynamicDamageMultiplier(1.25f);
+        var apply = typeof(SkillExecutionData).GetMethod(
+            "ApplyDynamicDamageMultiplier",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+
+        Assert.That(apply, Is.Not.Null);
+        apply.Invoke(data, new object[] { 1.25f });
 
         var scale = typeof(SkillExecutionData).GetMethod(
             "ScaleDamageMultiplier",
@@ -319,7 +324,7 @@ public sealed class SkillCatalogRuntimeTests
             Assert.That(resolveCharge, Is.Not.Null);
             Assert.That(resolveCharge.Invoke(null, new object[] { owner }), Is.SameAs(runtime));
 
-            runtime.StopActive();
+            SkillExecution.StopActive(runtime);
 
             Assert.That(runtime.IsActive, Is.False);
             Assert.That(resolveCharge.Invoke(null, new object[] { owner }), Is.Null);

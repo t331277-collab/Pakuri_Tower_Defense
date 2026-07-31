@@ -22,7 +22,7 @@ namespace Pakuri.InGame
             var activeSkills = model.SkillState.ActiveSkills;
             for (var i = 0; i < activeSkills.Count; i++)
             {
-                activeSkills[i].ResetRuntimeState();
+                SkillExecution.ResetRuntimeState(activeSkills[i]);
             }
         }
 

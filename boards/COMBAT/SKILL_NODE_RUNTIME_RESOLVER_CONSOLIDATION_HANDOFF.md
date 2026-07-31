@@ -8,7 +8,7 @@ Node 의미의 런타임 구현을 `SkillExecutionRuleResolver` 하나로 통합
 
 - `Definitions/Nodes`의 `GetOperation<T>()` 해제와 Node 기반 값 계산을 `SkillExecutionRuleResolver`가 유일하게 소유한다.
 - `SkillExecution`은 시전 검증, 학습 상태 전달, family/command 실행 조정, 기존 runtime API 호출과 Executor 분배를 담당한다.
-- `SkillExecutionData`는 Resolver가 완성한 실행값을 보관하고 전달하는 수동 데이터 객체가 된다.
+- `SkillExecutionData`는 Resolver가 완성한 실행값과 진행 상태를 보관하고 전달하며, 상태 진행 제어는 `SkillExecution`이 담당한다.
 - `SkillTrigger`는 Resolver가 추출한 반응 정의를 받아 사건 gate를 판정하고, 성공한 반응을 `SkillExecution`으로 되돌려보낸다.
 - `SkillTargeting`은 대상 조건을 받아 실제 대상 목록과 중심을 반환한다.
 - `SkillStatus.cs`와 `SingleSkillRules.cs`의 Node 기반 계산을 Resolver로 옮긴 뒤 두 스크립트를 삭제한다.
@@ -49,6 +49,7 @@ Node 의미의 런타임 구현을 `SkillExecutionRuleResolver` 하나로 통합
 - Phase 1 baseline/inventory 완료 및 커밋.
 - Phase 2 Node composition 구현 및 빌드 검증 완료.
 - Phase 7 Context 제거, 주석 추상화, 최종 정적 검증 완료.
+- Phase 8 Code Reviewer 책임 수정 완료: `SkillExecutionData` 런타임 lifecycle 조정을 `SkillExecution`으로 이동하고 Core/Editor 프로젝트 빌드를 오류 0개로 통과했다.
 
 ## Selected Code Builder tracks
 
@@ -130,6 +131,7 @@ Node operation 해제와 Node 기반 값 계산의 유일한 런타임 해석기
 - Actor가 전달한 적중 문맥과 Resolver 계산 결과를 받아 기존 피해·상태 공통 API를 호출한다.
 - Trigger가 통과시킨 effect와 command를 조정하고 기존 쿨다운·재장전·상태 연장·Zone 재시전 API를 호출한다.
 - 실행 성공 뒤 탄창·쿨다운·연사 상태와 lifecycle을 확정한다.
+- 런타임 상태 초기화, 시간 진행, 시전 진입, 적중·발사 순번과 탄창·쿨다운·재장전 진행을 조정한다.
 - 일반 시전과 Trigger 재실행의 공통 진입점을 유지한다.
 
 금지:
@@ -144,6 +146,7 @@ Node operation 해제와 Node 기반 값 계산의 유일한 런타임 해석기
 허용:
 
 - 실행 입력과 `Prepared*` 결과 보관.
+- 탄창·쿨다운·시전·재장전·연사 진행값의 저장.
 - 읽기 전용 컬렉션과 값 조회.
 - Resolver가 내부 범위에서 값을 채울 수 있는 최소 접근자.
 - Node를 읽지 않는 내부 copy 생성자 또는 기계적 clone.
@@ -248,7 +251,7 @@ Actor or combat system event
 
 `RefundCooldown`, `ReduceReload`, `ExtendStatusDuration`처럼 family Executor로 표현되지 않는 현재 command는 Trigger와 Resolver가 직접 실행하지 않는다. `SkillExecution`이 Resolver 계산 뒤 기존 runtime API로 처리하고 성공 여부를 반환한다. 이 예외를 위한 새 Executor는 만들지 않는다.
 
-## Current inspected evidence
+## Baseline evidence before Resolver migration
 
 ### Node meaning is currently interpreted inside data
 
@@ -256,7 +259,7 @@ Actor or combat system event
   - `ApplyNodes`가 모든 `SkillNode.GetOperation<T>()`를 직접 호출한다.
 - 같은 파일 `:728` 이후
   - `SkillActionOpKind` switch와 Node별 `Apply*Action`이 의미를 구현한다.
-- 따라서 현재 `SkillExecutionData`는 수동 데이터 객체가 아니다.
+- 따라서 초기 기준선의 `SkillExecutionData`는 수동 데이터 객체가 아니었다.
 
 ### Node meaning is spread across runtime scripts
 
@@ -498,7 +501,7 @@ Status: complete. Phase 1 baseline commit: `8398d68`. Phase 2 verification: `rg`
 
 ### Phase 3 — remove active behavior from data
 
-Status: complete. SkillExecutionData now owns the former per-skill runtime state, UnitSkills owns active/passive runtime lists and lookup, SkillExecutionData has no Node extraction methods, C# callers contain no SkillUseState or SkillExecutionState, and dotnet build Pakuri/Assembly-CSharp.csproj --no-restore exits 0 with 0 errors.
+Status: complete. SkillExecutionData stores per-skill runtime state, SkillExecution owns runtime-state progression, UnitSkills owns active/passive runtime lists and lookup, SkillExecutionData has no Node extraction or lifecycle methods, C# callers contain no SkillUseState or SkillExecutionState, and dotnet build Pakuri/Assembly-CSharp.csproj --no-restore exits 0 with 0 errors.
 
 1. 생성자의 Node 적용을 제거한다.
 2. `ApplyChoiceSpec`, `ApplyNodes`, Node별 `Apply*Action`을 제거한다.
@@ -549,6 +552,15 @@ Status: complete. `SkillExecutionContext` was absorbed into the existing `SkillA
 5. Node operation 소비가 Resolver 하나인지 검사한다.
 6. 빌드, diff, Unity compile/console을 검증한다.
 7. 관련 board에 구현 결과와 실제 명령 출력을 기록한다.
+
+### Phase 8 — Code Reviewer responsibility correction
+
+Status: complete. Code Reviewer found that `SkillExecutionData` still owned runtime lifecycle methods. Code Builder moved runtime-state coordination into the existing `SkillExecution`, migrated all repository callers without adding files, exposed the Definition-only Resolver entry points required by Editor tests, and passed both Core and Editor builds with 0 errors and 2 existing reference warnings each.
+
+1. `SkillExecutionData` keeps runtime values and Resolver-facing data access only.
+2. `SkillExecution` owns runtime reset, tick, cast entry, hit/launch counters, burst progress, cooldown, and reload progression.
+3. `UnitSkills`, recovery flow, family Executors, Actors, and editor tests call the new `SkillExecution` owner methods.
+4. Existing six-file Implementation scope, one `SkillExecution` class, Resolver boundary, Trigger gate asymmetry, and legacy-symbol deletion remain unchanged.
 
 ## Compatibility requirements
 
@@ -608,6 +620,7 @@ Status: complete. `SkillExecutionContext` was absorbed into the existing `SkillA
 23. 모든 Node operation이 현재와 같은 결과를 내며 누락된 operation이 없다.
 24. 관련 C# 프로젝트 빌드가 성공한다.
 25. Unity console에 이 변경으로 생긴 compile error가 없다.
+26. `SkillExecutionData`에는 runtime lifecycle method declaration이 없고, 해당 조정 method는 `SkillExecution`에만 있다.
 
 ## Verification expected from Code Builder
 
@@ -618,6 +631,7 @@ rg -n "ApplyNodes|ApplyChoiceSpec|ApplyNodeAction" Pakuri\Assets\Scripts\Combat\
 rg -n "ApplyDamage|ApplyStatus|ExtendStatusDuration|ReduceCooldownRemaining|ReduceReloadRemaining|TryExecuteRecast" Pakuri\Assets\Scripts\Combat\Skills\Implementation\SkillExecutionRuleResolver.cs Pakuri\Assets\Scripts\Combat\Skills\Implementation\SkillTrigger.cs
 rg -n "new SkillExecutionData|CreateExecutionData|ApplyChoiceSpec|ApplyNodes|ApplyDynamicDamageMultiplier|ScaleDamageMultiplier|SetRawDamageOverride|CopyWithDamageMultiplier" Pakuri\Assets --glob "*.cs"
 rg -n "^\s*(public|internal|private|protected)?\s*(static\s+|sealed\s+|partial\s+)*class\s+" Pakuri\Assets\Scripts\Combat\Skills\Implementation\SkillExecution.cs
+rg -n "^\s*(public|internal|private|protected).*\b(ResetRuntimeState|AdvanceProjectileLaunchCount|AdvanceSkillHitCount|ConsecutiveHitDamageMultiplier|Tick|CanCastWithData|TryBeginCast|StopActive|CurrentBurstProjectileIndex|ReduceReloadRemaining|ReduceCooldownRemaining|ResetCooldown|TickDown|RefreshRuntimeModifiers|BeginRecoveryIfNeeded)\s*\(" Pakuri\Assets\Scripts\Combat\Skills\Implementation\SkillExecutionData.cs
 rg -n "SkillExecutionContext|SkillUseState|SkillExecutionState|ProjectileStatusHitSpec|SingleDamageModifierState|class SkillStatus|class SingleSkillRules" Pakuri\Assets\Scripts --glob "*.cs"
 rg --files Pakuri\Assets\Scripts\Combat\Skills\Implementation -g "*.cs"
 dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false
@@ -663,12 +677,10 @@ Unity-MCP로 editor compile과 console을 확인한다. Play Mode gameplay 검�
 
 ## Next Actions
 
-1. Code Builder가 필수 역할·track 문서와 본 handoff를 읽는다.
-2. Phase 1의 baseline과 Node inventory를 기록한다.
-3. Phase 2부터 순서대로 구현한다.
-4. 각 Phase 뒤 최소 build와 구조 `rg`를 실행하고 해당 Phase를 커밋한다.
-5. 완료 뒤 primary handoff의 Status, Evidence와 History를 갱신한다.
-6. 사용자가 요청한 경우에만 Code Reviewer를 실행한다.
+1. Phase 1~8 구현과 각 Phase 커밋이 완료되었다.
+2. Code Reviewer가 확인한 `SkillExecutionData` 책임 위반을 Code Builder가 수정했다.
+3. Assembly-CSharp 빌드와 정적 경계 검증이 완료되었다.
+4. Unity EditMode 회귀 테스트와 추가 gameplay 검증은 아직 실행하지 않았으며, Play Mode는 사용자가 수행한다.
 
 ## Evidence
 
@@ -729,3 +741,4 @@ Unity-MCP로 editor compile과 console을 확인한다. Play Mode gameplay 검�
 - 2026-07-31: Phase 5 moved cast/repeat/core/status/refund value resolution into SkillExecutionRuleResolver, moved shared damage/status/trigger/reload application into SkillExecution, unified family hit multipliers, and passed Assembly-CSharp build with 0 errors.
 - 2026-07-31: Phase 6 kept Trigger gate asymmetry and command generation limits, routed accepted reactions to SkillExecution for delay/repeat/outcome/command/targeting/runtime application, and passed Assembly-CSharp build with 0 errors.
 - 2026-07-31: Phase 7 absorbed `SkillExecutionContext` into existing `SkillActionContext`, normalized concise abstract comments across `Combat/Skills`, confirmed six Implementation scripts and one `SkillExecution` class, found zero legacy symbols and zero runtime-application calls in Resolver, and passed `git diff --check` plus `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore` with 0 errors and 2 existing reference warnings.
+- 2026-07-31: Code Reviewer found runtime lifecycle methods still owned by `SkillExecutionData`; Code Builder moved them into `SkillExecution`, migrated repository callers, exposed the Definition-only Resolver entry points, changed the Editor test to inspect the internal data mutator through its existing reflection pattern, confirmed zero lifecycle method declarations remain in `SkillExecutionData`, and passed both Core and Editor builds with 0 errors and 2 existing reference warnings each.
