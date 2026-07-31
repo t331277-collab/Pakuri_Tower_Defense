@@ -4,6 +4,66 @@
 
 The pre-cleanup file, including all completed July tasks, is preserved at `boards/ARCHIVE/ACTIVE_BOARD_SNAPSHOT_2026-07-28/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
 
+## Task: 2026-07-31 Skill Node Runtime Resolver Consolidation Handoff Correction
+
+### Task title
+
+Correct the Code Builder handoff for Node runtime Resolver consolidation.
+
+### Goals
+
+- Make `SkillExecutionRuleResolver` the sole `GetOperation<T>()` and Node-value calculator without letting it apply runtime damage, status, cooldown, reload, or recast effects.
+- Preserve `SkillTrigger` event-gate ownership and route accepted outcomes through `SkillExecution`.
+- Record all external `SkillExecutionData` construction/mutation callers, current Trigger asymmetry, dual-application risk, DTO copy invariants, operation flows, and parity tests before implementation.
+
+### Constraints
+
+- Preserve current gameplay and Trigger source-owned/passive-owned gate asymmetry unless the user separately approves a behavior fix.
+- Use separate legacy and Resolver snapshots for parity tests; runtime uses one composition path per phase.
+- Keep `StatusCombatRules.ApplyStatus` and `InGameCombatManager.ApplyDamage` as common application paths.
+- Keep mechanical DTO copy/clone support and prevent post-build collection mutation.
+- Do not add Skill Implementation scripts. Reduce each existing multi-class script toward one responsibility class by absorbing only required fields/methods and deleting obsolete classes.
+- Integrate responsibilities by rewriting ownership and callers; do not split classes into new same-name files, paste a legacy class body into another script, hide it as a nested class, or keep needless forwarding wrappers.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder for handoff correction and later implementation. Code Reviewer only by explicit user request.
+
+### Status
+
+User concerns 1-7 validated against current code and reflected in the primary handoff. Phase 1 baseline and inventory are recorded; Node composition implementation is now in progress.
+
+### Next Actions
+
+- Phase 1 baseline is committed; Phase 2 owns Resolver Node composition and is verified by the Assembly-CSharp build.
+- Add parity coverage for composition order, cast-time versus hit-time values, status results, Trigger asymmetry, recursion/generation, Definition-only reaction lookup, and snapshot immutability.
+- Do not alter Trigger gate asymmetry or command recursion behavior without a separate user decision.
+- Keep `SkillExecution.cs` as the only file for its responsibility and reduce its four current classes to the single `SkillExecution` class; do not create `SkillExecutionContext.cs`, `SkillUseState.cs`, or `SkillExecutionState.cs`.
+- Replace `ProjectileStatusHitSpec` through existing execution/status contracts and delete it with `SkillStatus.cs`; do not create `ProjectileStatusHitSpec.cs`.
+- Final Skill `Implementation` file set is fixed to the six existing scripts named in the primary handoff.
+- Delete responsibility-free fields, methods, helpers, and legacy types after caller migration and compatibility checks; final class count and line count must decrease.
+
+### Evidence
+
+- Primary handoff: `boards/COMBAT/SKILL_NODE_RUNTIME_RESOLVER_CONSOLIDATION_HANDOFF.md`.
+- Before Phase 2, `SkillExecutionData` constructed source Nodes directly and `MemberwiseClone` handled damage-adjusted copies.
+- Phase 1 baseline commit records the full caller inventory and fixed six-file target from the handoff.
+- `EnemyCombatDecision.cs:193` and `DamageMeterUIController.cs:255,271` read reactions through the constructor outside Combat runtime orchestration.
+- `SkillCatalogRuntimeTests.cs` directly calls the constructor and APIs planned for removal at multiple locations.
+- `SkillTrigger.cs:384` executes source-owned reactions after its basic gate; `:446` applies additional passive count/proc/internal-cooldown gates.
+- `SkillExecution.cs:89,231,501` limits skill/effect reaction depth; `SkillTrigger.cs:901` separately limits only Zone recast generation for commands.
+- Assignment search found no writer for branch set/launch set, skill status tag/chance, or consume-status-stack override fields in `SkillExecutionData`.
+- Declaration search found four top-level classes in `SkillExecution.cs` and two in `SkillStatus.cs`; `ProjectileStatusHitSpec` is consumed by the shared status path and four skill families.
+
+### History
+
+- 2026-07-31: User identified incomplete migration surface, responsibility conflicts, Trigger asymmetry, dual application risk, DTO copy scope, incomplete operation inventory, test gaps, and board-state drift.
+- 2026-07-31: Code Builder verified all seven concerns as valid, found additional caller and gate details, and corrected the handoff without changing C# runtime behavior.
+- 2026-07-31: User added the one-script/one-class preference and required responsibility-based integration instead of physical class-body movement; Designer added the convention, split targets, deletion rules, and acceptance checks.
+- 2026-07-31: User corrected that the convention forbids new split files. Designer removed the same-name file plan and fixed the target to six existing Implementation scripts, one `SkillExecution` class, caller migration, legacy type deletion, and reduced class/line counts.
+- 2026-07-31: Code Builder resumed under the per-Phase commit rule and closed the baseline/inventory phase before runtime edits.
+
 ## Task: 2026-07-28 Skill Trigger / Node Unification Design
 
 ### Task title
