@@ -380,7 +380,7 @@ internal static class SkillTrigger
 		{
 			if (ShouldRunSourceOwnedTrigger(trigger, source, sourceSkillId, triggerEvent, triggerContext))
 			{
-				SkillExecution.ExecuteTriggeredReaction(
+                SkillExecution.ScheduleReaction(
 					combatManager,
 					roster,
 					roster.Find(source),
@@ -449,7 +449,7 @@ internal static class SkillTrigger
 					SkillReaction trigger = triggers[triggerIndex];
 					if (ShouldRunPassiveOwnerTrigger(trigger, unitState, triggerEvent, triggerContext) && PassesCountGate(combatManager, unitState, trigger) && PassesProcGate(combatManager, unitState, trigger))
 					{
-						SkillExecution.ExecuteTriggeredReaction(
+                        SkillExecution.ScheduleReaction(
 							combatManager,
 							roster,
 						unitEntry,

@@ -928,16 +928,40 @@ namespace Pakuri.InGame
                 entry.Model,
                 sourceRuntime,
                 roster);
-            var runtime = sourceRuntime;
-            if (!string.IsNullOrWhiteSpace(effect.TargetSkillId))
+            if (effect.IsRecast)
             {
-                runtime = entry.Model.SkillState.FindBySkillId(effect.TargetSkillId);
-                if (runtime?.Data == null)
+                var zone = effect.ResolvedDefinition as ZoneSkillDefinition;
+                if (zone == null)
                 {
                     return false;
                 }
+
+                var recastContext = new SkillActionContext(
+                    combatManager,
+                    roster,
+                    entry,
+                    sourceRuntime,
+                    eventTarget,
+                    hasManualTargetPoint: hasTargetPoint,
+                    manualTargetPoint: targetPoint,
+                    recastGeneration: recastGeneration,
+                    lockToEventTarget: lockToEventTarget,
+                    publishSkillLifecycleEvents: false,
+                    sourceSkillId: sourceSkillId);
+                var recastSnapshot = effect.InheritSnapshot
+                    ? sourceSnapshot
+                    : SkillExecutionRuleResolver.CreateDefinitionSnapshot(zone);
+                return TryExecuteRecast(
+                    recastContext,
+                    recastSnapshot,
+                    zone,
+                    effect,
+                    targetPoint);
             }
-            else if (effect.ResolvedDefinition != sourceRuntime.Data)
+
+            var runtime = entry.Model.SkillState.FindByDefinition(
+                effect.ResolvedDefinition);
+            if (runtime == null)
             {
                 runtime = new SkillExecutionData(entry.Model, effect.ResolvedDefinition);
             }
@@ -1005,9 +1029,7 @@ namespace Pakuri.InGame
             for (var i = 0; i < effects.Count; i++)
             {
                 var effect = effects[i];
-                if (effect == null
-                    || (enemyTargetsOnly
-                        && effect.Targeting?.TargetSide != SkillTargetSide.Enemy))
+                if (effect == null)
                 {
                     continue;
                 }
@@ -1015,17 +1037,17 @@ namespace Pakuri.InGame
                 if (effect.DelaySeconds > 0f)
                 {
                     context.CombatManager.StartCoroutine(
-                        ExecuteCastEffectDelayed(context, sourceSnapshot, effect));
+                        ExecuteResolvedCastEffectDelayed(context, sourceSnapshot, effect));
                 }
                 else
                 {
-                    ExecuteCastEffect(context, sourceSnapshot, effect);
+                    ExecuteResolvedCastEffect(context, sourceSnapshot, effect);
                 }
             }
         }
 
         /// 예약된 시전 효과를 생존 조건 아래 실행한다.
-        private static IEnumerator ExecuteCastEffectDelayed(
+    private static IEnumerator ExecuteResolvedCastEffectDelayed(
             SkillActionContext context,
             SkillExecutionData sourceSnapshot,
             SkillCastEffect effect)
@@ -1033,12 +1055,12 @@ namespace Pakuri.InGame
             yield return new WaitForSeconds(effect.DelaySeconds);
             if (context?.CasterEntry != null && context.CasterEntry.IsAlive)
             {
-                ExecuteCastEffect(context, sourceSnapshot, effect);
+                ExecuteResolvedCastEffect(context, sourceSnapshot, effect);
             }
         }
 
         /// 시전 효과의 대상과 실행 방식을 결정한다.
-        private static bool ExecuteCastEffect(
+        private static bool ExecuteResolvedCastEffect(
             SkillActionContext context,
             SkillExecutionData sourceSnapshot,
             SkillCastEffect effect,
@@ -1048,6 +1070,32 @@ namespace Pakuri.InGame
             if (context == null || sourceSnapshot == null || effect == null)
             {
                 return false;
+            }
+
+            if (effect.Command != null && effect.ResolvedDefinition == null)
+            {
+                var commandContext = new SkillTrigger.TriggerExecutionContext(
+                    context.EventTarget,
+                    context.Caster,
+                    context.HasManualTargetPoint
+                        ? context.ManualTargetPoint
+                        : context.CasterEntry.Transform != null
+                            ? (Vector2)context.CasterEntry.Transform.position
+                            : Vector2.zero,
+                    null,
+                    0f,
+                    0f,
+                    DamageAttribute.Physical,
+                    context.SourceSkillId,
+                    context.Caster,
+                    recastGeneration: context.RecastGeneration);
+                return ApplyReactionCommand(
+                    context.CombatManager,
+                    context.Roster,
+                    context.CasterEntry,
+                    context.Runtime,
+                    effect.Command,
+                    commandContext);
             }
 
             var hasTargetPoint = context.HasManualTargetPoint;
@@ -1198,14 +1246,16 @@ namespace Pakuri.InGame
                         context,
                         snapshot,
                         RequireDefinition<ZoneSkillDefinition>(definition),
-                        null,
+                        1f,
+                        0f,
                         null);
                 case SkillRuntimeKind.Field:
                     return PrepareZoneExecutionData(
                         context,
                         snapshot,
                         RequireDefinition<ZoneSkillDefinition>(definition),
-                        null,
+                        1f,
+                        0f,
                         null);
                 case SkillRuntimeKind.Buff:
                 case SkillRuntimeKind.Shield:
@@ -1238,10 +1288,16 @@ namespace Pakuri.InGame
             SkillActionContext context,
             SkillExecutionData snapshot,
             ZoneSkillDefinition skill,
-            SkillReactionCommand command,
+            SkillCastEffect effect,
             Vector2 center)
         {
-            return PrepareZoneExecutionData(context, snapshot, skill, command, center)
+            return PrepareZoneExecutionData(
+                    context,
+                    snapshot,
+                    skill,
+                    effect.RadiusMultiplier,
+                    effect.DurationSeconds,
+                    center)
                 && ZoneSkillExecutor.Execute(context, snapshot);
         }
 
@@ -1347,7 +1403,8 @@ namespace Pakuri.InGame
             SkillActionContext context,
             SkillExecutionData snapshot,
             ZoneSkillDefinition skill,
-            SkillReactionCommand command,
+            float recastRadiusMultiplier,
+            float recastDuration,
             Vector2? recastCenter)
         {
             if (context == null || snapshot == null || skill == null)
@@ -1355,9 +1412,9 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var isRecast = command != null && recastCenter.HasValue;
+            var isRecast = recastCenter.HasValue;
             var baseRadius = SkillTargeting.BaseRadius(skill.Targeting, skill.Area);
-            var radiusMultiplier = isRecast ? Mathf.Max(0f, command.RadiusMultiplier) : 1f;
+            var radiusMultiplier = isRecast ? Mathf.Max(0f, recastRadiusMultiplier) : 1f;
             var radius = SkillTargeting.Radius(
                 baseRadius,
                 snapshot.RadiusMultiplier,
@@ -1390,7 +1447,7 @@ namespace Pakuri.InGame
                     : 1f;
             interval = Mathf.Max(0.05f, interval * Mathf.Max(0.05f, snapshot.ShotIntervalMultiplier));
             var duration = isRecast
-                ? Mathf.Max(0.05f, command.DurationSeconds)
+                ? Mathf.Max(0.05f, recastDuration)
                 : skill.Area != null && skill.Area.Duration > 0f
                     ? skill.Area.Duration
                     : skill.Timing != null
@@ -1875,7 +1932,7 @@ namespace Pakuri.InGame
         }
 
         /// 통과한 반응을 지연과 반복 실행으로 연결한다.
-        internal static void ExecuteTriggeredReaction(
+        internal static void ScheduleReaction(
             InGameCombatManager combatManager,
             UnitSpawnManager roster,
             CombatUnitEntry sourceEntry,
@@ -1896,7 +1953,7 @@ namespace Pakuri.InGame
                     + (i > 0 ? Mathf.Max(0f, trigger.RepeatIntervalSeconds) * i : 0f);
                 if (delaySeconds <= 0f)
                 {
-                    ExecuteTriggeredReactionOnce(
+                    RunScheduledReaction(
                         combatManager,
                         roster,
                         sourceEntry,
@@ -1908,7 +1965,7 @@ namespace Pakuri.InGame
                 else
                 {
                     combatManager.StartCoroutine(
-                        ExecuteTriggeredReactionDelayed(
+                        RunScheduledReactionDelayed(
                             combatManager,
                             roster,
                             sourceEntry,
@@ -1922,7 +1979,7 @@ namespace Pakuri.InGame
         }
 
         /// 예약된 반응을 지정 시점에 실행한다.
-        private static IEnumerator ExecuteTriggeredReactionDelayed(
+        private static IEnumerator RunScheduledReactionDelayed(
             InGameCombatManager combatManager,
             UnitSpawnManager roster,
             CombatUnitEntry sourceEntry,
@@ -1933,7 +1990,7 @@ namespace Pakuri.InGame
             float resolvedRawDamage)
         {
             yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
-            ExecuteTriggeredReactionOnce(
+            RunScheduledReaction(
                 combatManager,
                 roster,
                 sourceEntry,
@@ -1944,7 +2001,7 @@ namespace Pakuri.InGame
         }
 
         /// 반응 한 회분의 실행을 시작한다.
-        private static void ExecuteTriggeredReactionOnce(
+        private static void RunScheduledReaction(
             InGameCombatManager combatManager,
             UnitSpawnManager roster,
             CombatUnitEntry sourceEntry,
@@ -1953,7 +2010,7 @@ namespace Pakuri.InGame
             SkillTrigger.TriggerExecutionContext triggerContext,
             float resolvedRawDamage)
         {
-            ExecuteTriggeredOutcome(
+            ExecuteReactionOutcome(
                 combatManager,
                 roster,
                 sourceEntry,
@@ -1964,7 +2021,7 @@ namespace Pakuri.InGame
         }
 
         /// 반응 결과에 맞는 실행 경로를 선택한다.
-        private static bool ExecuteTriggeredOutcome(
+        private static bool ExecuteReactionOutcome(
             InGameCombatManager combatManager,
             UnitSpawnManager roster,
             CombatUnitEntry sourceEntry,
@@ -2014,22 +2071,20 @@ namespace Pakuri.InGame
             }
 
             return trigger.Command != null
-                && ExecuteTriggeredCommand(
+                && ApplyReactionCommand(
                     combatManager,
                     roster,
                     sourceEntry,
-                    source,
                     sourceRuntime,
                     trigger.Command,
                     triggerContext);
         }
 
         /// 반응 command를 런타임 변화로 반영한다.
-        private static bool ExecuteTriggeredCommand(
+        private static bool ApplyReactionCommand(
             InGameCombatManager combatManager,
             UnitSpawnManager roster,
             CombatUnitEntry source,
-            UnitCombatState sourceState,
             SkillExecutionData sourceRuntime,
             SkillReactionCommand command,
             SkillTrigger.TriggerExecutionContext triggerContext)
@@ -2048,30 +2103,6 @@ namespace Pakuri.InGame
                 recastGeneration: triggerContext.RecastGeneration,
                 lockToEventTarget: command.LockToEventTarget,
                 publishSkillLifecycleEvents: false);
-            if (command.Kind == SkillReactionCommandKind.RecastZone)
-            {
-                var skill = command.ResolvedDefinition as ZoneSkillDefinition;
-                if (skill == null
-                    || context.RecastGeneration >= Math.Max(1, command.MaxGeneration))
-                {
-                    return false;
-                }
-
-                var inheritedSnapshot = sourceState.SkillState.CreateExecutionData(
-                    sourceState,
-                    sourceRuntime,
-                    roster);
-                var snapshot = command.InheritSnapshot
-                    ? inheritedSnapshot
-                    : SkillExecutionRuleResolver.CreateDefinitionSnapshot(skill);
-                return combatManager.SkillExecution.TryExecuteRecast(
-                    context,
-                    snapshot,
-                    skill,
-                    command,
-                    triggerContext.EventCenter);
-            }
-
             var targets = SkillTargeting.OrderedTargets(context, command.Targeting);
             var limit = command.Targeting != null && command.Targeting.Shape == SkillTargetShape.Single
                 ? 1

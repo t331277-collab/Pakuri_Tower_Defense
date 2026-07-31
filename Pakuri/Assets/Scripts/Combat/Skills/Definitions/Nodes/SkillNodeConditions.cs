@@ -82,7 +82,6 @@ namespace Pakuri.Data
 
     public enum SkillReactionCommandKind
     {
-        RecastZone,
         RefundCooldown,
         ReduceReload,
         ExtendStatusDuration
@@ -102,10 +101,6 @@ namespace Pakuri.InGame
         public SkillTargetingSpec Targeting = new SkillTargetingSpec();
         public bool LockToEventTarget;
         public int MaxTargets;
-        public float RadiusMultiplier = 1f;
-        public bool InheritSnapshot = true;
-        public int MaxGeneration = 1;
-        public SkillDefinition ResolvedDefinition;
     }
 
     /// Skill/Choice/Passive Node가 소유하는 사건 조건과 공통 실행 보정값.
@@ -134,7 +129,6 @@ namespace Pakuri.InGame
         public int RepeatCount = 1;
         public float RepeatIntervalSeconds;
         public bool RequireEventExecute;
-        public string TargetSkillId = string.Empty;
         public SkillCastEffect Effect;
         public SkillReactionCommand Command;
         public float DamageMultiplier = 1f;

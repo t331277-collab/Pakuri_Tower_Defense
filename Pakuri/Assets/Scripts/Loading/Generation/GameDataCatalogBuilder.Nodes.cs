@@ -103,7 +103,6 @@ namespace Pakuri.Data
 				|| string.Equals(handler, "ApplyDamage", StringComparison.OrdinalIgnoreCase))
 			{
 				BuildReactionDamage(reaction, node, state, targeting);
-				ResolveReactionEffect(reaction.Effect, activeSkills, passiveSkills);
 				return;
 			}
 			if (string.Equals(handler, "ApplyStatus", StringComparison.OrdinalIgnoreCase))
@@ -114,7 +113,6 @@ namespace Pakuri.Data
 					state,
 					targeting,
 					statusDefinitions);
-				ResolveReactionEffect(reaction.Effect, activeSkills, passiveSkills);
 				return;
 			}
 			if (string.Equals(handler, "ApplyShield", StringComparison.OrdinalIgnoreCase))
@@ -125,12 +123,11 @@ namespace Pakuri.Data
 					state,
 					targeting,
 					statusDefinitions);
-				ResolveReactionEffect(reaction.Effect, activeSkills, passiveSkills);
 				return;
 			}
 			if (string.Equals(handler, "ExecuteSkill", StringComparison.OrdinalIgnoreCase))
 			{
-				reaction.TargetSkillId = GetParam(node, "skill_id");
+				var targetSkillId = GetParam(node, "skill_id");
 				reaction.DamageMultiplier = Mathf.Max(
 					0f,
 					GetFloatParam(node, "damage_multiplier", 1f));
@@ -138,10 +135,17 @@ namespace Pakuri.Data
 				reaction.Effect = new SkillCastEffect
 				{
 					EffectId = reaction.ReactionId,
-					TargetSkillId = reaction.TargetSkillId,
 					DamageMultiplier = reaction.DamageMultiplier
 				};
-				ResolveReactionEffect(reaction.Effect, activeSkills, passiveSkills);
+				reaction.Effect.ResolvedDefinition = FindSkillDefinition(
+					activeSkills,
+					passiveSkills,
+					targetSkillId);
+				if (reaction.Effect.ResolvedDefinition == null)
+				{
+					throw new InvalidOperationException(
+						"Triggered skill is not registered: " + targetSkillId);
+				}
 				return;
 			}
 			if (string.Equals(handler, "RecastZone", StringComparison.OrdinalIgnoreCase))
@@ -149,26 +153,24 @@ namespace Pakuri.Data
 				reaction.DelaySeconds += Mathf.Max(
 					0f,
 					GetFloatParam(node, "delay_seconds", 0f));
-				reaction.Command = new SkillReactionCommand
+				var targetSkillId = GetParam(node, "source_skill_id");
+				reaction.Effect = new SkillCastEffect
 				{
-					Kind = SkillReactionCommandKind.RecastZone,
-					TargetId = GetParam(node, "source_skill_id"),
+					EffectId = reaction.ReactionId,
+					IsRecast = true,
 					DurationSeconds = Mathf.Max(0f, GetFloatParam(node, "duration_seconds", 0f)),
 					RadiusMultiplier = Mathf.Max(0f, GetFloatParam(node, "radius_multiplier", 1f)),
 					InheritSnapshot = GetBoolParam(node, "inherit_snapshot", true),
 					MaxGeneration = Mathf.Max(1, GetIntParam(node, "max_generation", 1)),
-					Targeting = targeting,
-					LockToEventTarget = reaction.LockToEventTarget,
-					MaxTargets = state.MaxTargets
 				};
-				reaction.Command.ResolvedDefinition = FindSkillDefinition(
+				reaction.Effect.ResolvedDefinition = FindSkillDefinition(
 					activeSkills,
 					passiveSkills,
-					reaction.Command.TargetId) ;
-				if (reaction.Command.ResolvedDefinition == null)
+					targetSkillId);
+				if (!(reaction.Effect.ResolvedDefinition is ZoneSkillDefinition))
 				{
 					throw new InvalidOperationException(
-						"Recast zone is not registered: " + reaction.Command.TargetId);
+						"Recast zone is not registered: " + targetSkillId);
 				}
 				return;
 			}
@@ -338,35 +340,6 @@ namespace Pakuri.Data
 			passiveSkills);
 
 		var effect = reaction.Effect;
-		if (effect == null && !string.IsNullOrWhiteSpace(reaction.TargetSkillId))
-		{
-			effect = new SkillCastEffect
-			{
-				EffectId = row.Id,
-				TargetSkillId = reaction.TargetSkillId,
-				DamageMultiplier = reaction.DamageMultiplier,
-				UseSourcePreparedAim = string.Equals(
-					reaction.TargetSkillId,
-					row.SourceSkillId,
-					StringComparison.OrdinalIgnoreCase),
-				Targeting = BuildTriggerTargeting(state)
-			};
-			ResolveReactionEffect(effect, activeSkills, passiveSkills);
-			if (state.HasStatusPayload)
-			{
-				effect.OnHitStatusOverride = new StatusApplicationSpec
-				{
-					Status = CreateReactionStatus(
-						state.StatusKind,
-						reaction,
-						state,
-						statusDefinitions),
-					Chance = state.StatusChance,
-					Stacks = state.StatusStacks,
-					RefreshDuration = state.RefreshDuration
-				};
-			}
-		}
 		if (effect == null
 			&& reaction.Command?.Kind
 				== SkillReactionCommandKind.ExtendStatusDuration)
@@ -374,9 +347,7 @@ namespace Pakuri.Data
 			effect = new SkillCastEffect
 			{
 				EffectId = row.Id,
-				Targeting = reaction.Command.Targeting,
-				ExtendStatusKind = reaction.Command.StatusKind,
-				DurationSeconds = reaction.Command.DurationSeconds
+				Command = reaction.Command
 			};
 		}
 		if (effect == null && HasHandler(nodes, "StatusModifier"))
@@ -389,11 +360,15 @@ namespace Pakuri.Data
 		if (effect != null)
 		{
 			effect.DelaySeconds = Mathf.Max(0f, row.TriggerDelaySeconds);
-			effect.UseSourcePreparedCenter = effect.HasDamage
+			effect.UseSourcePreparedAim = effect.ResolvedDefinition != null
+				&& string.Equals(
+					effect.ResolvedDefinition.SkillId,
+					row.SourceSkillId,
+					StringComparison.OrdinalIgnoreCase);
+			effect.UseSourcePreparedCenter = effect.ResolvedDefinition is SingleSkillDefinition
 				&& state.CenterMode
 					== SkillMultiEffectCenterMode.PrimarySkillCenter;
 		}
-		ResolveReactionEffect(effect, activeSkills, passiveSkills);
 
 		return effect != null
 			? SkillNode.FromOperation(
@@ -514,114 +489,27 @@ namespace Pakuri.Data
 		{
 			EffectId = row.Id,
 			DelaySeconds = Mathf.Max(0f, row.TriggerDelaySeconds),
-			Targeting = targeting,
-			Status = new StatusApplicationSpec
+			ResolvedDefinition = new BuffSkillDefinition
 			{
-				Status = status,
-				Chance = 1f,
-				Stacks = 1,
-				RefreshDuration = true
-			},
-			DurationSeconds = status.Duration,
-			SkillEffectPrefab = status.StatusEffectPrefab,
-			RuntimeVisual = status.RuntimeVisual
-		};
-	}
-
-	/// 생성 시점에 반응 payload를 실제 family 정의로 고정한다.
-	private static void ResolveReactionEffect(
-		SkillCastEffect effect,
-		SkillDefinition[] activeSkills,
-		PassiveSkillDefinition[] passiveSkills)
-	{
-		if (effect == null || effect.ResolvedDefinition != null)
-		{
-			return;
-		}
-
-		if (!string.IsNullOrWhiteSpace(effect.TargetSkillId))
-		{
-			effect.ResolvedDefinition = FindSkillDefinition(
-				activeSkills,
-				passiveSkills,
-				effect.TargetSkillId);
-			if (effect.ResolvedDefinition == null)
-			{
-				throw new InvalidOperationException(
-					"Triggered skill is not registered: " + effect.TargetSkillId);
-			}
-			return;
-		}
-
-		if (effect.HasDamage)
-		{
-			effect.ResolvedDefinition = new SingleSkillDefinition
-			{
-				SkillId = effect.EffectId,
-				SkillName = effect.EffectId,
-				RuntimeKind = SkillRuntimeKind.SingleAttack,
-				ImplementationState = SkillImplementationState.RuntimeImplemented,
-				Element = effect.Damage.Element,
-				SkillEffectPrefab = effect.SkillEffectPrefab,
-				RuntimeVisual = effect.RuntimeVisual,
-				Targeting = effect.Targeting,
-				Area = effect.Area,
-				UsesHitTargetCount = true,
-				HitTargetCount = effect.Targeting != null && effect.Targeting.CoverAll
-					? int.MaxValue
-					: 1,
-				Damage = effect.Damage,
-				OnHitStatus = effect.Status
-			};
-			return;
-		}
-
-		if (effect.HasShield)
-		{
-			effect.ResolvedDefinition = new BuffSkillDefinition
-			{
-				SkillId = effect.EffectId,
-				SkillName = effect.EffectId,
+				SkillId = row.Id,
+				SkillName = row.Id,
 				RuntimeKind = SkillRuntimeKind.Buff,
 				ImplementationState = SkillImplementationState.RuntimeImplemented,
-				Element = DamageAttribute.Physical,
-				SkillEffectPrefab = effect.SkillEffectPrefab,
-				RuntimeVisual = effect.RuntimeVisual,
-				Targeting = effect.Targeting,
-				Target = effect.Targeting != null
-					? effect.Targeting.TargetSide
-					: SkillTargetSide.Self,
-				UseConfiguredTargeting = true,
-				EffectKind = BuffEffectKind.Shield,
-				ShieldBase = effect.ShieldBase,
-				ShieldCoefficient = effect.ShieldCoefficient,
-				ShieldStatSource = effect.ShieldStatSource,
-				ShieldDuration = effect.DurationSeconds,
-				ShieldStatus = effect.ShieldStatus
-			};
-			return;
-		}
-
-		if (effect.HasStatus)
-		{
-			effect.ResolvedDefinition = new BuffSkillDefinition
-			{
-				SkillId = effect.EffectId,
-				SkillName = effect.EffectId,
-				RuntimeKind = SkillRuntimeKind.Buff,
-				ImplementationState = SkillImplementationState.RuntimeImplemented,
-				Element = DamageAttribute.Physical,
-				SkillEffectPrefab = effect.SkillEffectPrefab,
-				RuntimeVisual = effect.RuntimeVisual,
-				Targeting = effect.Targeting,
-				Target = effect.Targeting != null
-					? effect.Targeting.TargetSide
-					: SkillTargetSide.Self,
+				Targeting = targeting,
+				Target = targeting.TargetSide,
 				UseConfiguredTargeting = true,
 				EffectKind = BuffEffectKind.Status,
-				AttachedStatus = effect.Status
-			};
-		}
+				AttachedStatus = new StatusApplicationSpec
+				{
+					Status = status,
+					Chance = 1f,
+					Stacks = 1,
+					RefreshDuration = true
+				},
+				SkillEffectPrefab = status.StatusEffectPrefab,
+				RuntimeVisual = status.RuntimeVisual
+			}
+		};
 	}
 
 	private static bool HasHandler(
@@ -679,12 +567,7 @@ namespace Pakuri.Data
 			CoverAll = shape != SkillTargetShape.Single || state.CoverAll
 		};
 		targeting.CoverAll = area.CoverAll;
-		reaction.Effect = new SkillCastEffect
-		{
-			EffectId = reaction.ReactionId,
-			Targeting = targeting,
-			Area = area,
-			Damage = new SkillDamageSpec
+		var damage = new SkillDamageSpec
 			{
 				SkillId = reaction.SourceSkillId,
 				Element = GetEnumParam(
@@ -697,9 +580,28 @@ namespace Pakuri.Data
 				SpellPowerCoefficient =
 					GetFloatParam(node, "spell_power_coefficient", 0f) * multiplier,
 				CriticalAllowed = false
-			},
-			SkillEffectPrefab = state.Prefab,
-			RuntimeVisual = state.RuntimeVisual ?? new RuntimeSkillVisualSpec()
+			};
+		reaction.Effect = new SkillCastEffect
+		{
+			EffectId = reaction.ReactionId,
+			ResolvedDefinition = new SingleSkillDefinition
+			{
+				SkillId = reaction.ReactionId,
+				SkillName = reaction.ReactionId,
+				RuntimeKind = SkillRuntimeKind.SingleAttack,
+				ImplementationState = SkillImplementationState.RuntimeImplemented,
+				Element = damage.Element,
+				SkillEffectPrefab = state.Prefab,
+				RuntimeVisual = state.RuntimeVisual ?? new RuntimeSkillVisualSpec(),
+				Targeting = targeting,
+				Area = area,
+				UsesHitTargetCount = true,
+				HitAllTargets = targeting.CoverAll && maxTargets <= 0,
+				HitTargetCount = maxTargets > 0
+					? maxTargets
+					: targeting.CoverAll ? int.MaxValue : 1,
+				Damage = damage
+			}
 		};
 		reaction.DamageValueSource = GetEnumParam(
 			node,
@@ -730,16 +632,27 @@ namespace Pakuri.Data
 		reaction.Effect = new SkillCastEffect
 		{
 			EffectId = reaction.ReactionId,
-			Targeting = targeting,
-			Status = new StatusApplicationSpec
+			ResolvedDefinition = new BuffSkillDefinition
 			{
-				Status = status,
-				Chance = state.HasStatusPayload ? state.StatusChance : 1f,
-				Stacks = state.HasStatusPayload ? state.StatusStacks : 1,
-				RefreshDuration = !state.HasStatusPayload || state.RefreshDuration
-			},
-			SkillEffectPrefab = state.Prefab,
-			RuntimeVisual = state.RuntimeVisual ?? new RuntimeSkillVisualSpec()
+				SkillId = reaction.ReactionId,
+				SkillName = reaction.ReactionId,
+				RuntimeKind = SkillRuntimeKind.Buff,
+				ImplementationState = SkillImplementationState.RuntimeImplemented,
+				Element = DamageAttribute.Physical,
+				SkillEffectPrefab = state.Prefab,
+				RuntimeVisual = state.RuntimeVisual ?? new RuntimeSkillVisualSpec(),
+				Targeting = targeting,
+				Target = targeting.TargetSide,
+				UseConfiguredTargeting = true,
+				EffectKind = BuffEffectKind.Status,
+				AttachedStatus = new StatusApplicationSpec
+				{
+					Status = status,
+					Chance = state.HasStatusPayload ? state.StatusChance : 1f,
+					Stacks = state.HasStatusPayload ? state.StatusStacks : 1,
+					RefreshDuration = !state.HasStatusPayload || state.RefreshDuration
+				}
+			}
 		};
 		reaction.PublishSkillLifecycleEvents = false;
 	}
@@ -760,14 +673,25 @@ namespace Pakuri.Data
 		reaction.Effect = new SkillCastEffect
 		{
 			EffectId = reaction.ReactionId,
-			Targeting = targeting,
-			ShieldBase = GetFloatParam(node, "base_damage", 0f),
-			ShieldCoefficient = GetFloatParam(node, "spell_power_coefficient", 0f),
-			ShieldStatSource = StatSource.Intelligence,
-			DurationSeconds = status.Duration,
-			ShieldStatus = status,
-			SkillEffectPrefab = state.Prefab,
-			RuntimeVisual = state.RuntimeVisual ?? new RuntimeSkillVisualSpec()
+			ResolvedDefinition = new BuffSkillDefinition
+			{
+				SkillId = reaction.ReactionId,
+				SkillName = reaction.ReactionId,
+				RuntimeKind = SkillRuntimeKind.Buff,
+				ImplementationState = SkillImplementationState.RuntimeImplemented,
+				Element = DamageAttribute.Physical,
+				SkillEffectPrefab = state.Prefab,
+				RuntimeVisual = state.RuntimeVisual ?? new RuntimeSkillVisualSpec(),
+				Targeting = targeting,
+				Target = targeting.TargetSide,
+				UseConfiguredTargeting = true,
+				EffectKind = BuffEffectKind.Shield,
+				ShieldBase = GetFloatParam(node, "base_damage", 0f),
+				ShieldCoefficient = GetFloatParam(node, "spell_power_coefficient", 0f),
+				ShieldStatSource = StatSource.Intelligence,
+				ShieldDuration = status.Duration,
+				ShieldStatus = status
+			}
 		};
 		reaction.PublishSkillLifecycleEvents = false;
 	}

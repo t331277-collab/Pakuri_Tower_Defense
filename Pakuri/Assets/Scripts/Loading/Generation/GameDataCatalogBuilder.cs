@@ -536,26 +536,33 @@ namespace Pakuri.Data
             var followUp = new SkillCastEffect
             {
                 EffectId = source.Skill.Id,
-                SkillEffectPrefab = sourceSkill.SkillEffectPrefab,
-                RuntimeVisual = sourceSkill.RuntimeVisual,
-                Targeting =
+                ResolvedDefinition = new SingleSkillDefinition
                 {
-                    TargetSide = SkillTargetSide.Enemy,
-                    Selection = source.ExcludePrimaryTarget
-                        ? SkillTargetSelection.NearestOtherFromEventTarget
-                        : SkillTargetSelection.Nearest,
-                    Shape = SkillTargetShape.Single,
-                    Radius = searchRadius
-                },
-                Area =
-                {
-                    Radius = 0f,
-                    CoverAll = false
-                },
-                Damage = sourceSkill.Damage
+                    SkillId = source.Skill.Id,
+                    SkillName = source.Skill.Id,
+                    RuntimeKind = SkillRuntimeKind.SingleAttack,
+                    ImplementationState = SkillImplementationState.RuntimeImplemented,
+                    SkillEffectPrefab = sourceSkill.SkillEffectPrefab,
+                    RuntimeVisual = sourceSkill.RuntimeVisual,
+                    Targeting = new SkillTargetingSpec
+                    {
+                        TargetSide = SkillTargetSide.Enemy,
+                        Selection = source.ExcludePrimaryTarget
+                            ? SkillTargetSelection.NearestOtherFromEventTarget
+                            : SkillTargetSelection.Nearest,
+                        Shape = SkillTargetShape.Single,
+                        Radius = searchRadius
+                    },
+                    Area = new AreaBlueprintSpec
+                    {
+                        Radius = 0f,
+                        CoverAll = false
+                    },
+                    UsesHitTargetCount = true,
+                    HitTargetCount = 1,
+                    Damage = sourceSkill.Damage
+                }
             };
-
-            ResolveReactionEffect(followUp, activeSkills, null);
 
             return new SkillReaction
             {
@@ -900,7 +907,6 @@ namespace Pakuri.Data
                     statusDefinitions,
                     activeSkills);
                 if (definitions[i].Effect == null
-                    && string.IsNullOrWhiteSpace(definitions[i].TargetSkillId)
                     && definitions[i].Command == null
                     && HasHandler(normalizedNodes, "StatusModifier"))
                 {
@@ -909,10 +915,6 @@ namespace Pakuri.Data
                         normalizedNodes,
                         statusDefinitions);
                     definitions[i].Effect.DelaySeconds = 0f;
-                    ResolveReactionEffect(
-                        definitions[i].Effect,
-                        activeSkills,
-                        null);
                 }
             }
 

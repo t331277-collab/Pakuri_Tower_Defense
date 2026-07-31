@@ -14,30 +14,17 @@ namespace Pakuri.InGame
     {
         public string EffectId;
         public float DelaySeconds;
-        public string TargetSkillId;
         public SkillDefinition ResolvedDefinition;
         public float DamageMultiplier = 1f;
         public bool UseSourcePreparedAim;
         public bool UseSourcePreparedCenter;
         public StatusApplicationSpec OnHitStatusOverride;
-        public SkillTargetingSpec Targeting = new SkillTargetingSpec();
-        public AreaBlueprintSpec Area = new AreaBlueprintSpec();
-        public SkillDamageSpec Damage;
-        public StatusApplicationSpec Status;
-        public float ShieldBase;
-        public float ShieldCoefficient;
-        public StatSource ShieldStatSource = StatSource.Intelligence;
-        public StatusRuntimeData ShieldStatus;
-        public StatusEffectKind ExtendStatusKind;
+        public SkillReactionCommand Command;
+        public bool IsRecast;
+        public float RadiusMultiplier = 1f;
         public float DurationSeconds;
-        public GameObject SkillEffectPrefab;
-        public RuntimeSkillVisualSpec RuntimeVisual = new RuntimeSkillVisualSpec();
-
-        public bool HasDamage => Damage != null;
-        public bool HasStatus => Status != null && Status.Status != null;
-        public bool HasShield => ShieldStatus != null;
-        public bool ExtendsStatus => ExtendStatusKind != StatusEffectKind.None
-            && DurationSeconds > 0f;
+        public bool InheritSnapshot = true;
+        public int MaxGeneration = 1;
     }
 
     public readonly struct SkillCastEffectOp

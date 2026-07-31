@@ -230,18 +230,18 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(chainTrigger.DelaySeconds, Is.EqualTo(0.5f).Within(0.0001f));
         Assert.That(chainTrigger.DamageMultiplier, Is.EqualTo(0.5f).Within(0.0001f));
         Assert.That(chainTrigger.PublishSkillLifecycleEvents, Is.False);
-        Assert.That(chainTrigger.TargetSkillId, Is.Empty);
         Assert.That(chainTrigger.Effect, Is.Not.Null);
         Assert.That(
             chainTrigger.Effect.ResolvedDefinition,
             Is.TypeOf<SingleSkillDefinition>());
-        Assert.That(chainTrigger.Effect.Damage, Is.SameAs(
+        var chainOutcome = (SingleSkillDefinition)chainTrigger.Effect.ResolvedDefinition;
+        Assert.That(chainOutcome.Damage, Is.SameAs(
             ((SingleSkillDefinition)chainSkill).Damage));
         Assert.That(
-            chainTrigger.Effect.Targeting.Selection,
+            chainOutcome.Targeting.Selection,
             Is.EqualTo(SkillTargetSelection.NearestOtherFromEventTarget));
         Assert.That(
-            chainTrigger.Effect.Targeting.Radius,
+            chainOutcome.Targeting.Radius,
             Is.EqualTo(7f).Within(0.0001f));
         Assert.That(
             Array.Exists(
@@ -425,12 +425,8 @@ public sealed class SkillCatalogRuntimeTests
 
         Assert.That(triggers, Has.Count.EqualTo(82));
         Assert.That(
-            triggers.FindAll(trigger =>
-                !string.IsNullOrWhiteSpace(trigger.TargetSkillId)),
-            Has.Count.EqualTo(4));
-        Assert.That(
             triggers.FindAll(trigger => trigger.Effect != null),
-            Has.Count.EqualTo(61));
+            Has.Count.EqualTo(62));
         Assert.That(
             triggers.FindAll(trigger =>
                 trigger.Effect != null
@@ -438,11 +434,7 @@ public sealed class SkillCatalogRuntimeTests
             Is.Empty);
         Assert.That(
             triggers.FindAll(trigger => trigger.Command != null),
-            Has.Count.EqualTo(21));
-        Assert.That(
-            triggers.FindAll(trigger =>
-                trigger.Command?.Kind == SkillReactionCommandKind.RecastZone),
-            Has.Count.EqualTo(1));
+            Has.Count.EqualTo(20));
         Assert.That(
             triggers.FindAll(trigger =>
                 trigger.Command?.Kind == SkillReactionCommandKind.RefundCooldown),
@@ -457,16 +449,19 @@ public sealed class SkillCatalogRuntimeTests
             Is.Empty);
         var zoneRecast = triggers.Find(
             trigger => trigger.ReactionId == "eve-e-master-1");
-        Assert.That(zoneRecast?.Command, Is.Not.Null);
+        Assert.That(zoneRecast?.Effect, Is.Not.Null);
+        Assert.That(zoneRecast.Effect.IsRecast, Is.True);
+        Assert.That(
+            zoneRecast.Effect.ResolvedDefinition,
+            Is.TypeOf<ZoneSkillDefinition>());
         Assert.That(zoneRecast.DelaySeconds, Is.EqualTo(0.5f));
-        Assert.That(zoneRecast.Command.RadiusMultiplier, Is.EqualTo(0.6f));
-        Assert.That(zoneRecast.Command.DurationSeconds, Is.EqualTo(3f));
-        Assert.That(zoneRecast.Command.MaxGeneration, Is.EqualTo(1));
-        Assert.That(zoneRecast.Command.InheritSnapshot, Is.True);
+        Assert.That(zoneRecast.Effect.RadiusMultiplier, Is.EqualTo(0.6f));
+        Assert.That(zoneRecast.Effect.DurationSeconds, Is.EqualTo(3f));
+        Assert.That(zoneRecast.Effect.MaxGeneration, Is.EqualTo(1));
+        Assert.That(zoneRecast.Effect.InheritSnapshot, Is.True);
         Assert.That(
             triggers.FindAll(trigger =>
-                string.IsNullOrWhiteSpace(trigger.TargetSkillId)
-                && trigger.Effect == null
+                trigger.Effect == null
                 && trigger.Command == null),
             Is.Empty);
         Assert.That(
@@ -474,34 +469,26 @@ public sealed class SkillCatalogRuntimeTests
                 trigger.DamageValueSource != SkillTriggerDamageValueSource.Fixed),
             Has.Count.EqualTo(7));
         Assert.That(
-            triggers.FindAll(trigger =>
-                !string.IsNullOrWhiteSpace(trigger.TargetSkillId)),
-            Has.Count.EqualTo(4));
-        Assert.That(
             triggers.FindAll(trigger => trigger.PublishSkillLifecycleEvents),
             Has.Count.EqualTo(4));
         Assert.That(
             triggers.FindAll(trigger =>
-                !string.IsNullOrWhiteSpace(trigger.TargetSkillId)
-                && trigger.PublishSkillLifecycleEvents),
-            Has.Count.EqualTo(4));
-        Assert.That(
-            triggers.FindAll(trigger =>
-                !string.IsNullOrWhiteSpace(trigger.TargetSkillId)
-                && trigger.Effect?.ResolvedDefinition == null),
+                trigger.Effect?.ResolvedDefinition == null),
             Is.Empty);
         Assert.That(
             triggers.FindAll(trigger =>
-                trigger.Effect?.HasDamage == true),
-            Has.Count.EqualTo(24));
+                trigger.Effect?.ResolvedDefinition is SingleSkillDefinition),
+            Has.Count.EqualTo(28));
         Assert.That(
             triggers.FindAll(trigger =>
-                trigger.Effect?.HasStatus == true),
+                trigger.Effect?.ResolvedDefinition is BuffSkillDefinition
+                && ((BuffSkillDefinition)trigger.Effect.ResolvedDefinition).EffectKind
+                    == BuffEffectKind.Status),
             Has.Count.EqualTo(33));
         Assert.That(
             triggers.FindAll(trigger =>
-                trigger.Effect?.HasShield == true),
-            Is.Empty);
+                trigger.Effect?.ResolvedDefinition is ZoneSkillDefinition),
+            Has.Count.EqualTo(1));
     }
 
     [Test]
@@ -522,12 +509,10 @@ public sealed class SkillCatalogRuntimeTests
             || (trigger.Event == SkillTriggerEvent.OnSkillCast
                 && (trigger.EventSkillIds == null || trigger.EventSkillIds.Length == 0)));
         var workingTriggers = triggers.FindAll(trigger =>
-            !string.IsNullOrWhiteSpace(trigger.TargetSkillId)
-            || trigger.Effect != null
+            trigger.Effect != null
             || trigger.Command != null);
         var incompleteTriggers = triggers.FindAll(trigger =>
-            string.IsNullOrWhiteSpace(trigger.TargetSkillId)
-            && trigger.Effect == null
+            trigger.Effect == null
             && trigger.Command == null);
         var castEffects = new List<SkillCastEffect>();
         foreach (var monster in GameDataLoader.CurrentCatalog.Monsters)
@@ -558,19 +543,22 @@ public sealed class SkillCatalogRuntimeTests
         var arielShieldDamage = castEffects.Find(
             effect => effect.EffectId == "ariel-b-trait-5");
         Assert.That(arielShieldDamage, Is.Not.Null);
-        Assert.That(arielShieldDamage.Status?.Status, Is.Not.Null);
+        var arielShieldDefinition =
+            arielShieldDamage.ResolvedDefinition as BuffSkillDefinition;
+        Assert.That(arielShieldDefinition, Is.Not.Null);
+        Assert.That(arielShieldDefinition.AttachedStatus?.Status, Is.Not.Null);
         Assert.That(
-            arielShieldDamage.Status.Status.Modifiers.DamageBonusRate,
+            arielShieldDefinition.AttachedStatus.Status.Modifiers.DamageBonusRate,
             Is.EqualTo(0.12f));
-        Assert.That(arielShieldDamage.Status.Status.Duration, Is.EqualTo(5f));
+        Assert.That(arielShieldDefinition.AttachedStatus.Status.Duration, Is.EqualTo(5f));
         Assert.That(
-            arielShieldDamage.Targeting.TargetSide,
+            arielShieldDefinition.Targeting.TargetSide,
             Is.EqualTo(SkillTargetSide.AllAllies));
         Assert.That(
-            arielShieldDamage.Status.Status.ConditionalTargetStatusGroups,
+            arielShieldDefinition.AttachedStatus.Status.ConditionalTargetStatusGroups,
             Has.Length.EqualTo(1));
         Assert.That(
-            arielShieldDamage.Status.Status
+            arielShieldDefinition.AttachedStatus.Status
                 .ConditionalTargetStatusGroups[0].Requirements[0].Kind,
             Is.EqualTo(StatusEffectKind.Shield));
         Assert.That(
@@ -589,12 +577,14 @@ public sealed class SkillCatalogRuntimeTests
             workingTriggers.Exists(trigger =>
                 trigger.ReactionId
                     == "ariel-a-master2-holy-exposure-on-hit"
-                && trigger.Effect?.HasStatus == true),
+                && trigger.Effect?.ResolvedDefinition is BuffSkillDefinition),
             Is.True);
         var vegaSecondSlash = castEffects.Find(
             effect => effect.EffectId == "vega-b-master1-second-slash");
         Assert.That(vegaSecondSlash, Is.Not.Null);
-        Assert.That(vegaSecondSlash.TargetSkillId, Is.EqualTo("vega-b"));
+        Assert.That(
+            vegaSecondSlash.ResolvedDefinition?.SkillId,
+            Is.EqualTo("vega-b"));
         Assert.That(vegaSecondSlash.DamageMultiplier, Is.EqualTo(0.45f));
         Assert.That(vegaSecondSlash.DelaySeconds, Is.EqualTo(0.4f));
         Assert.That(vegaSecondSlash.UseSourcePreparedAim, Is.True);
@@ -643,7 +633,6 @@ public sealed class SkillCatalogRuntimeTests
                 {
                     passiveReactionCount++;
                     if (trigger.Effect != null
-                        || !string.IsNullOrWhiteSpace(trigger.TargetSkillId)
                         || trigger.Command != null)
                     {
                         passiveReactionOutcomeCount++;
@@ -651,10 +640,6 @@ public sealed class SkillCatalogRuntimeTests
                     if (trigger.Effect != null)
                     {
                         passiveEffectCount++;
-                    }
-                    else if (!string.IsNullOrWhiteSpace(trigger.TargetSkillId))
-                    {
-                        passiveSkillReuseCount++;
                     }
                     else if (trigger.Command != null)
                     {

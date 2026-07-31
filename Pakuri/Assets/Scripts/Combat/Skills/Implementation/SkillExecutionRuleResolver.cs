@@ -851,7 +851,9 @@ namespace Pakuri.InGame
             for (var i = 0; i < snapshot.CastEffects.Count; i++)
             {
                 var effect = snapshot.CastEffects[i];
-                if (effect != null && effect.Targeting?.TargetSide == SkillTargetSide.Enemy)
+                if (effect != null
+                    && (effect.ResolvedDefinition?.Targeting?.TargetSide == SkillTargetSide.Enemy
+                        || effect.Command?.Targeting?.TargetSide == SkillTargetSide.Enemy))
                 {
                     effects.Add(effect);
                 }

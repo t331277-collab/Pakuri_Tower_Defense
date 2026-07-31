@@ -340,6 +340,33 @@ namespace Pakuri.InGame
             return null;
         }
 
+        /// 정의 참조가 가리키는 학습 런타임을 찾는다.
+        public SkillExecutionData FindByDefinition(SkillDefinition definition)
+        {
+            if (definition == null)
+            {
+                return null;
+            }
+
+            for (var i = 0; i < activeSkills.Count; i++)
+            {
+                if (activeSkills[i]?.Data == definition)
+                {
+                    return activeSkills[i];
+                }
+            }
+
+            for (var i = 0; i < passiveSkills.Count; i++)
+            {
+                if (passiveSkills[i]?.Data == definition)
+                {
+                    return passiveSkills[i];
+                }
+            }
+
+            return null;
+        }
+
         /// 보유 스킬 전체에서 식별자가 같은 선택 효과를 찾는다.
         public SkillChoice FindChoice(string choiceId)
         {
