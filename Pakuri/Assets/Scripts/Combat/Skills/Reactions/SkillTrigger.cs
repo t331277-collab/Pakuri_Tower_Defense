@@ -374,8 +374,6 @@ internal static class SkillTrigger
 		{
 			return;
 		}
-		string id = ((source.Identity != null) ? source.Identity.DefinitionId : string.Empty);
-		MonsterDefinition monsterDefinition = GameDataLoader.CurrentCatalog.GetMonster(id);
 		SkillReaction[] array = SourceOwnedTriggers(source, sourceSkillId, roster);
 		if (array == null || array.Length == 0)
 		{

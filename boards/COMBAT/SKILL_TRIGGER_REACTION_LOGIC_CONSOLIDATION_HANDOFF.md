@@ -38,7 +38,7 @@
 
 ## Status
 
-사용자가 `65 working / 17 incomplete / 76 non-Trigger` 분류, 17개 Trigger 효과 복구, 64개 일반 Choice/base/passive 효과 복구를 승인했다. Code Builder Phase 1~8 구현 완료. Code Reviewer 1~3차 수정 요청을 Code Builder가 반영했으며 재검토 대기.
+사용자가 `65 working / 17 incomplete / 76 non-Trigger` 분류, 17개 Trigger 효과 복구, 64개 일반 Choice/base/passive 효과 복구를 승인했다. Code Builder Phase 1~8 구현 완료. Code Reviewer 1~4차 수정 요청을 Code Builder가 반영했으며 재검토 대기.
 
 ## Core decision
 
@@ -796,6 +796,12 @@ SkillTrigger 공통 gate
 - Vega B 특성 1의 1.25배와 두 번째 참격 0.45배가 `0.5625`가 되는 회귀 테스트를 추가했다.
 - solution build 오류 0, Unity EditMode 16/16 통과. Unity console에는 컴파일 오류가 없고 Test Runner가 결과 파일을 저장하는 Exception 로그 1건이 남는다.
 
+### Code Reviewer correction 4
+
+- `SkillTrigger.ExecuteSourceOwnedTriggers`에서 사용되지 않는 source Definition ID와 catalog 조회를 제거했다.
+- Trigger 사건·조건·실행 경로는 변경하지 않았고 불필요한 Data catalog 의존성만 삭제했다.
+- solution build 오류 0, Unity EditMode 16/16 통과.
+
 ## Risk boundaries
 
 - `SkillRuntimeKind` 기반 분배가 모든 기존 concrete family 매핑과 정확히 같아야 한다.
@@ -894,6 +900,7 @@ SkillTrigger 공통 gate
 - Reviewer correction 1 verification: `ariel-a-master-2` 일반 payload 0/실제 OnOutgoingDamage reaction 1; Vega B follow-up target `vega-b`/배율 0.45/지연 0.4/침묵/원본 방향 재사용; Ariel C 지연 파동 원본 center 재사용; 일반 payload 73; solution build error 0; Unity Console error 0; Unity EditMode 15/15.
 - Reviewer correction 2 verification: Vega B follow-up calls common reaction execution with `executeCastEffects=false`; other call sites retain the default `true`; solution build error 0; Unity Console error 0; Unity EditMode 15/15.
 - Reviewer correction 3 verification: reaction paths call `ScaleDamageMultiplier`, normal skill path still calls additive `ApplyDynamicDamageMultiplier`; `1.25 × 0.45 = 0.5625` regression test; solution build error 0; Unity EditMode 16/16.
+- Reviewer correction 4 verification: `ExecuteSourceOwnedTriggers` has no unused catalog lookup; solution build error 0; Unity EditMode 16/16.
 
 ## History
 
@@ -917,3 +924,4 @@ SkillTrigger 공통 gate
 - 2026-07-31: Code Builder applied Reviewer correction 1 through existing Node, snapshot, SkillExecution, and passive refresh paths.
 - 2026-07-31: Code Reviewer found the delayed self-follow-up recursion path; Code Builder disabled nested cast effects only for that reuse call.
 - 2026-07-31: Code Reviewer found reaction scaling was additive against existing Choice damage modifiers; Code Builder separated reaction multiplication from normal additive modifier accumulation and passed the 16-test EditMode suite.
+- 2026-07-31: Code Reviewer found an unused source catalog lookup in `SkillTrigger`; Code Builder removed it without changing event or outcome behavior.
