@@ -979,3 +979,55 @@ User approved effect restoration and Code Builder implementation. Phases 1-8 com
 - 2026-07-31: Code Reviewer found reaction scaling incorrectly added to existing Choice damage modifiers; Code Builder added the shared reaction-only multiplication path and regression test.
 - 2026-07-31: Code Reviewer found an unused source catalog lookup in `SkillTrigger`; Code Builder removed the dead dependency.
 - 2026-07-31: Code Reviewer completed final PASS after correction 4; only user-owned Play Mode verification remains.
+
+## Task: 2026-07-31 Skill Folder Three-Layer Reorganization
+
+### Task title
+
+Combat Skills를 Definitions, Implementation, Activation 세 책임 축으로 재배치하고 UnitSkills를 GameFlow로 이동한다.
+
+### Goals
+
+- `Definitions`는 authored skill/Choice/Node 계약을 유지한다.
+- `Implementation`은 실행 문맥, snapshot, 규칙, 대상, 상태, Trigger, 단일 스킬 판정을 소유한다.
+- `Activation`은 계열별 Executor와 Actor만 소유한다.
+- `UnitSkills`는 전투 실행 폴더에서 제거하고 `GameFlow` 소유 상태로 이동한다.
+
+### Constraints
+
+- C# 본문, namespace, public API, serialized field, Unity asset GUID, scene/prefab reference를 변경하지 않는다.
+- `Definitions` 내부 family/Node 구조와 authored CSV/data를 변경하지 않는다.
+- 파일 이동은 `.cs`와 `.meta`를 함께 수행한다.
+- Unity Play Mode gameplay 검증은 사용자 소유다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+파일 이동 및 Unity refresh/솔루션 build/EditMode 검증 완료. Code Reviewer 검토 대기.
+
+### Next Actions
+
+- Code Reviewer에게 구조 diff, GUID, API 보존을 검증 요청.
+- 사용자 Play Mode gameplay 검증은 기존과 같이 사용자 소유.
+
+### Evidence
+
+- 이동 전 `Combat/Skills`는 31개 C# 파일, 11,228줄이었다.
+- 이동 후 `Definitions` 12개, `Implementation` 8개, `Activation` 10개이며 `UnitSkills.cs`는 `GameFlow` 루트에 있다.
+- 별도 `.asmdef`는 `Pakuri/Assets/Scripts` 아래에 존재하지 않는다.
+- `UnitSkills` 소비자는 `RunSession`과 `UnitCombatState`이며, 클래스는 학습 active/passive/Choice ID만 보관한다.
+- `Activation`은 Buff/Line/Projectile/Single/Zone의 Executor와 Actor만 포함한다.
+- `Implementation`은 `SingleSkillRules`를 포함해 실행 규칙과 공통 runtime 경로를 포함한다.
+- Unity가 `Assembly-CSharp.csproj`를 새 경로로 재생성했으며 active generated project의 구 `Delivery/Execution/Reactions/Runtime` 참조는 0건, `GameFlow/UnitSkills.cs` 참조는 1건이다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal`은 오류 0개로 완료했으며 기존 System.Net.Http/System.IO.Compression 충돌 경고 2개만 남았다.
+- Unity full EditMode test job `553a856b5d664901bc4d355be30a7d5d`는 16/16 Passed; TestResults.xml도 `total=16`, `passed=16`, `failed=0`이다.
+- staged diff는 모든 `.cs`/`.meta` 이동을 100% rename으로 인식했으며 `git diff --cached --check` whitespace 오류가 없다.
+
+### History
+
+- 2026-07-31: User approved Code Builder implementation of the three-layer folder organization and `UnitSkills` GameFlow relocation.
+- 2026-07-31: Code Builder moved source files and `.meta` files without changing C# content or namespace.
+- 2026-07-31: Unity project regeneration, solution build, full EditMode test, stale-path scan, and staged rename/GUID verification completed.
