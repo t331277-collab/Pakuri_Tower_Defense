@@ -608,7 +608,7 @@ Status: complete. `RebuildLearnedSkillState` was removed from `SkillExecution` a
 
 ### Phase 10 — common recast baseline and contract
 
-Status: pending. Commit this Phase before changing runtime behavior.
+Status: complete. Baseline/inventory commit: `593f70c`. Current build baseline: Core/Editor compile passed with 0 errors; Unity EditMode execution remains blocked by another Unity instance using the project.
 
 1. Fix the current reaction outcome baseline from Generation and Editor tests: raw effect, learned-skill reference, typed command, and missing outcome counts.
 2. Record every caller of `TryExecuteReaction`, `TryExecuteReactionEffect`, `ExecuteCastEffect`, `ExecuteTriggeredReaction`, `ApplyResolvedHits`, and `ApplyHitEnhancements`.
