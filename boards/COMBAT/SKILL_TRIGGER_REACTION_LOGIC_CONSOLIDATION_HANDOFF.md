@@ -822,6 +822,7 @@ SkillTrigger 공통 gate
 - 검토 범위: Phase 1~8 통합과 Reviewer correction 1~4의 변경 파일, 호출자, null guard, 재귀 제한, 기존 Choice 배율 합성, 정적 참조 제거.
 - 근거: `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal` 오류 0; Unity EditMode `TestResults.xml` `total=16 passed=16 failed=0`; C# obsolete Trigger symbol 검색 0; 최신 diff `git diff --check` 통과.
 - 남은 검증: Unity Play Mode 실제 전투 동작은 사용자 확인.
+- 원격 반영: `git push origin main`은 인증 입력을 받지 못해 실패했으며 로컬 커밋은 유지된다.
 
 ## Acceptance criteria
 
