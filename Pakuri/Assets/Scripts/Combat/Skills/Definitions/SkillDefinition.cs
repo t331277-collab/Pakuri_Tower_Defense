@@ -1,6 +1,6 @@
 /*
- * 역할: 모든 스킬 Definition의 공용 계약.
- * 책임: 스킬 식별·타이밍·대상·피해·상태 적용 공통값을 정의한다.
+ * 역할: 모든 스킬이 공유하는 설계 기준을 정의한다.
+ * 책임: 식별 정보와 실행 종류, 타이밍, 대상, 표현, 학습 선택의 공통값을 제공한다.
  */
 
 using System;
@@ -10,6 +10,7 @@ using UnityEngine;
 
 namespace Pakuri.Data
 {
+    /// 활성 스킬이 배치될 학습 위치를 구분한다.
     public enum SkillSlot
     {
         A,
@@ -24,6 +25,7 @@ namespace Pakuri.Data
         J
     }
 
+    /// 스킬 데이터와 실행 구현의 준비 상태를 구분한다.
     public enum SkillImplementationState
     {
         NotImplemented,
@@ -31,6 +33,7 @@ namespace Pakuri.Data
         RuntimeImplemented
     }
 
+    /// 스킬이 사용할 물리적 실행 방식을 구분한다.
     public enum SkillRuntimeKind
     {
         MagazineProjectile,
@@ -50,12 +53,14 @@ namespace Pakuri.Data
 
 namespace Pakuri.InGame
 {
+    /// 계수 계산에 사용할 시전자 능력치를 구분한다.
     public enum StatSource
     {
         Attack,
         Intelligence
     }
 
+    /// 스킬이 영향을 줄 진영 관계를 구분한다.
     public enum SkillTargetSide
     {
         Enemy,
@@ -64,6 +69,7 @@ namespace Pakuri.InGame
         AllAllies
     }
 
+    /// 후보 중 우선 대상을 고르는 방식을 구분한다.
     public enum SkillTargetSelection
     {
         Nearest,
@@ -77,6 +83,7 @@ namespace Pakuri.InGame
         NearestOtherFromEventTarget
     }
 
+    /// 스킬이 대상을 포함할 공간 형태를 구분한다.
     public enum SkillTargetShape
     {
         Single,
@@ -85,6 +92,7 @@ namespace Pakuri.InGame
         Battlefield
     }
 
+    /// 시전과 지속 효과가 진행될 시간 기준을 설계한다.
     [Serializable]
     public class SkillTimingSpec
     {
@@ -93,6 +101,7 @@ namespace Pakuri.InGame
         public float TickInterval;
     }
 
+    /// 대상 진영과 우선순위, 적용 범위를 설계한다.
     [Serializable]
     public class SkillTargetingSpec
     {
@@ -110,6 +119,7 @@ namespace Pakuri.InGame
         public bool CoverAll;
     }
 
+    /// 기본 피해와 시전자 능력치 계수를 설계한다.
     [Serializable]
     public class SkillDamageSpec
     {
@@ -121,6 +131,7 @@ namespace Pakuri.InGame
         public bool CriticalAllowed = true;
     }
 
+    /// 상태 효과가 적용될 확률과 중첩, 지속 규칙을 설계한다.
     [Serializable]
     public class StatusApplicationSpec
     {
@@ -138,6 +149,7 @@ namespace Pakuri.InGame
         public StatusApplicationSpec ThresholdStatus;
     }
 
+    /// 공간 효과의 크기와 지속 주기를 설계한다.
     [Serializable]
     public class AreaBlueprintSpec
     {
@@ -147,6 +159,7 @@ namespace Pakuri.InGame
         public bool CoverAll;
     }
 
+    /// 모든 스킬이 공유하는 식별과 실행 기준을 설계한다.
     public class SkillDefinition
     {
         [Header("Identity")]

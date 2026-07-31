@@ -1,6 +1,6 @@
 /*
- * 역할: 지속 Zone 런타임 동작.
- * 책임: Zone 배치·recast·주기·Collider 판정·피해·상태·비주얼 수명과 완료를 소유한다.
+ * 역할: 일정 공간에 남는 공격의 실제 판정을 진행한다.
+ * 책임: 범위 충돌과 주기 피해, 상태, 재시전 세대, 표현 수명과 종료 사건을 처리한다.
  */
 
 using System;
@@ -12,7 +12,7 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// ZoneSkillActor 런타임 오브젝트를 나타내며 모델과 Unity 컴포넌트를 연결한다.
+    /// 영역이 유지되는 동안 주기적인 적중 결과를 전투에 반영한다.
     public class ZoneSkillActor : MonoBehaviour
     {
 
@@ -41,7 +41,7 @@ namespace Pakuri.InGame
         private int recastGeneration;
         private static bool applyingHitEnhancement;
 
-        /// 영역의 범위, 지속과 적중 규칙을 시작한다.
+        /// 확정된 영역과 적중 기준으로 첫 주기를 시작한다.
         public void Initialize(
             InGameCombatManager manager,
             CombatUnitEntry sourceEntry,
@@ -98,7 +98,7 @@ namespace Pakuri.InGame
             ApplyCurrentAreaTick();
         }
 
-        /// 프레임 경과에 따라 영역 틱과 수명을 갱신한다.
+        /// 다음 적용 주기와 영역 종료 시점을 진행한다.
         private void Update()
         {
             var deltaTime = Time.deltaTime;
@@ -117,7 +117,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 영역 종료 사건을 후속 효과에 전달한다.
+        /// 영역의 마지막 위치와 재시전 세대를 후속 반응에 알린다.
         private void TryExecuteExpireEffects()
         {
             if (combatManager != null && casterEntry != null && roster != null)
@@ -142,7 +142,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 현재 틱의 범위 적용을 실행한다.
+        /// 물리 충돌 영역 유무에 맞춰 이번 주기의 대상 판정을 고른다.
         private bool ApplyCurrentAreaTick()
         {
             if (usePrefabHitbox)
@@ -187,7 +187,7 @@ namespace Pakuri.InGame
                 snapshot);
         }
 
-        /// 충돌된 범위 대상에 피해를 적용한다.
+        /// 실제 충돌 영역과 겹친 대상만 이번 주기 결과로 확정한다.
         internal static bool ApplyColliderAreaTick(
             InGameCombatManager manager,
             CombatUnitEntry sourceEntry,
@@ -239,7 +239,7 @@ namespace Pakuri.InGame
             return routed;
         }
 
-        /// 범위 대상 목록을 물리 적중과 후속 사건으로 연결한다.
+        /// 중심과 반경으로 걸러진 대상을 공통 적중 처리로 넘긴다.
         internal static bool ApplyAreaTargets(
             InGameCombatManager manager,
             CombatUnitEntry sourceEntry,
@@ -342,7 +342,7 @@ namespace Pakuri.InGame
                 executionData);
         }
 
-        /// 선택된 대상에 피해와 상태, 적중 사건을 적용한다.
+        /// 대상 제한을 반영한 뒤 피해, 상태, 후속 사건을 같은 순서로 적용한다.
         internal static bool ApplyResolvedTargets(
             InGameCombatManager manager,
             CombatUnitEntry sourceEntry,
@@ -433,7 +433,7 @@ namespace Pakuri.InGame
             return routed;
         }
 
-        /// 적중 사건과 적중 후속 값을 같은 Actor 경로에서 처리한다.
+        /// 물리적 적중을 반응과 추가 피해, 연쇄 피해의 공통 출발점으로 삼는다.
         internal static void PublishHitOutcome(
             InGameCombatManager manager,
             UnitSpawnManager unitRoster,
@@ -584,7 +584,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 실행에 사용할 원본 스킬 식별자를 고른다.
+        /// 후속 사건이 원래 시전자를 추적할 식별자를 고른다.
         private static string SourceSkillId(SkillExecutionData executionData, SkillExecutionData sourceRuntime)
         {
             if (sourceRuntime != null && !string.IsNullOrWhiteSpace(sourceRuntime.SkillId))

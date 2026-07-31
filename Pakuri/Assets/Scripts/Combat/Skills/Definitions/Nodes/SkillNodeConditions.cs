@@ -1,6 +1,6 @@
 /*
- * 역할: 스킬 노드 조건 계약.
- * 책임: 시전·상태 요구 조건값을 정의한다.
+ * 역할: 스킬 규칙이 성립할 조건을 정의한다.
+ * 책임: 시전, 사건, 상태, 발생원 조건이 후속 결과를 허용할 기준을 제공한다.
  */
 
 using System;
@@ -9,6 +9,7 @@ using Pakuri.Data;
 
 namespace Pakuri.Data
 {
+    /// 다중 효과가 어느 진영을 셀지 구분한다.
     public enum SkillMultiEffectTargetSide
     {
         Enemy,
@@ -16,6 +17,7 @@ namespace Pakuri.Data
         AllAllies
     }
 
+    /// 다중 효과가 기준 대상을 고르는 방식을 구분한다.
     public enum SkillMultiEffectTargetSelection
     {
         Nearest,
@@ -23,6 +25,7 @@ namespace Pakuri.Data
         EventTarget
     }
 
+    /// 다중 효과가 퍼질 공간 형태를 구분한다.
     public enum SkillMultiEffectTargetShape
     {
         Single,
@@ -30,6 +33,7 @@ namespace Pakuri.Data
         Battlefield
     }
 
+    /// 다중 효과가 시작될 중심 기준을 구분한다.
     public enum SkillMultiEffectCenterMode
     {
         EffectTarget,
@@ -38,6 +42,7 @@ namespace Pakuri.Data
         NearestEnemy
     }
 
+    /// 스킬 반응을 검사할 전투 시점을 구분한다.
     public enum SkillTriggerEvent
     {
         BuildExecutionData,
@@ -56,6 +61,7 @@ namespace Pakuri.Data
         CombatStart
     }
 
+    /// 반응이 허용할 사건 발생원의 관계를 구분한다.
     public enum SkillTriggerEventSourceScope
     {
         Any,
@@ -63,6 +69,7 @@ namespace Pakuri.Data
         AllAllies
     }
 
+    /// 사건에서 후속 피해값을 가져올 기준을 구분한다.
     public enum SkillTriggerDamageValueSource
     {
         Fixed,
@@ -73,6 +80,7 @@ namespace Pakuri.Data
         EventAppliedDamage
     }
 
+    /// 후속 결과가 발생할 위치 기준을 구분한다.
     public enum SkillTriggerCenterMode
     {
         EventCenter,
@@ -80,6 +88,7 @@ namespace Pakuri.Data
         Caster
     }
 
+    /// 물리 효과 없이 바꿀 런타임 상태를 구분한다.
     public enum SkillReactionCommandKind
     {
         RefundCooldown,
@@ -90,6 +99,7 @@ namespace Pakuri.Data
 
 namespace Pakuri.InGame
 {
+    /// 반응 결과로 수행할 상태 변화를 대상 규칙과 연결한다.
     [Serializable]
     public sealed class SkillReactionCommand
     {
@@ -103,7 +113,7 @@ namespace Pakuri.InGame
         public int MaxTargets;
     }
 
-    /// Skill/Choice/Passive Node가 소유하는 사건 조건과 공통 실행 보정값.
+    /// 전투 사건이 언제 어떤 결과로 이어지는지 정의한다.
     [Serializable]
     public sealed class SkillReaction
     {
@@ -140,9 +150,10 @@ namespace Pakuri.InGame
         public bool PublishSkillLifecycleEvents;
     }
 
+    /// 사건 반응을 노드에서 해석할 값으로 전달한다.
     public readonly struct SkillReactionOp
     {
-        /// 반응 조건과 결과의 의미를 보관한다.
+        /// 사건 반응을 노드에서 해석할 규칙으로 고정한다.
         public SkillReactionOp(SkillReaction reaction)
         {
             Reaction = reaction;
@@ -151,9 +162,10 @@ namespace Pakuri.InGame
         public SkillReaction Reaction { get; }
     }
 
+    /// 효과가 요구하는 상태와 최소 중첩을 나타낸다.
     public readonly struct StatusStackCondition
     {
-        /// 상태 중첩 조건의 의미를 보관한다.
+        /// 효과가 요구하는 상태와 최소 중첩을 고정한다.
         public StatusStackCondition(StatusEffectKind statusKind, int minimumStacks)
         {
             StatusKind = statusKind;
@@ -164,9 +176,10 @@ namespace Pakuri.InGame
         public int MinimumStacks { get; }
     }
 
+    /// 대상 생명력에 따라 넓어질 시전 기준을 나타낸다.
     public readonly struct CastConditionOp
     {
-        /// 시전 조건 보정의 의미를 보관한다.
+        /// 시전 허용 범위를 바꿀 기준값을 고정한다.
         public CastConditionOp(float targetHealthRatioBonus)
         {
             TargetHealthRatioBonus = targetHealthRatioBonus;
@@ -175,9 +188,10 @@ namespace Pakuri.InGame
         public float TargetHealthRatioBonus { get; }
     }
 
+    /// 시전자에게 요구되는 상태 조건을 나타낸다.
     public readonly struct SourceStatusRequirementOp
     {
-        /// 시전자 상태 조건의 의미를 보관한다.
+        /// 시전자에게 필요한 상태 조건을 고정한다.
         public SourceStatusRequirementOp(StatusEffectKind statusKind, int minimumStacks)
         {
             Condition = new StatusStackCondition(statusKind, minimumStacks);

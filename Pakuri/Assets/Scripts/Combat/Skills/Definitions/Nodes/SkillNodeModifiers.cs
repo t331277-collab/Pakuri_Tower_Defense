@@ -1,21 +1,23 @@
 /*
- * 역할: 스킬 노드 보정 계약.
- * 책임: 피해·치명타·조건부 피해 보정값을 정의한다.
+ * 역할: 전투 결과를 바꾸는 보정 규칙을 정의한다.
+ * 책임: 피해와 치명타가 대상 조건에 따라 달라질 기준값을 제공한다.
  */
 
 using Pakuri.Data;
 
 namespace Pakuri.InGame
 {
+    /// 피해 보정이 적용될 전투 조건을 구분한다.
     public enum DamageModifierOpKind
     {
         BossMultiplier,
         ExecuteMultiplier
     }
 
+    /// 특정 전투 조건에 적용할 피해 배율을 나타낸다.
     public readonly struct DamageModifierOp
     {
-        /// 피해 배율 보정의 의미를 보관한다.
+        /// 특정 전투 조건에서 적용할 피해 배율을 고정한다.
         public DamageModifierOp(DamageModifierOpKind kind, float multiplier)
         {
             Kind = kind;
@@ -26,9 +28,10 @@ namespace Pakuri.InGame
         public float Multiplier { get; }
     }
 
+    /// 조건부로 더할 치명타 확률을 나타낸다.
     public readonly struct CritModifierOp
     {
-        /// 치명타 보정의 의미를 보관한다.
+        /// 조건을 만족했을 때 더할 치명타 확률을 고정한다.
         public CritModifierOp(float chanceBonus)
         {
             ChanceBonus = chanceBonus;
@@ -37,9 +40,10 @@ namespace Pakuri.InGame
         public float ChanceBonus { get; }
     }
 
+    /// 대상 상태가 피해 배율을 바꾸는 규칙을 나타낸다.
     public readonly struct ConditionalDamageActionOp
     {
-        /// 조건부 피해 행동의 의미를 보관한다.
+        /// 대상 상태에 따라 적용할 피해 배율을 정의한다.
         public ConditionalDamageActionOp(
             float damageMultiplier,
             StatusEffectKind requiredStatus,
@@ -53,9 +57,10 @@ namespace Pakuri.InGame
         public StatusStackCondition Condition { get; }
     }
 
+    /// 대상 상태가 치명타 확률을 바꾸는 규칙을 나타낸다.
     public readonly struct ConditionalCritChanceActionOp
     {
-        /// 조건부 치명타 행동의 의미를 보관한다.
+        /// 대상 상태에 따라 적용할 치명타 보정을 정의한다.
         public ConditionalCritChanceActionOp(
             float chanceBonus,
             StatusEffectKind requiredStatus,
@@ -69,9 +74,10 @@ namespace Pakuri.InGame
         public StatusStackCondition Condition { get; }
     }
 
+    /// 시전자 상태가 대상의 받는 피해를 바꾸는 규칙을 나타낸다.
     public readonly struct StatusConditionalDamageTakenActionOp
     {
-        /// 상태 조건부 피해 행동의 의미를 보관한다.
+        /// 시전자 상태가 대상의 받는 피해를 바꾸는 규칙을 정의한다.
         public StatusConditionalDamageTakenActionOp(
             float bonus,
             StatusEffectKind requiredSourceStatus)

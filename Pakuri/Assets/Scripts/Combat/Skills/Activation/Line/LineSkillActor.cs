@@ -1,6 +1,6 @@
 /*
- * 역할: 런타임 Line Hit Actor 동작.
- * 책임: Line Hitbox 판정·피해·상태·넉백·비주얼 수명과 완료를 소유한다.
+ * 역할: 직선형 공격의 실제 적중을 진행한다.
+ * 책임: 직선 충돌과 주기 피해, 상태, 밀어내기, 표현 수명을 처리한다.
  */
 
 using System;
@@ -12,7 +12,7 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// LineSkillActor 런타임 오브젝트를 나타내며 모델과 Unity 컴포넌트를 연결한다.
+    /// 직선 영역이 유지되는 동안 충돌 결과를 전투에 반영한다.
     public class LineSkillActor : MonoBehaviour
     {
 
@@ -45,7 +45,7 @@ namespace Pakuri.InGame
         private readonly Collider2D[] lineHitboxes = new Collider2D[1];
         private BoxCollider2D lineHitbox;
 
-        /// 직선 영역의 범위, 지속과 적중 규칙을 시작한다.
+        /// 확정된 직선 영역과 적중 기준으로 첫 판정을 시작한다.
         public void Initialize(
             InGameCombatManager manager,
             CombatUnitEntry sourceEntry,
@@ -101,7 +101,7 @@ namespace Pakuri.InGame
             ApplyLineTick();
         }
 
-        /// 직선 시각 효과의 수명을 정한다.
+        /// 판정 없이 표현만 남을 때 사라질 시점을 정한다.
         public float InitializeVisualLifetime(
             EffectManager manager,
             float durationSeconds)
@@ -112,7 +112,7 @@ namespace Pakuri.InGame
             return remainingDuration;
         }
 
-        /// 현재 틱의 직선 충돌과 피해를 실행한다.
+        /// 현재 직선과 겹친 대상에 이번 주기의 결과를 적용한다.
         private bool ApplyLineTick()
         {
             if (combatManager == null || casterEntry == null || roster == null || lineHitbox == null)
@@ -162,7 +162,7 @@ namespace Pakuri.InGame
             return routed;
         }
 
-        /// 프레임 경과에 따라 직선 영역을 갱신한다.
+        /// 영역의 다음 판정 시점과 종료 시점을 진행한다.
         private void Update()
         {
             var deltaTime = Time.deltaTime;
@@ -183,7 +183,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 적중 대상의 밀어내기를 적용한다.
+        /// 유효한 방향과 거리만 대상 위치 변화로 반영한다.
         private static void TryApplyKnockback(CombatUnitEntry target, Vector2 normalizedDirection, float distance)
         {
             if (target == null
@@ -197,7 +197,7 @@ namespace Pakuri.InGame
             target.Transform.position += (Vector3)(normalizedDirection.normalized * distance);
         }
 
-        /// 직선 적중 상태를 공통 경로에 적용한다.
+        /// 같은 영역에서 상태가 중복되지 않도록 첫 적중만 적용한다.
         private static void TryApplyStatus(
             InGameCombatManager manager,
             UnitCombatState target,
@@ -224,7 +224,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 대상 중복 처리를 위한 식별자를 고른다.
+        /// 같은 대상을 한 번만 처리할 안정적인 기준을 고른다.
         private static string TargetKey(UnitCombatState target)
         {
             var unitId = target != null && target.Identity != null ? target.Identity.UnitId : null;

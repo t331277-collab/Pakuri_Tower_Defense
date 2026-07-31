@@ -1,6 +1,6 @@
 /*
- * 역할: 스킬 반응 전달.
- * 책임: Trigger 조건을 평가하고 설정된 후속 결과를 예약하거나 실행한다.
+ * 역할: 전투 사건이 스킬 반응으로 이어질지 판정한다.
+ * 책임: 발생원, 상태, 선택, 확률, 횟수, 내부 대기 조건을 검사하고 통과한 결과를 실행 흐름에 넘긴다.
  */
 
 using System;
@@ -17,7 +17,7 @@ namespace Pakuri.InGame
 internal static class SkillTrigger
 {
 
-	/// TriggerGateState의 변경 가능한 런타임 상태를 보관한다.
+	/// 전투마다 반응 횟수와 내부 대기 진행을 분리해 유지한다.
 	private sealed class TriggerGateState
 	{
 		private readonly Dictionary<string, float> cooldowns =
@@ -98,7 +98,7 @@ internal static class SkillTrigger
 		return triggers.ToArray();
 	}
 
-	/// TriggerExecutionContext 처리에 함께 전달되는 값들을 묶는다.
+	/// 사건 발생 순간의 피해와 대상, 상태, 발생원을 후속 판정에 고정한다.
 	internal readonly struct TriggerExecutionContext
 	{
 		private readonly float[] trackedIncomingDamage;
@@ -133,7 +133,7 @@ internal static class SkillTrigger
 
 		public int RecastGeneration { get; }
 
-		/// 사건과 반응 실행에 필요한 값을 한 단위로 묶는다.
+		/// 지연 실행 뒤에도 사건 당시의 판정 기준을 그대로 사용하게 한다.
 		public TriggerExecutionContext(UnitCombatState eventTarget, UnitCombatState attacker, Vector2 eventCenter, StatusRuntimeInstance status, float shieldAbsorbedAmount, float eventAppliedDamage, DamageAttribute eventAttribute, string eventSourceSkillId, UnitCombatState eventSource = null, bool eventWasExecute = false, string eventTriggerSourceSkillId = null, int eventHitCount = 0, int recastGeneration = 0)
 		{
 			EventTarget = eventTarget;
@@ -769,7 +769,7 @@ internal static class SkillTrigger
 		return obj + ":" + text;
 	}
 
-	/// 전투 항목에서 반응 판정용 모델을 가져온다.
+	/// 상태가 기억한 발생원을 현재 전투 명단에서 복원한다.
 	private static UnitCombatState SourceModel(
 		UnitSpawnManager roster,
 		string sourceUnitId,
@@ -808,7 +808,7 @@ internal static class SkillTrigger
 		return null;
 	}
 
-	/// 전투 모델의 현재 위치를 읽는다.
+	/// 사건 중심으로 사용할 유닛의 현재 위치를 정한다.
 	private static Vector2 UnitPosition(UnitSpawnManager roster, UnitCombatState model)
 	{
 		var entry = roster != null ? roster.Find(model) : null;

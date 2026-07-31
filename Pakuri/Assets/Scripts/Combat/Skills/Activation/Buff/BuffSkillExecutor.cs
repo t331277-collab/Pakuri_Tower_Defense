@@ -1,6 +1,6 @@
 /*
- * 역할: 버프 계열 스킬 전달.
- * 책임: 상태·회복·보호막·돌진 효과를 하나의 버프 실행 경로로 전달한다.
+ * 역할: 지원형 스킬의 확정값을 전투에 적용한다.
+ * 책임: 상태, 회복, 보호막, 돌진을 종류에 맞는 공통 전투 경로로 보낸다.
  */
 
 using Pakuri.Combat;
@@ -9,11 +9,11 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// 시전 시 확정된 버프 효과 종류에 맞는 런타임 동작을 실행한다.
+    /// 확정된 지원 효과를 실제 전투 변화와 시각 표현으로 연결한다.
     internal static class BuffSkillExecutor
     {
 
-        /// 지원 효과의 계열에 맞는 실행 경로를 고른다.
+        /// 지원 효과의 성격에 맞는 적용 방식을 고른다.
         internal static bool Execute(
             SkillActionContext context,
             SkillExecutionData snapshot)
@@ -31,7 +31,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 상태 적용을 지원 효과의 공통 경로에 연결한다.
+        /// 상태 효과를 대상마다 적용하고 성공한 표현을 남긴다.
         private static bool ExecuteStatus(
             SkillActionContext context,
             SkillExecutionData snapshot)
@@ -76,7 +76,7 @@ namespace Pakuri.InGame
             return routed || castCommitted;
         }
 
-        /// 회복 효과를 대상의 생명력에 반영한다.
+        /// 우선 대상의 생명력을 회복하고 결과를 표현한다.
         private static bool ExecuteHeal(
             SkillActionContext context,
             SkillExecutionData snapshot)
@@ -101,7 +101,7 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /// 보호막 효과를 대상의 방어 상태에 반영한다.
+        /// 대상마다 보호막 상태와 그 수명을 시작한다.
         private static bool ExecuteShield(
             SkillActionContext context,
             SkillExecutionData snapshot)
@@ -144,19 +144,19 @@ namespace Pakuri.InGame
             return routed;
         }
 
-        /// 돌진 효과를 이동과 접촉 판정에 연결한다.
+        /// 돌진을 맡을 시전자와 실행 상태가 준비됐는지 확인한다.
         private static bool ExecuteCharge(SkillActionContext context)
         {
             return context.Caster != null && context.Runtime != null;
         }
 
-        /// 대상이 지원 효과를 받을 수 있는지 확인한다.
+        /// 살아 있는 전투 유닛만 지원 대상으로 허용한다.
         private static bool IsValid(CombatUnitEntry target)
         {
             return target != null && target.IsAlive && target.Model != null;
         }
 
-        /// 지원 효과의 시각 표현을 생성한다.
+        /// 효과가 붙을 위치와 수명에 맞춰 표현을 만든다.
         private static void SpawnVisual(
             SkillActionContext context,
             SkillExecutionData snapshot,

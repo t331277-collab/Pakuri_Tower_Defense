@@ -1,5 +1,42 @@
 # AUTOMATION_GUIDE
 
+## Task: 2026-07-31 Codex CLI 0.146.0 Update
+
+### Task title
+
+Update the global Codex CLI from 0.145.0 to 0.146.0.
+
+### Goals
+
+- Install Codex CLI 0.146.0 with the official update command.
+- Verify the active CLI version.
+
+### Constraints
+
+- Do not change project code or Unity assets.
+- Use actual installer and version output as evidence.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed and verified.
+
+### Next Actions
+
+- None.
+
+### Evidence
+
+- Official installer output: `Codex CLI 0.146.0 installed successfully.`
+- `codex --version` output: `codex-cli 0.146.0`.
+
+### History
+
+- 2026-07-31: Updated Codex CLI from 0.145.0 to 0.146.0 and verified the installed version.
+
 ## Archived History
 
 The pre-cleanup OPS automation, Codex CLI, Reviewer, and Unity-MCP boards are preserved under `boards/ARCHIVE/ACTIVE_BOARD_SNAPSHOT_2026-07-28/OPS/`.

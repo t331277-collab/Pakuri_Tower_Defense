@@ -1,6 +1,6 @@
 /*
- * 역할: Zone 스킬 전달 조정.
- * 책임: 확정된 배치 계획대로 Zone Actor를 생성하고 해석된 실행 데이터를 전달한다.
+ * 역할: 지속 영역의 배치 계획을 실행한다.
+ * 책임: 확정된 중심마다 영역 오브젝트를 만들고 주기 판정에 실행값을 넘긴다.
  */
 
 using System;
@@ -10,10 +10,10 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// 확정된 각 중심에 ZoneSkillActor를 생성하고 실행을 시작한다.
+    /// 준비된 중심마다 영역을 배치하고 실제 주기 판정을 시작한다.
     internal static class ZoneSkillExecutor
     {
-        /// 영역형 스킬의 실행 객체와 입력을 준비한다.
+        /// 각 중심에 표현과 판정 기준을 갖춘 영역 오브젝트를 만든다.
         internal static bool Execute(
             SkillActionContext context,
             SkillExecutionData snapshot)

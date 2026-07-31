@@ -1,6 +1,6 @@
 /*
- * 역할: Line 스킬 전달 조정.
- * 책임: 확정된 방향과 반복 간격대로 Line Actor를 생성한다.
+ * 역할: 직선형 공격의 배치 계획을 실행한다.
+ * 책임: 확정된 방향과 반복 간격에 맞춰 직선 공격 오브젝트를 만든다.
  */
 
 using System;
@@ -12,12 +12,12 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// 확정된 Line 배치 계획을 실행하고 실제 판정은 LineSkillActor에 맡긴다.
+    /// 시전 계획을 직선 공격 오브젝트로 바꾸고 적중 판정을 넘긴다.
     internal sealed class LineSkillExecutor : MonoBehaviour
     {
         private EffectManager effects;
 
-        /// 직선형 스킬의 실행 객체와 입력을 준비한다.
+        /// 반복 시전을 유지할 임시 실행 오브젝트를 만든다.
         internal static bool Execute(
             SkillActionContext context,
             SkillExecutionData snapshot)
@@ -50,7 +50,7 @@ namespace Pakuri.InGame
             return executor.Initialize(context, snapshot);
         }
 
-        /// 직선형 실행의 배치와 반복 조건을 시작한다.
+        /// 첫 공격을 배치하고 남은 방향의 실행 시점을 정한다.
         private bool Initialize(
             SkillActionContext context,
             SkillExecutionData snapshot)
@@ -75,7 +75,7 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /// 예약된 직선형 반복 시전을 실행한다.
+        /// 준비된 방향을 간격에 맞춰 차례로 배치한다.
         private IEnumerator ExecuteRepeatedLineCasts(
             SkillActionContext context,
             SkillExecutionData snapshot,
@@ -96,7 +96,7 @@ namespace Pakuri.InGame
             effects.RemoveEffect(gameObject);
         }
 
-        /// 직선형 공격 한 회분을 실행한다.
+        /// 한 방향의 표현과 판정 오브젝트를 완성한다.
         private static bool ExecuteOnce(
             SkillActionContext context,
             SkillExecutionData snapshot,

@@ -1,6 +1,6 @@
 /*
- * 역할: 런타임 버프 비주얼 소유.
- * 책임: 버프 효과를 대상에 부착하고 소유 상태 효과가 끝나면 제거한다.
+ * 역할: 지원 효과의 시각적 존재를 유지한다.
+ * 책임: 시간 또는 상태 수명에 맞춰 효과 오브젝트를 정리한다.
  */
 
 using UnityEngine;
@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// BuffSkillActor 런타임 오브젝트를 나타내며 모델과 Unity 컴포넌트를 연결한다.
+    /// 적용된 지원 효과가 보이는 기간을 실제 효과 수명과 맞춘다.
     public class BuffSkillActor : MonoBehaviour
     {
 
@@ -17,7 +17,7 @@ namespace Pakuri.InGame
         private float remainingLifetime;
         private bool hasLifetime;
 
-        /// 시간형 버프 비주얼의 수명을 시작한다.
+        /// 정해진 시간이 지나면 사라지는 표현을 시작한다.
         public void InitializeTimed(
             EffectManager manager,
             float durationSeconds)
@@ -31,7 +31,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 상태가 끝날 때까지 버프 비주얼을 유지한다.
+        /// 전투 상태가 끝날 때까지 표현의 생존 기준을 연결한다.
         public void InitializePersistent(
             EffectManager manager,
             StatusRuntimeInstance status)
@@ -42,7 +42,7 @@ namespace Pakuri.InGame
             remainingLifetime = 0f;
         }
 
-        /// 버프 비주얼의 수명을 끝낸다.
+        /// 표현이 맡은 수명이 끝났음을 효과 관리자에 알린다.
         public void Complete()
         {
             if (effectManager == null)
@@ -55,7 +55,7 @@ namespace Pakuri.InGame
             manager.RemoveEffect(gameObject, persistentStatus);
         }
 
-        /// 효과 객체에 버프 실행 컴포넌트를 연결한다.
+        /// 기존 효과 오브젝트가 수명 관리를 맡을 수 있게 준비한다.
         public static BuffSkillActor Attach(GameObject instance)
         {
             var actor = instance.GetComponent<BuffSkillActor>();
@@ -67,7 +67,7 @@ namespace Pakuri.InGame
             return actor;
         }
 
-        /// 프레임 경과에 따라 버프 비주얼 수명을 갱신한다.
+        /// 시간형 표현이 만료되는 시점을 진행한다.
         private void Update()
         {
             if (!hasLifetime)

@@ -1,6 +1,6 @@
 /*
- * 스킬 사용 조건을 검증하고 확정된 효과를 알맞은 실행 경로로 전달한다.
- * 개별 스킬의 대기시간과 학습·선택 보정 상태도 함께 관리한다.
+ * 역할: 스킬 시전 흐름을 조정한다.
+ * 책임: 사용 가능 여부를 검증하고 확정값을 준비해 계열별 실행기로 분배하며 진행 상태를 갱신한다.
  */
 
 using System;
@@ -23,7 +23,7 @@ namespace Pakuri.InGame
         /// 자동 시전 후보를 외부 정책으로 선별한다.
         public delegate bool SkillAutoRoutePredicate(CombatUnitEntry entry, SkillExecutionData runtime);
 
-        /// 실행 상태의 기준값과 진행값을 초기화한다.
+        /// 새 전투에서 스킬이 시작할 자원과 진행 상태를 맞춘다.
         public static void ResetRuntimeState(SkillExecutionData runtime)
         {
             if (runtime == null)
@@ -51,7 +51,7 @@ namespace Pakuri.InGame
             runtime.consecutiveHitRepeatCount = 0;
         }
 
-        /// 다음 투사체 순번을 기록한다.
+        /// 발사 순서에 의존하는 규칙이 사용할 다음 순번을 확정한다.
         public static int AdvanceProjectileLaunchCount(SkillExecutionData runtime)
         {
             if (runtime == null)
@@ -68,7 +68,7 @@ namespace Pakuri.InGame
             return runtime.ProjectileLaunchCount;
         }
 
-        /// 다음 적중 순번을 기록한다.
+        /// 누적 적중 규칙이 사용할 다음 순번을 확정한다.
         public static int AdvanceSkillHitCount(SkillExecutionData runtime)
         {
             if (runtime == null)
@@ -118,7 +118,7 @@ namespace Pakuri.InGame
             return runtime.consecutiveHitRepeatCount;
         }
 
-        /// 시간 경과를 실행 상태에 반영한다.
+        /// 행동 속도와 실제 시간 기준에 맞춰 모든 대기 상태를 진행한다.
         public static void Tick(SkillExecutionData runtime, float deltaTime)
         {
             if (runtime == null || deltaTime <= 0f)
@@ -146,7 +146,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 현재 실행값으로 시전 가능 여부를 판정한다.
+        /// 쿨다운과 탄창, 시전 간격이 현재 스킬 사용을 허용하는지 판정한다.
         public static bool CanCastWithData(
             SkillExecutionData runtime,
             SkillExecutionData snapshot)
@@ -175,7 +175,7 @@ namespace Pakuri.InGame
                 && runtime.HasMagazine;
         }
 
-        /// 확정 실행값으로 탄약과 대기를 소비한다.
+        /// 성공한 시전의 탄창과 연사, 회복 상태를 확정한다.
         public static bool TryBeginCast(
             SkillExecutionData runtime,
             SkillExecutionData snapshot)
@@ -351,7 +351,7 @@ namespace Pakuri.InGame
                 || runtime.TickRemaining <= 0f;
         }
 
-        /// 이번 실행의 보정값으로 상태 기준을 갱신한다.
+        /// 학습 보정이 바뀌어도 남은 탄창과 진행 상태가 이어지게 맞춘다.
         private static void RefreshRuntimeModifiers(
             SkillExecutionData runtime,
             SkillExecutionData snapshot)
@@ -670,7 +670,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 입력을 실행값으로 만들고 공통 실행으로 넘긴다.
+        /// 일반 입력을 학습이 반영된 실행값으로 바꿔 공통 시전 흐름에 넣는다.
         private bool TryExecuteSkill(
             CombatUnitEntry entry,
             SkillExecutionData runtime,
@@ -715,7 +715,7 @@ namespace Pakuri.InGame
                 triggerSourceSkillId);
         }
 
-        /// 확정된 스킬을 검증하고 실행 단계로 통과시킨다.
+        /// 대상과 계열 입력을 확정한 뒤 성공한 시전만 상태와 사건에 반영한다.
         private bool ExecutePrepared(
             CombatUnitEntry entry,
             SkillExecutionData runtime,
@@ -877,7 +877,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 생성 단계에서 확정된 결과를 공통 스킬 실행으로 연결한다.
+        /// 후속 효과도 일반 시전과 같은 준비와 계열 실행 경로로 되돌린다.
         internal bool TryExecuteResolvedEffect(
             CombatUnitEntry entry,
             SkillExecutionData sourceRuntime,
@@ -1145,7 +1145,7 @@ namespace Pakuri.InGame
                 triggerSourceSkillId);
         }
 
-        /// 스킬 계열을 알맞은 실행기로 보낸다.
+        /// 확정된 실행값을 물리적 형태에 맞는 실행기로 보낸다.
         private static bool ExecuteSkill(
             SkillActionContext context,
             SkillExecutionData snapshot,
@@ -1186,7 +1186,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 스킬 계열에 맞는 실행 입력을 완성한다.
+        /// 공통 실행값을 각 물리적 형태가 바로 사용할 입력으로 완성한다.
         private static bool PrepareExecutionData(
             SkillActionContext context,
             SkillExecutionData snapshot,
@@ -2061,7 +2061,7 @@ namespace Pakuri.InGame
                     triggerContext);
         }
 
-        /// 반응 command를 런타임 변화로 반영한다.
+        /// 물리 효과가 아닌 반응 결과를 기존 상태 변경 경로로 전달한다.
         private static bool ApplyReactionCommand(
             InGameCombatManager combatManager,
             UnitSpawnManager roster,

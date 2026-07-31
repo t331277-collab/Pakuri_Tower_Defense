@@ -1,6 +1,6 @@
 /*
- * 역할: 확정 스킬 런타임 상태.
- * 책임: 실행 가능한 스킬 값·재사용 대기·대상·전달·배율·시전별 상태를 보관한다.
+ * 역할: 한 스킬의 확정값과 전투 진행 상태를 전달한다.
+ * 책임: 규칙 계산 결과와 시전 준비값, 쿨다운, 탄창, 연사 상태를 원본 정의와 분리해 보관한다.
  */
 
 using System;
@@ -12,7 +12,7 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-/// 스킬 정의와 전투 중 실행 상태를 함께 보관한다.
+/// 같은 스킬 정의에서 소유자별 실행값과 진행 상태를 분리한다.
 public class SkillExecutionData
 {
 
@@ -486,7 +486,7 @@ public class SkillExecutionData
 		}
 	}
 
-	/// 정의만으로 실행에 필요한 기본값을 만든다.
+	/// 원본 정의를 바꾸지 않고 규칙 계산을 시작할 기준값을 만든다.
 	public SkillExecutionData(SkillDefinition source)
 	{
 		Source = source;
@@ -519,7 +519,7 @@ public class SkillExecutionData
 
 	public SkillSlot Slot => Source != null ? Source.Slot : default;
 
-	/// 소유자와 정의를 연결해 사용 상태를 만든다.
+	/// 소유자마다 독립적으로 진행될 스킬 상태를 시작한다.
 	public SkillExecutionData(UnitCombatState owner, SkillDefinition source)
 		: this(source)
 	{
@@ -585,7 +585,7 @@ public class SkillExecutionData
 		return copy;
 	}
 
-	/// 활성 선택을 학습 상태에 기록한다.
+	/// 현재 실행값에 반영된 학습 선택을 기록한다.
 	public void AddActiveChoiceId(string choiceId)
 	{
 		if (!string.IsNullOrWhiteSpace(choiceId))
@@ -594,7 +594,7 @@ public class SkillExecutionData
 		}
 	}
 
-	/// 학습 상태에 선택이 포함됐는지 확인한다.
+	/// 현재 실행이 특정 학습 선택의 영향을 받는지 확인한다.
 	public bool HasActiveChoice(string choiceId)
 	{
 		if (!string.IsNullOrWhiteSpace(choiceId))

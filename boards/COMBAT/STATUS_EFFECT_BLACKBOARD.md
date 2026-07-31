@@ -1210,3 +1210,51 @@ Code Builder.
 - 2026-07-31: Code Builder moved source files and `.meta` files without changing C# content or namespace.
 - 2026-07-31: Unity project regeneration, solution build, full EditMode test, stale-path scan, and staged rename/GUID verification completed.
 - 2026-07-31: Code Reviewer inspected the rename-only diff, layer boundaries, GUID/API preservation, build/test evidence, and returned PASS with no fix request.
+
+## Task: 2026-08-01 Combat Skills Responsibility Comments
+
+### Task title
+
+Combat Skills 전체 스크립트의 역할과 메소드 의미를 실제 코드 책임에 맞춰 설명한다.
+
+### Goals
+
+- `Combat/Skills` 아래 모든 C# 스크립트 상단에 역할과 책임을 기록한다.
+- 공개 타입과 모든 메소드, 생성자에 짧고 추상적인 한국어 설명을 둔다.
+- 타입명과 매개변수를 반복하는 기계적 주석을 실제 실행 의미로 바꾼다.
+- 주석에서 가운데점 문자를 사용하지 않는다.
+
+### Constraints
+
+- 실제 코드와 호출 흐름을 읽은 근거로만 책임을 설명한다.
+- 실행 코드, API, 직렬화 계약과 동작을 변경하지 않는다.
+- 필드마다 같은 설명을 반복하거나 핵심 흐름을 가리는 주석을 추가하지 않는다.
+- 기존 사용자 변경인 `boards/OPS/AUTOMATION_GUIDE.md`는 수정하지 않는다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Complete. 전체 주석 정비와 비게임플레이 검증을 완료했다.
+
+### Next Actions
+
+- 추가 코드 변경 없음.
+- 주석 전용 변경이므로 별도 Play Mode 검증은 요구하지 않는다.
+
+### Evidence
+
+- 정비 전 `rg --files Pakuri/Assets/Scripts/Combat/Skills -g '*.cs'` 결과는 C# 28개이며 전체 10,786줄이다.
+- 28개 파일 모두 상단 5줄 안에 `역할:`과 `책임:`을 가진다.
+- 선언 검사 결과 타입 91개와 메소드, 생성자 330개 모두 바로 앞에 설명 주석이 있다.
+- `rg -n "·" Pakuri/Assets/Scripts/Combat/Skills -g '*.cs'` 결과는 0건이다.
+- 변경 전후에서 주석 줄을 제외한 C# 본문 비교 결과는 `COMMENT_ONLY_DIFF`다.
+- `git diff --check -- Pakuri/Assets/Scripts/Combat/Skills`가 통과했다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal`은 오류 0개로 완료됐으며 기존 `System.Net.Http`, `System.IO.Compression` 버전 충돌 경고 2개만 남았다.
+
+### History
+
+- 2026-08-01: 사용자가 Code Builder에게 Combat Skills 전체 코드의 역할, 책임, 메소드 주석을 추상적이고 간결한 표현으로 정비하도록 요청했다.
+- 2026-08-01: Code Builder가 Definitions, Implementation, Activation 28개 파일을 모두 읽고 주석만 수정한 뒤 선언 누락, 금지 문자, 본문 불변과 솔루션 빌드를 검증했다.

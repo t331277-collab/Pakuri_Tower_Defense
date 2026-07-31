@@ -1,6 +1,6 @@
 /*
- * 역할: 단일 스킬 런타임 Actor 동작.
- * 책임: Single 타기팅·지연·판정·피해·후속 실행·비주얼 수명과 완료를 소유한다.
+ * 역할: 한 번의 배치로 발생하는 공격 결과를 진행한다.
+ * 책임: 지연과 반복, 충돌, 대상 제한, 피해, 상태, 후속 공격과 표현 수명을 처리한다.
  */
 
 using System;
@@ -13,7 +13,7 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// SingleSkillActor 런타임 오브젝트를 나타내며 모델과 Unity 컴포넌트를 연결한다.
+    /// 단발성 효과가 맡은 작업과 표현이 모두 끝날 때까지 수명을 유지한다.
     public partial class SingleSkillActor : MonoBehaviour
     {
 
@@ -161,18 +161,18 @@ namespace Pakuri.InGame
         }
     }
 
-/// Single 계열 판정과 적용을 소유한다.
+/// 배치된 공격의 대상 판정과 전투 결과를 적용한다.
 public partial class SingleSkillActor
 {
 
-	/// SingleExecutionOutcome 처리에 함께 전달되는 값들을 묶는다.
+	/// 공격이 실제 적용됐는지와 시전 자체가 성립했는지를 구분한다.
 	internal readonly struct SingleExecutionOutcome
 	{
 		public bool Routed { get; }
 
 		public bool CastCommitted { get; }
 
-		/// 단일 실행 결과를 전달값으로 묶는다.
+		/// 적용 결과와 시전 성립 여부를 함께 고정한다.
 		public SingleExecutionOutcome(bool routed, bool castCommitted)
 		{
 			Routed = routed;
@@ -180,7 +180,7 @@ public partial class SingleSkillActor
 		}
 	}
 
-	/// SingleFollowUpSpec 처리에 함께 전달되는 값들을 묶는다.
+	/// 조건부 후속 공격이 공유할 상태 조건과 반복 규칙을 고정한다.
 	private readonly struct SingleFollowUpSpec
 	{
 		public StatusEffectKind RequiredStatusKind { get; }
@@ -193,7 +193,7 @@ public partial class SingleSkillActor
 
 		public GameObject Prefab { get; }
 
-		/// 후속 공격의 공통 조건을 묶는다.
+		/// 후속 공격이 반복마다 사용할 기준을 고정한다.
 		public SingleFollowUpSpec(StatusEffectKind requiredStatusKind, int repeatCount, float intervalSeconds, float damageMultiplier, GameObject prefab)
 		{
 			RequiredStatusKind = requiredStatusKind;
@@ -204,14 +204,14 @@ public partial class SingleSkillActor
 		}
 	}
 
-	/// SingleFollowUpTarget 처리에 함께 전달되는 값들을 묶는다.
+	/// 후속 공격이 다시 찾을 대상과 마지막 중심을 보존한다.
 	private readonly struct SingleFollowUpTarget
 	{
 		public UnitCombatState Model { get; }
 
 		public Vector2 Center { get; }
 
-		/// 후속 공격 대상과 중심을 묶는다.
+		/// 대상이 사라져도 사용할 기준 위치를 함께 고정한다.
 		public SingleFollowUpTarget(UnitCombatState model, Vector2 center)
 		{
 			Model = model;
@@ -219,7 +219,7 @@ public partial class SingleSkillActor
 		}
 	}
 
-	/// TargetDamageResolution 처리에 함께 전달되는 값들을 묶는다.
+	/// 대상 상태를 반영한 피해 입력과 처형 결과를 고정한다.
 	private readonly struct TargetDamageResolution
 	{
 		public float Damage { get; }
@@ -232,7 +232,7 @@ public partial class SingleSkillActor
 
 		public int PendingConsumedStacks { get; }
 
-		/// 대상별 피해 결과를 전달값으로 묶는다.
+		/// 피해 적용과 상태 소비가 같은 판정 결과를 사용하게 한다.
 		public TargetDamageResolution(float damage, float finalDamageMultiplier, float critChanceBonus, bool isExecute, int pendingConsumedStacks)
 		{
 			Damage = damage;

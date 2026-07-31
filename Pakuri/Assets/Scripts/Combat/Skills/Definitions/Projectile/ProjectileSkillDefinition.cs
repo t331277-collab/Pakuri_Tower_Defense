@@ -1,6 +1,6 @@
 /*
- * 역할: 투사체 스킬 Definition.
- * 책임: 투사체 전달·직격·충돌 범위 설정을 정의한다.
+ * 역할: 이동형 공격의 설계값을 정의한다.
+ * 책임: 발사 수와 속도, 관통, 직격, 충돌 후 범위 효과를 제공한다.
  */
 
 using System;
@@ -9,6 +9,7 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /// 한 번의 발사가 만들 투사체 묶음과 이동 방식을 설계한다.
     [Serializable]
     public class ProjectileBlueprintSpec
     {
@@ -24,6 +25,7 @@ namespace Pakuri.InGame
         public float LifetimeSeconds;
     }
 
+    /// 투사체의 직격과 충돌 후 결과를 함께 설계한다.
     public class ProjectileSkillDefinition : SkillDefinition
     {
         [Header("Projectile")]

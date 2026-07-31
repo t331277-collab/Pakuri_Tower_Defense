@@ -1,6 +1,6 @@
 /*
- * 역할: 스킬 실행과 사건 전달에 필요한 불변 값.
- * 책임: 실행 기반값과 사건 정보를 하나의 전달 단위로 보관한다.
+ * 역할: 스킬 실행과 전투 사건이 공유할 기준 매뉴얼을 정의한다.
+ * 책임: 시전자, 대상, 조준, 사건값, 재시전 정보를 한 시점의 입력으로 고정한다.
  */
 
 using Pakuri.Combat;
@@ -9,11 +9,11 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// 실행과 사건 전달에 필요한 불변 값을 묶는다.
+    /// 시전과 사건 경계를 넘어 같은 판단 기준을 전달한다.
     public sealed class SkillActionContext
     {
 
-        /// 스킬 실행의 공통 기반값을 고정한다.
+        /// 일반 시전에 필요한 전투 기준을 한 시점의 입력으로 고정한다.
         public SkillActionContext(
             InGameCombatManager combatManager,
             UnitSpawnManager roster,
@@ -55,7 +55,7 @@ namespace Pakuri.InGame
             ApplyDamageMultiplierToShield = applyDamageMultiplierToShield;
         }
 
-        /// 사건값과 실행 기반값을 한 전달 단위로 합친다.
+        /// 발생한 사건에 기존 시전 기준을 이어 붙여 후속 판정을 준비한다.
         public SkillActionContext(
             UnitCombatState source,
             string sourceSkillId,
@@ -116,7 +116,7 @@ namespace Pakuri.InGame
 
         public UnitCombatState Caster => CasterEntry != null ? CasterEntry.Model : Source;
 
-        /// 실행 기반값을 사건 전달 객체에 이어 붙인다.
+        /// 후속 사건도 원래 시전의 조준과 재시전 제한을 따르게 한다.
         private void CopyExecutionValues(SkillActionContext executionContext)
         {
             if (executionContext == null)

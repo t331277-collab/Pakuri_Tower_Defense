@@ -1,6 +1,6 @@
 /*
- * 역할: 확정 스킬 규칙 계산.
- * 책임: 스킬 정의·학습 선택·패시브 배율·실행 문맥을 결합해 실행 가능한 값을 만든다.
+ * 역할: 설계된 스킬 규칙을 실행 가능한 값으로 해석한다.
+ * 책임: 기본 노드와 패시브, 강화, 마스터를 합성하고 시전과 적중 시점의 판정값을 계산한다.
  */
 
 using System;
@@ -12,11 +12,11 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// 정의의 의미를 실행값과 판정값으로 확정한다.
+    /// 설계 규칙을 시전과 적중에서 바로 사용할 값으로 확정한다.
     public static class SkillExecutionRuleResolver
     {
 
-        /// 정의가 런타임에서 사용할 기본 골격을 만든다.
+        /// 원본 스킬의 기본 규칙만 반영한 실행 기준을 만든다.
         public static SkillExecutionData CreateDefinitionSnapshot(SkillDefinition source)
         {
             var snapshot = new SkillExecutionData(source);
@@ -27,7 +27,7 @@ namespace Pakuri.InGame
             return snapshot;
         }
 
-        /// 선택된 강화 의미를 실행값에 합친다.
+        /// 선택된 학습 효과를 현재 실행 기준에 누적한다.
         public static void ApplyChoice(SkillExecutionData snapshot, SkillChoice choice)
         {
             if (snapshot == null || choice == null || choice.Nodes == null)
@@ -41,7 +41,7 @@ namespace Pakuri.InGame
             ApplyNodes(snapshot, choice.Nodes, snapshot.SkillId);
         }
 
-        /// 소유자의 학습과 선택을 반영한 실행값을 만든다.
+        /// 소유자가 실제로 배운 모든 효과를 순서대로 합성한다.
         internal static SkillExecutionData BuildExecutionData(
             UnitCombatState owner,
             SkillExecutionData runtime,
@@ -286,7 +286,7 @@ namespace Pakuri.InGame
             return string.Equals(targetSkillId, skill.SkillId, StringComparison.OrdinalIgnoreCase);
         }
 
-	/// 정의된 Node 의미를 실행값에 순서대로 합친다.
+	/// 각 노드의 의미를 선언 순서대로 실행 기준에 반영한다.
 	internal static void ApplyNodes(SkillExecutionData snapshot, IReadOnlyList<SkillNode> nodes, string targetSkillId = null)
 	{
 
@@ -449,7 +449,7 @@ namespace Pakuri.InGame
 		}
 	}
 
-		/// 행동 의미를 실행값에 반영한다.
+		/// 수치 변화의 종류에 따라 실행 기준을 갱신한다.
 		internal static void ApplyNodeAction(SkillExecutionData snapshot, SkillActionOp action)
 	{
 		switch (action.Kind)

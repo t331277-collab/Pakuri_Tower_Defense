@@ -1,6 +1,6 @@
 /*
- * 역할: 단일 계열 스킬 Definition.
- * 책임: 단일 대상·제한 대상·실행 조건·대상 상태 연동값을 정의한다.
+ * 역할: 한 번의 판정으로 적용되는 공격의 설계값을 정의한다.
+ * 책임: 대상 수와 배치, 처형 조건, 상태 소비, 피해와 상태 효과를 제공한다.
  */
 
 using Pakuri.Data;
@@ -8,6 +8,7 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /// 단발성 공격의 배치와 대상별 결과를 설계한다.
     public class SingleSkillDefinition : SkillDefinition
     {
         [Header("Area")]

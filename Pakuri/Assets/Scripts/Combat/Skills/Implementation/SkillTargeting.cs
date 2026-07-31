@@ -1,6 +1,6 @@
 /*
- * 역할: 공통 스킬 대상 선택.
- * 책임: 진영·형태·거리·가시성·선택 규칙으로 등록 유닛을 필터링·정렬·선택한다.
+ * 역할: 스킬 조건을 실제 전투 대상과 위치로 바꾼다.
+ * 책임: 진영, 형태, 상태, 거리, 선택 우선순위에 따라 후보를 걸러 순서를 정한다.
  */
 
 using System;
@@ -12,18 +12,18 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// SkillDeploymentRepeatMode에서 지원하는 값의 종류를 정의한다.
+    /// 여러 배치를 새 대상에 펼칠지 기존 대상을 다시 사용할지 구분한다.
     internal enum SkillDeploymentRepeatMode
     {
         RepeatNearest,
         RandomExisting
     }
 
-    /// 타기팅 규칙을 실제 전투 대상 선택으로 바꾼다.
+    /// 동일한 대상 규칙이 모든 스킬 계열에서 같은 결과를 내게 한다.
     internal static class SkillTargeting
     {
 
-        /// 조건에 맞는 대상을 실행 순서로 정렬한다.
+        /// 기본 대상 규칙으로 후보를 우선순위에 맞춰 정렬한다.
         public static List<CombatUnitEntry> OrderedTargets(
             CombatUnitEntry sourceEntry,
             UnitSpawnManager unitRoster,
@@ -33,7 +33,7 @@ namespace Pakuri.InGame
             return OrderedTargets(sourceEntry, unitRoster, targetingSpec, StatusEffectKind.None, 0);
         }
 
-        /// 조건에 맞는 대상을 실행 순서로 정렬한다.
+        /// 사건 대상 고정 여부까지 반영해 실행 순서를 만든다.
         public static List<CombatUnitEntry> OrderedTargets(
             SkillActionContext context,
             SkillTargetingSpec targetingSpec)
@@ -59,7 +59,7 @@ namespace Pakuri.InGame
                 true);
         }
 
-        /// 조건에 맞는 대상을 실행 순서로 정렬한다.
+        /// 연쇄 선택과 사건 대상 고정을 포함한 실행 순서를 만든다.
         public static List<CombatUnitEntry> OrderedTargets(
             CombatUnitEntry sourceEntry,
             UnitSpawnManager unitRoster,
@@ -108,7 +108,7 @@ namespace Pakuri.InGame
             return new List<CombatUnitEntry>();
         }
 
-        /// 조건에 맞는 대상을 실행 순서로 정렬한다.
+        /// 필수 상태를 충족한 대상만 실행 순서로 정렬한다.
         public static List<CombatUnitEntry> OrderedTargets(
             CombatUnitEntry sourceEntry,
             UnitSpawnManager unitRoster,
@@ -137,7 +137,7 @@ namespace Pakuri.InGame
             return targets;
         }
 
-        /// 가장 가까운 유효 대상을 고른다.
+        /// 선택 방식에 맞는 최우선 대상을 거리 기준과 함께 고른다.
         public static CombatUnitEntry FindNearestTarget(
             CombatUnitEntry caster,
             UnitSpawnManager roster,
@@ -464,7 +464,7 @@ namespace Pakuri.InGame
             return origin;
         }
 
-        /// 영역의 기본 범위를 정의값에서 가져온다.
+        /// 영역 전용 값이 있으면 공통 대상 범위보다 우선한다.
         public static float BaseRadius(SkillTargetingSpec targeting, AreaBlueprintSpec area)
         {
             if (area != null && area.Radius > 0f)
@@ -485,7 +485,7 @@ namespace Pakuri.InGame
             return Mathf.Max(0f, radius);
         }
 
-        /// 시각 효과 크기에서 영역 배율을 읽는다.
+        /// 판정 반경의 변화가 표현 크기에도 같은 비율로 보이게 한다.
         public static float PrefabScaleFactor(
             float baseRadius,
             float radiusMultiplier,

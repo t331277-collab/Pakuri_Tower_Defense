@@ -1,6 +1,6 @@
 /*
- * 역할: 투사체 스킬 전달 조정.
- * 책임: 확정된 발사 계획대로 Projectile Actor를 생성하고 후속 발사를 예약한다.
+ * 역할: 투사체 공격의 발사 계획을 실행한다.
+ * 책임: 확정된 방향과 순번에 맞춰 투사체를 만들고 후속 발사를 예약한다.
  */
 
 using System;
@@ -11,12 +11,12 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// 확정된 Projectile 발사 계획을 실행하고 충돌 판정은 ProjectileSkillActor에 맡긴다.
+    /// 시전 계획을 투사체 오브젝트로 바꾸고 이동과 적중 판정을 넘긴다.
     internal sealed class ProjectileSkillExecutor : MonoBehaviour
     {
         private EffectManager effects;
 
-        /// 투사체형 스킬의 실행 객체와 입력을 준비한다.
+        /// 후속 발사까지 유지할 임시 실행 오브젝트를 만든다.
         internal static bool Execute(
             SkillActionContext context,
             SkillExecutionData snapshot)
@@ -48,7 +48,7 @@ namespace Pakuri.InGame
             return instance.AddComponent<ProjectileSkillExecutor>().Initialize(context, snapshot);
         }
 
-        /// 투사체형 실행의 배치와 반복 조건을 시작한다.
+        /// 이번 발사 묶음을 배치하고 남은 후속 발사를 결정한다.
         private bool Initialize(
             SkillActionContext context,
             SkillExecutionData snapshot)
@@ -85,7 +85,7 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /// 예약된 후속 투사체를 실행한다.
+        /// 정해진 지연 뒤 같은 조준 방향으로 추가 발사를 잇는다.
         private IEnumerator ExecuteFollowUpProjectilesAfterDelay(
             SkillActionContext context,
             SkillExecutionData snapshot)
@@ -133,7 +133,7 @@ namespace Pakuri.InGame
             effects.RemoveEffect(gameObject);
         }
 
-        /// 투사체 실행 객체를 생성하고 입력을 전달한다.
+        /// 한 발의 표현과 이동, 충돌 입력을 완성한다.
         private static void SpawnProjectileActor(
             SkillActionContext context,
             SkillExecutionData snapshot,
@@ -213,7 +213,7 @@ namespace Pakuri.InGame
                 snapshot.CritDamageBonus);
         }
 
-        /// 순번에 대응하는 실행값을 고른다.
+        /// 발사 계획에 값이 없을 때 안전한 기본값을 사용한다.
         private static T ValueAt<T>(
             System.Collections.Generic.IReadOnlyList<T> values,
             int index,

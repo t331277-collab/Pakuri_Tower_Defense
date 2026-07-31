@@ -1,6 +1,6 @@
 /*
- * 역할: 단일 대상 스킬 전달 조정.
- * 책임: 확정된 Single 배치 계획을 순회하고 실제 판정을 Actor에 전달한다.
+ * 역할: 단발성 공격의 배치 계획을 실행한다.
+ * 책임: 확정된 중심마다 공격을 시작하고 반복 작업의 완료를 추적한다.
  */
 
 using UnityEngine;
@@ -8,10 +8,10 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-/// 확정된 Single 중심 계획을 실행하고 실제 판정은 SingleSkillActor에 맡긴다.
+/// 준비된 중심을 공격 오브젝트에 넘기고 모든 배치의 완료를 모은다.
 internal static class SingleSkillExecutor
 {
-	/// 단일형 스킬의 실행 객체와 입력을 준비한다.
+	/// 여러 중심과 후속 작업을 함께 추적할 실행 오브젝트를 만든다.
 	internal static bool Execute(
 		SkillActionContext context,
 		SkillExecutionData snapshot)

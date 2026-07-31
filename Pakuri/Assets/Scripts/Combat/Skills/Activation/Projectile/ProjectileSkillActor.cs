@@ -1,6 +1,6 @@
 /*
- * 역할: 런타임 투사체 이동과 충돌.
- * 책임: Projectile 이동·충돌·피해·상태·비주얼 수명과 완료를 소유한다.
+ * 역할: 투사체의 이동과 실제 적중을 진행한다.
+ * 책임: 이동, 충돌, 관통, 피해, 상태, 충돌 후 효과와 수명을 처리한다.
  */
 
 using System;
@@ -12,7 +12,7 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// ProjectileSkillActor 런타임 오브젝트를 나타내며 모델과 Unity 컴포넌트를 연결한다.
+    /// 발사된 투사체가 사라질 때까지 이동과 충돌 결과를 전투에 반영한다.
     public class ProjectileSkillActor : MonoBehaviour
     {
 
@@ -60,7 +60,7 @@ namespace Pakuri.InGame
         private bool visualOnly;
         private Collider2D[] hitboxColliders;
 
-        /// 투사체의 이동, 충돌과 후속 효과를 시작한다.
+        /// 기본 이동과 충돌 횟수, 종료 기준을 초기화한다.
         public void Initialize(
             InGameCombatManager manager,
             UnitCombatState source,
@@ -115,7 +115,7 @@ namespace Pakuri.InGame
             CacheHitboxColliders();
         }
 
-        /// 시각 효과의 수명을 정한다.
+        /// 판정 없이 표현만 남을 때 사라질 시점을 정한다.
         public float InitializeVisualLifetime(
             EffectManager manager,
             float durationSeconds)
@@ -126,7 +126,7 @@ namespace Pakuri.InGame
             return maxLifetime;
         }
 
-        /// 투사체의 충돌과 후속 효과를 완성한다.
+        /// 상태와 분기, 충돌 후 효과를 기본 이동 규칙에 결합한다.
         public void Initialize(
             InGameCombatManager manager,
             UnitCombatState source,
@@ -197,13 +197,13 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 충돌 영역을 준비한다.
+        /// 생성 직후 충돌 판정에 사용할 영역을 확보한다.
         private void Awake()
         {
             CacheHitboxColliders();
         }
 
-        /// 프레임 경과에 따라 이동과 수명을 갱신한다.
+        /// 이동, 지연 충돌 효과, 만료 시점을 매 프레임 진행한다.
         private void Update()
         {
             var deltaTime = Time.deltaTime;
@@ -240,7 +240,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 이동 결과를 전투 충돌 판정에 연결한다.
+        /// 이번 이동 경로와 겹친 대상을 순서대로 판정한다.
         private void TryHitRosterTargets(Vector2 movement)
         {
             if (combatManager == null || combatManager.Units == null || owner == null)
@@ -266,7 +266,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 충돌한 대상의 피해와 후속 처리를 시작한다.
+        /// 처음 만난 유효 대상에 직격 결과와 후속 규칙을 적용한다.
         private bool TryHitTarget(CombatUnitEntry target)
         {
             if (target == null || target.Model == null || !target.IsAlive || IsSameSide(target.Model))
@@ -321,7 +321,7 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /// 적중 대상에 맞는 피해 배율을 정한다.
+        /// 대상 조건과 연속 적중 횟수를 현재 피해 배율에 합친다.
         private float HitDamageMultiplier(UnitCombatState target)
         {
             var multiplier = SkillExecutionRuleResolver.ResolveHitDamageMultiplier(executionData, target);
@@ -340,7 +340,7 @@ namespace Pakuri.InGame
             return Mathf.Max(0f, multiplier);
         }
 
-        /// 투사체 적중 사건을 반응 흐름에 전달한다.
+        /// 탄창의 마지막 발사가 맞은 순간을 반응 판정에 알린다.
         private void TryRunProjectileHitTriggers()
         {
             if (!isMagazineLastProjectile || magazineLastProjectileTriggerFired)
@@ -358,7 +358,7 @@ namespace Pakuri.InGame
                 transform.position);
         }
 
-        /// 분기 피해 조건을 적중 결과에 반영한다.
+        /// 확률 조건을 통과하면 주변의 다른 대상에게 피해를 잇는다.
         private void TryApplyBranchDamage(
             CombatUnitEntry hitTarget,
             Vector2 hitPosition,
@@ -415,7 +415,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 분기 피해가 이어질 대상을 고른다.
+        /// 이미 맞힌 대상을 제외하고 가장 가까운 다음 대상을 고른다.
         private CombatUnitEntry FindNearestBranchTarget(
             IReadOnlyList<CombatUnitEntry> candidates,
             CombatUnitEntry hitTarget,
@@ -457,7 +457,7 @@ namespace Pakuri.InGame
             return best;
         }
 
-        /// 분기 피해 영역을 생성한다.
+        /// 분기된 두 지점을 짧은 연결 표현으로 보여준다.
         private void SpawnBranchDamageLine(Vector2 origin, Vector2 target)
         {
             const float durationSeconds = 0.12f;
@@ -480,7 +480,7 @@ namespace Pakuri.InGame
             lineActor.InitializeVisualLifetime(combatManager.Effects, durationSeconds);
         }
 
-        /// 대상이 발사자와 같은 진영인지 확인한다.
+        /// 아군 충돌을 피해 판정에서 제외한다.
         private bool IsSameSide(UnitCombatState target)
         {
             var ownerIdentity = owner.Identity;
@@ -490,7 +490,7 @@ namespace Pakuri.InGame
                 && ownerIdentity.Side == targetIdentity.Side;
         }
 
-        /// 투사체가 종료 경계를 넘었는지 확인한다.
+        /// 진행 방향을 기준으로 유효 이동 범위를 벗어났는지 확인한다.
         private bool HasPassedDestroyBoundary()
         {
             if (impactArmed)
@@ -503,7 +503,7 @@ namespace Pakuri.InGame
                 : transform.position.x < destroyBeyondX;
         }
 
-        /// 지연 충돌 후속 효과를 준비한다.
+        /// 첫 충돌 위치에 멈추고 후속 범위 효과의 시간을 시작한다.
         private void ArmImpact(CombatUnitEntry target, Vector2 hitPosition)
         {
             impactArmed = true;
@@ -522,7 +522,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 준비된 충돌 영역의 피해를 실행한다.
+        /// 멈춘 위치에서 충돌 후 표현과 범위 결과를 확정한다.
         private void Impact()
         {
             if (impactResolved || combatManager == null)
@@ -592,7 +592,7 @@ namespace Pakuri.InGame
             effects.RemoveEffect(gameObject);
         }
 
-        /// 투사체 종료 사건을 후속 효과에 전달한다.
+        /// 만료가 한 번만 후속 반응으로 이어지게 전달한다.
         private void TryExecuteOnExpireEffects()
         {
             if (expirePublished)
@@ -624,7 +624,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 투사체 충돌 영역을 저장한다.
+        /// 이동 경로 판정에 사용할 모든 충돌 영역을 모은다.
         private void CacheHitboxColliders()
         {
             hitboxColliders = GetComponentsInChildren<Collider2D>();
