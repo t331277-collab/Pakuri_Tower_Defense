@@ -145,7 +145,7 @@ namespace Pakuri.InGame
                     var targetKey = TargetKey(target.Model);
                     TryApplyStatus(combatManager, target.Model, statusSpec, sourceModel, targetKey, appliedBaseStatusTargets);
                 }
-                SkillExecution.ApplyHitEnhancements(
+                ZoneSkillActor.PublishHitOutcome(
                     combatManager,
                     roster,
                     runtime,

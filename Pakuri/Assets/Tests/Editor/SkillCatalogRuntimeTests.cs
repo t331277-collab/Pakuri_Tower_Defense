@@ -232,6 +232,9 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(chainTrigger.PublishSkillLifecycleEvents, Is.False);
         Assert.That(chainTrigger.TargetSkillId, Is.Empty);
         Assert.That(chainTrigger.Effect, Is.Not.Null);
+        Assert.That(
+            chainTrigger.Effect.ResolvedDefinition,
+            Is.TypeOf<SingleSkillDefinition>());
         Assert.That(chainTrigger.Effect.Damage, Is.SameAs(
             ((SingleSkillDefinition)chainSkill).Damage));
         Assert.That(
@@ -427,7 +430,12 @@ public sealed class SkillCatalogRuntimeTests
             Has.Count.EqualTo(4));
         Assert.That(
             triggers.FindAll(trigger => trigger.Effect != null),
-            Has.Count.EqualTo(57));
+            Has.Count.EqualTo(61));
+        Assert.That(
+            triggers.FindAll(trigger =>
+                trigger.Effect != null
+                && trigger.Effect.ResolvedDefinition == null),
+            Is.Empty);
         Assert.That(
             triggers.FindAll(trigger => trigger.Command != null),
             Has.Count.EqualTo(21));
@@ -477,6 +485,11 @@ public sealed class SkillCatalogRuntimeTests
                 !string.IsNullOrWhiteSpace(trigger.TargetSkillId)
                 && trigger.PublishSkillLifecycleEvents),
             Has.Count.EqualTo(4));
+        Assert.That(
+            triggers.FindAll(trigger =>
+                !string.IsNullOrWhiteSpace(trigger.TargetSkillId)
+                && trigger.Effect?.ResolvedDefinition == null),
+            Is.Empty);
         Assert.That(
             triggers.FindAll(trigger =>
                 trigger.Effect?.HasDamage == true),
@@ -662,8 +675,8 @@ public sealed class SkillCatalogRuntimeTests
 
         Assert.That(passiveReactionCount, Is.EqualTo(48));
         Assert.That(passiveReactionOutcomeCount, Is.EqualTo(48));
-        Assert.That(passiveEffectCount, Is.EqualTo(24));
-        Assert.That(passiveSkillReuseCount, Is.EqualTo(4));
+        Assert.That(passiveEffectCount, Is.EqualTo(28));
+        Assert.That(passiveSkillReuseCount, Is.EqualTo(0));
         Assert.That(passiveCommandCount, Is.EqualTo(20));
         Assert.That(cooldownRefundCount, Is.EqualTo(14));
         Assert.That(reloadReductionCount, Is.EqualTo(6));

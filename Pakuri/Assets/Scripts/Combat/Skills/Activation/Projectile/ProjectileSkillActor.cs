@@ -290,7 +290,7 @@ namespace Pakuri.InGame
                 {
                     StatusCombatRules.ApplyStatus(combatManager, target.Model, statusOnHit, owner);
                 }
-                SkillExecution.ApplyHitEnhancements(
+                ZoneSkillActor.PublishHitOutcome(
                     combatManager,
                     combatManager != null ? combatManager.Units : null,
                     runtime,
@@ -564,7 +564,7 @@ namespace Pakuri.InGame
 
             if (hasImpactArea)
             {
-                SkillExecution.ApplyAreaHits(
+                ZoneSkillActor.ApplyAreaTargets(
                     combatManager,
                     combatManager.Units != null ? combatManager.Units.Find(owner) : null,
                     combatManager.Units,

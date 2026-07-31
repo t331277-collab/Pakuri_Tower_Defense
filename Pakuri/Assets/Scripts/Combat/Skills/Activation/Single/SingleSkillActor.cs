@@ -477,7 +477,7 @@ public partial class SingleSkillActor
 					StatusCombatRules.ApplyStatus(manager, unitEntry.Model, statusSpec, source);
 				}
 				TryApplyCoreOnHitAdditionalDamage(manager, snapshot, source, sourceSkillId, unitEntry, damageResolution.Damage, isCoreHit);
-				SkillExecution.ApplyHitEnhancements(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry, hitPosition, damageResolution.Damage);
+				ZoneSkillActor.PublishHitOutcome(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry, hitPosition, damageResolution.Damage);
 				result = true;
 				num++;
 				if (num >= maxTargets)
@@ -515,7 +515,7 @@ public partial class SingleSkillActor
 			{
 				StatusCombatRules.ApplyStatus(manager, unitEntry.Model, statusSpec, source);
 			}
-			SkillExecution.ApplyHitEnhancements(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry, hitPosition, damageResolution.Damage);
+				ZoneSkillActor.PublishHitOutcome(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry, hitPosition, damageResolution.Damage);
 			result = true;
 			num++;
 			if (num >= maxTargets)
@@ -554,7 +554,7 @@ public partial class SingleSkillActor
 			{
 				StatusCombatRules.ApplyStatus(manager, unitEntry.Model, statusSpec, source);
 			}
-			SkillExecution.ApplyHitEnhancements(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry, hitPosition, damageResolution.Damage);
+				ZoneSkillActor.PublishHitOutcome(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry, hitPosition, damageResolution.Damage);
 			TryApplyHitCountCooldownRefund(sourceRuntime, snapshot, 1);
 			TryExecuteOnHitCountEffects(manager, unitRoster, sourceEntry, sourceRuntime, snapshot, 1, center);
 			return true;
@@ -578,7 +578,7 @@ public partial class SingleSkillActor
 				{
 					StatusCombatRules.ApplyStatus(manager, unitEntry2.Model, statusSpec, source);
 				}
-				SkillExecution.ApplyHitEnhancements(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry2, hitPosition2, damageResolution2.Damage);
+				ZoneSkillActor.PublishHitOutcome(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry2, hitPosition2, damageResolution2.Damage);
 				result2 = true;
 				num++;
 			}

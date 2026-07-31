@@ -39,6 +39,7 @@ namespace Pakuri.InGame
         private Collider2D[] prefabHitboxColliders;
         private bool usePrefabHitbox;
         private int recastGeneration;
+        private static bool applyingHitEnhancement;
 
         /// 영역의 범위, 지속과 적중 규칙을 시작한다.
         public void Initialize(
@@ -165,7 +166,7 @@ namespace Pakuri.InGame
                     snapshot);
             }
 
-            return SkillExecution.ApplyAreaHits(
+            return ApplyAreaTargets(
                 combatManager,
                 casterEntry,
                 roster,
@@ -219,7 +220,7 @@ namespace Pakuri.InGame
                 Vector2.zero,
                 eligibleTargets);
 
-            var routed = SkillExecution.ApplyResolvedHits(
+            var routed = ApplyResolvedTargets(
                 manager,
                 sourceEntry,
                 unitRoster,
@@ -236,6 +237,351 @@ namespace Pakuri.InGame
                 critDamageBonus,
                 executionData);
             return routed;
+        }
+
+        /// 범위 대상 목록을 물리 적중과 후속 사건으로 연결한다.
+        internal static bool ApplyAreaTargets(
+            InGameCombatManager manager,
+            CombatUnitEntry sourceEntry,
+            UnitSpawnManager unitRoster,
+            SkillTargetingSpec targetingSpec,
+            Vector2 center,
+            float radius,
+            bool coverAll,
+            float damage,
+            DamageAttribute damageAttribute,
+            StatusApplicationSpec onHitStatus,
+            UnitCombatState source,
+            string sourceSkillId,
+            SkillExecutionData sourceRuntime,
+            bool criticalAllowed,
+            float critChanceBonus,
+            float critDamageBonus,
+            int maxTargets,
+            SkillExecutionData executionData)
+        {
+            if (manager == null || sourceEntry == null || unitRoster == null)
+            {
+                return false;
+            }
+
+            if (!coverAll && radius <= 0f)
+            {
+                var target = SkillTargeting.FindNearestTarget(
+                    sourceEntry,
+                    unitRoster,
+                    targetingSpec);
+                return ApplyResolvedTargets(
+                    manager,
+                    sourceEntry,
+                    unitRoster,
+                    target != null ? new[] { target } : Array.Empty<CombatUnitEntry>(),
+                    1,
+                    damage,
+                    damageAttribute,
+                    onHitStatus,
+                    source,
+                    sourceSkillId,
+                    sourceRuntime,
+                    criticalAllowed,
+                    critChanceBonus,
+                    critDamageBonus,
+                    executionData);
+            }
+
+            var candidates = SkillTargeting.TargetList(
+                sourceEntry,
+                unitRoster,
+                targetingSpec);
+            var radiusSquared = Mathf.Max(0f, radius) * Mathf.Max(0f, radius);
+            var hitUnitIds = new HashSet<string>();
+            var eligibleTargets = new List<CombatUnitEntry>();
+            for (var i = 0; i < candidates.Count; i++)
+            {
+                var target = candidates[i];
+                if (target == null
+                    || !target.IsAlive
+                    || target.Model == null
+                    || target.Transform == null)
+                {
+                    continue;
+                }
+
+                var unitId = target.Model.Identity != null
+                    ? target.Model.Identity.UnitId
+                    : null;
+                if (!string.IsNullOrWhiteSpace(unitId)
+                    && !hitUnitIds.Add(unitId))
+                {
+                    continue;
+                }
+                if (!coverAll
+                    && ((Vector2)target.Transform.position - center).sqrMagnitude > radiusSquared)
+                {
+                    continue;
+                }
+
+                eligibleTargets.Add(target);
+            }
+
+            return ApplyResolvedTargets(
+                manager,
+                sourceEntry,
+                unitRoster,
+                eligibleTargets,
+                maxTargets,
+                damage,
+                damageAttribute,
+                onHitStatus,
+                source,
+                sourceSkillId,
+                sourceRuntime,
+                criticalAllowed,
+                critChanceBonus,
+                critDamageBonus,
+                executionData);
+        }
+
+        /// 선택된 대상에 피해와 상태, 적중 사건을 적용한다.
+        internal static bool ApplyResolvedTargets(
+            InGameCombatManager manager,
+            CombatUnitEntry sourceEntry,
+            UnitSpawnManager unitRoster,
+            IReadOnlyList<CombatUnitEntry> eligibleTargets,
+            int maxTargets,
+            float damage,
+            DamageAttribute damageAttribute,
+            StatusApplicationSpec onHitStatus,
+            UnitCombatState source,
+            string sourceSkillId,
+            SkillExecutionData sourceRuntime,
+            bool criticalAllowed,
+            float critChanceBonus,
+            float critDamageBonus,
+            SkillExecutionData executionData)
+        {
+            if (manager == null
+                || eligibleTargets == null
+                || eligibleTargets.Count == 0)
+            {
+                return false;
+            }
+
+            var selectedTargets = new List<CombatUnitEntry>(eligibleTargets);
+            if (maxTargets > 0 && maxTargets < selectedTargets.Count)
+            {
+                for (var i = 0; i < maxTargets; i++)
+                {
+                    var randomIndex = UnityEngine.Random.Range(i, selectedTargets.Count);
+                    (selectedTargets[i], selectedTargets[randomIndex]) =
+                        (selectedTargets[randomIndex], selectedTargets[i]);
+                }
+                selectedTargets.RemoveRange(
+                    maxTargets,
+                    selectedTargets.Count - maxTargets);
+            }
+
+            var routed = false;
+            for (var i = 0; i < selectedTargets.Count; i++)
+            {
+                var target = selectedTargets[i];
+                if (target == null || !target.IsAlive || target.Model == null)
+                {
+                    continue;
+                }
+
+                var hitPosition = target.Transform != null
+                    ? (Vector2)target.Transform.position
+                    : Vector2.zero;
+                var resolvedDamage = Mathf.Max(0f, damage);
+                var finalDamageMultiplier =
+                    SkillExecutionRuleResolver.ResolveHitDamageMultiplier(
+                        executionData,
+                        target.Model);
+                var result = manager.ApplyDamage(
+                    target.Model,
+                    resolvedDamage,
+                    damageAttribute,
+                    source,
+                    criticalAllowed,
+                    critChanceBonus,
+                    critDamageBonus,
+                    sourceSkillId,
+                    finalDamageMultiplier: finalDamageMultiplier);
+                if (!result.IsDead)
+                {
+                    StatusCombatRules.ApplyStatus(
+                        manager,
+                        target.Model,
+                        onHitStatus,
+                        source);
+                }
+                PublishHitOutcome(
+                    manager,
+                    sourceRuntime != null ? unitRoster : null,
+                    sourceRuntime,
+                    executionData,
+                    sourceEntry,
+                    source,
+                    sourceSkillId,
+                    target,
+                    hitPosition,
+                    resolvedDamage);
+                routed = true;
+            }
+
+            return routed;
+        }
+
+        /// 적중 사건과 적중 후속 값을 같은 Actor 경로에서 처리한다.
+        internal static void PublishHitOutcome(
+            InGameCombatManager manager,
+            UnitSpawnManager unitRoster,
+            SkillExecutionData runtime,
+            SkillExecutionData skillData,
+            CombatUnitEntry sourceEntry,
+            UnitCombatState source,
+            string sourceSkillId,
+            CombatUnitEntry hitTarget,
+            Vector2 hitPosition,
+            float primaryBaseDamage)
+        {
+            if (manager != null
+                && unitRoster != null
+                && source != null
+                && hitTarget != null
+                && hitTarget.Model != null)
+            {
+                var actionExecutionContext = new SkillActionContext(
+                    manager,
+                    unitRoster,
+                    sourceEntry,
+                    runtime,
+                    hitTarget.Model,
+                    publishSkillLifecycleEvents: runtime != null,
+                    sourceSkillId: sourceSkillId);
+                SkillTrigger.PublishLifecycleEvent(
+                    SkillTriggerEvent.OnHit,
+                    new SkillActionContext(
+                        source,
+                        sourceSkillId,
+                        hitTarget.Model,
+                        hitPosition,
+                        primaryBaseDamage,
+                        1,
+                        skillData,
+                        actionExecutionContext));
+            }
+
+            if (manager == null
+                || unitRoster == null
+                || skillData == null
+                || source == null
+                || hitTarget == null
+                || hitTarget.Model == null
+                || primaryBaseDamage <= 0f
+                || applyingHitEnhancement)
+            {
+                return;
+            }
+
+            var hasReloadReduction =
+                !string.IsNullOrWhiteSpace(skillData.ReloadReduceTargetSkillId)
+                && skillData.ReloadReduceSecondsPerHit > 0f;
+            if (!skillData.HasOnHitAdditionalDamageBehavior && !hasReloadReduction)
+            {
+                return;
+            }
+
+            var hitIndex = runtime != null
+                ? SkillExecution.AdvanceSkillHitCount(runtime)
+                : 0;
+            applyingHitEnhancement = true;
+            try
+            {
+                if (hasReloadReduction
+                    && runtime != null
+                    && runtime.Owner != null
+                    && runtime.Owner.Skills != null)
+                {
+                    var reloadSkill = runtime.Owner.SkillState.FindBySkillId(
+                        skillData.ReloadReduceTargetSkillId);
+                    if (reloadSkill != null && reloadSkill.IsReloading)
+                    {
+                        SkillExecution.ReduceReloadRemaining(
+                            reloadSkill,
+                            skillData.ReloadReduceSecondsPerHit);
+                    }
+                }
+
+                var targetsHitUnit = string.IsNullOrWhiteSpace(
+                        skillData.OnHitAdditionalDamageTarget)
+                    || string.Equals(
+                        skillData.OnHitAdditionalDamageTarget,
+                        "HitTarget",
+                        StringComparison.OrdinalIgnoreCase);
+                if (skillData.HasOnHitAdditionalDamage
+                    && skillData.OnHitAdditionalDamageMultiplier > 0f
+                    && targetsHitUnit
+                    && hitTarget.IsAlive
+                    && UnityEngine.Random.value <= Mathf.Clamp01(
+                        skillData.OnHitAdditionalDamageChance))
+                {
+                    manager.ApplyDamage(
+                        hitTarget.Model,
+                        primaryBaseDamage,
+                        skillData.OnHitAdditionalDamageAttribute,
+                        source,
+                        criticalAllowed: false,
+                        0f,
+                        0f,
+                        sourceSkillId,
+                        suppressOutgoingDamageTriggers: true,
+                        finalDamageMultiplier:
+                            skillData.OnHitAdditionalDamageMultiplier);
+                }
+
+                if (skillData.HasOnHitChainDamageBehavior
+                    && hitIndex > 0
+                    && hitIndex % skillData.OnHitChainHitPeriod == 0)
+                {
+                    var chainTargets = SkillTargeting.ChainTargets(
+                        unitRoster,
+                        sourceEntry,
+                        source,
+                        hitTarget,
+                        hitPosition,
+                        skillData.OnHitChainSearchRadius);
+                    var targetCount = Mathf.Min(
+                        skillData.OnHitChainTargetCount,
+                        chainTargets.Count);
+                    for (var i = 0; i < targetCount; i++)
+                    {
+                        var chainTarget = chainTargets[i];
+                        if (chainTarget != null
+                            && chainTarget.IsAlive
+                            && chainTarget.Model != null)
+                        {
+                            manager.ApplyDamage(
+                                chainTarget.Model,
+                                primaryBaseDamage,
+                                skillData.OnHitChainDamageAttribute,
+                                source,
+                                criticalAllowed: false,
+                                0f,
+                                0f,
+                                sourceSkillId,
+                                suppressOutgoingDamageTriggers: true,
+                                finalDamageMultiplier:
+                                    skillData.OnHitChainDamageMultiplier);
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                applyingHitEnhancement = false;
+            }
         }
 
         /// 실행에 사용할 원본 스킬 식별자를 고른다.
