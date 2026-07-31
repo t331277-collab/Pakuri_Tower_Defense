@@ -1053,6 +1053,43 @@ namespace Pakuri.InGame
                 * ConditionalDamageMultiplier(snapshot, target);
         }
 
+        /// 연속 적중 횟수에 따른 피해 배율을 계산한다.
+        internal static float ResolveConsecutiveHitDamageMultiplier(
+            SkillExecutionData runtime,
+            SkillExecutionData snapshot,
+            int repeatCount)
+        {
+            if (runtime == null || repeatCount < 0)
+            {
+                return 1f;
+            }
+
+            var projectileData = runtime.Data as ProjectileSkillDefinition;
+            var bonusRate = projectileData != null
+                ? projectileData.ConsecutiveHitBonusRate
+                : 0f;
+            var bonusMax = projectileData != null
+                ? projectileData.ConsecutiveHitMax
+                : 0f;
+            if (snapshot != null && snapshot.ConsecutiveHitBonusRate > 0f)
+            {
+                bonusRate = snapshot.ConsecutiveHitBonusRate;
+            }
+            if (snapshot != null && snapshot.ConsecutiveHitMax > 0f)
+            {
+                bonusMax = snapshot.ConsecutiveHitMax;
+            }
+            if (bonusRate <= 0f || bonusMax <= 0f)
+            {
+                return 1f;
+            }
+
+            var bonus = Mathf.Min(
+                Mathf.Max(0f, bonusMax),
+                Mathf.Max(0f, bonusRate) * repeatCount);
+            return 1f + bonus;
+        }
+
         /// 적중 대상 조건의 치명타 보정을 계산한다.
         internal static float ResolveHitCritChanceBonus(
             SkillExecutionData snapshot,

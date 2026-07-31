@@ -328,10 +328,13 @@ namespace Pakuri.InGame
 
             if (runtime != null && executionData != null)
             {
-                multiplier *= SkillExecution.ConsecutiveHitDamageMultiplier(
+                var repeatCount = SkillExecution.AdvanceConsecutiveHitCount(
+                    runtime,
+                    target);
+                multiplier *= SkillExecutionRuleResolver.ResolveConsecutiveHitDamageMultiplier(
                     runtime,
                     executionData,
-                    target);
+                    repeatCount);
             }
 
             return Mathf.Max(0f, multiplier);

@@ -85,31 +85,14 @@ namespace Pakuri.InGame
             return runtime.SkillHitCount;
         }
 
-        /// 연속 적중 흐름에 맞는 피해 배율을 계산한다.
-        public static float ConsecutiveHitDamageMultiplier(
+        /// 연속 적중 상태를 다음 적중 기준으로 갱신한다.
+        public static int AdvanceConsecutiveHitCount(
             SkillExecutionData runtime,
-            SkillExecutionData snapshot,
             UnitCombatState target)
         {
             if (runtime == null || target == null)
             {
-                return 1f;
-            }
-
-            var projectileData = runtime.Data as ProjectileSkillDefinition;
-            var bonusRate = projectileData != null ? projectileData.ConsecutiveHitBonusRate : 0f;
-            var bonusMax = projectileData != null ? projectileData.ConsecutiveHitMax : 0f;
-            if (snapshot != null && snapshot.ConsecutiveHitBonusRate > 0f)
-            {
-                bonusRate = snapshot.ConsecutiveHitBonusRate;
-            }
-            if (snapshot != null && snapshot.ConsecutiveHitMax > 0f)
-            {
-                bonusMax = snapshot.ConsecutiveHitMax;
-            }
-            if (bonusRate <= 0f || bonusMax <= 0f)
-            {
-                return 1f;
+                return -1;
             }
 
             var unitId = target.Identity != null ? target.Identity.UnitId : string.Empty;
@@ -117,7 +100,7 @@ namespace Pakuri.InGame
             {
                 runtime.consecutiveHitTargetUnitId = string.Empty;
                 runtime.consecutiveHitRepeatCount = 0;
-                return 1f;
+                return 0;
             }
 
             if (string.Equals(runtime.consecutiveHitTargetUnitId, unitId, StringComparison.Ordinal))
@@ -132,10 +115,7 @@ namespace Pakuri.InGame
                 runtime.consecutiveHitRepeatCount = 0;
             }
 
-            var bonus = Mathf.Min(
-                Mathf.Max(0f, bonusMax),
-                Mathf.Max(0f, bonusRate) * runtime.consecutiveHitRepeatCount);
-            return 1f + bonus;
+            return runtime.consecutiveHitRepeatCount;
         }
 
         /// 시간 경과를 실행 상태에 반영한다.
