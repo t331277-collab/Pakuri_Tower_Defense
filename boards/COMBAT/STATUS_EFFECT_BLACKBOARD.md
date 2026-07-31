@@ -909,11 +909,11 @@ Code Builder.
 
 ### Status
 
-User approved effect restoration and Code Builder implementation. Phases 1-2 complete.
+User approved effect restoration and Code Builder implementation. Phases 1-3 complete.
 
 ### Next Actions
 
-- Implement Phase 3 existing-skill reactions.
+- Implement Phase 4 non-Trigger extraction and normal Skill/Choice/Passive effect restoration.
 - Commit and verify each remaining phase separately.
 - Run the approved Code Reviewer loop after Phase 8.
 
@@ -931,6 +931,9 @@ User approved effect restoration and Code Builder implementation. Phases 1-2 com
 - `SkillCatalogRuntimeTests.TriggerSemanticClassificationBaselineIsStable` fixes the semantic `65/17/76` owner classification.
 - Phase 1 solution build completed with error 0; Unity focused EditMode test passed 1/1 and loaded catalog 5/8/8.
 - Phase 2 routes preparation and Executors by existing `SkillRuntimeKind`; solution build error 0 and Unity EditMode 13/13.
+- Current `AreaAttack` data has both `SingleSkillDefinition` (`Slash`, `FireDragonSlash`) and Zone-family results, so Phase 2 validates and preserves that existing family split.
+- Phase 3 replaces the common `TryExecuteTriggered` dependency on the full Trigger Definition with `TryExecuteReaction`, passing existing runtime, Definition, snapshot runtime, and primitive execution adjustments.
+- Phase 3 solution build completed with error 0; Unity forced script compile and full EditMode tests passed 14/14.
 
 ### History
 
@@ -941,3 +944,4 @@ User approved effect restoration and Code Builder implementation. Phases 1-2 com
 - 2026-07-31: User approved restoring the 17 event-driven effects and 64 normal cast effects, assigned Code Builder, and required per-phase commits plus Reviewer approval.
 - 2026-07-31: Code Builder completed the Phase 1 classification baseline.
 - 2026-07-31: Code Builder completed Phase 2 runtime-kind executor routing.
+- 2026-07-31: Code Builder completed Phase 3 existing-skill runtime reuse.

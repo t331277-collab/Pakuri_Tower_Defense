@@ -38,7 +38,7 @@
 
 ## Status
 
-사용자가 `65 working / 17 incomplete / 76 non-Trigger` 분류, 17개 Trigger 효과 복구, 64개 일반 Choice/base/passive 효과 복구를 승인했다. Code Builder Phase 1 기준선 고정과 검증 완료.
+사용자가 `65 working / 17 incomplete / 76 non-Trigger` 분류, 17개 Trigger 효과 복구, 64개 일반 Choice/base/passive 효과 복구를 승인했다. Code Builder Phase 1~3 구현과 비-Play-Mode 검증 완료.
 
 ## Core decision
 
@@ -335,7 +335,8 @@ ariel-j-after-e-action-speed-trigger
 MagazineProjectile / CooldownProjectile -> ProjectileSkillExecutor
 LineAttack                              -> LineSkillExecutor
 SingleAttack / Mark / Execute           -> SingleSkillExecutor
-AreaAttack / Field                      -> ZoneSkillExecutor
+AreaAttack                              -> 현재 Definition family에 따라 SingleSkillExecutor 또는 ZoneSkillExecutor
+Field                                   -> ZoneSkillExecutor
 Buff / Shield / Heal                    -> BuffSkillExecutor
 Passive                                 -> 직접 실행하지 않음
 ```
@@ -698,6 +699,12 @@ SkillTrigger 공통 gate
 
 - `ExecuteSkill` 4개를 hidden Definition 없이 실제 target runtime snapshot으로 실행.
 - 같은 skill 재실행 Node를 공통 경로에 연결.
+- 완료 증거:
+  - `SkillExecution.TryExecuteReaction`은 `SkillTriggerDefinition` 전체를 받지 않고 기존 `SkillUseState`, `SkillDefinition`, snapshot runtime과 실행 보정값만 받는다.
+  - `SkillTrigger.TryExecuteOutcome`은 `UsesExistingSkillRuntime` 결과에서 실제 learned target runtime을 찾아 그 runtime과 Definition을 공통 실행 경로에 전달한다.
+  - 임시 direct-delivery 결과는 기존 source runtime으로 snapshot을 만들고 현재 generated Definition을 실행하므로 Phase 5 이전 동작을 보존한다.
+  - 재귀 깊이 8, lifecycle 발행, event target 고정, raw damage override, damage multiplier 계약을 유지한다.
+  - solution build 오류 0, Unity 강제 script compile 뒤 EditMode 14/14 통과.
 
 ### Phase 4: Non-Trigger extraction
 
@@ -794,7 +801,7 @@ SkillTrigger 공통 gate
 
 ## Next Actions
 
-- Code Builder가 Phase 1 기준선부터 구현한다.
+- Code Builder가 Phase 4 비-Trigger 분리와 정상 효과 복구를 구현한다.
 - 각 Phase의 변경과 검증 결과를 별도 Git commit으로 기록한다.
 - Phase 8과 전체 검증 후 Code Reviewer 롤로 전환한다.
 - Reviewer가 수정을 요구하면 Code Reviewer 롤로 수정·재검증하고 통과할 때까지 반복한다.
@@ -823,6 +830,9 @@ SkillTrigger 공통 gate
 - Ariel-B audit: trait 1~3 are Choice modifiers, trait 4 is OnShieldExpire damage, trait 5 is an OnCast status modifier with no current runtime outcome, master 2 is OnShieldAbsorb damage.
 - Phase 1 test: `Pakuri/Assets/Tests/Editor/SkillCatalogRuntimeTests.cs`
 - Phase 1 verification: solution build error 0; Unity EditMode `TriggerSemanticClassificationBaselineIsStable` 1/1.
+- Phase 2 verification: solution build error 0; Unity EditMode 13/13.
+- Phase 2 family exception: authored `Slash`와 `FireDragonSlash`는 `SkillRuntimeKind.AreaAttack`이지만 CSV `DamageArea` Generation 결과가 `SingleSkillDefinition`이다. 따라서 현재 `AreaAttack`은 기존 Definition family를 검증해 Single 또는 Zone Executor를 선택한다.
+- Phase 3 verification: `TryExecuteTriggered` 참조 0; `TryExecuteReaction`이 Trigger Definition 없이 기존 runtime/Definition을 받는다; solution build error 0; Unity EditMode 14/14.
 
 ## History
 
@@ -836,3 +846,4 @@ SkillTrigger 공통 gate
 - 2026-07-31: User assigned Code Builder, required one Git commit per Phase, and approved repeated Code Reviewer correction passes until approval.
 - 2026-07-31: Code Builder completed Phase 1 semantic baseline test and non-Play-Mode verification.
 - 2026-07-31: Code Builder completed Phase 2 runtime-kind executor routing and full EditMode verification.
+- 2026-07-31: Code Builder completed Phase 3 existing-skill runtime reuse and removed the common execution entry point's dependency on `SkillTriggerDefinition`.

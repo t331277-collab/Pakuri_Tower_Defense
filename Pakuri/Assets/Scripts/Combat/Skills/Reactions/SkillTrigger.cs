@@ -769,13 +769,24 @@ internal static class SkillTrigger
 			return false;
 		}
 
-		SkillUseState runtime = source.SkillState.FindBySkillId(trigger.SourceSkillId);
+		SkillUseState sourceRuntime = source.SkillState.FindBySkillId(trigger.SourceSkillId);
 		if (trigger.TriggeredSkill != null)
 		{
+			if (sourceRuntime == null)
+			{
+				return false;
+			}
+
+			var runtime = trigger.UsesExistingSkillRuntime
+				? source.SkillState.FindBySkillId(trigger.TriggeredSkill.SkillId)
+				: new SkillUseState(source, trigger.TriggeredSkill);
 			if (runtime == null)
 			{
 				return false;
 			}
+			var snapshotRuntime = trigger.UsesExistingSkillRuntime
+				? runtime
+				: sourceRuntime;
 
 			var targetPoint = triggerContext.EventCenter;
 			if (trigger.CenterMode == SkillTriggerCenterMode.Caster
@@ -795,10 +806,14 @@ internal static class SkillTrigger
 
 			var hasRawDamageOverride =
 				trigger.DamageValueSource != SkillTriggerDamageValueSource.Fixed;
-			return combatManager.SkillExecution.TryExecuteTriggered(
+			var beginCast = trigger.UsesExistingSkillRuntime
+				&& trigger.TriggeredSkill is BuffSkillDefinition triggeredBuff
+				&& triggeredBuff.EffectKind == BuffEffectKind.Charge;
+			return combatManager.SkillExecution.TryExecuteReaction(
 				sourceEntry,
 				runtime,
-				trigger,
+				snapshotRuntime,
+				trigger.TriggeredSkill,
 				roster,
 				combatManager,
 				triggerContext.EventTarget,
@@ -806,7 +821,12 @@ internal static class SkillTrigger
 				true,
 				hasRawDamageOverride,
 				ResolveTriggeredRawDamage(trigger, triggerContext),
-				triggerContext.RecastGeneration);
+				triggerContext.RecastGeneration,
+				trigger.TriggeredDamageMultiplier,
+				trigger.SourceSkillId,
+				trigger.LockToEventTarget,
+				trigger.PublishSkillLifecycleEvents,
+				beginCast);
 		}
 
 		if (trigger.Command != null)
@@ -816,7 +836,7 @@ internal static class SkillTrigger
 				roster,
 				sourceEntry,
 				source,
-				runtime,
+				sourceRuntime,
 				trigger.Command,
 				triggerContext);
 		}

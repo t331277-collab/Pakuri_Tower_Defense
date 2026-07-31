@@ -201,11 +201,12 @@ namespace Pakuri.InGame
                 null);
         }
 
-        /// 전달된 런타임 입력값을 사용해 ExecuteTriggered 작업을 시도하고 성공 여부를 반환한다.
-        public bool TryExecuteTriggered(
+        /// 전달된 런타임 입력값을 사용해 Reaction 작업을 시도하고 성공 여부를 반환한다.
+        public bool TryExecuteReaction(
             CombatUnitEntry entry,
-            SkillUseState sourceRuntime,
-            SkillTriggerDefinition trigger,
+            SkillUseState runtime,
+            SkillUseState snapshotRuntime,
+            SkillDefinition definition,
             UnitSpawnManager roster,
             InGameCombatManager combatManager,
             UnitCombatState eventTarget,
@@ -213,35 +214,29 @@ namespace Pakuri.InGame
             bool hasTargetPoint,
             bool hasRawDamageOverride,
             float rawDamageOverride,
-            int recastGeneration)
+            int recastGeneration,
+            float damageMultiplier,
+            string sourceSkillId,
+            bool lockToEventTarget,
+            bool publishSkillLifecycleEvents,
+            bool beginCast)
         {
             if (entry == null
-                || sourceRuntime == null
-                || trigger == null
-                || trigger.TriggeredSkill == null
+                || runtime == null
+                || snapshotRuntime == null
+                || definition == null
                 || triggeredExecutionDepth >= MaxTriggeredExecutionDepth)
             {
                 return false;
             }
 
-            var runtime = trigger.UsesExistingSkillRuntime
-                ? entry.Model.SkillState.FindBySkillId(trigger.TriggeredSkill.SkillId)
-                : new SkillUseState(entry.Model, trigger.TriggeredSkill);
-            if (runtime == null)
-            {
-                return false;
-            }
-
-            var snapshotRuntime = trigger.UsesExistingSkillRuntime
-                ? runtime
-                : sourceRuntime;
             var snapshot = entry.Model.SkillState.CreateExecutionData(
                 entry.Model,
                 snapshotRuntime,
                 roster);
-            if (!Mathf.Approximately(trigger.TriggeredDamageMultiplier, 1f))
+            if (!Mathf.Approximately(damageMultiplier, 1f))
             {
-                snapshot.ApplyDynamicDamageMultiplier(trigger.TriggeredDamageMultiplier);
+                snapshot.ApplyDynamicDamageMultiplier(damageMultiplier);
             }
             if (hasRawDamageOverride)
             {
@@ -251,16 +246,13 @@ namespace Pakuri.InGame
             var aimDirection = entry.Transform != null && hasTargetPoint
                 ? targetPoint - (Vector2)entry.Transform.position
                 : default;
-            var beginTriggeredCast = trigger.UsesExistingSkillRuntime
-                && trigger.TriggeredSkill is BuffSkillDefinition triggeredBuff
-                && triggeredBuff.EffectKind == BuffEffectKind.Charge;
             try
             {
                 triggeredExecutionDepth++;
                 return ExecutePrepared(
                     entry,
                     runtime,
-                    trigger.TriggeredSkill,
+                    definition,
                     snapshot,
                     roster,
                     combatManager,
@@ -268,11 +260,11 @@ namespace Pakuri.InGame
                     aimDirection,
                     hasTargetPoint,
                     targetPoint,
-                    beginTriggeredCast,
-                    trigger.SourceSkillId,
+                    beginCast,
+                    sourceSkillId,
                     eventTarget,
-                    trigger.LockToEventTarget,
-                    trigger.PublishSkillLifecycleEvents,
+                    lockToEventTarget,
+                    publishSkillLifecycleEvents,
                     recastGeneration);
             }
             finally
@@ -488,6 +480,12 @@ namespace Pakuri.InGame
                     RequireDefinition<SingleSkillDefinition>(skillData);
                     return SingleSkillExecutor.Execute(context, snapshot);
                 case SkillRuntimeKind.AreaAttack:
+                    if (skillData is SingleSkillDefinition)
+                    {
+                        return SingleSkillExecutor.Execute(context, snapshot);
+                    }
+                    RequireDefinition<ZoneSkillDefinition>(skillData);
+                    return ZoneSkillExecutor.Execute(context, snapshot);
                 case SkillRuntimeKind.Field:
                     RequireDefinition<ZoneSkillDefinition>(skillData);
                     return ZoneSkillExecutor.Execute(context, snapshot);
@@ -534,6 +532,16 @@ namespace Pakuri.InGame
                         snapshot,
                         RequireDefinition<SingleSkillDefinition>(definition));
                 case SkillRuntimeKind.AreaAttack:
+                    if (definition is SingleSkillDefinition areaSingle)
+                    {
+                        return PrepareSingleExecutionData(context, snapshot, areaSingle);
+                    }
+                    return PrepareZoneExecutionData(
+                        context,
+                        snapshot,
+                        RequireDefinition<ZoneSkillDefinition>(definition),
+                        null,
+                        null);
                 case SkillRuntimeKind.Field:
                     return PrepareZoneExecutionData(
                         context,

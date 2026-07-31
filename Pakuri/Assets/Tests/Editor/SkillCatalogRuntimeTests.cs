@@ -256,18 +256,11 @@ public sealed class SkillCatalogRuntimeTests
             var runtime = new SkillUseState(owner, charge);
             owner.SkillState.AddOrReplace(runtime);
             var entry = new CombatUnitEntry(owner, actorObject.transform);
-            var trigger = new SkillTriggerDefinition
-            {
-                SourceSkillId = charge.SkillId,
-                TriggeredSkill = charge,
-                UsesExistingSkillRuntime = true,
-                PublishSkillLifecycleEvents = false
-            };
-
-            var executed = new SkillExecution().TryExecuteTriggered(
+            var executed = new SkillExecution().TryExecuteReaction(
                 entry,
                 runtime,
-                trigger,
+                runtime,
+                charge,
                 null,
                 null,
                 null,
@@ -275,7 +268,12 @@ public sealed class SkillCatalogRuntimeTests
                 false,
                 false,
                 0f,
-                0);
+                0,
+                1f,
+                charge.SkillId,
+                false,
+                false,
+                true);
 
             Assert.That(executed, Is.True);
             Assert.That(runtime.IsActive, Is.True);
@@ -530,6 +528,11 @@ public sealed class SkillCatalogRuntimeTests
                     Assert.That(definition, Is.TypeOf<SingleSkillDefinition>(), definition.SkillId);
                     break;
                 case SkillRuntimeKind.AreaAttack:
+                    Assert.That(
+                        definition is SingleSkillDefinition || definition is ZoneSkillDefinition,
+                        Is.True,
+                        definition.SkillId);
+                    break;
                 case SkillRuntimeKind.Field:
                     Assert.That(definition, Is.TypeOf<ZoneSkillDefinition>(), definition.SkillId);
                     break;

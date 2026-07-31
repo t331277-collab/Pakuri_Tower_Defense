@@ -480,11 +480,11 @@ Code Builder.
 
 ### Status
 
-User approved Generation/runtime implementation. Phases 1-2 complete; Parsing and Generation contracts remain unchanged.
+User approved Generation/runtime implementation. Phases 1-3 complete; Parsing and Generation contracts remain unchanged.
 
 ### Next Actions
 
-- Implement Phase 3 existing-skill reactions without changing the authoring schema.
+- Implement Phase 4 non-Trigger extraction and normal Skill/Choice/Passive effect restoration without changing the authoring schema.
 
 ### Evidence
 
@@ -499,6 +499,8 @@ User approved Generation/runtime implementation. Phases 1-2 complete; Parsing an
 - `SkillCatalogRuntimeTests.TriggerSemanticClassificationBaselineIsStable` fixes the Generation result classification at `65/17/76`.
 - Phase 1 solution build completed with error 0; Unity focused EditMode test passed 1/1 and loaded catalog 5/8/8.
 - Phase 2 changed no CSV, Parsing, Validation, or Generation contract; runtime-kind family verification passed 13/13.
+- Phase 3 changed no CSV, Parsing, Validation, or Generation contract; existing-skill reactions now pass the learned target runtime and Definition directly into the common reaction entry point.
+- Phase 3 solution build completed with error 0; Unity forced script compile and full EditMode tests passed 14/14.
 
 ### History
 
@@ -509,3 +511,4 @@ User approved Generation/runtime implementation. Phases 1-2 complete; Parsing an
 - 2026-07-31: User approved restoration of both the 17 event outcomes and 64 normal cast outcomes and assigned Code Builder.
 - 2026-07-31: Code Builder completed Phase 1 semantic catalog baseline verification.
 - 2026-07-31: Code Builder completed Phase 2 without changing the data contract.
+- 2026-07-31: Code Builder completed Phase 3 existing-skill runtime reuse without changing the authoring schema.
