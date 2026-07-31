@@ -791,6 +791,11 @@ namespace Pakuri.InGame
             {
                 return false;
             }
+            if (!publishSkillLifecycleEvents
+                && !string.IsNullOrWhiteSpace(triggerSourceSkillId))
+            {
+                snapshot.PreparedSkillId = triggerSourceSkillId;
+            }
             var lifecycleCenter = hasManualTargetPoint
                 ? manualTargetPoint
                 : entry.Transform != null
@@ -892,8 +897,8 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 사건에서 파생된 단일 효과를 실행한다.
-        internal bool TryExecuteReactionEffect(
+        /// 생성 단계에서 확정된 결과를 공통 스킬 실행으로 연결한다.
+        internal bool TryExecuteResolvedEffect(
             CombatUnitEntry entry,
             SkillExecutionData sourceRuntime,
             UnitSpawnManager roster,
@@ -901,50 +906,81 @@ namespace Pakuri.InGame
             SkillCastEffect effect,
             UnitCombatState eventTarget,
             Vector2 targetPoint,
+            bool hasTargetPoint,
             int recastGeneration,
             string sourceSkillId,
             bool lockToEventTarget,
             float damageMultiplier,
             bool hasRawDamageOverride,
-            float rawDamageOverride)
+            float rawDamageOverride,
+            SkillExecutionData sourceSnapshot = null)
         {
             if (entry?.Model == null
                 || sourceRuntime == null
                 || effect == null
+                || effect.ResolvedDefinition == null
                 || triggeredExecutionDepth >= MaxTriggeredExecutionDepth)
             {
                 return false;
             }
 
-            var snapshot = entry.Model.SkillState.CreateExecutionData(
+            sourceSnapshot ??= entry.Model.SkillState.CreateExecutionData(
                 entry.Model,
                 sourceRuntime,
                 roster);
+            var runtime = sourceRuntime;
+            if (!string.IsNullOrWhiteSpace(effect.TargetSkillId))
+            {
+                runtime = entry.Model.SkillState.FindBySkillId(effect.TargetSkillId);
+                if (runtime?.Data == null)
+                {
+                    return false;
+                }
+            }
+            else if (effect.ResolvedDefinition != sourceRuntime.Data)
+            {
+                runtime = new SkillExecutionData(entry.Model, effect.ResolvedDefinition);
+            }
+
+            var snapshot = runtime == sourceRuntime
+                ? sourceSnapshot
+                : SkillExecutionRuleResolver.BuildExecutionData(
+                    entry.Model,
+                    runtime,
+                    roster);
             if (!Mathf.Approximately(damageMultiplier, 1f))
             {
                 snapshot.ScaleDamageMultiplier(damageMultiplier);
             }
-            var context = new SkillActionContext(
-                combatManager,
-                roster,
-                entry,
-                sourceRuntime,
-                eventTarget,
-                hasManualTargetPoint: true,
-                manualTargetPoint: targetPoint,
-                recastGeneration: recastGeneration,
-                lockToEventTarget: lockToEventTarget,
-                publishSkillLifecycleEvents: false,
-                sourceSkillId: sourceSkillId);
+            if (hasRawDamageOverride)
+            {
+                snapshot.SetRawDamageOverride(rawDamageOverride);
+            }
+            snapshot.OnHitStatusOverride = effect.OnHitStatusOverride;
+            var aimDirection = entry.Transform != null && hasTargetPoint
+                ? targetPoint - (Vector2)entry.Transform.position
+                : default;
             try
             {
                 triggeredExecutionDepth++;
-                return ExecuteCastEffect(
-                    context,
+                return ExecutePrepared(
+                    entry,
+                    runtime,
+                    effect.ResolvedDefinition,
                     snapshot,
-                    effect,
-                    hasRawDamageOverride,
-                    rawDamageOverride);
+                    roster,
+                    combatManager,
+                    aimDirection.sqrMagnitude > 0.0001f,
+                    aimDirection,
+                    hasTargetPoint,
+                    targetPoint,
+                    false,
+                    sourceSkillId,
+                    eventTarget,
+                    lockToEventTarget,
+                    false,
+                    recastGeneration,
+                    false);
             }
             finally
             {
@@ -1014,140 +1050,36 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            if (!string.IsNullOrWhiteSpace(effect.TargetSkillId))
+            var hasTargetPoint = context.HasManualTargetPoint;
+            var targetPoint = context.ManualTargetPoint;
+            if (effect.UseSourcePreparedAim
+                && sourceSnapshot.PreparedDirections != null
+                && sourceSnapshot.PreparedDirections.Count > 0
+                && sourceSnapshot.PreparedDirections[0].sqrMagnitude > 0.0001f)
             {
-                var runtime = context.Caster?.SkillState.FindBySkillId(
-                    effect.TargetSkillId);
-                if (runtime?.Data == null)
-                {
-                    return false;
-                }
-
-                var hasTargetPoint = context.HasManualTargetPoint;
-                var targetPoint = context.ManualTargetPoint;
-                if (effect.UseSourcePreparedAim
-                    && sourceSnapshot.PreparedDirections != null
-                    && sourceSnapshot.PreparedDirections.Count > 0
-                    && sourceSnapshot.PreparedDirections[0].sqrMagnitude > 0.0001f)
-                {
-                    var origin = context.CasterEntry.Transform != null
-                        ? (Vector2)context.CasterEntry.Transform.position
-                        : Vector2.zero;
-                    targetPoint = origin + sourceSnapshot.PreparedDirections[0];
-                    hasTargetPoint = true;
-                }
-
-                return context.CombatManager.SkillExecution.TryExecuteReaction(
-                    context.CasterEntry,
-                    runtime,
-                    runtime,
-                    runtime.Data,
-                    context.Roster,
-                    context.CombatManager,
-                    context.EventTarget,
-                    targetPoint,
-                    hasTargetPoint,
-                    false,
-                    0f,
-                    context.RecastGeneration,
-                    effect.DamageMultiplier,
-                    effect.EffectId,
-                    false,
-                    false,
-                    false,
-                    effect.OnHitStatusOverride,
-                    false);
+                var origin = context.CasterEntry.Transform != null
+                    ? (Vector2)context.CasterEntry.Transform.position
+                    : Vector2.zero;
+                targetPoint = origin + sourceSnapshot.PreparedDirections[0];
+                hasTargetPoint = true;
             }
 
-            var snapshot = sourceSnapshot.CopyWithDamageMultiplier(1f);
-            snapshot.PreparedSkillId = effect.EffectId;
-            snapshot.PreparedTargeting = effect.Targeting;
-            snapshot.PreparedRuntimeVisual = effect.RuntimeVisual;
-            snapshot.PreparedSkillEffectPrefab = effect.SkillEffectPrefab;
-
-            if (effect.HasDamage)
-            {
-                var primaryCenter = effect.UseSourcePreparedCenter
-                    && sourceSnapshot.PreparedCenters != null
-                    && sourceSnapshot.PreparedCenters.Count > 0
-                        ? sourceSnapshot.PreparedCenters[0]
-                        : SkillTargeting.AreaCenter(
-                            context,
-                            effect.Targeting,
-                            effect.Area);
-                var baseRadius = SkillTargeting.BaseRadius(effect.Targeting, effect.Area);
-                snapshot.PreparedCenters = new[] { primaryCenter };
-                snapshot.PreparedBaseRadius = baseRadius;
-                snapshot.PreparedRadius = SkillTargeting.Radius(
-                    baseRadius,
-                    snapshot.RadiusMultiplier,
-                    snapshot.RadiusBonus);
-                snapshot.PreparedCoverAll = effect.Targeting != null
-                    && effect.Targeting.CoverAll;
-                snapshot.PreparedDamage = hasRawDamageOverride
-                    ? Mathf.Max(0f, rawDamageOverride)
-                    : DamageCalculator.CalculateRawDamage(
-                        context.Caster,
-                        effect.Damage);
-                snapshot.PreparedDamageAttribute = effect.Damage.Element;
-                snapshot.PreparedStatus = SkillExecutionRuleResolver.StatusSpec(effect.Status, snapshot);
-                snapshot.PreparedCriticalAllowed = effect.Damage.CriticalAllowed;
-                snapshot.PreparedHitTargetCount = snapshot.PreparedCoverAll
-                    ? int.MaxValue
-                    : 1;
-                snapshot.PreparedUsesHitTargetCount = true;
-                return SingleSkillExecutor.Execute(context, snapshot);
-            }
-
-            var targets = SkillTargeting.BuffTargets(
-                context,
-                effect.Targeting != null
-                    ? effect.Targeting.TargetSide
-                    : SkillTargetSide.Self,
-                true,
-                effect.Targeting);
-            snapshot.PreparedTargets = targets;
-            if (effect.ExtendsStatus)
-            {
-                var changed = false;
-                for (var i = 0; i < targets.Count; i++)
-                {
-                    var target = targets[i];
-                    if (target?.Model != null)
-                    {
-                        changed |= context.CombatManager.ExtendStatusDuration(
-                            target.Model,
-                            effect.ExtendStatusKind,
-                            effect.DurationSeconds);
-                    }
-                }
-                return changed;
-            }
-
-            if (effect.HasShield)
-            {
-                var stat = effect.ShieldStatSource == StatSource.Attack
-                    ? context.Caster.Stats.AttackPower
-                        * StatusCombatRules.AttackPowerMultiplier(context.Caster)
-                    : context.Caster.Stats.SpellPower
-                        * StatusCombatRules.SpellPowerMultiplier(context.Caster);
-                snapshot.PreparedBuffEffectKind = BuffEffectKind.Shield;
-                snapshot.PreparedShieldAmount = Mathf.Max(
-                    0f,
-                    effect.ShieldBase + stat * effect.ShieldCoefficient);
-                snapshot.PreparedDuration = Mathf.Max(0f, effect.DurationSeconds);
-                snapshot.PreparedShieldStatusData = effect.ShieldStatus;
-                return BuffSkillExecutor.Execute(context, snapshot);
-            }
-
-            if (effect.HasStatus)
-            {
-                snapshot.PreparedBuffEffectKind = BuffEffectKind.Status;
-                snapshot.PreparedStatus = SkillExecutionRuleResolver.StatusSpec(effect.Status, snapshot);
-                return BuffSkillExecutor.Execute(context, snapshot);
-            }
-
-            return false;
+            return context.CombatManager.SkillExecution.TryExecuteResolvedEffect(
+                context.CasterEntry,
+                context.Runtime,
+                context.Roster,
+                context.CombatManager,
+                effect,
+                context.EventTarget,
+                targetPoint,
+                hasTargetPoint,
+                context.RecastGeneration,
+                effect.EffectId,
+                false,
+                effect.DamageMultiplier,
+                hasRawDamageOverride,
+                rawDamageOverride,
+                sourceSnapshot);
         }
 
         /// 시전 완료를 후속 반응에 알린다.
@@ -2247,7 +2179,8 @@ namespace Pakuri.InGame
             CombatUnitEntry sourceEntry,
             UnitCombatState source,
             SkillReaction trigger,
-            SkillTrigger.TriggerExecutionContext triggerContext)
+            SkillTrigger.TriggerExecutionContext triggerContext,
+            float resolvedRawDamage)
         {
             if (combatManager == null || roster == null || sourceEntry == null || source == null || trigger == null)
             {
@@ -2267,7 +2200,8 @@ namespace Pakuri.InGame
                         sourceEntry,
                         source,
                         trigger,
-                        triggerContext);
+                        triggerContext,
+                        resolvedRawDamage);
                 }
                 else
                 {
@@ -2279,7 +2213,8 @@ namespace Pakuri.InGame
                             source,
                             trigger,
                             triggerContext,
-                            delaySeconds));
+                            delaySeconds,
+                            resolvedRawDamage));
                 }
             }
         }
@@ -2292,7 +2227,8 @@ namespace Pakuri.InGame
             UnitCombatState source,
             SkillReaction trigger,
             SkillTrigger.TriggerExecutionContext triggerContext,
-            float delaySeconds)
+            float delaySeconds,
+            float resolvedRawDamage)
         {
             yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
             ExecuteTriggeredReactionOnce(
@@ -2301,7 +2237,8 @@ namespace Pakuri.InGame
                 sourceEntry,
                 source,
                 trigger,
-                triggerContext);
+                triggerContext,
+                resolvedRawDamage);
         }
 
         /// 반응 한 회분의 실행을 시작한다.
@@ -2311,7 +2248,8 @@ namespace Pakuri.InGame
             CombatUnitEntry sourceEntry,
             UnitCombatState source,
             SkillReaction trigger,
-            SkillTrigger.TriggerExecutionContext triggerContext)
+            SkillTrigger.TriggerExecutionContext triggerContext,
+            float resolvedRawDamage)
         {
             ExecuteTriggeredOutcome(
                 combatManager,
@@ -2319,7 +2257,8 @@ namespace Pakuri.InGame
                 sourceEntry,
                 source,
                 trigger,
-                triggerContext);
+                triggerContext,
+                resolvedRawDamage);
         }
 
         /// 반응 결과에 맞는 실행 경로를 선택한다.
@@ -2329,7 +2268,8 @@ namespace Pakuri.InGame
             CombatUnitEntry sourceEntry,
             UnitCombatState source,
             SkillReaction trigger,
-            SkillTrigger.TriggerExecutionContext triggerContext)
+            SkillTrigger.TriggerExecutionContext triggerContext,
+            float resolvedRawDamage)
         {
             if (combatManager == null || roster == null || sourceEntry == null || source == null || trigger == null)
             {
@@ -2354,7 +2294,7 @@ namespace Pakuri.InGame
             if (trigger.Effect != null)
             {
                 return sourceRuntime != null
-                    && combatManager.SkillExecution.TryExecuteReactionEffect(
+                    && combatManager.SkillExecution.TryExecuteResolvedEffect(
                         sourceEntry,
                         sourceRuntime,
                         roster,
@@ -2362,48 +2302,13 @@ namespace Pakuri.InGame
                         trigger.Effect,
                         triggerContext.EventTarget,
                         targetPoint,
+                        true,
                         triggerContext.RecastGeneration,
                         trigger.SourceSkillId,
                         trigger.LockToEventTarget,
                         trigger.DamageMultiplier,
                         trigger.DamageValueSource != SkillTriggerDamageValueSource.Fixed,
-                        ResolveTriggeredRawDamage(trigger, triggerContext));
-            }
-
-            if (!string.IsNullOrWhiteSpace(trigger.TargetSkillId))
-            {
-                if (sourceRuntime == null)
-                {
-                    return false;
-                }
-
-                var runtime = source.SkillState.FindBySkillId(trigger.TargetSkillId);
-                if (runtime == null)
-                {
-                    return false;
-                }
-
-                var hasRawDamageOverride = trigger.DamageValueSource != SkillTriggerDamageValueSource.Fixed;
-                var beginCast = runtime.Data is BuffSkillDefinition triggeredBuff
-                    && triggeredBuff.EffectKind == BuffEffectKind.Charge;
-                return combatManager.SkillExecution.TryExecuteReaction(
-                    sourceEntry,
-                    runtime,
-                    runtime,
-                    runtime.Data,
-                    roster,
-                    combatManager,
-                    triggerContext.EventTarget,
-                    targetPoint,
-                    true,
-                    hasRawDamageOverride,
-                    ResolveTriggeredRawDamage(trigger, triggerContext),
-                    triggerContext.RecastGeneration,
-                    trigger.DamageMultiplier,
-                    trigger.SourceSkillId,
-                    trigger.LockToEventTarget,
-                    trigger.PublishSkillLifecycleEvents,
-                    beginCast);
+                        resolvedRawDamage);
             }
 
             return trigger.Command != null
@@ -2443,10 +2348,8 @@ namespace Pakuri.InGame
                 publishSkillLifecycleEvents: false);
             if (command.Kind == SkillReactionCommandKind.RecastZone)
             {
-                var skill = sourceRuntime.Data as ZoneSkillDefinition;
+                var skill = command.ResolvedDefinition as ZoneSkillDefinition;
                 if (skill == null
-                    || (!string.IsNullOrWhiteSpace(command.TargetId)
-                        && !string.Equals(command.TargetId, skill.SkillId, StringComparison.OrdinalIgnoreCase))
                     || context.RecastGeneration >= Math.Max(1, command.MaxGeneration))
                 {
                     return false;
@@ -2493,7 +2396,11 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                var runtimes = CommandRuntimes(target, command.TargetId);
+                var runtimes = string.IsNullOrWhiteSpace(command.TargetId)
+                    ? target.SkillState.ActiveSkills
+                    : target.SkillState.FindBySkillId(command.TargetId) is SkillExecutionData targetRuntime
+                        ? new[] { targetRuntime }
+                        : Array.Empty<SkillExecutionData>();
                 for (var runtimeIndex = 0; runtimeIndex < runtimes.Count; runtimeIndex++)
                 {
                     var targetRuntime = runtimes[runtimeIndex];
@@ -2512,48 +2419,6 @@ namespace Pakuri.InGame
                 }
             }
             return changed;
-        }
-
-        /// command가 가리키는 스킬 실행값을 모은다.
-        private static IReadOnlyList<SkillExecutionData> CommandRuntimes(
-            UnitCombatState target,
-            string skillId)
-        {
-            if (!string.IsNullOrWhiteSpace(skillId))
-            {
-                var runtime = target.SkillState.FindBySkillId(skillId);
-                return runtime != null
-                    ? new[] { runtime }
-                    : Array.Empty<SkillExecutionData>();
-            }
-            return target.SkillState.ActiveSkills;
-        }
-
-        /// 사건 기반 반응 피해를 하나의 값으로 확정한다.
-        private static float ResolveTriggeredRawDamage(
-            SkillReaction trigger,
-            SkillTrigger.TriggerExecutionContext context)
-        {
-            var value = 0f;
-            switch (trigger.DamageValueSource)
-            {
-                case SkillTriggerDamageValueSource.ShieldAppliedAmount:
-                    value = context.ShieldAppliedAmount;
-                    break;
-                case SkillTriggerDamageValueSource.ShieldRemainingAmount:
-                    value = context.ShieldRemainingAmount;
-                    break;
-                case SkillTriggerDamageValueSource.ShieldAbsorbedAmount:
-                    value = context.ShieldAbsorbedAmount;
-                    break;
-                case SkillTriggerDamageValueSource.TrackedIncomingDamage:
-                    value = context.TrackedIncomingDamage(trigger.TrackedDamageAttribute);
-                    break;
-                case SkillTriggerDamageValueSource.EventAppliedDamage:
-                    value = context.EventAppliedDamage;
-                    break;
-            }
-            return Mathf.Max(0f, value) * Mathf.Max(0f, trigger.DamageValueMultiplier);
         }
 
     }

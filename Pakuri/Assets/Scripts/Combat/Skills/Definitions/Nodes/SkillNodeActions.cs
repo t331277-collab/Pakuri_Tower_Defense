@@ -15,6 +15,7 @@ namespace Pakuri.InGame
         public string EffectId;
         public float DelaySeconds;
         public string TargetSkillId;
+        public SkillDefinition ResolvedDefinition;
         public float DamageMultiplier = 1f;
         public bool UseSourcePreparedAim;
         public bool UseSourcePreparedCenter;

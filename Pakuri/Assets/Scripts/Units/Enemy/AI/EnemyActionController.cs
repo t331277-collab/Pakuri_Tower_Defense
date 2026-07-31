@@ -224,12 +224,41 @@ namespace Pakuri.InGame
                 enemyEntry,
                 movement,
                 collisionTargets);
-            return collisionTargets.Count > 0
-                && BuffSkillExecutor.ApplyChargeContact(
+            if (collisionTargets.Count == 0)
+            {
+                return false;
+            }
+
+            var snapshot = runtime != null ? runtime.ActiveExecutionData : null;
+            if (snapshot == null)
+            {
+                return false;
+            }
+
+            var target = collisionTargets[0];
+            var maxHealth = target.Model.Stats != null
+                ? Mathf.Max(0f, target.Model.Stats.MaxHealth)
+                : 0f;
+            var damageResult = combatManager.ApplyDamage(
+                target.Model,
+                maxHealth * snapshot.PreparedChargeTargetMaxHealthRatio,
+                snapshot.PreparedDamageAttribute,
+                enemyModel,
+                true,
+                sourceSkillId: !string.IsNullOrWhiteSpace(snapshot.PreparedSkillId)
+                    ? snapshot.PreparedSkillId
+                    : runtime.SkillId);
+            if (!damageResult.IsDead && snapshot.PreparedStatus != null)
+            {
+                StatusCombatRules.ApplyStatus(
                     combatManager,
-                    enemyModel,
-                    collisionTargets[0],
-                    runtime);
+                    target.Model,
+                    snapshot.PreparedStatus,
+                    enemyModel);
+            }
+
+            SkillExecution.StopActive(runtime);
+            return true;
         }
 
         /// 전달된 런타임 입력값을 사용해 NexusAttack를 경과 시간 기준으로 갱신한다.

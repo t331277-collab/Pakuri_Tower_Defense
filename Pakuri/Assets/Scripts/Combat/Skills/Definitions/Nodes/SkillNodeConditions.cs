@@ -105,6 +105,7 @@ namespace Pakuri.InGame
         public float RadiusMultiplier = 1f;
         public bool InheritSnapshot = true;
         public int MaxGeneration = 1;
+        public SkillDefinition ResolvedDefinition;
     }
 
     /// Skill/Choice/Passive Node가 소유하는 사건 조건과 공통 실행 보정값.

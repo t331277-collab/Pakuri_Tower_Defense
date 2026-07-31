@@ -386,7 +386,8 @@ internal static class SkillTrigger
 					roster.Find(source),
 					source,
 					trigger,
-					triggerContext);
+					triggerContext,
+					ResolveTriggeredDamage(trigger, triggerContext));
 			}
 		}
 	}
@@ -451,10 +452,11 @@ internal static class SkillTrigger
 						SkillExecution.ExecuteTriggeredReaction(
 							combatManager,
 							roster,
-							unitEntry,
-							unitState,
-							trigger,
-							triggerContext);
+						unitEntry,
+						unitState,
+						trigger,
+						triggerContext,
+						ResolveTriggeredDamage(trigger, triggerContext));
 					}
 				}
 			}
@@ -608,6 +610,39 @@ internal static class SkillTrigger
 		return gateStates.GetOrCreateValue(combatManager).ConsumeCount(
 			BuildPassiveTriggerCooldownKey(owner, trigger),
 			trigger.EveryCount);
+	}
+
+	/// 지연 전에 사건이 제공한 수치를 반응 입력으로 고정한다.
+	private static float ResolveTriggeredDamage(
+		SkillReaction trigger,
+		TriggerExecutionContext context)
+	{
+		if (trigger == null)
+		{
+			return 0f;
+		}
+
+		var value = 0f;
+		switch (trigger.DamageValueSource)
+		{
+			case SkillTriggerDamageValueSource.ShieldAppliedAmount:
+				value = context.ShieldAppliedAmount;
+				break;
+			case SkillTriggerDamageValueSource.ShieldRemainingAmount:
+				value = context.ShieldRemainingAmount;
+				break;
+			case SkillTriggerDamageValueSource.ShieldAbsorbedAmount:
+				value = context.ShieldAbsorbedAmount;
+				break;
+			case SkillTriggerDamageValueSource.TrackedIncomingDamage:
+				value = context.TrackedIncomingDamage(trigger.TrackedDamageAttribute);
+				break;
+			case SkillTriggerDamageValueSource.EventAppliedDamage:
+				value = context.EventAppliedDamage;
+				break;
+		}
+
+		return Mathf.Max(0f, value) * Mathf.Max(0f, trigger.DamageValueMultiplier);
 	}
 
 	/// 사건 발생원 범위가 반응 조건과 맞는지 확인한다.

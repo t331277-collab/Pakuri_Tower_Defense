@@ -478,7 +478,8 @@ namespace Pakuri.Data
                 BuildReactionOutcome(
                     definition,
                     normalizedNodes,
-                    statusDefinitions);
+                    statusDefinitions,
+                    activeSkills);
                 definitions.Add(definition);
             }
 
@@ -553,6 +554,8 @@ namespace Pakuri.Data
                 },
                 Damage = sourceSkill.Damage
             };
+
+            ResolveReactionEffect(followUp, activeSkills, null);
 
             return new SkillReaction
             {
@@ -894,7 +897,8 @@ namespace Pakuri.Data
                 BuildReactionOutcome(
                     definitions[i],
                     normalizedNodes,
-                    statusDefinitions);
+                    statusDefinitions,
+                    activeSkills);
                 if (definitions[i].Effect == null
                     && string.IsNullOrWhiteSpace(definitions[i].TargetSkillId)
                     && definitions[i].Command == null
@@ -905,6 +909,10 @@ namespace Pakuri.Data
                         normalizedNodes,
                         statusDefinitions);
                     definitions[i].Effect.DelaySeconds = 0f;
+                    ResolveReactionEffect(
+                        definitions[i].Effect,
+                        activeSkills,
+                        null);
                 }
             }
 
@@ -958,7 +966,9 @@ namespace Pakuri.Data
                 var effectNode = BuildNormalCastEffectNode(
                     row,
                     nodes,
-                    statusDefinitions);
+                    statusDefinitions,
+                    activeSkills,
+                    passiveSkills);
                 if (effectNode == null)
                 {
                     continue;

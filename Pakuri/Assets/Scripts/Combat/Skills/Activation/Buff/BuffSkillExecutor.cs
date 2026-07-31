@@ -150,46 +150,6 @@ namespace Pakuri.InGame
             return context.Caster != null && context.Runtime != null;
         }
 
-        /// 돌진 접촉 결과를 피해와 후속 효과에 연결한다.
-        internal static bool ApplyChargeContact(
-            InGameCombatManager combatManager,
-            UnitCombatState caster,
-            CombatUnitEntry target,
-            SkillExecutionData runtime)
-        {
-            var snapshot = runtime != null ? runtime.ActiveExecutionData : null;
-            if (combatManager == null
-                || caster == null
-                || !IsValid(target)
-                || snapshot == null
-                || snapshot.PreparedBuffEffectKind != BuffEffectKind.Charge)
-            {
-                return false;
-            }
-
-            var maxHealth = target.Model.Stats != null
-                ? Mathf.Max(0f, target.Model.Stats.MaxHealth)
-                : 0f;
-            var damageResult = combatManager.ApplyDamage(
-                target.Model,
-                maxHealth * snapshot.PreparedChargeTargetMaxHealthRatio,
-                snapshot.PreparedDamageAttribute,
-                caster,
-                true,
-                sourceSkillId: !string.IsNullOrWhiteSpace(snapshot.PreparedSkillId)
-                    ? snapshot.PreparedSkillId
-                    : runtime.SkillId);
-
-            var statusSpec = snapshot.PreparedStatus;
-            if (!damageResult.IsDead && statusSpec != null)
-            {
-                StatusCombatRules.ApplyStatus(combatManager, target.Model, statusSpec, caster);
-            }
-
-            SkillExecution.StopActive(runtime);
-            return true;
-        }
-
         /// 대상이 지원 효과를 받을 수 있는지 확인한다.
         private static bool IsValid(CombatUnitEntry target)
         {
