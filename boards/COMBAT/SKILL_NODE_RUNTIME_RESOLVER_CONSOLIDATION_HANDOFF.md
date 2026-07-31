@@ -658,7 +658,7 @@ Status: complete. Trigger forwarding and scheduling implementation commit: `e81d
 
 ### Phase 14 — Actor owns physical hit application
 
-Status: pending.
+Status: complete. Actor physical-hit ownership commit: `6e7ba5a`; `SkillExecution` and family Executors no longer apply physical damage, while Actor paths retain collision confirmation and combat API application. Core/Editor build: 0 errors.
 
 1. Projectile, Line, Single and Zone Actors retain collision/target confirmation and call the common damage calculator/combat manager path.
 2. Replace `ZoneSkillActor -> SkillExecution.ApplyResolvedHits` with Zone Actor-owned target iteration using existing `SkillTargeting` and Resolver values; do not add an Actor base class for one shared helper.
