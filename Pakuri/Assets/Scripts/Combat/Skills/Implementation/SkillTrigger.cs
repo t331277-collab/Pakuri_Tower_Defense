@@ -16,6 +16,29 @@ namespace Pakuri.InGame
 /// 전투 사건의 조건을 판정하고 통과한 반응을 실행 흐름에 넘긴다.
 internal static class SkillTrigger
 {
+	/// 하나의 사건 연쇄에서 이미 시작한 반응을 기록한다.
+	internal sealed class TriggerExecutionState
+	{
+		private readonly HashSet<string> executedReactions =
+			new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+		/// 같은 사건 연쇄에서 반응을 처음 시작할 때만 통과시킨다.
+		internal bool TryConsume(UnitCombatState owner, SkillReaction trigger)
+		{
+			if (owner == null || trigger == null)
+			{
+				return false;
+			}
+
+			var ownerId = owner.Identity != null && !string.IsNullOrWhiteSpace(owner.Identity.UnitId)
+				? owner.Identity.UnitId
+				: RuntimeHelpers.GetHashCode(owner).ToString();
+			var reactionId = !string.IsNullOrWhiteSpace(trigger.ReactionId)
+				? trigger.ReactionId
+				: trigger.SourceSkillId + ":" + trigger.Event;
+			return executedReactions.Add(ownerId + ":" + reactionId);
+		}
+	}
 
 	/// 전투마다 반응 횟수와 내부 대기 진행을 분리해 유지한다.
 	private sealed class TriggerGateState
@@ -133,8 +156,10 @@ internal static class SkillTrigger
 
 		public int RecastGeneration { get; }
 
+		internal TriggerExecutionState ExecutionState { get; }
+
 		/// 지연 실행 뒤에도 사건 당시의 판정 기준을 그대로 사용하게 한다.
-		public TriggerExecutionContext(UnitCombatState eventTarget, UnitCombatState attacker, Vector2 eventCenter, StatusRuntimeInstance status, float shieldAbsorbedAmount, float eventAppliedDamage, DamageAttribute eventAttribute, string eventSourceSkillId, UnitCombatState eventSource = null, bool eventWasExecute = false, string eventTriggerSourceSkillId = null, int eventHitCount = 0, int recastGeneration = 0)
+		public TriggerExecutionContext(UnitCombatState eventTarget, UnitCombatState attacker, Vector2 eventCenter, StatusRuntimeInstance status, float shieldAbsorbedAmount, float eventAppliedDamage, DamageAttribute eventAttribute, string eventSourceSkillId, UnitCombatState eventSource = null, bool eventWasExecute = false, string eventTriggerSourceSkillId = null, int eventHitCount = 0, int recastGeneration = 0, TriggerExecutionState executionState = null)
 		{
 			EventTarget = eventTarget;
 			Attacker = attacker;
@@ -160,6 +185,7 @@ internal static class SkillTrigger
 			EventTriggerSourceSkillId = eventTriggerSourceSkillId;
 			EventHitCount = Mathf.Max(0, eventHitCount);
 			RecastGeneration = Mathf.Max(0, recastGeneration);
+			ExecutionState = executionState ?? new TriggerExecutionState();
 		}
 
 		/// 사건 속성에 해당하는 누적 피해를 읽는다.
@@ -202,7 +228,8 @@ internal static class SkillTrigger
 			actionContext.SourceSkillId,
 			actionContext.Source,
 			eventHitCount: actionContext.HitCount,
-			recastGeneration: actionContext.RecastGeneration);
+			recastGeneration: actionContext.RecastGeneration,
+			executionState: actionContext.TriggerExecutionState);
 		ExecuteSourceOwnedTriggers(
 			actionContext.CombatManager,
 			actionContext.Roster,
@@ -218,11 +245,11 @@ internal static class SkillTrigger
 	}
 
 	/// 투사체 적중 사건을 반응 판정에 전달한다.
-	public static void ExecuteProjectileHit(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillId, bool isMagazineLastProjectile, Vector2 eventCenter)
+	public static void ExecuteProjectileHit(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillId, bool isMagazineLastProjectile, Vector2 eventCenter, TriggerExecutionState executionState = null)
 	{
 		if (isMagazineLastProjectile)
 		{
-			ExecuteSourceOwnedTriggers(combatManager, roster, source, sourceSkillId, SkillTriggerEvent.OnMagazineLastProjectileHit, new TriggerExecutionContext(source, null, eventCenter, null, 0f, 0f, DamageAttribute.Physical, sourceSkillId, source));
+			ExecuteSourceOwnedTriggers(combatManager, roster, source, sourceSkillId, SkillTriggerEvent.OnMagazineLastProjectileHit, new TriggerExecutionContext(source, null, eventCenter, null, 0f, 0f, DamageAttribute.Physical, sourceSkillId, source, executionState: executionState));
 		}
 	}
 
@@ -251,114 +278,114 @@ internal static class SkillTrigger
 	}
 
 	/// 보호막 종료 사건을 반응 판정에 전달한다.
-	public static void ExecuteShieldExpire(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState shieldTarget, StatusRuntimeInstance shieldStatus)
+	public static void ExecuteShieldExpire(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState shieldTarget, StatusRuntimeInstance shieldStatus, TriggerExecutionState executionState = null)
 	{
 		if (shieldTarget != null && shieldStatus != null && shieldStatus.IsShieldStatus)
 		{
 			UnitCombatState unitState = SourceModel(roster, shieldStatus.SourceUnitId, shieldStatus.SourceDefinitionId);
 			string text = ((!string.IsNullOrWhiteSpace(shieldStatus.SourceSkillId)) ? shieldStatus.SourceSkillId : string.Empty);
 			Vector2 eventCenter = UnitPosition(roster, shieldTarget);
-			TriggerExecutionContext triggerContext = new TriggerExecutionContext(shieldTarget, null, eventCenter, shieldStatus, 0f, 0f, DamageAttribute.Physical, text, unitState);
+			TriggerExecutionContext triggerContext = new TriggerExecutionContext(shieldTarget, null, eventCenter, shieldStatus, 0f, 0f, DamageAttribute.Physical, text, unitState, executionState: executionState);
 			ExecuteSourceOwnedTriggers(combatManager, roster, unitState, text, SkillTriggerEvent.OnShieldExpire, triggerContext);
 			ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnShieldExpire, triggerContext);
 		}
 	}
 
 	/// 보호막 흡수 사건을 반응 판정에 전달한다.
-	public static void ExecuteShieldAbsorb(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState shieldTarget, UnitCombatState attacker, StatusRuntimeInstance shieldStatus, float absorbedAmount)
+	public static void ExecuteShieldAbsorb(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState shieldTarget, UnitCombatState attacker, StatusRuntimeInstance shieldStatus, float absorbedAmount, TriggerExecutionState executionState = null)
 	{
 		if (shieldTarget != null && shieldStatus != null && shieldStatus.IsShieldStatus && !(absorbedAmount <= 0f))
 		{
 			UnitCombatState unitState = SourceModel(roster, shieldStatus.SourceUnitId, shieldStatus.SourceDefinitionId);
 			string text = ((!string.IsNullOrWhiteSpace(shieldStatus.SourceSkillId)) ? shieldStatus.SourceSkillId : string.Empty);
 			Vector2 eventCenter = ((attacker != null) ? UnitPosition(roster, attacker) : UnitPosition(roster, shieldTarget));
-			TriggerExecutionContext triggerContext = new TriggerExecutionContext(attacker, attacker, eventCenter, shieldStatus, absorbedAmount, 0f, DamageAttribute.Physical, text, unitState);
+			TriggerExecutionContext triggerContext = new TriggerExecutionContext(attacker, attacker, eventCenter, shieldStatus, absorbedAmount, 0f, DamageAttribute.Physical, text, unitState, executionState: executionState);
 			ExecuteSourceOwnedTriggers(combatManager, roster, unitState, text, SkillTriggerEvent.OnShieldAbsorb, triggerContext);
 			ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnShieldAbsorb, triggerContext);
 		}
 	}
 
 	/// 여러 보호막 흡수 사건을 반응 판정에 전달한다.
-	public static void ExecuteShieldAbsorbs(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState shieldTarget, UnitCombatState attacker, IReadOnlyList<ShieldAbsorptionRecord> absorbedShields)
+	public static void ExecuteShieldAbsorbs(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState shieldTarget, UnitCombatState attacker, IReadOnlyList<ShieldAbsorptionRecord> absorbedShields, TriggerExecutionState executionState = null)
 	{
 		for (int i = 0; i < absorbedShields.Count; i++)
 		{
 			ShieldAbsorptionRecord shieldAbsorbRecord = absorbedShields[i];
 			if (!(shieldAbsorbRecord.AbsorbedAmount <= 0f))
 			{
-				ExecuteShieldAbsorb(combatManager, roster, shieldTarget, attacker, shieldAbsorbRecord.Status, shieldAbsorbRecord.AbsorbedAmount);
+				ExecuteShieldAbsorb(combatManager, roster, shieldTarget, attacker, shieldAbsorbRecord.Status, shieldAbsorbRecord.AbsorbedAmount, executionState);
 			}
 		}
 	}
 
 	/// 상태 종료 사건을 반응 판정에 전달한다.
-	public static void ExecuteStatusExpire(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState statusOwner, StatusRuntimeInstance status)
+	public static void ExecuteStatusExpire(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState statusOwner, StatusRuntimeInstance status, TriggerExecutionState executionState = null)
 	{
 		if (statusOwner != null && status != null)
 		{
 			UnitCombatState unitState = SourceModel(roster, status.SourceUnitId, status.SourceDefinitionId);
 			string text = ((!string.IsNullOrWhiteSpace(status.SourceSkillId)) ? status.SourceSkillId : string.Empty);
 			Vector2 eventCenter = UnitPosition(roster, statusOwner);
-			TriggerExecutionContext triggerContext = new TriggerExecutionContext(statusOwner, null, eventCenter, status, 0f, 0f, DamageAttribute.Physical, text, unitState);
+			TriggerExecutionContext triggerContext = new TriggerExecutionContext(statusOwner, null, eventCenter, status, 0f, 0f, DamageAttribute.Physical, text, unitState, executionState: executionState);
 			ExecuteSourceOwnedTriggers(combatManager, roster, unitState, text, SkillTriggerEvent.OnStatusExpire, triggerContext);
 			ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnStatusExpire, triggerContext);
 		}
 	}
 
 	/// 여러 상태 종료 사건을 반응 판정에 전달한다.
-	public static void ExecuteExpiredStatuses(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState statusOwner, IReadOnlyList<StatusRuntimeInstance> removedStatuses)
+	public static void ExecuteExpiredStatuses(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState statusOwner, IReadOnlyList<StatusRuntimeInstance> removedStatuses, TriggerExecutionState executionState = null)
 	{
 		for (int i = 0; i < removedStatuses.Count; i++)
 		{
 			StatusRuntimeInstance status = removedStatuses[i];
-			ExecuteStatusExpire(combatManager, roster, statusOwner, status);
+			ExecuteStatusExpire(combatManager, roster, statusOwner, status, executionState);
 		}
-		ExecuteShieldExpires(combatManager, roster, statusOwner, removedStatuses);
+		ExecuteShieldExpires(combatManager, roster, statusOwner, removedStatuses, executionState);
 	}
 
 	/// 여러 보호막 종료 사건을 반응 판정에 전달한다.
-	public static void ExecuteShieldExpires(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState shieldTarget, IReadOnlyList<StatusRuntimeInstance> removedStatuses)
+	public static void ExecuteShieldExpires(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState shieldTarget, IReadOnlyList<StatusRuntimeInstance> removedStatuses, TriggerExecutionState executionState = null)
 	{
 		for (int i = 0; i < removedStatuses.Count; i++)
 		{
 			StatusRuntimeInstance unitStatusRuntime = removedStatuses[i];
 			if (unitStatusRuntime.IsShieldStatus)
 			{
-				ExecuteShieldExpire(combatManager, roster, shieldTarget, unitStatusRuntime);
+				ExecuteShieldExpire(combatManager, roster, shieldTarget, unitStatusRuntime, executionState);
 			}
 		}
 	}
 
 	/// 외부 피해 사건을 반응 판정에 전달한다.
-	public static void ExecuteOutgoingDamage(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillId, UnitCombatState eventTarget, DamageAttribute attribute, float eventAppliedDamage, bool eventWasExecute = false)
+	public static void ExecuteOutgoingDamage(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillId, UnitCombatState eventTarget, DamageAttribute attribute, float eventAppliedDamage, bool eventWasExecute = false, TriggerExecutionState executionState = null)
 	{
 		if (!(combatManager == null) && roster != null && source != null)
 		{
 			Vector2 eventCenter = ((eventTarget != null) ? UnitPosition(roster, eventTarget) : UnitPosition(roster, source));
-			TriggerExecutionContext triggerContext = new TriggerExecutionContext(eventTarget, null, eventCenter, null, 0f, eventAppliedDamage, attribute, sourceSkillId, source, eventWasExecute);
+			TriggerExecutionContext triggerContext = new TriggerExecutionContext(eventTarget, null, eventCenter, null, 0f, eventAppliedDamage, attribute, sourceSkillId, source, eventWasExecute, executionState: executionState);
 			ExecuteSourceOwnedTriggers(combatManager, roster, source, sourceSkillId, SkillTriggerEvent.OnOutgoingDamage, triggerContext);
 			ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnOutgoingDamage, triggerContext);
 		}
 	}
 
 	/// 스킬 시전 사건을 반응 판정에 전달한다.
-	public static void ExecuteSkillCast(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillId, Vector2 eventCenter, string eventTriggerSourceSkillId = null)
+	public static void ExecuteSkillCast(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillId, Vector2 eventCenter, string eventTriggerSourceSkillId = null, TriggerExecutionState executionState = null)
 	{
 		if (!(combatManager == null) && roster != null && source != null)
 		{
-			TriggerExecutionContext triggerContext = new TriggerExecutionContext(source, source, eventCenter, null, 0f, 0f, DamageAttribute.Physical, sourceSkillId, source, eventWasExecute: false, eventTriggerSourceSkillId);
+			TriggerExecutionContext triggerContext = new TriggerExecutionContext(source, source, eventCenter, null, 0f, 0f, DamageAttribute.Physical, sourceSkillId, source, eventWasExecute: false, eventTriggerSourceSkillId, executionState: executionState);
 			ExecuteSourceOwnedTriggers(combatManager, roster, source, sourceSkillId, SkillTriggerEvent.OnSkillCast, triggerContext);
 			ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnSkillCast, triggerContext);
 		}
 	}
 
 	/// 처치 사건을 반응 판정에 전달한다.
-	public static void ExecuteKill(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillId, UnitCombatState eventTarget, DamageAttribute attribute, float eventAppliedDamage, bool eventWasExecute = false)
+	public static void ExecuteKill(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillId, UnitCombatState eventTarget, DamageAttribute attribute, float eventAppliedDamage, bool eventWasExecute = false, TriggerExecutionState executionState = null)
 	{
 		if (!(combatManager == null) && roster != null && source != null)
 		{
 			Vector2 eventCenter = ((eventTarget != null) ? UnitPosition(roster, eventTarget) : UnitPosition(roster, source));
-			TriggerExecutionContext triggerContext = new TriggerExecutionContext(eventTarget, source, eventCenter, null, 0f, eventAppliedDamage, attribute, sourceSkillId, source, eventWasExecute);
+			TriggerExecutionContext triggerContext = new TriggerExecutionContext(eventTarget, source, eventCenter, null, 0f, eventAppliedDamage, attribute, sourceSkillId, source, eventWasExecute, executionState: executionState);
 			ExecuteSourceOwnedTriggers(combatManager, roster, source, sourceSkillId, SkillTriggerEvent.OnKill, triggerContext);
 			ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnKill, triggerContext);
 		}
@@ -378,7 +405,8 @@ internal static class SkillTrigger
 		}
 		foreach (SkillReaction trigger in array)
 		{
-			if (ShouldRunSourceOwnedTrigger(trigger, source, sourceSkillId, triggerEvent, triggerContext))
+			if (ShouldRunSourceOwnedTrigger(trigger, source, sourceSkillId, triggerEvent, triggerContext)
+				&& triggerContext.ExecutionState.TryConsume(source, trigger))
 			{
                 SkillExecution.ScheduleReaction(
 					combatManager,
@@ -447,7 +475,10 @@ internal static class SkillTrigger
 				for (int triggerIndex = 0; triggerIndex < triggers.Count; triggerIndex++)
 				{
 					SkillReaction trigger = triggers[triggerIndex];
-					if (ShouldRunPassiveOwnerTrigger(trigger, unitState, triggerEvent, triggerContext) && PassesCountGate(combatManager, unitState, trigger) && PassesProcGate(combatManager, unitState, trigger))
+					if (ShouldRunPassiveOwnerTrigger(trigger, unitState, triggerEvent, triggerContext)
+						&& PassesCountGate(combatManager, unitState, trigger)
+						&& PassesProcGate(combatManager, unitState, trigger)
+						&& triggerContext.ExecutionState.TryConsume(unitState, trigger))
 					{
                         SkillExecution.ScheduleReaction(
 							combatManager,

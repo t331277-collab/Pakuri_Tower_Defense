@@ -285,7 +285,7 @@ namespace Pakuri.InGame
             if (contactDamageEnabled)
             {
                 resolvedDamage = damage;
-                var damageResult = combatManager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, owner, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, finalDamageMultiplier: HitDamageMultiplier(target.Model));
+                var damageResult = combatManager.ApplyDamageWithTriggerState(target.Model, resolvedDamage, damageAttribute, owner, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, false, false, null, HitDamageMultiplier(target.Model), executionData != null ? executionData.TriggerExecutionState : null);
                 if (!damageResult.IsDead)
                 {
                     StatusCombatRules.ApplyStatus(combatManager, target.Model, statusOnHit, owner);
@@ -355,7 +355,8 @@ namespace Pakuri.InGame
                 owner,
                 sourceSkillId,
                 true,
-                transform.position);
+                transform.position,
+                executionData != null ? executionData.TriggerExecutionState : null);
         }
 
         /// 확률 조건을 통과하면 주변의 다른 대상에게 피해를 잇는다.
@@ -400,7 +401,7 @@ namespace Pakuri.InGame
 
                 selectedTargets.Add(target.Model);
                 var targetPosition = (Vector2)target.Transform.position;
-                combatManager.ApplyDamage(
+                combatManager.ApplyDamageWithTriggerState(
                     target.Model,
                     branchDamage,
                     damageAttribute,
@@ -409,8 +410,11 @@ namespace Pakuri.InGame
                     critChanceBonus,
                     critDamageBonus,
                     sourceSkillId,
-                    suppressOutgoingDamageTriggers: true,
-                    finalDamageMultiplier: HitDamageMultiplier(target.Model) * branchDamageMultiplier);
+                    true,
+                    false,
+                    null,
+                    HitDamageMultiplier(target.Model) * branchDamageMultiplier,
+                    executionData != null ? executionData.TriggerExecutionState : null);
                 SpawnBranchDamageLine(hitPosition, targetPosition);
             }
         }

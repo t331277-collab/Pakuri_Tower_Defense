@@ -16,14 +16,10 @@ namespace Pakuri.InGame
     /// 시전 가능 여부를 확인하고 확정된 효과를 실행 방식에 맞게 분배한다.
     public class SkillExecution
     {
-        private const int MaxTriggeredExecutionDepth = 8;
-        private static int triggeredExecutionDepth;
-        private static bool applyingHitEnhancement;
-
-        /// 자동 시전 후보를 외부 정책으로 선별한다.
+        /// 자동 시전 후보를 선별한다.
         public delegate bool SkillAutoRoutePredicate(CombatUnitEntry entry, SkillExecutionData runtime);
 
-        /// 다음 스테이지로 넘어갈때 스킬을 초기 상태로 돌린다.
+        /// 쿨타임, 탄창 초기화
         public static void ResetRuntimeState(SkillExecutionData runtime)
         {
             if (runtime == null)
@@ -31,22 +27,17 @@ namespace Pakuri.InGame
                 return;
             }
 
-            runtime.effectiveMaxMagazineSize = 0;
-            runtime.effectiveBurstProjectileCount = 0;
-            runtime.effectiveReloadDuration = 0f;
-            runtime.effectiveTickInterval = 0f;
-            runtime.effectiveBurstInterval = 0f;
-            runtime.effectiveCooldownDuration = 0f;
-            runtime.CooldownRemaining = 0f;
             runtime.CastRemaining = 0f;
             runtime.ActiveDurationRemaining = 0f;
             runtime.TickRemaining = 0f;
             runtime.ReloadRemaining = 0f;
-            SkillExecutionRuleResolver.InitializeRuntimeValues(runtime, null);
+            runtime.MagazineRemaining = runtime.MaxMagazineSize;
+            ResetCooldown(runtime);
             runtime.queuedBurstShotsRemaining = 0;
             runtime.ProjectileLaunchCount = 0;
             runtime.SkillHitCount = 0;
             runtime.ActiveExecutionData = null;
+            runtime.TriggerExecutionState = null;
             runtime.consecutiveHitTargetUnitId = string.Empty;
             runtime.consecutiveHitRepeatCount = 0;
         }
@@ -501,8 +492,7 @@ namespace Pakuri.InGame
             if (entry == null
                 || runtime == null
                 || snapshotRuntime == null
-                || definition == null
-                || triggeredExecutionDepth >= MaxTriggeredExecutionDepth)
+                || definition == null)
             {
                 return false;
             }
@@ -524,32 +514,24 @@ namespace Pakuri.InGame
             var aimDirection = entry.Transform != null && hasTargetPoint
                 ? targetPoint - (Vector2)entry.Transform.position
                 : default;
-            try
-            {
-                triggeredExecutionDepth++;
-                return ExecutePrepared(
-                    entry,
-                    runtime,
-                    definition,
-                    snapshot,
-                    roster,
-                    combatManager,
-                    aimDirection.sqrMagnitude > 0.0001f,
-                    aimDirection,
-                    hasTargetPoint,
-                    targetPoint,
-                    beginCast,
-                    sourceSkillId,
-                    eventTarget,
-                    lockToEventTarget,
-                    publishSkillLifecycleEvents,
-                    recastGeneration,
-                    executeCastEffects);
-            }
-            finally
-            {
-                triggeredExecutionDepth--;
-            }
+            return ExecutePrepared(
+                entry,
+                runtime,
+                definition,
+                snapshot,
+                roster,
+                combatManager,
+                aimDirection.sqrMagnitude > 0.0001f,
+                aimDirection,
+                hasTargetPoint,
+                targetPoint,
+                beginCast,
+                sourceSkillId,
+                eventTarget,
+                lockToEventTarget,
+                publishSkillLifecycleEvents,
+                recastGeneration,
+                executeCastEffects);
         }
 
         /// 일반 입력을 학습이 반영된 실행값으로 바꿔 공통 시전 흐름에 넣는다.
@@ -615,7 +597,8 @@ namespace Pakuri.InGame
             bool lockToEventTarget = false,
             bool publishSkillLifecycleEvents = true,
             int recastGeneration = 0,
-            bool executeCastEffects = true)
+            bool executeCastEffects = true,
+            SkillTrigger.TriggerExecutionState triggerExecutionState = null)
         {
             if (beginCast && !CanCastWithData(runtime, snapshot))
             {
@@ -639,6 +622,7 @@ namespace Pakuri.InGame
                     ? null
                     : triggerSourceSkillId,
                 eventTarget: eventTarget);
+            context.TriggerExecutionState = triggerExecutionState;
             if (lockToEventTarget
                 && SkillTargeting.OrderedTargets(context, definition.Targeting).Count == 0)
             {
@@ -775,13 +759,14 @@ namespace Pakuri.InGame
             float damageMultiplier,
             bool hasRawDamageOverride,
             float rawDamageOverride,
-            SkillExecutionData sourceSnapshot = null)
+            SkillExecutionData sourceSnapshot = null,
+            bool publishSkillLifecycleEvents = false,
+            SkillTrigger.TriggerExecutionState triggerExecutionState = null)
         {
             if (entry?.Model == null
                 || sourceRuntime == null
                 || effect == null
-                || effect.ResolvedDefinition == null
-                || triggeredExecutionDepth >= MaxTriggeredExecutionDepth)
+                || effect.ResolvedDefinition == null)
             {
                 return false;
             }
@@ -790,6 +775,10 @@ namespace Pakuri.InGame
                 entry.Model,
                 sourceRuntime,
                 roster);
+            if (triggerExecutionState != null)
+            {
+                sourceSnapshot.TriggerExecutionState = triggerExecutionState;
+            }
             if (effect.IsRecast)
             {
                 var zone = effect.ResolvedDefinition as ZoneSkillDefinition;
@@ -809,11 +798,16 @@ namespace Pakuri.InGame
                     manualTargetPoint: targetPoint,
                     recastGeneration: recastGeneration,
                     lockToEventTarget: lockToEventTarget,
-                    publishSkillLifecycleEvents: false,
+                    publishSkillLifecycleEvents: publishSkillLifecycleEvents,
                     sourceSkillId: sourceSkillId);
                 var recastSnapshot = effect.InheritSnapshot
                     ? sourceSnapshot
                     : SkillExecutionRuleResolver.CreateDefinitionSnapshot(zone);
+                if (triggerExecutionState != null)
+                {
+                    recastSnapshot.TriggerExecutionState = triggerExecutionState;
+                    recastContext.TriggerExecutionState = triggerExecutionState;
+                }
                 return TryExecuteRecast(
                     recastContext,
                     recastSnapshot,
@@ -843,36 +837,33 @@ namespace Pakuri.InGame
             {
                 snapshot.SetRawDamageOverride(rawDamageOverride);
             }
+            if (triggerExecutionState != null)
+            {
+                snapshot.TriggerExecutionState = triggerExecutionState;
+            }
             snapshot.OnHitStatusOverride = effect.OnHitStatusOverride;
             var aimDirection = entry.Transform != null && hasTargetPoint
                 ? targetPoint - (Vector2)entry.Transform.position
                 : default;
-            try
-            {
-                triggeredExecutionDepth++;
-                return ExecutePrepared(
-                    entry,
-                    runtime,
-                    effect.ResolvedDefinition,
-                    snapshot,
-                    roster,
-                    combatManager,
-                    aimDirection.sqrMagnitude > 0.0001f,
-                    aimDirection,
-                    hasTargetPoint,
-                    targetPoint,
-                    false,
-                    sourceSkillId,
-                    eventTarget,
-                    lockToEventTarget,
-                    false,
-                    recastGeneration,
-                    false);
-            }
-            finally
-            {
-                triggeredExecutionDepth--;
-            }
+            return ExecutePrepared(
+                entry,
+                runtime,
+                effect.ResolvedDefinition,
+                snapshot,
+                roster,
+                combatManager,
+                aimDirection.sqrMagnitude > 0.0001f,
+                aimDirection,
+                hasTargetPoint,
+                targetPoint,
+                false,
+                sourceSkillId,
+                eventTarget,
+                lockToEventTarget,
+                publishSkillLifecycleEvents,
+                recastGeneration,
+                false,
+                triggerExecutionState);
         }
 
         /// 시전 효과를 즉시 실행하거나 예약한다.
@@ -997,7 +988,8 @@ namespace Pakuri.InGame
                 effect.DamageMultiplier,
                 hasRawDamageOverride,
                 rawDamageOverride,
-                sourceSnapshot);
+                sourceSnapshot: sourceSnapshot,
+                triggerExecutionState: context.TriggerExecutionState);
         }
 
         /// 시전 완료를 후속 반응에 알린다.
@@ -1024,7 +1016,8 @@ namespace Pakuri.InGame
                 entry.Model,
                 runtime.Data.SkillId,
                 center,
-                triggerSourceSkillId);
+                triggerSourceSkillId,
+                context.TriggerExecutionState);
         }
 
         /// 확정된 실행값을 물리적 형태에 맞는 실행기로 보낸다.
@@ -1930,7 +1923,9 @@ namespace Pakuri.InGame
                         trigger.LockToEventTarget,
                         trigger.DamageMultiplier,
                         trigger.DamageValueSource != SkillTriggerDamageValueSource.Fixed,
-                        resolvedRawDamage);
+                        resolvedRawDamage,
+                        publishSkillLifecycleEvents: trigger.PublishSkillLifecycleEvents,
+                        triggerExecutionState: triggerContext.ExecutionState);
             }
 
             return trigger.Command != null
@@ -1966,6 +1961,7 @@ namespace Pakuri.InGame
                 recastGeneration: triggerContext.RecastGeneration,
                 lockToEventTarget: command.LockToEventTarget,
                 publishSkillLifecycleEvents: false);
+            context.TriggerExecutionState = triggerContext.ExecutionState;
             var targets = SkillTargeting.OrderedTargets(context, command.Targeting);
             var limit = command.Targeting != null && command.Targeting.Shape == SkillTargetShape.Single
                 ? 1

@@ -398,7 +398,7 @@ namespace Pakuri.InGame
                     SkillExecutionRuleResolver.ResolveHitDamageMultiplier(
                         executionData,
                         target.Model);
-                var result = manager.ApplyDamage(
+                var result = manager.ApplyDamageWithTriggerState(
                     target.Model,
                     resolvedDamage,
                     damageAttribute,
@@ -407,7 +407,11 @@ namespace Pakuri.InGame
                     critChanceBonus,
                     critDamageBonus,
                     sourceSkillId,
-                    finalDamageMultiplier: finalDamageMultiplier);
+                    false,
+                    false,
+                    null,
+                    finalDamageMultiplier,
+                    executionData != null ? executionData.TriggerExecutionState : null);
                 if (!result.IsDead)
                 {
                     StatusCombatRules.ApplyStatus(
@@ -527,7 +531,7 @@ namespace Pakuri.InGame
                     && UnityEngine.Random.value <= Mathf.Clamp01(
                         skillData.OnHitAdditionalDamageChance))
                 {
-                    manager.ApplyDamage(
+                    manager.ApplyDamageWithTriggerState(
                         hitTarget.Model,
                         primaryBaseDamage,
                         skillData.OnHitAdditionalDamageAttribute,
@@ -536,9 +540,11 @@ namespace Pakuri.InGame
                         0f,
                         0f,
                         sourceSkillId,
-                        suppressOutgoingDamageTriggers: true,
-                        finalDamageMultiplier:
-                            skillData.OnHitAdditionalDamageMultiplier);
+                        true,
+                        false,
+                        null,
+                        skillData.OnHitAdditionalDamageMultiplier,
+                        skillData.TriggerExecutionState);
                 }
 
                 if (skillData.HasOnHitChainDamageBehavior
@@ -562,7 +568,7 @@ namespace Pakuri.InGame
                             && chainTarget.IsAlive
                             && chainTarget.Model != null)
                         {
-                            manager.ApplyDamage(
+                            manager.ApplyDamageWithTriggerState(
                                 chainTarget.Model,
                                 primaryBaseDamage,
                                 skillData.OnHitChainDamageAttribute,
@@ -571,9 +577,11 @@ namespace Pakuri.InGame
                                 0f,
                                 0f,
                                 sourceSkillId,
-                                suppressOutgoingDamageTriggers: true,
-                                finalDamageMultiplier:
-                                    skillData.OnHitChainDamageMultiplier);
+                                true,
+                                false,
+                                null,
+                                skillData.OnHitChainDamageMultiplier,
+                                skillData.TriggerExecutionState);
                         }
                     }
                 }

@@ -524,6 +524,7 @@ public class SkillExecutionData
 		: this(source)
 	{
 		Owner = owner;
+		SkillExecutionRuleResolver.InitializeRuntimeValues(this, null);
 		SkillExecution.ResetRuntimeState(this);
 	}
 
@@ -536,6 +537,7 @@ public class SkillExecutionData
     public int ProjectileLaunchCount { get; internal set; }
     public int SkillHitCount { get; internal set; }
     internal SkillExecutionData ActiveExecutionData { get; set; }
+    internal SkillTrigger.TriggerExecutionState TriggerExecutionState { get; set; }
 
     internal int effectiveMaxMagazineSize;
     internal int effectiveBurstProjectileCount;

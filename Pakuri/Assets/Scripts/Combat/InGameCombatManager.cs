@@ -37,6 +37,32 @@ namespace Pakuri.InGame
             SourceHitWasExecute = sourceHitWasExecute;
             DamageMeterSourceId = damageMeterSourceId;
             FinalDamageBonus = finalDamageBonus;
+            TriggerExecutionState = null;
+        }
+
+        internal AttackRule(
+            UnitCombatState source,
+            bool criticalAllowed,
+            float critChanceBonus,
+            float critDamageBonus,
+            string sourceSkillId,
+            bool suppressOutgoingDamageTriggers,
+            bool sourceHitWasExecute,
+            string damageMeterSourceId,
+            float finalDamageBonus,
+            SkillTrigger.TriggerExecutionState triggerExecutionState)
+            : this(
+                source,
+                criticalAllowed,
+                critChanceBonus,
+                critDamageBonus,
+                sourceSkillId,
+                suppressOutgoingDamageTriggers,
+                sourceHitWasExecute,
+                damageMeterSourceId,
+                finalDamageBonus)
+        {
+            TriggerExecutionState = triggerExecutionState;
         }
 
         public UnitCombatState Source { get; }
@@ -48,6 +74,7 @@ namespace Pakuri.InGame
         public bool SourceHitWasExecute { get; }
         public string DamageMeterSourceId { get; }
         public float FinalDamageBonus { get; }
+        internal SkillTrigger.TriggerExecutionState TriggerExecutionState { get; }
     }
 
     /// InGameCombatManager가 담당하는 작업을 조정하고 공유 런타임 상태를 소유한다.
@@ -181,10 +208,74 @@ namespace Pakuri.InGame
             string damageMeterSourceId = null,
             float finalDamageMultiplier = 1f)
         {
+            return ApplyDamageInternal(
+                target,
+                baseDamage,
+                attribute,
+                source,
+                criticalAllowed,
+                critChanceBonus,
+                critDamageBonus,
+                sourceSkillId,
+                suppressOutgoingDamageTriggers,
+                sourceHitWasExecute,
+                damageMeterSourceId,
+                finalDamageMultiplier,
+                null);
+        }
+
+        /// 사건 연쇄를 이어서 피해와 후속 사건을 함께 적용한다.
+        internal InGameResourceChangeResult ApplyDamageWithTriggerState(
+            UnitCombatState target,
+            float baseDamage,
+            DamageAttribute attribute,
+            UnitCombatState source,
+            bool criticalAllowed,
+            float critChanceBonus,
+            float critDamageBonus,
+            string sourceSkillId,
+            bool suppressOutgoingDamageTriggers,
+            bool sourceHitWasExecute,
+            string damageMeterSourceId,
+            float finalDamageMultiplier,
+            SkillTrigger.TriggerExecutionState triggerExecutionState)
+        {
+            return ApplyDamageInternal(
+                target,
+                baseDamage,
+                attribute,
+                source,
+                criticalAllowed,
+                critChanceBonus,
+                critDamageBonus,
+                sourceSkillId,
+                suppressOutgoingDamageTriggers,
+                sourceHitWasExecute,
+                damageMeterSourceId,
+                finalDamageMultiplier,
+                triggerExecutionState);
+        }
+
+        /// 피해 결과와 연결된 전투 사건을 하나의 흐름으로 마무리한다.
+        private InGameResourceChangeResult ApplyDamageInternal(
+            UnitCombatState target,
+            float baseDamage,
+            DamageAttribute attribute,
+            UnitCombatState source,
+            bool criticalAllowed,
+            float critChanceBonus,
+            float critDamageBonus,
+            string sourceSkillId,
+            bool suppressOutgoingDamageTriggers,
+            bool sourceHitWasExecute,
+            string damageMeterSourceId,
+            float finalDamageMultiplier,
+            SkillTrigger.TriggerExecutionState triggerExecutionState)
+        {
             var depletedShields = new List<StatusRuntimeInstance>();
             var absorbedShields = new List<ShieldAbsorptionRecord>();
             var finalDamageBonus = Mathf.Max(0f, finalDamageMultiplier) - 1f;
-            var attackRule = new AttackRule(source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, suppressOutgoingDamageTriggers, sourceHitWasExecute, damageMeterSourceId, finalDamageBonus);
+            var attackRule = new AttackRule(source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, suppressOutgoingDamageTriggers, sourceHitWasExecute, damageMeterSourceId, finalDamageBonus, triggerExecutionState);
             var result = ApplyDamageToResources(target, baseDamage, attribute, attackRule, depletedShields, absorbedShields);
 
             if (!result.Changed)
@@ -204,8 +295,8 @@ namespace Pakuri.InGame
             var damagedEntry = Units.Find(result.Target);
             damagedEntry.RefreshDisplay();
             damagedEntry.ShowDamage(result.AppliedDamage, result.IsDead);
-            SkillTrigger.ExecuteShieldAbsorbs(this, Units, target, source, absorbedShields);
-            SkillTrigger.ExecuteExpiredStatuses(this, Units, target, depletedShields);
+            SkillTrigger.ExecuteShieldAbsorbs(this, Units, target, source, absorbedShields, triggerExecutionState);
+            SkillTrigger.ExecuteExpiredStatuses(this, Units, target, depletedShields, triggerExecutionState);
             DispatchOutgoingDamageTriggers(target, attribute, attackRule, result, baseDamage);
             if (result.IsDead && attackRule.Source != null)
             {
@@ -217,7 +308,8 @@ namespace Pakuri.InGame
                     target,
                     attribute,
                     result.AppliedDamage,
-                    attackRule.SourceHitWasExecute);
+                    attackRule.SourceHitWasExecute,
+                    attackRule.TriggerExecutionState);
             }
 
             RemoveUnitIfDead(result);
@@ -526,7 +618,8 @@ namespace Pakuri.InGame
                 target,
                 attribute,
                 result.AppliedDamage,
-                attackRule.SourceHitWasExecute);
+                attackRule.SourceHitWasExecute,
+                attackRule.TriggerExecutionState);
 
             ApplyOutgoingAdditionalDamageStatuses(target, attribute, attackRule, sourceBaseDamage);
         }

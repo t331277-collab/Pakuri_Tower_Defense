@@ -4,6 +4,143 @@
 
 The pre-cleanup file, including all completed July tasks, is preserved at `boards/ARCHIVE/ACTIVE_BOARD_SNAPSHOT_2026-07-28/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
 
+## Task: 2026-08-01 Preserve Learned Skill Runtime Values During Reset
+
+### Task title
+
+전투 재설정에서 학습 강화 실행값을 보존하고 진행 상태만 초기화한다.
+
+### Goals
+
+- `SkillExecution.ResetRuntimeState`가 쿨다운, 시전, 재장전, 탄창과 진행 문맥만 초기화하게 한다.
+- `effective` 실행값은 스테이지 전환 때 기본값으로 덮어쓰지 않는다.
+- 새 `SkillExecutionData` 생성 시에만 기존 Resolver로 기본 실행값을 준비한다.
+
+### Constraints
+
+- `SkillExecutionRuleResolver.InitializeRuntimeValues`와 `UnitSkills`의 학습 초기화 경로를 재사용한다.
+- 학습 시점에 확정된 재장전, 연사, 탄창, 쿨다운 실행값을 전투 재설정에서 보존한다.
+- 기존 공개 API와 스테이지 전환 흐름을 유지한다.
+- 커밋하지 않는다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation complete. 정적 호출 검사와 솔루션 빌드를 완료했다.
+
+### Next Actions
+
+- 사용자 Play Mode에서 스테이지 전환 후 학습된 탄창, 재장전, 연사, 쿨다운 값이 유지되는지 확인한다.
+
+### Evidence
+
+- `SkillExecution.ResetRuntimeState`는 `effective` 필드와 `InitializeRuntimeValues`를 더 이상 초기화하지 않고 진행 상태와 `MagazineRemaining`만 초기화한다.
+- `SkillExecutionData(UnitCombatState, SkillDefinition)` 생성자에서 `InitializeRuntimeValues(this, null)`을 호출해 기본 실행값을 한 번 준비한다.
+- `UnitSkills.InitializeLearnedRuntimeValues`의 Snapshot 적용 호출은 그대로 유지된다.
+- `rg` 결과 `InitializeRuntimeValues` 호출은 생성자, 학습 초기화와 Resolver 정의에만 남고 `ResetRuntimeState`에는 없다.
+- `git diff --check`가 통과했다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal`은 오류 0개, 기존 참조 충돌 경고 2개로 완료했다.
+
+### History
+
+- 2026-08-01: 사용자가 전투 재설정에서 기본 실행값을 삭제한 뒤 복구하는 구조의 불필요성과 강화값 손실 위험을 지적했다.
+- 2026-08-01: Code Builder가 기본 실행값 계산을 생성자에 남기고 `ResetRuntimeState`를 진행 상태 초기화로 축소했다.
+
+## Task: 2026-08-01 Skill Runtime Dead Code Cleanup
+
+### Task title
+
+Combat Skills의 중복 선언과 참조 없는 실행 보조 코드를 제거한다.
+
+### Goals
+
+- `SkillExecution`에 남은 미사용 `applyingHitEnhancement` 선언을 제거한다.
+- `SingleSkillActor`의 참조 없는 시각 수명 상수를 제거한다.
+- `ZoneSkillActor`의 실제 적중 강화 재진입 방지 필드는 보존한다.
+
+### Constraints
+
+- 호출 흐름과 공개 API를 변경하지 않는다.
+- Unity 메시지 메소드인 `Awake`, `Update`는 엔진 호출이므로 삭제하지 않는다.
+- 기존 사용자 변경과 이전 미커밋 작업을 유지한다.
+- 커밋하지 않는다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Complete. 참조 대조, 정적 검사와 솔루션 빌드를 완료했다.
+
+### Next Actions
+
+- 사용자 Play Mode 검증은 기존 작업과 같이 필요할 때 수행한다.
+
+### Evidence
+
+- `SkillExecution.cs`의 `applyingHitEnhancement` 선언은 삭제했고, `ZoneSkillActor.cs:42,487,503,591`의 실제 사용 경로는 보존했다.
+- `SingleSkillActor.cs`의 `DefaultVisualLifetimeSeconds`와 `PostDamageLifetimePaddingSeconds`는 저장소 전체 참조가 없어 삭제했다.
+- 후보 제거 후 `rg`에는 `ZoneSkillActor.cs`의 재진입 방지 필드와 세 사용 지점만 남았다.
+- `git diff --check`가 통과했다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal`은 오류 0개, 기존 참조 충돌 경고 2개로 완료했다.
+
+### History
+
+- 2026-08-01: Code Builder가 Skills Implementation과 Activation의 비공개 필드 선언 및 참조를 대조했다.
+- 2026-08-01: 참조 없는 선언 3개를 제거하고, 동일 이름이지만 실제 재진입 방지에 사용되는 Zone 필드는 보존했다.
+
+## Task: 2026-08-01 Trigger Execution Count Ownership
+
+### Task title
+
+Remove the global triggered execution depth cap and keep reaction repetition explicit.
+
+### Goals
+
+- Remove `MaxTriggeredExecutionDepth` and its shared depth counter.
+- Execute each matching reaction once per event chain unless its authored `RepeatCount` requests more executions.
+- Carry the reaction execution state through delayed reactions, Actors, damage, status, shield, kill and lifecycle event paths.
+- Keep independent `OnOutgoingDamage` events independent so normal multi-hit skills are not capped by a global count.
+
+### Constraints
+
+- Reuse existing `SkillReaction.RepeatCount`, `RepeatIntervalSeconds`, skill repeat values and recast generation values.
+- Preserve the public `InGameCombatManager.ApplyDamage` signature.
+- Do not add a Skill Implementation script or change authored CSV data.
+- Do not commit this task. Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation complete and uncommitted. Local build and static checks pass.
+
+### Next Actions
+
+- User verifies multi-hit, delayed reaction, repeated reaction and cross-skill lifecycle behavior in Unity Play Mode.
+- Review whether any authored reaction intentionally needs the same reaction to re-enter across one persistent Actor lifetime.
+
+### Evidence
+
+- `SkillExecution.cs` no longer contains `MaxTriggeredExecutionDepth` or `triggeredExecutionDepth`.
+- `SkillTrigger.TriggerExecutionState` records a reaction by owner and reaction ID and is consumed before source-owned or passive-owned scheduling.
+- `SkillReaction.RepeatCount` remains the explicit per-event repeat value used by `SkillExecution.ScheduleReaction`.
+- `SkillActionContext`, `SkillExecutionData`, `AttackRule`, `InGameCombatManager`, and existing skill Actors carry the same execution state through delayed and hit-time paths.
+- `rg` returned `MAX_DEPTH_REMAINS=0`, `DIRECT_ACTOR_APPLY_DAMAGE_REMAINS=0`, `TRIGGER_STATE_CONSUME_SITES=3`, and `EXPLICIT_REPEAT_DEFINITION_SITES=46`.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal` completed with 0 errors and the existing two assembly-reference warnings.
+- `git diff --check` passed. Worktree contains nine modified C# files and no commit was created.
+
+### History
+
+- 2026-08-01: User rejected a global eight-level limit because it can change authored skill results and requested explicit per-reaction execution counts.
+- 2026-08-01: Code Builder removed the global cap, connected per-chain reaction consumption and preserved existing repeat definitions without committing.
+
 ## Task: 2026-08-01 Consecutive Hit Damage Responsibility
 
 ### Task title
