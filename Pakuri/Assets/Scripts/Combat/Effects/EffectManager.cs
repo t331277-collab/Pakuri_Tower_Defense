@@ -3,7 +3,6 @@
  * 책임: 전투 결과와 분리하여 효과 GameObject를 생성·부착·추적·제거·일괄 정리한다.
  */
 
-using System;
 using System.Collections.Generic;
 using Pakuri.Data;
 using UnityEngine;
@@ -219,44 +218,6 @@ namespace Pakuri.InGame
                 RemoveEffect(child);
             }
 
-        }
-    }
-}
-
-namespace Pakuri.Data
-{
-    public enum RuntimeSkillVisualAnchor
-    {
-        Skill,
-        StatusTarget
-    }
-
-    [Serializable]
-    public class RuntimeSkillHitboxSpec
-    {
-        public Vector2 Size;
-
-        public bool HasHitbox()
-        {
-            return Size.x > 0f && Size.y > 0f;
-        }
-    }
-
-    [Serializable]
-    public class RuntimeSkillVisualSpec
-    {
-        public Sprite Sprite;
-        public RuntimeAnimatorController AnimatorController;
-        public Vector3 LocalScale = Vector3.one;
-        public int SortingOrder;
-        public RuntimeSkillVisualAnchor Anchor = RuntimeSkillVisualAnchor.Skill;
-        public RuntimeSkillHitboxSpec Hitbox = new RuntimeSkillHitboxSpec();
-
-        public bool HasVisual()
-        {
-            return Sprite != null
-                || AnimatorController != null
-                || (Hitbox != null && Hitbox.HasHitbox());
         }
     }
 }

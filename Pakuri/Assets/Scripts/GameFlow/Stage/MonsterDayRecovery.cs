@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// MonsterDayRecovery가 소유하는 데이터와 동작을 캡슐화한다.
+    /// MonsterDayRecovery가 소유하는 데이터와 동작
     static class MonsterDayRecovery
     {
 

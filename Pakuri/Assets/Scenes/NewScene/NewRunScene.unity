@@ -23613,11 +23613,17 @@ MonoBehaviour:
   runtimeObjectRoot: {fileID: 1773081075}
   runtimeEnemyRoot: {fileID: 727702651}
   runtimeMonsterRoot: {fileID: 1094400654}
-  arielUnitPrefab: {fileID: 4596420534878418281, guid: 6cab17e3f2f1775429ecb9a204438d9a, type: 3}
-  eveUnitPrefab: {fileID: 4596420534878418281, guid: 768bb9d217c3cc64a84cd7059fe5e154, type: 3}
-  rinUnitPrefab: {fileID: 4596420534878418281, guid: 45d446ad22f4f2f4d94f4ab1039c5b0a, type: 3}
-  seinUnitPrefab: {fileID: 4596420534878418281, guid: d827bb1e48cabef4abeed838d6bb8e05, type: 3}
-  vegaUnitPrefab: {fileID: 4596420534878418281, guid: a1e586738d1b9b64a97d0caba4cd449c, type: 3}
+  monsterPrefabBindings:
+  - monsterId: ariel
+    prefab: {fileID: 4596420534878418281, guid: 6cab17e3f2f1775429ecb9a204438d9a, type: 3}
+  - monsterId: eve
+    prefab: {fileID: 4596420534878418281, guid: 768bb9d217c3cc64a84cd7059fe5e154, type: 3}
+  - monsterId: rin
+    prefab: {fileID: 4596420534878418281, guid: 45d446ad22f4f2f4d94f4ab1039c5b0a, type: 3}
+  - monsterId: sein
+    prefab: {fileID: 4596420534878418281, guid: d827bb1e48cabef4abeed838d6bb8e05, type: 3}
+  - monsterId: vega
+    prefab: {fileID: 4596420534878418281, guid: a1e586738d1b9b64a97d0caba4cd449c, type: 3}
   enemyPrefabBindings:
   - enemyId: stage1-swordsman
     prefab: {fileID: 6219452113495756200, guid: f2892daa44e860e49b1ea2b17f8682dc, type: 3}

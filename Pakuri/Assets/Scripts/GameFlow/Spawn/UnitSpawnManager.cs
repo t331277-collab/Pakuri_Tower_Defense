@@ -14,11 +14,6 @@ namespace Pakuri.InGame
     /// UnitSpawnManager가 담당하는 작업을 조정하고 공유 런타임 상태를 소유한다.
     public class UnitSpawnManager : MonoBehaviour
     {
-        private const string ArielMonsterId = "ariel";
-        private const string EveMonsterId = "eve";
-        private const string RinMonsterId = "rin";
-        private const string SeinMonsterId = "sein";
-        private const string VegaMonsterId = "vega";
         private readonly UnitCombatStateFactory unitStateFactory = new UnitCombatStateFactory();
         private readonly CombatUnitRegistry unitRegistry = new CombatUnitRegistry();
 
@@ -27,11 +22,7 @@ namespace Pakuri.InGame
         [SerializeField] private Transform enemySpawnPoint;
         [SerializeField] private Transform runtimeEnemyRoot;
         [SerializeField] private Transform runtimeMonsterRoot;
-        [SerializeField] private GameObject arielUnitPrefab;
-        [SerializeField] private GameObject eveUnitPrefab;
-        [SerializeField] private GameObject rinUnitPrefab;
-        [SerializeField] private GameObject seinUnitPrefab;
-        [SerializeField] private GameObject vegaUnitPrefab;
+        [SerializeField] private MonsterPrefabBinding[] monsterPrefabBindings = Array.Empty<MonsterPrefabBinding>();
         [SerializeField] private EnemyPrefabBinding[] enemyPrefabBindings = Array.Empty<EnemyPrefabBinding>();
 
         public IReadOnlyList<CombatUnitEntry> Entries => unitRegistry.Entries;
@@ -45,6 +36,17 @@ namespace Pakuri.InGame
             var model = unitStateFactory.CreateNexus(actor.MaxHealth);
             actor.Initialize(model);
             RegisterUnit(model, actor, actor.transform);
+        }
+
+        /// MonsterPrefabBinding가 나타내는 런타임 값을 보관한다.
+        [Serializable]
+        private class MonsterPrefabBinding
+        {
+            [SerializeField] private string monsterId = string.Empty;
+            [SerializeField] private GameObject prefab = null;
+
+            public string MonsterId => monsterId;
+            public GameObject Prefab => prefab;
         }
 
         /// EnemyPrefabBinding가 나타내는 런타임 값을 보관한다.
@@ -124,13 +126,6 @@ namespace Pakuri.InGame
             return spawnedUnit;
         }
 
-        /// 전달된 session 값을 사용해 RestorePlayerPartyFromSession 작업을 수행한다.
-        public void RestorePlayerPartyFromSession(RunSession session)
-        {
-            RestoreSelectedPlayerFromSession(session);
-            RestoreAdditionalPlayersFromSession(session);
-        }
-
         /// 전달된 런타임 입력값을 사용해 EnemyById를 런타임 씬 오브젝트로 생성하고 등록한다.
         public GameObject SpawnEnemyById(
             string enemyId,
@@ -145,48 +140,32 @@ namespace Pakuri.InGame
             return SpawnEnemyUnit(prefab, enemyId, spawnIndex, spawnX, spawnYMin, spawnYMax, healthMultiplier, isBoss);
         }
 
-        /// 전달된 activeSession 값을 사용해 RestoreSelectedPlayerFromSession 작업을 수행한다.
-        private void RestoreSelectedPlayerFromSession(
-            RunSession activeSession)
+        /// 전달된 session 값을 사용해 RestorePlayerPartyFromSession 작업을 수행한다.
+        public void RestorePlayerPartyFromSession(RunSession session)
         {
-
-            var selectedEntry = FindPlayerMonsterBySlot(0);
-            if (selectedEntry != null)
-            {
-                return;
-            }
-
-            if (TryReviveExistingPlayerBySlot(activeSession, 0, out _))
-            {
-                return;
-            }
-
-            CreateSelectedPlayerUnit(
-                activeSession,
-                out _,
-                out _);
-        }
-
-        /// 전달된 activeSession 값을 사용해 RestoreAdditionalPlayersFromSession 작업을 수행한다.
-        private void RestoreAdditionalPlayersFromSession(RunSession activeSession)
-        {
-            for (var slotIndex = 1; slotIndex < activeSession.PartyMembers.Count; slotIndex++)
+            for (var slotIndex = 0; slotIndex < session.PartyMembers.Count; slotIndex++)
             {
                 if (FindPlayerMonsterBySlot(slotIndex) != null)
                 {
                     continue;
                 }
 
-                if (TryReviveExistingPlayerBySlot(activeSession, slotIndex, out _))
+                if (TryReviveExistingPlayerBySlot(session, slotIndex, out _))
                 {
                     continue;
                 }
 
-                var monsterId = activeSession.PartyMembers[slotIndex].MonsterId;
+                if (slotIndex == 0)
+                {
+                    CreateSelectedPlayerUnit(session, out _, out _);
+                    continue;
+                }
+
+                var monsterId = session.PartyMembers[slotIndex].MonsterId;
                 var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId)
                     ?? throw new InvalidOperationException($"Party monster data '{monsterId}' is required.");
 
-                CreateManifestedMonster(monster, activeSession, slotIndex);
+                CreateManifestedMonster(monster, session, slotIndex);
             }
         }
 
@@ -432,29 +411,13 @@ namespace Pakuri.InGame
         /// 전달된 monsterId 값을 사용해 MonsterPrefab를 결정한다.
         private GameObject ResolveMonsterPrefab(string monsterId)
         {
-            if (string.Equals(monsterId, ArielMonsterId, StringComparison.OrdinalIgnoreCase))
+            for (var i = 0; i < monsterPrefabBindings.Length; i++)
             {
-                return RequirePrefab(arielUnitPrefab, monsterId);
-            }
-
-            if (string.Equals(monsterId, EveMonsterId, StringComparison.OrdinalIgnoreCase))
-            {
-                return RequirePrefab(eveUnitPrefab, monsterId);
-            }
-
-            if (string.Equals(monsterId, RinMonsterId, StringComparison.OrdinalIgnoreCase))
-            {
-                return RequirePrefab(rinUnitPrefab, monsterId);
-            }
-
-            if (string.Equals(monsterId, SeinMonsterId, StringComparison.OrdinalIgnoreCase))
-            {
-                return RequirePrefab(seinUnitPrefab, monsterId);
-            }
-
-            if (string.Equals(monsterId, VegaMonsterId, StringComparison.OrdinalIgnoreCase))
-            {
-                return RequirePrefab(vegaUnitPrefab, monsterId);
+                var binding = monsterPrefabBindings[i];
+                if (string.Equals(monsterId, binding.MonsterId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return RequirePrefab(binding.Prefab, monsterId);
+                }
             }
 
             throw new InvalidOperationException($"Monster prefab '{monsterId}' is required.");

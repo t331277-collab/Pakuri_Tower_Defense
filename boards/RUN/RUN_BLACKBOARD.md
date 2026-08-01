@@ -8,6 +8,88 @@ The previous Run, reward, and save/load boards are preserved under `boards/ARCHI
 
 For new Run work, inspect the exact current code and data first, then add a required-field task block here only when persistent state is needed.
 
+## Task: 2026-08-01 NewRunScene Monster Prefab Serialization Migration
+
+### Task title
+
+Move `NewRunScene` monster prefab references into `MonsterPrefabBinding[]`.
+
+### Goals
+
+- Replace the five `UnitSpawnManager` scene fields with one serialized binding array.
+- Preserve the five existing prefab GUID references in `NewRunScene`.
+- Keep selected-monster and manifested-party spawn call sites unchanged.
+
+### Constraints
+
+- Preserve scene references and runtime spawn behavior.
+- Do not change RunSession or learned-skill ownership.
+- Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and verified.
+
+### Next Actions
+
+- User verifies selected and manifested monster spawning in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity:23616` now contains five `monsterPrefabBindings` entries.
+- Unity loaded `NewRunScene` successfully and scene validation reported 0 issues, 0 missing scripts, and 0 broken prefabs.
+- Unity component inspection reported the five expected monster IDs and prefab asset paths.
+- Core and Editor builds completed with 0 errors; only the existing two assembly-reference warnings remain.
+
+### History
+
+- 2026-08-01: Code Builder migrated the existing NewRunScene monster prefab references from individual fields to serialized binding entries without changing spawn callers.
+
+## Task: 2026-08-01 Player Party Restore Consolidation
+
+### Task title
+
+Consolidate selected-player and additional-player session restoration into one traversal.
+
+### Goals
+
+- Keep one `RestorePlayerPartyFromSession` entry point for every party slot.
+- Preserve registry checks and revival of existing runtime monsters.
+- Preserve selected-player creation for slot 0 and manifested-monster creation for later slots.
+
+### Constraints
+
+- Keep the public `RestorePlayerPartyFromSession` API and existing creation methods.
+- Preserve `RunSession` ownership and next-day restoration behavior.
+- Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and verified.
+
+### Next Actions
+
+- User verifies next-day party revival and restoration in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/GameFlow/Spawn/UnitSpawnManager.cs:144` now loops from slot 0 through `PartyMembers` in one method.
+- Repository search found zero `RestoreSelectedPlayerFromSession` and `RestoreAdditionalPlayersFromSession` references.
+- Core and Editor builds completed with 0 errors; only the existing two assembly-reference warnings remain.
+- Unity script validation reported 0 warnings and 0 errors; Unity Console reported 0 error/warning entries.
+
+### History
+
+- 2026-08-01: Code Builder merged the two private restoration traversals while retaining their slot-specific creation branches.
+
 ## Task: 2026-07-29 Unit Skill Ownership Consolidation
 
 ### Task title
