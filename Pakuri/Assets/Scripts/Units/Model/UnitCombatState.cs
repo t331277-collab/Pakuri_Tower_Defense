@@ -11,14 +11,12 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// UnitSide에서 지원하는 값의 종류를 정의한다.
     public enum UnitSide
     {
         Player,
         Enemy
     }
 
-    /// UnitRole에서 지원하는 값의 종류를 정의한다.
     public enum UnitRole
     {
         Monster,
@@ -26,7 +24,6 @@ namespace Pakuri.InGame
         Nexus
     }
 
-    /// UnitIdentity가 소유하는 데이터와 동작을 캡슐화한다.
     [Serializable]
     public class UnitIdentity
     {
@@ -38,7 +35,6 @@ namespace Pakuri.InGame
         public int SlotIndex;
     }
 
-    /// UnitCombatStats가 소유하는 데이터와 동작을 캡슐화한다.
     [Serializable]
     public class UnitCombatStats
     {
@@ -51,7 +47,6 @@ namespace Pakuri.InGame
         public float CriticalResistance;
     }
 
-    /// UnitDefenseStats가 소유하는 데이터와 동작을 캡슐화한다.
     [Serializable]
     public class UnitDefenseStats
     {
@@ -62,7 +57,6 @@ namespace Pakuri.InGame
         public float Darkness;
         public float Holy;
 
-        /// 전달된 attribute 값을 사용해 요청값를 반환한다.
         public float Get(DamageAttribute attribute)
         {
             switch (attribute)
@@ -85,7 +79,6 @@ namespace Pakuri.InGame
         }
     }
 
-    /// UnitCombatResources가 소유하는 데이터와 동작을 캡슐화한다.
     [Serializable]
     public class UnitCombatResources
     {

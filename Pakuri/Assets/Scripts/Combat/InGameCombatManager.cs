@@ -16,7 +16,6 @@ namespace Pakuri.InGame
     public readonly struct AttackRule
     {
 
-        /// AttackRule 인스턴스를 전달된 런타임 입력값으로 초기화한다.
         public AttackRule(
             UnitCombatState source,
             bool criticalAllowed,
@@ -77,7 +76,6 @@ namespace Pakuri.InGame
         internal SkillTrigger.TriggerExecutionState TriggerExecutionState { get; }
     }
 
-    /// InGameCombatManager가 담당하는 작업을 조정하고 공유 런타임 상태를 소유한다.
     public class InGameCombatManager : MonoBehaviour
     {
         [SerializeField] private UnitSpawnManager unitSpawnManager;
@@ -142,7 +140,6 @@ namespace Pakuri.InGame
             TickUnitStatuses(Time.deltaTime);
         }
 
-        /// 전달된 deltaTime 값을 사용해 SkillStates를 경과 시간 기준으로 갱신한다.
         private void TickSkillStates(float deltaTime)
         {
             var entries = Units.Entries;
@@ -156,7 +153,6 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 전달된 model 값을 사용해 PlayerUnitRegistered를 관련 런타임 시스템에 알린다.
         internal void NotifyPlayerUnitRegistered(UnitCombatState model)
         {
             if (PlayerCombatInputController.IsSelectedPlayerModel(model))
@@ -174,7 +170,6 @@ namespace Pakuri.InGame
             skillExecution.ExecutePassiveEffects(this, Units, model);
         }
 
-        /// 전달된 model 값을 사용해 EnemyUnitRegistered를 관련 런타임 시스템에 알린다.
         internal void NotifyEnemyUnitRegistered(EnemyCombatState model)
         {
             var entries = Units.Entries;
@@ -193,7 +188,6 @@ namespace Pakuri.InGame
             DispatchCombatStartOnce(model);
         }
 
-        /// 전달된 런타임 입력값을 사용해 Damage를 적용한다.
         public InGameResourceChangeResult ApplyDamage(
             UnitCombatState target,
             float baseDamage,
@@ -316,7 +310,6 @@ namespace Pakuri.InGame
             return result;
         }
 
-        /// 전달된 런타임 입력값을 사용해 Heal 결과값을 생성해 반환한다.
         public InGameResourceChangeResult Heal(UnitCombatState target, float amount)
         {
 
@@ -330,7 +323,6 @@ namespace Pakuri.InGame
             return result;
         }
 
-        /// 전달된 런타임 입력값을 사용해 DamageToResources를 적용한다.
         private static InGameResourceChangeResult ApplyDamageToResources(
             UnitCombatState target,
             float baseDamage,
@@ -375,7 +367,6 @@ namespace Pakuri.InGame
                 currentHealth <= 0f);
         }
 
-        /// 전달된 런타임 입력값을 사용해 HealResources 결과값을 생성해 반환한다.
         private static InGameResourceChangeResult HealResources(UnitCombatState target, float amount)
         {
             var resources = target.Resources;
@@ -403,13 +394,11 @@ namespace Pakuri.InGame
                 currentHealth <= 0f);
         }
 
-        /// 전달된 value 값을 사용해 요청값를 런타임 정밀도에 맞게 반올림한다.
         private static float Round(float value)
         {
             return Mathf.Round(Mathf.Max(0f, value));
         }
 
-        /// 전달된 런타임 입력값을 사용해 Status를 적용한다.
         public StatusRuntimeInstance ApplyStatus(
             UnitCombatState target,
             StatusRuntimeData statusData,
@@ -440,7 +429,6 @@ namespace Pakuri.InGame
             return status;
         }
 
-        /// 전달된 런타임 입력값을 사용해 ShieldStatus를 적용한다.
         public StatusRuntimeInstance ApplyShieldStatus(
             UnitCombatState target,
             StatusRuntimeData statusData,
@@ -474,7 +462,6 @@ namespace Pakuri.InGame
             return status;
         }
 
-        /// 전달된 런타임 입력값을 사용해 StatusDuration를 연장한다.
         public bool ExtendStatusDuration(UnitCombatState target, StatusEffectKind kind, float durationDelta)
         {
             if (kind == StatusEffectKind.None || durationDelta <= 0f || target.IsNexus)
@@ -509,7 +496,6 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /// 전달된 런타임 입력값을 사용해 StatusEffectVisual를 표시한다.
         private void ShowStatusEffectVisual(
             UnitCombatState target,
             StatusRuntimeInstance status)
@@ -563,7 +549,6 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 전달된 source 값을 사용해 CombatStartOnce를 등록된 런타임 처리기로 전달한다.
         private void DispatchCombatStartOnce(UnitCombatState source)
         {
 
@@ -575,7 +560,6 @@ namespace Pakuri.InGame
             SkillTrigger.ExecuteCombatStart(this, Units, source);
         }
 
-        /// 전달된 런타임 입력값을 사용해 PassiveStatus를 소유한 런타임 상태에서 제거한다.
         internal bool RemovePassiveStatus(UnitCombatState target, StatusEffectKind kind, string sourceSkillId)
         {
             var removedStatuses = new List<StatusRuntimeInstance>();
@@ -596,7 +580,6 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /// 전달된 런타임 입력값을 사용해 OutgoingDamageTriggers를 등록된 런타임 처리기로 전달한다.
         private void DispatchOutgoingDamageTriggers(
             UnitCombatState target,
             DamageAttribute attribute,
@@ -624,7 +607,6 @@ namespace Pakuri.InGame
             ApplyOutgoingAdditionalDamageStatuses(target, attribute, attackRule, sourceBaseDamage);
         }
 
-        /// 전달된 런타임 입력값을 사용해 OutgoingAdditionalDamageStatuses를 적용한다.
         private void ApplyOutgoingAdditionalDamageStatuses(
             UnitCombatState target,
             DamageAttribute triggerAttribute,
@@ -663,7 +645,6 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 전달된 런타임 입력값을 사용해 StatusStacks를 현재 런타임 상태에서 소비한다.
         public int ConsumeStatusStacks(UnitCombatState target, StatusEffectKind kind, int stacks)
         {
             if (stacks <= 0)
@@ -687,7 +668,6 @@ namespace Pakuri.InGame
             return consumed;
         }
 
-        /// 전달된 deltaTime 값을 사용해 UnitStatuses를 경과 시간 기준으로 갱신한다.
         private void TickUnitStatuses(float deltaTime)
         {
             if (deltaTime <= 0f)
@@ -715,7 +695,6 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 전달된 result 값을 사용해 UnitIfDead를 소유한 런타임 상태에서 제거한다.
         private void RemoveUnitIfDead(InGameResourceChangeResult result)
         {
             if (!result.IsDead)
@@ -733,7 +712,6 @@ namespace Pakuri.InGame
     public readonly struct InGameResourceChangeResult
     {
 
-        /// InGameResourceChangeResult 인스턴스를 전달된 런타임 입력값으로 초기화한다.
         public InGameResourceChangeResult(
             UnitCombatState target,
             float previousHealth,

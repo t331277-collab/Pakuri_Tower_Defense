@@ -15,8 +15,8 @@ namespace Pakuri.InGame
 
         /// 지원 효과의 성격에 맞는 적용 방식을 고른다.
         internal static bool Execute(
-            SkillActionContext context,
-            SkillExecutionData snapshot)
+            SkillExecutionContext context,
+            SkillExecutionState snapshot)
         {
             switch (snapshot.PreparedBuffEffectKind)
             {
@@ -33,8 +33,8 @@ namespace Pakuri.InGame
 
         /// 상태 효과를 대상마다 적용하고 성공한 표현을 남긴다.
         private static bool ExecuteStatus(
-            SkillActionContext context,
-            SkillExecutionData snapshot)
+            SkillExecutionContext context,
+            SkillExecutionState snapshot)
         {
             var statusSpec = snapshot.PreparedStatus;
             if (statusSpec == null)
@@ -76,10 +76,10 @@ namespace Pakuri.InGame
             return routed || castCommitted;
         }
 
-        /// 우선 대상의 생명력을 회복하고 결과를 표현한다.
+        /// 최우선 대상의 생명력을 회복하고 결과를 표현한다.
         private static bool ExecuteHeal(
-            SkillActionContext context,
-            SkillExecutionData snapshot)
+            SkillExecutionContext context,
+            SkillExecutionState snapshot)
         {
             var target = snapshot.PreparedTargets.Count > 0
                 ? snapshot.PreparedTargets[0]
@@ -103,8 +103,8 @@ namespace Pakuri.InGame
 
         /// 대상마다 보호막 상태와 그 수명을 시작한다.
         private static bool ExecuteShield(
-            SkillActionContext context,
-            SkillExecutionData snapshot)
+            SkillExecutionContext context,
+            SkillExecutionState snapshot)
         {
             if (snapshot.PreparedShieldStatusData == null || snapshot.PreparedDuration <= 0f)
             {
@@ -145,7 +145,7 @@ namespace Pakuri.InGame
         }
 
         /// 돌진을 맡을 시전자와 실행 상태가 준비됐는지 확인한다.
-        private static bool ExecuteCharge(SkillActionContext context)
+        private static bool ExecuteCharge(SkillExecutionContext context)
         {
             return context.Caster != null && context.Runtime != null;
         }
@@ -158,8 +158,8 @@ namespace Pakuri.InGame
 
         /// 효과가 붙을 위치와 수명에 맞춰 표현을 만든다.
         private static void SpawnVisual(
-            SkillActionContext context,
-            SkillExecutionData snapshot,
+            SkillExecutionContext context,
+            SkillExecutionState snapshot,
             CombatUnitEntry target,
             string namePrefix,
             float duration,

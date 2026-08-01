@@ -21,23 +21,19 @@ namespace Pakuri.InGame
         private UnitSpawnManager roster;
         private SkillTargetingSpec targeting;
         private Vector2 center;
-        private float radius;
-        private bool coverAll;
         private float remainingDuration;
         private float tickInterval;
         private float tickRemaining;
-        private int maxHitTargetCount;
         private float damage;
         private DamageAttribute attribute;
         private StatusApplicationSpec statusSpec;
-        private SkillExecutionData runtime;
-        private SkillExecutionData snapshot;
+        private SkillExecutionState runtime;
+        private SkillExecutionState snapshot;
         private UnitCombatState sourceModel;
         private bool criticalAllowed;
         private float critChanceBonus;
         private float critDamageBonus;
         private Collider2D[] prefabHitboxColliders;
-        private bool usePrefabHitbox;
         private int recastGeneration;
         private static bool applyingHitEnhancement;
 
@@ -48,16 +44,13 @@ namespace Pakuri.InGame
             UnitSpawnManager unitRoster,
             SkillTargetingSpec targetingSpec,
             Vector2 areaCenter,
-            float areaRadius,
-            bool areaCoversAll,
             float durationSeconds,
             float tickIntervalSeconds,
-            int maxTargetsPerTick,
             float damagePerTick,
             DamageAttribute damageAttribute,
             StatusApplicationSpec onTickStatus,
-            SkillExecutionData sourceRuntime,
-            SkillExecutionData executionData,
+            SkillExecutionState sourceRuntime,
+            SkillExecutionState executionData,
             UnitCombatState source,
             bool allowCritical,
             float criticalChanceBonus,
@@ -69,12 +62,9 @@ namespace Pakuri.InGame
             roster = unitRoster;
             targeting = targetingSpec;
             center = areaCenter;
-            radius = Mathf.Max(0f, areaRadius);
-            coverAll = areaCoversAll;
             remainingDuration = Mathf.Max(0.05f, durationSeconds);
             tickInterval = Mathf.Max(0.05f, tickIntervalSeconds);
             tickRemaining = tickInterval;
-            maxHitTargetCount = maxTargetsPerTick <= 0 ? int.MaxValue : maxTargetsPerTick;
             damage = Mathf.Max(0f, damagePerTick);
             attribute = damageAttribute;
             statusSpec = onTickStatus;
@@ -86,15 +76,6 @@ namespace Pakuri.InGame
             critDamageBonus = criticalDamageBonus;
             recastGeneration = Mathf.Max(0, generation);
             prefabHitboxColliders = GetComponentsInChildren<Collider2D>();
-            usePrefabHitbox = !coverAll
-                && prefabHitboxColliders != null
-                && prefabHitboxColliders.Length > 0;
-            EffectVisualBuilder.ConfigureZoneEffect(
-                gameObject,
-                center,
-                radius,
-                coverAll,
-                usePrefabHitbox);
             ApplyCurrentAreaTick();
         }
 
@@ -122,7 +103,7 @@ namespace Pakuri.InGame
         {
             if (combatManager != null && casterEntry != null && roster != null)
             {
-                var lifecycleContext = new SkillActionContext(
+                var lifecycleContext = new SkillExecutionContext(
                     combatManager,
                     roster,
                     casterEntry,
@@ -130,7 +111,7 @@ namespace Pakuri.InGame
                     recastGeneration: recastGeneration);
                 SkillTrigger.PublishLifecycleEvent(
                     SkillTriggerEvent.OnExpire,
-                    new SkillActionContext(
+                    new SkillExecutionContext(
                         casterEntry.Model,
                         SourceSkillId(snapshot, runtime),
                         null,
@@ -142,38 +123,15 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 물리 충돌 영역 유무에 맞춰 이번 주기의 대상 판정을 고른다.
+        /// 물리 충돌 영역과 겹친 대상을 이번 주기 결과로 확정한다.
         private bool ApplyCurrentAreaTick()
         {
-            if (usePrefabHitbox)
-            {
-                return ApplyColliderAreaTick(
-                    combatManager,
-                    casterEntry,
-                    roster,
-                    targeting,
-                    prefabHitboxColliders,
-                    maxHitTargetCount,
-                    damage,
-                    attribute,
-                    statusSpec,
-                    sourceModel,
-                    SourceSkillId(snapshot, runtime),
-                    runtime,
-                    criticalAllowed,
-                    critChanceBonus,
-                    critDamageBonus,
-                    snapshot);
-            }
-
-            return ApplyAreaTargets(
+            return ApplyColliderAreaTick(
                 combatManager,
                 casterEntry,
                 roster,
                 targeting,
-                center,
-                radius,
-                coverAll,
+                prefabHitboxColliders,
                 damage,
                 attribute,
                 statusSpec,
@@ -183,7 +141,6 @@ namespace Pakuri.InGame
                 criticalAllowed,
                 critChanceBonus,
                 critDamageBonus,
-                maxHitTargetCount,
                 snapshot);
         }
 
@@ -194,17 +151,16 @@ namespace Pakuri.InGame
             UnitSpawnManager unitRoster,
             SkillTargetingSpec targetingSpec,
             Collider2D[] hitboxColliders,
-            int maxTargetsPerTick,
             float damagePerTick,
             DamageAttribute damageAttribute,
             StatusApplicationSpec onHitStatus,
             UnitCombatState source,
             string sourceSkillId,
-            SkillExecutionData sourceRuntime,
+            SkillExecutionState sourceRuntime,
             bool criticalAllowed,
             float critChanceBonus,
             float critDamageBonus,
-            SkillExecutionData executionData)
+            SkillExecutionState executionData)
         {
             if (manager == null || sourceEntry == null || unitRoster == null || hitboxColliders == null || hitboxColliders.Length == 0)
             {
@@ -225,7 +181,6 @@ namespace Pakuri.InGame
                 sourceEntry,
                 unitRoster,
                 eligibleTargets,
-                maxTargetsPerTick,
                 damagePerTick,
                 damageAttribute,
                 onHitStatus,
@@ -239,126 +194,22 @@ namespace Pakuri.InGame
             return routed;
         }
 
-        /// 중심과 반경으로 걸러진 대상을 공통 적중 처리로 넘긴다.
-        internal static bool ApplyAreaTargets(
-            InGameCombatManager manager,
-            CombatUnitEntry sourceEntry,
-            UnitSpawnManager unitRoster,
-            SkillTargetingSpec targetingSpec,
-            Vector2 center,
-            float radius,
-            bool coverAll,
-            float damage,
-            DamageAttribute damageAttribute,
-            StatusApplicationSpec onHitStatus,
-            UnitCombatState source,
-            string sourceSkillId,
-            SkillExecutionData sourceRuntime,
-            bool criticalAllowed,
-            float critChanceBonus,
-            float critDamageBonus,
-            int maxTargets,
-            SkillExecutionData executionData)
-        {
-            if (manager == null || sourceEntry == null || unitRoster == null)
-            {
-                return false;
-            }
-
-            if (!coverAll && radius <= 0f)
-            {
-                var target = SkillTargeting.FindNearestTarget(
-                    sourceEntry,
-                    unitRoster,
-                    targetingSpec);
-                return ApplyResolvedTargets(
-                    manager,
-                    sourceEntry,
-                    unitRoster,
-                    target != null ? new[] { target } : Array.Empty<CombatUnitEntry>(),
-                    1,
-                    damage,
-                    damageAttribute,
-                    onHitStatus,
-                    source,
-                    sourceSkillId,
-                    sourceRuntime,
-                    criticalAllowed,
-                    critChanceBonus,
-                    critDamageBonus,
-                    executionData);
-            }
-
-            var candidates = SkillTargeting.TargetList(
-                sourceEntry,
-                unitRoster,
-                targetingSpec);
-            var radiusSquared = Mathf.Max(0f, radius) * Mathf.Max(0f, radius);
-            var hitUnitIds = new HashSet<string>();
-            var eligibleTargets = new List<CombatUnitEntry>();
-            for (var i = 0; i < candidates.Count; i++)
-            {
-                var target = candidates[i];
-                if (target == null
-                    || !target.IsAlive
-                    || target.Model == null
-                    || target.Transform == null)
-                {
-                    continue;
-                }
-
-                var unitId = target.Model.Identity != null
-                    ? target.Model.Identity.UnitId
-                    : null;
-                if (!string.IsNullOrWhiteSpace(unitId)
-                    && !hitUnitIds.Add(unitId))
-                {
-                    continue;
-                }
-                if (!coverAll
-                    && ((Vector2)target.Transform.position - center).sqrMagnitude > radiusSquared)
-                {
-                    continue;
-                }
-
-                eligibleTargets.Add(target);
-            }
-
-            return ApplyResolvedTargets(
-                manager,
-                sourceEntry,
-                unitRoster,
-                eligibleTargets,
-                maxTargets,
-                damage,
-                damageAttribute,
-                onHitStatus,
-                source,
-                sourceSkillId,
-                sourceRuntime,
-                criticalAllowed,
-                critChanceBonus,
-                critDamageBonus,
-                executionData);
-        }
-
-        /// 대상 제한을 반영한 뒤 피해, 상태, 후속 사건을 같은 순서로 적용한다.
+        /// 충돌이 확정된 모든 대상에 피해, 상태, 후속 사건을 같은 순서로 적용한다.
         internal static bool ApplyResolvedTargets(
             InGameCombatManager manager,
             CombatUnitEntry sourceEntry,
             UnitSpawnManager unitRoster,
             IReadOnlyList<CombatUnitEntry> eligibleTargets,
-            int maxTargets,
             float damage,
             DamageAttribute damageAttribute,
             StatusApplicationSpec onHitStatus,
             UnitCombatState source,
             string sourceSkillId,
-            SkillExecutionData sourceRuntime,
+            SkillExecutionState sourceRuntime,
             bool criticalAllowed,
             float critChanceBonus,
             float critDamageBonus,
-            SkillExecutionData executionData)
+            SkillExecutionState executionData)
         {
             if (manager == null
                 || eligibleTargets == null
@@ -367,24 +218,10 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var selectedTargets = new List<CombatUnitEntry>(eligibleTargets);
-            if (maxTargets > 0 && maxTargets < selectedTargets.Count)
-            {
-                for (var i = 0; i < maxTargets; i++)
-                {
-                    var randomIndex = UnityEngine.Random.Range(i, selectedTargets.Count);
-                    (selectedTargets[i], selectedTargets[randomIndex]) =
-                        (selectedTargets[randomIndex], selectedTargets[i]);
-                }
-                selectedTargets.RemoveRange(
-                    maxTargets,
-                    selectedTargets.Count - maxTargets);
-            }
-
             var routed = false;
-            for (var i = 0; i < selectedTargets.Count; i++)
+            for (var i = 0; i < eligibleTargets.Count; i++)
             {
-                var target = selectedTargets[i];
+                var target = eligibleTargets[i];
                 if (target == null || !target.IsAlive || target.Model == null)
                 {
                     continue;
@@ -395,7 +232,7 @@ namespace Pakuri.InGame
                     : Vector2.zero;
                 var resolvedDamage = Mathf.Max(0f, damage);
                 var finalDamageMultiplier =
-                    SkillExecutionRuleResolver.ResolveHitDamageMultiplier(
+                    SkillExecutionRules.ResolveHitDamageMultiplier(
                         executionData,
                         target.Model);
                 var result = manager.ApplyDamageWithTriggerState(
@@ -441,8 +278,8 @@ namespace Pakuri.InGame
         internal static void PublishHitOutcome(
             InGameCombatManager manager,
             UnitSpawnManager unitRoster,
-            SkillExecutionData runtime,
-            SkillExecutionData skillData,
+            SkillExecutionState runtime,
+            SkillExecutionState skillData,
             CombatUnitEntry sourceEntry,
             UnitCombatState source,
             string sourceSkillId,
@@ -456,7 +293,7 @@ namespace Pakuri.InGame
                 && hitTarget != null
                 && hitTarget.Model != null)
             {
-                var actionExecutionContext = new SkillActionContext(
+                var actionExecutionContext = new SkillExecutionContext(
                     manager,
                     unitRoster,
                     sourceEntry,
@@ -466,7 +303,7 @@ namespace Pakuri.InGame
                     sourceSkillId: sourceSkillId);
                 SkillTrigger.PublishLifecycleEvent(
                     SkillTriggerEvent.OnHit,
-                    new SkillActionContext(
+                    new SkillExecutionContext(
                         source,
                         sourceSkillId,
                         hitTarget.Model,
@@ -593,7 +430,7 @@ namespace Pakuri.InGame
         }
 
         /// 후속 사건이 원래 시전자를 추적할 식별자를 고른다.
-        private static string SourceSkillId(SkillExecutionData executionData, SkillExecutionData sourceRuntime)
+        private static string SourceSkillId(SkillExecutionState executionData, SkillExecutionState sourceRuntime)
         {
             if (sourceRuntime != null && !string.IsNullOrWhiteSpace(sourceRuntime.SkillId))
             {

@@ -8,7 +8,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-/// MainMenuUIManager가 담당하는 작업을 조정하고 공유 런타임 상태를 소유한다.
 public class MainMenuUIManager : MonoBehaviour
 {
     [Header("Panels")]
@@ -45,7 +44,6 @@ public class MainMenuUIManager : MonoBehaviour
         ShowIntro();
     }
 
-    /// SceneReferences를 결정한다.
     private void ResolveSceneReferences()
     {
         introPanel = ResolveGameObject(introPanel, "Intro");
@@ -63,7 +61,6 @@ public class MainMenuUIManager : MonoBehaviour
         rinButton = ResolveButton(rinButton, monsterSelectPanel, "Rin");
     }
 
-    /// Buttons를 런타임 사건 또는 씬 대상에 연결한다.
     private void BindButtons()
     {
         Bind(introGameStartButton, ShowMainMenu);
@@ -77,7 +74,6 @@ public class MainMenuUIManager : MonoBehaviour
         Bind(rinButton, () => SelectMonster("rin"));
     }
 
-    /// 전달된 런타임 입력값을 사용해 요청값를 런타임 사건 또는 씬 대상에 연결한다.
     private static void Bind(Button button, UnityEngine.Events.UnityAction action)
     {
         if (button == null || action == null)
@@ -88,31 +84,30 @@ public class MainMenuUIManager : MonoBehaviour
         button.onClick.AddListener(action);
     }
 
-    /// Intro를 표시한다.
+    /// 인트로 패널을 열어 게임 시작 화면을 보여준다.
     private void ShowIntro()
     {
         SetOnlyActive(introPanel);
     }
 
-    /// MainMenu를 표시한다.
+    /// 메인 메뉴 패널을 보여준다.
     private void ShowMainMenu()
     {
         SetOnlyActive(mainMenuPanel);
     }
 
-    /// MonsterSelect를 표시한다.
+    /// 몬스터 선택 패널을 열어 출전 몬스터를 고르게 한다.
     private void ShowMonsterSelect()
     {
         SetOnlyActive(monsterSelectPanel);
     }
 
-    /// 전달된 monsterId 값을 사용해 Monster를 선택한다.
     private void SelectMonster(string monsterId)
     {
         selectedMonsterId = monsterId;
     }
 
-    /// SelectedMonsterRun를 시작한다.
+    /// 선택한 몬스터를 StartContext에 저장하고 Run 씬을 연다.
     private void StartSelectedMonsterRun()
     {
         var monsterId = string.IsNullOrWhiteSpace(selectedMonsterId) ? defaultMonsterId : selectedMonsterId;
@@ -127,7 +122,6 @@ public class MainMenuUIManager : MonoBehaviour
         SceneManager.LoadScene(newRunScenePath);
     }
 
-    /// 전달된 activePanel 값을 사용해 OnlyActive를 갱신한다.
     private void SetOnlyActive(GameObject activePanel)
     {
         SetActive(introPanel, introPanel == activePanel);
@@ -135,7 +129,6 @@ public class MainMenuUIManager : MonoBehaviour
         SetActive(monsterSelectPanel, monsterSelectPanel == activePanel);
     }
 
-    /// 전달된 런타임 입력값을 사용해 Active를 갱신한다.
     private static void SetActive(GameObject target, bool active)
     {
         if (target != null)
@@ -144,7 +137,6 @@ public class MainMenuUIManager : MonoBehaviour
         }
     }
 
-    /// 전달된 런타임 입력값을 사용해 GameObject를 결정한다.
     private static GameObject ResolveGameObject(GameObject current, params string[] names)
     {
         if (current != null)
@@ -164,7 +156,6 @@ public class MainMenuUIManager : MonoBehaviour
         return null;
     }
 
-    /// 전달된 런타임 입력값을 사용해 Button를 결정한다.
     private static Button ResolveButton(Button current, GameObject root, string childName)
     {
         if (current != null)
@@ -181,7 +172,6 @@ public class MainMenuUIManager : MonoBehaviour
         return target != null ? target.GetComponent<Button>() : null;
     }
 
-    /// 전달된 런타임 입력값을 사용해 Child를 찾는다.
     private static GameObject FindChild(Transform root, string childName)
     {
         if (root == null || string.IsNullOrWhiteSpace(childName))
@@ -206,7 +196,6 @@ public class MainMenuUIManager : MonoBehaviour
         return null;
     }
 
-    /// 전달된 objectName 값을 사용해 SceneGameObject를 찾는다.
     private static GameObject FindSceneGameObject(string objectName)
     {
         if (string.IsNullOrWhiteSpace(objectName))

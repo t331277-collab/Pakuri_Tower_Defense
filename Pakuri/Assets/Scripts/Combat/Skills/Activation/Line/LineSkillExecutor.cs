@@ -17,10 +17,10 @@ namespace Pakuri.InGame
     {
         private EffectManager effects;
 
-        /// 반복 시전을 유지할 임시 실행 오브젝트를 만든다.
+        /// 이펙트 생성
         internal static bool Execute(
-            SkillActionContext context,
-            SkillExecutionData snapshot)
+            SkillExecutionContext context,
+            SkillExecutionState snapshot)
         {
             var effects = context.CombatManager.Effects;
             if (effects == null)
@@ -50,10 +50,10 @@ namespace Pakuri.InGame
             return executor.Initialize(context, snapshot);
         }
 
-        /// 첫 공격을 배치하고 남은 방향의 실행 시점을 정한다.
+        /// 첫 공격을 배치하고 남은 방향의 실행 시점을 정한다. -> 광선이 여러개일 경우
         private bool Initialize(
-            SkillActionContext context,
-            SkillExecutionData snapshot)
+            SkillExecutionContext context,
+            SkillExecutionState snapshot)
         {
             effects = context.CombatManager.Effects;
             var directions = snapshot.PreparedDirections;
@@ -77,8 +77,8 @@ namespace Pakuri.InGame
 
         /// 준비된 방향을 간격에 맞춰 차례로 배치한다.
         private IEnumerator ExecuteRepeatedLineCasts(
-            SkillActionContext context,
-            SkillExecutionData snapshot,
+            SkillExecutionContext context,
+            SkillExecutionState snapshot,
             IReadOnlyList<Vector2> directions)
         {
             for (var i = 1; i < directions.Count; i++)
@@ -98,8 +98,8 @@ namespace Pakuri.InGame
 
         /// 한 방향의 표현과 판정 오브젝트를 완성한다.
         private static bool ExecuteOnce(
-            SkillActionContext context,
-            SkillExecutionData snapshot,
+            SkillExecutionContext context,
+            SkillExecutionState snapshot,
             Vector2 direction)
         {
             var effects = context.CombatManager.Effects;
@@ -161,7 +161,7 @@ namespace Pakuri.InGame
                 snapshot.CritDamageBonus);
             SkillTrigger.PublishLifecycleEvent(
                 SkillTriggerEvent.OnDeploymentCast,
-                new SkillActionContext(context.Caster, skillId, null, center, 0f, 0, snapshot, context));
+                new SkillExecutionContext(context.Caster, skillId, null, center, 0f, 0, snapshot, context));
             return true;
         }
     }

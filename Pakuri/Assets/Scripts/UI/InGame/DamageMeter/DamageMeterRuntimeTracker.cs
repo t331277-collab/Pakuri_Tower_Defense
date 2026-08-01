@@ -53,7 +53,6 @@ namespace Pakuri.InGame
             }
         }
 
-        /// CombatManager를 결정한다.
         private void ResolveCombatManager()
         {
             if (combatManager == null)
@@ -69,7 +68,6 @@ namespace Pakuri.InGame
             Version++;
         }
 
-        /// 전달된 런타임 입력값을 사용해 Record 조회를 시도하고 값이 있는지 반환한다.
         public bool TryGetRecord(string monsterId, out MonsterDamageRecord record)
         {
             if (string.IsNullOrWhiteSpace(monsterId))
@@ -81,7 +79,6 @@ namespace Pakuri.InGame
             return records.TryGetValue(monsterId, out record);
         }
 
-        /// 전달된 런타임 입력값을 사용해 Record 작업을 수행한다.
         private void Record(AttackRule attackRule, InGameResourceChangeResult result)
         {
 
@@ -122,13 +119,11 @@ namespace Pakuri.InGame
         }
     }
 
-    /// MonsterDamageRecord가 나타내는 런타임 값을 보관한다.
     public class MonsterDamageRecord
     {
         private readonly Dictionary<string, SkillDamageRecord> sources = new Dictionary<string, SkillDamageRecord>(StringComparer.OrdinalIgnoreCase);
         private readonly List<SkillDamageRecord> orderedSources = new List<SkillDamageRecord>();
 
-        /// MonsterDamageRecord 인스턴스를 전달된 런타임 입력값으로 초기화한다.
         public MonsterDamageRecord(string monsterId)
         {
             MonsterId = monsterId;
@@ -138,7 +133,6 @@ namespace Pakuri.InGame
         public float TotalDamage { get; private set; }
         public IReadOnlyList<SkillDamageRecord> OrderedSources => orderedSources;
 
-        /// 전달된 런타임 입력값을 사용해 Damage를 소유한 런타임 상태에 추가한다.
         public void AddDamage(string sourceId, float amount)
         {
             if (!sources.TryGetValue(sourceId, out var source))
@@ -153,11 +147,9 @@ namespace Pakuri.InGame
         }
     }
 
-    /// SkillDamageRecord가 나타내는 런타임 값을 보관한다.
     public class SkillDamageRecord
     {
 
-        /// SkillDamageRecord 인스턴스를 전달된 런타임 입력값으로 초기화한다.
         public SkillDamageRecord(string sourceId)
         {
             SourceId = sourceId;
@@ -166,7 +158,6 @@ namespace Pakuri.InGame
         public string SourceId { get; }
         public float Damage { get; private set; }
 
-        /// 전달된 amount 값을 사용해 Damage를 소유한 런타임 상태에 추가한다.
         public void AddDamage(float amount)
         {
             Damage += amount;

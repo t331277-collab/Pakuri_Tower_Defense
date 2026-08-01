@@ -74,7 +74,6 @@ namespace Pakuri.Data
             }
         }
 
-        /// 전달된 sourceCatalog 값을 사용해 RuntimeCatalogAssetsFromImportedSource를 현재 원본 상태와 동기화한다.
         internal static SourceModel SyncRuntimeCatalogAssetsFromImportedSource(
             out CsvRuntimeCatalog sourceCatalog)
         {
@@ -157,7 +156,6 @@ namespace Pakuri.Data
             return sourceModel;
         }
 
-        /// EnsureRuntimeResourcesFolderExists 작업을 수행한다.
         internal static void EnsureRuntimeResourcesFolderExists()
         {
             var resourceFolder = Path.Combine(Application.dataPath, "Resources");
@@ -168,7 +166,6 @@ namespace Pakuri.Data
             Directory.CreateDirectory(csvFolder);
         }
 
-        /// 전달된 assetPath 값을 사용해 기존 Asset를 반환하고 없으면 새로 생성한다.
         internal static T LoadOrCreateAsset<T>(string assetPath)
             where T : ScriptableObject
         {
@@ -183,7 +180,6 @@ namespace Pakuri.Data
             return asset;
         }
 
-        /// 전달된 fileName 값을 사용해 LoadImportedSourceTextAsset 데이터를 검증하고 유효하지 않으면 예외를 던진다.
         internal static TextAsset LoadImportedSourceTextAssetOrThrow(string fileName)
         {
             var assetPath = GetAuthoringSourceAssetPath(fileName);
@@ -192,7 +188,6 @@ namespace Pakuri.Data
                 "Import the source CSV into Assets/CSVdata/authoring before validation.");
         }
 
-        /// 전달된 런타임 입력값을 사용해 ImportedSourceTextAssetsBySuffix를 불러온다.
         internal static TextAsset[] LoadImportedSourceTextAssetsBySuffix(string folderAssetPath, string fileNameSuffix)
         {
             var absoluteFolderPath = GetAbsoluteAssetPath(folderAssetPath);
@@ -232,7 +227,6 @@ namespace Pakuri.Data
             return assets.ToArray();
         }
 
-        /// 전달된 런타임 입력값을 사용해 ImportedSourceTextAssetsByPrefix를 불러온다.
         internal static TextAsset[] LoadImportedSourceTextAssetsByPrefix(string folderAssetPath, string fileNamePrefix)
         {
             var absoluteFolderPath = GetAbsoluteAssetPath(folderAssetPath);
@@ -272,7 +266,6 @@ namespace Pakuri.Data
             return assets.ToArray();
         }
 
-        /// 전달된 런타임 입력값을 사용해 LoadTextAsset 데이터를 검증하고 유효하지 않으면 예외를 던진다.
         internal static TextAsset LoadTextAssetOrThrow(string assetPath, string instruction)
         {
             var asset = AssetDatabase.LoadAssetAtPath<TextAsset>(assetPath);
@@ -292,7 +285,6 @@ namespace Pakuri.Data
             return asset;
         }
 
-        /// 전달된 assetPath 값을 사용해 ImportTextAsset 작업을 시도하고 성공 여부를 반환한다.
         internal static void TryImportTextAsset(string assetPath)
         {
             if (string.IsNullOrWhiteSpace(assetPath))
@@ -312,7 +304,6 @@ namespace Pakuri.Data
                 ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
         }
 
-        /// 전달된 assetPath 값을 사용해 AbsoluteAssetPath를 반환한다.
         internal static string GetAbsoluteAssetPath(string assetPath)
         {
             const string assetsPrefix = "Assets/";
@@ -325,7 +316,6 @@ namespace Pakuri.Data
             return Path.Combine(Application.dataPath, relativePath);
         }
 
-        /// 전달된 absolutePath 값을 사용해 AssetPathFromAbsolutePath를 반환한다.
         internal static string GetAssetPathFromAbsolutePath(string absolutePath)
         {
             var fullPath = Path.GetFullPath(absolutePath).Replace('\\', '/');
@@ -338,7 +328,6 @@ namespace Pakuri.Data
             return "Assets/" + fullPath.Substring(assetsRoot.Length + 1);
         }
 
-        /// 전달된 sourceModel 값을 사용해 SpriteEntries를 구성한다.
         internal static CsvRuntimeCatalog.SpriteEntry[] BuildSpriteEntries(SourceModel sourceModel)
         {
             var entries = new List<CsvRuntimeCatalog.SpriteEntry>();
@@ -361,7 +350,6 @@ namespace Pakuri.Data
             return entries.ToArray();
         }
 
-        /// 전달된 sourceModel 값을 사용해 PrefabEntries를 구성한다.
         internal static CsvRuntimeCatalog.PrefabEntry[] BuildPrefabEntries(SourceModel sourceModel)
         {
             var entries = new List<CsvRuntimeCatalog.PrefabEntry>();
@@ -384,7 +372,6 @@ namespace Pakuri.Data
             return entries.ToArray();
         }
 
-        /// 전달된 sourceModel 값을 사용해 AnimatorControllerEntries를 구성한다.
         internal static CsvRuntimeCatalog.AnimatorControllerEntry[] BuildAnimatorControllerEntries(SourceModel sourceModel)
         {
             var entries = new List<CsvRuntimeCatalog.AnimatorControllerEntry>();
@@ -420,19 +407,16 @@ namespace Pakuri.Data
 namespace Pakuri.Data
 {
 
-    /// CsvCatalogPostprocessor가 소유하는 데이터와 동작을 캡슐화한다.
     class CsvCatalogPostprocessor : AssetPostprocessor
     {
         private static bool syncQueued;
 
-        /// QueueInitialSync 작업을 수행한다.
         [InitializeOnLoadMethod]
         private static void QueueInitialSync()
         {
             QueueSync();
         }
 
-        /// 전달된 런타임 입력값을 사용해 OnPostprocessAllAssets 작업을 수행한다.
         private static void OnPostprocessAllAssets(
             string[] importedAssets,
             string[] deletedAssets,
@@ -450,7 +434,6 @@ namespace Pakuri.Data
             QueueSync();
         }
 
-        /// 전달된 assetPaths 값을 사용해 TouchesImportedSource 조건을 평가하고 결과를 반환한다.
         private static bool TouchesImportedSource(string[] assetPaths)
         {
             if (assetPaths == null)
@@ -475,7 +458,6 @@ namespace Pakuri.Data
             return false;
         }
 
-        /// QueueSync 작업을 수행한다.
         private static void QueueSync()
         {
             if (syncQueued)
@@ -487,7 +469,6 @@ namespace Pakuri.Data
             EditorApplication.delayCall += RunQueuedSync;
         }
 
-        /// RunQueuedSync 작업을 수행한다.
         private static void RunQueuedSync()
         {
             syncQueued = false;

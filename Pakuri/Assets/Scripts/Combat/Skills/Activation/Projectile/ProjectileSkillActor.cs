@@ -35,8 +35,8 @@ namespace Pakuri.InGame
         private int branchDamageCount;
         private float branchDamageMultiplier = 1f;
         private float branchDamageSearchRadius;
-        private SkillExecutionData runtime;
-        private SkillExecutionData executionData;
+        private SkillExecutionState runtime;
+        private SkillExecutionState executionData;
         private string sourceSkillId;
         private bool isMagazineLastProjectile;
         private bool magazineLastProjectileTriggerFired;
@@ -150,8 +150,8 @@ namespace Pakuri.InGame
             bool enableImpactArea,
             float impactAreaRadius,
             float delayedImpactDamage,
-            SkillExecutionData sourceRuntime,
-            SkillExecutionData snapshot,
+            SkillExecutionState sourceRuntime,
+            SkillExecutionState snapshot,
             string ignoredUnitId = null,
             string skillId = null,
             bool magazineLastProjectile = false,
@@ -324,14 +324,14 @@ namespace Pakuri.InGame
         /// 대상 조건과 연속 적중 횟수를 현재 피해 배율에 합친다.
         private float HitDamageMultiplier(UnitCombatState target)
         {
-            var multiplier = SkillExecutionRuleResolver.ResolveHitDamageMultiplier(executionData, target);
+            var multiplier = SkillExecutionRules.ResolveHitDamageMultiplier(executionData, target);
 
             if (runtime != null && executionData != null)
             {
                 var repeatCount = SkillExecution.AdvanceConsecutiveHitCount(
                     runtime,
                     target);
-                multiplier *= SkillExecutionRuleResolver.ResolveConsecutiveHitDamageMultiplier(
+                multiplier *= SkillExecutionRules.ResolveConsecutiveHitDamageMultiplier(
                     runtime,
                     executionData,
                     repeatCount);
@@ -571,14 +571,13 @@ namespace Pakuri.InGame
 
             if (hasImpactArea)
             {
-                ZoneSkillActor.ApplyAreaTargets(
+                ApplyImpactAreaTargets(
                     combatManager,
                     combatManager.Units != null ? combatManager.Units.Find(owner) : null,
                     combatManager.Units,
                     executionData.PreparedImpactTargeting,
                     impactCenter,
                     impactRadius,
-                    false,
                     impactDamage,
                     damageAttribute,
                     impactStatusOnHit,
@@ -588,12 +587,86 @@ namespace Pakuri.InGame
                     criticalAllowed,
                     critChanceBonus,
                     critDamageBonus,
-                    int.MaxValue,
                     executionData);
             }
 
             TryExecuteOnExpireEffects();
             effects.RemoveEffect(gameObject);
+        }
+
+        /// 충돌 지점의 폭발 반경 안에 있는 모든 대상을 적중 처리한다.
+        private static bool ApplyImpactAreaTargets(
+            InGameCombatManager manager,
+            CombatUnitEntry sourceEntry,
+            UnitSpawnManager unitRoster,
+            SkillTargetingSpec targetingSpec,
+            Vector2 center,
+            float radius,
+            float damage,
+            DamageAttribute damageAttribute,
+            StatusApplicationSpec onHitStatus,
+            UnitCombatState source,
+            string sourceSkillId,
+            SkillExecutionState sourceRuntime,
+            bool criticalAllowed,
+            float critChanceBonus,
+            float critDamageBonus,
+            SkillExecutionState executionData)
+        {
+            if (manager == null || sourceEntry == null || unitRoster == null)
+            {
+                return false;
+            }
+
+            var candidates = SkillTargeting.TargetList(
+                sourceEntry,
+                unitRoster,
+                targetingSpec);
+            var radiusSquared = Mathf.Max(0f, radius) * Mathf.Max(0f, radius);
+            var hitUnitIds = new HashSet<string>();
+            var eligibleTargets = new List<CombatUnitEntry>();
+            for (var i = 0; i < candidates.Count; i++)
+            {
+                var target = candidates[i];
+                if (target == null
+                    || !target.IsAlive
+                    || target.Model == null
+                    || target.Transform == null)
+                {
+                    continue;
+                }
+
+                var unitId = target.Model.Identity != null
+                    ? target.Model.Identity.UnitId
+                    : null;
+                if (!string.IsNullOrWhiteSpace(unitId)
+                    && !hitUnitIds.Add(unitId))
+                {
+                    continue;
+                }
+                if (((Vector2)target.Transform.position - center).sqrMagnitude > radiusSquared)
+                {
+                    continue;
+                }
+
+                eligibleTargets.Add(target);
+            }
+
+            return ZoneSkillActor.ApplyResolvedTargets(
+                manager,
+                sourceEntry,
+                unitRoster,
+                eligibleTargets,
+                damage,
+                damageAttribute,
+                onHitStatus,
+                source,
+                sourceSkillId,
+                sourceRuntime,
+                criticalAllowed,
+                critChanceBonus,
+                critDamageBonus,
+                executionData);
         }
 
         /// 만료가 한 번만 후속 반응으로 이어지게 전달한다.
@@ -608,7 +681,7 @@ namespace Pakuri.InGame
             if (combatManager != null && combatManager.Units != null && owner != null)
             {
                 var lifecycleSourceEntry = combatManager.Units.Find(owner);
-                var lifecycleContext = new SkillActionContext(
+                var lifecycleContext = new SkillExecutionContext(
                     combatManager,
                     combatManager.Units,
                     lifecycleSourceEntry,
@@ -616,7 +689,7 @@ namespace Pakuri.InGame
                     impactTarget);
                 SkillTrigger.PublishLifecycleEvent(
                     SkillTriggerEvent.OnExpire,
-                    new SkillActionContext(
+                    new SkillExecutionContext(
                         owner,
                         sourceSkillId,
                         impactTarget,
@@ -628,7 +701,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 이동 경로 판정에 사용할 모든 충돌 영역을 모은다.
+        /// 이동 경로 판정에 사용할 충돌 영역을 모은다.
         private void CacheHitboxColliders()
         {
             hitboxColliders = GetComponentsInChildren<Collider2D>();

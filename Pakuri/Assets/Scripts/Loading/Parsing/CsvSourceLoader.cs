@@ -16,11 +16,9 @@ using static Pakuri.Data.SkillGraphParser;
 namespace Pakuri.Data
 {
 
-    /// CsvSourceLoader가 소유하는 데이터와 동작을 캡슐화한다.
     internal static class CsvSourceLoader
     {
 
-        /// 전달된 sourceCatalog 값을 사용해 SourceModel를 불러온다.
         internal static SourceModel LoadSourceModel(CsvRuntimeCatalog sourceCatalog)
         {
             var model = new SourceModel();
@@ -191,7 +189,6 @@ namespace Pakuri.Data
             return model;
         }
 
-        /// 전달된 런타임 입력값을 사용해 SkillRows를 불러온다.
         internal static void LoadSkillRows(
             SourceModel model,
             TextAsset[] skillAssets,
@@ -210,7 +207,6 @@ namespace Pakuri.Data
             }
         }
 
-        /// 전달된 런타임 입력값을 사용해 SkillRows를 불러온다.
         internal static void LoadSkillRows(
             SourceModel model,
             TextAsset skillAsset,
@@ -236,7 +232,6 @@ namespace Pakuri.Data
             }
         }
 
-        /// 전달된 런타임 입력값을 사용해 SkillChoiceRows를 불러온다.
         internal static void LoadSkillChoiceRows(
             SourceModel model,
             TextAsset[] choiceAssets,
@@ -253,7 +248,6 @@ namespace Pakuri.Data
             }
         }
 
-        /// 전달된 런타임 입력값을 사용해 SkillChoiceRows를 불러온다.
         internal static void LoadSkillChoiceRows(
             SourceModel model,
             TextAsset choiceAsset,
@@ -288,7 +282,6 @@ namespace Pakuri.Data
             }
         }
 
-        /// 전달된 런타임 입력값을 사용해 AllowedSkillRuntimeKind 조건 충족 여부를 반환한다.
         internal static bool IsAllowedSkillRuntimeKind(
             SkillRuntimeKind runtimeKind,
             SkillRuntimeKind[] allowedRuntimeKinds)
@@ -296,7 +289,6 @@ namespace Pakuri.Data
             return Array.IndexOf(allowedRuntimeKinds, runtimeKind) >= 0;
         }
 
-        /// 전달된 asset 값을 사용해 TextAssetCsvTableName를 반환한다.
         internal static string GetTextAssetCsvTableName(TextAsset asset)
         {
             if (asset == null)
@@ -317,7 +309,6 @@ namespace Pakuri.Data
             return asset.name + ".csv";
         }
 
-        /// 전달된 런타임 입력값을 사용해 Unique를 소유한 런타임 상태에 추가한다.
         internal static void AddUnique<T>(Dictionary<string, T> dictionary, string id, T value, CsvRecord record)
         {
             if (string.IsNullOrWhiteSpace(id))

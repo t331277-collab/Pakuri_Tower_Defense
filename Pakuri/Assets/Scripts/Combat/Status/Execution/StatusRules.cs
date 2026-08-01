@@ -17,7 +17,6 @@ namespace Pakuri.InGame
     {
         private const float MinimumActionMultiplier = 0.05f;
 
-        /// 전달된 런타임 입력값을 사용해 Status를 적용한다.
         public static bool ApplyStatus(
             InGameCombatManager manager,
             UnitCombatState target,
@@ -59,7 +58,6 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /// 전달된 런타임 입력값을 사용해 ApplicationChance 결과값을 생성해 반환한다.
         public static float ApplicationChance(
             UnitCombatState target,
             StatusApplicationSpec status,
@@ -80,7 +78,6 @@ namespace Pakuri.InGame
             return Mathf.Clamp01(chance - AilmentResistanceBonus(target));
         }
 
-        /// 전달된 런타임 입력값을 사용해 DurationSeconds 결과값을 생성해 반환한다.
         private static float DurationSeconds(StatusApplicationSpec status, UnitCombatState source)
         {
             var duration = status.RuntimeResolved
@@ -97,13 +94,11 @@ namespace Pakuri.InGame
             return duration;
         }
 
-        /// 전달된 statusData 값을 사용해 Debuff 조건 충족 여부를 반환한다.
         private static bool IsDebuff(StatusRuntimeData statusData)
         {
             return statusData.Definition.Classification == StatusEffectClassification.Debuff;
         }
 
-        /// 전달된 런타임 입력값을 사용해 ThresholdStatus를 적용한다.
         private static void ApplyThresholdStatus(
             InGameCombatManager manager,
             UnitCombatState target,
@@ -146,7 +141,6 @@ namespace Pakuri.InGame
         internal readonly struct OutgoingAdditionalDamageSpec
         {
 
-            /// OutgoingAdditionalDamageSpec 인스턴스를 전달된 런타임 입력값으로 초기화한다.
             public OutgoingAdditionalDamageSpec(float multiplier, DamageAttribute triggerAttribute, DamageAttribute damageAttribute)
             {
                 Multiplier = multiplier;
@@ -159,7 +153,6 @@ namespace Pakuri.InGame
             public DamageAttribute DamageAttribute { get; }
         }
 
-        /// 전달된 data 값을 사용해 ModifierMagnitude를 계산한다.
         public static float ComputeModifierMagnitude(StatusRuntimeData data)
         {
             if (data == null)
@@ -186,25 +179,21 @@ namespace Pakuri.InGame
                 + Mathf.Abs(data.OutgoingAdditionalDamageMultiplier);
         }
 
-        /// 전달된 model 값을 사용해 Move 실행 가능 여부를 반환한다.
         public static bool CanMove(UnitCombatState model)
         {
             return !HasAnyStatus(model, data => !data.CanMove);
         }
 
-        /// 전달된 model 값을 사용해 Act 실행 가능 여부를 반환한다.
         public static bool CanAct(UnitCombatState model)
         {
             return !HasAnyStatus(model, data => !data.CanAct);
         }
 
-        /// 전달된 model 값을 사용해 UseSpecialSkill 실행 가능 여부를 반환한다.
         public static bool CanUseSpecialSkill(UnitCombatState model)
         {
             return !HasAnyStatus(model, data => !data.CanUseSpecialSkill);
         }
 
-        /// 전달된 model 값을 사용해 ActionSpeedMultiplier 결과값을 생성해 반환한다.
         public static float ActionSpeedMultiplier(UnitCombatState model)
         {
             return Mathf.Max(
@@ -216,13 +205,11 @@ namespace Pakuri.InGame
                         : 0f));
         }
 
-        /// 전달된 model 값을 사용해 SpeedMultiplier를 이동시킨다.
         public static float MoveSpeedMultiplier(UnitCombatState model)
         {
             return Mathf.Max(0f, 1f + SumStacked(model, data => data.MoveSpeedBonus));
         }
 
-        /// 전달된 model 값을 사용해 AttackPowerMultiplier 결과값을 생성해 반환한다.
         public static float AttackPowerMultiplier(UnitCombatState model)
         {
             return Mathf.Max(
@@ -234,19 +221,16 @@ namespace Pakuri.InGame
                         : 0f));
         }
 
-        /// 전달된 model 값을 사용해 SpellPowerMultiplier 결과값을 생성해 반환한다.
         public static float SpellPowerMultiplier(UnitCombatState model)
         {
             return Mathf.Max(0f, 1f + SumStacked(model, data => data.Modifiers.SpellPowerBonus));
         }
 
-        /// 전달된 model 값을 사용해 ShieldReceivedMultiplier 결과값을 생성해 반환한다.
         public static float ShieldReceivedMultiplier(UnitCombatState model)
         {
             return Mathf.Max(0f, 1f + SumStacked(model, data => data.Modifiers.ShieldReceivedBonus));
         }
 
-        /// 전달된 model 값을 사용해 CriticalChanceBonus 결과값을 생성해 반환한다.
         public static float CriticalChanceBonus(
             UnitCombatState model,
             UnitCombatState target = null)
@@ -258,7 +242,6 @@ namespace Pakuri.InGame
                     : 0f);
         }
 
-        /// 전달된 model 값을 사용해 CriticalDamageBonus 결과값을 생성해 반환한다.
         public static float CriticalDamageBonus(
             UnitCombatState model,
             UnitCombatState target = null)
@@ -270,7 +253,6 @@ namespace Pakuri.InGame
                     : 0f);
         }
 
-        /// 전달된 런타임 입력값을 사용해 OutgoingDamageBonus 결과값을 생성해 반환한다.
         public static float OutgoingDamageBonus(UnitCombatState source, DamageAttribute attribute, string sourceSkillId = null)
         {
             return OutgoingDamageBonus(source, null, attribute, sourceSkillId);
@@ -297,7 +279,6 @@ namespace Pakuri.InGame
             });
         }
 
-        /// 전달된 런타임 입력값을 사용해 OutgoingAdditionalDamageSpecs 결과값을 생성해 반환한다.
         internal static List<OutgoingAdditionalDamageSpec> OutgoingAdditionalDamageSpecs(UnitCombatState source, DamageAttribute triggerAttribute)
         {
             var results = new List<OutgoingAdditionalDamageSpec>();
@@ -336,7 +317,6 @@ namespace Pakuri.InGame
             return results;
         }
 
-        /// 전달된 런타임 입력값을 사용해 IncomingDamageBonus 결과값을 생성해 반환한다.
         public static float IncomingDamageBonus(UnitCombatState target, UnitCombatState source, DamageAttribute attribute, string sourceSkillId = null)
         {
             return SumStacked(target, data =>
@@ -365,7 +345,6 @@ namespace Pakuri.InGame
             });
         }
 
-        /// 전달된 런타임 입력값을 사용해 ElementResistMultiplier 결과값을 생성해 반환한다.
         public static float ElementResistMultiplier(UnitCombatState target, DamageAttribute attribute)
         {
             if (target == null || target.Statuses == null)
@@ -403,7 +382,6 @@ namespace Pakuri.InGame
             return multiplier;
         }
 
-        /// 전달된 런타임 입력값을 사용해 FlatElementResistReduction 결과값을 생성해 반환한다.
         public static float FlatElementResistReduction(UnitCombatState target, DamageAttribute attribute)
         {
             return Mathf.Max(0f, SumStacked(target, data =>
@@ -419,19 +397,16 @@ namespace Pakuri.InGame
             }));
         }
 
-        /// 전달된 target 값을 사용해 CriticalDamageTakenBonus 결과값을 생성해 반환한다.
         public static float CriticalDamageTakenBonus(UnitCombatState target)
         {
             return SumStacked(target, data => data.CriticalDamageTakenBonus);
         }
 
-        /// 전달된 target 값을 사용해 AilmentResistanceBonus 결과값을 생성해 반환한다.
         public static float AilmentResistanceBonus(UnitCombatState target)
         {
             return Mathf.Clamp01(SumStacked(target, data => data.AilmentResistanceBonus));
         }
 
-        /// 전달된 target 값을 사용해 CriticalResistanceBonus 결과값을 생성해 반환한다.
         public static float CriticalResistanceBonus(UnitCombatState target)
         {
             return SumStacked(
@@ -441,7 +416,6 @@ namespace Pakuri.InGame
                     : 0f);
         }
 
-        /// 전달된 런타임 입력값을 사용해 ConditionalStatusChanceBonus 결과값을 생성해 반환한다.
         public static float ConditionalStatusChanceBonus(UnitCombatState source, UnitCombatState target)
         {
             return SumStacked(source, data =>
@@ -455,7 +429,6 @@ namespace Pakuri.InGame
             });
         }
 
-        /// 전달된 런타임 입력값을 사용해 AppliedStatusDurationBonus 결과값을 생성해 반환한다.
         public static float AppliedStatusDurationBonus(UnitCombatState source, string statusId)
         {
             if (string.IsNullOrWhiteSpace(statusId))
@@ -477,7 +450,6 @@ namespace Pakuri.InGame
             });
         }
 
-        /// 전달된 런타임 입력값을 사용해 소유한 런타임 상태에 AnyStatus가 있는지 반환한다.
         private static bool HasAnyStatus(UnitCombatState model, System.Func<StatusRuntimeData, bool> predicate)
         {
             IReadOnlyList<StatusRuntimeInstance> statuses = null;
@@ -508,7 +480,6 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /// 전달된 런타임 입력값을 사용해 SumStacked 결과값을 생성해 반환한다.
         private static float SumStacked(UnitCombatState model, System.Func<StatusRuntimeData, float> selector)
         {
             IReadOnlyList<StatusRuntimeInstance> statuses = null;
@@ -542,7 +513,6 @@ namespace Pakuri.InGame
             return total;
         }
 
-        /// 전달된 runtime 값을 사용해 RuntimeData 결과값을 생성해 반환한다.
         private static StatusRuntimeData RuntimeData(StatusRuntimeInstance runtime)
         {
             if (runtime == null)
@@ -553,13 +523,11 @@ namespace Pakuri.InGame
             return runtime.SourceData;
         }
 
-        /// 전달된 런타임 입력값을 사용해 MatchesAttribute 조건을 평가하고 결과를 반환한다.
         private static bool MatchesAttribute(StatusRuntimeData data, DamageAttribute attribute)
         {
             return data != null && data.HasElementModifierTarget && (DamageAttribute)(int)data.ElementModifierTarget == attribute;
         }
 
-        /// 전달된 런타임 입력값을 사용해 MatchesConditionalSourceStatus 조건을 평가하고 결과를 반환한다.
         private static bool MatchesConditionalSourceStatus(UnitCombatState source, StatusRuntimeData data)
         {
             if (data == null || data.ConditionalSourceStatusKind == StatusEffectKind.None)
@@ -626,7 +594,6 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /// 전달된 런타임 입력값을 사용해 MatchesConditionalTargetStatus 조건을 평가하고 결과를 반환한다.
         private static bool MatchesConditionalTargetStatus(UnitCombatState target, StatusRuntimeData data)
         {
             if (data == null
@@ -668,7 +635,6 @@ namespace Pakuri.InGame
     static class StatusConditionRules
     {
 
-        /// 전달된 런타임 입력값을 사용해 MatchesConditionStatus 조건을 평가하고 결과를 반환한다.
         public static bool MatchesConditionStatus(
             UnitCombatState target,
             StatusConditionGroup[] groups,
@@ -721,7 +687,6 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /// 전달된 런타임 입력값을 사용해 MatchesConditionStatus 조건을 평가하고 결과를 반환한다.
         public static bool MatchesConditionStatus(
             UnitCombatState target,
             StatusConditionGroup[] groups)
@@ -729,7 +694,6 @@ namespace Pakuri.InGame
             return MatchesConditionStatus(target, groups, Array.Empty<string>());
         }
 
-        /// 전달된 런타임 입력값을 사용해 MatchesConditionStatus 조건을 평가하고 결과를 반환한다.
         public static bool MatchesConditionStatus(
             StatusRuntimeInstance status,
             StatusConditionGroup[] groups)
@@ -767,7 +731,6 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /// 전달된 런타임 입력값을 사용해 MatchesSkillRuntimeKinds 조건을 평가하고 결과를 반환한다.
         public static bool MatchesSkillRuntimeKinds(
             SkillRuntimeKindCondition[] conditions,
             string sourceSkillId)
@@ -807,7 +770,6 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /// 전달된 런타임 입력값을 사용해 MatchesRequiredSourceSkill 조건을 평가하고 결과를 반환한다.
         private static bool MatchesRequiredSourceSkill(
             UnitCombatState target,
             StatusEffectKind kind,
@@ -847,7 +809,6 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /// 전달된 skill 값을 사용해 AreaLikeSkill 조건 충족 여부를 반환한다.
         private static bool IsAreaLikeSkill(SkillDefinition skill)
         {
             if (skill.RuntimeKind == SkillRuntimeKind.AreaAttack

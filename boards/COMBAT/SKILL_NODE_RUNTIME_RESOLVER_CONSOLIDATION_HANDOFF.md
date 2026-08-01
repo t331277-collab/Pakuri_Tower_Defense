@@ -938,3 +938,4 @@ Unity-MCP로 editor compile과 console을 확인한다. Play Mode gameplay 검�
 - 2026-07-31: Designer가 current normal/learned reaction/raw effect/command 경로와 direct damage caller를 재검증하고 Phase 10~15 common recast handoff를 추가했다.
 - 2026-07-31: 자체 검증에서 raw effect는 learned runtime이 없어 direct `TargetSkillId` lookup만으로 실행할 수 없고, non-spatial command를 Actor로 강제하면 가짜 스킬이 필요함을 확인했다. 최종 설계는 Generation-resolved concrete Definition link와 typed state-command 예외를 사용한다.
 - 2026-08-01: Code Builder가 연속 적중 상태 진행과 피해 배율 계산을 각각 `SkillExecution`과 `SkillExecutionRuleResolver`로 분리하고 Projectile 호출부를 전환했다.
+- 2026-08-02: 사용자가 완료된 통합 구조의 후속 명명 변경을 승인했다. 현재 이름은 `Execution/SkillExecutionContext`, `Execution/SkillExecutionState`, `Execution/SkillExecutionRules`이며, 위 Phase 기록의 `Implementation`, `SkillActionContext`, `SkillExecutionData`, `SkillExecutionRuleResolver`와 삭제된 과거 `SkillExecutionState` 언급은 당시 상태를 설명하는 역사 기록이다.

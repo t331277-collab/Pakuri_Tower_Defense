@@ -22,9 +22,9 @@ public sealed class SkillCatalogRuntimeTests
                 SkillNode.FromOperation(new DamageModifierOp(DamageModifierOpKind.BossMultiplier, 3f), "skill-b")
             }
         };
-        var data = SkillExecutionRuleResolver.CreateDefinitionSnapshot(skill);
+        var data = SkillExecutionRules.CreateDefinitionSnapshot(skill);
 
-        SkillExecutionRuleResolver.ApplyChoice(data, choice);
+        SkillExecutionRules.ApplyChoice(data, choice);
 
         Assert.That(data.DamageModifierOps, Has.Count.EqualTo(1));
         Assert.That(data.DamageModifierOps[0].Multiplier, Is.EqualTo(2f));
@@ -34,15 +34,15 @@ public sealed class SkillCatalogRuntimeTests
     /// 반응 배율이 기존 피해 보정과 합성되는지 확인한다.
     public void ReactionDamageMultiplierScalesExistingSkillModifier()
     {
-        var data = new SkillExecutionData(new SkillDefinition { SkillId = "vega-b" });
-        var apply = typeof(SkillExecutionData).GetMethod(
+        var data = new SkillExecutionState(new SkillDefinition { SkillId = "vega-b" });
+        var apply = typeof(SkillExecutionState).GetMethod(
             "ApplyDynamicDamageMultiplier",
             BindingFlags.Instance | BindingFlags.NonPublic);
 
         Assert.That(apply, Is.Not.Null);
         apply.Invoke(data, new object[] { 1.25f });
 
-        var scale = typeof(SkillExecutionData).GetMethod(
+        var scale = typeof(SkillExecutionState).GetMethod(
             "ScaleDamageMultiplier",
             BindingFlags.Instance | BindingFlags.NonPublic);
 
@@ -149,6 +149,7 @@ public sealed class SkillCatalogRuntimeTests
         {
             CreatePassive("damage", PassiveModifierKind.DamageUp, 0.1f, DamageAttribute.Fire),
             CreatePassive("defense", PassiveModifierKind.DefenseUp, 0.1f),
+            CreatePassive("defense-2", PassiveModifierKind.DefenseUp, 0.2f),
             CreatePassive("crit-chance", PassiveModifierKind.CritChanceUp, 0.08f),
             CreatePassive("crit-damage", PassiveModifierKind.CritDamageUp, 0.2f),
             CreatePassive("healing", PassiveModifierKind.HealingUp, 0.15f),
@@ -166,7 +167,7 @@ public sealed class SkillCatalogRuntimeTests
 
         Assert.That(owner.SkillState.PassiveOutgoingDamageBonus(DamageAttribute.Fire), Is.EqualTo(0.1f).Within(0.0001f));
         Assert.That(owner.SkillState.PassiveOutgoingDamageBonus(DamageAttribute.Ice), Is.Zero.Within(0.0001f));
-        Assert.That(owner.SkillState.PassiveDefenseMultiplier(DamageAttribute.Holy), Is.EqualTo(1.1f).Within(0.0001f));
+        Assert.That(owner.SkillState.PassiveDefenseMultiplier(DamageAttribute.Holy), Is.EqualTo(1.3f).Within(0.0001f));
         Assert.That(owner.SkillState.PassiveCriticalChanceBonus(), Is.EqualTo(0.08f).Within(0.0001f));
         Assert.That(owner.SkillState.PassiveCriticalDamageBonus(), Is.EqualTo(0.2f).Within(0.0001f));
         Assert.That(owner.SkillState.PassiveHealingMultiplier(), Is.EqualTo(1.15f).Within(0.0001f));
@@ -294,7 +295,7 @@ public sealed class SkillCatalogRuntimeTests
                     ActiveDuration = 5f
                 }
             };
-            var runtime = new SkillExecutionData(owner, charge);
+            var runtime = new SkillExecutionState(owner, charge);
             owner.SkillState.AddOrReplace(runtime);
             var entry = new CombatUnitEntry(owner, actorObject.transform);
             var executed = new SkillExecution().TryExecuteReaction(
@@ -354,9 +355,9 @@ public sealed class SkillCatalogRuntimeTests
                 RuntimeKind = SkillRuntimeKind.Buff,
                 EffectKind = BuffEffectKind.Charge
             };
-            var sourceSnapshot = SkillExecutionRuleResolver.CreateDefinitionSnapshot(source);
-            var triggeredRuntime = new SkillExecutionData(owner, triggered);
-            var context = new SkillActionContext(
+            var sourceSnapshot = SkillExecutionRules.CreateDefinitionSnapshot(source);
+            var triggeredRuntime = new SkillExecutionState(owner, triggered);
+            var context = new SkillExecutionContext(
                 null,
                 null,
                 new CombatUnitEntry(owner, actorObject.transform),
@@ -364,7 +365,7 @@ public sealed class SkillCatalogRuntimeTests
             var prepare = typeof(SkillExecution).GetMethod(
                 "PrepareExecutionData",
                 BindingFlags.Static | BindingFlags.NonPublic);
-            var preparedSkillId = typeof(SkillExecutionData).GetProperty(
+            var preparedSkillId = typeof(SkillExecutionState).GetProperty(
                 "PreparedSkillId",
                 BindingFlags.Instance | BindingFlags.NonPublic);
 
@@ -735,7 +736,7 @@ public sealed class SkillCatalogRuntimeTests
         {
             return;
         }
-        effects.AddRange(SkillExecutionRuleResolver.CreateDefinitionSnapshot(skill).CastEffects);
+        effects.AddRange(SkillExecutionRules.CreateDefinitionSnapshot(skill).CastEffects);
         CollectCastEffects(skill.EnhancementChoices, effects);
         CollectCastEffects(skill.MasterChoices, effects);
         if (skill is PassiveSkillDefinition passive)
@@ -752,8 +753,8 @@ public sealed class SkillCatalogRuntimeTests
         {
             if (choices[i] != null)
             {
-                var snapshot = new SkillExecutionData(null);
-                SkillExecutionRuleResolver.ApplyChoice(snapshot, choices[i]);
+                var snapshot = new SkillExecutionState(null);
+                SkillExecutionRules.ApplyChoice(snapshot, choices[i]);
                 effects.AddRange(snapshot.CastEffects);
             }
         }
@@ -769,14 +770,14 @@ public sealed class SkillCatalogRuntimeTests
         {
             if (skills[i] != null)
             {
-                reactions.AddRange(SkillExecutionRuleResolver.CreateDefinitionSnapshot(skills[i]).Reactions);
+                reactions.AddRange(SkillExecutionRules.CreateDefinitionSnapshot(skills[i]).Reactions);
             }
         }
         for (var i = 0; passives != null && i < passives.Length; i++)
         {
             if (passives[i] != null)
             {
-                reactions.AddRange(SkillExecutionRuleResolver.CreateDefinitionSnapshot(passives[i]).Reactions);
+                reactions.AddRange(SkillExecutionRules.CreateDefinitionSnapshot(passives[i]).Reactions);
             }
         }
         return reactions;

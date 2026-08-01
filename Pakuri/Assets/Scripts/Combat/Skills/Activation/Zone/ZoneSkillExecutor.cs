@@ -15,8 +15,8 @@ namespace Pakuri.InGame
     {
         /// 각 중심에 표현과 판정 기준을 갖춘 영역 오브젝트를 만든다.
         internal static bool Execute(
-            SkillActionContext context,
-            SkillExecutionData snapshot)
+            SkillExecutionContext context,
+            SkillExecutionState snapshot)
         {
             var effects = context.CombatManager.Effects;
             if (effects == null)
@@ -70,11 +70,8 @@ namespace Pakuri.InGame
                     context.Roster,
                     snapshot.PreparedTargeting,
                     center,
-                    snapshot.PreparedRadius,
-                    snapshot.PreparedCoverAll,
                     snapshot.PreparedDuration,
                     snapshot.PreparedTickInterval,
-                    snapshot.PreparedHitTargetCount,
                     snapshot.PreparedDamage,
                     snapshot.PreparedDamageAttribute,
                     snapshot.PreparedStatus,

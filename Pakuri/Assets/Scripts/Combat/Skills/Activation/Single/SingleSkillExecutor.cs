@@ -8,13 +8,12 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-/// 준비된 중심을 공격 오브젝트에 넘기고 모든 배치의 완료를 모은다.
 internal static class SingleSkillExecutor
 {
 	/// 여러 중심과 후속 작업을 함께 추적할 실행 오브젝트를 만든다.
 	internal static bool Execute(
-		SkillActionContext context,
-		SkillExecutionData snapshot)
+		SkillExecutionContext context,
+		SkillExecutionState snapshot)
 	{
 		var effects = context.CombatManager.Effects;
 		if (effects == null)

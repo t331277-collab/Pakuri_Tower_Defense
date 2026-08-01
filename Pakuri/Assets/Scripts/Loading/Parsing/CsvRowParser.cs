@@ -173,7 +173,6 @@ namespace Pakuri.Data
             public bool RequireEventExecute;
         }
 
-        /// 전달된 record 값을 사용해 MonsterRow 값을 런타임 표현으로 파싱한다.
         internal static MonsterRow ParseMonsterRow(CsvRecord record)
         {
             return new MonsterRow
@@ -203,7 +202,6 @@ namespace Pakuri.Data
             };
         }
 
-        /// 전달된 record 값을 사용해 RewardChoiceRow 값을 런타임 표현으로 파싱한다.
         internal static RewardChoiceRow ParseRewardChoiceRow(CsvRecord record)
         {
             return new RewardChoiceRow
@@ -216,7 +214,6 @@ namespace Pakuri.Data
             };
         }
 
-        /// 전달된 런타임 입력값을 사용해 SkillRow 값을 런타임 표현으로 파싱한다.
         internal static SkillRow ParseSkillRow(
             CsvRecord record,
             PakuriCsvSkillKind skillKind,
@@ -311,7 +308,6 @@ namespace Pakuri.Data
             };
         }
 
-        /// 전달된 record 값을 사용해 SkillChoiceRow 값을 런타임 표현으로 파싱한다.
         internal static SkillChoiceRow ParseSkillChoiceRow(CsvRecord record)
         {
             return new SkillChoiceRow
@@ -328,7 +324,6 @@ namespace Pakuri.Data
             };
         }
 
-        /// 전달된 record 값을 사용해 SkillTriggerRow 값을 런타임 표현으로 파싱한다.
         internal static SkillTriggerRow ParseSkillTriggerRow(CsvRecord record)
         {
             var row = new SkillTriggerRow
@@ -383,7 +378,6 @@ namespace Pakuri.Data
             return row;
         }
 
-        /// 전달된 passiveSlot 값을 사용해 RequiredActiveSlot를 반환한다.
         internal static SkillSlot GetRequiredActiveSlot(SkillSlot passiveSlot)
         {
             switch (passiveSlot)
@@ -401,19 +395,16 @@ namespace Pakuri.Data
             }
         }
 
-        /// 전달된 런타임 입력값을 사용해 OptionalIntIfColumnExists를 읽는다.
         internal static int ReadOptionalIntIfColumnExists(CsvRecord record, string columnName)
         {
             return record.HasColumn(columnName) ? record.ReadInt(columnName) : 0;
         }
 
-        /// 전달된 런타임 입력값을 사용해 OptionalFloatIfColumnExists를 읽는다.
         internal static float ReadOptionalFloatIfColumnExists(CsvRecord record, string columnName)
         {
             return ReadOptionalFloat(record, columnName, 0f);
         }
 
-        /// 전달된 런타임 입력값을 사용해 OptionalFloat를 읽는다.
         internal static float ReadOptionalFloat(CsvRecord record, string columnName, float defaultValue)
         {
             return record.HasColumn(columnName) && TryReadFloat(record, columnName, out var value)
@@ -421,19 +412,16 @@ namespace Pakuri.Data
                 : defaultValue;
         }
 
-        /// 전달된 런타임 입력값을 사용해 OptionalStringIfColumnExists를 읽는다.
         internal static string ReadOptionalStringIfColumnExists(CsvRecord record, string columnName)
         {
             return record.HasColumn(columnName) ? record.ReadString(columnName) : string.Empty;
         }
 
-        /// 전달된 런타임 입력값을 사용해 OptionalBoolIfColumnExists를 읽는다.
         internal static bool ReadOptionalBoolIfColumnExists(CsvRecord record, string columnName)
         {
             return ReadOptionalBool(record, columnName, false);
         }
 
-        /// 전달된 런타임 입력값을 사용해 OptionalBool를 읽는다.
         internal static bool ReadOptionalBool(CsvRecord record, string columnName, bool defaultValue)
         {
             return !record.HasColumn(columnName) || string.IsNullOrWhiteSpace(record.ReadString(columnName))
@@ -441,7 +429,6 @@ namespace Pakuri.Data
                 : record.ReadBool(columnName);
         }
 
-        /// 전달된 런타임 입력값을 사용해 OptionalEnum를 읽는다.
         internal static T ReadOptionalEnum<T>(CsvRecord record, string columnName, T defaultValue) where T : struct
         {
             return !record.HasColumn(columnName) || string.IsNullOrWhiteSpace(record.ReadString(columnName))
@@ -449,14 +436,12 @@ namespace Pakuri.Data
                 : record.ReadEnum<T>(columnName);
         }
 
-        /// 전달된 런타임 입력값을 사용해 ReadFloatIfColumnExists 작업을 시도하고 성공 여부를 반환한다.
         internal static bool TryReadFloatIfColumnExists(CsvRecord record, string columnName, out float value)
         {
             value = 0f;
             return record.HasColumn(columnName) && TryReadFloat(record, columnName, out value);
         }
 
-        /// 전달된 런타임 입력값을 사용해 ReadFloat 작업을 시도하고 성공 여부를 반환한다.
         internal static bool TryReadFloat(CsvRecord record, string columnName, out float value)
         {
             var raw = record.ReadString(columnName);
@@ -538,7 +523,6 @@ namespace Pakuri.Data
             public bool Enabled;
         }
 
-        /// 전달된 record 값을 사용해 EnemyRow 값을 런타임 표현으로 파싱한다.
         internal static EnemyRow ParseEnemyRow(CsvRecord record)
         {
             return new EnemyRow
@@ -568,7 +552,6 @@ namespace Pakuri.Data
             };
         }
 
-        /// 전달된 런타임 입력값을 사용해 EnemyBaseSkillRow 값을 런타임 표현으로 파싱한다.
         internal static EnemyBaseSkillRow ParseEnemyBaseSkillRow(CsvRecord record, string tableName)
         {
             if (string.Equals(tableName, "skills_passive.csv", StringComparison.OrdinalIgnoreCase))
@@ -614,7 +597,6 @@ namespace Pakuri.Data
             return row;
         }
 
-        /// 전달된 record 값을 사용해 EnemyPassiveSkillRow 값을 런타임 표현으로 파싱한다.
         internal static EnemyBaseSkillRow ParseEnemyPassiveSkillRow(CsvRecord record)
         {
             var modifierKind = record.ReadEnum<PassiveModifierKind>("modifier_kind");
@@ -639,7 +621,6 @@ namespace Pakuri.Data
             };
         }
 
-        /// 전달된 record 값을 사용해 EnemyTriggerRow 값을 런타임 표현으로 파싱한다.
         internal static EnemyTriggerRow ParseEnemyTriggerRow(CsvRecord record)
         {
             return new EnemyTriggerRow

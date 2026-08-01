@@ -13,7 +13,7 @@ using UnityEngine.UI;
 namespace Pakuri.InGame
 {
 
-    /// DamageMeterUIController가 담당하는 입력 또는 표시 흐름을 조정하고 관련 런타임 상태를 갱신한다.
+    /// 전투 중 누적된 유닛별 피해량을 Damage Meter 패널에 표시한다.
     public class DamageMeterUIController : MonoBehaviour
     {
         private const int MaxPartySlots = 5;
@@ -65,20 +65,17 @@ namespace Pakuri.InGame
             }
         }
 
-        /// Open 작업을 수행한다.
         public void Open()
         {
             SetOverlayVisible(true);
             RefreshNow();
         }
 
-        /// Close 작업을 수행한다.
         public void Close()
         {
             SetOverlayVisible(false);
         }
 
-        /// Now를 현재 런타임 모델을 기준으로 갱신한다.
         public void RefreshNow()
         {
             ResolveReferences();
@@ -111,7 +108,7 @@ namespace Pakuri.InGame
             lastTrackerVersion = tracker != null ? tracker.Version : -1;
         }
 
-        /// PartyOrder를 구성한다.
+        /// Registry의 플레이어 순서에 맞춰 Damage Meter 행을 배치한다.
         private void BuildPartyOrder()
         {
             Array.Clear(partyMonsterIds, 0, partyMonsterIds.Length);
@@ -136,7 +133,6 @@ namespace Pakuri.InGame
             }
         }
 
-        /// LeaderDamage를 결정한다.
         private float ResolveLeaderDamage()
         {
             var max = 0f;
@@ -152,7 +148,6 @@ namespace Pakuri.InGame
             return max;
         }
 
-        /// 전달된 런타임 입력값을 사용해 DisplayName를 결정한다.
         private string ResolveDisplayName(string monsterId, string sourceId)
         {
             var manager = GameDataLoader.CurrentCatalog;
@@ -193,7 +188,6 @@ namespace Pakuri.InGame
             return string.IsNullOrWhiteSpace(sourceId) ? "Unknown" : sourceId;
         }
 
-        /// 전달된 런타임 입력값을 사용해 SortKey를 결정한다.
         private int ResolveSortKey(string monsterId, string sourceId, int firstSeenIndex)
         {
             var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId);
@@ -213,7 +207,6 @@ namespace Pakuri.InGame
             return 1000 + firstSeenIndex;
         }
 
-        /// 전달된 런타임 입력값을 사용해 TriggerSourceDisplayName를 결정한다.
         private static string ResolveTriggerSourceDisplayName(MonsterDefinition monster, string sourceId)
         {
             var trigger = FindReaction(monster, sourceId);
@@ -235,7 +228,6 @@ namespace Pakuri.InGame
                 : ResolveActiveSkillDisplayName(monster, sourceSkillId);
         }
 
-        /// 전달된 런타임 입력값을 사용해 ChoiceTitleForSource를 결정한다.
         private static string ResolveChoiceTitleForSource(MonsterDefinition monster, string sourceId)
         {
             var reaction = FindReaction(monster, sourceId);
@@ -252,7 +244,7 @@ namespace Pakuri.InGame
             for (var i = 0; monster?.ActiveSkills != null
                 && i < monster.ActiveSkills.Length; i++)
             {
-                var reactions = SkillExecutionRuleResolver.CreateDefinitionSnapshot(
+                var reactions = SkillExecutionRules.CreateDefinitionSnapshot(
                     monster.ActiveSkills[i]).Reactions;
                 for (var j = 0; j < reactions.Count; j++)
                 {
@@ -268,7 +260,7 @@ namespace Pakuri.InGame
             for (var i = 0; monster?.PassiveSkills != null
                 && i < monster.PassiveSkills.Length; i++)
             {
-                var reactions = SkillExecutionRuleResolver.CreateDefinitionSnapshot(
+                var reactions = SkillExecutionRules.CreateDefinitionSnapshot(
                     monster.PassiveSkills[i]).Reactions;
                 for (var j = 0; j < reactions.Count; j++)
                 {
@@ -284,14 +276,12 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /// 전달된 choiceId 값을 사용해 ChoiceTitle를 결정한다.
         private static string ResolveChoiceTitle(string choiceId)
         {
             var choice = GameDataLoader.CurrentCatalog.GetData<SkillChoice>(choiceId);
             return choice != null ? choice.Title : string.Empty;
         }
 
-        /// 전달된 런타임 입력값을 사용해 ActiveSkillDisplayName를 결정한다.
         private static string ResolveActiveSkillDisplayName(MonsterDefinition monster, string sourceId)
         {
             var activeSkills = monster != null ? monster.ActiveSkills : null;
@@ -312,7 +302,6 @@ namespace Pakuri.InGame
             return string.Empty;
         }
 
-        /// 전달된 런타임 입력값을 사용해 PassiveDisplayName를 결정한다.
         private static string ResolvePassiveDisplayName(MonsterDefinition monster, string sourceId)
         {
             var passives = monster != null ? monster.PassiveSkills : null;
@@ -333,7 +322,6 @@ namespace Pakuri.InGame
             return string.Empty;
         }
 
-        /// 전달된 visible 값을 사용해 OverlayVisible를 갱신한다.
         private void SetOverlayVisible(bool visible)
         {
             if (meterRoot != null)
@@ -348,7 +336,6 @@ namespace Pakuri.InGame
             }
         }
 
-        /// Buttons를 런타임 사건 또는 씬 대상에 연결한다.
         private void BindButtons()
         {
             if (openButton != null)
@@ -364,7 +351,6 @@ namespace Pakuri.InGame
             }
         }
 
-        /// References를 결정한다.
         private void ResolveReferences()
         {
             if (stageManager == null)
@@ -383,7 +369,6 @@ namespace Pakuri.InGame
             }
         }
 
-        /// SceneUi를 결정한다.
         private void ResolveSceneUi()
         {
             if (openButton == null)
@@ -431,13 +416,12 @@ namespace Pakuri.InGame
             }
         }
 
-        /// Catalog를 결정한다.
         private GameDataCatalog ResolveCatalog()
         {
             return GameDataLoader.CurrentCatalog;
         }
 
-        /// SceneObject를 찾는다.
+        /// 현재 씬에 존재하는 지정 타입의 오브젝트를 찾아 반환한다.
         private static T FindSceneObject<T>() where T : UnityEngine.Object
         {
             var objects = Resources.FindObjectsOfTypeAll<T>();
@@ -453,7 +437,6 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /// DamagePanelView가 소유하는 데이터와 동작을 캡슐화한다.
         [Serializable]
         private class DamagePanelView
         {
@@ -474,13 +457,11 @@ namespace Pakuri.InGame
 
             public bool IsBound => root != null;
 
-            /// DamagePanelView 인스턴스를 전달된 런타임 입력값으로 초기화한다.
             public DamagePanelView(Transform panelRoot)
             {
                 Bind(panelRoot);
             }
 
-            /// 전달된 panelRoot 값을 사용해 요청값를 런타임 사건 또는 씬 대상에 연결한다.
             public void Bind(Transform panelRoot)
             {
                 root = panelRoot != null ? panelRoot.gameObject : null;
@@ -494,7 +475,6 @@ namespace Pakuri.InGame
                 ResolveChildren();
             }
 
-            /// 전달된 런타임 입력값을 사용해 Runtime를 갱신한다.
             public void SetRuntime(
                 MonsterDefinition monster,
                 MonsterDamageRecord record,
@@ -528,7 +508,6 @@ namespace Pakuri.InGame
                 RefreshSegments(monsterId, record, leaderDamage, displayNameResolver, sortKeyResolver);
             }
 
-            /// 전달된 visible 값을 사용해 Visible를 갱신한다.
             public void SetVisible(bool visible)
             {
                 if (root != null)
@@ -537,7 +516,6 @@ namespace Pakuri.InGame
                 }
             }
 
-            /// 전달된 monster 값을 사용해 Image를 현재 런타임 모델을 기준으로 갱신한다.
             private void RefreshImage(MonsterDefinition monster)
             {
                 if (monsterImage == null)
@@ -556,7 +534,6 @@ namespace Pakuri.InGame
                 monsterImage.enabled = false;
             }
 
-            /// 전달된 런타임 입력값을 사용해 Segments를 현재 런타임 모델을 기준으로 갱신한다.
             private void RefreshSegments(
                 string monsterId,
                 MonsterDamageRecord record,
@@ -609,7 +586,6 @@ namespace Pakuri.InGame
                 }
             }
 
-            /// 전달된 런타임 입력값을 사용해 VisibleSources를 구성한다.
             private List<SortedSkillSource> BuildVisibleSources(
                 MonsterDamageRecord record,
                 string monsterId,
@@ -642,7 +618,6 @@ namespace Pakuri.InGame
                 return result;
             }
 
-            /// 전달된 count 값을 사용해 EnsureSegmentCount 작업을 수행한다.
             private void EnsureSegmentCount(int count)
             {
                 if (meterTemplate == null)
@@ -663,7 +638,6 @@ namespace Pakuri.InGame
                 }
             }
 
-            /// 전달된 count 값을 사용해 SegmentCountActive를 갱신한다.
             private void SetSegmentCountActive(int count)
             {
                 for (var i = 0; i < segments.Count; i++)
@@ -675,7 +649,6 @@ namespace Pakuri.InGame
                 }
             }
 
-            /// MeterWidth를 결정한다.
             private float ResolveMeterWidth()
             {
                 if (meterBackground != null && meterBackground.rect.width > 0f)
@@ -686,7 +659,6 @@ namespace Pakuri.InGame
                 return templateSize.x > 0f ? templateSize.x : 1f;
             }
 
-            /// 전달된 런타임 입력값을 사용해 ConfigureSegment 작업을 수행한다.
             private void ConfigureSegment(RectTransform segment, float xOffset, float width)
             {
                 segment.anchorMin = templateAnchorMin;
@@ -711,7 +683,6 @@ namespace Pakuri.InGame
                 new Color(0.02f, 0.42f, 0.16f, 1f),
             };
 
-            /// 전달된 런타임 입력값을 사용해 SegmentColor를 적용한다.
             private static void ApplySegmentColor(RectTransform segment, int index)
             {
                 if (segment == null)
@@ -731,7 +702,6 @@ namespace Pakuri.InGame
                 }
             }
 
-            /// Children를 결정한다.
             private void ResolveChildren()
             {
                 if (root == null)
@@ -790,7 +760,6 @@ namespace Pakuri.InGame
         private readonly struct SortedSkillSource
         {
 
-            /// SortedSkillSource 인스턴스를 전달된 런타임 입력값으로 초기화한다.
             public SortedSkillSource(SkillDamageRecord record, int sortKey, int firstSeenIndex)
             {
                 Record = record;
@@ -803,21 +772,18 @@ namespace Pakuri.InGame
             public int FirstSeenIndex { get; }
         }
 
-        /// 전달된 런타임 입력값을 사용해 Image를 찾는다.
         private static Image FindImage(Transform root, string path)
         {
             var child = root != null ? root.Find(path) : null;
             return child != null ? child.GetComponent<Image>() : null;
         }
 
-        /// 전달된 런타임 입력값을 사용해 Text를 찾는다.
         private static TMP_Text FindText(Transform root, string path)
         {
             var child = root != null ? root.Find(path) : null;
             return child != null ? child.GetComponent<TMP_Text>() : null;
         }
 
-        /// 전달된 value 값을 사용해 Compact를 표시 또는 직렬화 형식으로 변환한다.
         private static string FormatCompact(float value)
         {
             var clamped = Mathf.Max(0f, value);

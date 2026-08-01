@@ -18,8 +18,8 @@ namespace Pakuri.InGame
 
         /// 후속 발사까지 유지할 임시 실행 오브젝트를 만든다.
         internal static bool Execute(
-            SkillActionContext context,
-            SkillExecutionData snapshot)
+            SkillExecutionContext context,
+            SkillExecutionState snapshot)
         {
             var effects = context.CombatManager.Effects;
             if (effects == null)
@@ -48,10 +48,9 @@ namespace Pakuri.InGame
             return instance.AddComponent<ProjectileSkillExecutor>().Initialize(context, snapshot);
         }
 
-        /// 이번 발사 묶음을 배치하고 남은 후속 발사를 결정한다.
         private bool Initialize(
-            SkillActionContext context,
-            SkillExecutionData snapshot)
+            SkillExecutionContext context,
+            SkillExecutionState snapshot)
         {
             effects = context.CombatManager.Effects;
             var launchSnapshot = snapshot.CopyWithDamageMultiplier(
@@ -87,8 +86,8 @@ namespace Pakuri.InGame
 
         /// 정해진 지연 뒤 같은 조준 방향으로 추가 발사를 잇는다.
         private IEnumerator ExecuteFollowUpProjectilesAfterDelay(
-            SkillActionContext context,
-            SkillExecutionData snapshot)
+            SkillExecutionContext context,
+            SkillExecutionState snapshot)
         {
             if (snapshot.FollowUpProjectileDelaySeconds > 0f)
             {
@@ -120,7 +119,7 @@ namespace Pakuri.InGame
                             * Mathf.Max(0f, snapshot.FollowUpProjectileDamageMultiplier),
                         snapshot.PreparedBoundaries.Count > 0
                             ? snapshot.PreparedBoundaries[0]
-                            : SkillExecutionRuleResolver.ProjectileDestroyBoundaryX(
+                            : SkillExecutionRules.ProjectileDestroyBoundaryX(
                                 snapshot.PreparedOrigin,
                                 snapshot.PreparedDirection,
                                 snapshot.PreparedProjectileSpeed,
@@ -135,9 +134,9 @@ namespace Pakuri.InGame
 
         /// 한 발의 표현과 이동, 충돌 입력을 완성한다.
         private static void SpawnProjectileActor(
-            SkillActionContext context,
-            SkillExecutionData snapshot,
-            SkillExecutionData launchSnapshot,
+            SkillExecutionContext context,
+            SkillExecutionState snapshot,
+            SkillExecutionState launchSnapshot,
             Vector2 direction,
             float damage,
             float impactDamage,
@@ -191,10 +190,10 @@ namespace Pakuri.InGame
                 boundary,
                 snapshot.PreparedProjectileLifetime,
                 snapshot.PreparedStatus,
-                ValueAt(snapshot.PreparedBranchChances, planIndex, 0f),
-                ValueAt(snapshot.PreparedBranchCounts, planIndex, 0),
-                ValueAt(snapshot.PreparedBranchDamageMultipliers, planIndex, 1f),
-                ValueAt(snapshot.PreparedBranchSearchRadii, planIndex, 0f),
+                snapshot.PreparedBranchChances[planIndex],
+                snapshot.PreparedBranchCounts[planIndex],
+                snapshot.PreparedBranchDamageMultipliers[planIndex],
+                snapshot.PreparedBranchSearchRadii[planIndex],
                 snapshot.PreparedImpactStatus,
                 snapshot.PreparedContactDamageEnabled,
                 snapshot.PreparedStopOnFirstHit,
@@ -213,15 +212,5 @@ namespace Pakuri.InGame
                 snapshot.CritDamageBonus);
         }
 
-        /// 발사 계획에 값이 없을 때 안전한 기본값을 사용한다.
-        private static T ValueAt<T>(
-            System.Collections.Generic.IReadOnlyList<T> values,
-            int index,
-            T fallback)
-        {
-            return values != null && index >= 0 && index < values.Count
-                ? values[index]
-                : fallback;
-        }
     }
 }

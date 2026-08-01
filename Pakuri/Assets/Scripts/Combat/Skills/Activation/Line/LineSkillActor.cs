@@ -32,8 +32,8 @@ namespace Pakuri.InGame
         private float damage;
         private DamageAttribute attribute;
         private StatusApplicationSpec statusSpec;
-        private SkillExecutionData runtime;
-        private SkillExecutionData executionData;
+        private SkillExecutionState runtime;
+        private SkillExecutionState executionData;
         private UnitCombatState sourceModel;
         private string sourceSkillId;
         private bool criticalAllowed;
@@ -61,8 +61,8 @@ namespace Pakuri.InGame
             float damagePerTick,
             DamageAttribute damageAttribute,
             StatusApplicationSpec onHitStatus,
-            SkillExecutionData sourceRuntime,
-            SkillExecutionData snapshot,
+            SkillExecutionState sourceRuntime,
+            SkillExecutionState snapshot,
             UnitCombatState source,
             string skillId,
             bool allowCritical,
@@ -101,18 +101,7 @@ namespace Pakuri.InGame
             ApplyLineTick();
         }
 
-        /// 판정 없이 표현만 남을 때 사라질 시점을 정한다.
-        public float InitializeVisualLifetime(
-            EffectManager manager,
-            float durationSeconds)
-        {
-            effectManager = manager;
-            visualOnly = true;
-            remainingDuration = Mathf.Max(0.05f, durationSeconds);
-            return remainingDuration;
-        }
-
-        /// 현재 직선과 겹친 대상에 이번 주기의 결과를 적용한다.
+        /// 현재 직선과 겹친 대상에게 데미지 비율을 계산해 InGameCombatManager 에 넘긴다.
         private bool ApplyLineTick()
         {
             if (combatManager == null || casterEntry == null || roster == null || lineHitbox == null)
@@ -137,7 +126,7 @@ namespace Pakuri.InGame
                 }
 
                 var hitPosition = (Vector2)target.Transform.position;
-                var finalDamageMultiplier = SkillExecutionRuleResolver.ResolveHitDamageMultiplier(executionData, target.Model);
+                var finalDamageMultiplier = SkillExecutionRules.ResolveHitDamageMultiplier(executionData, target.Model);
                 var damageResult = combatManager.ApplyDamageWithTriggerState(target.Model, damage, attribute, sourceModel, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, false, false, null, finalDamageMultiplier, executionData != null ? executionData.TriggerExecutionState : null);
                 TryApplyKnockback(target, direction, knockbackDistance);
                 if (!damageResult.IsDead)

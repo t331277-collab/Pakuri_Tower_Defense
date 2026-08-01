@@ -9,7 +9,7 @@ using UnityEngine.UI;
 namespace Pakuri.InGame
 {
 
-    /// InGameUtilityPanelController가 담당하는 입력 또는 표시 흐름을 조정하고 관련 런타임 상태를 갱신한다.
+    /// 일시정지·배속·Debug·Damage Meter·설정·종료 버튼을 관리한다.
     public class InGameUtilityPanelController : MonoBehaviour
     {
         private static readonly float[] TimeScales = { 1f, 1.5f, 2f };
@@ -73,7 +73,6 @@ namespace Pakuri.InGame
             }
         }
 
-        /// References를 결정한다.
         private void ResolveReferences()
         {
             if (playerCombatControl == null)
@@ -107,13 +106,11 @@ namespace Pakuri.InGame
             }
         }
 
-        /// CycleTimeScale 작업을 수행한다.
         private void CycleTimeScale()
         {
             ApplyTimeScale((timeScaleIndex + 1) % TimeScales.Length);
         }
 
-        /// 전달된 index 값을 사용해 TimeScale를 적용한다.
         private void ApplyTimeScale(int index)
         {
             timeScaleIndex = Mathf.Clamp(index, 0, TimeScales.Length - 1);

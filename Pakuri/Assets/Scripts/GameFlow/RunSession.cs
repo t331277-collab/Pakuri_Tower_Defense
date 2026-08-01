@@ -10,7 +10,6 @@ using Pakuri.Data;
 namespace Pakuri.InGame
 {
 
-    /// RunSession가 소유하는 데이터와 동작을 캡슐화한다.
     [Serializable]
     public class RunSession
     {
@@ -39,7 +38,7 @@ namespace Pakuri.InGame
         public int Gold;
         public int DarkTrace;
 
-        /// 전달된 monster 값을 사용해 Begin 결과값을 생성해 반환한다.
+        /// 선택한 몬스터를 첫 파티원으로 등록해 새 Run을 시작한다.
         public static RunSession Begin(MonsterDefinition monster)
         {
 
@@ -48,7 +47,6 @@ namespace Pakuri.InGame
             return session;
         }
 
-        /// 전달된 monster 값을 사용해 DefaultActiveSkillId를 결정한다.
         private static string ResolveDefaultActiveSkillId(MonsterDefinition monster)
         {
             if (monster == null || monster.ActiveSkills == null)
@@ -71,7 +69,7 @@ namespace Pakuri.InGame
             return string.Empty;
         }
 
-        /// 전달된 런타임 입력값을 사용해 RecordOfferingChoice 작업을 수행한다.
+        /// Offering에서 선택한 보상과 연결 스킬을 해당 파티원의 Run 상태에 기록한다.
         public void RecordOfferingChoice(
             RunMonsterState member,
             string rewardId,
@@ -105,7 +103,7 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 전달된 런타임 입력값을 사용해 LearnActive 실행 가능 여부를 반환한다.
+        /// 파티원이 새 액티브 스킬을 배울 수 있는지 현재 학습 한도와 조건으로 판정한다.
         public bool CanLearnActive(
             RunMonsterState member,
             MonsterDefinition monster,
@@ -136,7 +134,7 @@ namespace Pakuri.InGame
             return additionalCount < MaxAdditionalActiveSkillCount;
         }
 
-        /// 전달된 런타임 입력값을 사용해 LearnPassive 실행 가능 여부를 반환한다.
+        /// 파티원이 새 패시브 스킬을 배울 수 있는지 선행 액티브 스킬과 한도로 판정한다.
         public bool CanLearnPassive(
             RunMonsterState member,
             MonsterDefinition monster,
@@ -176,7 +174,7 @@ namespace Pakuri.InGame
             return false;
         }
 
-        /// 전달된 런타임 입력값을 사용해 ChooseSkillChoice 실행 가능 여부를 반환한다.
+        /// 보상 선택지를 해당 파티원이 아직 선택할 수 있는지 판정한다.
         public bool CanChooseSkillChoice(
             RunMonsterState member,
             MonsterDefinition.RewardChoiceDefinition reward,
@@ -214,7 +212,6 @@ namespace Pakuri.InGame
             return CanChooseSkillChoice(member, sourceSkillId, choice);
         }
 
-        /// 전달된 런타임 입력값을 사용해 ChooseSkillChoice 실행 가능 여부를 반환한다.
         public bool CanChooseSkillChoice(
             RunMonsterState member,
             string sourceSkillId,
@@ -253,14 +250,14 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /// 전달된 런타임 입력값을 사용해 ClaimMaterialReward 작업을 수행한다.
+        /// 전투 보상으로 얻은 재화를 RunSession에 누적한다.
         public void ClaimMaterialReward(int goldReward, int darkTraceReward)
         {
             Gold += Math.Max(0, goldReward);
             DarkTrace += Math.Max(0, darkTraceReward);
         }
 
-        /// 전달된 런타임 입력값을 사용해 AddPartyMonster 작업을 시도하고 성공 여부를 반환한다.
+        /// 아직 파티에 없는 몬스터를 다음 슬롯에 추가한다.
         public bool TryAddPartyMonster(
             MonsterDefinition monster,
             out int slotIndex)
@@ -279,7 +276,6 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /// 전달된 monster 값을 사용해 PartyMemberState를 소유한 런타임 상태에 추가한다.
         private RunMonsterState AddPartyMemberState(MonsterDefinition monster)
         {
             var state = new RunMonsterState
@@ -297,7 +293,6 @@ namespace Pakuri.InGame
             return state;
         }
 
-        /// 전달된 monsterId 값을 사용해 PartyMemberState를 반환한다.
         public RunMonsterState GetPartyMemberState(string monsterId)
         {
             if (string.IsNullOrWhiteSpace(monsterId))
@@ -317,7 +312,6 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /// 전달된 런타임 입력값을 사용해 CountChosenChoices 결과값을 생성해 반환한다.
         private static int CountChosenChoices(
             RunMonsterState member,
             string skillId,
@@ -349,7 +343,6 @@ namespace Pakuri.InGame
             return count;
         }
 
-        /// 전달된 런타임 입력값을 사용해 ChoiceTargetSkillId를 결정한다.
         private static string ResolveChoiceTargetSkillId(
             SkillChoice choice,
             string fallbackSkillId)

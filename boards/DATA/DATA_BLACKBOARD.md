@@ -587,6 +587,50 @@ User approved Generation/runtime implementation. Phases 1-8 complete. Code Revie
 - 2026-07-31: Code Builder applied Reviewer correction 4 without data-contract changes; removed unused catalog access from `SkillTrigger`.
 - 2026-07-31: Code Reviewer completed final PASS; data/CSV path remains unchanged.
 
+## Task: 2026-08-02 Enemy Slash SingleAttack CSV Migration
+
+### Task title
+
+Move `Slash` and `FireDragonSlash` from the enemy AreaAttack authoring table to the SingleAttack authoring table.
+
+### Goals
+
+- Remove both rows from `skills_area_attack.csv`.
+- Add both rows to `skills_single_attack.csv` with `runtime_kind=SingleAttack` and the SingleAttack column layout.
+- Keep their damage, targeting, cooldown, visual and hitbox values while converting `DamageArea` to `Damage`.
+
+### Constraints
+
+- Change only the two enemy skill CSV files.
+- Do not add a new runtime kind, parser field, builder branch or combat implementation.
+- Do not claim Unity catalog/runtime validation; only static CSV validation was run in this task.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+CSV migration is corrected on disk and static schema checks pass; Unity TextAsset reimport/runtime sync is pending.
+
+### Next Actions
+
+- In Unity, run `Pakuri/Sync CSV Runtime Catalog Assets`, then `Pakuri/Validate CSV Source Data`.
+- If the same 48-column error remains, reimport the enemy `skills_single_attack.csv` TextAsset or restart the Unity Editor before validating again.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/authoring/enemy/skills/base/area_attack/skills_area_attack.csv` now contains only its header and type row; `Slash` and `FireDragonSlash` are absent.
+- `Pakuri/Assets/CSVdata/authoring/enemy/skills/base/single_attack/skills_single_attack.csv` contains both rows with 49 columns, `SingleAttack`, `Damage`, and `charge_ramp_seconds=3` / `charge_move_speed_multiplier=2.5`.
+- Direct UTF-8 disk read reports header=49 columns and `Slash` row 6=49 columns; Unity previously reported an imported row 6 with 48 columns.
+- `git diff --check` completed without whitespace errors.
+- `GameDataCatalogBuilder.Skills.cs` maps `DamageArea` to `SingleSkillDefinition`; the migrated rows now use the explicit `Damage` profile.
+
+### History
+
+- 2026-08-02: Code Builder moved and converted the two enemy rows; no C# files were changed.
+- 2026-08-02: Unity reported the pre-correction 48-column imported row; the disk CSV was rechecked at 49 columns and Unity reimport was left as the next verification step.
+
 ## Task: 2026-07-31 Reaction Outcome Definition Materialization
 
 ### Task title

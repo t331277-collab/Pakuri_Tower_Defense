@@ -15,7 +15,6 @@ namespace Pakuri.InGame
     public class UnitCombatStateFactory
     {
 
-        /// 전달된 런타임 입력값을 사용해 SelectedMonster를 생성한다.
         public UnitCombatState CreateSelectedMonster(
             MonsterDefinition definition,
             RunSession.RunMonsterState runState = null,
@@ -24,7 +23,6 @@ namespace Pakuri.InGame
             return CreateMonster(definition, UnitSide.Player, UnitRole.Monster, slotIndex, "player", runState);
         }
 
-        /// 전달된 런타임 입력값을 사용해 ManifestedMonster를 생성한다.
         public UnitCombatState CreateManifestedMonster(
             MonsterDefinition definition,
             RunSession.RunMonsterState runState,
@@ -33,7 +31,6 @@ namespace Pakuri.InGame
             return CreateMonster(definition, UnitSide.Player, UnitRole.Monster, slotIndex, "party", runState);
         }
 
-        /// 전달된 런타임 입력값을 사용해 Enemy를 생성한다.
         public EnemyCombatState CreateEnemy(EnemyDefinition definition, int slotIndex = 0, bool isBoss = false)
         {
             var stats = definition.Stats;
@@ -83,7 +80,6 @@ namespace Pakuri.InGame
             return model;
         }
 
-        /// 전달된 maxHealth 값을 사용해 Nexus를 생성한다.
         public UnitCombatState CreateNexus(float maxHealth)
         {
             return new UnitCombatState
@@ -111,7 +107,6 @@ namespace Pakuri.InGame
             };
         }
 
-        /// 전달된 런타임 입력값을 사용해 Monster를 생성한다.
         private static UnitCombatState CreateMonster(
             MonsterDefinition definition,
             UnitSide side,
@@ -150,7 +145,6 @@ namespace Pakuri.InGame
             return model;
         }
 
-        /// 전달된 런타임 입력값을 사용해 Stats를 대응시킨다.
         private static UnitCombatStats MapStats(UnitCombatStats source, float maxHealth)
         {
             return new UnitCombatStats
@@ -165,7 +159,6 @@ namespace Pakuri.InGame
             };
         }
 
-        /// 전달된 source 값을 사용해 RuntimeDefenses를 생성한다.
         private static UnitDefenseStats CreateRuntimeDefenses(UnitDefenseStats source)
         {
             return new UnitDefenseStats
@@ -179,7 +172,6 @@ namespace Pakuri.InGame
             };
         }
 
-        /// 전달된 런타임 입력값을 사용해 UnitId를 구성한다.
         private static string BuildUnitId(string prefix, string definitionId, int slotIndex)
         {
             return $"{prefix}-{definitionId}-{slotIndex}";

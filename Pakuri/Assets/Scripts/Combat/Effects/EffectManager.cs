@@ -14,7 +14,6 @@ namespace Pakuri.InGame
     public readonly struct EffectCreateRequest
     {
 
-        /// EffectCreateRequest 인스턴스를 전달된 런타임 입력값으로 초기화한다.
         public EffectCreateRequest(
             RuntimeSkillVisualSpec visual,
             GameObject prefab,
@@ -51,14 +50,14 @@ namespace Pakuri.InGame
         public bool CreateEmptyActor { get; }
     }
 
-    /// EffectManager가 담당하는 작업을 조정하고 공유 런타임 상태를 소유한다.
     public class EffectManager : MonoBehaviour
     {
         [SerializeField] private Transform runtimeSkillRoot;
         private readonly Dictionary<StatusRuntimeInstance, GameObject> statusEffectVisuals = new Dictionary<StatusRuntimeInstance, GameObject>();
         private readonly HashSet<GameObject> targetAttachedEffects = new HashSet<GameObject>();
 
-        /// 전달된 런타임 입력값을 사용해 Object를 생성한다.
+        /// 이펙트를 넣을 오브젝트를 생성한다.
+
         private GameObject CreateObject(
             EffectCreateRequest request,
             Vector3 position)
@@ -83,13 +82,13 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /// 전달된 런타임 입력값을 사용해 VisualToTarget를 연결한다.
+        /// 스킬 적용 대상의 자식으로 이펙트를 적용시켜 이펙트가 타겟에 붙는다.
+
         private static void AttachVisualToTarget(GameObject instance, Transform targetTransform)
         {
             instance.transform.SetParent(targetTransform, true);
         }
 
-        /// 전달된 런타임 입력값을 사용해 RuntimeObject를 생성한다.
         private GameObject CreateRuntimeObject(
             string objectName,
             Vector3 position,
@@ -101,7 +100,8 @@ namespace Pakuri.InGame
             return instance;
         }
 
-        /// 전달된 request 값을 사용해 Effect를 생성한다.
+        /// 이펙트 생성
+
         public GameObject CreateEffect(EffectCreateRequest request)
         {
             GameObject instance = null;
@@ -170,7 +170,6 @@ namespace Pakuri.InGame
             RemoveEffect(instance, status);
         }
 
-        /// 전달된 런타임 입력값을 사용해 Effect를 소유한 런타임 상태에서 제거한다.
         public void RemoveEffect(
             GameObject instance,
             StatusRuntimeInstance status = null)
@@ -194,7 +193,6 @@ namespace Pakuri.InGame
             Destroy(instance);
         }
 
-        /// Effects를 소유한 런타임 상태에서 비운다.
         public void ClearEffects()
         {
             var attachedEffects = new List<GameObject>(targetAttachedEffects);

@@ -1443,3 +1443,107 @@ Implementation complete. 솔루션 빌드와 정적 잔존 경로 검사를 완�
 - 2026-08-01: 사용자가 학습 시점에만 강화 조건과 유효 실행값을 판정하고 전투 중 재판정을 제거하도록 요청했다.
 - 2026-08-01: Code Builder가 유효 실행값 계산을 Resolver의 초기화 경로로 이동하고 `RefreshRuntimeModifiers`, 학습 Choice 상태 게이트와 관련 Node 경로를 제거했다.
 - 2026-08-01: Trigger 상태 게이트와 적중 대상 상태 기반 Node는 별도 사건 의미로 분류해 보존하고 빌드와 정적 검사를 통과시켰다.
+
+## Task: 2026-08-02 Zone Area Target Resolution Simplification
+
+### Task title
+
+Zone 스킬이 Collider와 겹친 모든 대상을 처리하도록 거리 기반 fallback과 불필요한 대상 수 제한을 제거한다.
+
+### Goals
+
+- Zone 실행 경로에서 `maxHitTargetCount`와 준비된 대상 수 제한 전달을 제거한다.
+- `ApplyResolvedTargets`가 전달받은 유효 대상을 임의로 잘라내지 않고 모두 처리하게 한다.
+- `radius <= 0`일 때 가장 가까운 대상 하나를 선택하는 우회 경로를 제거한다.
+- 모든 Zone 틱이 `UnitCollisionResolver.CollectTargets`를 거치도록 실행 경로를 하나로 만든다.
+- 투사체 충돌 지점의 반경 판정은 `ProjectileSkillActor`가 소유하게 한다.
+- 현재 Zone 데이터의 기본 반경과 반경 배율이 양수인지 확인한다.
+
+### Constraints
+
+- SingleAttack의 `HitTargetCount` 실행 경로는 유지한다.
+- Projectile 충돌 영역의 거리 판정, 중복 제거, 피해와 상태 적용 순서는 유지한다.
+- Zone 반경 데이터는 이펙트와 Collider 크기 조정에 계속 사용한다.
+- 사용자 소유의 Unity Play Mode 검증은 수행하지 않는다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Complete. Zone Collider 전용 실행, Projectile 반경 판정 이동, 솔루션 빌드와 정적 검증을 완료했다.
+
+### Next Actions
+
+- 사용자 Play Mode에서 Zone 틱마다 Collider와 겹친 모든 대상이 처리되는지 확인한다.
+
+### Evidence
+
+- `ZoneSkillActor.ApplyResolvedTargets`에서 `maxTargets`, 임의 선택용 복사 목록, `Random.Range`, `RemoveRange`를 제거하고 `eligibleTargets` 전체를 순회한다.
+- `ZoneSkillActor`의 `maxHitTargetCount` 필드와 `ZoneSkillExecutor`의 `PreparedHitTargetCount` 전달을 제거했다.
+- `ZoneSkillActor`의 `radius <= 0` 최단 대상 우회 분기를 제거했다.
+- `ZoneSkillActor.ApplyCurrentAreaTick`은 조건 분기 없이 `ApplyColliderAreaTick`만 호출한다.
+- Zone Actor의 `radius`, `coverAll`, `usePrefabHitbox`와 관련 초기화 입력을 제거했다.
+- 거리 기반 `ApplyAreaTargets`는 `ProjectileSkillActor.ApplyImpactAreaTargets`로 이동했으며 Projectile의 기존 반경 판정을 유지한다.
+- 호출자가 사라진 `EffectVisualBuilder.ConfigureZoneEffect`와 Zone 준비 단계의 `PreparedRadius`, `PreparedCoverAll` 대입을 제거했다. 같은 준비 속성의 SingleAttack 사용은 유지했다.
+- `ZoneSkillDefinition`과 Zone 데이터 빌더에서 Zone 전용 `UsesHitTargetCount`, `HitAllTargets`, `HitTargetCount`를 제거했으며 Single 경로의 같은 필드는 유지했다.
+- 현재 AreaAttack 기본 반경은 `eve-c`, `eve-e`, `sein-d` 모두 `3.2`이며, Area 선택의 `RadiusMultiplier` 값은 `0.8`, `1.25`, `1.3`이다.
+- 현재 Zone 행의 런타임 hitbox 크기는 `eve-c` 6.28x5.2, `eve-e` 7.38x7.24, `sein-d` 3.271948x1.705267이며 모두 양수다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal`은 오류 0개, 기존 참조 충돌 경고 2개로 완료했다.
+- `git diff --check`가 통과했다.
+
+### History
+
+- 2026-08-02: 사용자가 Zone 대상 제한과 `radius <= 0` 우회 경로를 제거하도록 Code Builder 작업을 요청했다.
+- 2026-08-02: Code Builder가 Zone 실행과 빌드 경로를 수정하고 Projectile의 현재 `int.MaxValue` 인자를 함께 제거했다.
+- 2026-08-02: 사용자가 모든 Zone의 판정 규칙을 Collider 충돌로 확정했다.
+- 2026-08-02: Code Builder가 Zone 거리 fallback을 제거하고 투사체 반경 판정을 Projectile로 이동한 뒤 빌드와 hitbox 데이터 검사를 완료했다.
+
+## Task: 2026-08-02 Skill Execution Naming Cleanup
+
+### Task title
+
+스킬 실행 폴더와 핵심 실행 타입의 이름을 현재 책임에 맞게 정리한다.
+
+### Goals
+
+- `Combat/Skills/Implementation` 폴더를 `Combat/Skills/Execution`으로 변경한다.
+- `SkillActionContext`를 `SkillExecutionContext`로 변경한다.
+- `SkillExecutionData`를 `SkillExecutionState`로 변경한다.
+- `SkillExecutionRuleResolver`를 `SkillExecutionRules`로 변경한다.
+- `SkillExecution`, `SkillTargeting`, `SkillTrigger` 이름은 유지한다.
+
+### Constraints
+
+- 코드 동작, namespace, public member 구성과 실행 순서를 변경하지 않는다.
+- 폴더와 세 스크립트의 Unity `.meta` GUID를 보존한다.
+- 기존 사용자 수정은 보존하고 타입 식별자만 기계적으로 변경한다.
+- 과거 통합 handoff의 역사 본문은 소급 변경하지 않고 후속 이름 변경 메모만 추가한다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Complete. 폴더·타입·파일 rename과 빌드 검증을 완료했다.
+
+### Next Actions
+
+- Unity Editor가 새 Assets 경로를 반영한 뒤 Console에 import 오류가 없는지 확인한다.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution`에 승인된 여섯 스크립트와 각 `.meta`가 존재한다.
+- 폴더 GUID `9dbc5189d7d0d5c4297c238ae83029b1`을 보존했다.
+- `SkillExecutionContext`, `SkillExecutionState`, `SkillExecutionRules`의 GUID는 각각 `82045cd00ee245b7bf885be962f8c619`, `5f6dba237e624d17a54e67ae7aeeb165`, `87ea56e14128452fbf054076cd83de47`로 기존 값과 같다.
+- `SkillActionContext|SkillExecutionData|SkillExecutionRuleResolver` C# 검색 결과는 0건이다.
+- `Skills/Implementation` C# 경로 검색 결과는 0건이다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal`은 오류 0개, 기존 참조 충돌 경고 2개로 완료했다.
+- `git diff --check`가 통과했다.
+
+### History
+
+- 2026-08-02: 사용자가 실행 폴더와 핵심 타입의 책임을 확인한 뒤 새 이름을 승인했다.
+- 2026-08-02: Code Builder가 폴더와 파일을 `.meta`와 함께 이동하고 모든 C# 참조를 변경했다.

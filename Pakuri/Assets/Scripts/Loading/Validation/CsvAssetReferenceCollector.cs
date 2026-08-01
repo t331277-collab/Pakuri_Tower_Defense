@@ -12,7 +12,6 @@ using static Pakuri.Data.SkillGraphParser;
 namespace Pakuri.Data
 {
 
-    /// CsvAssetReferenceCollector가 소유하는 데이터와 동작을 캡슐화한다.
     internal static class CsvAssetReferenceCollector
     {
 
@@ -20,7 +19,6 @@ namespace Pakuri.Data
         internal readonly struct ReferencedAssetPath
         {
 
-            /// ReferencedAssetPath 인스턴스를 전달된 런타임 입력값으로 초기화한다.
             public ReferencedAssetPath(string assetPath, string ownerLabel)
             {
                 AssetPath = assetPath;
@@ -31,7 +29,6 @@ namespace Pakuri.Data
             public string OwnerLabel { get; }
         }
 
-        /// ReferencedAssetSet가 소유하는 데이터와 동작을 캡슐화한다.
         internal class ReferencedAssetSet
         {
             internal readonly HashSet<string> spritePathLookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -42,25 +39,21 @@ namespace Pakuri.Data
             public List<ReferencedAssetPath> PrefabPaths { get; } = new List<ReferencedAssetPath>();
             public List<ReferencedAssetPath> AnimatorControllerPaths { get; } = new List<ReferencedAssetPath>();
 
-            /// 전달된 런타임 입력값을 사용해 Sprite를 소유한 런타임 상태에 추가한다.
             public void AddSprite(string assetPath, string ownerLabel)
             {
                 Add(assetPath, ownerLabel, spritePathLookup, SpritePaths);
             }
 
-            /// 전달된 런타임 입력값을 사용해 Prefab를 소유한 런타임 상태에 추가한다.
             public void AddPrefab(string assetPath, string ownerLabel)
             {
                 Add(assetPath, ownerLabel, prefabPathLookup, PrefabPaths);
             }
 
-            /// 전달된 런타임 입력값을 사용해 AnimatorController를 소유한 런타임 상태에 추가한다.
             public void AddAnimatorController(string assetPath, string ownerLabel)
             {
                 Add(assetPath, ownerLabel, animatorControllerPathLookup, AnimatorControllerPaths);
             }
 
-            /// 전달된 런타임 입력값을 사용해 요청값를 소유한 런타임 상태에 추가한다.
             internal static void Add(
                 string assetPath,
                 string ownerLabel,
@@ -80,7 +73,6 @@ namespace Pakuri.Data
             }
         }
 
-        /// 전달된 model 값을 사용해 ReferencedAssets를 결과 컬렉션에 수집한다.
         internal static ReferencedAssetSet CollectReferencedAssets(SourceModel model)
         {
             var assets = new ReferencedAssetSet();

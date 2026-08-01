@@ -8,12 +8,11 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
-
-    /// EffectVisualBuilder 런타임 데이터를 파싱된 저작 데이터에서 생성한다.
     static class EffectVisualBuilder
     {
 
-        /// 전달된 direction 값을 사용해 Rotation 결과값을 생성해 반환한다.
+        /// 투사체, 광선 회전 적용
+
         public static Quaternion Rotation(Vector2 direction)
         {
             if (direction.sqrMagnitude <= 0.0001f)
@@ -25,7 +24,9 @@ namespace Pakuri.InGame
             return Quaternion.Euler(0f, 0f, angle);
         }
 
-        /// 전달된 런타임 입력값을 사용해 Configure 작업을 수행한다.
+
+        /// 비쥬얼 컴포넌트 조립
+
         public static void Configure(
             GameObject instance,
             RuntimeSkillVisualSpec visual,
@@ -53,7 +54,6 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 전달된 런타임 입력값을 사용해 ConfigureAreaEffect 작업을 수행한다.
         public static void ConfigureAreaEffect(
             GameObject instance,
             float baseRadius,
@@ -118,38 +118,7 @@ namespace Pakuri.InGame
             return collider;
         }
 
-        public static void ConfigureZoneEffect(
-            GameObject instance,
-            Vector2 center,
-            float radius,
-            bool coverAll,
-            bool usePrefabHitbox)
-        {
-            instance.transform.position = center;
-            if (usePrefabHitbox || coverAll || radius <= 0f)
-            {
-                return;
-            }
-
-            var renderer = instance.GetComponent<SpriteRenderer>();
-            if (renderer == null || renderer.sprite == null)
-            {
-                return;
-            }
-
-            var size = renderer.sprite.bounds.size;
-            var scale = instance.transform.localScale;
-            var diameter = radius * 2f;
-            if (size.x > 0.0001f)
-            {
-                scale.x = Mathf.Sign(scale.x == 0f ? 1f : scale.x) * (diameter / size.x);
-            }
-            if (size.y > 0.0001f)
-            {
-                scale.y = Mathf.Sign(scale.y == 0f ? 1f : scale.y) * (diameter / size.y);
-            }
-            instance.transform.localScale = scale;
-        }
+        /// 임시 분기 이펙트
 
         public static GameObject CreateBranchDamageLine(
             EffectManager effects,
@@ -199,7 +168,6 @@ namespace Pakuri.InGame
             return instance;
         }
 
-        /// 전달된 런타임 입력값을 사용해 ConfigureHitbox 작업을 수행한다.
         private static void ConfigureHitbox(
             GameObject instance,
             RuntimeSkillHitboxSpec hitbox,

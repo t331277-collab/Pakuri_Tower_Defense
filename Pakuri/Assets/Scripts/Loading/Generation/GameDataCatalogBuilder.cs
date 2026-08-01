@@ -23,13 +23,11 @@ namespace Pakuri.Data
 
         private readonly CsvRuntimeCatalog assetCatalog;
 
-        /// GameDataCatalogBuilder 인스턴스를 전달된 런타임 입력값으로 초기화한다.
         private GameDataCatalogBuilder(CsvRuntimeCatalog assetCatalog)
         {
             this.assetCatalog = assetCatalog ?? throw new ArgumentNullException(nameof(assetCatalog));
         }
 
-        /// 전달된 런타임 입력값을 사용해 RuntimeCatalog를 구성한다.
         internal static GameDataCatalog BuildRuntimeCatalog(
             SourceModel model,
             CsvRuntimeCatalog assetCatalog)
@@ -37,7 +35,6 @@ namespace Pakuri.Data
             return new GameDataCatalogBuilder(assetCatalog).Build(model);
         }
 
-        /// 전달된 model 값을 사용해 요청값를 구성한다.
         private GameDataCatalog Build(SourceModel model)
         {
             var catalog = ScriptableObject.CreateInstance<GameDataCatalog>();
@@ -114,7 +111,6 @@ namespace Pakuri.Data
             return catalog;
         }
 
-        /// 전달된 런타임 입력값을 사용해 MonsterSkillDisplayName를 결정한다.
         private string ResolveMonsterSkillDisplayName(
             SourceModel model,
             string monsterId,
@@ -138,7 +134,6 @@ namespace Pakuri.Data
                 $"Monster '{monsterId}' has no '{skillKind}' skill in slot '{slot}'.");
         }
 
-        /// 전달된 런타임 입력값을 사용해 Enemies를 구성한다.
         private EnemyDefinition[] BuildEnemies(
             SourceModel model,
             string stageId,
@@ -208,7 +203,6 @@ namespace Pakuri.Data
             return enemies.ToArray();
         }
 
-        /// 전달된 런타임 입력값을 사용해 EnemyPassiveDefinition를 구성한다.
         private PassiveSkillDefinition BuildEnemyPassiveDefinition(
             SourceModel model,
             string passiveId,
@@ -243,7 +237,6 @@ namespace Pakuri.Data
             };
         }
 
-        /// 전달된 런타임 입력값을 사용해 EnemyAssignedActiveSkills를 구성한다.
         private SkillDefinition[] BuildEnemyAssignedActiveSkills(
             SourceModel model,
             string enemyId,
@@ -275,7 +268,6 @@ namespace Pakuri.Data
             return definitions.ToArray();
         }
 
-        /// 전달된 런타임 입력값을 사용해 AddEnemyAssignedSkillDefinition 작업을 시도하고 성공 여부를 반환한다.
         private void TryAddEnemyAssignedSkillDefinition(
             SourceModel model,
             string ownerId,
@@ -300,7 +292,6 @@ namespace Pakuri.Data
                 statusDefinitions));
         }
 
-        /// 전달된 런타임 입력값을 사용해 EnemyAssignedSkillDefinition를 구성한다.
         private ActiveSkillBuildData BuildEnemyAssignedSkillDefinition(EnemyBaseSkillRow source, SkillSlot runtimeSlot)
         {
             var row = source.Skill;
@@ -350,7 +341,6 @@ namespace Pakuri.Data
             return definition;
         }
 
-        /// 전달된 definition 값을 사용해 EnemyExecutionProfile를 적용한다.
         private void ApplyEnemyExecutionProfile(ActiveSkillBuildData definition)
         {
             if (definition == null)
@@ -383,7 +373,6 @@ namespace Pakuri.Data
             }
         }
 
-        /// 전달된 selection 값을 사용해 EnemyTargetSelection를 대응시킨다.
         private string MapEnemyTargetSelection(string selection)
         {
             if (string.Equals(selection, "FarthestHostile", StringComparison.OrdinalIgnoreCase))
@@ -415,7 +404,6 @@ namespace Pakuri.Data
             return selection;
         }
 
-        /// 전달된 런타임 입력값을 사용해 EnemyAssignedSkillTriggers를 구성한다.
         private SkillReaction[] BuildEnemyAssignedSkillReactions(
             SourceModel model,
             string enemyId,
@@ -580,7 +568,6 @@ namespace Pakuri.Data
             };
         }
 
-        /// 전달된 model 값을 사용해 StatusEffects를 구성한다.
         private StatusEffectDefinition[] BuildStatusEffects(SourceModel model)
         {
             var statuses = new List<StatusEffectDefinition>();
@@ -620,7 +607,6 @@ namespace Pakuri.Data
             return statuses.ToArray();
         }
 
-        /// 전달된 definition 값을 사용해 StatusRuntimeData를 구성한다.
         private static StatusRuntimeData BuildStatusRuntimeData(StatusEffectDefinition definition)
         {
             var status = new StatusRuntimeData
@@ -664,7 +650,6 @@ namespace Pakuri.Data
             return status;
         }
 
-        /// 전달된 런타임 입력값을 사용해 StatusRuntimeData를 반환한다.
         private static StatusRuntimeData GetStatusRuntimeData(
             StatusEffectKind kind,
             StatusEffectDefinition[] definitions,
@@ -693,7 +678,6 @@ namespace Pakuri.Data
             throw new KeyNotFoundException($"Status definition '{kind}' is not registered.");
         }
 
-        /// 전달된 런타임 입력값을 사용해 RewardChoices를 구성한다.
         private MonsterDefinition.RewardChoiceDefinition[] BuildRewardChoices(SourceModel model, string monsterId)
         {
             var rewards = FilterAndSort(
@@ -716,7 +700,6 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        /// 전달된 런타임 입력값을 사용해 ActiveSkills를 구성한다.
         private SkillDefinition[] BuildActiveSkills(
             SourceModel model,
             string monsterId,
@@ -803,7 +786,6 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        /// 전달된 런타임 입력값을 사용해 SkillNodeParamValueLookup를 구성한다.
         private Dictionary<string, string> BuildSkillNodeParamValueLookup(SourceModel model, string nodeId)
         {
             var parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -819,7 +801,6 @@ namespace Pakuri.Data
             return parameters;
         }
 
-        /// 전달된 런타임 입력값을 사용해 SkillNodeStringParam를 반환한다.
         private string GetSkillNodeStringParam(Dictionary<string, string> parameters, string key)
         {
             if (parameters.TryGetValue(key, out var value))
@@ -830,7 +811,6 @@ namespace Pakuri.Data
             return string.Empty;
         }
 
-        /// 전달된 런타임 입력값을 사용해 SkillNodeFloatParam를 반환한다.
         private float GetSkillNodeFloatParam(Dictionary<string, string> parameters, string key, float defaultValue)
         {
             if (!parameters.TryGetValue(key, out var value) || string.IsNullOrWhiteSpace(value))
@@ -841,7 +821,6 @@ namespace Pakuri.Data
             return float.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
         }
 
-        /// 전달된 런타임 입력값을 사용해 SkillNodeIntParam를 반환한다.
         private int GetSkillNodeIntParam(Dictionary<string, string> parameters, string key, int defaultValue)
         {
             if (!parameters.TryGetValue(key, out var value) || string.IsNullOrWhiteSpace(value))
@@ -852,7 +831,6 @@ namespace Pakuri.Data
             return int.Parse(value, NumberStyles.Integer, CultureInfo.InvariantCulture);
         }
 
-        /// 전달된 런타임 입력값을 사용해 SkillTriggers를 구성한다.
         private SkillReaction[] BuildSkillReactions(
             SourceModel model,
             string monsterId,
@@ -1140,7 +1118,6 @@ namespace Pakuri.Data
             return result;
         }
 
-        /// 전달된 런타임 입력값을 사용해 PassiveSkills를 구성한다.
         private PassiveSkillDefinition[] BuildPassiveSkills(
             SourceModel model,
             MonsterDefinition monster)
@@ -1177,7 +1154,6 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        /// 전달된 런타임 입력값을 사용해 SkillChoices를 구성한다.
         private SkillChoiceBuildData[] BuildSkillChoices(SourceModel model, string skillId, SkillChoiceGroup choiceGroup)
         {
             var choices = FilterAndSort(
@@ -1222,7 +1198,6 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        /// 전달된 런타임 입력값을 사용해 ChoiceNodeParam를 반환한다.
         private string GetChoiceNodeParam(
             SkillNodeBuildData[] nodes,
             string handlerId,
@@ -1263,7 +1238,6 @@ namespace Pakuri.Data
             return string.Empty;
         }
 
-        /// 전달된 런타임 입력값을 사용해 SkillNodes를 구성한다.
         private SkillNodeBuildData[] BuildSkillNodes(
             SourceModel model,
             SkillNodeOwnerKind ownerKind,
@@ -1328,7 +1302,6 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        /// 전달된 런타임 입력값을 사용해 SkillNodeParams를 구성한다.
         private SkillNodeParamBuildData[] BuildSkillNodeParams(SourceModel model, string nodeId)
         {
             var nodeParams = FilterAndSort(
@@ -1355,7 +1328,6 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        /// 전달된 런타임 입력값을 사용해 FilterAndSort 결과값을 생성해 반환한다.
         private List<T> FilterAndSort<T>(
             IEnumerable<T> source,
             Predicate<T> predicate,
@@ -1374,7 +1346,6 @@ namespace Pakuri.Data
             return filtered;
         }
 
-        /// 전달된 런타임 입력값을 사용해 StatusPayload를 적용한다.
         private void ApplyStatusPayload(ActiveSkillBuildData definition, StatusPayloadRow payload)
         {
             if (definition == null || payload == null)
@@ -1405,7 +1376,6 @@ namespace Pakuri.Data
             definition.StatusElementDamageTakenBonus = payload.StatusElementDamageTakenBonus;
         }
 
-        /// 전달된 entries 값을 사용해 CatalogEntries를 정렬한다.
         private IEnumerable<CatalogEntryRow> SortCatalogEntries(Dictionary<string, CatalogEntryRow> entries)
         {
             var list = new List<CatalogEntryRow>(entries.Values);
@@ -1413,7 +1383,6 @@ namespace Pakuri.Data
             return list;
         }
 
-        /// 전달된 assetPath 값을 사용해 Sprite를 불러온다.
         private Sprite LoadSprite(string assetPath)
         {
             if (string.IsNullOrWhiteSpace(assetPath))
@@ -1429,7 +1398,6 @@ namespace Pakuri.Data
             throw new CsvFatalException($"Runtime sprite asset is missing: '{assetPath}'.");
         }
 
-        /// 전달된 row 값을 사용해 RuntimeVisual를 구성한다.
         private RuntimeSkillVisualSpec BuildRuntimeVisual(SkillRow row)
         {
             if (row == null)
@@ -1450,7 +1418,6 @@ namespace Pakuri.Data
                 row.RuntimeVisualAnchor);
         }
 
-        /// 전달된 row 값을 사용해 ImpactRuntimeVisual를 구성한다.
         private RuntimeSkillVisualSpec BuildImpactRuntimeVisual(SkillRow row)
         {
             if (row == null)
@@ -1470,7 +1437,6 @@ namespace Pakuri.Data
                 0f);
         }
 
-        /// 전달된 런타임 입력값을 사용해 RuntimeVisual를 구성한다.
         private RuntimeSkillVisualSpec BuildRuntimeVisual(
             string spritePath,
             string animatorControllerPath,
@@ -1525,7 +1491,6 @@ namespace Pakuri.Data
             };
         }
 
-        /// 전달된 assetPath 값을 사용해 AnimatorController를 불러온다.
         private RuntimeAnimatorController LoadAnimatorController(string assetPath)
         {
             if (string.IsNullOrWhiteSpace(assetPath))
@@ -1541,7 +1506,6 @@ namespace Pakuri.Data
             throw new CsvFatalException($"Runtime animator controller asset is missing: '{assetPath}'.");
         }
 
-        /// 전달된 assetPath 값을 사용해 Prefab를 불러온다.
         private GameObject LoadPrefab(string assetPath)
         {
             if (string.IsNullOrWhiteSpace(assetPath))

@@ -13,7 +13,6 @@ using UnityEngine;
 namespace Pakuri.Data
 {
 
-/// ActiveSkillBuildData가 나타내는 런타임 값을 보관한다.
 internal sealed class ActiveSkillBuildData
 {
 	public string SkillId;
@@ -114,7 +113,6 @@ internal sealed class ActiveSkillBuildData
 	public SkillNodeBuildData[] Nodes = Array.Empty<SkillNodeBuildData>();
 }
 
-/// PassiveSkillBuildData가 나타내는 런타임 값을 보관한다.
 internal sealed class PassiveSkillBuildData
 {
 	public string PassiveId;
@@ -131,7 +129,6 @@ internal sealed class PassiveSkillBuildData
 	public SkillNodeBuildData[] Nodes = Array.Empty<SkillNodeBuildData>();
 }
 
-/// SkillChoiceBuildData가 나타내는 런타임 값을 보관한다.
 internal sealed class SkillChoiceBuildData
 {
 	public string ChoiceId;
@@ -150,7 +147,6 @@ internal sealed class SkillChoiceBuildData
 internal sealed partial class GameDataCatalogBuilder
 {
 
-	/// 전달된 런타임 입력값을 사용해 ActiveDefinition를 구성한다.
 	private static SkillDefinition BuildActiveDefinition(
 		string ownerId,
 		ActiveSkillBuildData source,
@@ -162,7 +158,6 @@ internal sealed partial class GameDataCatalogBuilder
 		return skillRuntimeData;
 	}
 
-	/// 전달된 런타임 입력값을 사용해 PassiveDefinition를 구성한다.
 	private static PassiveSkillDefinition BuildPassiveDefinition(MonsterDefinition monster, PassiveSkillBuildData source)
 	{
 		PassiveSkillDefinition passiveSkillExecutionDefinition = CreateRuntimeData<PassiveSkillDefinition>();
@@ -189,7 +184,6 @@ internal sealed partial class GameDataCatalogBuilder
 		return passiveSkillExecutionDefinition;
 	}
 
-	/// 전달된 source 값을 사용해 Choices를 구성한다.
 	private static SkillChoice[] BuildChoices(SkillChoiceBuildData[] source)
 	{
 		var choices = new SkillChoice[source.Length];
@@ -213,7 +207,6 @@ internal sealed partial class GameDataCatalogBuilder
 		return choices;
 	}
 
-	/// 전달된 source 값을 사용해 ConcreteActiveSkill를 생성한다.
 	private static SkillDefinition CreateConcreteActiveSkill(ActiveSkillBuildData source)
 	{
 		if (MatchesProfile(source, "DamageArea"))
@@ -265,7 +258,6 @@ internal sealed partial class GameDataCatalogBuilder
 		return new T();
 	}
 
-	/// 전달된 런타임 입력값을 사용해 CommonFields를 대응시킨다.
 	private static void MapCommonFields(
 		SkillDefinition skill,
 		string monsterId,
@@ -320,7 +312,6 @@ internal sealed partial class GameDataCatalogBuilder
 		}
 	}
 
-	/// 전달된 런타임 입력값을 사용해 ActiveFields를 대응시킨다.
 	private static void MapActiveFields(
 		SkillDefinition skill,
 		MonsterDefinition monster,
@@ -371,9 +362,6 @@ internal sealed partial class GameDataCatalogBuilder
 		}
 		else if (skill is ZoneSkillDefinition zoneSkillExecutionDefinition)
 		{
-			bool hitAllTargets;
-			int hitTargetCount;
-			bool usesHitTargetCount = TryResolveHitTargetCount(source.HitTargetCount, out hitAllTargets, out hitTargetCount);
 			zoneSkillExecutionDefinition.Area.Radius = source.Radius;
 			zoneSkillExecutionDefinition.Area.Duration = source.CooldownSeconds;
 			if (source.ActiveDurationSeconds > 0f)
@@ -381,14 +369,6 @@ internal sealed partial class GameDataCatalogBuilder
 				zoneSkillExecutionDefinition.Area.Duration = source.ActiveDurationSeconds;
 			}
 			zoneSkillExecutionDefinition.Area.TickInterval = source.ShotIntervalSeconds;
-			zoneSkillExecutionDefinition.UsesHitTargetCount = usesHitTargetCount;
-			zoneSkillExecutionDefinition.HitAllTargets = hitAllTargets;
-			zoneSkillExecutionDefinition.HitTargetCount = hitTargetCount;
-			if (hitAllTargets)
-			{
-				zoneSkillExecutionDefinition.HitTargetCount = int.MaxValue;
-			}
-			zoneSkillExecutionDefinition.Area.CoverAll = hitAllTargets;
 			MapDamage(zoneSkillExecutionDefinition.DamagePerTick, source);
 			zoneSkillExecutionDefinition.OnTickStatus = CreateStatusApplication(source, statusDefinitions);
 		}
@@ -511,7 +491,6 @@ internal sealed partial class GameDataCatalogBuilder
 		}
 	}
 
-	/// 전달된 source에 맞는 버프 실행 종류를 반환한다.
 	private static BuffEffectKind MapBuffEffectKind(ActiveSkillBuildData source)
 	{
 		if (MatchesProfile(source, "ChargeDamageStatus"))
@@ -530,7 +509,6 @@ internal sealed partial class GameDataCatalogBuilder
 		return BuffEffectKind.Status;
 	}
 
-	/// 전달된 런타임 입력값을 사용해 Damage를 대응시킨다.
 	private static void MapDamage(SkillDamageSpec damage, ActiveSkillBuildData source)
 	{
 		damage.SkillId = source.SkillId;
@@ -541,7 +519,6 @@ internal sealed partial class GameDataCatalogBuilder
 		damage.CriticalAllowed = source.CriticalAllowed;
 	}
 
-	/// 전달된 targetScope 값을 사용해 EnemyTargetSide를 대응시킨다.
 	private static SkillTargetSide MapEnemyTargetSide(string targetScope)
 	{
 		if (string.IsNullOrWhiteSpace(targetScope))
@@ -559,13 +536,11 @@ internal sealed partial class GameDataCatalogBuilder
 		return SkillTargetSide.Enemy;
 	}
 
-	/// 전달된 런타임 입력값을 사용해 MatchesProfile 조건을 평가하고 결과를 반환한다.
 	private static bool MatchesProfile(ActiveSkillBuildData source, string profile)
 	{
 		return string.Equals(source.ExecutionProfile, profile, StringComparison.OrdinalIgnoreCase);
 	}
 
-	/// 전달된 런타임 입력값을 사용해 DominantCoefficient를 반환한다.
 	private static float GetDominantCoefficient(ActiveSkillBuildData source, out StatSource statSource)
 	{
 		if (Mathf.Abs(source.SpellPowerCoefficient) >= Mathf.Abs(source.AttackPowerCoefficient))
@@ -577,7 +552,6 @@ internal sealed partial class GameDataCatalogBuilder
 		return source.AttackPowerCoefficient;
 	}
 
-	/// 전달된 런타임 입력값을 사용해 StatusApplication를 생성한다.
 	private static StatusApplicationSpec CreateStatusApplication(
 		ActiveSkillBuildData source,
 		StatusEffectDefinition[] statusDefinitions)
@@ -594,7 +568,6 @@ internal sealed partial class GameDataCatalogBuilder
 		return statusApplicationSpec;
 	}
 
-	/// 전달된 런타임 입력값을 사용해 StatusRuntimeData를 생성한다.
 	private static StatusRuntimeData CreateStatusRuntimeData(
 		ActiveSkillBuildData source,
 		StatusEffectDefinition[] statusDefinitions)
@@ -690,7 +663,6 @@ internal sealed partial class GameDataCatalogBuilder
 		return runtimeStatusData;
 	}
 
-	/// 전달된 런타임 입력값을 사용해 ResolveHitTargetCount 작업을 시도하고 성공 여부를 반환한다.
 	private static bool TryResolveHitTargetCount(string rawValue, out bool hitAllTargets, out int hitTargetCount)
 	{
 		hitAllTargets = false;
@@ -710,7 +682,6 @@ internal sealed partial class GameDataCatalogBuilder
 		return true;
 	}
 
-	/// 전달된 source 값을 사용해 BuffTarget를 대응시킨다.
 	private static SkillTargetSide MapBuffTarget(ActiveSkillBuildData source)
 	{
 		StatusValueParser.TryParseTargetScope(source.StatusTargetScope, out var scope);
@@ -722,7 +693,6 @@ internal sealed partial class GameDataCatalogBuilder
 		return SkillTargetSide.AllAllies;
 	}
 
-	/// 전달된 source 값을 사용해 StatusDuration를 결정한다.
 	private static float ResolveStatusDuration(ActiveSkillBuildData source)
 	{
 		if (source.StatusDurationSeconds > 0f)
@@ -736,7 +706,6 @@ internal sealed partial class GameDataCatalogBuilder
 		return source.CooldownSeconds;
 	}
 
-	/// 전달된 런타임 입력값을 사용해 SingleBaseNodes를 적용한다.
 	private static void ApplySingleBaseNodes(SingleSkillDefinition single, SkillNodeBuildData[] nodes, DamageAttribute attribute)
 	{
 		foreach (SkillNodeBuildData skillNodeDefinition in nodes)
@@ -767,7 +736,6 @@ internal sealed partial class GameDataCatalogBuilder
 		}
 	}
 
-	/// 전달된 runtimeKind 값을 사용해 Shape를 대응시킨다.
 	private static SkillTargetShape MapShape(SkillRuntimeKind runtimeKind)
 	{
 		switch (runtimeKind)

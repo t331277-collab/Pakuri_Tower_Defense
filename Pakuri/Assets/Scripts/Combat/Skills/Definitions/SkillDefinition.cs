@@ -89,7 +89,7 @@ namespace Pakuri.InGame
         Single,
         Line,
         Circle, 
-        Battlefield // 광역 공격
+        Battlefield // 전장 전체를 대상으로 하는 장판형 공격
     }
 
     /// 시전과 지속 효과가 진행될 시간 기준을 설계한다.
@@ -105,7 +105,7 @@ namespace Pakuri.InGame
     [Serializable]
     public class SkillTargetingSpec
     {
-        public SkillTargetSide TargetSide = SkillTargetSide.Enemy; // 아군, 적 파악
+        public SkillTargetSide TargetSide = SkillTargetSide.Enemy; // 효과를 적용할 진영
         public SkillTargetSelection Selection = SkillTargetSelection.Nearest;
         public string SelectionStatusId;
         public StatusEffectKind SelectionStatusKind;

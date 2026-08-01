@@ -47,7 +47,6 @@ namespace Pakuri.Data
         public DamageAttribute ResistReductionElement;
     }
 
-    /// StatusEffectClassification에서 지원하는 값의 종류를 정의한다.
     public enum StatusEffectClassification
     {
         Buff,
@@ -94,7 +93,6 @@ namespace Pakuri.Data
         public bool Permanent => IsPermanent;
     }
 
-    /// StatusEffectKind에서 지원하는 값의 종류를 정의한다.
     public enum StatusEffectKind
     {
         None,
@@ -119,7 +117,6 @@ namespace Pakuri.Data
         SeinDSuperheatedPresence
     }
 
-    /// StatusConditionRequirement가 소유하는 데이터와 동작을 캡슐화한다.
     [Serializable]
     public class StatusConditionRequirement
     {
@@ -127,14 +124,12 @@ namespace Pakuri.Data
         public int MinStacks;
     }
 
-    /// StatusConditionGroup가 소유하는 데이터와 동작을 캡슐화한다.
     [Serializable]
     public class StatusConditionGroup
     {
         public StatusConditionRequirement[] Requirements = Array.Empty<StatusConditionRequirement>();
     }
 
-    /// SkillRuntimeKindCondition가 소유하는 데이터와 동작을 캡슐화한다.
     [Serializable]
     public class SkillRuntimeKindCondition
     {
@@ -142,7 +137,6 @@ namespace Pakuri.Data
         public SkillRuntimeKind Kind;
     }
 
-    /// StatusRuntimeData가 나타내는 런타임 값을 보관한다.
     public class StatusRuntimeData
     {
         public StatusEffectDefinition Definition;
@@ -213,7 +207,7 @@ namespace Pakuri.Data
         public DamageAttribute OutgoingAdditionalDamageTriggerAttribute;
         public DamageAttribute OutgoingAdditionalDamageAttribute;
 
-        /// Clone 결과값을 생성해 반환한다.
+        /// 상태 정의를 복사해 런타임 계산에 사용할 독립 인스턴스를 만든다.
         public StatusRuntimeData Clone()
         {
             var clone = (StatusRuntimeData)MemberwiseClone();

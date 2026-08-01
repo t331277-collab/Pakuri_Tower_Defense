@@ -12,9 +12,6 @@ namespace Pakuri.InGame
     {
         [Header("Area")]
         public AreaBlueprintSpec Area = new AreaBlueprintSpec();
-        public bool UsesHitTargetCount;
-        public bool HitAllTargets;
-        public int HitTargetCount = 1;
 
         [Header("Enemy Effect")]
         public SkillDamageSpec DamagePerTick = new SkillDamageSpec();
