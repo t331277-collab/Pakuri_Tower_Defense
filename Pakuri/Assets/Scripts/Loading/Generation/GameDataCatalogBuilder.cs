@@ -61,6 +61,7 @@ namespace Pakuri.Data
                     PakuriCsvSkillKind.Passive,
                     SkillSlot.F);
                 monster.MonsterIconImage = LoadSprite(sourceMonster.MonsterIconImagePath);
+                monster.Image = LoadSprite(sourceMonster.ImagePath);
                 monster.PowerStat = sourceMonster.PowerStat;
                 monster.BaseStats = new UnitCombatStats
                 {
@@ -159,6 +160,7 @@ namespace Pakuri.Data
                 var enemy = ScriptableObject.CreateInstance<EnemyDefinition>();
                 enemy.EnemyId = sourceEnemy.Id;
                 enemy.DisplayName = sourceEnemy.DisplayName;
+                enemy.Image = LoadSprite(sourceEnemy.ImagePath);
                 enemy.Attribute = sourceEnemy.Attribute;
                 enemy.Stats = new UnitCombatStats
                 {

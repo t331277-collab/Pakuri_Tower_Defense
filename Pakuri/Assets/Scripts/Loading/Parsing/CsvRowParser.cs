@@ -30,6 +30,7 @@ namespace Pakuri.Data
             public string ActiveSkillName;
             public string PassiveSkillName;
             public string MonsterIconImagePath;
+            public string ImagePath;
             public float MaxHealth;
             public float PowerStat;
             public float BaseAttackPower;
@@ -185,6 +186,7 @@ namespace Pakuri.Data
                 ActiveSkillName = ReadOptionalStringIfColumnExists(record, "active_skill_name"),
                 PassiveSkillName = ReadOptionalStringIfColumnExists(record, "passive_skill_name"),
                 MonsterIconImagePath = ReadOptionalStringIfColumnExists(record, "MonsterIconImage"),
+                ImagePath = ReadOptionalStringIfColumnExists(record, "Image"),
                 MaxHealth = record.ReadFloat("max_health"),
                 PowerStat = record.ReadFloat("power_stat"),
                 BaseAttackPower = record.ReadFloat("base_attack_power"),
@@ -244,7 +246,7 @@ namespace Pakuri.Data
                 IsDefaultLearned = ReadOptionalBool(record, "is_default_learned", slot == SkillSlot.A),
                 IsAvailableWithoutActiveRequirement = ReadOptionalBool(record, "is_available_without_active_requirement", slot == SkillSlot.F),
                 RequiredActiveSlot = ReadOptionalEnum(record, "required_active_slot", GetRequiredActiveSlot(slot)),
-                SkillIconPath = ReadOptionalStringIfColumnExists(record, "skill_icon_path"),
+                SkillIconPath = ReadSkillIconPath(record),
                 SkillEffectPrefabPath = ReadOptionalStringIfColumnExists(record, "skill_effect_prefab_path"),
                 RuntimeVisualSpritePath = ReadOptionalStringIfColumnExists(record, "runtime_visual_sprite_path"),
                 RuntimeVisualAnimatorControllerPath = ReadOptionalStringIfColumnExists(record, "runtime_visual_animator_controller_path"),
@@ -417,6 +419,14 @@ namespace Pakuri.Data
             return record.HasColumn(columnName) ? record.ReadString(columnName) : string.Empty;
         }
 
+        internal static string ReadSkillIconPath(CsvRecord record)
+        {
+            var path = ReadOptionalStringIfColumnExists(record, "SkillIconImage");
+            return string.IsNullOrWhiteSpace(path)
+                ? ReadOptionalStringIfColumnExists(record, "skill_icon_path")
+                : path;
+        }
+
         internal static bool ReadOptionalBoolIfColumnExists(CsvRecord record, string columnName)
         {
             return ReadOptionalBool(record, columnName, false);
@@ -480,6 +490,7 @@ namespace Pakuri.Data
             public string SkillSlotBId;
             public string PassiveId;
             public float NexusDamage;
+            public string ImagePath;
         }
 
         /// EnemyBaseSkillRow에 해당하는 CSV 한 행을 표현한다.
@@ -548,7 +559,8 @@ namespace Pakuri.Data
                 SkillSlotAId = record.ReadRequiredString("skill_slot_a_id"),
                 SkillSlotBId = record.ReadRequiredString("skill_slot_b_id"),
                 PassiveId = record.ReadRequiredString("passive_id"),
-                NexusDamage = record.ReadFloat("nexus_damage")
+                NexusDamage = record.ReadFloat("nexus_damage"),
+                ImagePath = ReadOptionalStringIfColumnExists(record, "Image")
             };
         }
 

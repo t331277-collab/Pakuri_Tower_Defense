@@ -4,6 +4,90 @@
 
 The pre-cleanup file, including completed and superseded data tasks, is preserved at `boards/ARCHIVE/ACTIVE_BOARD_SNAPSHOT_2026-07-28/DATA/DATA_BLACKBOARD.md`.
 
+## Task: 2026-08-03 Monster Skill Icon Asset Copy
+
+### Task title
+
+Create A-E skill icon folders for the five monsters and copy each available `runtime_visual_sprite_path` PNG as `<slot>_Icon.png`.
+
+### Goals
+
+- Create `Pakuri/Assets/Image/Monster/Icon/Skill/<monster>/<A-E>/` for `ariel`, `eve`, `rin`, `sein`, and `vega`.
+- Copy the 23 available A-E source PNGs without changing CSV authoring data.
+- Keep `rin/D` and `rin/E` folders present while their CSV sprite paths remain empty.
+
+### Constraints
+
+- Copy/rename PNG files only; do not edit skill CSVs or add runtime code.
+- Use the exact `runtime_visual_sprite_path` values from `Pakuri/Assets/CSVdata/authoring/monster/skills/base`.
+- Do not overwrite an existing destination with different content.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+23 of 25 requested icons copied and SHA-256 verified. The two Rin source paths are unavailable because `rin-d` and `rin-e` have empty `runtime_visual_sprite_path` fields.
+
+### Next Actions
+
+- Obtain the intended source PNG paths for `rin-d` and `rin-e`, then copy them to `rin/D/D_Icon.png` and `rin/E/E_Icon.png`.
+- Let Unity generate/import child-folder and PNG `.meta` files if they are not created automatically by the editor.
+
+### Evidence
+
+- UTF-8 `Import-Csv` read found 25 A-E rows across six base skill CSVs and five monster IDs: `ariel`, `eve`, `rin`, `sein`, `vega`.
+- Validation found 25 slot folders, 23 PNGs and 23 source/destination SHA-256 matches.
+- `git status --short -- Pakuri/Assets/CSVdata/authoring/monster/skills/base` returned `NONE`.
+
+### History
+
+- 2026-08-03: Code Builder created the five-monster/A-E folder structure and copied 23 validated PNGs; no CSV files were changed.
+
+## Task: 2026-08-03 Monster and Skill Icon CSV References
+
+### Task title
+
+Populate `MonsterIconImage` and add `SkillIconImage` to the monster skill authoring CSVs so generated runtime data resolves the icon sprites.
+
+### Goals
+
+- Assign all five `MonsterIconImage` values from `Assets/Image/Monster/Icon/Monster`.
+- Add `SkillIconImage` plus its `asset_path` type row to all six monster base skill CSVs.
+- Populate A-E skill rows from the existing `Icon/Skill` PNGs and include the generated paths in the runtime catalog.
+
+### Constraints
+
+- Preserve the existing CSV row values and use only verified project asset paths.
+- Keep F-J passive `SkillIconImage` cells empty because no F-J icon folders/assets exist in the inspected workspace.
+- Reuse the existing `SkillRow.SkillIconPath`, `GameDataCatalogBuilder.LoadSprite`, `SkillDefinition.Icon`, and asset collector flow; do not add duplicate runtime icon fields.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Complete. Monster and active-skill icon paths are authored, parsed and generated into `CsvRuntimeCatalog.asset`.
+
+### Next Actions
+
+- If passive F-J icons are required later, create those assets first, then populate their currently empty `SkillIconImage` cells.
+
+### Evidence
+
+- `monsters.csv` now maps `ariel`, `eve`, `rin`, `sein`, and `vega` to five existing `Monster/*_Icon.png` files.
+- Six base skill CSV headers now contain `SkillIconImage`; all 25 A-E rows contain existing icon paths. Passive F-J rows remain empty by design.
+- `CsvRowParser.ParseSkillRow` now reads `SkillIconImage` and falls back to legacy `skill_icon_path`; existing Generation already loads the field into `SkillDefinition.Icon`.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and 2 pre-existing assembly-reference warnings.
+- Unity menu `Pakuri/Sync CSV Runtime Catalog Assets` completed; `CsvRuntimeCatalog.asset` contains five monster icon paths and 25 active skill icon paths. Unity console reported a runtime catalog with 5 monsters, 8 stage-one enemies and 8 stage-two enemies.
+- All 25 target PNG `.meta` files were verified with `textureType: 8` (Sprite).
+
+### History
+
+- 2026-08-03: Code Builder added the CSV field, parser compatibility, generated runtime catalog references, and ran compile/path verification without adding a new Definition type.
+
 ## Task: 2026-07-31 Resolved Skill Outcome Materialization
 
 ### Task title
@@ -677,3 +761,47 @@ Design pending implementation. The current completed baseline remains effect 57,
 
 - 2026-07-31: User approved normal-cast-path reuse for conditional skills.
 - 2026-07-31: Designer selected Generation-resolved Definition references to avoid runtime payload interpretation and runtime catalog lookup, while retaining typed non-spatial command exceptions.
+
+## Task: 2026-08-03 Monster and Enemy Image CSV Runtime Wiring
+
+### Task title
+
+Load distinct monster Standing and enemy display Sprites from CSV Image paths.
+
+### Goals
+
+- Keep `MonsterIconImage` for monster icons.
+- Add `Image` to `monsters.csv` for five Standing Sprites.
+- Add `Image` to `enemies.csv` for all 16 current enemy Sprites.
+- Parse, validate, generate and serialize both Image path sets through the existing runtime catalog.
+
+### Constraints
+
+- Use only inspected asset paths and prefab Sprite GUID mappings.
+- Preserve the existing CSV-to-`CsvRuntimeCatalog` pipeline.
+- Do not remove `MonsterIconImage` or add a duplicate icon field.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented. CSV asset validation, Unity catalog sync, scene validation and solution build passed; Unity EditMode suite has two unrelated existing Trigger test failures.
+
+### Next Actions
+
+- User verifies Standing images in `PrisonPanel` and `MenifestedSuccessPopUp`, and enemy images in `PrisonPanel/Prisonal/Image` during Play Mode.
+
+### Evidence
+
+- `monsters.csv` contains five `Image` paths under `Assets/Image/Monster/*/Standing` and preserves `MonsterIconImage`.
+- `enemies.csv` contains 16 `Image` paths matched to current Stage1/Stage2 prefab `m_Sprite` GUIDs and `.meta` files.
+- `CsvRowParser`, `MonsterDefinition`, `EnemyDefinition`, `GameDataCatalogBuilder` and `CsvAssetReferenceCollector` now carry the new paths.
+- Static verification reported `monster_rows=5`, `monster_images=5`, `bad_monster=0`, `enemy_rows=16`, `enemy_images=16`, `bad_enemy=0`.
+- Unity sync completed and catalog load reported 5 monsters, 8 stage-one enemies and 8 stage-two enemies.
+- `dotnet build Pakuri/Pakuri.sln --no-restore`: 0 errors, 2 existing assembly-reference warnings.
+
+### History
+
+- 2026-08-03: Code Builder added distinct monster/enemy Image CSV fields, runtime wiring, UI consumers and removed old serialized monster portrait/Karin Sprite references.

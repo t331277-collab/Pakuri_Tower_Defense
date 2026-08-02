@@ -17,6 +17,7 @@ namespace Pakuri.Data
 
         public string EnemyId;
         public string DisplayName;
+        public Sprite Image;
         public DamageAttribute Attribute;
         public UnitCombatStats Stats = new UnitCombatStats
         {

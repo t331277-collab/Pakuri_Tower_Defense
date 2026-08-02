@@ -134,3 +134,125 @@ Implementation and available non-Play-Mode verification complete.
 
 - 2026-07-29: Designer and user agreed that `UnitSkills` owns learned skill and Choice state while `RunSession` owns run rules and reward transactions.
 - 2026-07-29: Code Builder removed duplicate run collections and converted spawn, restoration, Offering UI, and debug paths to the shared instance.
+
+## Task: 2026-08-03 Offering Skill Popup Text
+
+### Task title
+
+Update NewRunScene Offering popup text by learned-skill category.
+
+### Goals
+
+- Preserve `RunSession` Offering selection and learned-skill ownership.
+- Display `신규 획득!` for new A~E active skills.
+- Display `패시브 스킬` for new F~J passive skills.
+- Display `마스터 스킬` for master choices.
+
+### Constraints
+
+- Keep the existing `OpenOfferingPanel → BuildOfferingChoices → BindChoiceButton` flow.
+- Do not modify `RunSession`, `UnitSkills`, CSV data, or scene hierarchy.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally compiled.
+
+### Next Actions
+
+- User verifies the popup text after opening each Offering choice category in Play Mode.
+
+### Evidence
+
+- `InGameUIManager` assigns category-specific `OfferingKind` values before shared button binding.
+- `RunSession` remains the existing source for learnability and master-choice eligibility.
+- Runtime and Editor project builds completed with zero errors and the existing two assembly-reference warnings.
+
+### History
+
+- 2026-08-03: Code Builder added category-specific `NewSkillPopUText` updates through the shared Offering UI path.
+
+## Task: 2026-08-03 NewRunScene CSV Image Binding
+
+### Task title
+
+Remove obsolete scene Sprite ownership for PrisonPanel and use runtime catalog Images.
+
+### Goals
+
+- Remove five serialized monster portrait fields from `InGameUIManager` and `NewRunScene`.
+- Clear the direct Karin Sprite from `PrisonPanel/Prisonal/Image`.
+- Keep the scene hierarchy and UI object paths unchanged.
+
+### Constraints
+
+- Do not change `RunSession`, `UnitSkills`, Offering flow or scene hierarchy.
+- Keep Play Mode verification user-owned.
+- Preserve unrelated existing scene changes.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and scene-validated.
+
+### Next Actions
+
+- User verifies prisoner selection and monster party image refresh in `NewRunScene` Play Mode.
+
+### Evidence
+
+- `NewRunScene.unity` no longer serializes `arielPrisonPortrait`, `evePrisonPortrait`, `rinPrisonPortrait`, `seinPrisonPortrait` or `vegaPrisonPortrait`.
+- The direct `Karin.png` Sprite on `PrisonPanel/Prisonal/Image` was cleared to `fileID: 0`.
+- Unity scene validation reported 0 issues, 0 missing scripts and 0 broken prefabs.
+
+### History
+
+- 2026-08-03: Code Builder removed obsolete scene Sprite references; UI now assigns catalog-backed Images at refresh time.
+
+## Task: 2026-08-03 Run UI Inspector Reference Wiring
+
+### Task title
+
+Wire NewRunScene reward, Offering, and Menifest UI through serialized Inspector references.
+
+### Goals
+
+- Preserve the existing Offering and manifest flow while removing runtime scene-name lookup from the extracted UI modules.
+- Keep Choice1~3 popup activation/text/color behavior and Prison party slot behavior unchanged.
+- Store all current NewRunScene module references on `Canvas/InGameUIManager`.
+
+### Constraints
+
+- Preserve RunSession ownership, scene hierarchy, and user-facing flow.
+- Do not change CSV or runtime skill/manifest rules.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and scene-validated.
+
+### Next Actions
+
+- User verifies Offering selection, master/passive popup labels, manifest success/failure, and next-day flow in Play Mode.
+
+### Evidence
+
+- `OfferingUI`, `MenifestUI`, `PrisonPanelUI`, `RewardPanelUI`, and `InGameInfoUI` constructors now consume typed serializable reference groups.
+- `NewRunScene` Canvas inspection reports assigned Offering choice buttons/popups/texts, Menifest controls/images, Prison slots, reward controls, and resource labels.
+- Scene validation reported 0 issues, 0 missing scripts, and 0 broken prefabs; Unity Console contained 0 error/warning entries after refresh.
+- Runtime and Editor project build completed with 0 errors and the existing 2 assembly-reference warnings.
+
+### History
+
+- 2026-08-03: Code Builder saved the NewRunScene Inspector reference graph and removed the obsolete scene resolver used by the former UI modules.

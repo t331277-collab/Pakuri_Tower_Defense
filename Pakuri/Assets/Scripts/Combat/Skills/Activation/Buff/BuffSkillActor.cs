@@ -55,7 +55,7 @@ namespace Pakuri.InGame
             manager.RemoveEffect(gameObject, persistentStatus);
         }
 
-        /// 기존 효과 오브젝트가 수명 관리를 맡을 수 있게 준비한다.
+        /// BuffSkillActor 컴포넌트 부착
         public static BuffSkillActor Attach(GameObject instance)
         {
             var actor = instance.GetComponent<BuffSkillActor>();

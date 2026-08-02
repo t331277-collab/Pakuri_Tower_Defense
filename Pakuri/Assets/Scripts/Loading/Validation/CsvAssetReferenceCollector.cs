@@ -153,6 +153,12 @@ namespace Pakuri.Data
             foreach (var monster in model.Monsters.Values)
             {
                 assets.AddSprite(monster.MonsterIconImagePath, $"Monster '{monster.Id}' MonsterIconImage");
+                assets.AddSprite(monster.ImagePath, $"Monster '{monster.Id}' Image");
+            }
+
+            foreach (var enemy in model.Enemies.Values)
+            {
+                assets.AddSprite(enemy.ImagePath, $"Enemy '{enemy.Id}' Image");
             }
 
             return assets;

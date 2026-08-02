@@ -22,6 +22,8 @@ namespace Pakuri.InGame
 
         private float baseFixedDeltaTime;
         private int timeScaleIndex;
+        private ColorBlock autoButtonDefaultColors;
+        private bool hasAutoButtonDefaultColors;
 
         /// Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.
         private void Awake()
@@ -29,6 +31,7 @@ namespace Pakuri.InGame
             ResolveReferences();
             baseFixedDeltaTime = Time.fixedDeltaTime / Mathf.Max(Time.timeScale, 0.0001f);
             ApplyTimeScale(0);
+            RefreshAutoButtonVisual();
         }
 
         /// Unity가 컴포넌트를 활성화할 때 구독과 활성 상태를 복원한다.
@@ -47,6 +50,8 @@ namespace Pakuri.InGame
                 timeButton.onClick.RemoveListener(CycleTimeScale);
                 timeButton.onClick.AddListener(CycleTimeScale);
             }
+
+            RefreshAutoButtonVisual();
         }
 
         /// Unity가 컴포넌트를 비활성화할 때 구독과 임시 상태를 중단한다.
@@ -86,6 +91,12 @@ namespace Pakuri.InGame
             if (autoButton == null && autoTransform != null)
             {
                 autoButton = autoTransform.GetComponent<Button>();
+            }
+
+            if (autoButton != null && !hasAutoButtonDefaultColors)
+            {
+                autoButtonDefaultColors = autoButton.colors;
+                hasAutoButtonDefaultColors = true;
             }
 
             if (timeButton == null && timeTransform != null)
@@ -137,7 +148,28 @@ namespace Pakuri.InGame
                 var combatManager = FindFirstObjectByType<InGameCombatManager>();
                 playerCombatControl.ToggleAutoSkillMode(
                     combatManager != null ? combatManager.Units : null);
+                RefreshAutoButtonVisual();
             }
+        }
+
+        private void RefreshAutoButtonVisual()
+        {
+            if (autoButton == null
+                || playerCombatControl == null
+                || !hasAutoButtonDefaultColors)
+            {
+                return;
+            }
+
+            var colors = autoButtonDefaultColors;
+            var stateColor = playerCombatControl.AutoSkillEnabled
+                ? autoButtonDefaultColors.selectedColor
+                : autoButtonDefaultColors.normalColor;
+            colors.normalColor = stateColor;
+            colors.highlightedColor = stateColor;
+            colors.pressedColor = stateColor;
+            colors.selectedColor = stateColor;
+            autoButton.colors = colors;
         }
     }
 }
