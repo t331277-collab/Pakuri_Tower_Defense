@@ -1,6 +1,5 @@
 /*
  * 역할: 전투 자원과 상태 변경의 중앙 처리.
- * 책임: 피해·회복·보호막·상태 효과·Trigger 전달·상태 갱신·패배·전투 초기화를 처리한다.
  */
 
 using System;
@@ -25,7 +24,8 @@ namespace Pakuri.InGame
             bool suppressOutgoingDamageTriggers,
             bool sourceHitWasExecute,
             string damageMeterSourceId,
-            float finalDamageBonus)
+            float finalDamageBonus,
+            bool isTrigger = false)
         {
             Source = source;
             CriticalAllowed = criticalAllowed;
@@ -36,32 +36,7 @@ namespace Pakuri.InGame
             SourceHitWasExecute = sourceHitWasExecute;
             DamageMeterSourceId = damageMeterSourceId;
             FinalDamageBonus = finalDamageBonus;
-            TriggerExecutionState = null;
-        }
-
-        internal AttackRule(
-            UnitCombatState source,
-            bool criticalAllowed,
-            float critChanceBonus,
-            float critDamageBonus,
-            string sourceSkillId,
-            bool suppressOutgoingDamageTriggers,
-            bool sourceHitWasExecute,
-            string damageMeterSourceId,
-            float finalDamageBonus,
-            SkillTrigger.TriggerExecutionState triggerExecutionState)
-            : this(
-                source,
-                criticalAllowed,
-                critChanceBonus,
-                critDamageBonus,
-                sourceSkillId,
-                suppressOutgoingDamageTriggers,
-                sourceHitWasExecute,
-                damageMeterSourceId,
-                finalDamageBonus)
-        {
-            TriggerExecutionState = triggerExecutionState;
+            IsTrigger = isTrigger;
         }
 
         public UnitCombatState Source { get; }
@@ -73,7 +48,7 @@ namespace Pakuri.InGame
         public bool SourceHitWasExecute { get; }
         public string DamageMeterSourceId { get; }
         public float FinalDamageBonus { get; }
-        internal SkillTrigger.TriggerExecutionState TriggerExecutionState { get; }
+        internal bool IsTrigger { get; }
     }
 
     public class InGameCombatManager : MonoBehaviour
@@ -108,7 +83,7 @@ namespace Pakuri.InGame
         public event Action<AttackRule, InGameResourceChangeResult> DamageApplied;
         public event Action<UnitCombatState> UnitDefeated;
 
-        /// Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.
+        /// 초기화
         private void Awake()
         {
             enemyActionController = new EnemyActionController(Units, skillExecution, this);
@@ -140,6 +115,8 @@ namespace Pakuri.InGame
             TickUnitStatuses(Time.deltaTime);
         }
 
+        /// 게임 시간 관리
+
         private void TickSkillStates(float deltaTime)
         {
             var entries = Units.Entries;
@@ -153,6 +130,8 @@ namespace Pakuri.InGame
             }
         }
 
+        /// 몬스터 전투 등록
+
         internal void NotifyPlayerUnitRegistered(UnitCombatState model)
         {
             if (PlayerCombatInputController.IsSelectedPlayerModel(model))
@@ -164,7 +143,7 @@ namespace Pakuri.InGame
             DispatchCombatStartOnce(model);
         }
 
-        /// 현재 학습한 passive 일반 효과를 공통 실행 경로로 다시 적용한다.
+        /// 현재 학습한 passive 목록을 갱신한다.
         internal void RefreshPassiveEffects(UnitCombatState model)
         {
             skillExecution.ExecutePassiveEffects(this, Units, model);
@@ -188,6 +167,7 @@ namespace Pakuri.InGame
             DispatchCombatStartOnce(model);
         }
 
+        /// 피해 계산과 자원 변경 후 화면 갱신, 후속 Trigger, 사망 정리를 처리한다.
         public InGameResourceChangeResult ApplyDamage(
             UnitCombatState target,
             float baseDamage,
@@ -200,76 +180,14 @@ namespace Pakuri.InGame
             bool suppressOutgoingDamageTriggers = false,
             bool sourceHitWasExecute = false,
             string damageMeterSourceId = null,
-            float finalDamageMultiplier = 1f)
+            float finalDamageMultiplier = 1f,
+            bool isTrigger = false)
         {
-            return ApplyDamageInternal(
-                target,
-                baseDamage,
-                attribute,
-                source,
-                criticalAllowed,
-                critChanceBonus,
-                critDamageBonus,
-                sourceSkillId,
-                suppressOutgoingDamageTriggers,
-                sourceHitWasExecute,
-                damageMeterSourceId,
-                finalDamageMultiplier,
-                null);
-        }
-
-        /// 사건 연쇄를 이어서 피해와 후속 사건을 함께 적용한다.
-        internal InGameResourceChangeResult ApplyDamageWithTriggerState(
-            UnitCombatState target,
-            float baseDamage,
-            DamageAttribute attribute,
-            UnitCombatState source,
-            bool criticalAllowed,
-            float critChanceBonus,
-            float critDamageBonus,
-            string sourceSkillId,
-            bool suppressOutgoingDamageTriggers,
-            bool sourceHitWasExecute,
-            string damageMeterSourceId,
-            float finalDamageMultiplier,
-            SkillTrigger.TriggerExecutionState triggerExecutionState)
-        {
-            return ApplyDamageInternal(
-                target,
-                baseDamage,
-                attribute,
-                source,
-                criticalAllowed,
-                critChanceBonus,
-                critDamageBonus,
-                sourceSkillId,
-                suppressOutgoingDamageTriggers,
-                sourceHitWasExecute,
-                damageMeterSourceId,
-                finalDamageMultiplier,
-                triggerExecutionState);
-        }
-
-        /// 피해 결과와 연결된 전투 사건을 하나의 흐름으로 마무리한다.
-        private InGameResourceChangeResult ApplyDamageInternal(
-            UnitCombatState target,
-            float baseDamage,
-            DamageAttribute attribute,
-            UnitCombatState source,
-            bool criticalAllowed,
-            float critChanceBonus,
-            float critDamageBonus,
-            string sourceSkillId,
-            bool suppressOutgoingDamageTriggers,
-            bool sourceHitWasExecute,
-            string damageMeterSourceId,
-            float finalDamageMultiplier,
-            SkillTrigger.TriggerExecutionState triggerExecutionState)
-        {
+            // 보호막·HP를 차감하고 피해 결과를 만든다.
             var depletedShields = new List<StatusRuntimeInstance>();
             var absorbedShields = new List<ShieldAbsorptionRecord>();
             var finalDamageBonus = Mathf.Max(0f, finalDamageMultiplier) - 1f;
-            var attackRule = new AttackRule(source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, suppressOutgoingDamageTriggers, sourceHitWasExecute, damageMeterSourceId, finalDamageBonus, triggerExecutionState);
+            var attackRule = new AttackRule(source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, suppressOutgoingDamageTriggers, sourceHitWasExecute, damageMeterSourceId, finalDamageBonus, isTrigger);
             var result = ApplyDamageToResources(target, baseDamage, attribute, attackRule, depletedShields, absorbedShields);
 
             if (!result.Changed)
@@ -277,6 +195,7 @@ namespace Pakuri.InGame
                 return result;
             }
 
+            // 보호막을 모두 없애면 이펙트 삭제.
             if (depletedShields.Count > 0)
             {
                 for (var i = 0; i < depletedShields.Count; i++)
@@ -285,27 +204,32 @@ namespace Pakuri.InGame
                 }
             }
 
+            // 피해 이벤트와 유닛 표시를 갱신한다.
             DamageApplied?.Invoke(attackRule, result);
             var damagedEntry = Units.Find(result.Target);
             damagedEntry.RefreshDisplay();
             damagedEntry.ShowDamage(result.AppliedDamage, result.IsDead);
-            SkillTrigger.ExecuteShieldAbsorbs(this, Units, target, source, absorbedShields, triggerExecutionState);
-            SkillTrigger.ExecuteExpiredStatuses(this, Units, target, depletedShields, triggerExecutionState);
-            DispatchOutgoingDamageTriggers(target, attribute, attackRule, result, baseDamage);
-            if (result.IsDead && attackRule.Source != null)
+            // 일반 피해만 보호막·상태·피해·처치 후속반응을 발행한다.
+            if (!attackRule.IsTrigger)
             {
-                SkillTrigger.ExecuteKill(
-                    this,
-                    Units,
-                    attackRule.Source,
-                    attackRule.SourceSkillId,
-                    target,
-                    attribute,
-                    result.AppliedDamage,
-                    attackRule.SourceHitWasExecute,
-                    attackRule.TriggerExecutionState);
+                SkillTrigger.ExecuteShieldAbsorbs(this, Units, target, source, absorbedShields);
+                SkillTrigger.ExecuteExpiredStatuses(this, Units, target, depletedShields);
+                DispatchOutgoingDamageTriggers(target, attribute, attackRule, result, baseDamage);
+                if (result.IsDead && attackRule.Source != null)
+                {
+                    SkillTrigger.ExecuteKill(
+                        this,
+                        Units,
+                        attackRule.Source,
+                        attackRule.SourceSkillId,
+                        target,
+                        attribute,
+                        result.AppliedDamage,
+                        attackRule.SourceHitWasExecute);
+                }
             }
 
+            // 사망한 유닛을 전투 Registry에서 정리한다.
             RemoveUnitIfDead(result);
             return result;
         }
@@ -601,8 +525,7 @@ namespace Pakuri.InGame
                 target,
                 attribute,
                 result.AppliedDamage,
-                attackRule.SourceHitWasExecute,
-                attackRule.TriggerExecutionState);
+                attackRule.SourceHitWasExecute);
 
             ApplyOutgoingAdditionalDamageStatuses(target, attribute, attackRule, sourceBaseDamage);
         }

@@ -35,6 +35,7 @@ namespace Pakuri.Data
         internal const string AuthoringEnemySkillBaseCsvAssetRoot = AuthoringEnemySkillCsvAssetRoot + "/base";
         internal const string AuthoringEnemySkillTriggerCsvAssetRoot = AuthoringEnemySkillCsvAssetRoot + "/triggers";
         internal const string AuthoringStatusCsvAssetRoot = AuthoringCsvAssetRoot + "/status";
+        internal const string StageFlowCsvAssetRoot = CsvDataAssetRoot + "/stage_flow";
         internal const string RuntimeResourcesFolderAssetPath = "Assets/Resources/Pakuri/CSVRuntime";
         internal const string RuntimeCatalogAssetPath = RuntimeResourcesFolderAssetPath + "/CsvRuntimeCatalog.asset";
         internal const string RuntimeCatalogResourcesPath = "Pakuri/CSVRuntime/CsvRuntimeCatalog";
@@ -260,6 +261,11 @@ namespace Pakuri.Data
             Require(sourceCatalog.Enemies != null, EnemiesFileName);
             Require(sourceCatalog.EnemySkillBaseFiles?.Length > 0, "enemy/skills/baseskills_*.csv");
             Require(sourceCatalog.EnemySkillTriggerFiles?.Length > 0, "enemy/skills/triggers*_skill_triger.csv");
+            Require(sourceCatalog.StageDay != null, StageFileNames.StageDay);
+            Require(sourceCatalog.Stage1Encounter != null, "stage_flow/Stage1/" + StageFileNames.StageEncounter);
+            Require(sourceCatalog.Stage1Reward != null, "stage_flow/Stage1/" + StageFileNames.StageReward);
+            Require(sourceCatalog.Stage2Encounter != null, "stage_flow/Stage2/" + StageFileNames.StageEncounter);
+            Require(sourceCatalog.Stage2Reward != null, "stage_flow/Stage2/" + StageFileNames.StageReward);
 
             if (missingAssets.Count > 0)
             {

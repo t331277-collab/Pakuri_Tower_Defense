@@ -1,4 +1,5 @@
 reward_rule_id,combat_type,stage,gold,dark_trace,prisoner_count_1_chance,prisoner_count_2_chance,prisoner_count_3_chance,manifest_success_chance,elite_bonus_prisoners,artifact_choice_count,guaranteed_prisoner_source,notes
+string,string,int,int,int,float,float,float,float,int,int,string,string
 reward-stage2-normal,Normal,2,10,10,0.05,0.80,0.15,0.70,0,0,EncounterBoss,Stage 2 normal combat reward; copied from Stage 1 reward pattern until Stage 2 balance is authored.
 reward-stage2-midboss,Day5Midboss,2,30,20,0.05,0.80,0.15,0.70,0,3,GuaranteedBoss,Stage 2 midboss reward; copied from Stage 1 reward pattern until Stage 2 balance is authored.
 reward-stage2-day10-midboss,Day10Midboss,2,30,20,0.05,0.80,0.15,0.70,0,3,GuaranteedBoss,Stage 2 day 10 midboss reward; copied from Stage 1 reward pattern until Stage 2 balance is authored.

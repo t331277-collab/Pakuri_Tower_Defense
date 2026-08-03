@@ -73,9 +73,7 @@ namespace Pakuri.InGame
             EventDamage = eventDamage;
             HitCount = Mathf.Max(0, hitCount);
             ExecutionData = executionData;
-            TriggerExecutionState = executionData != null
-                ? executionData.TriggerExecutionState
-                : null;
+            IsTrigger = executionData != null && executionData.IsTrigger;
             CopyExecutionValues(executionContext);
         }
 
@@ -101,7 +99,7 @@ namespace Pakuri.InGame
 
         public SkillExecutionState ExecutionData { get; }
 
-        internal SkillTrigger.TriggerExecutionState TriggerExecutionState { get; set; }
+        internal bool IsTrigger { get; set; }
 
         public bool HasManualAimDirection { get; private set; }
 
@@ -141,7 +139,7 @@ namespace Pakuri.InGame
             LockToEventTarget = executionContext.LockToEventTarget;
             PublishSkillLifecycleEvents = executionContext.PublishSkillLifecycleEvents;
             ApplyDamageMultiplierToShield = executionContext.ApplyDamageMultiplierToShield;
-            TriggerExecutionState = executionContext.TriggerExecutionState;
+            IsTrigger = executionContext.IsTrigger;
         }
     }
 }

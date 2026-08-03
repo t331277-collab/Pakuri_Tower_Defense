@@ -19,7 +19,6 @@ namespace Pakuri.InGame
 
         [SerializeField] private Transform monsterPanelRoot;
         [SerializeField] private MonsterPanelSlotView[] monsterSlots = new MonsterPanelSlotView[MaxPartySlots];
-        [SerializeField] private StageManager stageManager;
         [SerializeField] private UnitSpawnManager unitSpawnManager;
 
         /// Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.
@@ -45,7 +44,6 @@ namespace Pakuri.InGame
             SetPanelVisible(true);
 
             var modelsBySlot = ResolvePlayerModelsBySlot();
-            var catalog = ResolveCatalog();
             for (var i = 0; i < monsterSlots.Length; i++)
             {
                 var slotView = monsterSlots[i];
@@ -54,7 +52,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                slotView.SetRuntime(modelsBySlot[i], catalog);
+                slotView.SetRuntime(modelsBySlot[i]);
             }
         }
 
@@ -97,11 +95,6 @@ namespace Pakuri.InGame
             return models;
         }
 
-        private GameDataCatalog ResolveCatalog()
-        {
-            return GameDataLoader.CurrentCatalog;
-        }
-
         private void SetPanelVisible(bool visible)
         {
             if (monsterPanelRoot != null)
@@ -119,7 +112,7 @@ namespace Pakuri.InGame
 
             private string lastMonsterId;
 
-            public void SetRuntime(UnitCombatState model, GameDataCatalog catalog)
+            public void SetRuntime(UnitCombatState model)
             {
                 if (root == null)
                 {
@@ -139,11 +132,11 @@ namespace Pakuri.InGame
                 }
 
                 SetVisible(true);
-                RefreshMonsterImage(monsterId, catalog);
+                RefreshMonsterImage(monsterId);
                 RefreshActiveSlots(model);
             }
 
-            private void RefreshMonsterImage(string monsterId, GameDataCatalog catalog)
+            private void RefreshMonsterImage(string monsterId)
             {
                 if (monsterImage == null || string.Equals(lastMonsterId, monsterId, System.StringComparison.OrdinalIgnoreCase))
                 {

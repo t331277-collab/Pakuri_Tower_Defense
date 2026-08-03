@@ -235,7 +235,7 @@ namespace Pakuri.InGame
                     SkillExecutionRules.ResolveHitDamageMultiplier(
                         executionData,
                         target.Model);
-                var result = manager.ApplyDamageWithTriggerState(
+                var result = manager.ApplyDamage(
                     target.Model,
                     resolvedDamage,
                     damageAttribute,
@@ -248,7 +248,7 @@ namespace Pakuri.InGame
                     false,
                     null,
                     finalDamageMultiplier,
-                    executionData != null ? executionData.TriggerExecutionState : null);
+                    isTrigger: executionData != null && executionData.IsTrigger);
                 if (!result.IsDead)
                 {
                     StatusCombatRules.ApplyStatus(
@@ -368,7 +368,7 @@ namespace Pakuri.InGame
                     && UnityEngine.Random.value <= Mathf.Clamp01(
                         skillData.OnHitAdditionalDamageChance))
                 {
-                    manager.ApplyDamageWithTriggerState(
+                    manager.ApplyDamage(
                         hitTarget.Model,
                         primaryBaseDamage,
                         skillData.OnHitAdditionalDamageAttribute,
@@ -381,7 +381,7 @@ namespace Pakuri.InGame
                         false,
                         null,
                         skillData.OnHitAdditionalDamageMultiplier,
-                        skillData.TriggerExecutionState);
+                        isTrigger: skillData.IsTrigger);
                 }
 
                 if (skillData.HasOnHitChainDamageBehavior
@@ -405,7 +405,7 @@ namespace Pakuri.InGame
                             && chainTarget.IsAlive
                             && chainTarget.Model != null)
                         {
-                            manager.ApplyDamageWithTriggerState(
+                            manager.ApplyDamage(
                                 chainTarget.Model,
                                 primaryBaseDamage,
                                 skillData.OnHitChainDamageAttribute,
@@ -418,7 +418,7 @@ namespace Pakuri.InGame
                                 false,
                                 null,
                                 skillData.OnHitChainDamageMultiplier,
-                                skillData.TriggerExecutionState);
+                                isTrigger: skillData.IsTrigger);
                         }
                     }
                 }

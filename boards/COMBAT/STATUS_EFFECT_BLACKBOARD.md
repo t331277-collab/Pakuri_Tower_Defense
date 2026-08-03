@@ -4,6 +4,53 @@
 
 The pre-cleanup file, including all completed July tasks, is preserved at `boards/ARCHIVE/ACTIVE_BOARD_SNAPSHOT_2026-07-28/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
 
+## Task: 2026-08-03 Remove SingleSkill Internal Delay Path
+
+### Task title
+
+Remove SingleSkill's unused internal delayed-damage path and reuse the existing `SkillExecution -> SingleSkillExecutor` route for delayed follow-up skills.
+
+### Goals
+
+- Remove `SingleSkillActor` delay coroutines and execution-operation tracking.
+- Keep `sein-c` projectile arrival delay as a separate generated `sein-c@arrival` SingleSkill execution.
+- Keep `RepeatPerTarget` behavior while running its schedule on the existing SingleSkillExecutor object.
+- Reduce `SingleSkillActor` to visual lifetime and one-batch target/result application.
+
+### Constraints
+
+- Preserve projectile `damage_delay_seconds` source data and `ProjectileSkillActor` arrival behavior.
+- Do not modify UI files or unrelated user changes.
+- Preserve immediate SingleSkill targeting, damage, status, trigger and visual behavior.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation complete. Static residue checks and diff check passed. Full C# build is currently blocked by 3 errors in out-of-scope modified UI files.
+
+### Next Actions
+
+- In Unity Play Mode, verify `sein-c` arrival execution, SingleSkill immediate hitbox/area hits, and `RepeatPerTarget` timing.
+- Re-run the full build after the unrelated UI compile errors are resolved.
+
+### Evidence
+
+- `SingleSkillActor.cs` no longer contains `PreparedDamageDelay`, `ApplyNonPrefabTargetsAfterDelay`, `ApplyPrefabHitboxAfterDelay`, `StartTrackedCoroutine`, `TrackOperation`, `TryCompleteExecution`, `BeginPreparedExecution` or `FinishPreparedExecution`.
+- `SingleSkillActor.cs` reduced from 737 lines before this task to 543 lines and now keeps visual animation lifetime plus immediate target/result application.
+- `SingleSkillExecutor.cs` is now the existing runtime execution component for the `RuntimeSingleExecution` object; it schedules `RepeatPerTarget` and removes its host after delayed repeats finish.
+- `sein-c` still uses `ProjectileSkillActor.ExecuteArrivalSkill -> SkillExecution.TryExecuteReaction -> SingleSkillExecutor`; the generated `sein-c@arrival` SingleSkill remains separate from the projectile lifetime.
+- Current authored skill CSV search has one positive `damage_delay_seconds` row, `sein-c`, which is a `CooldownProjectile`; no authored SingleSkill row uses the removed internal delay field.
+- `rg` found no remaining SingleSkill internal delay or Actor operation-tracking symbols. `git diff --check` passed for all changed combat/loading files.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore -v:minimal` reports 3 errors only in modified out-of-scope UI files: `MonsterPanelUI.cs:146`, `DebugUI.cs:665`, and `DebugUI.cs:686`; no SingleSkill or Loading error was reported. Existing Unity reference warnings remain.
+
+### History
+
+- 2026-08-03: Code Builder deleted the unused SingleSkill internal delay contract and moved existing repeat scheduling to the existing SingleSkillExecutor host without adding a script.
+
 ## Task: 2026-08-03 Remove SingleSkill Conditional Follow-Up Runtime
 
 ### Task title
@@ -1678,3 +1725,139 @@ Complete. 폴더·타입·파일 rename과 빌드 검증을 완료했다.
 
 - 2026-08-02: 사용자가 실행 폴더와 핵심 타입의 책임을 확인한 뒤 새 이름을 승인했다.
 - 2026-08-02: Code Builder가 폴더와 파일을 `.meta`와 함께 이동하고 모든 C# 참조를 변경했다.
+
+## Task: 2026-08-03 Remove TriggerExecutionState
+
+### Task title
+
+`TriggerExecutionState`와 사건 연쇄별 반응 소비 추적을 제거하고 `IsTrigger`로 후속 반응 재진입을 차단한다.
+
+### Goals
+
+- `SkillTrigger.TriggerExecutionState`, `TryConsume`와 관련 전달 인자를 삭제한다.
+- 모든 `SkillReaction`이 생성하는 스킬 실행에 `IsTrigger`를 전달한다.
+- `IsTrigger == true`인 스킬은 피해·생명주기·투사체 적중 사건을 새 반응으로 재발행하지 않는다.
+- 기존 Executor/Actor 실행, 피해 적용, 수명 종료, 명시적 반복 규칙은 유지한다.
+
+### Constraints
+
+- 원본 스킬 종료까지 후속 효과 생성을 예약하는 새 대기 처리는 추가하지 않는다.
+- 정상 스킬의 직접 실행과 후속 반응 스킬의 수명·판정·삭제 경로를 분리하지 않는다.
+- `OnHit`는 대상별 사건으로 유지하고, 반응별 전역 소비 키를 다시 추가하지 않는다.
+- 사용자 Unity Play Mode 검증은 수행하지 않는다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation complete. 정적 참조 검사와 `Assembly-CSharp` 빌드를 완료했다.
+
+### Next Actions
+
+- Unity Play Mode에서 일반 스킬, 다중 대상 OnHit, 후속 반응의 추가 피해와 후속 반응 재진입 차단을 확인한다.
+
+### Evidence
+
+- `SkillTrigger.cs`에서 `TriggerExecutionState`, `TryConsume`, 사건 전달용 `executionState` 인자를 제거했다.
+- `SkillNodeConditions.cs:122`의 `SkillReaction.IsTrigger = true`가 후속 반응 정의의 기본 태그다.
+- `SkillExecution.cs`는 반응 실행 시 `trigger.IsTrigger`를 실행 스냅샷에 전달하고, `NotifySkillCastTriggers`는 `context.IsTrigger`를 차단한다.
+- `SingleSkillActor`, `LineSkillActor`, `ZoneSkillActor`, `ProjectileSkillActor`의 피해 호출은 `ApplyDamage(..., isTrigger: ...)` 공통 경로를 사용한다.
+- `InGameCombatManager.ApplyDamageInternal`은 `AttackRule.IsTrigger`일 때 보호막·상태·피해·처치 후속 사건만 건너뛰고 실제 피해와 사망 정리는 유지한다.
+- `ProjectileSkillActor.TryRunProjectileHitTriggers`와 `SkillTrigger.PublishLifecycleEvent`도 `IsTrigger` 실행을 새 반응으로 발행하지 않는다.
+- 저장소 C# 검색에서 `TriggerExecutionState`, `ApplyDamageWithTriggerState`, `TryConsume(` 잔존 결과는 0건이다.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore`는 오류 0개, 기존 Unity 참조 충돌 경고 2개로 완료했다.
+- `git diff --check`가 통과했다.
+
+### History
+
+- 2026-08-03: 사용자가 원본 종료 시점 예약 없이 `TriggerExecutionState`와 관련 불필요 로직을 제거하고 `IsTrigger` 기반 재진입 차단을 적용하도록 요청했다.
+- 2026-08-03: Code Builder가 공통 실행 상태·피해 경로·Lifecycle/Projectile 경계를 수정하고 빌드와 잔존 참조 검사를 완료했다.
+
+## Task: 2026-08-03 Consolidate AttackRule Constructors
+
+### Task title
+
+`AttackRule`의 일반 피해 생성자와 Trigger 피해 생성자를 하나로 통합한다.
+
+### Goals
+
+- 중복 생성자와 위임 초기화를 제거한다.
+- `isTrigger = false` 기본값으로 일반 피해 호출을 유지한다.
+- 후속 반응 피해는 기존처럼 `isTrigger` 값을 전달한다.
+
+### Constraints
+
+- `AttackRule` 필드와 `ApplyDamageInternal`의 동작을 변경하지 않는다.
+- `AttackRule`의 일반 호출 호환성을 유지한다.
+- 사용자 Unity Play Mode 검증은 수행하지 않는다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation complete. 솔루션 빌드와 diff 검사를 완료했다.
+
+### Next Actions
+
+- 별도 작업 없음. Unity Play Mode는 필요 시 사용자 검증 영역이다.
+
+### Evidence
+
+- `InGameCombatManager.cs:19`의 public 생성자에 `bool isTrigger = false`를 통합했다.
+- 기존 `InGameCombatManager.cs:42` internal 중복 생성자를 삭제했다.
+- `InGameCombatManager.cs:217`의 내부 호출은 `isTrigger` 값을 그대로 전달한다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal`은 오류 0개, 기존 참조 충돌 경고 2개로 완료했다.
+- `git diff --check -- Pakuri/Assets/Scripts/Combat/InGameCombatManager.cs`가 통과했다.
+
+### History
+
+- 2026-08-03: 사용자가 두 `AttackRule` 생성자를 합치도록 Code Builder 작업을 요청했다.
+- 2026-08-03: Code Builder가 기본값 인자를 가진 단일 public 생성자로 통합하고 빌드를 완료했다.
+
+## Task: 2026-08-03 Inline ApplyDamageInternal
+
+### Task title
+
+`ApplyDamageInternal`의 단일 위임 경계를 제거하고 `ApplyDamage`를 유일한 피해 진입점으로 만든다.
+
+### Goals
+
+- `ApplyDamageInternal`을 삭제한다.
+- `ApplyDamage` 안에서 자원 결과 처리, 화면 갱신, Trigger 후처리, 사망 정리를 유지한다.
+- `DamageCalculator`는 최종 피해 수치 계산, `ApplyDamageToResources`는 HP·보호막 자원 변경을 계속 담당한다.
+
+### Constraints
+
+- 피해 계산식과 자원 변경 순서를 변경하지 않는다.
+- `DamageCalculator`에 상태 변경·화면·Trigger 책임을 추가하지 않는다.
+- Unity Play Mode 검증은 수행하지 않는다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation complete. 잔여 참조 검색과 솔루션 빌드를 완료했다.
+
+### Next Actions
+
+- 별도 작업 없음. Unity Play Mode는 필요 시 사용자 검증 영역이다.
+
+### Evidence
+
+- `InGameCombatManager.cs:171`의 `ApplyDamage`가 기존 `ApplyDamageInternal` 본문을 직접 수행한다.
+- `ApplyDamageInternal` 저장소 검색 결과는 0건이다.
+- `InGameCombatManager.cs:245`의 `ApplyDamageToResources`와 `DamageCalculator.CalculateFinalDamage` 호출은 유지된다.
+- `ApplyDamage`의 `DamageApplied`, Actor 화면 갱신, `SkillTrigger` 후처리, `RemoveUnitIfDead` 순서는 유지된다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal`은 오류 0개, 기존 참조 충돌 경고 2개로 완료했다.
+- `git diff --check -- Pakuri/Assets/Scripts/Combat/InGameCombatManager.cs`가 통과했다.
+
+### History
+
+- 2026-08-03: 사용자가 `DamageCalculator`와 `InGameCombatManager`의 책임을 확인한 뒤 `ApplyDamageInternal` 제거 작업을 요청했다.
+- 2026-08-03: Code Builder가 위임 메서드를 삭제하고 피해 후처리 순서를 `ApplyDamage`에 유지했다.

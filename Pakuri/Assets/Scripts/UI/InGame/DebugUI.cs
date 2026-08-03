@@ -48,7 +48,6 @@ namespace Pakuri.InGame
         [SerializeField] private Button[] masterButtons = new Button[MasterButtonCount];
         [SerializeField] private Button[] passiveTraitButtons = new Button[PassiveTraitButtonCount];
         [SerializeField] private StageManager stageManager;
-        [SerializeField] private UnitSpawnManager unitSpawnManager;
         [SerializeField] private InGameCombatManager combatManager;
         [SerializeField] private MonsterPanelUI monsterPanelUI;
 
@@ -59,10 +58,10 @@ namespace Pakuri.InGame
         private void Awake()
         {
             BindButtons();
-            SetDebugRootPanelVisible(false);
-            SetPanelVisible(false);
-            SetModifiedPanelVisible(false);
-            SetPassiveModifiedPanelVisible(false);
+            UiObjectUtility.SetActive(debugRootPanel, false);
+            UiObjectUtility.SetActive(debugPanel, false);
+            UiObjectUtility.SetActive(debugModifiedPanel, false);
+            UiObjectUtility.SetActive(debugPassiveModifiedPanel, false);
         }
 
         /// Unity가 컴포넌트를 활성화할 때 구독과 활성 상태를 복원한다.
@@ -80,20 +79,20 @@ namespace Pakuri.InGame
             if (keyboard != null
                 && (keyboard.digit8Key.wasPressedThisFrame || keyboard.numpad8Key.wasPressedThisFrame))
             {
-                SetDebugRootPanelVisible(debugRootPanel == null || !debugRootPanel.activeSelf);
+                UiObjectUtility.SetActive(debugRootPanel, debugRootPanel == null || !debugRootPanel.activeSelf);
             }
         }
 
         public void Open()
         {
-            SetPanelVisible(true);
+            UiObjectUtility.SetActive(debugPanel, true);
             CloseModifiedPanel();
             RefreshButtonLabels();
         }
 
         public void Close()
         {
-            SetPanelVisible(false);
+            UiObjectUtility.SetActive(debugPanel, false);
             CloseModifiedPanel();
         }
 
@@ -110,22 +109,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var session = ResolveSession();
-            var catalog = ResolveCatalog();
-            var selectedEntry = ResolveSelectedPlayerEntry();
-            UnitCombatState model = null;
-            if (selectedEntry != null)
-            {
-                model = selectedEntry.Model;
-            }
-            var monsterId = ResolveMonsterId(session, model);
-            if (session == null || string.IsNullOrWhiteSpace(monsterId))
-            {
-                return;
-            }
-
-            var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId);
-            if (monster == null)
+            if (!TryResolveSelectedMonster(out var session, out var monster))
             {
                 return;
             }
@@ -144,27 +128,12 @@ namespace Pakuri.InGame
                 return;
             }
 
-            CommitDebugOfferingChoice(session, catalog, monster, null, sourceSkill.SkillId, string.Empty);
+            CommitDebugOfferingChoice(session, monster, null, sourceSkill.SkillId, string.Empty);
         }
 
         private void TryLearnPassiveSlot(int slotIndex)
         {
-            var session = ResolveSession();
-            var catalog = ResolveCatalog();
-            var selectedEntry = ResolveSelectedPlayerEntry();
-            UnitCombatState model = null;
-            if (selectedEntry != null)
-            {
-                model = selectedEntry.Model;
-            }
-            var monsterId = ResolveMonsterId(session, model);
-            if (session == null || string.IsNullOrWhiteSpace(monsterId))
-            {
-                return;
-            }
-
-            var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId);
-            if (monster == null)
+            if (!TryResolveSelectedMonster(out var session, out var monster))
             {
                 return;
             }
@@ -183,12 +152,12 @@ namespace Pakuri.InGame
                 return;
             }
 
-            CommitDebugOfferingChoice(session, catalog, monster, null, string.Empty, passive.SkillId);
+            CommitDebugOfferingChoice(session, monster, null, string.Empty, passive.SkillId);
         }
 
         private void RefreshRuntimeSkillModels()
         {
-            var manager = ResolveCombatManager();
+            var manager = combatManager;
             if (manager == null)
             {
                 return;
@@ -213,7 +182,6 @@ namespace Pakuri.InGame
         private void RefreshButtonLabels()
         {
             var session = ResolveSession();
-            var catalog = ResolveCatalog();
             var selectedEntry = ResolveSelectedPlayerEntry();
             UnitCombatState model = null;
             if (selectedEntry != null)
@@ -266,46 +234,6 @@ namespace Pakuri.InGame
             }
         }
 
-        private void EnsureSkillButtonArray()
-        {
-            if (skillButtons == null || skillButtons.Length != DebugSlots.Length)
-            {
-                skillButtons = new Button[DebugSlots.Length];
-            }
-        }
-
-        private void EnsureModifierOpenButtonArray()
-        {
-            if (modifierOpenButtons == null || modifierOpenButtons.Length != DebugSlots.Length)
-            {
-                modifierOpenButtons = new Button[DebugSlots.Length];
-            }
-        }
-
-        private void EnsureTraitButtonArray()
-        {
-            if (traitButtons == null || traitButtons.Length != TraitButtonCount)
-            {
-                traitButtons = new Button[TraitButtonCount];
-            }
-        }
-
-        private void EnsureMasterButtonArray()
-        {
-            if (masterButtons == null || masterButtons.Length != MasterButtonCount)
-            {
-                masterButtons = new Button[MasterButtonCount];
-            }
-        }
-
-        private void EnsurePassiveTraitButtonArray()
-        {
-            if (passiveTraitButtons == null || passiveTraitButtons.Length != PassiveTraitButtonCount)
-            {
-                passiveTraitButtons = new Button[PassiveTraitButtonCount];
-            }
-        }
-
         private void BindButtons()
         {
             BindButton(openButton, Open);
@@ -313,35 +241,35 @@ namespace Pakuri.InGame
             BindButton(modifierCloseButton, CloseModifiedPanel);
             BindButton(passiveModifierCloseButton, CloseModifiedPanel);
 
-            EnsureSkillButtonArray();
+            skillButtons = EnsureButtonArray(skillButtons, DebugSlots.Length);
             for (var i = 0; i < skillButtons.Length && i < DebugSlots.Length; i++)
             {
                 var capturedIndex = i;
                 BindButton(skillButtons[i], () => TryLearnSlot(capturedIndex));
             }
 
-            EnsureModifierOpenButtonArray();
+            modifierOpenButtons = EnsureButtonArray(modifierOpenButtons, DebugSlots.Length);
             for (var i = 0; i < modifierOpenButtons.Length && i < DebugSlots.Length; i++)
             {
                 var capturedIndex = i;
                 BindButton(modifierOpenButtons[i], () => OpenModifiedPanelForSlot(capturedIndex));
             }
 
-            EnsureTraitButtonArray();
+            traitButtons = EnsureButtonArray(traitButtons, TraitButtonCount);
             for (var i = 0; i < traitButtons.Length; i++)
             {
                 var capturedIndex = i;
                 BindButton(traitButtons[i], () => ApplyModifierChoice(false, capturedIndex));
             }
 
-            EnsureMasterButtonArray();
+            masterButtons = EnsureButtonArray(masterButtons, MasterButtonCount);
             for (var i = 0; i < masterButtons.Length; i++)
             {
                 var capturedIndex = i;
                 BindButton(masterButtons[i], () => ApplyModifierChoice(true, capturedIndex));
             }
 
-            EnsurePassiveTraitButtonArray();
+            passiveTraitButtons = EnsureButtonArray(passiveTraitButtons, PassiveTraitButtonCount);
             for (var i = 0; i < passiveTraitButtons.Length; i++)
             {
                 var capturedIndex = i;
@@ -354,19 +282,14 @@ namespace Pakuri.InGame
             return stageManager != null ? stageManager.ActiveSession : null;
         }
 
-        private GameDataCatalog ResolveCatalog()
+        private static Button[] EnsureButtonArray(Button[] buttons, int count)
         {
-            return GameDataLoader.CurrentCatalog;
-        }
-
-        private InGameCombatManager ResolveCombatManager()
-        {
-            return combatManager;
+            return buttons != null && buttons.Length == count ? buttons : new Button[count];
         }
 
         private CombatUnitEntry ResolveSelectedPlayerEntry()
         {
-            var manager = ResolveCombatManager();
+            var manager = combatManager;
             if (manager == null)
             {
                 return null;
@@ -385,6 +308,22 @@ namespace Pakuri.InGame
             return null;
         }
 
+        private bool TryResolveSelectedMonster(out RunSession session, out MonsterDefinition monster)
+        {
+            session = ResolveSession();
+            monster = null;
+            var selectedEntry = ResolveSelectedPlayerEntry();
+            var model = selectedEntry != null ? selectedEntry.Model : null;
+            var monsterId = ResolveMonsterId(session, model);
+            if (session == null || string.IsNullOrWhiteSpace(monsterId))
+            {
+                return false;
+            }
+
+            monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId);
+            return monster != null;
+        }
+
         private static string ResolveMonsterId(RunSession session, UnitCombatState model)
         {
             if (model != null && model.Identity != null && !string.IsNullOrWhiteSpace(model.Identity.DefinitionId))
@@ -400,44 +339,12 @@ namespace Pakuri.InGame
             return string.Empty;
         }
 
-        private void SetDebugRootPanelVisible(bool visible)
-        {
-            if (debugRootPanel != null)
-            {
-                debugRootPanel.SetActive(visible);
-            }
-        }
-
-        private void SetPanelVisible(bool visible)
-        {
-            if (debugPanel != null)
-            {
-                debugPanel.SetActive(visible);
-            }
-        }
-
-        private void SetModifiedPanelVisible(bool visible)
-        {
-            if (debugModifiedPanel != null)
-            {
-                debugModifiedPanel.SetActive(visible);
-            }
-        }
-
-        private void SetPassiveModifiedPanelVisible(bool visible)
-        {
-            if (debugPassiveModifiedPanel != null)
-            {
-                debugPassiveModifiedPanel.SetActive(visible);
-            }
-        }
-
         private void CloseModifiedPanel()
         {
             activeModifierSlotIndex = -1;
             activeModifierIsPassive = false;
-            SetModifiedPanelVisible(false);
-            SetPassiveModifiedPanelVisible(false);
+            UiObjectUtility.SetActive(debugModifiedPanel, false);
+            UiObjectUtility.SetActive(debugPassiveModifiedPanel, false);
         }
 
         private void OpenModifiedPanelForSlot(int slotIndex)
@@ -455,8 +362,8 @@ namespace Pakuri.InGame
 
             if (!TryResolveModifierContext(slotIndex, out var session, out var sourceSkill, out var monster))
             {
-                SetModifiedPanelVisible(false);
-                SetPassiveModifiedPanelVisible(false);
+                UiObjectUtility.SetActive(debugModifiedPanel, false);
+                UiObjectUtility.SetActive(debugPassiveModifiedPanel, false);
                 return;
             }
 
@@ -467,15 +374,15 @@ namespace Pakuri.InGame
                 || state == null
                 || !state.Skills.HasActiveSkill(sourceSkill.SkillId))
             {
-                SetModifiedPanelVisible(false);
-                SetPassiveModifiedPanelVisible(false);
+                UiObjectUtility.SetActive(debugModifiedPanel, false);
+                UiObjectUtility.SetActive(debugPassiveModifiedPanel, false);
                 return;
             }
 
             activeModifierSlotIndex = slotIndex;
             activeModifierIsPassive = false;
-            SetModifiedPanelVisible(true);
-            SetPassiveModifiedPanelVisible(false);
+            UiObjectUtility.SetActive(debugModifiedPanel, true);
+            UiObjectUtility.SetActive(debugPassiveModifiedPanel, false);
             RefreshModifierChoiceButtons();
         }
 
@@ -483,8 +390,8 @@ namespace Pakuri.InGame
         {
             if (!TryResolvePassiveModifierContext(slotIndex, out var session, out var passive, out var monster))
             {
-                SetModifiedPanelVisible(false);
-                SetPassiveModifiedPanelVisible(false);
+                UiObjectUtility.SetActive(debugModifiedPanel, false);
+                UiObjectUtility.SetActive(debugPassiveModifiedPanel, false);
                 return;
             }
 
@@ -495,15 +402,15 @@ namespace Pakuri.InGame
                 || state == null
                 || !state.Skills.HasPassiveSkill(passive.SkillId))
             {
-                SetModifiedPanelVisible(false);
-                SetPassiveModifiedPanelVisible(false);
+                UiObjectUtility.SetActive(debugModifiedPanel, false);
+                UiObjectUtility.SetActive(debugPassiveModifiedPanel, false);
                 return;
             }
 
             activeModifierSlotIndex = slotIndex;
             activeModifierIsPassive = true;
-            SetModifiedPanelVisible(false);
-            SetPassiveModifiedPanelVisible(true);
+            UiObjectUtility.SetActive(debugModifiedPanel, false);
+            UiObjectUtility.SetActive(debugPassiveModifiedPanel, true);
             RefreshModifierChoiceButtons();
         }
 
@@ -532,7 +439,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            CommitDebugOfferingChoice(session, ResolveCatalog(), monster, choice, sourceSkill.SkillId, string.Empty);
+            CommitDebugOfferingChoice(session, monster, choice, sourceSkill.SkillId, string.Empty);
 
             RefreshModifierChoiceButtons();
         }
@@ -562,7 +469,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            CommitDebugOfferingChoice(session, ResolveCatalog(), monster, choice, string.Empty, passive.SkillId);
+            CommitDebugOfferingChoice(session, monster, choice, string.Empty, passive.SkillId);
             RefreshModifierChoiceButtons();
         }
 
@@ -581,8 +488,8 @@ namespace Pakuri.InGame
                 SetModifierButtonsInactive(passiveTraitButtons);
                 if (activeModifierSlotIndex < 0)
                 {
-                    SetModifiedPanelVisible(false);
-                    SetPassiveModifiedPanelVisible(false);
+                    UiObjectUtility.SetActive(debugModifiedPanel, false);
+                    UiObjectUtility.SetActive(debugPassiveModifiedPanel, false);
                 }
 
                 return;
@@ -618,8 +525,8 @@ namespace Pakuri.InGame
                 SetModifierButtonsInactive(masterButtons);
                 if (activeModifierSlotIndex < 0)
                 {
-                    SetModifiedPanelVisible(false);
-                    SetPassiveModifiedPanelVisible(false);
+                    UiObjectUtility.SetActive(debugModifiedPanel, false);
+                    UiObjectUtility.SetActive(debugPassiveModifiedPanel, false);
                 }
 
                 return;
@@ -709,29 +616,11 @@ namespace Pakuri.InGame
             out SkillDefinition sourceSkill,
             out MonsterDefinition monster)
         {
-            session = ResolveSession();
+            session = null;
             sourceSkill = null;
             monster = null;
-            if (session == null || slotIndex < 0 || slotIndex >= DebugSlots.Length)
-            {
-                return false;
-            }
-
-            var catalog = ResolveCatalog();
-            var selectedEntry = ResolveSelectedPlayerEntry();
-            UnitCombatState model = null;
-            if (selectedEntry != null)
-            {
-                model = selectedEntry.Model;
-            }
-            var monsterId = ResolveMonsterId(session, model);
-            if (string.IsNullOrWhiteSpace(monsterId))
-            {
-                return false;
-            }
-
-            monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId);
-            if (monster == null)
+            if (slotIndex < 0 || slotIndex >= DebugSlots.Length
+                || !TryResolveSelectedMonster(out session, out monster))
             {
                 return false;
             }
@@ -748,29 +637,12 @@ namespace Pakuri.InGame
             out PassiveSkillDefinition passive,
             out MonsterDefinition monster)
         {
-            session = ResolveSession();
+            session = null;
             passive = null;
             monster = null;
-            if (session == null || slotIndex < 0 || slotIndex >= DebugSlots.Length || !IsPassiveSlot(slotIndex))
-            {
-                return false;
-            }
-
-            var catalog = ResolveCatalog();
-            var selectedEntry = ResolveSelectedPlayerEntry();
-            UnitCombatState model = null;
-            if (selectedEntry != null)
-            {
-                model = selectedEntry.Model;
-            }
-            var monsterId = ResolveMonsterId(session, model);
-            if (string.IsNullOrWhiteSpace(monsterId))
-            {
-                return false;
-            }
-
-            monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId);
-            if (monster == null)
+            if (slotIndex < 0 || slotIndex >= DebugSlots.Length
+                || !IsPassiveSlot(slotIndex)
+                || !TryResolveSelectedMonster(out session, out monster))
             {
                 return false;
             }
@@ -783,7 +655,6 @@ namespace Pakuri.InGame
 
         private void CommitDebugOfferingChoice(
             RunSession session,
-            GameDataCatalog catalog,
             MonsterDefinition monster,
             SkillChoice choice,
             string activeSkillId,

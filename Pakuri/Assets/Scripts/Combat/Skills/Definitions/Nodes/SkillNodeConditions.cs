@@ -119,6 +119,7 @@ namespace Pakuri.InGame
     {
         public string ReactionId;
         public string SourceSkillId;
+        public bool IsTrigger = true;
         public SkillTriggerEvent Event;
         public string[] RequiredActiveChoiceIds = Array.Empty<string>();
         public string[] ExcludedActiveChoiceIds = Array.Empty<string>();

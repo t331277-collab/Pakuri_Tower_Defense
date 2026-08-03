@@ -23,6 +23,8 @@ namespace Pakuri.InGame
 
         private MonsterDefinition pendingManifestMonster;
 
+        public bool IsFailurePopupVisible => manifestedFailPopUp != null && manifestedFailPopUp.activeSelf;
+
         private void Awake()
         {
             BindButton(manifestedFailBackButton, CompleteAfterFailure);
@@ -45,7 +47,7 @@ namespace Pakuri.InGame
             var succeeded = pendingManifestMonster != null && UnityEngine.Random.value < successChance;
             if (!succeeded)
             {
-                SetActive(manifestedFailPopUp, true);
+                UiObjectUtility.SetActive(manifestedFailPopUp, true);
                 return true;
             }
 
@@ -55,13 +57,13 @@ namespace Pakuri.InGame
 
         public void Hide()
         {
-            SetActive(manifestedFailPopUp, false);
-            SetActive(manifestedSuccessPopUp, false);
+            UiObjectUtility.SetActive(manifestedFailPopUp, false);
+            UiObjectUtility.SetActive(manifestedSuccessPopUp, false);
         }
 
         private void ShowManifestSuccessPopup(MonsterDefinition monster)
         {
-            SetActive(manifestedSuccessPopUp, true);
+            UiObjectUtility.SetActive(manifestedSuccessPopUp, true);
             if (monsterNameText != null)
             {
                 monsterNameText.text = monster != null ? monster.DisplayName : "Unknown";
@@ -84,14 +86,14 @@ namespace Pakuri.InGame
         private void SkipManifestChoice()
         {
             pendingManifestMonster = null;
-            SetActive(manifestedSuccessPopUp, false);
+            UiObjectUtility.SetActive(manifestedSuccessPopUp, false);
             uiManager?.CompletePrisonAction();
         }
 
         private void CompleteAfterFailure()
         {
             pendingManifestMonster = null;
-            SetActive(manifestedFailPopUp, false);
+            UiObjectUtility.SetActive(manifestedFailPopUp, false);
             uiManager?.CompletePrisonAction();
         }
 
@@ -110,7 +112,7 @@ namespace Pakuri.InGame
 
             unitSpawnManager?.SpawnManifestedMonster(session, pendingManifestMonster, slotIndex);
             pendingManifestMonster = null;
-            SetActive(manifestedSuccessPopUp, false);
+            UiObjectUtility.SetActive(manifestedSuccessPopUp, false);
             uiManager?.RefreshInfo();
             uiManager?.CompletePrisonAction();
         }
@@ -160,12 +162,5 @@ namespace Pakuri.InGame
             button.onClick.AddListener(action);
         }
 
-        private static void SetActive(GameObject target, bool active)
-        {
-            if (target != null)
-            {
-                target.SetActive(active);
-            }
-        }
     }
 }

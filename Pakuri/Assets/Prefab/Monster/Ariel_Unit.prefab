@@ -364,7 +364,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.26892644, y: 0.26892644, z: 0.26892644}
+  m_LocalScale: {x: 0.25, y: 0.25, z: 0.25}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 525887795797914250}
@@ -525,7 +525,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ab96406b52c3454daa4c602c0b81989, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.AnimationController
-  animator: {fileID: 900100000000001}
   idleState: Anim_Ariel_Idle
   deadState: Anim_Ariel_Dead_1
   attackStateCount: 3

@@ -301,3 +301,88 @@ Implemented, serialized, compiled, and scene-validated.
 ### History
 
 - 2026-08-03: Code Builder replaced spawn/UI lookup with direct Inspector references, converted the scene UI modules to MonoBehaviours, removed the shared reference script, and grouped NewRunScene objects without changing their world transforms or layer assignments.
+
+## Task: 2026-08-03 Manifest Failure Overlay and Scene Rename
+
+### Task title
+
+Keep `ManifestFailPopup` over `PrisonPanel`, restore PrisonPanel on failure Back, and rename the active menu/run scenes.
+
+### Goals
+
+- Keep `PrisonPanel` active when manifest fails so `ManifestFailPopup` renders above it.
+- Make the failure popup Back action reopen `PrisonPanel`.
+- Rename the existing run scene to `InGameScene` and the existing main menu scene to `MainMenuScene`.
+
+### Constraints
+
+- Preserve the existing success-manifest flow and popup hierarchy.
+- Update all active serialized/code/build-settings scene paths.
+- The requested `NewMainScene.unity` did not exist; use the actual `NewMainMenu.unity` as the main-menu source.
+- Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, statically verified, and compiled.
+
+### Next Actions
+
+- User verifies manifest failure overlay, failure Back return, success flow, and MainMenu ↔ InGame scene transitions in Play Mode.
+
+### Evidence
+
+- `MenifestUI.IsFailurePopupVisible` exposes the failure popup state; `CompleteAfterFailure` now calls `OpenPrisonPanel()`.
+- `PrisonPanelUI` hides the panel only when the manifest result is not the failure popup, leaving the existing `Popup` sibling above `Panels` in the scene hierarchy.
+- `NewRunScene` was renamed to `InGameScene`; `NewMainMenu` was renamed to `MainMenuScene`, with their `.meta` GUIDs preserved.
+- `MainMenuUIManager`, `StageManager`, both serialized scene fields, and `EditorBuildSettings.asset` now use `InGameScene`/`MainMenuScene` paths.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and the existing 2 assembly-reference warnings; `git diff --check` returned no whitespace errors.
+
+### History
+
+- 2026-08-03: Code Builder changed failure overlay/back behavior, renamed the two existing scenes, synchronized active references, and verified the build.
+
+## Task: 2026-08-03 Manifest Back Binding and Debug Skill Reference Fix
+
+### Task title
+
+Bind `ManifestFailPopup` Back from an active UI owner and restore `DebugUI` StageManager access.
+
+### Goals
+
+- Ensure `ManifestFailPopup` Back closes the fail popup and returns to `RewardPanel`.
+- Keep the failed-manifest popup over `PrisonPanel` until Back.
+- Allow `DebugPanel` skill buttons to resolve the active `RunSession`.
+
+### Constraints
+
+- Preserve success manifestation flow.
+- Keep direct Inspector references.
+- Do not bypass existing `RunSession` skill-learning rules.
+- Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, statically verified, and compiled.
+
+### Next Actions
+
+- User verifies failure popup Back, `RewardPanel` return, and `DebugPanel` active/passive skill acquisition in Play Mode.
+
+### Evidence
+
+- `MenifestUI` now belongs to the active `Popup` GameObject (`InGameScene.unity` fileID `310674459`), so `Awake()` binds `manifestedFailBackButton`.
+- `CompleteAfterFailure()` disables the failure popup and calls `InGameUIManager.CompletePrisonAction()`, which hides `PrisonPanel` and shows `RewardPanel`.
+- `DebugUI.stageManager` now points to StageManager fileID `1427799829` instead of `{fileID: 0}`, allowing `ResolveSession()` to return the active session.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and the existing 2 assembly-reference warnings; `git diff --check` passed for the modified code and scene.
+
+### History
+
+- 2026-08-03: Code Builder moved `MenifestUI` to the active `Popup` owner, restored `RewardPanel` return on failure Back, and restored the `DebugUI` StageManager Inspector reference.

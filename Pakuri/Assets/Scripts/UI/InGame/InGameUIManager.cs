@@ -11,8 +11,6 @@ namespace Pakuri.InGame
     public class InGameUIManager : MonoBehaviour
     {
         [SerializeField] private StageManager stageManager;
-        [SerializeField] private UnitSpawnManager unitSpawnManager;
-        [SerializeField] private InGameCombatManager combatManager;
         [SerializeField] private InGameInfoUI infoUI;
         [SerializeField] private RewardPanelUI rewardPanelUI;
         [SerializeField] private PrisonPanelUI prisonPanelUI;
@@ -125,8 +123,6 @@ namespace Pakuri.InGame
         private bool ValidateReferences()
         {
             if (stageManager != null
-                && unitSpawnManager != null
-                && combatManager != null
                 && infoUI != null
                 && rewardPanelUI != null
                 && prisonPanelUI != null
@@ -138,10 +134,21 @@ namespace Pakuri.InGame
             }
 
             Debug.LogError(
-                "InGameUIManager requires StageManager, UnitSpawnManager, InGameCombatManager, "
+                "InGameUIManager requires StageManager "
                 + "and all InGame UI components to be assigned in the Inspector.",
                 this);
             return false;
+        }
+    }
+
+    internal static class UiObjectUtility
+    {
+        internal static void SetActive(GameObject target, bool active)
+        {
+            if (target != null)
+            {
+                target.SetActive(active);
+            }
         }
     }
 }

@@ -441,3 +441,129 @@ Implemented and verified.
 ### History
 
 - 2026-08-03: Code Builder removed dead catalog code and consolidated duplicate skill/reaction lookup paths in `DamageMeterUIController` without changing serialized scene data.
+
+## Task: 2026-08-03 UI Dead Code and Duplicate Reduction
+
+### Task title
+
+Remove confirmed dead UI state and duplicate UI helper/lookup code.
+
+### Goals
+
+- Delete unused reward metadata, damage-record identity, serialized Inspector fields, and catalog plumbing.
+- Reduce repeated DebugUI array/panel/monster-resolution code.
+- Consolidate identical `SetActive(GameObject, bool)` implementations without changing UI behavior.
+
+### Constraints
+
+- Preserve UI behavior, public MonoBehaviour entry points, and active Inspector references.
+- Remove matching stale `NewRunScene` serialized fields when script fields are deleted.
+- Do not merge `BindButton` implementations because listener replacement behavior differs.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally compiled.
+
+### Next Actions
+
+- User verifies reward buttons, Prison/Offering/Manifest flow, Debug panels, BossHP, MainMenu panel switching, and Damage Meter in Play Mode.
+
+### Evidence
+
+- `RewardButtonView` no longer stores unused `RewardKind`, `Kind`, or `Amount` values; `MonsterDamageRecord` no longer stores unread `MonsterId`.
+- Removed unused UI Inspector fields and matching `NewRunScene.unity` entries for `RewardPanelUI`, `OfferingUI`, `MonsterPanelUI`, `DebugUI`, and `InGameUIManager`.
+- `MonsterPanelUI` no longer passes a catalog through methods that read `GameDataLoader.CurrentCatalog` directly.
+- `DebugUI` uses one button-array guard, one shared selected-monster resolver, and one shared `UiObjectUtility.SetActive` helper.
+- Six duplicate UI `SetActive` helpers were reduced to `UiObjectUtility` in `InGameUIManager.cs`; listener-binding helpers were left unchanged.
+- `git diff --check` returned no whitespace errors.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and the existing 2 assembly-reference warnings.
+
+### History
+
+- 2026-08-03: Code Builder applied the confirmed dead-code and duplicate-code reductions from the UI audit and synchronized NewRunScene serialized fields.
+
+## Task: 2026-08-03 MainMenu Inspector Reference Wiring
+
+### Task title
+
+Remove MainMenu runtime scene lookup and use preassigned Inspector references.
+
+### Goals
+
+- Keep `MainMenuUIManager` dependent only on serialized panel and button references.
+- Store all `NewMainMenu` panel/button references directly in scene serialization.
+- Remove name/path-based runtime object search code.
+
+### Constraints
+
+- Preserve MainMenu panel flow, monster selection, `StartContext`, and NewRunScene loading.
+- Preserve the existing scene hierarchy and player-facing labels.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally compiled.
+
+### Next Actions
+
+- User verifies Intro → MainMenu → MonsterSelect transitions, all five monster buttons, and NewRunScene loading in Play Mode.
+
+### Evidence
+
+- `MainMenuUIManager.Awake()` now only binds the serialized fields; `ResolveSceneReferences`, `ResolveGameObject`, `ResolveButton`, `FindChild`, and `FindSceneGameObject` were removed.
+- `NewMainMenu.unity` now identifies the component as `MainMenuUIManager` and stores non-zero fileIDs for three panels and eight Button components.
+- Static search found no runtime scene lookup symbol in `MainMenuUIManager.cs`.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and the existing 2 assembly-reference warnings.
+- `git diff --check` returned no whitespace errors.
+
+### History
+
+- 2026-08-03: Code Builder converted MainMenu scene references from runtime name lookup to direct Inspector serialization and removed the fallback resolver code.
+
+## Task: 2026-08-03 PrisonPanel Full-Card Raycast Fix
+
+### Task title
+
+Disable raycast interception on the 1P~5P parent background Images in NewRunScene.
+
+### Goals
+
+- Allow clicks in the full PrisonPanel slot area to reach the configured child Buttons.
+- Keep the existing PrisonPanelUI Inspector Button references and hierarchy unchanged.
+
+### Constraints
+
+- Change only the parent background Image `m_RaycastTarget` values for 1P~5P.
+- Do not resize or replace the child Buttons.
+- Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and scene diff verified.
+
+### Next Actions
+
+- User verifies center clicks on `UI/PrisonPanel/1P` through `5P` in NewRunScene Play Mode.
+
+### Evidence
+
+- `NewRunScene.unity` parent Image components `421615614`, `1448528057`, `1496035311`, `1590034690`, and `2110331148` now have `m_RaycastTarget: 0`.
+- These components are the parent Images of 5P, 2P, 1P, 4P, and 3P respectively; the configured child Button fileIDs remain unchanged at `NewRunScene.unity:31783-31806`.
+- `git diff --check -- Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` returned no whitespace errors.
+
+### History
+
+- 2026-08-03: Code Builder disabled parent background Image raycasts for all five PrisonPanel slots.

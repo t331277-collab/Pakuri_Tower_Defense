@@ -1,4 +1,5 @@
 encounter_id,spawn_order,enemy_id,count,interval_sec,spawn_x,spawn_y_min,spawn_y_max,is_boss_candidate,is_guaranteed_boss,boss_health_multiplier_min,boss_health_multiplier_max,guaranteed_prisoner,notes
+string,int,string,int,float,float,float,float,bool,bool,float,float,bool,string
 stage1-day1-normal,0,stage1-swordsman,1,1,9.02,-5,5,true,false,3,5,true,Opening normal combat boss candidate.
 stage1-day1-normal,1,stage1-shieldbearer,1,1,9.02,-5,5,true,false,3,5,false,Opening tank introduction.
 stage1-day1-normal,2,stage1-rogue,1,1,9.02,-5,5,true,false,3,5,false,Opening ranged introduction.

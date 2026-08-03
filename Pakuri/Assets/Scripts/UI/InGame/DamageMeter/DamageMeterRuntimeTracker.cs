@@ -101,7 +101,7 @@ namespace Pakuri.InGame
 
             if (!records.TryGetValue(identity.DefinitionId, out var record))
             {
-                record = new MonsterDamageRecord(identity.DefinitionId);
+                record = new MonsterDamageRecord();
                 records.Add(identity.DefinitionId, record);
             }
 
@@ -115,12 +115,6 @@ namespace Pakuri.InGame
         private readonly Dictionary<string, SkillDamageRecord> sources = new Dictionary<string, SkillDamageRecord>(StringComparer.OrdinalIgnoreCase);
         private readonly List<SkillDamageRecord> orderedSources = new List<SkillDamageRecord>();
 
-        public MonsterDamageRecord(string monsterId)
-        {
-            MonsterId = monsterId;
-        }
-
-        public string MonsterId { get; }
         public float TotalDamage { get; private set; }
         public IReadOnlyList<SkillDamageRecord> OrderedSources => orderedSources;
 

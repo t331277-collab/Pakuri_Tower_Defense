@@ -122,7 +122,7 @@ namespace Pakuri.InGame
 
                 var hitPosition = (Vector2)target.Transform.position;
                 var finalDamageMultiplier = SkillExecutionRules.ResolveHitDamageMultiplier(executionData, target.Model);
-                var damageResult = combatManager.ApplyDamageWithTriggerState(target.Model, damage, attribute, sourceModel, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, false, false, null, finalDamageMultiplier, executionData != null ? executionData.TriggerExecutionState : null);
+                var damageResult = combatManager.ApplyDamage(target.Model, damage, attribute, sourceModel, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, false, false, null, finalDamageMultiplier, isTrigger: executionData != null && executionData.IsTrigger);
                 TryApplyKnockback(target, direction, knockbackDistance);
                 if (!damageResult.IsDead)
                 {

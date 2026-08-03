@@ -142,6 +142,21 @@ namespace Pakuri.Data
             sourceCatalog.EnemySkillTriggerFiles = LoadImportedSourceTextAssetsBySuffix(
                 AuthoringEnemySkillTriggerCsvAssetRoot,
                 "_skill_triger.csv");
+            sourceCatalog.StageDay = LoadTextAssetOrThrow(
+                $"{StageFlowCsvAssetRoot}/{StageFileNames.StageDay}",
+                "Create StageDay.csv under Assets/CSVdata/stage_flow before validation.");
+            sourceCatalog.Stage1Encounter = LoadTextAssetOrThrow(
+                $"{StageFlowCsvAssetRoot}/Stage1/{StageFileNames.StageEncounter}",
+                "Create Stage1/StageEncounter.csv under Assets/CSVdata/stage_flow before validation.");
+            sourceCatalog.Stage1Reward = LoadTextAssetOrThrow(
+                $"{StageFlowCsvAssetRoot}/Stage1/{StageFileNames.StageReward}",
+                "Create Stage1/StageReward.csv under Assets/CSVdata/stage_flow before validation.");
+            sourceCatalog.Stage2Encounter = LoadTextAssetOrThrow(
+                $"{StageFlowCsvAssetRoot}/Stage2/{StageFileNames.StageEncounter}",
+                "Create Stage2/StageEncounter.csv under Assets/CSVdata/stage_flow before validation.");
+            sourceCatalog.Stage2Reward = LoadTextAssetOrThrow(
+                $"{StageFlowCsvAssetRoot}/Stage2/{StageFileNames.StageReward}",
+                "Create Stage2/StageReward.csv under Assets/CSVdata/stage_flow before validation.");
             EditorUtility.SetDirty(sourceCatalog);
 
             var sourceModel = LoadSourceModel(sourceCatalog);

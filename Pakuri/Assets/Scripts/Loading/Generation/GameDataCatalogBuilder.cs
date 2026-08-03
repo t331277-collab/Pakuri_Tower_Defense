@@ -109,6 +109,7 @@ namespace Pakuri.Data
             catalog.Monsters = monsters.ToArray();
             catalog.StageOneEnemies = BuildEnemies(model, "stage_one", catalog.StatusEffects);
             catalog.StageTwoEnemies = BuildEnemies(model, "stage_two", catalog.StatusEffects);
+            catalog.Stage = StageDefinitionBuilder.Build(assetCatalog);
             return catalog;
         }
 

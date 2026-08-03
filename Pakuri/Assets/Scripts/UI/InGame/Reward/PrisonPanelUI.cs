@@ -40,15 +40,15 @@ namespace Pakuri.InGame
 
         public void Open()
         {
-            SetActive(prisonerChoicePopUp, false);
-            SetActive(prisonPanel, true);
+            UiObjectUtility.SetActive(prisonerChoicePopUp, false);
+            UiObjectUtility.SetActive(prisonPanel, true);
             Refresh();
         }
 
         public void Hide()
         {
-            SetActive(prisonPanel, false);
-            SetActive(prisonerChoicePopUp, false);
+            UiObjectUtility.SetActive(prisonPanel, false);
+            UiObjectUtility.SetActive(prisonerChoicePopUp, false);
         }
 
         public void Refresh()
@@ -86,7 +86,7 @@ namespace Pakuri.InGame
             {
                 if (offeringUI != null && offeringUI.OpenOfferingPanel(monsterId))
                 {
-                    SetActive(prisonPanel, false);
+                    UiObjectUtility.SetActive(prisonPanel, false);
                 }
 
                 return;
@@ -102,7 +102,10 @@ namespace Pakuri.InGame
                 return;
             }
 
-            SetActive(prisonPanel, false);
+            if (!menifestUI.IsFailurePopupVisible)
+            {
+                UiObjectUtility.SetActive(prisonPanel, false);
+            }
         }
 
         private static void RefreshPrisonPartySlot(
@@ -116,10 +119,10 @@ namespace Pakuri.InGame
                 return;
             }
 
-            SetActive(slot.Image != null ? slot.Image.gameObject : null, isOccupied);
-            SetActive(slot.Button != null ? slot.Button.gameObject : null, isOccupied || isNextManifestSlot);
-            SetActive(slot.ReinforcementLabel, isOccupied);
-            SetActive(slot.MenifestedLabel, isNextManifestSlot);
+            UiObjectUtility.SetActive(slot.Image != null ? slot.Image.gameObject : null, isOccupied);
+            UiObjectUtility.SetActive(slot.Button != null ? slot.Button.gameObject : null, isOccupied || isNextManifestSlot);
+            UiObjectUtility.SetActive(slot.ReinforcementLabel, isOccupied);
+            UiObjectUtility.SetActive(slot.MenifestedLabel, isNextManifestSlot);
 
             if (slot.Button != null)
             {
@@ -152,7 +155,7 @@ namespace Pakuri.InGame
             var activePrisonerButton = uiManager?.ActivePrisonerButton;
             var prisonerId = activePrisonerButton != null ? activePrisonerButton.PrisonerId : string.Empty;
             var hasPrisoner = !string.IsNullOrWhiteSpace(prisonerId);
-            SetActive(prisonerImage != null ? prisonerImage.gameObject : null, hasPrisoner);
+            UiObjectUtility.SetActive(prisonerImage != null ? prisonerImage.gameObject : null, hasPrisoner);
             if (!hasPrisoner)
             {
                 return;
@@ -182,14 +185,6 @@ namespace Pakuri.InGame
 
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(action);
-        }
-
-        private static void SetActive(GameObject target, bool active)
-        {
-            if (target != null)
-            {
-                target.SetActive(active);
-            }
         }
 
         [Serializable]

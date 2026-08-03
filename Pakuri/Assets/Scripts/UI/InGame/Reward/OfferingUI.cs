@@ -15,7 +15,6 @@ namespace Pakuri.InGame
 
         private enum OfferingKind
         {
-            Normal,
             NewActiveSkill,
             NewPassiveSkill,
             Trait,
@@ -25,7 +24,6 @@ namespace Pakuri.InGame
         private readonly List<OfferingChoiceView> offeringChoices = new List<OfferingChoiceView>();
         [SerializeField] private GameObject offeringPanel;
         [SerializeField] private OfferingButtonView[] offeringButtonViews = new OfferingButtonView[MaxOfferingChoices];
-        [SerializeField] private StageManager stageManager;
         [SerializeField] private InGameCombatManager combatManager;
         [SerializeField] private InGameUIManager uiManager;
 
@@ -46,10 +44,10 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            SetActive(offeringPanel, true);
+            UiObjectUtility.SetActive(offeringPanel, true);
             for (var i = 0; i < offeringButtonViews.Length; i++)
             {
-                var buttonView = i < offeringButtonViews.Length ? offeringButtonViews[i] : null;
+                var buttonView = offeringButtonViews[i];
                 var button = buttonView != null ? buttonView.Button : null;
                 if (button == null)
                 {
@@ -76,7 +74,7 @@ namespace Pakuri.InGame
 
         public void Hide()
         {
-            SetActive(offeringPanel, false);
+            UiObjectUtility.SetActive(offeringPanel, false);
         }
 
         private void CommitOfferingChoice(int choiceIndex)
@@ -108,7 +106,7 @@ namespace Pakuri.InGame
 
             RefreshRuntimeSkillModels();
             uiManager?.ConsumeActivePrisonerButton();
-            SetActive(offeringPanel, false);
+            UiObjectUtility.SetActive(offeringPanel, false);
             uiManager?.RefreshInfo();
             uiManager?.CompletePrisonAction();
         }
@@ -249,11 +247,6 @@ namespace Pakuri.InGame
 
         private static OfferingKind ResolveOfferingKind(SkillChoice choice)
         {
-            if (choice == null)
-            {
-                return OfferingKind.Normal;
-            }
-
             return choice.ChoiceGroup == SkillChoiceGroup.ActiveMaster
                 ? OfferingKind.Master
                 : OfferingKind.Trait;
@@ -502,9 +495,9 @@ namespace Pakuri.InGame
                 view.DescriptionLabel.text = choice.Description;
             }
 
-            if (view.FallbackLabel != null && view.DescriptionLabel == null && view.SkillNameLabel == null)
+            if (view.TitleLabel != null && view.DescriptionLabel == null && view.SkillNameLabel == null)
             {
-                view.FallbackLabel.text = $"{choice.Title}\n{choice.Description}";
+                view.TitleLabel.text = $"{choice.Title}\n{choice.Description}";
             }
 
             if (view.IconImage != null)
@@ -546,14 +539,6 @@ namespace Pakuri.InGame
             }
         }
 
-        private static void SetActive(GameObject target, bool active)
-        {
-            if (target != null)
-            {
-                target.SetActive(active);
-            }
-        }
-
         private sealed class OfferingChoiceView
         {
             public string MonsterId;
@@ -586,7 +571,6 @@ namespace Pakuri.InGame
             public TMP_Text SkillNameLabel => skillNameLabel;
             public TMP_Text TitleLabel => titleLabel;
             public TMP_Text DescriptionLabel => descriptionLabel;
-            public TMP_Text FallbackLabel => titleLabel;
             public Image IconImage => iconImage;
             public GameObject PopUp => popUp;
             public TMP_Text PopUpText => popUpText;

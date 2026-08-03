@@ -356,8 +356,6 @@ public class SkillExecutionState
 
 	internal bool PreparedPrefabHitboxAtOrigin { get; set; }
 
-	internal float PreparedDamageDelay { get; set; }
-
 	internal StatusEffectKind PreparedTargetStatusStackStatusKind { get; set; }
 
 	internal int PreparedTargetStatusStackMaxStacks { get; set; }
@@ -529,7 +527,7 @@ public class SkillExecutionState
     public int ProjectileLaunchCount { get; internal set; }
     public int SkillHitCount { get; internal set; }
     internal SkillExecutionState ActiveExecutionData { get; set; }
-    internal SkillTrigger.TriggerExecutionState TriggerExecutionState { get; set; }
+    internal bool IsTrigger { get; set; }
 
     internal int effectiveMaxMagazineSize;
     internal int effectiveBurstProjectileCount;

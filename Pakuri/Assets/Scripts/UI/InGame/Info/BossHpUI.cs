@@ -46,11 +46,11 @@ namespace Pakuri.InGame
 
             if (displayedBoss == null)
             {
-                SetActive(root, false);
+                UiObjectUtility.SetActive(root, false);
                 return;
             }
 
-            SetActive(root, true);
+            UiObjectUtility.SetActive(root, true);
             RefreshValues(displayedBoss.Model);
         }
 
@@ -62,7 +62,7 @@ namespace Pakuri.InGame
             }
 
             displayedBoss = null;
-            SetActive(root, false);
+            UiObjectUtility.SetActive(root, false);
         }
 
         private void RefreshValues(UnitCombatState model)
@@ -99,7 +99,7 @@ namespace Pakuri.InGame
             var shieldRatio = Mathf.Clamp01(currentShield / safeTotal);
             SetSegment(fill, 0f, healthRatio);
             SetSegment(shield, healthRatio, shieldRatio);
-            SetActive(shield != null ? shield.gameObject : null, currentShield > 0f);
+            UiObjectUtility.SetActive(shield != null ? shield.gameObject : null, currentShield > 0f);
         }
 
         private void SetSegment(RectTransform target, float leftRatio, float widthRatio)
@@ -169,12 +169,5 @@ namespace Pakuri.InGame
                 : value.ToString("0.##");
         }
 
-        private static void SetActive(GameObject target, bool active)
-        {
-            if (target != null)
-            {
-                target.SetActive(active);
-            }
-        }
     }
 }

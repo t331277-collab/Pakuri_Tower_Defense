@@ -1,6 +1,5 @@
 /*
- * 역할: 필드 유닛 생명주기 소유.
- * 책임: 플레이어·적·Nexus 런타임 유닛을 생성·등록·조회·표시 갱신·제거한다.
+ * 역할 및 책임: 플레이어·적·Nexus 런타임 유닛을 생성·등록·조회·표시 갱신·제거한다.
  */
 
 using System;
@@ -33,6 +32,14 @@ namespace Pakuri.InGame
         /// 전투 씬에 Nexus 모델을 만들고 표시 Actor와 Registry를 연결한다.
         public void RegisterNexus(NexusActor actor)
         {
+            for (var i = 0; i < unitRegistry.Players.Count; i++)
+            {
+                if (unitRegistry.Players[i].Model.IsNexus)
+                {
+                    return;
+                }
+            }
+
             var model = unitStateFactory.CreateNexus(actor.MaxHealth);
             actor.Initialize(model);
             RegisterUnit(model, actor, actor.transform);

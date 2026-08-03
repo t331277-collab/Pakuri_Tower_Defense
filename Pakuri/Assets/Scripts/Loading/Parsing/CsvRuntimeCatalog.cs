@@ -62,6 +62,13 @@ namespace Pakuri.Data
         public TextAsset[] EnemySkillBaseFiles;
         public TextAsset[] EnemySkillTriggerFiles;
 
+        [Header("Stage Sources")]
+        public TextAsset StageDay;
+        public TextAsset Stage1Encounter;
+        public TextAsset Stage1Reward;
+        public TextAsset Stage2Encounter;
+        public TextAsset Stage2Reward;
+
         [Header("Unity Assets")]
         public SpriteEntry[] Sprites = Array.Empty<SpriteEntry>();
         public PrefabEntry[] Prefabs = Array.Empty<PrefabEntry>();

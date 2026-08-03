@@ -29,7 +29,6 @@ namespace Pakuri.InGame
         public StatusEffectKind ConsumeTargetStatusKind;
         public float ConsumeTargetStatusRatio;
         public int ConsumeTargetStatusStacks;
-        public float DamageDelaySeconds;
         public float ExecuteHealthRatioThreshold;
         public bool RequireExecuteThresholdToCast;
         public float ExecuteDamageMultiplier = 1f;

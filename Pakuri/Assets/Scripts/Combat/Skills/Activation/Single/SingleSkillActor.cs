@@ -1,10 +1,9 @@
 /*
- * 역할: 한 번의 배치로 발생하는 공격 결과를 진행한다.
- * 책임: 지연과 반복, 충돌, 대상 제한, 피해, 상태, 후속 공격과 표현 수명을 처리한다.
+ * 역할: 단일 공격 배치의 대상 판정과 전투 결과를 적용한다.
+ * 책임: 충돌, 대상 제한, 피해, 상태, 후속 적중 효과와 표현 수명을 처리한다.
  */
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
@@ -18,28 +17,7 @@ namespace Pakuri.InGame
     {
 
         private EffectManager effectManager;
-        private Transform target;
-        private Vector3 offset;
         private float remainingLifetime;
-        private bool followsTarget;
-        private bool executionActor;
-        private bool executionLaunchFinished;
-        private int pendingOperations;
-
-        /// 시간형 효과의 수명과 실행 상태를 시작한다.
-        public void InitializeTimed(
-            EffectManager manager,
-            float durationSeconds)
-        {
-            effectManager = manager;
-            executionActor = false;
-            executionLaunchFinished = false;
-            pendingOperations = 0;
-            target = null;
-            offset = Vector3.zero;
-            followsTarget = false;
-            remainingLifetime = Mathf.Max(0.01f, durationSeconds);
-        }
 
         /// 단일 애니메이션 클립의 길이를 효과 수명으로 사용한다.
         public float InitializeAnimation(EffectManager manager)
@@ -59,51 +37,9 @@ namespace Pakuri.InGame
             }
 
             var lifetime = Mathf.Max(0.01f, clips[0].length);
-            InitializeTimed(manager, lifetime);
-            return lifetime;
-        }
-
-	/// 준비된 단일 실행의 작업 상태를 시작한다.
-	internal void BeginPreparedExecution(EffectManager manager)
-        {
             effectManager = manager;
-            executionActor = true;
-            executionLaunchFinished = false;
-            pendingOperations = 0;
-            target = null;
-            followsTarget = false;
-            remainingLifetime = 0f;
-        }
-
-	/// 준비된 단일 실행의 종료 조건을 확인한다.
-	internal void FinishPreparedExecution()
-        {
-            executionLaunchFinished = true;
-            TryCompleteExecution();
-        }
-
-        /// 지연 작업을 실행 수명에 연결한다.
-        private void StartTrackedCoroutine(IEnumerator operation)
-        {
-            pendingOperations++;
-            StartCoroutine(TrackOperation(operation));
-        }
-
-        /// 지연 작업의 완료를 실행 수명에 반영한다.
-        private IEnumerator TrackOperation(IEnumerator operation)
-        {
-            yield return operation;
-            pendingOperations = Mathf.Max(0, pendingOperations - 1);
-            TryCompleteExecution();
-        }
-
-        /// 모든 작업이 끝난 실행을 정리한다.
-        private void TryCompleteExecution()
-        {
-            if (executionActor && executionLaunchFinished && pendingOperations == 0)
-            {
-                Complete();
-            }
+            remainingLifetime = lifetime;
+            return lifetime;
         }
 
         /// 효과 객체의 수명을 끝낸다.
@@ -134,22 +70,6 @@ namespace Pakuri.InGame
         /// 프레임 경과에 따라 효과 수명을 갱신한다.
         private void Update()
         {
-            if (executionActor)
-            {
-                return;
-            }
-
-            if (followsTarget)
-            {
-                if (target == null)
-                {
-                    Complete();
-                    return;
-                }
-
-                transform.position = target.position + offset;
-            }
-
             remainingLifetime -= Time.deltaTime;
             if (remainingLifetime <= 0f)
             {
@@ -161,21 +81,6 @@ namespace Pakuri.InGame
 /// 배치된 공격의 대상 판정과 전투 결과를 적용한다.
 public partial class SingleSkillActor
 {
-
-	/// 공격이 실제 적용됐는지와 시전 자체가 성립했는지를 구분한다.
-	internal readonly struct SingleExecutionOutcome
-	{
-		public bool Routed { get; }
-
-		public bool CastCommitted { get; }
-
-		/// 적용 결과와 시전 성립 여부를 함께 고정한다.
-		public SingleExecutionOutcome(bool routed, bool castCommitted)
-		{
-			Routed = routed;
-			CastCommitted = castCommitted;
-		}
-	}
 
 	/// 대상 상태를 반영한 피해 입력과 처형 결과를 고정한다.
 	private readonly struct TargetDamageResolution
@@ -201,67 +106,8 @@ public partial class SingleSkillActor
 		}
 	}
 
-	/// 반복 배치 계획을 시간 순서로 예약한다.
-	internal void ScheduleRepeatedDeployments(SkillExecutionContext context, SkillExecutionState snapshot, Vector2 center, RuntimeSkillVisualSpec runtimeVisual, GameObject prefab)
-	{
-		if (context == null || context.CombatManager == null
-			|| !SkillExecutionRules.ResolveRepeat(
-				snapshot,
-				out var repeatCount,
-				out var repeatInterval,
-				out var repeatDamageMultiplier))
-		{
-			return;
-		}
-		SkillExecutionState snapshot2 = snapshot;
-		if (!Mathf.Approximately(repeatDamageMultiplier, 1f))
-		{
-			snapshot2 = snapshot.CopyWithDamageMultiplier(repeatDamageMultiplier);
-		}
-		for (int i = 1; i <= repeatCount; i++)
-		{
-			float num = Mathf.Max(0f, repeatInterval * (float)i);
-			if (num <= 0f)
-			{
-				ExecuteAtCenter(context, snapshot2, center, runtimeVisual, prefab, useRuntimeState: false);
-				PublishDeploymentLifecycle(context, snapshot2, center);
-			}
-			else
-			{
-				StartTrackedCoroutine(ExecuteRepeatedDeploymentAfterDelay(context, snapshot2, center, runtimeVisual, prefab, num));
-			}
-		}
-	}
-
-	/// 예약된 반복 배치를 실행한다.
-	private IEnumerator ExecuteRepeatedDeploymentAfterDelay(SkillExecutionContext context, SkillExecutionState snapshot, Vector2 center, RuntimeSkillVisualSpec runtimeVisual, GameObject prefab, float delaySeconds)
-	{
-		yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
-		if (context != null && !(context.CombatManager == null) && context.Roster != null && context.CasterEntry != null && context.Caster != null)
-		{
-			ExecuteAtCenter(context, snapshot, center, runtimeVisual, prefab, useRuntimeState: false);
-			PublishDeploymentLifecycle(context, snapshot, center);
-		}
-	}
-
-	/// 배치 시작 사건을 전달한다.
-	internal static void PublishDeploymentLifecycle(
-		SkillExecutionContext context,
-		SkillExecutionState snapshot,
-		Vector2 center)
-	{
-		if (context == null)
-		{
-			return;
-		}
-
-		SkillTrigger.PublishLifecycleEvent(
-			SkillTriggerEvent.OnDeploymentCast,
-			new SkillExecutionContext(context.Caster, context.SourceSkillId, null, center, 0f, 0, snapshot, context));
-	}
-
 	/// 준비된 단일 공격을 중심 위치에서 실행한다.
-	internal SingleExecutionOutcome ExecuteAtCenter(SkillExecutionContext context, SkillExecutionState snapshot, Vector2 center, RuntimeSkillVisualSpec runtimeVisual, GameObject prefab, bool useRuntimeState)
+	internal static bool ExecuteAtCenter(SkillExecutionContext context, SkillExecutionState snapshot, Vector2 center, RuntimeSkillVisualSpec runtimeVisual, GameObject prefab, bool useRuntimeState)
 	{
 		float radius = snapshot.PreparedRadius;
 		bool coverAll = snapshot.PreparedCoverAll;
@@ -271,7 +117,6 @@ public partial class SingleSkillActor
 		float critChanceBonus = snapshot?.CritChanceBonus ?? 0f;
 		float critDamageBonus = snapshot?.CritDamageBonus ?? 0f;
 		int num = snapshot.PreparedHitTargetCount;
-		float num2 = snapshot.PreparedDamageDelay;
 		SkillExecutionState skillRuntimeInstance = null;
 		if (useRuntimeState && context.PublishSkillLifecycleEvents)
 		{
@@ -301,46 +146,24 @@ public partial class SingleSkillActor
 						snapshot.RadiusMultiplier,
 						snapshot.RadiusBonus);
 				}
-				if (num2 > 0f)
-				{
-					StartTrackedCoroutine(ApplyPrefabHitboxAfterDelay(context, snapshot, gameObject, num, damage, attribute, statusSpec, skillRuntimeInstance, snapshot.PreparedCriticalAllowed, critChanceBonus, critDamageBonus, num2));
-				}
-				else
-				{
-					flag2 = ApplyPrefabHitbox(context.CombatManager, context.CasterEntry, context.Roster, snapshot.PreparedTargeting, gameObject, num, damage, attribute, statusSpec, context.Caster, context.SourceSkillId, skillRuntimeInstance, snapshot.PreparedCriticalAllowed, critChanceBonus, critDamageBonus, snapshot, context.EventTarget, context.LockToEventTarget);
-				}
+				flag2 = ApplyPrefabHitbox(context.CombatManager, context.CasterEntry, context.Roster, snapshot.PreparedTargeting, gameObject, num, damage, attribute, statusSpec, context.Caster, context.SourceSkillId, skillRuntimeInstance, snapshot.PreparedCriticalAllowed, critChanceBonus, critDamageBonus, snapshot, context.EventTarget, context.LockToEventTarget);
 				SingleSkillActor.Attach(gameObject).InitializeAnimation(effects);
 			}
 		}
 		if (!flag)
 		{
 			castCommitted = true;
-			if (num2 > 0f)
+			flag2 = ApplyNonPrefabTargets(context, snapshot, center, radius, coverAll, num, damage, attribute, statusSpec, skillRuntimeInstance, snapshot.PreparedCriticalAllowed, critChanceBonus, critDamageBonus);
+			if (flag2 && effects != null)
 			{
-				if (effects != null)
+				var visualInstance = effects.CreateEffect(new EffectCreateRequest(runtimeVisual, prefab, "RuntimeSingleVisual", center, Quaternion.identity, null, null, false, true, false));
+				if (visualInstance != null)
 				{
-					var visualInstance = effects.CreateEffect(new EffectCreateRequest(runtimeVisual, prefab, "RuntimeSingleVisual", center, Quaternion.identity, null, null, false, true, false));
-					if (visualInstance != null)
-					{
-						SingleSkillActor.Attach(visualInstance).InitializeAnimation(effects);
-					}
-				}
-				StartTrackedCoroutine(ApplyNonPrefabTargetsAfterDelay(context, snapshot, center, radius, coverAll, num, damage, attribute, statusSpec, skillRuntimeInstance, snapshot.PreparedCriticalAllowed, critChanceBonus, critDamageBonus, num2));
-			}
-			else
-			{
-				flag2 = ApplyNonPrefabTargets(context, snapshot, center, radius, coverAll, num, damage, attribute, statusSpec, skillRuntimeInstance, snapshot.PreparedCriticalAllowed, critChanceBonus, critDamageBonus);
-				if (flag2 && effects != null)
-				{
-					var visualInstance = effects.CreateEffect(new EffectCreateRequest(runtimeVisual, prefab, "RuntimeSingleVisual", center, Quaternion.identity, null, null, false, true, false));
-					if (visualInstance != null)
-					{
-						SingleSkillActor.Attach(visualInstance).InitializeAnimation(effects);
-					}
+					SingleSkillActor.Attach(visualInstance).InitializeAnimation(effects);
 				}
 			}
 		}
-		return new SingleExecutionOutcome(flag2, castCommitted);
+		return castCommitted;
 	}
 
 	/// 일반 단일 공격의 대상 경로를 선택한다.
@@ -355,23 +178,6 @@ public partial class SingleSkillActor
 			return ApplyLimitedTargets(context.CombatManager, context.CasterEntry, context.Roster, snapshot.PreparedTargeting, effectiveHitTargetCount, damage, attribute, statusSpec, context.Caster, context.SourceSkillId, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, snapshot, center, context.EventTarget, context.LockToEventTarget);
 		}
 		return ApplyAreaTargets(context.CombatManager, context.CasterEntry, context.Roster, snapshot.PreparedTargeting, center, radius, coverAll, damage, attribute, statusSpec, context.Caster, context.SourceSkillId, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, snapshot, context.EventTarget, context.LockToEventTarget);
-	}
-
-	/// 지연된 일반 대상 판정을 실행한다.
-	private IEnumerator ApplyNonPrefabTargetsAfterDelay(SkillExecutionContext context, SkillExecutionState snapshot, Vector2 center, float radius, bool coverAll, int effectiveHitTargetCount, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, SkillExecutionState onHitRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, float delaySeconds)
-	{
-		yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
-		ApplyNonPrefabTargets(context, snapshot, center, radius, coverAll, effectiveHitTargetCount, damage, attribute, statusSpec, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus);
-	}
-
-	/// 지연된 충돌 영역 판정을 실행한다.
-	private IEnumerator ApplyPrefabHitboxAfterDelay(SkillExecutionContext context, SkillExecutionState snapshot, GameObject instance, int effectiveHitTargetCount, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, SkillExecutionState onHitRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, float delaySeconds)
-	{
-		yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
-		if (context != null && !(context.CombatManager == null) && context.CasterEntry != null && context.Roster != null && !(instance == null))
-		{
-			ApplyPrefabHitbox(context.CombatManager, context.CasterEntry, context.Roster, snapshot.PreparedTargeting, instance, effectiveHitTargetCount, damage, attribute, statusSpec, context.Caster, context.SourceSkillId, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, snapshot, context.EventTarget, context.LockToEventTarget);
-		}
 	}
 
 	/// 충돌 영역 결과를 공통 피해 경로에 연결한다.
@@ -405,7 +211,7 @@ public partial class SingleSkillActor
 				Vector2 hitPosition = ((unitEntry.Transform != null) ? ((Vector2)unitEntry.Transform.position) : Vector2.zero);
 				bool isCoreHit = coreCollisionTargets.Contains(unitEntry);
 				TargetDamageResolution damageResolution = TargetDamage(snapshot, damage, unitEntry.Model, critChanceBonus, isCoreHit);
-				InGameResourceChangeResult result2 = manager.ApplyDamageWithTriggerState(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, critDamageBonus, sourceSkillId, false, damageResolution.IsExecute, null, damageResolution.FinalDamageMultiplier, snapshot.TriggerExecutionState);
+                InGameResourceChangeResult result2 = manager.ApplyDamage(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, critDamageBonus, sourceSkillId, false, damageResolution.IsExecute, null, damageResolution.FinalDamageMultiplier, isTrigger: snapshot.IsTrigger);
 				int consumedStacks = ConsumePendingTargetStatusStacks(manager, unitEntry.Model, snapshot, damageResolution);
 				SkillExecution.HandleSingleKillRecovery(sourceRuntime, snapshot, result2, damageResolution.IsExecute);
 				TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry, result2, consumedStacks);
@@ -443,7 +249,7 @@ public partial class SingleSkillActor
 			CombatUnitEntry unitEntry = list[i];
 			Vector2 hitPosition = ((unitEntry.Transform != null) ? ((Vector2)unitEntry.Transform.position) : center);
 			TargetDamageResolution damageResolution = TargetDamage(snapshot, damage, unitEntry.Model, critChanceBonus, isCoreHit: false);
-			InGameResourceChangeResult result2 = manager.ApplyDamageWithTriggerState(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, critDamageBonus, sourceSkillId, false, damageResolution.IsExecute, null, damageResolution.FinalDamageMultiplier, snapshot.TriggerExecutionState);
+            InGameResourceChangeResult result2 = manager.ApplyDamage(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, critDamageBonus, sourceSkillId, false, damageResolution.IsExecute, null, damageResolution.FinalDamageMultiplier, isTrigger: snapshot.IsTrigger);
 			int consumedStacks = ConsumePendingTargetStatusStacks(manager, unitEntry.Model, snapshot, damageResolution);
 			SkillExecution.HandleSingleKillRecovery(sourceRuntime, snapshot, result2, damageResolution.IsExecute);
 			TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry, result2, consumedStacks);
@@ -481,7 +287,7 @@ public partial class SingleSkillActor
 			}
 			Vector2 hitPosition = ((unitEntry.Transform != null) ? ((Vector2)unitEntry.Transform.position) : center);
 			TargetDamageResolution damageResolution = TargetDamage(snapshot, damage, unitEntry.Model, critChanceBonus, isCoreHit: false);
-			InGameResourceChangeResult result = manager.ApplyDamageWithTriggerState(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, critDamageBonus, sourceSkillId, false, damageResolution.IsExecute, null, damageResolution.FinalDamageMultiplier, snapshot.TriggerExecutionState);
+            InGameResourceChangeResult result = manager.ApplyDamage(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, critDamageBonus, sourceSkillId, false, damageResolution.IsExecute, null, damageResolution.FinalDamageMultiplier, isTrigger: snapshot.IsTrigger);
 			int consumedStacks = ConsumePendingTargetStatusStacks(manager, unitEntry.Model, snapshot, damageResolution);
 			SkillExecution.HandleSingleKillRecovery(sourceRuntime, snapshot, result, damageResolution.IsExecute);
 			TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry, result, consumedStacks);
@@ -504,7 +310,7 @@ public partial class SingleSkillActor
 			{
 				Vector2 hitPosition2 = ((unitEntry2.Transform != null) ? ((Vector2)unitEntry2.Transform.position) : center);
 				TargetDamageResolution damageResolution2 = TargetDamage(snapshot, damage, unitEntry2.Model, critChanceBonus, isCoreHit: false);
-				InGameResourceChangeResult result3 = manager.ApplyDamageWithTriggerState(unitEntry2.Model, damageResolution2.Damage, attribute, source, criticalAllowed, damageResolution2.CritChanceBonus, critDamageBonus, sourceSkillId, false, damageResolution2.IsExecute, null, damageResolution2.FinalDamageMultiplier, snapshot.TriggerExecutionState);
+                InGameResourceChangeResult result3 = manager.ApplyDamage(unitEntry2.Model, damageResolution2.Damage, attribute, source, criticalAllowed, damageResolution2.CritChanceBonus, critDamageBonus, sourceSkillId, false, damageResolution2.IsExecute, null, damageResolution2.FinalDamageMultiplier, isTrigger: snapshot.IsTrigger);
 				int consumedStacks2 = ConsumePendingTargetStatusStacks(manager, unitEntry2.Model, snapshot, damageResolution2);
 				SkillExecution.HandleSingleKillRecovery(sourceRuntime, snapshot, result3, damageResolution2.IsExecute);
 				TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry2, result3, consumedStacks2);
@@ -564,7 +370,7 @@ public partial class SingleSkillActor
 			return;
 		}
 
-		manager.ApplyDamageWithTriggerState(
+		manager.ApplyDamage(
 			target.Model,
 			primaryDamage * multiplier,
 			attribute,
@@ -577,7 +383,7 @@ public partial class SingleSkillActor
 			false,
 			null,
 			1f,
-			snapshot.TriggerExecutionState);
+			isTrigger: snapshot.IsTrigger);
 	}
 
 	/// 적중 수 보정을 실행에 반영한다.

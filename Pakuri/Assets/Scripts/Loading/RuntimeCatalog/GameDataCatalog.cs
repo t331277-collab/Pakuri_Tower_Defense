@@ -29,6 +29,7 @@ namespace Pakuri.Data
         public EnemyDefinition[] StageOneEnemies = Array.Empty<EnemyDefinition>();
         public EnemyDefinition[] StageTwoEnemies = Array.Empty<EnemyDefinition>();
         public StatusEffectDefinition[] StatusEffects = Array.Empty<StatusEffectDefinition>();
+        public StageDefinition Stage = new StageDefinition();
 
         public void RebuildLookup()
         {

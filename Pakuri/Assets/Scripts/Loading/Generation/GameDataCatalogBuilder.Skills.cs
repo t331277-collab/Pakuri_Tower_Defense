@@ -400,7 +400,6 @@ internal sealed partial class GameDataCatalogBuilder
 			singleSkillExecutionDefinition.ConsumeTargetStatusId = source.ConsumeTargetStatusId;
 			singleSkillExecutionDefinition.ConsumeTargetStatusRatio = Mathf.Clamp01(source.ConsumeTargetStatusRatio);
 			singleSkillExecutionDefinition.ConsumeTargetStatusStacks = Mathf.Max(0, source.ConsumeTargetStatusStacks);
-			singleSkillExecutionDefinition.DamageDelaySeconds = Mathf.Max(0f, source.DamageDelaySeconds);
 			singleSkillExecutionDefinition.ExecuteHealthRatioThreshold = Mathf.Clamp01(source.ExecuteHealthRatioThreshold);
 			singleSkillExecutionDefinition.RequireExecuteThresholdToCast = source.RequireExecuteThresholdToCast;
 			singleSkillExecutionDefinition.ExecuteDamageMultiplier = 1f;

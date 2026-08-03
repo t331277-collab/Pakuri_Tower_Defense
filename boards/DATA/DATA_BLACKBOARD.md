@@ -4,6 +4,49 @@
 
 The pre-cleanup file, including completed and superseded data tasks, is preserved at `boards/ARCHIVE/ACTIVE_BOARD_SNAPSHOT_2026-07-28/DATA/DATA_BLACKBOARD.md`.
 
+## Task: 2026-08-03 Remove SingleSkill Internal Delay Data Contract
+
+### Task title
+
+Remove the unused SingleSkill `DamageDelaySeconds` runtime contract while preserving projectile arrival delay data.
+
+### Goals
+
+- Remove `SingleSkillDefinition.DamageDelaySeconds` and `SkillExecutionState.PreparedDamageDelay`.
+- Stop copying source delay data into SingleSkill definitions during Generation.
+- Keep `ActiveSkillBuildData.DamageDelaySeconds` for projectile arrival generation and CSV validation.
+
+### Constraints
+
+- Preserve `skills_projectile.csv` and the authored `sein-c` value `0.8`.
+- Preserve generated `sein-c@arrival` creation and the existing runtime execution route.
+- Do not change CSV schema or unrelated loading/UI behavior.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation complete. Static data/code checks passed. Full C# build is currently blocked by 3 out-of-scope UI errors.
+
+### Next Actions
+
+- Unity catalog refresh and Play Mode verification remain user-owned.
+
+### Evidence
+
+- `GameDataCatalogBuilder.Skills.cs` still maps source `DamageDelaySeconds` to Projectile `ArrivalDelaySeconds` and builds `sein-c@arrival` when the value is positive, but no longer assigns it to `SingleSkillDefinition`.
+- `SingleSkillDefinition.cs`, `SkillExecutionState.cs` and `SkillExecution.cs` no longer contain the removed SingleSkill delay members.
+- `skills_projectile.csv` has the only positive authored `damage_delay_seconds` row: `sein-c`, runtime kind `CooldownProjectile`, value `0.8`.
+- `skill_graph_nodes_projectile.csv` keeps `sein-c-trait-4` `DamageDelayMultiplier=0.6`; this continues to modify projectile arrival delay, not SingleSkill internal damage delay.
+- `rg` found no remaining `PreparedDamageDelay`, `SingleSkillDefinition.DamageDelaySeconds`, or SingleSkill delayed-application method references.
+- The full build errors are limited to modified `MonsterPanelUI.cs:146`, `DebugUI.cs:665`, and `DebugUI.cs:686`; no changed Loading or Combat file produced a reported compiler error.
+
+### History
+
+- 2026-08-03: Code Builder removed the unused SingleSkill delay fields and preserved projectile arrival delay as the separate generated SingleSkill flow.
+
 ## Task: 2026-08-03 Sein-C Projectile Arrival SingleSkill Migration
 
 ### Task title
@@ -891,3 +934,82 @@ Implemented and statically verified; Unity asset reimport and Play Mode remain u
 ### History
 
 - 2026-08-03: Code Builder split the two stage-flow tables by stage, updated Inspector references and runtime loading, and removed the duplicate root CSV files after exact data comparison.
+
+## Task: 2026-08-03 Skill Reaction IsTrigger Runtime Contract
+
+### Task title
+
+후속 반응 스킬을 공통 실행 경로에서 식별할 `SkillReaction.IsTrigger` 계약을 추가한다.
+
+### Goals
+
+- 반응 정의가 실행 스냅샷에 `IsTrigger`를 전달하도록 한다.
+- 반응으로 생성된 스킬이 다시 사건 반응을 발행하지 않도록 Combat 실행 경로와 연결한다.
+
+### Constraints
+
+- CSV 열과 스키마를 추가하지 않는다.
+- 모든 반응은 기존 `GameDataCatalogBuilder`가 생성하는 런타임 `SkillReaction` 객체의 기본값을 사용한다.
+- 일반 스킬 정의 자체의 실행 경로와 기존 반복·지연 값은 변경하지 않는다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation complete. 런타임 생성 경로와 Assembly-CSharp 빌드를 확인했다.
+
+### Next Actions
+
+- Unity Play Mode에서 CSV 런타임 카탈로그 생성 후 반응 객체의 `IsTrigger` 기본값이 적용되는지 확인한다.
+
+### Evidence
+
+- `GameDataCatalogBuilder.BuildRuntimeCatalog`가 매번 `SkillReaction` 객체를 생성하며, `SkillNodeConditions.SkillReaction.IsTrigger`의 기본값은 `true`다.
+- 일반 시전 효과 변환은 `SkillReaction`을 임시로 사용한 뒤 `SkillCastEffect` 노드만 반환하므로 `IsTrigger` 실행 태그를 직접 사용하지 않는다.
+- `SkillExecution.ExecuteReactionOutcome`가 반응의 `IsTrigger`를 `TryExecuteResolvedEffect`로 전달한다.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore`는 오류 0개, 기존 Unity 참조 충돌 경고 2개로 완료했다.
+
+### History
+
+- 2026-08-03: Code Builder가 기존 사건 연쇄 상태 타입을 제거하는 공통 실행 계약으로 `SkillReaction.IsTrigger`를 추가했다.
+
+## Task: 2026-08-03 Restore NewRunScene Stage CSV Inspector References
+
+### Task title
+
+Reconnect the four Stage1/Stage2 Encounter and Reward TextAssets on `NewRunScene.StageManager`.
+
+### Goals
+
+- Remove the `{fileID: 0}` serialized references that stop `StageManager.LoadTables()`.
+- Preserve the existing StageFlowTable loading code and CSV files.
+
+### Constraints
+
+- Change only the four StageManager CSV fields in `NewRunScene.unity`.
+- Use the actual GUIDs from the four CSV `.meta` files.
+- Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and statically verified.
+
+### Next Actions
+
+- User reloads `NewRunScene` and verifies StageManager starts and enemy spawning proceeds in Play Mode.
+
+### Evidence
+
+- `NewRunScene.unity` now assigns `stage1EncounterCsv`, `stage1RewardCsv`, `stage2EncounterCsv`, and `stage2RewardCsv` with `fileID: 4900000` and the matching CSV GUIDs.
+- The four GUIDs resolve to `CSVdata/stage_flow/Stage1/StageEncounter.csv`, `Stage1/StageReward.csv`, `Stage2/StageEncounter.csv`, and `Stage2/StageReward.csv`.
+- `git diff --check -- Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` returned no whitespace errors.
+
+### History
+
+- 2026-08-03: Code Builder restored the four missing StageManager TextAsset Inspector references.
