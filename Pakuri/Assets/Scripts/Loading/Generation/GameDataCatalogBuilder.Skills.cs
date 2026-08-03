@@ -339,16 +339,12 @@ internal sealed partial class GameDataCatalogBuilder
 			projectileSkillExecutionDefinition.Projectile.ProjectileSpeed = source.ProjectileSpeed;
 			projectileSkillExecutionDefinition.Projectile.LifetimeSeconds = source.ProjectileLifetimeSeconds;
 			projectileSkillExecutionDefinition.ContactDamageEnabled = source.DamageDelaySeconds <= 0f;
-			projectileSkillExecutionDefinition.StopOnFirstHit = source.DamageDelaySeconds > 0f;
-			projectileSkillExecutionDefinition.ImpactDelaySeconds = Mathf.Max(0f, source.DamageDelaySeconds);
-			projectileSkillExecutionDefinition.ImpactRuntimeVisual = source.ImpactRuntimeVisual;
-			projectileSkillExecutionDefinition.HasImpactArea = source.DamageDelaySeconds > 0f;
-			projectileSkillExecutionDefinition.ImpactArea.Radius = source.Radius;
-			projectileSkillExecutionDefinition.ImpactArea.CoverAll = false;
+			projectileSkillExecutionDefinition.ArrivalDelaySeconds = Mathf.Max(0f, source.DamageDelaySeconds);
+			projectileSkillExecutionDefinition.ArrivalSkill = BuildProjectileArrivalSkill(
+				source,
+				statusDefinitions);
 			MapDamage(projectileSkillExecutionDefinition.Damage, source);
-			MapDamage(projectileSkillExecutionDefinition.ImpactDamage, source);
 			projectileSkillExecutionDefinition.OnHitStatus = CreateStatusApplication(source, statusDefinitions);
-			projectileSkillExecutionDefinition.ImpactStatus = CreateStatusApplication(source, statusDefinitions);
 		}
 		else if (skill is LineSkillDefinition lineSkillExecutionDefinition)
 		{
@@ -489,6 +485,49 @@ internal sealed partial class GameDataCatalogBuilder
 					: source.ChargeMoveSpeedMultiplier;
 			}
 		}
+	}
+
+	private static SingleSkillDefinition BuildProjectileArrivalSkill(
+		ActiveSkillBuildData source,
+		StatusEffectDefinition[] statusDefinitions)
+	{
+		if (source == null || source.DamageDelaySeconds <= 0f)
+		{
+			return null;
+		}
+
+		var radius = Mathf.Max(0f, source.Radius);
+		var arrivalSkill = new SingleSkillDefinition
+		{
+			SkillId = source.SkillId + "@arrival",
+			SkillName = source.DisplayName + " Arrival",
+			RuntimeKind = SkillRuntimeKind.SingleAttack,
+			ImplementationState = SkillImplementationState.RuntimeImplemented,
+			IsActive = false,
+			Element = source.Attribute,
+			RuntimeVisual = source.ImpactRuntimeVisual,
+			Targeting = new SkillTargetingSpec
+			{
+				TargetSide = SkillTargetSide.Enemy,
+				Selection = SkillTargetSelection.Nearest,
+				Shape = SkillTargetShape.Circle,
+				Radius = radius,
+				CoverAll = false
+			},
+			Area = new AreaBlueprintSpec
+			{
+				Radius = radius,
+				CoverAll = false
+			},
+			HitAllTargets = true,
+			HitTargetCount = int.MaxValue,
+			Damage = new SkillDamageSpec(),
+			OnHitStatus = new StatusApplicationSpec()
+		};
+
+		MapDamage(arrivalSkill.Damage, source);
+		arrivalSkill.OnHitStatus = CreateStatusApplication(source, statusDefinitions);
+		return arrivalSkill;
 	}
 
 	private static BuffEffectKind MapBuffEffectKind(ActiveSkillBuildData source)

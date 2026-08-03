@@ -336,23 +336,15 @@ public class SkillExecutionState
 
 	internal bool PreparedMagazineLastProjectile { get; set; }
 
-	internal StatusApplicationSpec PreparedImpactStatus { get; set; }
-
-	internal RuntimeSkillVisualSpec PreparedImpactRuntimeVisual { get; set; }
-
-	internal SkillTargetingSpec PreparedImpactTargeting { get; set; }
-
 	internal bool PreparedContactDamageEnabled { get; set; }
 
-	internal bool PreparedStopOnFirstHit { get; set; }
+	internal float PreparedArrivalDelay { get; set; }
 
-	internal float PreparedImpactDelay { get; set; }
+	internal SingleSkillDefinition PreparedArrivalSkill { get; set; }
 
-	internal bool PreparedHasImpactArea { get; set; }
+	internal bool PreparedHasProjectileTargetPoint { get; set; }
 
-	internal float PreparedImpactRadius { get; set; }
-
-	internal float PreparedImpactDamage { get; set; }
+	internal Vector2 PreparedProjectileTargetPoint { get; set; }
 
 	internal GameObject PreparedSkillEffectPrefab { get; set; }
 

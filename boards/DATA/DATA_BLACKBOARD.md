@@ -4,6 +4,49 @@
 
 The pre-cleanup file, including completed and superseded data tasks, is preserved at `boards/ARCHIVE/ACTIVE_BOARD_SNAPSHOT_2026-07-28/DATA/DATA_BLACKBOARD.md`.
 
+## Task: 2026-08-03 Sein-C Projectile Arrival SingleSkill Migration
+
+### Task title
+
+Replace the delayed projectile impact-area path with target-point arrival and the existing `SingleSkill` execution path.
+
+### Goals
+
+- Let Sein-C fly to its cast-time target point and preserve collision-triggered trait effects.
+- Execute the generated arrival `SingleSkill` after `damage_delay_seconds` at the target point.
+- Remove `ProjectileSkillActor`'s direct impact-area target collection and execution path.
+
+### Constraints
+
+- Preserve existing CSV schema, values, authored triggers and unrelated user changes.
+- Reuse `TryExecuteReaction` and the existing `SingleSkill` runtime; do not add a second area-damage executor.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation complete. Static references and `Assembly-CSharp.csproj` build verified.
+
+### Next Actions
+
+- In Unity Play Mode, verify Sein-C collision trait damage, target-point delay, arrival damage, and `sein-c-master-1` OnExpire behavior.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Skills/Activation/Projectile/ProjectileSkillActor.cs` now uses `BeginArrivalDelay` and `ExecuteArrivalSkill`; `ApplyImpactAreaTargets`, `ArmImpact`, and the old impact fields are absent.
+- `Pakuri/Assets/Scripts/Loading/Generation/GameDataCatalogBuilder.Skills.cs` creates a generated arrival `SingleSkillDefinition` from the projectile source data when `damage_delay_seconds > 0`.
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/SkillExecution.cs` stores the cast-time projectile target point and passes arrival data through `SkillExecutionState` and `ProjectileSkillExecutor`.
+- `Import-Csv Pakuri/Assets/CSVdata/authoring/monster/skills/base/projectile/skills_projectile.csv` confirms `sein-c`: `radius=1.8`, `damage_delay_seconds=0.8`.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore -v:minimal` completed with 0 errors and 2 existing assembly-reference warnings.
+- `rg` over Combat skill and Generation scripts found 0 old `ApplyImpactAreaTargets`, `ArmImpact`, `StopOnFirstHit`, `PreparedImpact`, and `impactArmed` references.
+
+### History
+
+- 2026-08-03: Code Builder migrated delayed projectile impact execution to target-point arrival plus generated `SingleSkill`; kept OnHit trigger publication active when base contact damage is disabled.
+
 ## Task: 2026-08-03 Monster Skill Icon Asset Copy
 
 ### Task title
@@ -805,3 +848,46 @@ Implemented. CSV asset validation, Unity catalog sync, scene validation and solu
 ### History
 
 - 2026-08-03: Code Builder added distinct monster/enemy Image CSV fields, runtime wiring, UI consumers and removed old serialized monster portrait/Karin Sprite references.
+
+## Task: 2026-08-03 Stage Flow CSV Split
+
+### Task title
+
+Organize Stage Encounter and Reward CSV data under separate `Stage1` and `Stage2` folders.
+
+### Goals
+
+- Create `stage_flow/Stage1/StageEncounter.csv` and `StageReward.csv`.
+- Create `stage_flow/Stage2/StageEncounter.csv` and `StageReward.csv`.
+- Keep StageManager runtime loading all four files in one StageFlowTable.
+
+### Constraints
+
+- Preserve every existing Encounter and Reward row and column value.
+- Keep `StageDay.csv` at the stage_flow root because it was not part of the requested split.
+- Do not overwrite unrelated user changes in prefabs, scene UI, combat scripts, or prior task files.
+- Store CSV files as UTF-8.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and statically verified; Unity asset reimport and Play Mode remain user-owned.
+
+### Next Actions
+
+- In Unity, allow the new folders/CSV TextAssets to import, then validate `NewRunScene` stage 1 and stage 2 day progression.
+
+### Evidence
+
+- Exact normalized split comparison returned `encounter_exact_split=True` for 60 Encounter rows and `reward_exact_split=True` for 9 Reward rows.
+- Static CSV validation found Stage1 Encounter 30 rows, Stage2 Encounter 30 rows, Stage1 Reward 5 rows, and Stage2 Reward 4 rows; all Encounter files have 14 columns and all Reward files have 13 columns.
+- `StageManager.cs` now has four serialized stage CSV references and `StageFlowTable.Load` loads both stage file pairs.
+- `NewRunScene.unity` assigns the four new TextAsset GUIDs to `stage1EncounterCsv`, `stage1RewardCsv`, `stage2EncounterCsv`, and `stage2RewardCsv`.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors; the existing two Unity reference-conflict warnings remain.
+
+### History
+
+- 2026-08-03: Code Builder split the two stage-flow tables by stage, updated Inspector references and runtime loading, and removed the duplicate root CSV files after exact data comparison.

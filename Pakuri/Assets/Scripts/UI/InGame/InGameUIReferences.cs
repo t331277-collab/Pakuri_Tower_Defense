@@ -15,6 +15,7 @@ namespace Pakuri.InGame
         public InGameOfferingReferences offering = new InGameOfferingReferences();
         public InGameMenifestReferences menifest = new InGameMenifestReferences();
         public InGameInfoReferences info = new InGameInfoReferences();
+        public InGameBossHpReferences bossHp = new InGameBossHpReferences();
     }
 
     [Serializable]
@@ -97,6 +98,17 @@ namespace Pakuri.InGame
         public TMP_Text prisonStageInfoText;
         public TMP_Text prisonGoldInfoText;
         public TMP_Text prisonDarkInfoText;
+    }
+
+    [Serializable]
+    internal sealed class InGameBossHpReferences
+    {
+        public GameObject root;
+        public TMP_Text nameText;
+        public TMP_Text hpText;
+        public RectTransform background;
+        public RectTransform fill;
+        public RectTransform shield;
     }
 }
 

@@ -27,6 +27,11 @@ namespace Pakuri.InGame
             display.ShowDamage(damageAmount);
         }
 
+        internal void SetWorldHpBarVisible(bool visible)
+        {
+            display?.SetWorldHpBarVisible(visible);
+        }
+
         public void RefreshDisplay()
         {
             display.Refresh(Model);

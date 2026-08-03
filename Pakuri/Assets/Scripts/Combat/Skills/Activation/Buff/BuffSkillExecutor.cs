@@ -13,7 +13,7 @@ namespace Pakuri.InGame
     internal static class BuffSkillExecutor
     {
 
-        /// 지원 효과의 성격에 맞는 적용 방식을 고른다.
+        /// 지원 효과의 스킬 종류에 맞는 적용 방식을 고른다.
         internal static bool Execute(
             SkillExecutionContext context,
             SkillExecutionState snapshot)

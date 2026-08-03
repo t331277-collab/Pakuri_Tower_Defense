@@ -1344,12 +1344,22 @@ namespace Pakuri.InGame
             var origin = context.CasterEntry.Transform != null
                 ? (Vector2)context.CasterEntry.Transform.position
                 : Vector2.zero;
-            var target = context.HasManualAimDirection
-                ? null
-                : SkillTargeting.FindNearestTarget(context.CasterEntry, context.Roster, skill.Targeting);
-            var direction = context.HasManualAimDirection
-                ? context.ManualAimDirection
-                : SkillTargeting.DirectionToTarget(origin, target);
+            var target = !context.HasManualAimDirection && !context.HasManualTargetPoint
+                ? SkillTargeting.FindNearestTarget(context.CasterEntry, context.Roster, skill.Targeting)
+                : null;
+            var hasTargetPoint = context.HasManualTargetPoint;
+            var targetPoint = context.ManualTargetPoint;
+            if (!hasTargetPoint && target != null && target.Transform != null)
+            {
+                hasTargetPoint = true;
+                targetPoint = target.Transform.position;
+            }
+
+            var direction = context.HasManualTargetPoint
+                ? context.ManualTargetPoint - origin
+                : context.HasManualAimDirection
+                    ? context.ManualAimDirection
+                    : SkillTargeting.DirectionToTarget(origin, target);
             if (direction.sqrMagnitude <= 0.0001f)
             {
                 if (!context.HasManualAimDirection)
@@ -1430,6 +1440,8 @@ namespace Pakuri.InGame
             snapshot.PreparedProjectileSpeed = speed;
             snapshot.PreparedPierceCount = pierce;
             snapshot.PreparedProjectileLifetime = lifetime;
+            snapshot.PreparedHasProjectileTargetPoint = hasTargetPoint;
+            snapshot.PreparedProjectileTargetPoint = targetPoint;
             snapshot.PreparedBurstProjectileCount = burstCount;
             snapshot.PreparedBurstProjectileIndex = burstIndex;
             snapshot.PreparedBurstDamageMultiplier = Mathf.Max(0f, burstDamageMultiplier);
@@ -1468,28 +1480,11 @@ namespace Pakuri.InGame
             snapshot.PreparedBranchCounts = branchCounts;
             snapshot.PreparedBranchDamageMultipliers = branchDamageMultipliers;
             snapshot.PreparedBranchSearchRadii = branchSearchRadii;
-            snapshot.PreparedImpactStatus = SkillExecutionRules.StatusSpec(skill.ImpactStatus, snapshot);
-            snapshot.PreparedImpactRuntimeVisual = skill.ImpactRuntimeVisual;
-            snapshot.PreparedImpactTargeting = new SkillTargetingSpec
-            {
-                TargetSide = SkillTargetSide.Enemy,
-                Selection = SkillTargetSelection.Nearest,
-                Shape = SkillTargetShape.Circle,
-                Radius = snapshot.PreparedImpactRadius,
-                CoverAll = false
-            };
             snapshot.PreparedContactDamageEnabled = skill.ContactDamageEnabled;
-            snapshot.PreparedStopOnFirstHit = skill.StopOnFirstHit;
-            snapshot.PreparedImpactDelay = Mathf.Max(
+            snapshot.PreparedArrivalDelay = Mathf.Max(
                 0f,
-                skill.ImpactDelaySeconds * Mathf.Max(0f, snapshot.DamageDelayMultiplier));
-            snapshot.PreparedHasImpactArea = skill.HasImpactArea;
-            snapshot.PreparedImpactRadius = SkillTargeting.Radius(
-                skill.ImpactArea != null ? skill.ImpactArea.Radius : 0f,
-                snapshot.RadiusMultiplier,
-                snapshot.RadiusBonus);
-            snapshot.PreparedImpactTargeting.Radius = snapshot.PreparedImpactRadius;
-            snapshot.PreparedImpactDamage = snapshot.PreparedDamage;
+                skill.ArrivalDelaySeconds * Mathf.Max(0f, snapshot.DamageDelayMultiplier));
+            snapshot.PreparedArrivalSkill = skill.ArrivalSkill;
             return true;
         }
 

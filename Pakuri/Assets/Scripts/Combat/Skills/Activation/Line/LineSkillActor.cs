@@ -101,7 +101,7 @@ namespace Pakuri.InGame
             ApplyLineTick();
         }
 
-        /// 현재 직선과 겹친 대상에게 데미지 비율을 계산해 InGameCombatManager 에 넘긴다.
+        /// 현재 직선과 겹친 대상이 받을 데미지를 InGameCombatManager 에 넘긴다.
         private bool ApplyLineTick()
         {
             if (combatManager == null || casterEntry == null || roster == null || lineHitbox == null)

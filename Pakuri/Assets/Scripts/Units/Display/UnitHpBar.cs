@@ -15,6 +15,7 @@ namespace Pakuri.InGame
     {
         private const string NameLabelObjectName = "MonsterNameLabel";
         private const string HpLabelObjectName = "MonsterHpLabel";
+        private const string HpRootObjectName = "MonsterHpBar";
         private const string HpBackgroundObjectName = "Background";
         private const string HpFillObjectName = "Fill";
         private const string ShieldFillObjectName = "Shield";
@@ -22,6 +23,7 @@ namespace Pakuri.InGame
 
         private readonly TextMesh nameLabel;
         private readonly TextMesh hpLabel;
+        private readonly Transform hpRoot;
         private readonly Transform hpBackground;
         private readonly Transform hpFill;
         private readonly Transform shieldFill;
@@ -31,6 +33,7 @@ namespace Pakuri.InGame
         {
             nameLabel = FindTextMesh(owner, NameLabelObjectName);
             hpLabel = FindTextMesh(owner, HpLabelObjectName);
+            hpRoot = FindChild(owner, HpRootObjectName);
             hpBackground = FindChild(owner, HpBackgroundObjectName);
             hpFill = FindChild(owner, HpFillObjectName);
             shieldFill = FindChild(owner, ShieldFillObjectName);
@@ -90,6 +93,14 @@ namespace Pakuri.InGame
             if (damagePopup != null)
             {
                 damagePopup.Show(damageAmount);
+            }
+        }
+
+        internal void SetWorldHpBarVisible(bool visible)
+        {
+            if (hpRoot != null)
+            {
+                hpRoot.gameObject.SetActive(visible);
             }
         }
 

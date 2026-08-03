@@ -8,6 +8,47 @@ The previous Ariel, Eve, Rin, Sein, and Vega boards are preserved under `boards/
 
 For new monster work, inspect the exact current code and data first, then add a required-field task block here only when persistent state is needed.
 
+## Task: 2026-08-03 Boss HP Priority Display
+
+### Task title
+
+Show one highest-maximum-HP active boss through Canvas `BossHP` while lower-priority bosses retain their prefab HP displays.
+
+### Goals
+
+- Select active `IsBoss` enemies by `Stats.MaxHealth`.
+- Hide only the selected boss's `MonsterHpBar` and show `Canvas/BossHP`.
+- Move to the next highest-maximum-HP boss after the selected boss is defeated.
+
+### Constraints
+
+- Preserve existing boss designation and user-edited enemy prefab transforms.
+- Do not mass-edit enemy prefab assets; hide the runtime `MonsterHpBar` root only.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implementation and available non-Play-Mode verification complete.
+
+### Next Actions
+
+- User verifies multi-boss spawn, damage, shield, defeat, and next-boss handoff in `NewRunScene` Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/UI/InGame/Info/BossHpUI.cs` selects live `Model.IsBoss` entries by descending `Model.Stats.MaxHealth` priority and updates the selected entry each frame.
+- `Pakuri/Assets/Scripts/Units/Display/UnitHpBar.cs` exposes runtime visibility for the prefab `MonsterHpBar` root; `EnemyActor` forwards the call.
+- Enemy prefab scan found 16 prefabs and 0 missing `MonsterHpBar` roots.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors; existing Unity reference-conflict warnings remain.
+
+### History
+
+- 2026-08-03: Code Builder added highest-maximum-HP boss selection, runtime world-bar handoff, and Canvas BossHP synchronization without overwriting the existing user prefab edits.
+
 ## Task: 2026-08-01 Monster Prefab Binding Migration
 
 ### Task title

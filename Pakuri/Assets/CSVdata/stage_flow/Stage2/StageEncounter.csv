@@ -1,34 +1,4 @@
 encounter_id,spawn_order,enemy_id,count,interval_sec,spawn_x,spawn_y_min,spawn_y_max,is_boss_candidate,is_guaranteed_boss,boss_health_multiplier_min,boss_health_multiplier_max,guaranteed_prisoner,notes
-stage1-day1-normal,0,stage1-swordsman,1,1,9.02,-5,5,true,false,3,5,true,Opening normal combat boss candidate.
-stage1-day1-normal,1,stage1-shieldbearer,1,1,9.02,-5,5,true,false,3,5,false,Opening tank introduction.
-stage1-day1-normal,2,stage1-rogue,1,1,9.02,-5,5,true,false,3,5,false,Opening ranged introduction.
-stage1-day1-normal,3,stage1-priest,1,1,9.02,-5,5,true,false,3,5,false,Opening support introduction.
-stage1-day2-normal,0,stage1-swordsman,2,1,9.02,-5,5,true,false,3,5,true,Normal combat candidate pool.
-stage1-day2-normal,1,stage1-rogue,1,1,9.02,-5,5,true,false,3,5,false,Normal combat ranged pressure.
-stage1-day3-normal,0,stage1-shieldbearer,2,1,9.02,-5,5,true,false,3,5,true,Normal combat defense pressure.
-stage1-day3-normal,1,stage1-priest,1,1,9.02,-5,5,true,false,3,5,false,Normal combat support pressure.
-stage1-day4-normal,0,stage1-swordsman,2,1,9.02,-5,5,true,false,3,5,true,Normal combat mixed pressure.
-stage1-day4-normal,1,stage1-shieldbearer,1,1,9.02,-5,5,true,false,3,5,false,Normal combat mixed pressure.
-stage1-day4-normal,2,stage1-rogue,1,1,9.02,-5,5,true,false,3,5,false,Normal combat mixed pressure.
-stage1-day5-midboss,0,stage1-guardian-captain,1,1,9.02,0,0,false,true,3,5,true,Stage 1 day 5 guaranteed midboss.
-stage1-day5-midboss,1,stage1-swordsman,2,1,9.02,-5,5,false,false,1,1,false,Midboss escort.
-stage1-day6-normal,0,stage1-swordsman,2,1,9.02,-5,5,true,false,6,10,true,Normal combat candidate pool.
-stage1-day6-normal,1,stage1-priest,1,1,9.02,-5,5,true,false,6,10,false,Normal combat support pressure.
-stage1-day7-normal,0,stage1-shieldbearer,2,1,9.02,-5,5,true,false,6,10,true,Normal combat defense pressure.
-stage1-day7-normal,1,stage1-rogue,2,1,9.02,-5,5,true,false,6,10,false,Normal combat ranged pressure.
-stage1-day8-normal,0,stage1-swordsman,2,1,9.02,-5,5,true,false,6,10,true,Normal combat mixed pressure.
-stage1-day8-normal,1,stage1-shieldbearer,2,1,9.02,-5,5,true,false,6,10,false,Normal combat mixed pressure.
-stage1-day8-normal,2,stage1-priest,1,1,9.02,-5,5,true,false,6,10,false,Normal combat support pressure.
-stage1-day9-normal,0,stage1-swordsman,2,1,9.02,-5,5,true,false,6,10,true,Final normal day mixed pressure.
-stage1-day9-normal,1,stage1-shieldbearer,2,1,9.02,-5,5,true,false,6,10,false,Final normal day mixed pressure.
-stage1-day9-normal,2,stage1-rogue,2,1,9.02,-5,5,true,false,6,10,false,Final normal day ranged pressure.
-stage1-day9-normal,3,stage1-priest,1,1,9.02,-5,5,true,false,6,10,false,Final normal day support pressure.
-stage1-day10-midboss,0,stage1-attack-captain,1,1,9.02,0,0,false,true,6,10,true,Stage 1 day 10 guaranteed midboss.
-stage1-day10-midboss,1,stage1-shieldbearer,2,1,9.02,-5,5,false,false,1,1,false,Midboss escort.
-stage1-day10-midboss,2,stage1-rogue,2,1,9.02,-5,5,false,false,1,1,false,Midboss escort.
-stage1-day11-boss,0,stage1-guardian-captain,1,1,9.02,0,0,false,true,1,1,false,Stage 1 boss fight includes day 5 midboss.
-stage1-day11-boss,1,stage1-attack-captain,1,1,9.02,0,0,false,true,1,1,false,Stage 1 boss fight includes day 10 midboss.
-stage1-day11-boss,2,stage1-hero-karin,1,1,9.02,0,0,false,true,1,1,true,Stage 1 boss fight includes stage boss.
 stage2-day1-normal,0,stage2-fire-dragon-slayer,1,1,9.02,-5,5,true,false,20,30,true,Stage 2 opening fire enemy boss candidate.
 stage2-day1-normal,1,stage2-lightning-scout,1,1,9.02,-5,5,true,false,20,30,false,Stage 2 opening lightning enemy boss candidate.
 stage2-day1-normal,2,stage2-dark-assassin,1,1,9.02,-5,5,true,false,20,30,false,Stage 2 opening dark enemy boss candidate.

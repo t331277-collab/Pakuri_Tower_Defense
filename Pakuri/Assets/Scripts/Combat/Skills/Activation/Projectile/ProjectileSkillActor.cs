@@ -1,6 +1,6 @@
 /*
  * 역할: 투사체의 이동과 실제 적중을 진행한다.
- * 책임: 이동, 충돌, 관통, 피해, 상태, 충돌 후 효과와 수명을 처리한다.
+ * 책임: 이동, 충돌, 관통, 피해, 상태, 목표 지점 도착 후 효과와 수명을 처리한다.
  */
 
 using System;
@@ -43,19 +43,16 @@ namespace Pakuri.InGame
         private bool criticalAllowed;
         private float critChanceBonus;
         private float critDamageBonus;
-        private StatusApplicationSpec impactStatusOnHit;
         private bool contactDamageEnabled = true;
-        private bool stopOnFirstHit;
-        private float impactDelaySeconds;
-        private RuntimeSkillVisualSpec impactRuntimeVisual;
-        private bool hasImpactArea;
-        private float impactRadius;
-        private float impactDamage;
-        private bool impactArmed;
-        private float impactDelayRemaining;
-        private Vector2 impactCenter;
-        private UnitCombatState impactTarget;
-        private bool impactResolved;
+        private float arrivalDelaySeconds;
+        private SingleSkillDefinition arrivalSkill;
+        private bool hasArrivalPoint;
+        private Vector2 arrivalPoint;
+        private bool arrivalArmed;
+        private float arrivalDelayRemaining;
+        private Vector2 arrivalCenter;
+        private UnitCombatState arrivalEventTarget;
+        private bool arrivalResolved;
         private bool expirePublished;
         private bool visualOnly;
         private Collider2D[] hitboxColliders;
@@ -98,19 +95,16 @@ namespace Pakuri.InGame
             criticalAllowed = false;
             critChanceBonus = 0f;
             critDamageBonus = 0f;
-            impactStatusOnHit = null;
             contactDamageEnabled = true;
-            stopOnFirstHit = false;
-            impactDelaySeconds = 0f;
-            impactRuntimeVisual = null;
-            hasImpactArea = false;
-            impactRadius = 0f;
-            impactDamage = 0f;
-            impactArmed = false;
-            impactDelayRemaining = 0f;
-            impactCenter = Vector2.zero;
-            impactTarget = null;
-            impactResolved = false;
+            arrivalDelaySeconds = 0f;
+            arrivalSkill = null;
+            hasArrivalPoint = false;
+            arrivalPoint = Vector2.zero;
+            arrivalArmed = false;
+            arrivalDelayRemaining = 0f;
+            arrivalCenter = Vector2.zero;
+            arrivalEventTarget = null;
+            arrivalResolved = false;
             expirePublished = false;
             CacheHitboxColliders();
         }
@@ -126,7 +120,7 @@ namespace Pakuri.InGame
             return maxLifetime;
         }
 
-        /// 상태와 분기, 충돌 후 효과를 기본 이동 규칙에 결합한다.
+        /// 상태와 분기, 목표 지점 도착 후 효과를 기본 이동 규칙에 결합한다.
         public void Initialize(
             InGameCombatManager manager,
             UnitCombatState source,
@@ -142,14 +136,11 @@ namespace Pakuri.InGame
             int branchCount,
             float branchMultiplier,
             float branchSearchRadius,
-            StatusApplicationSpec impactStatusSpec,
             bool enableContactDamage,
-            bool stopAfterFirstHit,
-            float impactDelay,
-            RuntimeSkillVisualSpec runtimeImpactVisual,
-            bool enableImpactArea,
-            float impactAreaRadius,
-            float delayedImpactDamage,
+            float arrivalDelay,
+            SingleSkillDefinition preparedArrivalSkill,
+            bool hasPreparedArrivalPoint,
+            Vector2 preparedArrivalPoint,
             SkillExecutionState sourceRuntime,
             SkillExecutionState snapshot,
             string ignoredUnitId = null,
@@ -175,14 +166,12 @@ namespace Pakuri.InGame
             branchDamageCount = Mathf.Max(0, branchCount);
             branchDamageMultiplier = Mathf.Max(0f, branchMultiplier);
             branchDamageSearchRadius = Mathf.Max(0f, branchSearchRadius);
-            impactStatusOnHit = impactStatusSpec;
             contactDamageEnabled = enableContactDamage;
-            stopOnFirstHit = stopAfterFirstHit;
-            impactDelaySeconds = Mathf.Max(0f, impactDelay);
-            impactRuntimeVisual = runtimeImpactVisual;
-            hasImpactArea = enableImpactArea;
-            impactRadius = Mathf.Max(0f, impactAreaRadius);
-            impactDamage = Mathf.Max(0f, delayedImpactDamage);
+            arrivalDelaySeconds = Mathf.Max(0f, arrivalDelay);
+            arrivalSkill = preparedArrivalSkill;
+            hasArrivalPoint = hasPreparedArrivalPoint && preparedArrivalSkill != null;
+            arrivalPoint = preparedArrivalPoint;
+            arrivalCenter = preparedArrivalPoint;
             runtime = sourceRuntime;
             executionData = snapshot;
             sourceSkillId = skillId;
@@ -197,13 +186,13 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 생성 직후 충돌 판정에 사용할 영역을 확보한다.
+        /// 생성 직후 충돌 판정을 확보한다.
         private void Awake()
         {
             CacheHitboxColliders();
         }
 
-        /// 이동, 지연 충돌 효과, 만료 시점을 매 프레임 진행한다.
+        /// 이동, 목표 지점 도착 지연, 만료 시점을 매 프레임 진행한다.
         private void Update()
         {
             var deltaTime = Time.deltaTime;
@@ -218,26 +207,64 @@ namespace Pakuri.InGame
                 return;
             }
 
-            if (!impactArmed)
+            if (!arrivalArmed)
             {
+                var start = (Vector2)transform.position;
                 var movement = direction * speed * deltaTime;
-                TryHitRosterTargets(movement);
-            }
-            else if (!impactResolved)
-            {
-                impactDelayRemaining -= deltaTime;
-                if (impactDelayRemaining <= 0f)
+                var reachesTargetPoint = hasArrivalPoint
+                    && ReachesTargetPoint(start, movement);
+                if (reachesTargetPoint)
                 {
-                    Impact();
+                    movement = arrivalPoint - start;
+                }
+
+                TryHitRosterTargets(movement);
+                if (reachesTargetPoint && !arrivalArmed)
+                {
+                    transform.position = arrivalPoint;
+                    BeginArrivalDelay();
+                }
+            }
+            else if (!arrivalResolved)
+            {
+                arrivalDelayRemaining -= deltaTime;
+                if (arrivalDelayRemaining <= 0f)
+                {
+                    ExecuteArrivalSkill();
                 }
             }
 
-            maxLifetime -= deltaTime;
-            if (HasPassedDestroyBoundary() || maxLifetime <= 0f)
+            if (!arrivalArmed)
             {
-                TryExecuteOnExpireEffects();
-                combatManager.Effects.RemoveEffect(gameObject);
+                maxLifetime -= deltaTime;
+                if (HasPassedDestroyBoundary() || maxLifetime <= 0f)
+                {
+                    if (hasArrivalPoint && !arrivalResolved)
+                    {
+                        transform.position = arrivalPoint;
+                        BeginArrivalDelay();
+                    }
+                    else
+                    {
+                        TryExecuteOnExpireEffects();
+                        combatManager.Effects.RemoveEffect(gameObject);
+                    }
+                }
             }
+        }
+
+        /// 이번 이동으로 고정된 목표 지점을 통과하는지 확인한다.
+        private bool ReachesTargetPoint(Vector2 start, Vector2 movement)
+        {
+            var toTarget = arrivalPoint - start;
+            if (toTarget.sqrMagnitude <= 0.0001f)
+            {
+                return true;
+            }
+
+            var distance = movement.magnitude;
+            return distance > 0.0001f
+                && Vector2.Dot(toTarget, direction) <= distance;
         }
 
         /// 이번 이동 경로와 겹친 대상을 순서대로 판정한다.
@@ -290,24 +317,29 @@ namespace Pakuri.InGame
                 {
                     StatusCombatRules.ApplyStatus(combatManager, target.Model, statusOnHit, owner);
                 }
-                ZoneSkillActor.PublishHitOutcome(
-                    combatManager,
-                    combatManager != null ? combatManager.Units : null,
-                    runtime,
-                    executionData,
-                    combatManager != null && combatManager.Units != null ? combatManager.Units.Find(owner) : null,
-                    owner,
-                    sourceSkillId,
-                    target,
-                    hitPosition,
-                    resolvedDamage);
             }
+
+            ZoneSkillActor.PublishHitOutcome(
+                combatManager,
+                combatManager != null ? combatManager.Units : null,
+                runtime,
+                executionData,
+                combatManager != null && combatManager.Units != null ? combatManager.Units.Find(owner) : null,
+                owner,
+                sourceSkillId,
+                target,
+                hitPosition,
+                resolvedDamage);
 
             TryRunProjectileHitTriggers();
             TryApplyBranchDamage(target, hitPosition, resolvedDamage);
-            if (stopOnFirstHit)
+            if (hasArrivalPoint)
             {
-                ArmImpact(target, hitPosition);
+                if (arrivalEventTarget == null)
+                {
+                    arrivalEventTarget = target.Model;
+                }
+
                 return true;
             }
 
@@ -365,7 +397,7 @@ namespace Pakuri.InGame
             Vector2 hitPosition,
             float primaryDamage)
         {
-            if (impactArmed
+            if (arrivalArmed
                 || combatManager == null
                 || combatManager.Units == null
                 || hitTarget == null
@@ -497,7 +529,7 @@ namespace Pakuri.InGame
         /// 진행 방향을 기준으로 유효 이동 범위를 벗어났는지 확인한다.
         private bool HasPassedDestroyBoundary()
         {
-            if (impactArmed)
+            if (arrivalArmed)
             {
                 return false;
             }
@@ -507,15 +539,18 @@ namespace Pakuri.InGame
                 : transform.position.x < destroyBeyondX;
         }
 
-        /// 첫 충돌 위치에 멈추고 후속 범위 효과의 시간을 시작한다.
-        private void ArmImpact(CombatUnitEntry target, Vector2 hitPosition)
+        /// 목표 지점에 멈추고 도착 후 SingleSkill의 지연 시간을 시작한다.
+        private void BeginArrivalDelay()
         {
-            impactArmed = true;
-            impactDelayRemaining = impactDelaySeconds;
-            impactCenter = hitPosition;
-            impactTarget = target != null ? target.Model : null;
+            if (arrivalArmed || arrivalResolved)
+            {
+                return;
+            }
+
+            arrivalArmed = true;
+            arrivalDelayRemaining = arrivalDelaySeconds;
+            arrivalCenter = arrivalPoint;
             speed = 0f;
-            remainingHits = 0;
             var colliders = GetComponentsInChildren<Collider2D>(true);
             for (var i = 0; i < colliders.Length; i++)
             {
@@ -526,147 +561,45 @@ namespace Pakuri.InGame
             }
         }
 
-        /// 멈춘 위치에서 충돌 후 표현과 범위 결과를 확정한다.
-        private void Impact()
+        /// 목표 지점에서 기존 SingleSkill 실행 경로를 호출한다.
+        private void ExecuteArrivalSkill()
         {
-            if (impactResolved || combatManager == null)
+            if (arrivalResolved || combatManager == null)
             {
                 return;
             }
 
-            impactResolved = true;
-            var effects = combatManager.Effects;
-            GameObject instance = null;
-            if (effects != null && impactRuntimeVisual != null && impactRuntimeVisual.HasVisual())
+            arrivalResolved = true;
+            var sourceEntry = combatManager.Units != null
+                ? combatManager.Units.Find(owner)
+                : null;
+            if (arrivalSkill != null && sourceEntry != null && runtime != null)
             {
-                var objectName = "ProjectileImpact";
-                if (!string.IsNullOrWhiteSpace(sourceSkillId))
-                {
-                    objectName = "ProjectileImpact_" + sourceSkillId;
-                }
-
-                instance = effects.CreateEffect(new EffectCreateRequest(
-                    impactRuntimeVisual,
-                    null,
-                    objectName,
-                    impactCenter,
-                    Quaternion.identity,
-                    null,
-                    null,
-                    false,
-                    false,
-                    false));
-            }
-
-            if (instance != null)
-            {
-                var impactActor = instance.GetComponent<ProjectileSkillActor>();
-                if (impactActor == null)
-                {
-                    impactActor = instance.AddComponent<ProjectileSkillActor>();
-                }
-
-                impactActor.InitializeVisualLifetime(effects, 0.1f);
-            }
-
-            if (hasImpactArea)
-            {
-                ApplyImpactAreaTargets(
-                    combatManager,
-                    combatManager.Units != null ? combatManager.Units.Find(owner) : null,
-                    combatManager.Units,
-                    executionData.PreparedImpactTargeting,
-                    impactCenter,
-                    impactRadius,
-                    impactDamage,
-                    damageAttribute,
-                    impactStatusOnHit,
-                    owner,
-                    sourceSkillId,
+                combatManager.SkillExecution.TryExecuteReaction(
+                    sourceEntry,
                     runtime,
-                    criticalAllowed,
-                    critChanceBonus,
-                    critDamageBonus,
-                    executionData);
+                    runtime,
+                    arrivalSkill,
+                    combatManager.Units,
+                    combatManager,
+                    arrivalEventTarget,
+                    arrivalCenter,
+                    hasTargetPoint: true,
+                    hasRawDamageOverride: false,
+                    rawDamageOverride: 0f,
+                    recastGeneration: 0,
+                    damageMultiplier: 1f,
+                    sourceSkillId: sourceSkillId,
+                    lockToEventTarget: false,
+                    publishSkillLifecycleEvents: false,
+                    beginCast: false,
+                    onHitStatusOverride: executionData != null
+                        ? executionData.PreparedStatus
+                        : statusOnHit);
             }
 
             TryExecuteOnExpireEffects();
-            effects.RemoveEffect(gameObject);
-        }
-
-        /// 충돌 지점의 폭발 반경 안에 있는 모든 대상을 적중 처리한다.
-        private static bool ApplyImpactAreaTargets(
-            InGameCombatManager manager,
-            CombatUnitEntry sourceEntry,
-            UnitSpawnManager unitRoster,
-            SkillTargetingSpec targetingSpec,
-            Vector2 center,
-            float radius,
-            float damage,
-            DamageAttribute damageAttribute,
-            StatusApplicationSpec onHitStatus,
-            UnitCombatState source,
-            string sourceSkillId,
-            SkillExecutionState sourceRuntime,
-            bool criticalAllowed,
-            float critChanceBonus,
-            float critDamageBonus,
-            SkillExecutionState executionData)
-        {
-            if (manager == null || sourceEntry == null || unitRoster == null)
-            {
-                return false;
-            }
-
-            var candidates = SkillTargeting.TargetList(
-                sourceEntry,
-                unitRoster,
-                targetingSpec);
-            var radiusSquared = Mathf.Max(0f, radius) * Mathf.Max(0f, radius);
-            var hitUnitIds = new HashSet<string>();
-            var eligibleTargets = new List<CombatUnitEntry>();
-            for (var i = 0; i < candidates.Count; i++)
-            {
-                var target = candidates[i];
-                if (target == null
-                    || !target.IsAlive
-                    || target.Model == null
-                    || target.Transform == null)
-                {
-                    continue;
-                }
-
-                var unitId = target.Model.Identity != null
-                    ? target.Model.Identity.UnitId
-                    : null;
-                if (!string.IsNullOrWhiteSpace(unitId)
-                    && !hitUnitIds.Add(unitId))
-                {
-                    continue;
-                }
-                if (((Vector2)target.Transform.position - center).sqrMagnitude > radiusSquared)
-                {
-                    continue;
-                }
-
-                eligibleTargets.Add(target);
-            }
-
-            return ZoneSkillActor.ApplyResolvedTargets(
-                manager,
-                sourceEntry,
-                unitRoster,
-                eligibleTargets,
-                damage,
-                damageAttribute,
-                onHitStatus,
-                source,
-                sourceSkillId,
-                sourceRuntime,
-                criticalAllowed,
-                critChanceBonus,
-                critDamageBonus,
-                executionData);
+            combatManager.Effects.RemoveEffect(gameObject);
         }
 
         /// 만료가 한 번만 후속 반응으로 이어지게 전달한다.
@@ -686,14 +619,14 @@ namespace Pakuri.InGame
                     combatManager.Units,
                     lifecycleSourceEntry,
                     runtime,
-                    impactTarget);
+                    arrivalEventTarget);
                 SkillTrigger.PublishLifecycleEvent(
                     SkillTriggerEvent.OnExpire,
                     new SkillExecutionContext(
                         owner,
                         sourceSkillId,
-                        impactTarget,
-                        impactCenter,
+                        arrivalEventTarget,
+                        arrivalCenter,
                         0f,
                         0,
                         executionData,

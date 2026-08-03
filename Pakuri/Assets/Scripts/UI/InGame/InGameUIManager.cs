@@ -26,6 +26,7 @@ namespace Pakuri.InGame
         private PrisonPanelUI prisonPanelUI;
         private OfferingUI offeringUI;
         private MenifestUI menifestUI;
+        private BossHpUI bossHpUI;
 
         private void Awake()
         {
@@ -45,6 +46,7 @@ namespace Pakuri.InGame
 
             if (stageManager == null || stageManager.State != StageState.RewardReady)
             {
+                bossHpUI?.Refresh(unitSpawnManager);
                 return;
             }
 
@@ -134,6 +136,7 @@ namespace Pakuri.InGame
                 RefreshInfo);
 
             infoUI = new InGameInfoUI(uiReferences.info);
+            bossHpUI = new BossHpUI(uiReferences.bossHp);
         }
 
         private void BindStaticButtons()
@@ -147,6 +150,7 @@ namespace Pakuri.InGame
             prisonPanelUI?.Hide();
             offeringUI?.Hide();
             menifestUI?.Hide();
+            bossHpUI?.Hide();
         }
 
         private RunSession ResolveSession()

@@ -26,8 +26,10 @@ namespace Pakuri.InGame
         [SerializeField] private InGameCombatManager combatManager;
         [SerializeField] private UnitSpawnManager unitSpawnManager;
         [SerializeField] private TextAsset stageDayCsv;
-        [SerializeField] private TextAsset stageEncounterCsv;
-        [SerializeField] private TextAsset stageRewardCsv;
+        [SerializeField] private TextAsset stage1EncounterCsv;
+        [SerializeField] private TextAsset stage1RewardCsv;
+        [SerializeField] private TextAsset stage2EncounterCsv;
+        [SerializeField] private TextAsset stage2RewardCsv;
         [SerializeField] private bool startFlowOnStart = true;
         [SerializeField] private float clearCheckInterval = DefaultClearCheckInterval;
         [SerializeField] private bool restorePlayerHealthOnDayAdvance = true;
@@ -486,7 +488,12 @@ namespace Pakuri.InGame
         /// Tables를 불러온다.
         private void LoadTables()
         {
-            table = StageFlowTable.Load(stageDayCsv, stageEncounterCsv, stageRewardCsv);
+            table = StageFlowTable.Load(
+                stageDayCsv,
+                stage1EncounterCsv,
+                stage1RewardCsv,
+                stage2EncounterCsv,
+                stage2RewardCsv);
         }
     }
 
@@ -580,12 +587,19 @@ namespace Pakuri.InGame
         private readonly List<StageEncounterRow> encounters = new List<StageEncounterRow>();
         private readonly List<StageRewardRow> rewards = new List<StageRewardRow>();
 
-        public static StageFlowTable Load(TextAsset dayCsv, TextAsset encounterCsv, TextAsset rewardCsv)
+        public static StageFlowTable Load(
+            TextAsset dayCsv,
+            TextAsset stage1EncounterCsv,
+            TextAsset stage1RewardCsv,
+            TextAsset stage2EncounterCsv,
+            TextAsset stage2RewardCsv)
         {
             var table = new StageFlowTable();
             table.LoadDays(dayCsv);
-            table.LoadEncounters(encounterCsv);
-            table.LoadRewards(rewardCsv);
+            table.LoadEncounters(stage1EncounterCsv);
+            table.LoadRewards(stage1RewardCsv);
+            table.LoadEncounters(stage2EncounterCsv);
+            table.LoadRewards(stage2RewardCsv);
             return table;
         }
 

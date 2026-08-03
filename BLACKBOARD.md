@@ -19,6 +19,7 @@ This file is the small root index for current global state. Detailed work is rou
 - The pre-compaction root state is preserved at `boards/ARCHIVE/BLACKBOARD_2026-07-28_PRE_COMPACTION.md`.
 - Code Reviewer execution requires explicit user permission.
 - Unity Play Mode gameplay verification remains user-owned.
+- The 2026-08-03 Boss HP display task is implemented: one active boss with the highest `Stats.MaxHealth` uses Canvas `BossHP`; lower-priority bosses keep prefab HP bars, and selection advances after defeat. Detailed state is recorded in `boards/MON/MON_BLACKBOARD.md` and `boards/UI/UI_BLACKBOARD.md`.
 
 ## Current Routes
 

@@ -63,7 +63,6 @@ namespace Pakuri.InGame
                     launchSnapshot,
                     snapshot.PreparedDirections[i],
                     snapshot.PreparedDamage,
-                    snapshot.PreparedImpactDamage,
                     snapshot.PreparedBoundaries[i],
                     snapshot.PreparedMagazineLastProjectile,
                     true,
@@ -115,8 +114,6 @@ namespace Pakuri.InGame
                         snapshot.PreparedDirection,
                         snapshot.PreparedDamage
                             * Mathf.Max(0f, snapshot.FollowUpProjectileDamageMultiplier),
-                        snapshot.PreparedDamage
-                            * Mathf.Max(0f, snapshot.FollowUpProjectileDamageMultiplier),
                         snapshot.PreparedBoundaries.Count > 0
                             ? snapshot.PreparedBoundaries[0]
                             : SkillExecutionRules.ProjectileDestroyBoundaryX(
@@ -139,7 +136,6 @@ namespace Pakuri.InGame
             SkillExecutionState launchSnapshot,
             Vector2 direction,
             float damage,
-            float impactDamage,
             float boundary,
             bool isMagazineLastProjectile,
             bool createFallbackHitbox,
@@ -194,14 +190,11 @@ namespace Pakuri.InGame
                 snapshot.PreparedBranchCounts[planIndex],
                 snapshot.PreparedBranchDamageMultipliers[planIndex],
                 snapshot.PreparedBranchSearchRadii[planIndex],
-                snapshot.PreparedImpactStatus,
                 snapshot.PreparedContactDamageEnabled,
-                snapshot.PreparedStopOnFirstHit,
-                snapshot.PreparedImpactDelay,
-                snapshot.PreparedImpactRuntimeVisual,
-                snapshot.PreparedHasImpactArea,
-                snapshot.PreparedImpactRadius,
-                impactDamage,
+                snapshot.PreparedArrivalDelay,
+                snapshot.PreparedArrivalSkill,
+                snapshot.PreparedHasProjectileTargetPoint,
+                snapshot.PreparedProjectileTargetPoint,
                 context.Runtime,
                 launchSnapshot,
                 null,

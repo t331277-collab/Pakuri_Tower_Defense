@@ -308,3 +308,44 @@ Implemented and scene-validated.
 ### History
 
 - 2026-08-03: Code Builder replaced runtime scene lookup with serialized Inspector references, saved the NewRunScene assignments, and deleted `InGameUiSceneResolver.cs` plus its `.meta` file.
+
+## Task: 2026-08-03 Canvas Boss HP Display
+
+### Task title
+
+Wire the authored `Canvas/BossHP` hierarchy to the in-game UI module and display the selected boss's combined HP and shield.
+
+### Goals
+
+- Bind `Name`, `HPText`, `BackGround`, `Fill`, and `Shield` through `InGameUIReferences`.
+- Format HP as `{current health + shield} / {max health + shield}`.
+- Keep BossHP inactive when no active boss is selected or transient reward UI is shown.
+
+### Constraints
+
+- Reuse the existing plain UI-module architecture and authored scene objects.
+- Keep `BossHP` initially inactive in `NewRunScene`.
+- Unity Play Mode visual verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implementation and scene serialization verification complete.
+
+### Next Actions
+
+- User verifies Canvas position, fill widths, shield segment, name, and HP text in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/UI/InGame/InGameUIReferences.cs` contains serialized BossHP references for the root, two texts, and three RectTransforms.
+- `Pakuri/Assets/Scripts/UI/InGame/InGameUIManager.cs` creates, refreshes, and hides `BossHpUI` with the existing UI lifecycle.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` contains `Canvas/BossHP`, all five child references, and `m_IsActive: 0` on the root.
+- `BossHP` `Fill` and `Shield` are authored as Simple UI Images, so `BossHpUI` updates their RectTransform widths and positions.
+
+### History
+
+- 2026-08-03: Code Builder connected the existing BossHP scene hierarchy to the new runtime module and preserved the existing InGame UI reference architecture.
