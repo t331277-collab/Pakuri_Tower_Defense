@@ -1,6 +1,5 @@
 /*
- * 역할: 런타임 스킬 효과 오브젝트 소유.
- * 책임: 전투 결과와 분리하여 효과 GameObject를 생성·부착·추적·제거·일괄 정리한다.
+ * 역할: 전투 결과와 분리하여 효과 GameObject를 생성·부착·추적·제거·일괄 정리한다.
  */
 
 using System.Collections.Generic;
@@ -9,46 +8,6 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
-
-    /// EffectCreateRequest 처리에 함께 전달되는 값들을 묶는다.
-    public readonly struct EffectCreateRequest
-    {
-
-        public EffectCreateRequest(
-            RuntimeSkillVisualSpec visual,
-            GameObject prefab,
-            string objectName,
-            Vector3 position,
-            Quaternion rotation,
-            Transform targetTransform,
-            StatusRuntimeInstance persistentStatus,
-            bool hitboxIsTrigger,
-            bool includeHitbox,
-            bool createEmptyActor)
-        {
-            Visual = visual;
-            Prefab = prefab;
-            ObjectName = objectName;
-            Position = position;
-            Rotation = rotation;
-            TargetTransform = targetTransform;
-            PersistentStatus = persistentStatus;
-            HitboxIsTrigger = hitboxIsTrigger;
-            IncludeHitbox = includeHitbox;
-            CreateEmptyActor = createEmptyActor;
-        }
-
-        public RuntimeSkillVisualSpec Visual { get; }
-        public GameObject Prefab { get; }
-        public string ObjectName { get; }
-        public Vector3 Position { get; }
-        public Quaternion Rotation { get; }
-        public Transform TargetTransform { get; }
-        public StatusRuntimeInstance PersistentStatus { get; }
-        public bool HitboxIsTrigger { get; }
-        public bool IncludeHitbox { get; }
-        public bool CreateEmptyActor { get; }
-    }
 
     public class EffectManager : MonoBehaviour
     {

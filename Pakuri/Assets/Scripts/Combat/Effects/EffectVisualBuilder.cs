@@ -25,7 +25,7 @@ namespace Pakuri.InGame
         }
 
 
-        /// 비쥬얼 컴포넌트 조립
+        /// 비쥬얼 컴포넌트 부착
 
         public static void Configure(
             GameObject instance,

@@ -1,6 +1,5 @@
 /*
  * 역할: 직선형 공격의 실제 적중을 진행한다.
- * 책임: 직선 충돌과 주기 피해, 상태, 밀어내기, 표현 수명을 처리한다.
  */
 
 using System;
@@ -12,7 +11,6 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    /// 직선 영역이 유지되는 동안 충돌 결과를 전투에 반영한다.
     public class LineSkillActor : MonoBehaviour
     {
 
@@ -40,7 +38,6 @@ namespace Pakuri.InGame
         private float critChanceBonus;
         private float critDamageBonus;
         private bool visualOnly;
-        private readonly HashSet<string> appliedBaseStatusTargets = new HashSet<string>();
         private readonly List<CombatUnitEntry> collisionTargets = new List<CombatUnitEntry>();
         private readonly Collider2D[] lineHitboxes = new Collider2D[1];
         private BoxCollider2D lineHitbox;
@@ -93,15 +90,13 @@ namespace Pakuri.InGame
             criticalAllowed = allowCritical;
             critChanceBonus = criticalChanceBonus;
             critDamageBonus = criticalDamageBonus;
-            appliedBaseStatusTargets.Clear();
-
             EffectVisualBuilder.ConfigureLineEffect(gameObject, origin, direction, length, width);
             lineHitbox = EffectVisualBuilder.ConfigureLineHitbox(gameObject, length, width);
             lineHitboxes[0] = lineHitbox;
             ApplyLineTick();
         }
 
-        /// 현재 직선과 겹친 대상이 받을 데미지를 InGameCombatManager 에 넘긴다.
+        /// 현재 직선과 겹친 대상이 받을 데미지를 InGameCombatManager 에 넘기고 후속 적중 효과를 적용한다.
         private bool ApplyLineTick()
         {
             if (combatManager == null || casterEntry == null || roster == null || lineHitbox == null)
@@ -131,8 +126,7 @@ namespace Pakuri.InGame
                 TryApplyKnockback(target, direction, knockbackDistance);
                 if (!damageResult.IsDead)
                 {
-                    var targetKey = TargetKey(target.Model);
-                    TryApplyStatus(combatManager, target.Model, statusSpec, sourceModel, targetKey, appliedBaseStatusTargets);
+                    StatusCombatRules.ApplyStatus(combatManager, target.Model, statusSpec, sourceModel);
                 }
                 ZoneSkillActor.PublishHitOutcome(
                     combatManager,
@@ -184,45 +178,6 @@ namespace Pakuri.InGame
             }
 
             target.Transform.position += (Vector3)(normalizedDirection.normalized * distance);
-        }
-
-        /// 같은 영역에서 상태가 중복되지 않도록 첫 적중만 적용한다.
-        private static void TryApplyStatus(
-            InGameCombatManager manager,
-            UnitCombatState target,
-            StatusApplicationSpec status,
-            UnitCombatState source,
-            string targetKey,
-            HashSet<string> appliedTargets)
-        {
-            if (status == null || !status.Enabled)
-            {
-                return;
-            }
-
-            if (appliedTargets != null && !string.IsNullOrWhiteSpace(targetKey) && appliedTargets.Contains(targetKey))
-            {
-                return;
-            }
-
-            if (StatusCombatRules.ApplyStatus(manager, target, status, source)
-                && appliedTargets != null
-                && !string.IsNullOrWhiteSpace(targetKey))
-            {
-                appliedTargets.Add(targetKey);
-            }
-        }
-
-        /// 같은 대상을 한 번만 처리할 안정적인 기준을 고른다.
-        private static string TargetKey(UnitCombatState target)
-        {
-            var unitId = target != null && target.Identity != null ? target.Identity.UnitId : null;
-            if (!string.IsNullOrWhiteSpace(unitId))
-            {
-                return unitId;
-            }
-
-            return target != null ? target.GetHashCode().ToString() : string.Empty;
         }
 
     }

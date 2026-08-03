@@ -7,66 +7,27 @@ using UnityEngine.UI;
 namespace Pakuri.InGame
 {
     /// 포로 선택, 파티 슬롯, Offering·현현 진입을 관리한다.
-    internal sealed class PrisonPanelUI
+    public sealed class PrisonPanelUI : MonoBehaviour
     {
         private const int PrisonPartySlotCount = 5;
 
-        private readonly GameObject prisonPanel;
-        private readonly GameObject prisonerChoicePopUp;
-        private readonly Image prisonPrisonerImage;
-        private readonly TMP_Text prisonPrisonerNameText;
-        private readonly PrisonPartySlotView[] prisonPartySlots = new PrisonPartySlotView[PrisonPartySlotCount];
+        [SerializeField] private GameObject prisonPanel;
+        [SerializeField] private GameObject prisonerChoicePopUp;
+        [SerializeField] private Image prisonerImage;
+        [SerializeField] private TMP_Text prisonerNameText;
+        [SerializeField] private PrisonPartySlotView[] prisonPartySlots = new PrisonPartySlotView[PrisonPartySlotCount];
+        [SerializeField] private OfferingUI offeringUI;
+        [SerializeField] private MenifestUI menifestUI;
+        [SerializeField] private InGameUIManager uiManager;
+
         private readonly string[] prisonSlotMonsterIds = new string[PrisonPartySlotCount];
-        private readonly Func<RunSession> resolveSession;
-        private readonly Func<string, string> resolvePrisonerDisplayName;
-        private readonly Func<RewardButtonView> resolveActivePrisonerButton;
-        private readonly OfferingUI offeringUI;
-        private readonly MenifestUI menifestUI;
-        private readonly Action refreshInfo;
-
-        public PrisonPanelUI(
-            InGamePrisonPanelReferences references,
-            Func<RunSession> resolveSession,
-            Func<string, string> resolvePrisonerDisplayName,
-            Func<RewardButtonView> resolveActivePrisonerButton,
-            OfferingUI offeringUI,
-            MenifestUI menifestUI,
-            Action refreshInfo)
-        {
-            prisonPanel = references != null ? references.prisonPanel : null;
-            prisonerChoicePopUp = references != null ? references.prisonerChoicePopUp : null;
-            prisonPrisonerImage = references != null ? references.prisonerImage : null;
-            prisonPrisonerNameText = references != null ? references.prisonerNameText : null;
-            this.resolveSession = resolveSession;
-            this.resolvePrisonerDisplayName = resolvePrisonerDisplayName;
-            this.resolveActivePrisonerButton = resolveActivePrisonerButton;
-            this.offeringUI = offeringUI;
-            this.menifestUI = menifestUI;
-            this.refreshInfo = refreshInfo;
-
-            var slotReferences = references != null
-                ? new[]
-                {
-                    references.partySlot1,
-                    references.partySlot2,
-                    references.partySlot3,
-                    references.partySlot4,
-                    references.partySlot5
-                }
-                : Array.Empty<InGamePrisonPartySlotReferences>();
-            for (var i = 0; i < prisonPartySlots.Length; i++)
-            {
-                var slot = i < slotReferences.Length ? slotReferences[i] : null;
-                prisonPartySlots[i] = new PrisonPartySlotView(
-                    slot != null ? slot.image : null,
-                    slot != null ? slot.nameText : null,
-                    slot != null ? slot.button : null,
-                    slot != null ? slot.reinforcementLabel : null,
-                    slot != null ? slot.manifestedLabel : null);
-            }
-        }
 
         public bool IsVisible => prisonPanel != null && prisonPanel.activeSelf;
+
+        private void Awake()
+        {
+            BindStaticButtons();
+        }
 
         public void BindStaticButtons()
         {
@@ -92,10 +53,10 @@ namespace Pakuri.InGame
 
         public void Refresh()
         {
-            refreshInfo?.Invoke();
+            uiManager?.RefreshInfo();
 
-            var session = resolveSession?.Invoke();
-            var partyMembers = session != null ? session.PartyMembers : null;
+            var session = uiManager?.ResolveSession();
+            var partyMembers = session?.PartyMembers;
             var occupiedCount = partyMembers != null
                 ? Math.Min(partyMembers.Count, PrisonPartySlotCount)
                 : 0;
@@ -131,8 +92,8 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var session = resolveSession?.Invoke();
-            var partyMembers = session != null ? session.PartyMembers : null;
+            var session = uiManager?.ResolveSession();
+            var partyMembers = session?.PartyMembers;
             var occupiedCount = partyMembers != null
                 ? Math.Min(partyMembers.Count, PrisonPartySlotCount)
                 : 0;
@@ -144,7 +105,7 @@ namespace Pakuri.InGame
             SetActive(prisonPanel, false);
         }
 
-        private void RefreshPrisonPartySlot(
+        private static void RefreshPrisonPartySlot(
             PrisonPartySlotView slot,
             string monsterId,
             bool isOccupied,
@@ -188,25 +149,25 @@ namespace Pakuri.InGame
 
         private void RefreshSelectedPrisoner()
         {
-            var activePrisonerButton = resolveActivePrisonerButton?.Invoke();
+            var activePrisonerButton = uiManager?.ActivePrisonerButton;
             var prisonerId = activePrisonerButton != null ? activePrisonerButton.PrisonerId : string.Empty;
             var hasPrisoner = !string.IsNullOrWhiteSpace(prisonerId);
-            SetActive(prisonPrisonerImage != null ? prisonPrisonerImage.gameObject : null, hasPrisoner);
+            SetActive(prisonerImage != null ? prisonerImage.gameObject : null, hasPrisoner);
             if (!hasPrisoner)
             {
                 return;
             }
 
-            if (prisonPrisonerNameText != null)
+            if (prisonerNameText != null)
             {
-                prisonPrisonerNameText.text = resolvePrisonerDisplayName(prisonerId);
+                prisonerNameText.text = uiManager.ResolvePrisonerDisplayName(prisonerId);
             }
 
             var enemy = GameDataLoader.CurrentCatalog.GetData<EnemyDefinition>(prisonerId);
-            if (prisonPrisonerImage != null)
+            if (prisonerImage != null)
             {
-                prisonPrisonerImage.sprite = enemy != null ? enemy.Image : null;
-                prisonPrisonerImage.color = prisonPrisonerImage.sprite != null
+                prisonerImage.sprite = enemy != null ? enemy.Image : null;
+                prisonerImage.color = prisonerImage.sprite != null
                     ? Color.white
                     : new Color(0f, 0f, 0f, 0.3f);
             }
@@ -230,28 +191,21 @@ namespace Pakuri.InGame
                 target.SetActive(active);
             }
         }
-    }
 
-    internal sealed class PrisonPartySlotView
-    {
-        public PrisonPartySlotView(
-            Image image,
-            TMP_Text nameText,
-            Button button,
-            GameObject reinforcementLabel,
-            GameObject menifestedLabel)
+        [Serializable]
+        private sealed class PrisonPartySlotView
         {
-            Image = image;
-            NameText = nameText;
-            Button = button;
-            ReinforcementLabel = reinforcementLabel;
-            MenifestedLabel = menifestedLabel;
-        }
+            [SerializeField] private Image image;
+            [SerializeField] private TMP_Text nameText;
+            [SerializeField] private Button button;
+            [SerializeField] private GameObject reinforcementLabel;
+            [SerializeField] private GameObject manifestedLabel;
 
-        public Image Image { get; }
-        public TMP_Text NameText { get; }
-        public Button Button { get; }
-        public GameObject ReinforcementLabel { get; }
-        public GameObject MenifestedLabel { get; }
+            public Image Image => image;
+            public TMP_Text NameText => nameText;
+            public Button Button => button;
+            public GameObject ReinforcementLabel => reinforcementLabel;
+            public GameObject MenifestedLabel => manifestedLabel;
+        }
     }
 }

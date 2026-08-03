@@ -349,3 +349,95 @@ Implementation and scene serialization verification complete.
 ### History
 
 - 2026-08-03: Code Builder connected the existing BossHP scene hierarchy to the new runtime module and preserved the existing InGame UI reference architecture.
+
+## Task: 2026-08-03 Direct Inspector UI Module Conversion and NewRunScene Organization
+
+### Task title
+
+Unify in-game UI ownership and scene references through MonoBehaviour Inspector wiring.
+
+### Goals
+
+- Make each scene-owned in-game UI module a `MonoBehaviour` with its own serialized Inspector references and lifecycle.
+- Keep `InGameUIManager` as the flow controller that coordinates the UI modules.
+- Remove `InGameUIReferences.cs` and all runtime scene-name/path lookup for the in-game UI.
+- Preserve existing UI order, transforms, layers, and runtime flow while grouping the scene hierarchy.
+
+### Constraints
+
+- Preserve `NewRunScene` gameplay/UI behavior and existing object transforms.
+- Keep UI objects on the existing UI layer and runtime/spawn objects on the existing Default layer.
+- Keep Unity Play Mode verification user-owned.
+- Do not modify unrelated Combat changes already present in the worktree.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, serialized, compiled, and scene-validated.
+
+### Next Actions
+
+- User verifies reward, Prison, Offering, manifest, HUD, damage-meter, debug, spawn, and next-day flows in `NewRunScene` Play Mode.
+
+### Evidence
+
+- `UI/InGame/InGameUIManager.cs:13-21` now stores direct serialized references to Stage/Spawn/Combat and each UI module.
+- `UI/InGame/Reward/RewardPanelUI.cs`, `PrisonPanelUI.cs`, `OfferingUI.cs`, `MenifestUI.cs`, `UI/InGame/Info/InGameInfoUI.cs`, and `BossHpUI.cs` are `MonoBehaviour` modules with direct `[SerializeField]` references.
+- `GameFlow/Spawn/UnitSpawnManager.cs:20-25` owns serialized spawn references; `partySpawnPoints` is assigned to five scene Transforms and no target lookup remains.
+- `InGameUIReferences.cs` and its `.meta` are absent; repository search found no `InGameUIReferences` or temporary `InGameSceneReferenceSetup` references.
+- Live `NewRunScene` hierarchy has `UI` on layer 5 with `HUD`, `Reward`, `Popup`, `Debug`, `DamageMeter`, and `Result`; `Runtime` on layer 0 with `Enemies`, `Skills`, and `Monsters`; `Grid/SpawnPoint` contains six spawn children on layer 0.
+- `NewRunScene.unity` stores non-zero direct references for `InGameUIManager`, `RewardPanelUI`, `PrisonPanelUI`, `OfferingUI`, and `UnitSpawnManager.partySpawnPoints[0..4]`.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and 2 existing assembly-reference warnings.
+- Unity `NewRunScene` validation returned 0 issues, 0 missing scripts, and 0 broken prefabs; editor state reports compilation complete and ready for tools. The cleared Unity console later contained one MCP transport disposed-object entry, not a project compiler diagnostic.
+
+### History
+
+- 2026-08-03: Code Builder converted scene-owned in-game UI modules to direct Inspector-wired MonoBehaviours, removed `InGameUIReferences.cs`, assigned all nested UI references, added direct party spawn-point references, and reorganized `NewRunScene` while preserving object order, transforms, and layers.
+
+## Task: 2026-08-03 Damage Meter Duplicate Logic Consolidation
+
+### Task title
+
+Remove redundant lookup code from `DamageMeterUIController`.
+
+### Goals
+
+- Remove the unused catalog helper and local value.
+- Share active/passive skill-name lookup code.
+- Scan a damage source's reaction once and reuse it for choice-title and trigger-source display resolution.
+- Share the active/passive reaction traversal without changing display priority or serialized Inspector fields.
+
+### Constraints
+
+- Preserve Damage Meter open/close, panel refresh, segment layout, tracker aggregation, and display fallback order.
+- Preserve all serialized field names and scene references.
+- Do not modify `DamageMeterRuntimeTracker` ownership or run Play Mode gameplay tests.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and verified.
+
+### Next Actions
+
+- User verifies Damage Meter opening, per-monster totals, skill segment labels, and percentage display in Play Mode.
+
+### Evidence
+
+- `DamageMeterUIController.cs:147-166` now resolves one `SkillReaction` and reuses it for both title and trigger-source paths.
+- `DamageMeterUIController.cs:232-263` uses one shared `SkillDefinition[]` reaction scan for active and passive skills.
+- `DamageMeterUIController.cs:268-299` uses one shared skill-name scan while preserving active-before-passive priority.
+- Search returns no `ResolveCatalog`, `ResolveActiveSkillDisplayName`, `ResolvePassiveDisplayName`, `ResolveChoiceTitleForSource`, or unused `catalog` symbol.
+- `DamageMeterRuntimeTracker.cs` remains the sole damage aggregation owner; this change only consolidates UI lookup/presentation code.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and the existing 2 assembly-reference warnings.
+- Unity console returned 0 error/warning entries after refresh; `NewRunScene` validation returned 0 issues, 0 missing scripts, and 0 broken prefabs.
+
+### History
+
+- 2026-08-03: Code Builder removed dead catalog code and consolidated duplicate skill/reaction lookup paths in `DamageMeterUIController` without changing serialized scene data.

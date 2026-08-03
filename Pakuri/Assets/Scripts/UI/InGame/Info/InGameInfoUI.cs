@@ -1,28 +1,19 @@
 using System;
 using Pakuri.Data;
 using TMPro;
+using UnityEngine;
 
 namespace Pakuri.InGame
 {
     /// InGame 상단 정보와 PrisonPanel 정보를 갱신한다.
-    internal sealed class InGameInfoUI
+    public sealed class InGameInfoUI : MonoBehaviour
     {
-        private readonly TMP_Text stageInfoText;
-        private readonly TMP_Text goldInfoText;
-        private readonly TMP_Text darkInfoText;
-        private readonly TMP_Text prisonStageInfoText;
-        private readonly TMP_Text prisonGoldInfoText;
-        private readonly TMP_Text prisonDarkInfoText;
-
-        public InGameInfoUI(InGameInfoReferences references)
-        {
-            stageInfoText = references != null ? references.stageInfoText : null;
-            goldInfoText = references != null ? references.goldInfoText : null;
-            darkInfoText = references != null ? references.darkInfoText : null;
-            prisonStageInfoText = references != null ? references.prisonStageInfoText : null;
-            prisonGoldInfoText = references != null ? references.prisonGoldInfoText : null;
-            prisonDarkInfoText = references != null ? references.prisonDarkInfoText : null;
-        }
+        [SerializeField] private TMP_Text stageInfoText;
+        [SerializeField] private TMP_Text goldInfoText;
+        [SerializeField] private TMP_Text darkInfoText;
+        [SerializeField] private TMP_Text prisonStageInfoText;
+        [SerializeField] private TMP_Text prisonGoldInfoText;
+        [SerializeField] private TMP_Text prisonDarkInfoText;
 
         public void Refresh(StageManager stageManager, RunSession session, bool prisonPanelVisible)
         {

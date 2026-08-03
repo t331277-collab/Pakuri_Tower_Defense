@@ -9,31 +9,25 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
-
     /// 살아 있는 보스 중 최대 체력이 가장 높은 유닛의 화면 HP를 표시한다.
-    internal sealed class BossHpUI
+    public sealed class BossHpUI : MonoBehaviour
     {
-        private readonly GameObject root;
-        private readonly TMP_Text nameText;
-        private readonly TMP_Text hpText;
-        private readonly RectTransform background;
-        private readonly RectTransform fill;
-        private readonly RectTransform shield;
+        [SerializeField] private GameObject root;
+        [SerializeField] private TMP_Text nameText;
+        [SerializeField] private TMP_Text hpText;
+        [SerializeField] private RectTransform background;
+        [SerializeField] private RectTransform fill;
+        [SerializeField] private RectTransform shield;
+        [SerializeField] private UnitSpawnManager unitSpawnManager;
 
         private CombatUnitEntry displayedBoss;
 
-        public BossHpUI(InGameBossHpReferences references)
+        private void Awake()
         {
-            root = references != null ? references.root : null;
-            nameText = references != null ? references.nameText : null;
-            hpText = references != null ? references.hpText : null;
-            background = references != null ? references.background : null;
-            fill = references != null ? references.fill : null;
-            shield = references != null ? references.shield : null;
             Hide();
         }
 
-        public void Refresh(UnitSpawnManager unitSpawnManager)
+        public void Refresh()
         {
             var nextBoss = SelectBoss(unitSpawnManager != null ? unitSpawnManager.Enemies : null);
             if (nextBoss != displayedBoss)
@@ -128,9 +122,9 @@ namespace Pakuri.InGame
 
             var position = target.anchoredPosition;
             position.x = background.anchoredPosition.x
-                - (backgroundWidth * 0.5f)
-                + (backgroundWidth * Mathf.Clamp01(leftRatio))
-                + (segmentWidth * 0.5f);
+                - backgroundWidth * 0.5f
+                + backgroundWidth * Mathf.Clamp01(leftRatio)
+                + segmentWidth * 0.5f;
             target.anchoredPosition = position;
         }
 
@@ -170,12 +164,9 @@ namespace Pakuri.InGame
 
         private static string FormatValue(float value)
         {
-            if (Mathf.Approximately(value, Mathf.Round(value)))
-            {
-                return Mathf.RoundToInt(value).ToString();
-            }
-
-            return value.ToString("0.##");
+            return Mathf.Approximately(value, Mathf.Round(value))
+                ? Mathf.RoundToInt(value).ToString()
+                : value.ToString("0.##");
         }
 
         private static void SetActive(GameObject target, bool active)

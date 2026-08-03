@@ -31,7 +31,6 @@ namespace Pakuri.InGame
         private void OnEnable()
         {
             Active = this;
-            ResolveCombatManager();
             if (combatManager != null)
             {
                 combatManager.DamageApplied -= Record;
@@ -50,14 +49,6 @@ namespace Pakuri.InGame
             if (Active == this)
             {
                 Active = null;
-            }
-        }
-
-        private void ResolveCombatManager()
-        {
-            if (combatManager == null)
-            {
-                combatManager = FindFirstObjectByType<InGameCombatManager>();
             }
         }
 

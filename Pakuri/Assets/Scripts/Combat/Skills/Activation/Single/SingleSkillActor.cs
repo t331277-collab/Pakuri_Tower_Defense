@@ -177,45 +177,6 @@ public partial class SingleSkillActor
 		}
 	}
 
-	/// 조건부 후속 공격이 공유할 상태 조건과 반복 규칙을 고정한다.
-	private readonly struct SingleFollowUpSpec
-	{
-		public StatusEffectKind RequiredStatusKind { get; }
-
-		public int RepeatCount { get; }
-
-		public float IntervalSeconds { get; }
-
-		public float DamageMultiplier { get; }
-
-		public GameObject Prefab { get; }
-
-		/// 후속 공격이 반복마다 사용할 기준을 고정한다.
-		public SingleFollowUpSpec(StatusEffectKind requiredStatusKind, int repeatCount, float intervalSeconds, float damageMultiplier, GameObject prefab)
-		{
-			RequiredStatusKind = requiredStatusKind;
-			RepeatCount = repeatCount;
-			IntervalSeconds = intervalSeconds;
-			DamageMultiplier = damageMultiplier;
-			Prefab = prefab;
-		}
-	}
-
-	/// 후속 공격이 다시 찾을 대상과 마지막 중심을 보존한다.
-	private readonly struct SingleFollowUpTarget
-	{
-		public UnitCombatState Model { get; }
-
-		public Vector2 Center { get; }
-
-		/// 대상이 사라져도 사용할 기준 위치를 함께 고정한다.
-		public SingleFollowUpTarget(UnitCombatState model, Vector2 center)
-		{
-			Model = model;
-			Center = center;
-		}
-	}
-
 	/// 대상 상태를 반영한 피해 입력과 처형 결과를 고정한다.
 	private readonly struct TargetDamageResolution
 	{
@@ -262,7 +223,7 @@ public partial class SingleSkillActor
 			float num = Mathf.Max(0f, repeatInterval * (float)i);
 			if (num <= 0f)
 			{
-				ExecuteAtCenter(context, snapshot2, center, runtimeVisual, prefab, allowConditionalFollowUp: false);
+				ExecuteAtCenter(context, snapshot2, center, runtimeVisual, prefab, useRuntimeState: false);
 				PublishDeploymentLifecycle(context, snapshot2, center);
 			}
 			else
@@ -278,7 +239,7 @@ public partial class SingleSkillActor
 		yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
 		if (context != null && !(context.CombatManager == null) && context.Roster != null && context.CasterEntry != null && context.Caster != null)
 		{
-			ExecuteAtCenter(context, snapshot, center, runtimeVisual, prefab, allowConditionalFollowUp: false);
+			ExecuteAtCenter(context, snapshot, center, runtimeVisual, prefab, useRuntimeState: false);
 			PublishDeploymentLifecycle(context, snapshot, center);
 		}
 	}
@@ -300,7 +261,7 @@ public partial class SingleSkillActor
 	}
 
 	/// 준비된 단일 공격을 중심 위치에서 실행한다.
-	internal SingleExecutionOutcome ExecuteAtCenter(SkillExecutionContext context, SkillExecutionState snapshot, Vector2 center, RuntimeSkillVisualSpec runtimeVisual, GameObject prefab, bool allowConditionalFollowUp)
+	internal SingleExecutionOutcome ExecuteAtCenter(SkillExecutionContext context, SkillExecutionState snapshot, Vector2 center, RuntimeSkillVisualSpec runtimeVisual, GameObject prefab, bool useRuntimeState)
 	{
 		float radius = snapshot.PreparedRadius;
 		bool coverAll = snapshot.PreparedCoverAll;
@@ -311,10 +272,8 @@ public partial class SingleSkillActor
 		float critDamageBonus = snapshot?.CritDamageBonus ?? 0f;
 		int num = snapshot.PreparedHitTargetCount;
 		float num2 = snapshot.PreparedDamageDelay;
-		SingleFollowUpSpec? followUpSpec = (allowConditionalFollowUp ? FollowUpSpec(snapshot, statusSpec, prefab) : ((SingleFollowUpSpec?)null));
-		List<SingleFollowUpTarget> followUpTargets = (followUpSpec.HasValue ? new List<SingleFollowUpTarget>() : null);
 		SkillExecutionState skillRuntimeInstance = null;
-		if (allowConditionalFollowUp && context.PublishSkillLifecycleEvents)
+		if (useRuntimeState && context.PublishSkillLifecycleEvents)
 		{
 			skillRuntimeInstance = context.Runtime;
 		}
@@ -344,11 +303,11 @@ public partial class SingleSkillActor
 				}
 				if (num2 > 0f)
 				{
-					StartTrackedCoroutine(ApplyPrefabHitboxAfterDelay(context, snapshot, gameObject, num, damage, attribute, statusSpec, skillRuntimeInstance, snapshot.PreparedCriticalAllowed, critChanceBonus, critDamageBonus, followUpSpec, followUpTargets, num2, allowConditionalFollowUp));
+					StartTrackedCoroutine(ApplyPrefabHitboxAfterDelay(context, snapshot, gameObject, num, damage, attribute, statusSpec, skillRuntimeInstance, snapshot.PreparedCriticalAllowed, critChanceBonus, critDamageBonus, num2));
 				}
 				else
 				{
-					flag2 = ApplyPrefabHitbox(context.CombatManager, context.CasterEntry, context.Roster, snapshot.PreparedTargeting, gameObject, num, damage, attribute, statusSpec, context.Caster, context.SourceSkillId, skillRuntimeInstance, snapshot.PreparedCriticalAllowed, critChanceBonus, critDamageBonus, snapshot, followUpSpec, followUpTargets, context.EventTarget, context.LockToEventTarget);
+					flag2 = ApplyPrefabHitbox(context.CombatManager, context.CasterEntry, context.Roster, snapshot.PreparedTargeting, gameObject, num, damage, attribute, statusSpec, context.Caster, context.SourceSkillId, skillRuntimeInstance, snapshot.PreparedCriticalAllowed, critChanceBonus, critDamageBonus, snapshot, context.EventTarget, context.LockToEventTarget);
 				}
 				SingleSkillActor.Attach(gameObject).InitializeAnimation(effects);
 			}
@@ -366,11 +325,11 @@ public partial class SingleSkillActor
 						SingleSkillActor.Attach(visualInstance).InitializeAnimation(effects);
 					}
 				}
-				StartTrackedCoroutine(ApplyNonPrefabTargetsAfterDelay(context, snapshot, center, radius, coverAll, num, damage, attribute, statusSpec, skillRuntimeInstance, snapshot.PreparedCriticalAllowed, critChanceBonus, critDamageBonus, followUpSpec, followUpTargets, num2, allowConditionalFollowUp));
+				StartTrackedCoroutine(ApplyNonPrefabTargetsAfterDelay(context, snapshot, center, radius, coverAll, num, damage, attribute, statusSpec, skillRuntimeInstance, snapshot.PreparedCriticalAllowed, critChanceBonus, critDamageBonus, num2));
 			}
 			else
 			{
-				flag2 = ApplyNonPrefabTargets(context, snapshot, center, radius, coverAll, num, damage, attribute, statusSpec, skillRuntimeInstance, snapshot.PreparedCriticalAllowed, critChanceBonus, critDamageBonus, followUpSpec, followUpTargets);
+				flag2 = ApplyNonPrefabTargets(context, snapshot, center, radius, coverAll, num, damage, attribute, statusSpec, skillRuntimeInstance, snapshot.PreparedCriticalAllowed, critChanceBonus, critDamageBonus);
 				if (flag2 && effects != null)
 				{
 					var visualInstance = effects.CreateEffect(new EffectCreateRequest(runtimeVisual, prefab, "RuntimeSingleVisual", center, Quaternion.identity, null, null, false, true, false));
@@ -381,15 +340,11 @@ public partial class SingleSkillActor
 				}
 			}
 		}
-		if (allowConditionalFollowUp && num2 <= 0f)
-		{
-			ScheduleConditionalFollowUps(context, snapshot, followUpSpec, followUpTargets);
-		}
 		return new SingleExecutionOutcome(flag2, castCommitted);
 	}
 
 	/// 일반 단일 공격의 대상 경로를 선택한다.
-	private static bool ApplyNonPrefabTargets(SkillExecutionContext context, SkillExecutionState snapshot, Vector2 center, float radius, bool coverAll, int effectiveHitTargetCount, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, SkillExecutionState onHitRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets)
+	private static bool ApplyNonPrefabTargets(SkillExecutionContext context, SkillExecutionState snapshot, Vector2 center, float radius, bool coverAll, int effectiveHitTargetCount, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, SkillExecutionState onHitRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus)
 	{
 		if (context == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null)
 		{
@@ -397,38 +352,30 @@ public partial class SingleSkillActor
 		}
 		if (snapshot.PreparedUsesHitTargetCount && snapshot.PreparedHitTargetCount != int.MaxValue)
 		{
-			return ApplyLimitedTargets(context.CombatManager, context.CasterEntry, context.Roster, snapshot.PreparedTargeting, effectiveHitTargetCount, damage, attribute, statusSpec, context.Caster, context.SourceSkillId, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, snapshot, center, followUpSpec, followUpTargets, context.EventTarget, context.LockToEventTarget);
+			return ApplyLimitedTargets(context.CombatManager, context.CasterEntry, context.Roster, snapshot.PreparedTargeting, effectiveHitTargetCount, damage, attribute, statusSpec, context.Caster, context.SourceSkillId, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, snapshot, center, context.EventTarget, context.LockToEventTarget);
 		}
-		return ApplyAreaTargets(context.CombatManager, context.CasterEntry, context.Roster, snapshot.PreparedTargeting, center, radius, coverAll, damage, attribute, statusSpec, context.Caster, context.SourceSkillId, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, snapshot, followUpSpec, followUpTargets, context.EventTarget, context.LockToEventTarget);
+		return ApplyAreaTargets(context.CombatManager, context.CasterEntry, context.Roster, snapshot.PreparedTargeting, center, radius, coverAll, damage, attribute, statusSpec, context.Caster, context.SourceSkillId, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, snapshot, context.EventTarget, context.LockToEventTarget);
 	}
 
 	/// 지연된 일반 대상 판정을 실행한다.
-	private IEnumerator ApplyNonPrefabTargetsAfterDelay(SkillExecutionContext context, SkillExecutionState snapshot, Vector2 center, float radius, bool coverAll, int effectiveHitTargetCount, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, SkillExecutionState onHitRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets, float delaySeconds, bool allowConditionalFollowUp)
+	private IEnumerator ApplyNonPrefabTargetsAfterDelay(SkillExecutionContext context, SkillExecutionState snapshot, Vector2 center, float radius, bool coverAll, int effectiveHitTargetCount, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, SkillExecutionState onHitRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, float delaySeconds)
 	{
 		yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
-		ApplyNonPrefabTargets(context, snapshot, center, radius, coverAll, effectiveHitTargetCount, damage, attribute, statusSpec, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, followUpSpec, followUpTargets);
-		if (allowConditionalFollowUp)
-		{
-			ScheduleConditionalFollowUps(context, snapshot, followUpSpec, followUpTargets);
-		}
+		ApplyNonPrefabTargets(context, snapshot, center, radius, coverAll, effectiveHitTargetCount, damage, attribute, statusSpec, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus);
 	}
 
 	/// 지연된 충돌 영역 판정을 실행한다.
-	private IEnumerator ApplyPrefabHitboxAfterDelay(SkillExecutionContext context, SkillExecutionState snapshot, GameObject instance, int effectiveHitTargetCount, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, SkillExecutionState onHitRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets, float delaySeconds, bool allowConditionalFollowUp)
+	private IEnumerator ApplyPrefabHitboxAfterDelay(SkillExecutionContext context, SkillExecutionState snapshot, GameObject instance, int effectiveHitTargetCount, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, SkillExecutionState onHitRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, float delaySeconds)
 	{
 		yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
 		if (context != null && !(context.CombatManager == null) && context.CasterEntry != null && context.Roster != null && !(instance == null))
 		{
-			ApplyPrefabHitbox(context.CombatManager, context.CasterEntry, context.Roster, snapshot.PreparedTargeting, instance, effectiveHitTargetCount, damage, attribute, statusSpec, context.Caster, context.SourceSkillId, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, snapshot, followUpSpec, followUpTargets, context.EventTarget, context.LockToEventTarget);
-			if (allowConditionalFollowUp)
-			{
-				ScheduleConditionalFollowUps(context, snapshot, followUpSpec, followUpTargets);
-			}
+			ApplyPrefabHitbox(context.CombatManager, context.CasterEntry, context.Roster, snapshot.PreparedTargeting, instance, effectiveHitTargetCount, damage, attribute, statusSpec, context.Caster, context.SourceSkillId, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, snapshot, context.EventTarget, context.LockToEventTarget);
 		}
 	}
 
 	/// 충돌 영역 결과를 공통 피해 경로에 연결한다.
-	private static bool ApplyPrefabHitbox(InGameCombatManager manager, CombatUnitEntry sourceEntry, UnitSpawnManager unitRoster, SkillTargetingSpec targetingSpec, GameObject hitboxObject, int maxTargets, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, UnitCombatState source, string sourceSkillId, SkillExecutionState sourceRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SkillExecutionState snapshot, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets, UnitCombatState eventTarget, bool lockToEventTarget)
+	private static bool ApplyPrefabHitbox(InGameCombatManager manager, CombatUnitEntry sourceEntry, UnitSpawnManager unitRoster, SkillTargetingSpec targetingSpec, GameObject hitboxObject, int maxTargets, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, UnitCombatState source, string sourceSkillId, SkillExecutionState sourceRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SkillExecutionState snapshot, UnitCombatState eventTarget, bool lockToEventTarget)
 	{
 		if (manager == null || sourceEntry == null || unitRoster == null || hitboxObject == null || maxTargets <= 0)
 		{
@@ -455,7 +402,6 @@ public partial class SingleSkillActor
 			CombatUnitEntry unitEntry = collisionTargets[i];
 			if (unitEntry != null && unitEntry.Model != null && unitEntry.Transform != null)
 			{
-				RegisterFollowUpTarget(followUpTargets, followUpSpec, unitEntry, (unitEntry != null && unitEntry.Transform != null) ? ((Vector2)unitEntry.Transform.position) : Vector2.zero);
 				Vector2 hitPosition = ((unitEntry.Transform != null) ? ((Vector2)unitEntry.Transform.position) : Vector2.zero);
 				bool isCoreHit = coreCollisionTargets.Contains(unitEntry);
 				TargetDamageResolution damageResolution = TargetDamage(snapshot, damage, unitEntry.Model, critChanceBonus, isCoreHit);
@@ -483,7 +429,7 @@ public partial class SingleSkillActor
 	}
 
 	/// 제한된 대상 목록에 피해를 적용한다.
-	private static bool ApplyLimitedTargets(InGameCombatManager manager, CombatUnitEntry sourceEntry, UnitSpawnManager unitRoster, SkillTargetingSpec targetingSpec, int maxTargets, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, UnitCombatState source, string sourceSkillId, SkillExecutionState sourceRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SkillExecutionState snapshot, Vector2 center, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets, UnitCombatState eventTarget, bool lockToEventTarget)
+	private static bool ApplyLimitedTargets(InGameCombatManager manager, CombatUnitEntry sourceEntry, UnitSpawnManager unitRoster, SkillTargetingSpec targetingSpec, int maxTargets, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, UnitCombatState source, string sourceSkillId, SkillExecutionState sourceRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SkillExecutionState snapshot, Vector2 center, UnitCombatState eventTarget, bool lockToEventTarget)
 	{
 		if (manager == null || sourceEntry == null || unitRoster == null || maxTargets <= 0)
 		{
@@ -495,7 +441,6 @@ public partial class SingleSkillActor
 		for (int i = 0; i < list.Count; i++)
 		{
 			CombatUnitEntry unitEntry = list[i];
-			RegisterFollowUpTarget(followUpTargets, followUpSpec, unitEntry, center);
 			Vector2 hitPosition = ((unitEntry.Transform != null) ? ((Vector2)unitEntry.Transform.position) : center);
 			TargetDamageResolution damageResolution = TargetDamage(snapshot, damage, unitEntry.Model, critChanceBonus, isCoreHit: false);
 			InGameResourceChangeResult result2 = manager.ApplyDamageWithTriggerState(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, critDamageBonus, sourceSkillId, false, damageResolution.IsExecute, null, damageResolution.FinalDamageMultiplier, snapshot.TriggerExecutionState);
@@ -520,7 +465,7 @@ public partial class SingleSkillActor
 	}
 
 	/// 범위 안 대상에 피해를 적용한다.
-	private static bool ApplyAreaTargets(InGameCombatManager manager, CombatUnitEntry sourceEntry, UnitSpawnManager unitRoster, SkillTargetingSpec targetingSpec, Vector2 center, float radius, bool coverAll, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, UnitCombatState source, string sourceSkillId, SkillExecutionState sourceRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SkillExecutionState snapshot, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets, UnitCombatState eventTarget, bool lockToEventTarget)
+	private static bool ApplyAreaTargets(InGameCombatManager manager, CombatUnitEntry sourceEntry, UnitSpawnManager unitRoster, SkillTargetingSpec targetingSpec, Vector2 center, float radius, bool coverAll, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, UnitCombatState source, string sourceSkillId, SkillExecutionState sourceRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SkillExecutionState snapshot, UnitCombatState eventTarget, bool lockToEventTarget)
 	{
 		if (manager == null || sourceEntry == null || unitRoster == null)
 		{
@@ -534,7 +479,6 @@ public partial class SingleSkillActor
 			{
 				return false;
 			}
-			RegisterFollowUpTarget(followUpTargets, followUpSpec, unitEntry, center);
 			Vector2 hitPosition = ((unitEntry.Transform != null) ? ((Vector2)unitEntry.Transform.position) : center);
 			TargetDamageResolution damageResolution = TargetDamage(snapshot, damage, unitEntry.Model, critChanceBonus, isCoreHit: false);
 			InGameResourceChangeResult result = manager.ApplyDamageWithTriggerState(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, critDamageBonus, sourceSkillId, false, damageResolution.IsExecute, null, damageResolution.FinalDamageMultiplier, snapshot.TriggerExecutionState);
@@ -558,7 +502,6 @@ public partial class SingleSkillActor
 			CombatUnitEntry unitEntry2 = list[i];
 			if (unitEntry2 != null && unitEntry2.IsAlive && unitEntry2.Model != null && !(unitEntry2.Transform == null) && (coverAll || !(((Vector2)unitEntry2.Transform.position - center).sqrMagnitude > num2)))
 			{
-				RegisterFollowUpTarget(followUpTargets, followUpSpec, unitEntry2, center);
 				Vector2 hitPosition2 = ((unitEntry2.Transform != null) ? ((Vector2)unitEntry2.Transform.position) : center);
 				TargetDamageResolution damageResolution2 = TargetDamage(snapshot, damage, unitEntry2.Model, critChanceBonus, isCoreHit: false);
 				InGameResourceChangeResult result3 = manager.ApplyDamageWithTriggerState(unitEntry2.Model, damageResolution2.Damage, attribute, source, criticalAllowed, damageResolution2.CritChanceBonus, critDamageBonus, sourceSkillId, false, damageResolution2.IsExecute, null, damageResolution2.FinalDamageMultiplier, snapshot.TriggerExecutionState);
@@ -669,72 +612,6 @@ public partial class SingleSkillActor
 					hitCount,
 					snapshot,
 					executionContext));
-		}
-	}
-
-	/// 조건부 후속 공격의 기준을 만든다.
-	private static SingleFollowUpSpec? FollowUpSpec(SkillExecutionState snapshot, StatusApplicationSpec statusSpec, GameObject prefab)
-	{
-		if (snapshot == null || !snapshot.HasBranchCount || snapshot.BranchCount <= 0 || !snapshot.HasBranchDamageMultiplier || snapshot.BranchDamageMultiplier <= 0f || !snapshot.HasBranchSearchRadius || snapshot.BranchSearchRadius <= 0f)
-		{
-			return null;
-		}
-		if (statusSpec == null || statusSpec.Status == null || statusSpec.Status.Kind == StatusEffectKind.None)
-		{
-			return null;
-		}
-		return new SingleFollowUpSpec(statusSpec.Status.Kind, snapshot.BranchCount, snapshot.BranchSearchRadius, snapshot.BranchDamageMultiplier, prefab);
-	}
-
-	/// 후속 공격 후보를 중복 없이 기록한다.
-	private static void RegisterFollowUpTarget(List<SingleFollowUpTarget> followUpTargets, SingleFollowUpSpec? followUpSpec, CombatUnitEntry target, Vector2 center)
-	{
-		if (followUpTargets == null || !followUpSpec.HasValue || target == null || target.Model == null || !HasStatus(target.Model, followUpSpec.Value.RequiredStatusKind))
-		{
-			return;
-		}
-		for (int i = 0; i < followUpTargets.Count; i++)
-		{
-			if (followUpTargets[i].Model == target.Model)
-			{
-				return;
-			}
-		}
-		followUpTargets.Add(new SingleFollowUpTarget(target.Model, center));
-	}
-
-	/// 조건부 후속 공격을 예약한다.
-	private void ScheduleConditionalFollowUps(SkillExecutionContext context, SkillExecutionState snapshot, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets)
-	{
-		if (context == null || context.CombatManager == null || context.Roster == null || context.CasterEntry == null || context.Caster == null || !followUpSpec.HasValue || followUpTargets == null || followUpTargets.Count == 0)
-		{
-			return;
-		}
-		SingleFollowUpSpec value = followUpSpec.Value;
-		for (int i = 0; i < followUpTargets.Count; i++)
-		{
-			SingleFollowUpTarget followUpTarget = followUpTargets[i];
-			for (int j = 1; j <= value.RepeatCount; j++)
-			{
-				StartTrackedCoroutine(ExecuteConditionalFollowUpAfterDelay(context, snapshot, followUpTarget, value, value.IntervalSeconds * (float)j));
-			}
-		}
-	}
-
-	/// 예약된 후속 공격을 실행한다.
-	private IEnumerator ExecuteConditionalFollowUpAfterDelay(SkillExecutionContext context, SkillExecutionState snapshot, SingleFollowUpTarget followUpTarget, SingleFollowUpSpec followUpSpec, float delaySeconds)
-	{
-		yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
-		if (context != null && !(context.CombatManager == null) && context.Roster != null && context.CasterEntry != null && context.Caster != null)
-		{
-			CombatUnitEntry unitEntry = ((followUpTarget.Model != null) ? context.Roster.Find(followUpTarget.Model) : null);
-			Vector2 center = ((unitEntry != null && unitEntry.Transform != null) ? ((Vector2)unitEntry.Transform.position) : followUpTarget.Center);
-			SkillExecutionState snapshot2 = null;
-			if (snapshot != null)
-			{
-				snapshot2 = snapshot.CopyWithDamageMultiplier(followUpSpec.DamageMultiplier);
-			}
-			ExecuteAtCenter(context, snapshot2, center, null, followUpSpec.Prefab, allowConditionalFollowUp: false);
 		}
 	}
 
@@ -854,16 +731,6 @@ public partial class SingleSkillActor
 			list.RemoveRange(maxTargetCount, list.Count - maxTargetCount);
 		}
 		return list;
-	}
-
-	/// 대상이 상태를 보유하는지 확인한다.
-	private static bool HasStatus(UnitCombatState target, StatusEffectKind kind)
-	{
-		if (target != null && target.Statuses != null && kind != StatusEffectKind.None)
-		{
-			return target.Statuses.Has(kind);
-		}
-		return false;
 	}
 
 }

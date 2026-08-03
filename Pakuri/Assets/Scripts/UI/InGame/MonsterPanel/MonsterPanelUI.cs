@@ -25,8 +25,6 @@ namespace Pakuri.InGame
         /// Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.
         private void Awake()
         {
-            ResolveReferences();
-            ResolveSceneUi();
             SetPanelVisible(true);
         }
 
@@ -39,14 +37,11 @@ namespace Pakuri.InGame
         /// 현재 Unity 프레임에서 Update 갱신 동작을 진행한다.
         private void Update()
         {
-            ResolveReferences();
             RefreshNow();
         }
 
         public void RefreshNow()
         {
-            ResolveReferences();
-            ResolveSceneUi();
             SetPanelVisible(true);
 
             var modelsBySlot = ResolvePlayerModelsBySlot();
@@ -102,86 +97,9 @@ namespace Pakuri.InGame
             return models;
         }
 
-        private void ResolveReferences()
-        {
-            if (stageManager == null)
-            {
-                stageManager = FindSceneObject<StageManager>();
-            }
-
-            if (unitSpawnManager == null)
-            {
-                unitSpawnManager = FindSceneObject<UnitSpawnManager>();
-            }
-        }
-
-        private void ResolveSceneUi()
-        {
-            if (monsterPanelRoot == null)
-            {
-                monsterPanelRoot = string.Equals(transform.name, "MonsterPanel", System.StringComparison.OrdinalIgnoreCase)
-                    ? transform
-                    : transform.Find("MonsterPanel");
-            }
-
-            if (monsterPanelRoot == null)
-            {
-                return;
-            }
-
-            monsterPanelRoot.gameObject.SetActive(true);
-            EnsureMonsterSlotArray();
-            for (var i = 0; i < monsterSlots.Length; i++)
-            {
-                ResolveMonsterSlot(i);
-            }
-        }
-
-        private void ResolveMonsterSlot(int slotIndex)
-        {
-            if (slotIndex < 0 || slotIndex >= monsterSlots.Length || monsterPanelRoot == null)
-            {
-                return;
-            }
-
-            var existing = monsterSlots[slotIndex];
-            if (existing != null && existing.IsBound)
-            {
-                return;
-            }
-
-            var slotRoot = monsterPanelRoot.Find(string.Format("{0}PMonster", slotIndex + 1));
-            if (slotRoot == null)
-            {
-                return;
-            }
-
-            if (existing == null)
-            {
-                monsterSlots[slotIndex] = new MonsterPanelSlotView(slotRoot);
-                return;
-            }
-
-            existing.Bind(slotRoot);
-        }
-
-        private void EnsureMonsterSlotArray()
-        {
-            if (monsterSlots == null || monsterSlots.Length != MaxPartySlots)
-            {
-                monsterSlots = new MonsterPanelSlotView[MaxPartySlots];
-            }
-        }
-
         private GameDataCatalog ResolveCatalog()
         {
             return GameDataLoader.CurrentCatalog;
-        }
-
-        private static Image FindImage(Transform root, string path)
-        {
-            var child = root != null ? root.Find(path) : null;
-            return child != null ? child.GetComponent<Image>() : null;
         }
 
         private void SetPanelVisible(bool visible)
@@ -190,22 +108,6 @@ namespace Pakuri.InGame
             {
                 monsterPanelRoot.gameObject.SetActive(visible);
             }
-        }
-
-        /// 현재 씬에 존재하는 지정 타입의 오브젝트를 찾아 반환한다.
-        private static T FindSceneObject<T>() where T : UnityEngine.Object
-        {
-            var objects = Resources.FindObjectsOfTypeAll<T>();
-            for (var i = 0; i < objects.Length; i++)
-            {
-                var component = objects[i] as Component;
-                if (component != null && component.gameObject.scene.IsValid())
-                {
-                    return objects[i];
-                }
-            }
-
-            return null;
         }
 
         [System.Serializable]
@@ -217,25 +119,8 @@ namespace Pakuri.InGame
 
             private string lastMonsterId;
 
-            public bool IsBound => root != null;
-
-            public MonsterPanelSlotView(Transform rootTransform)
-            {
-                Bind(rootTransform);
-            }
-
-            public void Bind(Transform rootTransform)
-            {
-                root = rootTransform != null ? rootTransform.gameObject : null;
-                monsterImage = null;
-                activeSlots = new ActiveSkillSlotView[MaxVisibleActiveSlots];
-                lastMonsterId = string.Empty;
-                ResolveChildren();
-            }
-
             public void SetRuntime(UnitCombatState model, GameDataCatalog catalog)
             {
-                ResolveChildren();
                 if (root == null)
                 {
                     return;
@@ -328,59 +213,6 @@ namespace Pakuri.InGame
                 }
             }
 
-            private void ResolveChildren()
-            {
-                if (root == null)
-                {
-                    return;
-                }
-
-                if (monsterImage == null)
-                {
-                    monsterImage = FindImage(root.transform, "Monster Image");
-                }
-
-                EnsureSlotArray();
-                ResolveSlot(0, "Active1");
-                ResolveSlot(1, "Active2");
-                ResolveSlot(2, "Active3");
-            }
-
-            private void ResolveSlot(int index, string childName)
-            {
-                if (index < 0 || index >= activeSlots.Length || root == null)
-                {
-                    return;
-                }
-
-                var existing = activeSlots[index];
-                if (existing != null && existing.IsBound)
-                {
-                    return;
-                }
-
-                var slotRoot = root.transform.Find(childName);
-                if (slotRoot == null)
-                {
-                    return;
-                }
-
-                if (existing == null)
-                {
-                    activeSlots[index] = new ActiveSkillSlotView(slotRoot.gameObject);
-                    return;
-                }
-
-                existing.Bind(slotRoot.gameObject);
-            }
-
-            private void EnsureSlotArray()
-            {
-                if (activeSlots == null || activeSlots.Length != MaxVisibleActiveSlots)
-                {
-                    activeSlots = new ActiveSkillSlotView[MaxVisibleActiveSlots];
-                }
-            }
         }
 
         [System.Serializable]
@@ -391,26 +223,8 @@ namespace Pakuri.InGame
             [SerializeField] private Image cooldownOverlay;
             [SerializeField] private TMP_Text label;
 
-            public bool IsBound => root != null;
-
-            public ActiveSkillSlotView(GameObject root)
-            {
-                Bind(root);
-            }
-
-            public void Bind(GameObject root)
-            {
-                this.root = root;
-                skillImage = null;
-                cooldownOverlay = null;
-                label = null;
-                ResolveChildren();
-            }
-
             public void SetRuntime(SkillExecutionState runtime)
             {
-                ResolveChildren();
-
                 if (runtime == null || runtime.Data == null)
                 {
                     SetVisible(false);
@@ -489,29 +303,6 @@ namespace Pakuri.InGame
                 cooldownOverlay.fillAmount = remainingRatio;
             }
 
-            private void ResolveChildren()
-            {
-                if (root == null)
-                {
-                    return;
-                }
-
-                if (skillImage == null)
-                {
-                    skillImage = root.GetComponent<Image>();
-                }
-
-                if (cooldownOverlay == null)
-                {
-                    var overlay = root.transform.Find("CooldownOverlay");
-                    cooldownOverlay = overlay != null ? overlay.GetComponent<Image>() : null;
-                }
-
-                if (label == null)
-                {
-                    label = root.GetComponentInChildren<TMP_Text>(true);
-                }
-            }
         }
     }
 }

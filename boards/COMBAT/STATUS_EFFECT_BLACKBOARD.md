@@ -4,6 +4,137 @@
 
 The pre-cleanup file, including all completed July tasks, is preserved at `boards/ARCHIVE/ACTIVE_BOARD_SNAPSHOT_2026-07-28/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
 
+## Task: 2026-08-03 Remove SingleSkill Conditional Follow-Up Runtime
+
+### Task title
+
+Remove the obsolete `SingleFollowUpSpec` conditional follow-up path from SingleSkill execution.
+
+### Goals
+
+- Delete `SingleFollowUpSpec` and its target collection, registration, scheduling and delayed execution logic.
+- Keep normal `RepeatPerTarget` deployment repetition and Trigger `RepeatCount` reaction repetition.
+- Keep SingleSkill damage, status, delay tracking, lifecycle and animation handling unchanged.
+
+### Constraints
+
+- Do not change authored CSV data or the common repeat/reaction rules.
+- Preserve delayed target evaluation and `StartTrackedCoroutine` completion tracking.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation complete. Residual reference search, diff check and C# build passed.
+
+### Next Actions
+
+- In Unity Play Mode, verify SingleSkill delay and `RepeatPerTarget` behavior, plus absence of the removed conditional branch behavior.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Skills/Activation/Single/SingleSkillActor.cs` no longer declares or references `SingleFollowUpSpec`, `SingleFollowUpTarget`, `FollowUpSpec`, `RegisterFollowUpTarget`, `ScheduleConditionalFollowUps`, `ExecuteConditionalFollowUpAfterDelay` or `HasStatus`.
+- `ExecuteAtCenter` retains the runtime-state gate needed to distinguish the primary execution from repeated internal deployments; its misleading `allowConditionalFollowUp` name was changed to `useRuntimeState`.
+- `ScheduleRepeatedDeployments` and `ExecuteRepeatedDeploymentAfterDelay` still call `ExecuteAtCenter` with `useRuntimeState: false`, so `RepeatPerTarget` remains on the existing path.
+- Repository search found no remaining conditional follow-up symbols.
+- `git diff --check -- Pakuri/Assets/Scripts/Combat/Skills/Activation/Single/SingleSkillActor.cs Pakuri/Assets/Scripts/Combat/Skills/Activation/Single/SingleSkillExecutor.cs` passed.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore -v:minimal` completed with 0 errors and the existing 2 assembly-reference warnings.
+
+### History
+
+- 2026-08-03: Code Builder removed the unused conditional status-based SingleSkill follow-up path while preserving authored repeat and reaction repetition paths.
+
+## Task: 2026-08-03 Apply Line Status Effects Every Tick
+
+### Task title
+
+Remove Line skill's per-target status deduplication so active line-area status effects are attempted on every damage tick.
+
+### Goals
+
+- Call `StatusCombatRules.ApplyStatus` directly for each alive line-hit target on every tick.
+- Remove the unused `TryApplyStatus`, `TargetKey` and per-target HashSet state.
+- Preserve line damage, knockback and hit-outcome publication.
+
+### Constraints
+
+- Keep status chance, resistance, duration, stack and refresh behavior in `StatusCombatRules.ApplyStatus`.
+- Do not change Projectile, Zone or Single status paths.
+- Preserve existing user changes in `LineSkillActor.cs`.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation complete. Static residue search, diff check and C# build passed.
+
+### Next Actions
+
+- In Unity Play Mode, verify a line-area status is attempted on each tick and that its authored chance/refresh rules still apply.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Skills/Activation/Line/LineSkillActor.cs` now calls `StatusCombatRules.ApplyStatus(combatManager, target.Model, statusSpec, sourceModel)` directly after non-lethal damage.
+- `TryApplyStatus`, `TargetKey`, `appliedBaseStatusTargets` and its initialization clear were removed; repository search found no remaining references in the Line path.
+- `Pakuri/Assets/Scripts/Combat/Status/Execution/StatusRules.cs:20` remains the common owner of enabled, alive, chance, resistance, duration, stack and refresh handling.
+- `git diff --check -- Pakuri/Assets/Scripts/Combat/Skills/Activation/Line/LineSkillActor.cs` passed.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore -v:minimal` completed with 0 errors and 2 existing assembly-reference warnings.
+
+### History
+
+- 2026-08-03: Code Builder removed Line skill's first-success-per-target status gate and restored direct per-tick status application attempts.
+
+## Task: 2026-08-03 Consolidate Effect Creation Contracts
+
+### Task title
+
+Move runtime effect visual specifications and `EffectCreateRequest` into one `EffectCreate.cs` script.
+
+### Goals
+
+- Keep runtime visual, hitbox and anchor definitions together with the effect creation request contract.
+- Remove the duplicate location of `EffectCreateRequest` from `EffectManager.cs`.
+- Preserve existing namespaces, public type names, call sites and Unity asset GUID.
+
+### Constraints
+
+- Preserve effect creation behavior and existing skill/status execution paths.
+- Do not merge damage, targeting or skill lifetime rules into the generic effect creation contract.
+- Keep the existing `EffectManager` and `EffectVisualBuilder` responsibilities unchanged.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation complete. Static reference checks and C# build passed.
+
+### Next Actions
+
+- Let Unity refresh the renamed script asset and confirm there is no import or compile error in the Editor.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Effects/EffectCreate.cs` now contains `RuntimeSkillVisualAnchor`, `RuntimeSkillHitboxSpec`, `RuntimeSkillVisualSpec` and `Pakuri.InGame.EffectCreateRequest`.
+- `Pakuri/Assets/Scripts/Combat/Effects/EffectManager.cs` no longer declares `EffectCreateRequest`; it only consumes it.
+- `EffectSpec.cs` and its `.meta` were removed; the original GUID `7c7276782e784ec28db67366ac1aeb7f` is preserved in `EffectCreate.cs.meta`.
+- C# search found one definition for each consolidated type and no `EffectSpec.cs` or duplicate declaration reference.
+- The generated `Pakuri/Assembly-CSharp.csproj` stale include was updated from `EffectSpec.cs` to `EffectCreate.cs` for local compilation; it is ignored/generated and not a source change.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore -v:minimal` completed with 0 errors and 2 existing assembly-reference warnings.
+- `git diff --check` passed for the changed source and metadata paths.
+
+### History
+
+- 2026-08-03: Code Builder consolidated EffectSpec definitions and EffectCreateRequest into EffectCreate.cs while preserving namespaces, type names, call sites and Unity GUID.
+
 ## Task: 2026-08-01 Preserve Learned Skill Runtime Values During Reset
 
 ### Task title

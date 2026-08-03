@@ -15,6 +15,7 @@ namespace Pakuri.InGame
         private static readonly float[] TimeScales = { 1f, 1.5f, 2f };
 
         [SerializeField] private PlayerCombatInputController playerCombatControl;
+        [SerializeField] private InGameCombatManager combatManager;
         [SerializeField] private Button autoButton;
         [SerializeField] private Button timeButton;
         [SerializeField] private GameObject onePointFiveIndicator;
@@ -28,7 +29,12 @@ namespace Pakuri.InGame
         /// Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.
         private void Awake()
         {
-            ResolveReferences();
+            if (autoButton != null)
+            {
+                autoButtonDefaultColors = autoButton.colors;
+                hasAutoButtonDefaultColors = true;
+            }
+
             baseFixedDeltaTime = Time.fixedDeltaTime / Mathf.Max(Time.timeScale, 0.0001f);
             ApplyTimeScale(0);
             RefreshAutoButtonVisual();
@@ -37,8 +43,6 @@ namespace Pakuri.InGame
         /// Unity가 컴포넌트를 활성화할 때 구독과 활성 상태를 복원한다.
         private void OnEnable()
         {
-            ResolveReferences();
-
             if (autoButton != null)
             {
                 autoButton.onClick.RemoveListener(ToggleSelectedPlayerAutoSkillMode);
@@ -78,45 +82,6 @@ namespace Pakuri.InGame
             }
         }
 
-        private void ResolveReferences()
-        {
-            if (playerCombatControl == null)
-            {
-                playerCombatControl = FindFirstObjectByType<PlayerCombatInputController>();
-            }
-
-            var autoTransform = transform.Find("AutoBtn");
-            var timeTransform = transform.Find("TimeBtn");
-
-            if (autoButton == null && autoTransform != null)
-            {
-                autoButton = autoTransform.GetComponent<Button>();
-            }
-
-            if (autoButton != null && !hasAutoButtonDefaultColors)
-            {
-                autoButtonDefaultColors = autoButton.colors;
-                hasAutoButtonDefaultColors = true;
-            }
-
-            if (timeButton == null && timeTransform != null)
-            {
-                timeButton = timeTransform.GetComponent<Button>();
-            }
-
-            if (onePointFiveIndicator == null && timeTransform != null)
-            {
-                var indicator = timeTransform.Find("1.5");
-                onePointFiveIndicator = indicator != null ? indicator.gameObject : null;
-            }
-
-            if (twoTimesIndicator == null && timeTransform != null)
-            {
-                var indicator = timeTransform.Find("2");
-                twoTimesIndicator = indicator != null ? indicator.gameObject : null;
-            }
-        }
-
         private void CycleTimeScale()
         {
             ApplyTimeScale((timeScaleIndex + 1) % TimeScales.Length);
@@ -145,7 +110,6 @@ namespace Pakuri.InGame
         {
             if (playerCombatControl != null)
             {
-                var combatManager = FindFirstObjectByType<InGameCombatManager>();
                 playerCombatControl.ToggleAutoSkillMode(
                     combatManager != null ? combatManager.Units : null);
                 RefreshAutoButtonVisual();

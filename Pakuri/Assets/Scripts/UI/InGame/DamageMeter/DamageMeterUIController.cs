@@ -34,9 +34,11 @@ namespace Pakuri.InGame
         /// Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.
         private void Awake()
         {
-            ResolveReferences();
-            ResolveSceneUi();
             BindButtons();
+            for (var i = 0; i < panels.Length; i++)
+            {
+                panels[i]?.Initialize();
+            }
             SetOverlayVisible(false);
         }
 
@@ -49,9 +51,6 @@ namespace Pakuri.InGame
         /// 현재 Unity 프레임에서 Update 갱신 동작을 진행한다.
         private void Update()
         {
-            ResolveReferences();
-            ResolveSceneUi();
-
             if (meterRoot == null || !meterRoot.activeSelf)
             {
                 return;
@@ -78,11 +77,8 @@ namespace Pakuri.InGame
 
         public void RefreshNow()
         {
-            ResolveReferences();
-            ResolveSceneUi();
             BuildPartyOrder();
 
-            var catalog = ResolveCatalog();
             var leaderDamage = ResolveLeaderDamage();
             for (var i = 0; i < panels.Length; i++)
             {
@@ -154,25 +150,20 @@ namespace Pakuri.InGame
             var monster = manager.GetMonster(monsterId);
             if (monster != null)
             {
-                var activeName = ResolveActiveSkillDisplayName(monster, sourceId);
-                if (!string.IsNullOrWhiteSpace(activeName))
+                var skillName = ResolveSkillDisplayName(monster, sourceId);
+                if (!string.IsNullOrWhiteSpace(skillName))
                 {
-                    return activeName;
+                    return skillName;
                 }
 
-                var passiveName = ResolvePassiveDisplayName(monster, sourceId);
-                if (!string.IsNullOrWhiteSpace(passiveName))
-                {
-                    return passiveName;
-                }
-
-                var choiceTitle = ResolveChoiceTitleForSource(monster, sourceId);
+                var reaction = FindReaction(monster, sourceId);
+                var choiceTitle = ResolveChoiceTitleForReaction(reaction);
                 if (!string.IsNullOrWhiteSpace(choiceTitle))
                 {
                     return choiceTitle;
                 }
 
-                var triggerSourceName = ResolveTriggerSourceDisplayName(monster, sourceId);
+                var triggerSourceName = ResolveTriggerSourceDisplayName(monster, sourceId, reaction);
                 if (!string.IsNullOrWhiteSpace(triggerSourceName))
                 {
                     return triggerSourceName;
@@ -207,9 +198,11 @@ namespace Pakuri.InGame
             return 1000 + firstSeenIndex;
         }
 
-        private static string ResolveTriggerSourceDisplayName(MonsterDefinition monster, string sourceId)
+        private static string ResolveTriggerSourceDisplayName(
+            MonsterDefinition monster,
+            string sourceId,
+            SkillReaction trigger)
         {
-            var trigger = FindReaction(monster, sourceId);
             if (trigger == null)
             {
                 return string.Empty;
@@ -222,15 +215,14 @@ namespace Pakuri.InGame
                 return string.Empty;
             }
 
-            var passiveName = ResolvePassiveDisplayName(monster, sourceSkillId);
+            var passiveName = FindSkillDisplayName(monster?.PassiveSkills, sourceSkillId);
             return !string.IsNullOrWhiteSpace(passiveName)
                 ? passiveName
-                : ResolveActiveSkillDisplayName(monster, sourceSkillId);
+                : FindSkillDisplayName(monster?.ActiveSkills, sourceSkillId);
         }
 
-        private static string ResolveChoiceTitleForSource(MonsterDefinition monster, string sourceId)
+        private static string ResolveChoiceTitleForReaction(SkillReaction reaction)
         {
-            var reaction = FindReaction(monster, sourceId);
             return reaction?.RequiredActiveChoiceIds != null
                 && reaction.RequiredActiveChoiceIds.Length > 0
                     ? ResolveChoiceTitle(reaction.RequiredActiveChoiceIds[0])
@@ -241,27 +233,18 @@ namespace Pakuri.InGame
             MonsterDefinition monster,
             string reactionId)
         {
-            for (var i = 0; monster?.ActiveSkills != null
-                && i < monster.ActiveSkills.Length; i++)
+            var reaction = FindReaction(monster?.ActiveSkills, reactionId);
+            return reaction ?? FindReaction(monster?.PassiveSkills, reactionId);
+        }
+
+        private static SkillReaction FindReaction(
+            SkillDefinition[] skills,
+            string reactionId)
+        {
+            for (var i = 0; skills != null && i < skills.Length; i++)
             {
                 var reactions = SkillExecutionRules.CreateDefinitionSnapshot(
-                    monster.ActiveSkills[i]).Reactions;
-                for (var j = 0; j < reactions.Count; j++)
-                {
-                    if (string.Equals(
-                        reactions[j].ReactionId,
-                        reactionId,
-                        StringComparison.OrdinalIgnoreCase))
-                    {
-                        return reactions[j];
-                    }
-                }
-            }
-            for (var i = 0; monster?.PassiveSkills != null
-                && i < monster.PassiveSkills.Length; i++)
-            {
-                var reactions = SkillExecutionRules.CreateDefinitionSnapshot(
-                    monster.PassiveSkills[i]).Reactions;
+                    skills[i]).Reactions;
                 for (var j = 0; j < reactions.Count; j++)
                 {
                     if (string.Equals(
@@ -282,43 +265,32 @@ namespace Pakuri.InGame
             return choice != null ? choice.Title : string.Empty;
         }
 
-        private static string ResolveActiveSkillDisplayName(MonsterDefinition monster, string sourceId)
+        private static string ResolveSkillDisplayName(MonsterDefinition monster, string sourceId)
         {
-            var activeSkills = monster != null ? monster.ActiveSkills : null;
-            if (activeSkills == null)
+            var activeName = FindSkillDisplayName(monster?.ActiveSkills, sourceId);
+            if (!string.IsNullOrWhiteSpace(activeName))
+            {
+                return activeName;
+            }
+
+            return FindSkillDisplayName(monster?.PassiveSkills, sourceId);
+        }
+
+        private static string FindSkillDisplayName(SkillDefinition[] skills, string sourceId)
+        {
+            if (skills == null)
             {
                 return string.Empty;
             }
 
-            for (var i = 0; i < activeSkills.Length; i++)
+            for (var i = 0; i < skills.Length; i++)
             {
-                var skill = activeSkills[i];
+                var skill = skills[i];
                 if (skill != null && string.Equals(skill.SkillId, sourceId, StringComparison.OrdinalIgnoreCase))
                 {
                     return skill.SkillName;
                 }
             }
-
-            return string.Empty;
-        }
-
-        private static string ResolvePassiveDisplayName(MonsterDefinition monster, string sourceId)
-        {
-            var passives = monster != null ? monster.PassiveSkills : null;
-            if (passives == null)
-            {
-                return string.Empty;
-            }
-
-            for (var i = 0; i < passives.Length; i++)
-            {
-                var passive = passives[i];
-                if (passive != null && string.Equals(passive.SkillId, sourceId, StringComparison.OrdinalIgnoreCase))
-                {
-                    return passive.SkillName;
-                }
-            }
-
             return string.Empty;
         }
 
@@ -351,92 +323,6 @@ namespace Pakuri.InGame
             }
         }
 
-        private void ResolveReferences()
-        {
-            if (stageManager == null)
-            {
-                stageManager = FindSceneObject<StageManager>();
-            }
-
-            if (unitSpawnManager == null)
-            {
-                unitSpawnManager = FindSceneObject<UnitSpawnManager>();
-            }
-
-            if (tracker == null)
-            {
-                tracker = GetComponent<DamageMeterRuntimeTracker>();
-            }
-        }
-
-        private void ResolveSceneUi()
-        {
-            if (openButton == null)
-            {
-                var buttonTransform = transform.Find("DamageMeterUIBtn");
-                openButton = buttonTransform != null ? buttonTransform.GetComponent<Button>() : null;
-            }
-
-            if (meterRoot == null)
-            {
-                var root = transform.Find("DamageMeterUI");
-                meterRoot = root != null ? root.gameObject : null;
-            }
-
-            if (closeButton == null && meterRoot != null)
-            {
-                var close = meterRoot.transform.Find("Close");
-                closeButton = close != null ? close.GetComponent<Button>() : null;
-            }
-
-            if (panels == null || panels.Length != MaxPartySlots)
-            {
-                panels = new DamagePanelView[MaxPartySlots];
-            }
-
-            if (meterRoot == null)
-            {
-                return;
-            }
-
-            for (var i = 0; i < panels.Length; i++)
-            {
-                if (panels[i] != null && panels[i].IsBound)
-                {
-                    continue;
-                }
-
-                var panelRoot = meterRoot.transform.Find(string.Format("{0}PDamagePanel", i + 1));
-                if (panelRoot == null)
-                {
-                    continue;
-                }
-
-                panels[i] = new DamagePanelView(panelRoot);
-            }
-        }
-
-        private GameDataCatalog ResolveCatalog()
-        {
-            return GameDataLoader.CurrentCatalog;
-        }
-
-        /// 현재 씬에 존재하는 지정 타입의 오브젝트를 찾아 반환한다.
-        private static T FindSceneObject<T>() where T : UnityEngine.Object
-        {
-            var objects = Resources.FindObjectsOfTypeAll<T>();
-            for (var i = 0; i < objects.Length; i++)
-            {
-                var component = objects[i] as Component;
-                if (component != null && component.gameObject.scene.IsValid())
-                {
-                    return objects[i];
-                }
-            }
-
-            return null;
-        }
-
         [Serializable]
         private class DamagePanelView
         {
@@ -447,7 +333,7 @@ namespace Pakuri.InGame
             [SerializeField] private TMP_Text totalDamagePercentText;
             [SerializeField] private RectTransform meterBackground;
             [SerializeField] private RectTransform meterTemplate;
-            [SerializeField] private readonly List<RectTransform> segments = new List<RectTransform>();
+            [SerializeField] private List<RectTransform> segments = new List<RectTransform>();
 
             private Vector2 templateSize;
             private Vector2 templatePosition;
@@ -455,24 +341,28 @@ namespace Pakuri.InGame
             private Vector2 templateAnchorMax;
             private Vector2 templatePivot;
 
-            public bool IsBound => root != null;
-
-            public DamagePanelView(Transform panelRoot)
+            public void Initialize()
             {
-                Bind(panelRoot);
-            }
+                if (segments == null)
+                {
+                    segments = new List<RectTransform>();
+                }
 
-            public void Bind(Transform panelRoot)
-            {
-                root = panelRoot != null ? panelRoot.gameObject : null;
-                monsterImage = null;
-                monsterNameText = null;
-                totalDamageText = null;
-                totalDamagePercentText = null;
-                meterBackground = null;
-                meterTemplate = null;
-                segments.Clear();
-                ResolveChildren();
+                if (meterTemplate == null)
+                {
+                    return;
+                }
+
+                templateSize = meterTemplate.rect.size;
+                if (templateSize.x <= 0f || templateSize.y <= 0f)
+                {
+                    templateSize = meterTemplate.sizeDelta;
+                }
+
+                templatePosition = meterTemplate.anchoredPosition;
+                templateAnchorMin = meterTemplate.anchorMin;
+                templateAnchorMax = meterTemplate.anchorMax;
+                templatePivot = meterTemplate.pivot;
             }
 
             public void SetRuntime(
@@ -482,7 +372,6 @@ namespace Pakuri.InGame
                 Func<string, string, string> displayNameResolver,
                 Func<string, string, int, int> sortKeyResolver)
             {
-                ResolveChildren();
                 SetVisible(true);
 
                 var monsterId = monster != null ? monster.MonsterId : string.Empty;
@@ -702,58 +591,6 @@ namespace Pakuri.InGame
                 }
             }
 
-            private void ResolveChildren()
-            {
-                if (root == null)
-                {
-                    return;
-                }
-
-                if (monsterImage == null)
-                {
-                    monsterImage = FindImage(root.transform, "Image");
-                }
-
-                if (monsterNameText == null)
-                {
-                    monsterNameText = FindText(root.transform, "Monster_Name_Text");
-                }
-
-                if (totalDamageText == null)
-                {
-                    totalDamageText = FindText(root.transform, "Total_Damage");
-                }
-
-                if (totalDamagePercentText == null)
-                {
-                    totalDamagePercentText = FindText(root.transform, "Total_Damage_Persent");
-                }
-
-                if (meterBackground == null)
-                {
-                    var bg = root.transform.Find("MeterBG");
-                    meterBackground = bg != null ? bg as RectTransform : null;
-                }
-
-                if (meterTemplate == null)
-                {
-                    var meter = root.transform.Find("Skill-Meter");
-                    meterTemplate = meter != null ? meter as RectTransform : null;
-                    if (meterTemplate != null)
-                    {
-                        templateSize = meterTemplate.rect.size;
-                        if (templateSize.x <= 0f || templateSize.y <= 0f)
-                        {
-                            templateSize = meterTemplate.sizeDelta;
-                        }
-
-                        templatePosition = meterTemplate.anchoredPosition;
-                        templateAnchorMin = meterTemplate.anchorMin;
-                        templateAnchorMax = meterTemplate.anchorMax;
-                        templatePivot = meterTemplate.pivot;
-                    }
-                }
-            }
         }
 
         /// SortedSkillSource 처리에 함께 전달되는 값들을 묶는다.
@@ -770,18 +607,6 @@ namespace Pakuri.InGame
             public SkillDamageRecord Record { get; }
             public int SortKey { get; }
             public int FirstSeenIndex { get; }
-        }
-
-        private static Image FindImage(Transform root, string path)
-        {
-            var child = root != null ? root.Find(path) : null;
-            return child != null ? child.GetComponent<Image>() : null;
-        }
-
-        private static TMP_Text FindText(Transform root, string path)
-        {
-            var child = root != null ? root.Find(path) : null;
-            return child != null ? child.GetComponent<TMP_Text>() : null;
         }
 
         private static string FormatCompact(float value)

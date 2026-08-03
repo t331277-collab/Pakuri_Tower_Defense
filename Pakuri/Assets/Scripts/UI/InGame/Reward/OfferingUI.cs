@@ -8,7 +8,7 @@ using UnityEngine.UI;
 namespace Pakuri.InGame
 {
     /// Offering 보상 선택과 신규·패시브·특성·마스터 표시를 관리한다.
-    internal sealed class OfferingUI
+    public sealed class OfferingUI : MonoBehaviour
     {
         private const int MaxOfferingChoices = 3;
         private static readonly Color TraitSkillNameColor = new Color(0.5f, 0f, 0.5f);
@@ -23,57 +23,15 @@ namespace Pakuri.InGame
         }
 
         private readonly List<OfferingChoiceView> offeringChoices = new List<OfferingChoiceView>();
-        private readonly Button[] offeringChoiceButtons;
-        private readonly OfferingButtonView[] offeringButtonViews;
-        private readonly GameObject offeringPanel;
-        private readonly Func<RunSession> resolveSession;
-        private readonly Func<InGameCombatManager> resolveCombatManager;
-        private readonly Func<RewardButtonView> resolveActivePrisonerButton;
-        private readonly Action consumePrisonerButton;
-        private readonly Action completePrisonAction;
-        private readonly Action refreshInfo;
-
-        public OfferingUI(
-            InGameOfferingReferences references,
-            Func<RunSession> resolveSession,
-            Func<InGameCombatManager> resolveCombatManager,
-            Func<RewardButtonView> resolveActivePrisonerButton,
-            Action consumePrisonerButton,
-            Action completePrisonAction,
-            Action refreshInfo)
-        {
-            offeringPanel = references != null ? references.offeringPanel : null;
-            var choiceReferences = references != null
-                ? new[]
-                {
-                    references.choice1,
-                    references.choice2,
-                    references.choice3
-                }
-                : Array.Empty<InGameOfferingChoiceReferences>();
-            offeringChoiceButtons = new Button[choiceReferences.Length];
-            for (var i = 0; i < choiceReferences.Length; i++)
-            {
-                offeringChoiceButtons[i] = choiceReferences[i] != null ? choiceReferences[i].button : null;
-            }
-            offeringButtonViews = new OfferingButtonView[choiceReferences.Length];
-            for (var i = 0; i < offeringButtonViews.Length; i++)
-            {
-                offeringButtonViews[i] = OfferingButtonView.FromReferences(
-                    i < choiceReferences.Length ? choiceReferences[i] : null,
-                    offeringChoiceButtons[i]);
-            }
-            this.resolveSession = resolveSession;
-            this.resolveCombatManager = resolveCombatManager;
-            this.resolveActivePrisonerButton = resolveActivePrisonerButton;
-            this.consumePrisonerButton = consumePrisonerButton;
-            this.completePrisonAction = completePrisonAction;
-            this.refreshInfo = refreshInfo;
-        }
+        [SerializeField] private GameObject offeringPanel;
+        [SerializeField] private OfferingButtonView[] offeringButtonViews = new OfferingButtonView[MaxOfferingChoices];
+        [SerializeField] private StageManager stageManager;
+        [SerializeField] private InGameCombatManager combatManager;
+        [SerializeField] private InGameUIManager uiManager;
 
         public bool OpenOfferingPanel(string monsterId)
         {
-            var activePrisonerButton = resolveActivePrisonerButton?.Invoke();
+            var activePrisonerButton = uiManager?.ActivePrisonerButton;
             if (activePrisonerButton == null
                 || activePrisonerButton.Consumed
                 || string.IsNullOrWhiteSpace(monsterId))
@@ -89,7 +47,7 @@ namespace Pakuri.InGame
             }
 
             SetActive(offeringPanel, true);
-            for (var i = 0; i < offeringChoiceButtons.Length; i++)
+            for (var i = 0; i < offeringButtonViews.Length; i++)
             {
                 var buttonView = i < offeringButtonViews.Length ? offeringButtonViews[i] : null;
                 var button = buttonView != null ? buttonView.Button : null;
@@ -123,8 +81,8 @@ namespace Pakuri.InGame
 
         private void CommitOfferingChoice(int choiceIndex)
         {
-            var session = resolveSession?.Invoke();
-            var activePrisonerButton = resolveActivePrisonerButton?.Invoke();
+            var session = uiManager?.ResolveSession();
+            var activePrisonerButton = uiManager?.ActivePrisonerButton;
             if (session == null
                 || activePrisonerButton == null
                 || activePrisonerButton.Consumed
@@ -149,16 +107,16 @@ namespace Pakuri.InGame
                 choice.PassiveSkillId);
 
             RefreshRuntimeSkillModels();
-            consumePrisonerButton?.Invoke();
+            uiManager?.ConsumeActivePrisonerButton();
             SetActive(offeringPanel, false);
-            refreshInfo?.Invoke();
-            completePrisonAction?.Invoke();
+            uiManager?.RefreshInfo();
+            uiManager?.CompletePrisonAction();
         }
 
         private void BuildOfferingChoices(string monsterId)
         {
             offeringChoices.Clear();
-            var session = resolveSession?.Invoke();
+            var session = uiManager?.ResolveSession();
             if (session == null)
             {
                 return;
@@ -441,7 +399,6 @@ namespace Pakuri.InGame
 
         private void RefreshRuntimeSkillModels()
         {
-            var combatManager = resolveCombatManager?.Invoke();
             var units = combatManager != null ? combatManager.Units : null;
             if (units == null)
             {
@@ -612,42 +569,27 @@ namespace Pakuri.InGame
             public Sprite Icon;
         }
 
+        [Serializable]
         private sealed class OfferingButtonView
         {
-            public Button Button;
-            public TMP_Text SummaryLabel;
-            public TMP_Text SkillNameLabel;
-            public TMP_Text TitleLabel;
-            public TMP_Text DescriptionLabel;
-            public TMP_Text FallbackLabel;
-            public Image IconImage;
-            public GameObject PopUp;
-            public TMP_Text PopUpText;
+            [SerializeField] private Button button;
+            [SerializeField] private TMP_Text summaryLabel;
+            [SerializeField] private TMP_Text skillNameLabel;
+            [SerializeField] private TMP_Text titleLabel;
+            [SerializeField] private TMP_Text descriptionLabel;
+            [SerializeField] private Image iconImage;
+            [SerializeField] private GameObject popUp;
+            [SerializeField] private TMP_Text popUpText;
 
-            public static OfferingButtonView FromReferences(
-                InGameOfferingChoiceReferences references,
-                Button button)
-            {
-                if (references == null && button == null)
-                {
-                    return null;
-                }
-
-                var view = new OfferingButtonView
-                {
-                    Button = button,
-                    SummaryLabel = references != null ? references.summaryLabel : null,
-                    SkillNameLabel = references != null ? references.skillNameLabel : null,
-                    TitleLabel = references != null ? references.titleLabel : null,
-                    DescriptionLabel = references != null ? references.descriptionLabel : null,
-                    IconImage = references != null ? references.iconImage : null,
-                    PopUp = references != null ? references.popUp : null,
-                    PopUpText = references != null ? references.popUpText : null
-                };
-                view.FallbackLabel = view.TitleLabel;
-                return view;
-            }
-
+            public Button Button => button;
+            public TMP_Text SummaryLabel => summaryLabel;
+            public TMP_Text SkillNameLabel => skillNameLabel;
+            public TMP_Text TitleLabel => titleLabel;
+            public TMP_Text DescriptionLabel => descriptionLabel;
+            public TMP_Text FallbackLabel => titleLabel;
+            public Image IconImage => iconImage;
+            public GameObject PopUp => popUp;
+            public TMP_Text PopUpText => popUpText;
         }
     }
 }

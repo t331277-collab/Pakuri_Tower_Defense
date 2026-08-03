@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Pakuri.Data;
 using TMPro;
@@ -8,61 +7,34 @@ using UnityEngine.UI;
 namespace Pakuri.InGame
 {
     /// Stage 보상 버튼과 보상 패널의 표시·소비 상태를 관리한다.
-    internal sealed class RewardPanelUI
+    public sealed class RewardPanelUI : MonoBehaviour
     {
         private readonly List<RewardButtonView> rewardButtons = new List<RewardButtonView>();
-        private readonly GameObject rewardPanel;
-        private readonly Transform rewardButtonContainer;
-        private readonly Button prisonerTemplateButton;
-        private readonly Button goldTemplateButton;
-        private readonly Button darkTemplateButton;
-        private readonly TMP_Text rewardSummaryText;
-        private readonly Vector2 rewardButtonFirstColumnPosition;
-        private readonly float rewardButtonColumnSpacingX;
-        private readonly float rewardButtonRowSpacingY;
-        private readonly int rewardButtonRowsPerColumn;
-        private readonly Func<RunSession> resolveSession;
-        private readonly Func<string, string> resolvePrisonerDisplayName;
-        private readonly Action openPrisonPanel;
-        private readonly Action continueToNextDay;
-        private readonly Action refreshInfo;
 
-        public RewardPanelUI(
-            InGameRewardPanelReferences references,
-            Vector2 rewardButtonFirstColumnPosition,
-            float rewardButtonColumnSpacingX,
-            float rewardButtonRowSpacingY,
-            int rewardButtonRowsPerColumn,
-            Func<RunSession> resolveSession,
-            Func<string, string> resolvePrisonerDisplayName,
-            Action openPrisonPanel,
-            Action continueToNextDay,
-            Action refreshInfo)
+        [SerializeField] private GameObject rewardPanel;
+        [SerializeField] private Transform rewardButtonContainer;
+        [SerializeField] private Button prisonerTemplateButton;
+        [SerializeField] private Button goldTemplateButton;
+        [SerializeField] private Button darkTemplateButton;
+        [SerializeField] private Button nextButton;
+        [SerializeField] private TMP_Text rewardSummaryText;
+        [SerializeField] private StageManager stageManager;
+        [SerializeField] private InGameUIManager uiManager;
+        [SerializeField] private Vector2 rewardButtonFirstColumnPosition = new Vector2(-321.97855f, 295f);
+        [SerializeField] private float rewardButtonColumnSpacingX = 533.97855f;
+        [SerializeField] private float rewardButtonRowSpacingY = 122f;
+        [SerializeField] private int rewardButtonRowsPerColumn = 3;
+
+        internal RewardButtonView ActivePrisonerButton { get; private set; }
+
+        private void Awake()
         {
-            rewardPanel = references != null ? references.rewardPanel : null;
-            rewardButtonContainer = references != null ? references.rewardButtonContainer : null;
-            prisonerTemplateButton = references != null ? references.prisonerTemplateButton : null;
-            darkTemplateButton = references != null ? references.darkTemplateButton : null;
-            goldTemplateButton = references != null ? references.goldTemplateButton : null;
-            rewardSummaryText = references != null ? references.rewardSummaryText : null;
-            this.rewardButtonFirstColumnPosition = rewardButtonFirstColumnPosition;
-            this.rewardButtonColumnSpacingX = rewardButtonColumnSpacingX;
-            this.rewardButtonRowSpacingY = rewardButtonRowSpacingY;
-            this.rewardButtonRowsPerColumn = rewardButtonRowsPerColumn;
-            this.resolveSession = resolveSession;
-            this.resolvePrisonerDisplayName = resolvePrisonerDisplayName;
-            this.openPrisonPanel = openPrisonPanel;
-            this.continueToNextDay = continueToNextDay;
-            this.refreshInfo = refreshInfo;
-
-            BindButton(references != null ? references.nextButton : null, ContinueToNextDay);
+            BindButton(nextButton, ContinueToNextDay);
         }
 
-        public RewardButtonView ActivePrisonerButton { get; private set; }
-
-        public void Show(StageManager stageManager)
+        public void Show(StageManager manager)
         {
-            if (stageManager == null)
+            if (manager == null)
             {
                 return;
             }
@@ -71,32 +43,32 @@ namespace Pakuri.InGame
             SetActive(rewardPanel, true);
             if (rewardSummaryText != null)
             {
-                rewardSummaryText.text = $"Stage {stageManager.CurrentStage}-{stageManager.CurrentDay} Reward";
+                rewardSummaryText.text = $"Stage {manager.CurrentStage}-{manager.CurrentDay} Reward";
             }
 
             var order = 0;
-            var prisoners = stageManager.PendingPrisonerEnemyIds;
+            var prisoners = manager.PendingPrisonerEnemyIds;
             for (var i = 0; i < prisoners.Count; i++)
             {
                 var prisonerId = prisoners[i];
                 var button = CreateRewardButton(prisonerTemplateButton, "PrisonerReward", order++);
-                SetButtonLabel(button, $"Prisoner\n{resolvePrisonerDisplayName(prisonerId)}");
+                SetButtonLabel(button, $"Prisoner\n{uiManager.ResolvePrisonerDisplayName(prisonerId)}");
                 var view = RegisterRewardButton(button, RewardKind.Prisoner, 0, prisonerId);
                 BindButton(button, () => OpenPrisonPanel(view));
             }
 
-            if (stageManager.PendingGoldReward > 0)
+            if (manager.PendingGoldReward > 0)
             {
-                var amount = stageManager.PendingGoldReward;
+                var amount = manager.PendingGoldReward;
                 var button = CreateRewardButton(goldTemplateButton, "GoldReward", order++);
                 SetButtonLabel(button, $"Gold\n+{amount}");
                 var view = RegisterRewardButton(button, RewardKind.Gold, amount, string.Empty);
                 BindButton(button, () => ClaimMaterialReward(view, amount, 0));
             }
 
-            if (stageManager.PendingDarkTraceReward > 0)
+            if (manager.PendingDarkTraceReward > 0)
             {
-                var amount = stageManager.PendingDarkTraceReward;
+                var amount = manager.PendingDarkTraceReward;
                 var button = CreateRewardButton(darkTemplateButton, "DarkTraceReward", order++);
                 SetButtonLabel(button, $"Dark Trace\n+{amount}");
                 var view = RegisterRewardButton(button, RewardKind.DarkTrace, amount, string.Empty);
@@ -106,7 +78,7 @@ namespace Pakuri.InGame
             SetTemplateActive(prisonerTemplateButton, false);
             SetTemplateActive(goldTemplateButton, false);
             SetTemplateActive(darkTemplateButton, false);
-            refreshInfo?.Invoke();
+            uiManager?.RefreshInfo();
         }
 
         public void Hide()
@@ -126,7 +98,7 @@ namespace Pakuri.InGame
                 var button = rewardButtons[i].Button;
                 if (button != null)
                 {
-                    UnityEngine.Object.Destroy(button.gameObject);
+                    Destroy(button.gameObject);
                 }
             }
 
@@ -144,7 +116,7 @@ namespace Pakuri.InGame
 
         private void ContinueToNextDay()
         {
-            continueToNextDay?.Invoke();
+            uiManager?.ContinueToNextDay();
         }
 
         private void OpenPrisonPanel(RewardButtonView view)
@@ -156,7 +128,7 @@ namespace Pakuri.InGame
 
             ActivePrisonerButton = view;
             SetActive(rewardPanel, false);
-            openPrisonPanel?.Invoke();
+            uiManager?.OpenPrisonPanel();
         }
 
         private void ClaimMaterialReward(RewardButtonView view, int gold, int darkTrace)
@@ -166,7 +138,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var session = resolveSession?.Invoke();
+            var session = uiManager != null ? uiManager.ResolveSession() : null;
             if (session == null)
             {
                 return;
@@ -174,7 +146,7 @@ namespace Pakuri.InGame
 
             session.ClaimMaterialReward(gold, darkTrace);
             view.SetConsumed();
-            refreshInfo?.Invoke();
+            uiManager?.RefreshInfo();
         }
 
         private Button CreateRewardButton(Button template, string namePrefix, int order)
@@ -184,7 +156,7 @@ namespace Pakuri.InGame
                 return null;
             }
 
-            var button = UnityEngine.Object.Instantiate(template, rewardButtonContainer);
+            var button = Instantiate(template, rewardButtonContainer);
             button.gameObject.name = $"{namePrefix}_{order + 1}";
             button.gameObject.SetActive(true);
             button.onClick.RemoveAllListeners();
@@ -215,8 +187,8 @@ namespace Pakuri.InGame
             var rowsPerColumn = Mathf.Max(1, rewardButtonRowsPerColumn);
             var column = order / rowsPerColumn;
             var row = order % rowsPerColumn;
-            var x = rewardButtonFirstColumnPosition.x + (rewardButtonColumnSpacingX * column);
-            var y = rewardButtonFirstColumnPosition.y - (rewardButtonRowSpacingY * row);
+            var x = rewardButtonFirstColumnPosition.x + rewardButtonColumnSpacingX * column;
+            var y = rewardButtonFirstColumnPosition.y - rewardButtonRowSpacingY * row;
             rect.anchoredPosition = new Vector2(x, y);
         }
 

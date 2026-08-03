@@ -19,6 +19,7 @@ namespace Pakuri.InGame
         [SerializeField] private InGameCombatManager combatManager;
         [SerializeField] private Transform playerSpawnPoint;
         [SerializeField] private Transform enemySpawnPoint;
+        [SerializeField] private Transform[] partySpawnPoints = new Transform[5];
         [SerializeField] private Transform runtimeEnemyRoot;
         [SerializeField] private Transform runtimeMonsterRoot;
         [SerializeField] private MonsterPrefabBinding[] monsterPrefabBindings = Array.Empty<MonsterPrefabBinding>();
@@ -442,9 +443,18 @@ namespace Pakuri.InGame
             model.Resources.CurrentHealth *= healthMultiplier;
         }
 
-        private static Transform ResolveManifestSpawnPoint(int partySlotIndex)
+        private Transform ResolveManifestSpawnPoint(int partySlotIndex)
         {
-            return GameObject.Find($"{partySlotIndex + 1}PSpawnPoint").transform;
+            if (partySpawnPoints == null
+                || partySlotIndex < 0
+                || partySlotIndex >= partySpawnPoints.Length
+                || partySpawnPoints[partySlotIndex] == null)
+            {
+                throw new InvalidOperationException(
+                    $"Party spawn point {partySlotIndex + 1} is required in UnitSpawnManager.");
+            }
+
+            return partySpawnPoints[partySlotIndex];
         }
     }
 

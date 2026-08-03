@@ -256,3 +256,48 @@ Implemented and scene-validated.
 ### History
 
 - 2026-08-03: Code Builder saved the NewRunScene Inspector reference graph and removed the obsolete scene resolver used by the former UI modules.
+
+## Task: 2026-08-03 NewRunScene Spawn and UI Hierarchy Normalization
+
+### Task title
+
+Use direct Inspector spawn/UI references and organize `NewRunScene` without changing layer-sensitive layout.
+
+### Goals
+
+- Store `UnitSpawnManager` party spawn points as direct serialized scene references.
+- Keep scene-owned UI modules as `MonoBehaviour` components with their own Inspector references.
+- Keep `InGameUIManager` as the coordinator and remove the shared `InGameUIReferences` object.
+- Group spawn, runtime, and UI objects while preserving their previous order, world transforms, and layers.
+
+### Constraints
+
+- Preserve the existing NewRunScene runtime flow and authored UI positions.
+- Preserve Default layer 0 for Grid/Runtime objects and UI layer 5 for Canvas/UI objects.
+- Do not modify unrelated Combat changes already present in the worktree.
+- Play Mode behavior verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, serialized, compiled, and scene-validated.
+
+### Next Actions
+
+- User verifies player/enemy spawn positions, reward flow, Offering flow, manifest flow, and next-day transition in Play Mode.
+
+### Evidence
+
+- `GameFlow/Spawn/UnitSpawnManager.cs:20-25,448-457` uses serialized `partySpawnPoints` and resolves by party-slot index; the former `GameObject.Find` path is gone.
+- `NewRunScene.unity` stores five non-zero `partySpawnPoints` fileIDs plus direct player/enemy/runtime-root references.
+- Live hierarchy reports `Grid/SpawnPoint`, `Runtime/Enemies`, `Runtime/Skills`, `Runtime/Monsters`, and the six UI category roots.
+- Live hierarchy reports layer 0 for Grid/Runtime categories and layer 5 for UI and its category roots; scene validation reports 0 issues, 0 missing scripts, and 0 broken prefabs.
+- `InGameUIReferences.cs` and its `.meta` are absent, and no deleted setup type remains in project files or source search.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and 2 existing assembly-reference warnings; Unity editor state reports no active compilation.
+
+### History
+
+- 2026-08-03: Code Builder replaced spawn/UI lookup with direct Inspector references, converted the scene UI modules to MonoBehaviours, removed the shared reference script, and grouped NewRunScene objects without changing their world transforms or layer assignments.

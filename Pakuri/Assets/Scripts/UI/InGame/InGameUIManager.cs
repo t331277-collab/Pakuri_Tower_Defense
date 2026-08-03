@@ -1,6 +1,6 @@
 /*
- * 역할: InGame UI 모듈을 조립하고 Stage 흐름만 제어한다.
- * 세부 표시·입력·보상 처리는 Reward/Info 하위 모듈이 담당한다.
+ * 역할: InGame UI 컴포넌트 사이의 Stage 흐름만 제어한다.
+ * 세부 표시·입력·보상 처리는 각 MonoBehaviour UI가 담당한다.
  */
 
 using Pakuri.Data;
@@ -13,20 +13,15 @@ namespace Pakuri.InGame
         [SerializeField] private StageManager stageManager;
         [SerializeField] private UnitSpawnManager unitSpawnManager;
         [SerializeField] private InGameCombatManager combatManager;
-        [SerializeField] private InGameUIReferences uiReferences = new InGameUIReferences();
-        [SerializeField] private Vector2 rewardButtonFirstColumnPosition = new Vector2(-321.97855f, 295f);
-        [SerializeField] private float rewardButtonColumnSpacingX = 533.97855f;
-        [SerializeField] private float rewardButtonRowSpacingY = 122f;
-        [SerializeField] private int rewardButtonRowsPerColumn = 3;
+        [SerializeField] private InGameInfoUI infoUI;
+        [SerializeField] private RewardPanelUI rewardPanelUI;
+        [SerializeField] private PrisonPanelUI prisonPanelUI;
+        [SerializeField] private OfferingUI offeringUI;
+        [SerializeField] private MenifestUI menifestUI;
+        [SerializeField] private BossHpUI bossHpUI;
 
         private int shownStage = -1;
         private int shownDay = -1;
-        private InGameInfoUI infoUI;
-        private RewardPanelUI rewardPanelUI;
-        private PrisonPanelUI prisonPanelUI;
-        private OfferingUI offeringUI;
-        private MenifestUI menifestUI;
-        private BossHpUI bossHpUI;
 
         private void Awake()
         {
@@ -35,8 +30,6 @@ namespace Pakuri.InGame
                 return;
             }
 
-            CreateUiModules();
-            BindStaticButtons();
             HideTransientPanels();
         }
 
@@ -46,7 +39,7 @@ namespace Pakuri.InGame
 
             if (stageManager == null || stageManager.State != StageState.RewardReady)
             {
-                bossHpUI?.Refresh(unitSpawnManager);
+                bossHpUI?.Refresh();
                 return;
             }
 
@@ -58,25 +51,23 @@ namespace Pakuri.InGame
             ShowRewardPanel();
         }
 
-        private void ShowRewardPanel()
+        internal RewardButtonView ActivePrisonerButton => rewardPanelUI?.ActivePrisonerButton;
+
+        internal void OpenPrisonPanel()
         {
-            shownStage = stageManager.CurrentStage;
-            shownDay = stageManager.CurrentDay;
-            HideTransientPanels();
-            rewardPanelUI?.Show(stageManager);
+            prisonPanelUI?.Open();
         }
 
-        private void ContinueToNextDay()
+        internal void ContinueToNextDay()
         {
             HideTransientPanels();
             rewardPanelUI?.Clear();
             shownStage = -1;
             shownDay = -1;
-
             stageManager?.ContinueToNextDay();
         }
 
-        private void CompletePrisonAction()
+        internal void CompletePrisonAction()
         {
             prisonPanelUI?.Hide();
             offeringUI?.Hide();
@@ -85,7 +76,12 @@ namespace Pakuri.InGame
             RefreshInfo();
         }
 
-        private void RefreshInfo()
+        internal void ConsumeActivePrisonerButton()
+        {
+            rewardPanelUI?.ConsumeActivePrisonerButton();
+        }
+
+        internal void RefreshInfo()
         {
             infoUI?.Refresh(
                 stageManager,
@@ -93,55 +89,28 @@ namespace Pakuri.InGame
                 prisonPanelUI != null && prisonPanelUI.IsVisible);
         }
 
-        private void CreateUiModules()
+        internal RunSession ResolveSession()
         {
-            rewardPanelUI = new RewardPanelUI(
-                uiReferences.reward,
-                rewardButtonFirstColumnPosition,
-                rewardButtonColumnSpacingX,
-                rewardButtonRowSpacingY,
-                rewardButtonRowsPerColumn,
-                ResolveSession,
-                ResolvePrisonerDisplayName,
-                () => prisonPanelUI?.Open(),
-                ContinueToNextDay,
-                RefreshInfo);
-
-            offeringUI = new OfferingUI(
-                uiReferences.offering,
-                ResolveSession,
-                ResolveCombatManager,
-                () => rewardPanelUI?.ActivePrisonerButton,
-                () => rewardPanelUI?.ConsumeActivePrisonerButton(),
-                CompletePrisonAction,
-                RefreshInfo);
-
-            menifestUI = new MenifestUI(
-                uiReferences.menifest,
-                ResolveSession,
-                ResolveStageManager,
-                ResolveUnitSpawnManager,
-                () => rewardPanelUI?.ActivePrisonerButton,
-                () => rewardPanelUI?.ConsumeActivePrisonerButton(),
-                CompletePrisonAction,
-                RefreshInfo);
-
-            prisonPanelUI = new PrisonPanelUI(
-                uiReferences.prison,
-                ResolveSession,
-                ResolvePrisonerDisplayName,
-                () => rewardPanelUI?.ActivePrisonerButton,
-                offeringUI,
-                menifestUI,
-                RefreshInfo);
-
-            infoUI = new InGameInfoUI(uiReferences.info);
-            bossHpUI = new BossHpUI(uiReferences.bossHp);
+            return stageManager != null ? stageManager.ActiveSession : null;
         }
 
-        private void BindStaticButtons()
+        internal string ResolvePrisonerDisplayName(string prisonerId)
         {
-            prisonPanelUI?.BindStaticButtons();
+            var enemy = GameDataLoader.CurrentCatalog.GetData<EnemyDefinition>(prisonerId);
+            if (enemy != null && !string.IsNullOrWhiteSpace(enemy.DisplayName))
+            {
+                return enemy.DisplayName;
+            }
+
+            return string.IsNullOrWhiteSpace(prisonerId) ? "Unknown" : prisonerId;
+        }
+
+        private void ShowRewardPanel()
+        {
+            shownStage = stageManager.CurrentStage;
+            shownDay = stageManager.CurrentDay;
+            HideTransientPanels();
+            rewardPanelUI?.Show(stageManager);
         }
 
         private void HideTransientPanels()
@@ -153,47 +122,24 @@ namespace Pakuri.InGame
             bossHpUI?.Hide();
         }
 
-        private RunSession ResolveSession()
-        {
-            return stageManager != null ? stageManager.ActiveSession : null;
-        }
-
-        private string ResolvePrisonerDisplayName(string prisonerId)
-        {
-            var enemy = GameDataLoader.CurrentCatalog.GetData<EnemyDefinition>(prisonerId);
-            if (enemy != null && !string.IsNullOrWhiteSpace(enemy.DisplayName))
-            {
-                return enemy.DisplayName;
-            }
-
-            return string.IsNullOrWhiteSpace(prisonerId) ? "Unknown" : prisonerId;
-        }
-
-        private InGameCombatManager ResolveCombatManager()
-        {
-            return combatManager;
-        }
-
-        private StageManager ResolveStageManager()
-        {
-            return stageManager;
-        }
-
-        private UnitSpawnManager ResolveUnitSpawnManager()
-        {
-            return unitSpawnManager;
-        }
-
         private bool ValidateReferences()
         {
-            if (stageManager != null && unitSpawnManager != null && combatManager != null && uiReferences != null)
+            if (stageManager != null
+                && unitSpawnManager != null
+                && combatManager != null
+                && infoUI != null
+                && rewardPanelUI != null
+                && prisonPanelUI != null
+                && offeringUI != null
+                && menifestUI != null
+                && bossHpUI != null)
             {
                 return true;
             }
 
             Debug.LogError(
-                "InGameUIManager requires StageManager, UnitSpawnManager, InGameCombatManager, " +
-                "and InGameUIReferences to be assigned in the Inspector.",
+                "InGameUIManager requires StageManager, UnitSpawnManager, InGameCombatManager, "
+                + "and all InGame UI components to be assigned in the Inspector.",
                 this);
             return false;
         }

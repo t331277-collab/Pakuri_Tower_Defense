@@ -58,8 +58,6 @@ namespace Pakuri.InGame
         /// Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.
         private void Awake()
         {
-            ResolveReferences();
-            ResolveSceneUi();
             BindButtons();
             SetDebugRootPanelVisible(false);
             SetPanelVisible(false);
@@ -70,7 +68,6 @@ namespace Pakuri.InGame
         /// Unity가 컴포넌트를 활성화할 때 구독과 활성 상태를 복원한다.
         private void OnEnable()
         {
-            ResolveReferences();
             RefreshButtonLabels();
             RefreshModifierChoiceButtons();
             monsterPanelUI?.RefreshNow();
@@ -79,8 +76,6 @@ namespace Pakuri.InGame
         /// 현재 Unity 프레임에서 Update 갱신 동작을 진행한다.
         private void Update()
         {
-            ResolveReferences();
-
             var keyboard = Keyboard.current;
             if (keyboard != null
                 && (keyboard.digit8Key.wasPressedThisFrame || keyboard.numpad8Key.wasPressedThisFrame))
@@ -271,132 +266,12 @@ namespace Pakuri.InGame
             }
         }
 
-        private void ResolveReferences()
-        {
-            if (stageManager == null)
-            {
-                stageManager = FindSceneObject<StageManager>();
-            }
-
-            if (unitSpawnManager == null)
-            {
-                unitSpawnManager = FindSceneObject<UnitSpawnManager>();
-            }
-
-            if (combatManager == null)
-            {
-                combatManager = FindSceneObject<InGameCombatManager>();
-            }
-
-            if (monsterPanelUI == null)
-            {
-                monsterPanelUI = FindSceneObject<MonsterPanelUI>();
-            }
-        }
-
-        private void ResolveSceneUi()
-        {
-            if (debugRootPanel == null)
-            {
-                debugRootPanel = FindChildObject("DebugPanel");
-            }
-
-            if (debugPanel == null)
-            {
-                debugPanel = FindChildObject("DebugPanel/DebugUI");
-            }
-
-            if (debugModifiedPanel == null)
-            {
-                debugModifiedPanel = FindChildObject("DebugPanel/DebugModifiedUI");
-            }
-
-            if (debugPassiveModifiedPanel == null)
-            {
-                debugPassiveModifiedPanel = FindChildObject("DebugPanel/DebugPassiveModifiedUI");
-            }
-
-            if (openButton == null)
-            {
-                openButton = FindButton("DebugPanel/DebugUIBtn") ?? FindButton("DebugPanel/DebugBtn");
-            }
-
-            if (closeButton == null)
-            {
-                closeButton = FindButton("DebugPanel/DebugUI/Close");
-            }
-
-            if (modifierCloseButton == null)
-            {
-                modifierCloseButton = FindButton("DebugPanel/DebugModifiedUI/Close");
-            }
-
-            if (passiveModifierCloseButton == null)
-            {
-                passiveModifierCloseButton = FindButton("DebugPanel/DebugPassiveModifiedUI/Close");
-            }
-
-            EnsureSkillButtonArray();
-            for (var i = 0; i < DebugSlots.Length; i++)
-            {
-                var slotName = DebugSlots[i].ToString();
-                ResolveSkillButton(i, $"DebugPanel/DebugUI/{slotName} Btn", $"DebugPanel/DebugUI/{slotName}Btn");
-            }
-
-            EnsureModifierOpenButtonArray();
-            for (var i = 0; i < DebugSlots.Length; i++)
-            {
-                var slotName = DebugSlots[i].ToString();
-                var modifierButtonName = ResolveModifierButtonName(DebugSlots[i]);
-                ResolveModifierOpenButton(
-                    i,
-                    $"DebugPanel/DebugUI/{slotName} Btn/{modifierButtonName}",
-                    $"DebugPanel/DebugUI/{slotName}Btn/{modifierButtonName}");
-            }
-
-            EnsureTraitButtonArray();
-            ResolveTraitButton(0, "DebugPanel/DebugModifiedUI/Trait1", "DebugPanel/DebugModifiedUI/trait1");
-            ResolveTraitButton(1, "DebugPanel/DebugModifiedUI/Trait2", "DebugPanel/DebugModifiedUI/trait2");
-            ResolveTraitButton(2, "DebugPanel/DebugModifiedUI/Trait3", "DebugPanel/DebugModifiedUI/trait3");
-            ResolveTraitButton(3, "DebugPanel/DebugModifiedUI/Trait4", "DebugPanel/DebugModifiedUI/trait4");
-            ResolveTraitButton(4, "DebugPanel/DebugModifiedUI/Trait5", "DebugPanel/DebugModifiedUI/trait5");
-
-            EnsureMasterButtonArray();
-            ResolveMasterButton(0, "DebugPanel/DebugModifiedUI/Master1", "DebugPanel/DebugModifiedUI/master1");
-            ResolveMasterButton(1, "DebugPanel/DebugModifiedUI/Master2", "DebugPanel/DebugModifiedUI/master2");
-
-            EnsurePassiveTraitButtonArray();
-            ResolvePassiveTraitButton(0, "DebugPanel/DebugPassiveModifiedUI/Trait1", "DebugPanel/DebugPassiveModifiedUI/trait1");
-            ResolvePassiveTraitButton(1, "DebugPanel/DebugPassiveModifiedUI/Trait2", "DebugPanel/DebugPassiveModifiedUI/trait2");
-            ResolvePassiveTraitButton(2, "DebugPanel/DebugPassiveModifiedUI/Trait3", "DebugPanel/DebugPassiveModifiedUI/trait3");
-        }
-
-        private void ResolveSkillButton(int index, string primaryPath, string fallbackPath)
-        {
-            if (index < 0 || index >= skillButtons.Length || skillButtons[index] != null)
-            {
-                return;
-            }
-
-            skillButtons[index] = FindButton(primaryPath) ?? FindButton(fallbackPath);
-        }
-
         private void EnsureSkillButtonArray()
         {
             if (skillButtons == null || skillButtons.Length != DebugSlots.Length)
             {
                 skillButtons = new Button[DebugSlots.Length];
             }
-        }
-
-        private void ResolveModifierOpenButton(int index, string primaryPath, string fallbackPath)
-        {
-            if (index < 0 || index >= modifierOpenButtons.Length || modifierOpenButtons[index] != null)
-            {
-                return;
-            }
-
-            modifierOpenButtons[index] = FindButton(primaryPath) ?? FindButton(fallbackPath);
         }
 
         private void EnsureModifierOpenButtonArray()
@@ -407,16 +282,6 @@ namespace Pakuri.InGame
             }
         }
 
-        private void ResolveTraitButton(int index, string primaryPath, string fallbackPath)
-        {
-            if (index < 0 || index >= traitButtons.Length || traitButtons[index] != null)
-            {
-                return;
-            }
-
-            traitButtons[index] = FindButton(primaryPath) ?? FindButton(fallbackPath);
-        }
-
         private void EnsureTraitButtonArray()
         {
             if (traitButtons == null || traitButtons.Length != TraitButtonCount)
@@ -425,32 +290,12 @@ namespace Pakuri.InGame
             }
         }
 
-        private void ResolveMasterButton(int index, string primaryPath, string fallbackPath)
-        {
-            if (index < 0 || index >= masterButtons.Length || masterButtons[index] != null)
-            {
-                return;
-            }
-
-            masterButtons[index] = FindButton(primaryPath) ?? FindButton(fallbackPath);
-        }
-
         private void EnsureMasterButtonArray()
         {
             if (masterButtons == null || masterButtons.Length != MasterButtonCount)
             {
                 masterButtons = new Button[MasterButtonCount];
             }
-        }
-
-        private void ResolvePassiveTraitButton(int index, string primaryPath, string fallbackPath)
-        {
-            if (index < 0 || index >= passiveTraitButtons.Length || passiveTraitButtons[index] != null)
-            {
-                return;
-            }
-
-            passiveTraitButtons[index] = FindButton(primaryPath) ?? FindButton(fallbackPath);
         }
 
         private void EnsurePassiveTraitButtonArray()
@@ -516,7 +361,6 @@ namespace Pakuri.InGame
 
         private InGameCombatManager ResolveCombatManager()
         {
-            ResolveReferences();
             return combatManager;
         }
 
@@ -1013,28 +857,6 @@ namespace Pakuri.InGame
                 && DebugSlots[slotIndex] >= SkillSlot.F;
         }
 
-        private static string ResolveModifierButtonName(SkillSlot slot)
-        {
-            return slot >= SkillSlot.E ? "EmodifierBtn" : $"{slot}modifierBtn";
-        }
-
-        private GameObject FindChildObject(string path)
-        {
-            var child = FindChild(path);
-            return child != null ? child.gameObject : null;
-        }
-
-        private Transform FindChild(string path)
-        {
-            return transform.Find(path);
-        }
-
-        private Button FindButton(string path)
-        {
-            var child = FindChild(path);
-            return child != null ? child.GetComponent<Button>() : null;
-        }
-
         private static void BindButton(Button button, UnityEngine.Events.UnityAction action)
         {
             if (button == null || action == null)
@@ -1046,20 +868,5 @@ namespace Pakuri.InGame
             button.onClick.AddListener(action);
         }
 
-        /// 현재 씬에 존재하는 지정 타입의 오브젝트를 찾아 반환한다.
-        private static T FindSceneObject<T>() where T : UnityEngine.Object
-        {
-            var objects = Resources.FindObjectsOfTypeAll<T>();
-            for (var i = 0; i < objects.Length; i++)
-            {
-                var component = objects[i] as Component;
-                if (component != null && component.gameObject.scene.IsValid())
-                {
-                    return objects[i];
-                }
-            }
-
-            return null;
-        }
     }
 }

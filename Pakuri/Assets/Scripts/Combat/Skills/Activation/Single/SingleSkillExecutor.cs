@@ -55,7 +55,7 @@ internal static class SingleSkillExecutor
 				center,
 				runtimeVisual,
 				prefab,
-				allowConditionalFollowUp: true);
+				useRuntimeState: true);
 			routed |= outcome.Routed;
 			castCommitted |= outcome.CastCommitted;
 			if (snapshot.PreparedUsesResolvedDeployments)

@@ -7,52 +7,24 @@ using UnityEngine.UI;
 namespace Pakuri.InGame
 {
     /// 포로 몬스터의 영입 성공·실패 화면과 파티 추가 선택을 관리한다.
-    internal sealed class MenifestUI
+    public sealed class MenifestUI : MonoBehaviour
     {
-        private readonly GameObject manifestedFailPopUp;
-        private readonly Button manifestedFailBackButton;
-        private readonly GameObject manifestedSuccessPopUp;
-        private readonly Button dontChoiceButton;
-        private readonly Button choiceButton;
-        private readonly TMP_Text monsterNameText;
-        private readonly TMP_Text monsterDescText;
-        private readonly Image monsterImage;
-        private readonly Func<RunSession> resolveSession;
-        private readonly Func<StageManager> resolveStageManager;
-        private readonly Func<UnitSpawnManager> resolveUnitSpawnManager;
-        private readonly Func<RewardButtonView> resolveActivePrisonerButton;
-        private readonly Action consumePrisonerButton;
-        private readonly Action completePrisonAction;
-        private readonly Action refreshInfo;
+        [SerializeField] private GameObject manifestedFailPopUp;
+        [SerializeField] private Button manifestedFailBackButton;
+        [SerializeField] private GameObject manifestedSuccessPopUp;
+        [SerializeField] private Button dontChoiceButton;
+        [SerializeField] private Button choiceButton;
+        [SerializeField] private TMP_Text monsterNameText;
+        [SerializeField] private TMP_Text monsterDescText;
+        [SerializeField] private Image monsterImage;
+        [SerializeField] private StageManager stageManager;
+        [SerializeField] private UnitSpawnManager unitSpawnManager;
+        [SerializeField] private InGameUIManager uiManager;
 
         private MonsterDefinition pendingManifestMonster;
 
-        public MenifestUI(
-            InGameMenifestReferences references,
-            Func<RunSession> resolveSession,
-            Func<StageManager> resolveStageManager,
-            Func<UnitSpawnManager> resolveUnitSpawnManager,
-            Func<RewardButtonView> resolveActivePrisonerButton,
-            Action consumePrisonerButton,
-            Action completePrisonAction,
-            Action refreshInfo)
+        private void Awake()
         {
-            manifestedFailPopUp = references != null ? references.failPopUp : null;
-            manifestedFailBackButton = references != null ? references.failBackButton : null;
-            manifestedSuccessPopUp = references != null ? references.successPopUp : null;
-            dontChoiceButton = references != null ? references.dontChoiceButton : null;
-            choiceButton = references != null ? references.choiceButton : null;
-            monsterNameText = references != null ? references.monsterNameText : null;
-            monsterDescText = references != null ? references.monsterDescText : null;
-            monsterImage = references != null ? references.monsterImage : null;
-            this.resolveSession = resolveSession;
-            this.resolveStageManager = resolveStageManager;
-            this.resolveUnitSpawnManager = resolveUnitSpawnManager;
-            this.resolveActivePrisonerButton = resolveActivePrisonerButton;
-            this.consumePrisonerButton = consumePrisonerButton;
-            this.completePrisonAction = completePrisonAction;
-            this.refreshInfo = refreshInfo;
-
             BindButton(manifestedFailBackButton, CompleteAfterFailure);
             BindButton(dontChoiceButton, SkipManifestChoice);
             BindButton(choiceButton, CommitManifestChoice);
@@ -60,16 +32,15 @@ namespace Pakuri.InGame
 
         public bool TryManifestPrisoner()
         {
-            var session = resolveSession?.Invoke();
-            var activePrisonerButton = resolveActivePrisonerButton?.Invoke();
+            var session = uiManager?.ResolveSession();
+            var activePrisonerButton = uiManager?.ActivePrisonerButton;
             if (session == null || activePrisonerButton == null || activePrisonerButton.Consumed)
             {
                 return false;
             }
 
-            consumePrisonerButton?.Invoke();
+            uiManager.ConsumeActivePrisonerButton();
             pendingManifestMonster = ResolveNextManifestCandidate(session);
-            var stageManager = resolveStageManager?.Invoke();
             var successChance = stageManager != null ? stageManager.PendingManifestSuccessChance : 0.7f;
             var succeeded = pendingManifestMonster != null && UnityEngine.Random.value < successChance;
             if (!succeeded)
@@ -103,13 +74,10 @@ namespace Pakuri.InGame
 
             if (monsterImage != null)
             {
-                monsterImage.sprite = null;
-                monsterImage.color = new Color(0f, 0f, 0f, 0.3f);
-                if (monster != null && monster.Image != null)
-                {
-                    monsterImage.sprite = monster.Image;
-                    monsterImage.color = Color.white;
-                }
+                monsterImage.sprite = monster != null ? monster.Image : null;
+                monsterImage.color = monsterImage.sprite != null
+                    ? Color.white
+                    : new Color(0f, 0f, 0f, 0.3f);
             }
         }
 
@@ -117,19 +85,19 @@ namespace Pakuri.InGame
         {
             pendingManifestMonster = null;
             SetActive(manifestedSuccessPopUp, false);
-            completePrisonAction?.Invoke();
+            uiManager?.CompletePrisonAction();
         }
 
         private void CompleteAfterFailure()
         {
             pendingManifestMonster = null;
             SetActive(manifestedFailPopUp, false);
-            completePrisonAction?.Invoke();
+            uiManager?.CompletePrisonAction();
         }
 
         private void CommitManifestChoice()
         {
-            var session = resolveSession?.Invoke();
+            var session = uiManager?.ResolveSession();
             if (session == null || pendingManifestMonster == null)
             {
                 return;
@@ -140,16 +108,11 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var unitSpawnManager = resolveUnitSpawnManager?.Invoke();
-            if (unitSpawnManager != null)
-            {
-                unitSpawnManager.SpawnManifestedMonster(session, pendingManifestMonster, slotIndex);
-            }
-
+            unitSpawnManager?.SpawnManifestedMonster(session, pendingManifestMonster, slotIndex);
             pendingManifestMonster = null;
             SetActive(manifestedSuccessPopUp, false);
-            refreshInfo?.Invoke();
-            completePrisonAction?.Invoke();
+            uiManager?.RefreshInfo();
+            uiManager?.CompletePrisonAction();
         }
 
         private static MonsterDefinition ResolveNextManifestCandidate(RunSession session)
