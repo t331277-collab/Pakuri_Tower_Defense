@@ -151,11 +151,13 @@ namespace Pakuri.Data
 
 		internal static SkillGraphNodeRow ParseSkillGraphNodeRow(CsvParser.CsvRecord record)
 		{
+			var monsterId = record.ReadRequiredString("monster_id");
+			var ownerId = record.ReadRequiredString("owner_id");
 			SkillGraphNodeRow skillGraphNodeRow = new SkillGraphNodeRow
 			{
-				MonsterId = record.ReadRequiredString("monster_id"),
+				MonsterId = monsterId,
 				OwnerKind = record.ReadEnum<SkillNodeOwnerKind>("owner_kind"),
-				OwnerId = record.ReadRequiredString("owner_id"),
+				OwnerId = NormalizeOwnerId(monsterId, ownerId),
 				TargetSkillId = CsvRowParser.ReadOptionalStringIfColumnExists(record, "target_skill_id"),
 				NodeOrder = record.ReadInt("node_order"),
 				NodeTypeId = record.ReadRequiredString("node_type_id"),
@@ -166,6 +168,22 @@ namespace Pakuri.Data
 				skillGraphNodeRow.Args[i] = CsvRowParser.ReadOptionalStringIfColumnExists(record, $"arg_{i + 1}");
 			}
 			return skillGraphNodeRow;
+		}
+
+		/// 그래프 CSV의 짧은 owner_id를 저장소의 전역 ID로 복원한다.
+		internal static string NormalizeOwnerId(string monsterId, string ownerId)
+		{
+			if (string.IsNullOrWhiteSpace(monsterId) || string.IsNullOrWhiteSpace(ownerId))
+			{
+				return ownerId;
+			}
+
+			var normalizedMonsterId = monsterId.Trim();
+			var normalizedOwnerId = ownerId.Trim();
+			var prefix = normalizedMonsterId + "-";
+			return normalizedOwnerId.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+				? normalizedOwnerId
+				: prefix + normalizedOwnerId;
 		}
 
 		internal static SkillNodeValueType ParseSkillNodeValueType(string rawValue, CsvParser.CsvRecord record)

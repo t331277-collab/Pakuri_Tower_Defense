@@ -103,7 +103,6 @@ internal sealed class ActiveSkillBuildData
 	public float StatusCriticalDamageTakenBonus;
 	public float StatusCriticalDamageBonus;
 	public float StatusAilmentResistanceBonus;
-	public float StatusCriticalResistanceBonus;
 	public float StatusElementResistReduction;
 	public float StatusFlatElementResistReduction;
 	public float StatusElementDamageTakenBonus;
@@ -241,7 +240,6 @@ internal sealed partial class GameDataCatalogBuilder
 		case SkillRuntimeKind.Execute:
 			return CreateRuntimeData<SingleSkillDefinition>();
 		case SkillRuntimeKind.AreaAttack:
-		case SkillRuntimeKind.Field:
 			return CreateRuntimeData<ZoneSkillDefinition>();
 		case SkillRuntimeKind.Buff:
 			return CreateRuntimeData<BuffSkillDefinition>();
@@ -652,10 +650,6 @@ internal sealed partial class GameDataCatalogBuilder
 			runtimeStatusData.CriticalDamageTakenBonus = source.StatusCriticalDamageTakenBonus;
 		}
 		runtimeStatusData.AilmentResistanceBonus = source.StatusAilmentResistanceBonus;
-		if (!Mathf.Approximately(source.StatusCriticalResistanceBonus, 0f))
-		{
-			runtimeStatusData.CriticalResistanceBonus = source.StatusCriticalResistanceBonus;
-		}
 		if (!Mathf.Approximately(source.StatusElementResistReduction, 0f))
 		{
 			runtimeStatusData.ElementResistReduction = source.StatusElementResistReduction;
@@ -782,7 +776,6 @@ internal sealed partial class GameDataCatalogBuilder
 			return SkillTargetShape.Line;
 		case SkillRuntimeKind.AreaAttack:
 		case SkillRuntimeKind.SingleAttack:
-		case SkillRuntimeKind.Field:
 		case SkillRuntimeKind.Mark:
 		case SkillRuntimeKind.Execute:
 			return SkillTargetShape.Circle;

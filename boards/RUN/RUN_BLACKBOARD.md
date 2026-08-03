@@ -386,3 +386,46 @@ Implemented, statically verified, and compiled.
 ### History
 
 - 2026-08-03: Code Builder moved `MenifestUI` to the active `Popup` owner, restored `RewardPanel` return on failure Back, and restored the `DebugUI` StageManager Inspector reference.
+
+## Task: 2026-08-03 Stage End UI Inspector Wiring and Nexus Persistence
+
+### Task title
+
+Move Stage end-flow UI references into UI components and keep one Nexus runtime model across days.
+
+### Goals
+
+- Remove `StageManager.ResolveEndFlowReferences` and bind end buttons through Inspector-owned UI components.
+- Remove StageManager's direct CSV loading and health preserve/restore workaround.
+- Prevent repeated Nexus registration from replacing the registry's persistent Nexus model.
+
+### Constraints
+
+- Preserve the existing win/defeat panel hierarchy, Button objects, and MainMenu return flow.
+- Use the Loading runtime catalog for Stage data.
+- Preserve Nexus current health during `ContinueToNextDay` without a second health-copy path.
+- Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, serialized, and compiled. Play Mode verification remains user-owned.
+
+### Next Actions
+
+- User verifies win/defeat Back buttons, multi-day Nexus health persistence, Stage transition, and enemy spawning in Play Mode.
+
+### Evidence
+
+- `StageManager` now stores `StageEndPanelUI winPanelUI` and `defeatPanelUI`; `InGameScene.unity` assigns both components and their Inspector Button references.
+- Search across `Assets/Scripts` and `InGameScene.unity` returned `NO_OLD_STAGE_END_FLOW_REFERENCES` for the old CSV fields, `StageFlowTable`, `ResolveEndFlowReferences`, and health preserve/restore symbols.
+- `UnitSpawnManager.RegisterNexus` returns when an existing registered player model has `IsNexus`, so Day transition does not create a second `nexus` model.
+- `InGameCombatManager.ResetCombatState` clears Nexus transient status/shield state but does not reset `Resources.CurrentHealth`; the existing model therefore keeps current health.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and the existing 2 assembly-reference warnings.
+
+### History
+
+- 2026-08-03: Code Builder added `StageEndPanelUI`, moved end-button ownership to Inspector references, consumed the Loading Stage catalog, removed the Nexus health workaround, and made Nexus registration idempotent.

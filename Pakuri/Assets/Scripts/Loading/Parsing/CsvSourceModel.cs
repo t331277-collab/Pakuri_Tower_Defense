@@ -79,7 +79,6 @@ namespace Pakuri.Data
             public float AttackPowerBonusPerStack;
             public float DamageTakenBonusPerStack;
             public float CriticalDamageTakenBonusPerStack;
-            public float CriticalResistanceBonusPerStack;
             public float ElementResistReductionPerStack;
             public float ElementDamageTakenBonusPerStack;
             public string StatusEffectPrefabPath;
@@ -106,7 +105,6 @@ namespace Pakuri.Data
                 AttackPowerBonusPerStack = record.ReadFloat("attack_power_bonus_per_stack"),
                 DamageTakenBonusPerStack = record.ReadFloat("damage_taken_bonus_per_stack"),
                 CriticalDamageTakenBonusPerStack = record.ReadFloat("critical_damage_taken_bonus_per_stack"),
-                CriticalResistanceBonusPerStack = record.ReadFloat("critical_resistance_bonus_per_stack"),
                 ElementResistReductionPerStack = record.ReadFloat("element_resist_reduction_per_stack"),
                 ElementDamageTakenBonusPerStack = record.ReadFloat("element_damage_taken_bonus_per_stack"),
                 StatusEffectPrefabPath = record.ReadString("status_effect_prefab_path")
@@ -149,7 +147,6 @@ namespace Pakuri.Data
             public float StatusCriticalDamageTakenBonus;
             public float StatusCriticalDamageBonus;
             public float StatusAilmentResistanceBonus;
-            public float StatusCriticalResistanceBonus;
             public float StatusElementResistReduction;
             public float StatusFlatElementResistReduction;
             public float StatusElementDamageTakenBonus;
@@ -180,7 +177,6 @@ namespace Pakuri.Data
                 StatusDamageTakenBonus = ReadStatusFloat(record, "status_damage_taken_bonus", allowMissingColumns),
                 StatusCriticalDamageTakenBonus = ReadStatusFloat(record, "status_critical_damage_taken_bonus", allowMissingColumns),
                 StatusAilmentResistanceBonus = ReadStatusFloat(record, "status_ailment_resistance_bonus", allowMissingColumns),
-                StatusCriticalResistanceBonus = ReadStatusFloat(record, "status_critical_resistance_bonus", allowMissingColumns),
                 StatusElementResistReduction = ReadStatusFloat(record, "status_element_resist_reduction", allowMissingColumns),
                 StatusFlatElementResistReduction = ReadStatusFloat(record, "status_flat_element_resist_reduction", allowMissingColumns),
                 StatusElementDamageTakenBonus = ReadStatusFloat(record, "status_element_damage_taken_bonus", allowMissingColumns)

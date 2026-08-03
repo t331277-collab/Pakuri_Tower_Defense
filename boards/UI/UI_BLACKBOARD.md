@@ -567,3 +567,43 @@ Implemented and scene diff verified.
 ### History
 
 - 2026-08-03: Code Builder disabled parent background Image raycasts for all five PrisonPanel slots.
+
+## Task: 2026-08-03 Stage End Panel UI Ownership
+
+### Task title
+
+Give win and defeat panels direct Inspector Button references.
+
+### Goals
+
+- Keep end-panel UI references on a `MonoBehaviour` attached to each panel.
+- Let `StageManager` coordinate visibility and callbacks without discovering child Buttons.
+
+### Constraints
+
+- Preserve the existing `InGameScene` panel hierarchy and Button behavior.
+- Do not add runtime object-name or child-path lookup.
+- Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, serialized, and compiled.
+
+### Next Actions
+
+- User verifies win/defeat panel visibility and MainMenu return in Play Mode.
+
+### Evidence
+
+- `Assets/Scripts/UI/InGame/StageEndPanelUI.cs` owns the serialized `returnButton` and listener binding.
+- `InGameScene.unity` assigns `StageEndPanelUI.returnButton` to Button fileIDs `240062369` and `1240753997`.
+- `StageManager` contains no `ResolveEndFlowReferences` or child Button discovery code.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and the existing 2 assembly-reference warnings.
+
+### History
+
+- 2026-08-03: Code Builder moved end-panel Button ownership from StageManager lookup into Inspector-wired `StageEndPanelUI` components.

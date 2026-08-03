@@ -167,7 +167,7 @@ namespace Pakuri.InGame
             DispatchCombatStartOnce(model);
         }
 
-        /// 피해 계산과 자원 변경 후 화면 갱신, 후속 Trigger, 사망 정리를 처리한다.
+        /// 피해 계산과 사망 정리를 처리한다.
         public InGameResourceChangeResult ApplyDamage(
             UnitCombatState target,
             float baseDamage,
@@ -195,12 +195,12 @@ namespace Pakuri.InGame
                 return result;
             }
 
-            // 보호막을 모두 없애면 이펙트 삭제.
+            // 보호막을 모두 없애면 연결된 시각 효과를 삭제한다.
             if (depletedShields.Count > 0)
             {
                 for (var i = 0; i < depletedShields.Count; i++)
                 {
-                    effectManager.SignalStatusEffectEnded(depletedShields[i]);
+                    effectManager.RemoveEffect(status: depletedShields[i]);
                 }
             }
 
@@ -214,7 +214,19 @@ namespace Pakuri.InGame
             {
                 SkillTrigger.ExecuteShieldAbsorbs(this, Units, target, source, absorbedShields);
                 SkillTrigger.ExecuteExpiredStatuses(this, Units, target, depletedShields);
-                DispatchOutgoingDamageTriggers(target, attribute, attackRule, result, baseDamage);
+                if (!attackRule.SuppressOutgoingDamageTriggers)
+                {
+                    SkillTrigger.ExecuteOutgoingDamage(
+                        this,
+                        Units,
+                        attackRule.Source,
+                        attackRule.SourceSkillId,
+                        target,
+                        attribute,
+                        result.AppliedDamage,
+                        attackRule.SourceHitWasExecute,
+                        baseDamage);
+                }
                 if (result.IsDead && attackRule.Source != null)
                 {
                     SkillTrigger.ExecuteKill(
@@ -229,7 +241,7 @@ namespace Pakuri.InGame
                 }
             }
 
-            // 사망한 유닛을 전투 Registry에서 정리한다.
+            // 유닛이 사망했다면 전투 Registry에서 정리한다.
             RemoveUnitIfDead(result);
             return result;
         }
@@ -246,6 +258,8 @@ namespace Pakuri.InGame
             Units.Find(result.Target).RefreshDisplay();
             return result;
         }
+
+        /// 실제 수치 계산(DamageCalculator.cs 사용)
 
         private static InGameResourceChangeResult ApplyDamageToResources(
             UnitCombatState target,
@@ -274,8 +288,8 @@ namespace Pakuri.InGame
                 var directShieldDamage = Mathf.Min(directShieldBefore, damageAfterStatusShield);
                 var remainingDamage = Mathf.Max(0f, damageAfterStatusShield - directShieldDamage);
 
-                resources.DirectShield = Round(Mathf.Max(0f, directShieldBefore - directShieldDamage));
-                resources.CurrentHealth = Round(Mathf.Max(0f, beforeHealth - remainingDamage));
+                resources.DirectShield = Mathf.Round(Mathf.Max(0f, directShieldBefore - directShieldDamage));
+                resources.CurrentHealth = Mathf.Round(Mathf.Max(0f, beforeHealth - remainingDamage));
                 target.SyncShield();
                 currentHealth = resources.CurrentHealth;
                 currentShield = resources.CurrentShield;
@@ -302,7 +316,7 @@ namespace Pakuri.InGame
             if (amount > 0f)
             {
                 var maxHealth = Mathf.Max(0f, target.Stats.MaxHealth);
-                resources.CurrentHealth = Round(Mathf.Min(maxHealth, beforeHealth + amount));
+                resources.CurrentHealth = Mathf.Round(Mathf.Min(maxHealth, beforeHealth + amount));
                 target.SyncShield();
                 currentHealth = resources.CurrentHealth;
                 currentShield = resources.CurrentShield;
@@ -318,11 +332,7 @@ namespace Pakuri.InGame
                 currentHealth <= 0f);
         }
 
-        private static float Round(float value)
-        {
-            return Mathf.Round(Mathf.Max(0f, value));
-        }
-
+        /// 상태 적용 규칙을 통과한 상태 데이터를 대상의 런타임 상태에 반영한다.
         public StatusRuntimeInstance ApplyStatus(
             UnitCombatState target,
             StatusRuntimeData statusData,
@@ -349,10 +359,11 @@ namespace Pakuri.InGame
             status.SetSourceUnit(source);
             target.SyncShield();
             Units.RefreshDisplay(target);
-            ShowStatusEffectVisual(target, status);
+            BuffSkillExecutor.ShowStatusEffectVisual(this, target, status);
             return status;
         }
 
+        /// 보호막 상태와 보호막 수치를 대상의 런타임 상태에 반영한다.
         public StatusRuntimeInstance ApplyShieldStatus(
             UnitCombatState target,
             StatusRuntimeData statusData,
@@ -382,10 +393,11 @@ namespace Pakuri.InGame
             status.SetSourceUnit(source);
             target.SyncShield();
             Units.RefreshDisplay(target);
-            ShowStatusEffectVisual(target, status);
+            BuffSkillExecutor.ShowStatusEffectVisual(this, target, status);
             return status;
         }
 
+        /// 상태 저장소에 지속시간 연장을 요청하고 전투 표현을 갱신한다.
         public bool ExtendStatusDuration(UnitCombatState target, StatusEffectKind kind, float durationDelta)
         {
             if (kind == StatusEffectKind.None || durationDelta <= 0f || target.IsNexus)
@@ -414,31 +426,10 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                ShowStatusEffectVisual(target, status);
+                BuffSkillExecutor.ShowStatusEffectVisual(this, target, status);
             }
 
             return true;
-        }
-
-        private void ShowStatusEffectVisual(
-            UnitCombatState target,
-            StatusRuntimeInstance status)
-        {
-            var instance = effectManager.CreateEffect(new EffectCreateRequest(
-                status.SourceData.RuntimeVisual,
-                status.SourceData.StatusEffectPrefab,
-                "RuntimeStatusVisual_" + status.SourceSkillId,
-                Units.Find(target).Transform.position,
-                Quaternion.identity,
-                Units.Find(target).Transform,
-                status,
-                false,
-                false,
-                false));
-            if (instance != null)
-            {
-                BuffSkillActor.Attach(instance).InitializePersistent(effectManager, status);
-            }
         }
 
         /// CombatState를 초기 런타임 상태로 되돌린다.
@@ -484,89 +475,8 @@ namespace Pakuri.InGame
             SkillTrigger.ExecuteCombatStart(this, Units, source);
         }
 
-        internal bool RemovePassiveStatus(UnitCombatState target, StatusEffectKind kind, string sourceSkillId)
-        {
-            var removedStatuses = new List<StatusRuntimeInstance>();
 
-            if (!target.Statuses.Remove(kind, sourceSkillId, removedStatuses))
-            {
-                return false;
-            }
-
-            target.SyncShield();
-            Units.RefreshDisplay(target);
-            for (var i = 0; i < removedStatuses.Count; i++)
-            {
-                effectManager.SignalStatusEffectEnded(removedStatuses[i]);
-            }
-
-            SkillTrigger.ExecuteExpiredStatuses(this, Units, target, removedStatuses);
-            return true;
-        }
-
-        private void DispatchOutgoingDamageTriggers(
-            UnitCombatState target,
-            DamageAttribute attribute,
-            AttackRule attackRule,
-            InGameResourceChangeResult result,
-            float sourceBaseDamage)
-        {
-
-            if (attackRule.Source == null || attackRule.SuppressOutgoingDamageTriggers || result.AppliedDamage <= 0f)
-            {
-                return;
-            }
-
-            SkillTrigger.ExecuteOutgoingDamage(
-                this,
-                Units,
-                attackRule.Source,
-                attackRule.SourceSkillId,
-                target,
-                attribute,
-                result.AppliedDamage,
-                attackRule.SourceHitWasExecute);
-
-            ApplyOutgoingAdditionalDamageStatuses(target, attribute, attackRule, sourceBaseDamage);
-        }
-
-        private void ApplyOutgoingAdditionalDamageStatuses(
-            UnitCombatState target,
-            DamageAttribute triggerAttribute,
-            AttackRule attackRule,
-            float sourceBaseDamage)
-        {
-            if (target.Resources.CurrentHealth <= 0f)
-            {
-                return;
-            }
-
-            var specs = StatusCombatRules.OutgoingAdditionalDamageSpecs(attackRule.Source, triggerAttribute);
-            for (var i = 0; i < specs.Count; i++)
-            {
-                if (target.Resources.CurrentHealth <= 0f)
-                {
-                    break;
-                }
-
-                var spec = specs[i];
-                if (spec.Multiplier <= 0f)
-                {
-                    continue;
-                }
-
-                ApplyDamage(
-                    target,
-                    sourceBaseDamage * spec.Multiplier,
-                    spec.DamageAttribute,
-                    attackRule.Source,
-                    true,
-                    0f,
-                    0f,
-                    attackRule.SourceSkillId,
-                    true);
-            }
-        }
+        /// 상태이상 차감 후 상태 갱신
 
         public int ConsumeStatusStacks(UnitCombatState target, StatusEffectKind kind, int stacks)
         {
@@ -581,7 +491,7 @@ namespace Pakuri.InGame
             {
                 for (var i = 0; i < removedStatuses.Count; i++)
                 {
-                    effectManager.SignalStatusEffectEnded(removedStatuses[i]);
+                    effectManager.RemoveEffect(status: removedStatuses[i]);
                 }
 
                 target.SyncShield();
@@ -590,6 +500,9 @@ namespace Pakuri.InGame
 
             return consumed;
         }
+
+
+        /// 상태이상 만료 관리
 
         private void TickUnitStatuses(float deltaTime)
         {
@@ -610,7 +523,7 @@ namespace Pakuri.InGame
                     Units.RefreshDisplay(model);
                     for (var j = 0; j < removedStatuses.Count; j++)
                     {
-                        effectManager.SignalStatusEffectEnded(removedStatuses[j]);
+                        effectManager.RemoveEffect(status: removedStatuses[j]);
                     }
 
                     SkillTrigger.ExecuteExpiredStatuses(this, Units, model, removedStatuses);

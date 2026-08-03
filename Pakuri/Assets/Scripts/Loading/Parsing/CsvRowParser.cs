@@ -38,7 +38,6 @@ namespace Pakuri.Data
             public float BaseMoveSpeed;
             public float BaseCriticalChance;
             public float BaseCriticalDamage;
-            public float BaseCriticalResistance;
             public float PhysicalDefense;
             public float FireDefense;
             public float LightningDefense;
@@ -194,7 +193,6 @@ namespace Pakuri.Data
                 BaseMoveSpeed = record.ReadFloat("base_move_speed"),
                 BaseCriticalChance = record.ReadFloat("base_crit_chance"),
                 BaseCriticalDamage = record.ReadFloat("base_crit_damage"),
-                BaseCriticalResistance = record.ReadFloat("base_crit_resistance"),
                 PhysicalDefense = record.ReadFloat("def_physical"),
                 FireDefense = record.ReadFloat("def_fire"),
                 LightningDefense = record.ReadFloat("def_lightning"),
@@ -479,7 +477,6 @@ namespace Pakuri.Data
             public float MoveSpeed;
             public float CriticalChance;
             public float CriticalDamage;
-            public float CriticalResistance;
             public float PhysicalDefense;
             public float FireDefense;
             public float LightningDefense;
@@ -549,7 +546,6 @@ namespace Pakuri.Data
                 MoveSpeed = record.ReadFloat("move_speed"),
                 CriticalChance = record.ReadFloat("crit_chance"),
                 CriticalDamage = record.ReadFloat("crit_damage"),
-                CriticalResistance = record.ReadFloat("crit_resistance"),
                 PhysicalDefense = record.ReadFloat("def_physical"),
                 FireDefense = record.ReadFloat("def_fire"),
                 LightningDefense = record.ReadFloat("def_lightning"),

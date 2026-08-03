@@ -1,6 +1,5 @@
 /*
  * 역할: 전투 사건이 스킬 반응으로 이어질지 판정한다.
- * 책임: 발생원, 상태, 선택, 확률, 횟수, 내부 대기 조건을 검사하고 통과한 결과를 실행 흐름에 넘긴다.
  */
 
 using System;
@@ -330,14 +329,54 @@ internal static class SkillTrigger
 	}
 
 	/// 외부 피해 사건을 반응 판정에 전달한다.
-	public static void ExecuteOutgoingDamage(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillId, UnitCombatState eventTarget, DamageAttribute attribute, float eventAppliedDamage, bool eventWasExecute = false)
+	public static void ExecuteOutgoingDamage(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillId, UnitCombatState eventTarget, DamageAttribute attribute, float eventAppliedDamage, bool eventWasExecute, float sourceBaseDamage)
 	{
-		if (!(combatManager == null) && roster != null && source != null)
+		if (!(combatManager == null) && roster != null && source != null && eventAppliedDamage > 0f)
 		{
 			Vector2 eventCenter = ((eventTarget != null) ? UnitPosition(roster, eventTarget) : UnitPosition(roster, source));
 			TriggerExecutionContext triggerContext = new TriggerExecutionContext(eventTarget, null, eventCenter, null, 0f, eventAppliedDamage, attribute, sourceSkillId, source, eventWasExecute);
 			ExecuteSourceOwnedTriggers(combatManager, roster, source, sourceSkillId, SkillTriggerEvent.OnOutgoingDamage, triggerContext);
 			ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnOutgoingDamage, triggerContext);
+			ApplyOutgoingAdditionalDamageStatuses(combatManager, eventTarget, source, sourceSkillId, attribute, sourceBaseDamage);
+		}
+	}
+
+	/// outgoing 피해 상태가 만든 추가 피해를 기존 피해 적용 경로에 전달한다.
+	private static void ApplyOutgoingAdditionalDamageStatuses(
+		InGameCombatManager combatManager,
+		UnitCombatState target,
+		UnitCombatState source,
+		string sourceSkillId,
+		DamageAttribute triggerAttribute,
+		float sourceBaseDamage)
+	{
+		if (combatManager == null || target == null || source == null || target.Resources.CurrentHealth <= 0f)
+		{
+			return;
+		}
+
+		var specs = StatusCombatRules.OutgoingAdditionalDamageSpecs(source, triggerAttribute);
+		for (var i = 0; i < specs.Count; i++)
+		{
+			if (target.Resources.CurrentHealth <= 0f)
+			{
+				break;
+			}
+
+			var spec = specs[i];
+			if (spec.Multiplier <= 0f)
+			{
+				continue;
+			}
+
+			combatManager.ApplyDamage(
+				target,
+				sourceBaseDamage * spec.Multiplier,
+				spec.DamageAttribute,
+				source,
+				criticalAllowed: true,
+				sourceSkillId: sourceSkillId,
+				suppressOutgoingDamageTriggers: true);
 		}
 	}
 

@@ -4,6 +4,226 @@
 
 The pre-cleanup file, including all completed July tasks, is preserved at `boards/ARCHIVE/ACTIVE_BOARD_SNAPSHOT_2026-07-28/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
 
+## Task: 2026-08-03 Remove Unused RemovePassiveStatus
+
+### Task title
+
+저장소에서 호출되지 않는 `RemovePassiveStatus`를 삭제한다.
+
+### Goals
+
+- `InGameCombatManager.RemovePassiveStatus`의 미사용 정의를 삭제한다.
+- `DispatchCombatStartOnce`, `DispatchOutgoingDamageTriggers`, `ApplyOutgoingAdditionalDamageStatuses`의 실제 실행 경로는 유지한다.
+
+### Constraints
+
+- 상태 제거, 전투 시작, 피해 후속반응의 공통 실행 경로는 변경하지 않는다.
+- `StatusState.Remove`, `ConsumeStatusStacks`와 기존 Trigger 경로는 변경하지 않는다.
+- Unity Play Mode 검증은 사용자 소유다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation complete. 잔여 참조 검사, diff 검사와 솔루션 빌드를 완료했다.
+
+### Next Actions
+
+- 별도 작업 없음. 필요 시 사용자 Play Mode에서 CombatStart 및 OnOutgoingDamage 반응을 확인한다.
+
+### Evidence
+
+- `InGameCombatManager.RemovePassiveStatus` 정의를 삭제했다.
+- 저장소 C# 검색에서 `RemovePassiveStatus` 잔여 결과는 0건이다.
+- `DispatchCombatStartOnce`는 플레이어·적 유닛 등록 경로에서 호출되고 `SkillTrigger.ExecuteCombatStart`를 유닛당 한 번 발행한다.
+- `DispatchOutgoingDamageTriggers`는 일반 피해 후 호출되며 `SkillTrigger.ExecuteOutgoingDamage`와 상태 기반 추가 피해를 연결한다.
+- `ApplyOutgoingAdditionalDamageStatuses`는 outgoing 추가 피해 상태를 조회해 기존 `ApplyDamage` 경로로 후속 피해를 적용한다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal`은 오류 0개, 기존 참조 충돌 경고 2개로 완료했다.
+- `git diff --check -- Pakuri/Assets/Scripts/Combat/InGameCombatManager.cs`가 통과했다.
+
+### History
+
+- 2026-08-03: 사용자가 네 메소드의 실제 사용 여부를 확인하고 미사용 `RemovePassiveStatus` 삭제를 요청했다.
+- 2026-08-03: Code Builder가 호출부가 없는 메소드를 삭제하고 나머지 세 메소드의 실행 경로를 보존했다.
+
+## Task: 2026-08-03 Clarify Status Duration Ownership
+
+### Task title
+
+상태 지속시간 변경 책임을 `StatusState`와 `InGameCombatManager`의 실제 코드 역할에 맞춰 명확히 한다.
+
+### Goals
+
+- `StatusState.ExtendDurations`가 지속시간 값을 변경하는 책임임을 주석으로 기록한다.
+- `InGameCombatManager.ExtendStatusDuration`가 상태 저장소 호출과 전투 표현 갱신을 담당함을 주석으로 기록한다.
+- 상태 지속시간 로직을 중복 이동하거나 `UnitCombatState`에 추가하지 않는다.
+
+### Constraints
+
+- 지속시간 계산·변경과 상태 만료 순서를 변경하지 않는다.
+- 보호막 동기화, 유닛 표시 갱신, 상태 시각 효과 갱신을 유지한다.
+- Unity Play Mode 검증은 사용자 소유다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation complete. 주석 확인, diff 검사와 솔루션 빌드를 완료했다.
+
+### Next Actions
+
+- 별도 작업 없음. 필요 시 사용자 Play Mode에서 상태 지속시간 연장 표현을 확인한다.
+
+### Evidence
+
+- `StatusState.cs:305`의 `UnitStatusCollection.ExtendDurations`가 조건에 맞는 `StatusRuntimeInstance`의 지속시간을 실제 변경한다.
+- `InGameCombatManager.cs:389`의 `ExtendStatusDuration`은 `target.Statuses.ExtendDurations` 호출 후 `SyncShield`, `RefreshDisplay`, 상태 시각 효과 갱신을 수행한다.
+- `SkillExecution.cs:1954`의 반응 명령은 기존처럼 `combatManager.ExtendStatusDuration` 공통 진입점을 사용한다.
+- `git diff --check`가 통과했다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal`은 오류 0개, 기존 참조 충돌 경고 2개로 완료했다.
+
+### History
+
+- 2026-08-03: 사용자가 상태 지속시간 관리는 `StatusState` 또는 `UnitCombatState` 책임인지 확인했다.
+- 2026-08-03: Code Builder가 실제 값 변경은 `StatusState`, 전투 표현 연결은 `InGameCombatManager`라는 현재 구조를 주석으로 명확히 했다.
+
+## Task: 2026-08-03 Move Status Visual Creation To BuffSkillExecutor
+
+### Task title
+
+상태이상 시각 효과 생성 메소드를 `BuffSkillExecutor`로 이동하고 공통 상태 적용 메소드에 책임 주석을 추가한다.
+
+### Goals
+
+- `ShowStatusEffectVisual` 구현을 `BuffSkillExecutor.cs`로 이동한다.
+- `ApplyStatus`, `ApplyShieldStatus`, `ExtendStatusDuration`의 역할을 코드 주석으로 명시한다.
+- 기존 상태 적용·보호막 적용·지속시간 연장 경로의 시각 효과 생성을 유지한다.
+
+### Constraints
+
+- 상태 확률·저항·지속시간·중첩 규칙은 `StatusCombatRules`와 `UnitStatusCollection`의 기존 경로를 유지한다.
+- Buff뿐 아니라 Line, Single, Projectile, Zone과 반응 상태 적용의 시각 효과도 끊기지 않게 한다.
+- Unity Play Mode 검증은 사용자 소유다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation complete. 잔여 참조 검사, diff 검사와 솔루션 빌드를 완료했다.
+
+### Next Actions
+
+- Unity Play Mode에서 일반 상태, 보호막 상태와 지속시간 연장 후 시각 효과 갱신을 확인한다.
+
+### Evidence
+
+- `BuffSkillExecutor.cs:207`에 `ShowStatusEffectVisual`을 이동하고 `EffectManager.CreateEffect` 호출을 유지했다.
+- `InGameCombatManager.cs:350`, `384`, `417`이 이동된 `BuffSkillExecutor.ShowStatusEffectVisual`을 호출한다.
+- `InGameCombatManager.cs:323`, `354`, `388`에 상태 적용, 보호막 적용, 지속시간 연장 책임 주석을 추가했다.
+- `InGameCombatManager.cs`의 기존 `ShowStatusEffectVisual` 구현은 삭제됐다.
+- `rg`로 새 메소드와 세 호출부를 확인했고 `git diff --check`가 통과했다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal`은 오류 0개, 기존 참조 충돌 경고 2개로 완료했다.
+
+### History
+
+- 2026-08-03: 사용자가 상태 시각 효과 생성을 `BuffSkillExecutor`로 이동하고 공통 상태 메소드에 주석을 추가하도록 요청했다.
+- 2026-08-03: Code Builder가 구현을 이동하고 기존 공통 상태 적용 경로의 호출을 연결한 뒤 빌드를 완료했다.
+
+## Task: 2026-08-03 Inline InGameCombatManager Round Calls
+
+### Task title
+
+`InGameCombatManager`의 단일 사용 `Round` 래퍼를 제거하고 호출부에서 `Mathf.Round`를 직접 사용한다.
+
+### Goals
+
+- 보호막과 HP 차감 및 회복의 반올림 표현을 호출부에 직접 둔다.
+- 사용처가 사라진 `Round` 메서드를 삭제한다.
+- 기존 음수 보정과 반올림 동작을 유지한다.
+
+### Constraints
+
+- `UnitCombatState`와 다른 스크립트의 반올림 로직은 변경하지 않는다.
+- HP·보호막 계산 순서와 자원 변경 결과를 변경하지 않는다.
+- Unity Play Mode 검증은 사용자 소유다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation complete. 잔여 참조 검사, diff 검사와 솔루션 빌드를 완료했다.
+
+### Next Actions
+
+- 별도 작업 없음. 필요 시 사용자 Play Mode에서 HP·보호막 수치 표시를 확인한다.
+
+### Evidence
+
+- `InGameCombatManager.cs:279`, `280`, `307`이 `Mathf.Round(Mathf.Max/Min(...))`를 직접 호출한다.
+- `InGameCombatManager.cs`의 `Round` 메서드와 해당 호출 참조가 삭제됐다.
+- 저장소 검색에서 `InGameCombatManager`의 `Round(` 참조는 0건이며 다른 파일의 독립적인 `Mathf.Round` 사용은 유지된다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal`은 오류 0개, 기존 참조 충돌 경고 2개로 완료했다.
+- `git diff --check -- Pakuri/Assets/Scripts/Combat/InGameCombatManager.cs`가 통과했다.
+
+### History
+
+- 2026-08-03: 사용자가 단일 래퍼인 `Round`를 호출부의 `Mathf.Round`로 대체할 수 있는지 확인했다.
+- 2026-08-03: Code Builder가 세 호출부를 직접 치환하고 미사용 `Round` 메서드를 삭제했다.
+
+## Task: 2026-08-03 Remove Persistent Shield Visual Actor Round Trip
+
+### Task title
+
+보호막 종료 시 `EffectManager → BuffSkillActor → EffectManager` 왕복 경로를 제거한다.
+
+### Goals
+
+- 보호막과 상태 효과가 종료되면 `EffectManager`가 상태 키로 연결된 시각 객체를 직접 삭제한다.
+- 보호막 시각 효과에 불필요한 `BuffSkillActor.InitializePersistent` 연결을 제거한다.
+- 시간형 버프 시각 효과의 `BuffSkillActor.Update → EffectManager.RemoveEffect` 경로는 유지한다.
+
+### Constraints
+
+- `StatusState`의 상태 수명과 보호막 자원 판정은 변경하지 않는다.
+- `EffectCreateRequest.PersistentStatus` 기반 시각 객체 매핑은 유지한다.
+- 기존 피해, 상태 제거, 스택 소모, 시간 만료 처리 순서는 유지한다.
+- Unity Play Mode 검증은 사용자 소유다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation complete. 잔여 참조 검사, diff 검사와 솔루션 빌드를 완료했다.
+
+### Next Actions
+
+- Unity Play Mode에서 보호막 소진, 상태 만료, 시간형 버프 시각 효과 삭제를 확인한다.
+
+### Evidence
+
+- `EffectManager.SignalStatusEffectEnded`를 삭제하고 `RemoveEffect(GameObject instance = null, StatusRuntimeInstance status = null)`가 상태 키로 객체를 직접 찾도록 변경했다.
+- `InGameCombatManager`의 피해 소진, 상태 제거, 스택 소모와 시간 만료 경로가 `effectManager.RemoveEffect(status: ...)`를 직접 호출한다.
+- `ShowStatusEffectVisual`에서 보호막 및 상태 시각 객체에 `BuffSkillActor.InitializePersistent`를 부착하던 경로를 삭제했다.
+- `BuffSkillActor`의 `persistentStatus` 필드와 `InitializePersistent`를 삭제하고, 시간형 `InitializeTimed`와 `Complete` 경로는 유지했다.
+- `rg`에서 `SignalStatusEffectEnded`, `InitializePersistent`, `BuffSkillActor.Attach(instance)` 참조는 0건이며, `EffectCreateRequest.PersistentStatus` 상태 키 매핑과 시간형 `InitializeTimed` 참조는 유지된다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal`은 오류 0개, 기존 `System.Net.Http` 및 `System.IO.Compression` 참조 충돌 경고 2개로 완료했다.
+- `git diff --check`가 통과했다.
+
+### History
+
+- 2026-08-03: 사용자가 보호막 종료 시 `EffectManager → BuffSkillActor → EffectManager` 왕복이 불필요한지 지적했다.
+- 2026-08-03: Code Builder가 persistent 보호막 시각 경로를 `InGameCombatManager → EffectManager.RemoveEffect`로 단순화하고 시간형 Actor 경로는 보존했다.
+
 ## Task: 2026-08-03 Remove SingleSkill Internal Delay Path
 
 ### Task title
@@ -1861,3 +2081,221 @@ Implementation complete. 잔여 참조 검색과 솔루션 빌드를 완료했�
 
 - 2026-08-03: 사용자가 `DamageCalculator`와 `InGameCombatManager`의 책임을 확인한 뒤 `ApplyDamageInternal` 제거 작업을 요청했다.
 - 2026-08-03: Code Builder가 위임 메서드를 삭제하고 피해 후처리 순서를 `ApplyDamage`에 유지했다.
+
+## Task: 2026-08-03 Move Outgoing Additional Damage Dispatch
+
+### Task title
+
+`ApplyOutgoingAdditionalDamageStatuses`와 outgoing 피해 이벤트 전달을 `SkillTrigger` 중심으로 정리한다.
+
+### Goals
+
+- `InGameCombatManager`의 `DispatchOutgoingDamageTriggers` 래퍼를 삭제한다.
+- `SkillTrigger.ExecuteOutgoingDamage`에서 outgoing 반응 후 추가 피해 상태를 실행한다.
+- 추가 피해의 실제 HP·보호막 변경은 기존 `InGameCombatManager.ApplyDamage` 경로를 재사용한다.
+- `SkillExecutionRules`의 스킬 정의 해석 책임과 `CombatStart` 중복 방지 동작은 변경하지 않는다.
+
+### Constraints
+
+- `OutgoingAdditionalDamageSpecs`의 속성·스택·배율 판정을 변경하지 않는다.
+- 추가 피해에 `criticalAllowed: true`, `suppressOutgoingDamageTriggers: true`를 유지해 기존 재귀 차단을 보존한다.
+- 일반 피해의 outgoing 반응 후 추가 피해 실행 순서를 유지한다.
+- Unity Play Mode 검증은 수행하지 않는다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation complete. 잔여 참조 검사, diff 검사, 솔루션 빌드를 완료했다.
+
+### Next Actions
+
+- Unity Play Mode에서 outgoing 반응과 `StatusOutgoingAdditionalDamage`의 추가 피해가 기존과 같은 순서로 실행되는지 확인한다.
+
+### Evidence
+
+- `InGameCombatManager.cs:219`가 `SuppressOutgoingDamageTriggers`가 아닌 일반 피해에만 `SkillTrigger.ExecuteOutgoingDamage`를 직접 호출한다.
+- `InGameCombatManager.cs`의 `DispatchOutgoingDamageTriggers`와 기존 `ApplyOutgoingAdditionalDamageStatuses` 구현은 삭제했다.
+- `SkillTrigger.cs:332`의 `ExecuteOutgoingDamage`가 적용 피해가 양수인 사건을 source-owned/passive-owned 반응에 전달한 뒤 추가 피해 상태를 처리한다.
+- `SkillTrigger.cs:345`의 추가 피해는 `StatusCombatRules.OutgoingAdditionalDamageSpecs`를 읽고 `combatManager.ApplyDamage`를 재호출한다.
+- 추가 피해 호출은 `criticalAllowed: true`, `suppressOutgoingDamageTriggers: true`를 유지한다.
+- `rg -n "DispatchOutgoingDamageTriggers|ApplyOutgoingAdditionalDamageStatuses" Pakuri/Assets/Scripts -g '*.cs'` 결과에서 이전 manager 메서드는 사라지고 새 `SkillTrigger` 메서드만 남았다.
+- `git diff --check -- Pakuri/Assets/Scripts/Combat/InGameCombatManager.cs Pakuri/Assets/Scripts/Combat/Skills/Execution/SkillTrigger.cs`가 통과했다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal`은 오류 0개, 기존 참조 충돌 경고 2개로 완료했다.
+
+### History
+
+- 2026-08-03: 사용자가 추가 피해 실행과 outgoing dispatch를 `InGameCombatManager` 밖의 스킬 실행 경로로 정리하도록 요청했다.
+- 2026-08-03: Code Builder가 manager 래퍼를 제거하고 `SkillTrigger.ExecuteOutgoingDamage`에 추가 피해 실행을 이동했다. `SkillExecutionRules`와 `CombatStart` 경로는 변경하지 않았다.
+
+## Task: 2026-08-03 Remove Critical Resistance Runtime Path
+
+### Task title
+
+Remove active `CriticalResistance` data and damage calculation paths, then reuse the existing attacker-side `StatusCriticalChanceBonus` path.
+
+### Goals
+
+- Remove base and status critical-resistance fields from active runtime models, parsers, generation and authoring CSV schemas.
+- Stop subtracting target critical resistance in `DamageCalculator`.
+- Convert Vega G trait 3 from target critical-resistance reduction to conditional all-ally critical-chance bonus.
+
+### Constraints
+
+- Reuse existing `StatusCriticalChanceBonus`; do not add a new crit system or CSV column.
+- Preserve `vulnerable`'s existing critical-damage-taken bonus; remove only its critical-resistance component.
+- Preserve `Assets/Legacy` historical files; current runtime and authoring scope is `Pakuri/Assets`.
+- Unity Play Mode and Editor catalog reimport remain user-owned while Unity is running.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation complete. Active residue checks, CSV structure checks, diff check and solution build passed.
+
+### Next Actions
+
+- After Unity is available for a safe editor refresh, sync the runtime CSV catalog and verify Vega G trait 3 in Play Mode.
+
+### Evidence
+
+- `DamageCalculator.cs:70` retains attacker-side `attackRule.CritChanceBonus`; active `CriticalResistance` search across `Pakuri/Assets/Scripts` and `Pakuri/Assets/CSVdata/authoring` returned no results.
+- `UnitCombatState`, unit definitions, `UnitCombatStateFactory`, CSV parsers, source models and `GameDataCatalogBuilder` no longer contain critical-resistance fields or mappings.
+- `StatusEffectDefinition`, `StatusRules` and node generation no longer expose or parse `CriticalResistanceBonus`.
+- `vega-g-trait-3` now selects `AllAllies` and applies `StatusCriticalChanceBonus` `0.10` while retaining the `silence&name-mark` condition.
+- `status_effects.csv` retains `vulnerable` critical-damage-taken `0.03` and no longer contains a critical-resistance column.
+- Current `monsters.csv`, `enemies.csv` and `status_effects.csv` import with consistent columns; `git diff --check` passed.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal` completed with 0 errors and the existing 2 assembly-reference warnings.
+
+### History
+
+- 2026-08-03: User requested replacing `CriticalResistance` with the existing `CritChanceBonus` direction and removing the unnecessary resistance stat.
+- 2026-08-03: Code Builder removed the active resistance path, converted Vega G trait 3 to the existing conditional attacker bonus, and preserved Legacy historical data.
+
+## Task: 2026-08-03 Unify AreaAttack Runtime Kind
+
+### Task title
+
+Convert `sein-d` from `Field` to `AreaAttack` and remove the obsolete `SkillRuntimeKind.Field` execution path.
+
+### Goals
+
+- Author `sein-d` with the existing `AreaAttack` runtime kind.
+- Remove `Field` from the runtime enum, loader allowlists, definition generation, execution routing and area-like status check.
+- Update the runtime catalog editor test to validate the remaining `AreaAttack` path.
+
+### Constraints
+
+- Preserve `sein-d` damage, duration, tick interval, status and visual values.
+- Do not change the shared `ZoneSkillDefinition` or `ZoneSkillExecutor` behavior.
+- Unity catalog reimport and Play Mode remain user-owned while Unity Editor is running.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation complete. Field residue checks, CSV parse, diff check and solution build passed.
+
+### Next Actions
+
+- After Unity refreshes the TextAsset, verify `sein-d` still creates the same persistent zone in Play Mode.
+
+### Evidence
+
+- `skills_area_attack.csv:5` now stores `sein-d` as `AreaAttack`.
+- `SkillRuntimeKind.Field` was removed from `SkillDefinition`, `CsvSourceLoader`, `GameDataCatalogBuilder.Skills`, `SkillExecution` and `StatusRules`.
+- `SkillCatalogRuntimeTests` no longer has a separate Field validation case.
+- Active C# and authoring CSV searches for `SkillRuntimeKind.Field` and exact `"Field"` returned no results.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal` completed with 0 errors and the existing 2 assembly-reference warnings; `git diff --check` passed.
+
+### History
+
+- 2026-08-03: User requested full AreaAttack unification and removal of Field references and validation rules.
+- 2026-08-03: Code Builder converted `sein-d`, removed the redundant runtime kind and updated the editor contract test.
+
+## Task: 2026-08-03 Normalize Skill Graph Owner IDs
+
+### Task title
+
+Remove duplicated monster prefixes from choice graph CSV `owner_id` values while preserving canonical runtime IDs.
+
+### Goals
+
+- Store graph `owner_id` values as short IDs such as `c-trait-1`.
+- Restore `monster_id-owner_id` during graph parsing so existing choice, trigger and skill lookup paths continue using canonical IDs.
+- Preserve graph validation, target resolution, node grouping and generated node IDs.
+
+### Constraints
+
+- Change only `skill_graph_nodes_*.csv` under the active monster skill choices authoring tree and the graph parser needed to normalize them.
+- Use the existing hyphenated ID convention (`eve-c-trait-1`), not a new underscore ID convention.
+- Do not change `skill_choices_*.csv`, skill IDs, trigger IDs or target skill IDs.
+- Unity TextAsset reimport and Play Mode verification remain user-owned.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation complete. CSV normalization, parser build, diff check and solution build passed.
+
+### Next Actions
+
+- After Unity reimports the six graph CSV TextAssets, validate skill choices and trigger graph behavior in Play Mode.
+
+### Evidence
+
+- `SkillGraphParser.ParseSkillGraphNodeRow` now calls `NormalizeOwnerId(monsterId, ownerId)` before graph validation/materialization.
+- `NormalizeOwnerId` is idempotent: it preserves a canonical `monster-id` input and prefixes only a short owner ID.
+- All 858 rows across six active `skill_graph_nodes_*.csv` files now have short `owner_id` values; verification found `still_prefixed=0`.
+- Sample authoring values are `eve / Choice / c-trait-1`, while the parser restores `eve-c-trait-1` for existing `model.SkillChoices` and graph generation.
+- `git diff --check` passed; `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal` completed with 0 errors and the existing 2 assembly-reference warnings.
+
+### History
+
+- 2026-08-03: User requested removing duplicated monster prefixes from graph `owner_id` values and reconstructing them from `monster_id` during parsing.
+- 2026-08-03: Code Builder shortened all active graph owner IDs and added canonical parser normalization without changing runtime ID consumers.
+
+## Task: Repair CSV Header/Type Column Counts After Schema Cleanup
+
+### Goals
+
+- Align the current authoring CSV header and type-row column counts so `CsvParser.CsvTable.Load` can load `monsters.csv`, `enemies.csv`, and `status_effects.csv`.
+- Preserve all existing CSV data values and avoid changing runtime parser logic.
+
+### Constraints
+
+- Modify only the three current authoring CSV type rows required by the reported error.
+- Do not alter historical `Assets/Legacy` data or Unity Editor-owned reimport state.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Completed and statically verified; Unity Editor auto-sync/reimport remains user-owned.
+
+### Next Actions
+
+- Allow Unity to reimport the changed CSV TextAssets and confirm runtime catalog auto-sync completes.
+
+### Evidence
+
+- `monsters.csv` type row now has 22 columns, matching its 22-column header.
+- `enemies.csv` type row now has 24 columns, matching its 24-column header.
+- `status_effects.csv` type row now has 19 columns, matching its 19-column header.
+- Quote-aware validation checked all 39 current authoring CSV files and every nonblank data row: `bad=0`.
+- `git diff --check` passed; `dotnet build Pakuri/Pakuri.sln --no-restore -v:q` completed with 0 errors and the existing 2 assembly-reference warnings.
+
+### History
+
+- 2026-08-03: User reported the Unity auto-sync failure at `CsvParser.cs:122` for `monsters.csv`.
+- 2026-08-03: Code Builder aligned the three mismatched type rows without changing CSV parser code or data values.

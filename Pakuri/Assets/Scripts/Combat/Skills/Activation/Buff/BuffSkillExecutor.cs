@@ -1,6 +1,6 @@
 /*
  * 역할: 지원형 스킬의 확정값을 전투에 적용한다.
- * 책임: 상태, 회복, 보호막, 돌진을 종류에 맞는 공통 전투 경로로 보낸다.
+ * 상태, 회복, 보호막, 돌진 버프를 종류에 맞는 공통 전투 경로로 보낸다.
  */
 
 using Pakuri.Combat;
@@ -201,6 +201,26 @@ namespace Pakuri.InGame
                 BuffSkillActor.Attach(instance).InitializeTimed(effects, duration);
                 casterVisualSpawned = snapshot.PreparedAttachVisualToCaster;
             }
+        }
+
+        /// 적용된 상태의 지속 시각 효과를 대상에 연결한다.
+        internal static void ShowStatusEffectVisual(
+            InGameCombatManager combatManager,
+            UnitCombatState target,
+            StatusRuntimeInstance status)
+        {
+            var targetEntry = combatManager.Units.Find(target);
+            combatManager.Effects.CreateEffect(new EffectCreateRequest(
+                status.SourceData.RuntimeVisual,
+                status.SourceData.StatusEffectPrefab,
+                "RuntimeStatusVisual_" + status.SourceSkillId,
+                targetEntry.Transform.position,
+                Quaternion.identity,
+                targetEntry.Transform,
+                status,
+                false,
+                false,
+                false));
         }
     }
 }

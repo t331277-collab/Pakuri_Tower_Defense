@@ -185,7 +185,6 @@
 "RedistributeConsumedStatus","5","target_count","int","false",""
 "RequiredSourceStatus","1","status_id","status_id","true",""
 "RequiredSourceStatus","2","min_stacks","int","false",""
-"StatusCriticalResistanceBonus","1","bonus","float","true",""
 "StatusRuntimeKindFilter","1","incoming_skill_runtime_kinds","string","false",""
 "StatusRuntimeKindFilter","2","outgoing_skill_runtime_kinds","string","false",""
 "TargetStatusCritBonus","1","status_id","status_id","true",""

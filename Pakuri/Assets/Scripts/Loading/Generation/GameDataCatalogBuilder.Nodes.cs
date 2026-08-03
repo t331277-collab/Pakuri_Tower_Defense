@@ -811,9 +811,6 @@ namespace Pakuri.Data
 				case TriggerStatusMutationKind.CriticalDamageBonus:
 					status.Modifiers.CritDamageBonusRate += mutation.Amount;
 					break;
-				case TriggerStatusMutationKind.CriticalResistanceBonus:
-					status.CriticalResistanceBonus += mutation.Amount;
-					break;
 				case TriggerStatusMutationKind.DamageTakenBonus:
 					status.DamageTakenBonus += mutation.Amount;
 					break;
@@ -866,7 +863,6 @@ namespace Pakuri.Data
 		ShieldReceivedBonus,
 		CriticalChanceBonus,
 		CriticalDamageBonus,
-		CriticalResistanceBonus,
 		DamageTakenBonus,
 		ElementResistReduction,
 		FlatElementResistReduction,
@@ -1191,7 +1187,6 @@ namespace Pakuri.Data
 		if (string.Equals(handlerId, "StatusMoveSpeedBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "StatusSpellPowerBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "StatusCriticalDamageBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "StatusCriticalResistanceBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "StatusElementResistReduction", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "StatusConditionalStatusChanceBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "StatusRuntimeKindFilter", StringComparison.OrdinalIgnoreCase)
@@ -1482,11 +1477,6 @@ namespace Pakuri.Data
 		if (string.Equals(handlerId, "StatusCriticalDamageBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			operation = new TriggerStatusMutation(TriggerStatusMutationKind.CriticalDamageBonus, amount, attribute);
-			return true;
-		}
-		if (string.Equals(handlerId, "StatusCriticalResistanceBonus", StringComparison.OrdinalIgnoreCase))
-		{
-			operation = new TriggerStatusMutation(TriggerStatusMutationKind.CriticalResistanceBonus, amount, attribute);
 			return true;
 		}
 		if (string.Equals(handlerId, "StatusDamageTakenBonus", StringComparison.OrdinalIgnoreCase))

@@ -70,8 +70,7 @@ namespace Pakuri.Data
                     SpellPower = sourceMonster.BaseSpellPower,
                     MoveSpeed = sourceMonster.BaseMoveSpeed,
                     CriticalChance = sourceMonster.BaseCriticalChance,
-                    CriticalDamage = sourceMonster.BaseCriticalDamage,
-                    CriticalResistance = sourceMonster.BaseCriticalResistance
+                    CriticalDamage = sourceMonster.BaseCriticalDamage
                 };
                 monster.Defenses = new UnitDefenseStats
                 {
@@ -170,8 +169,7 @@ namespace Pakuri.Data
                     SpellPower = sourceEnemy.SpellPower,
                     MoveSpeed = sourceEnemy.MoveSpeed,
                     CriticalChance = sourceEnemy.CriticalChance,
-                    CriticalDamage = sourceEnemy.CriticalDamage,
-                    CriticalResistance = sourceEnemy.CriticalResistance
+                    CriticalDamage = sourceEnemy.CriticalDamage
                 };
                 enemy.Defenses = new UnitDefenseStats
                 {
@@ -597,7 +595,6 @@ namespace Pakuri.Data
                     AttackPowerBonusPerStack = row.AttackPowerBonusPerStack,
                     DamageTakenBonusPerStack = row.DamageTakenBonusPerStack,
                     CriticalDamageTakenBonusPerStack = row.CriticalDamageTakenBonusPerStack,
-                    CriticalResistanceBonusPerStack = row.CriticalResistanceBonusPerStack,
                     ElementResistReductionPerStack = row.ElementResistReductionPerStack,
                     ElementDamageTakenBonusPerStack = row.ElementDamageTakenBonusPerStack,
                     StatusEffectPrefab = LoadPrefab(row.StatusEffectPrefabPath)
@@ -629,7 +626,6 @@ namespace Pakuri.Data
                 MoveSpeedBonus = definition.MoveSpeedBonusPerStack,
                 DamageTakenBonus = definition.DamageTakenBonusPerStack,
                 CriticalDamageTakenBonus = definition.CriticalDamageTakenBonusPerStack,
-                CriticalResistanceBonus = definition.CriticalResistanceBonusPerStack,
                 ElementResistReduction = definition.ElementResistReductionPerStack,
                 ElementDamageTakenBonus = definition.ElementDamageTakenBonusPerStack,
                 StatusEffectPrefab = definition.StatusEffectPrefab
@@ -1373,7 +1369,6 @@ namespace Pakuri.Data
             definition.StatusCriticalDamageTakenBonus = payload.StatusCriticalDamageTakenBonus;
             definition.StatusCriticalDamageBonus = payload.StatusCriticalDamageBonus;
             definition.StatusAilmentResistanceBonus = payload.StatusAilmentResistanceBonus;
-            definition.StatusCriticalResistanceBonus = payload.StatusCriticalResistanceBonus;
             definition.StatusElementResistReduction = payload.StatusElementResistReduction;
             definition.StatusFlatElementResistReduction = payload.StatusFlatElementResistReduction;
             definition.StatusElementDamageTakenBonus = payload.StatusElementDamageTakenBonus;

@@ -68,8 +68,7 @@ namespace Pakuri.Data
                 model,
                 sourceCatalog.MonsterSkillsAreaAttackFiles,
                 PakuriCsvSkillKind.Active,
-                SkillRuntimeKind.AreaAttack,
-                SkillRuntimeKind.Field);
+                SkillRuntimeKind.AreaAttack);
             LoadSkillRows(
                 model,
                 sourceCatalog.MonsterSkillsSingleAttackFiles,
@@ -129,7 +128,7 @@ namespace Pakuri.Data
                 model,
                 sourceCatalog.MonsterSkillChoicesAreaAttackFiles,
                 SkillRuntimeKind.AreaAttack,
-                SkillRuntimeKind.Field);
+                SkillRuntimeKind.AreaAttack);
             LoadSkillChoiceRows(
                 model,
                 sourceCatalog.MonsterSkillChoicesSingleAttackFiles,

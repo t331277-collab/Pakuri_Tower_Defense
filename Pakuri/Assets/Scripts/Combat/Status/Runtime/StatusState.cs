@@ -302,6 +302,7 @@ namespace Pakuri.InGame
             return Math.Max(0f, amount - remaining);
         }
 
+        /// 조건에 맞는 상태 인스턴스의 지속시간 값을 변경한다.
         public bool ExtendDurations(StatusEffectKind kind, float durationDelta, Func<StatusRuntimeInstance, bool> predicate = null)
         {
             if (durationDelta <= 0f)
@@ -493,6 +494,8 @@ namespace Pakuri.InGame
                 Stacks = Math.Min(maxStacks, nextStacks);
             }
         }
+
+        ///상태이상 차감
 
         public int ConsumeStacks(int stacks)
         {

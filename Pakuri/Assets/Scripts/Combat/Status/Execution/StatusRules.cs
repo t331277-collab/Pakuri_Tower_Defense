@@ -171,7 +171,6 @@ namespace Pakuri.InGame
                 + Mathf.Abs(data.DamageTakenBonus)
                 + Mathf.Abs(data.CriticalDamageTakenBonus)
                 + Mathf.Abs(data.AilmentResistanceBonus)
-                + Mathf.Abs(data.CriticalResistanceBonus)
                 + Mathf.Abs(data.ElementResistReduction)
                 + Mathf.Abs(data.FlatElementResistReduction)
                 + Mathf.Abs(data.ElementDamageTakenBonus)
@@ -405,15 +404,6 @@ namespace Pakuri.InGame
         public static float AilmentResistanceBonus(UnitCombatState target)
         {
             return Mathf.Clamp01(SumStacked(target, data => data.AilmentResistanceBonus));
-        }
-
-        public static float CriticalResistanceBonus(UnitCombatState target)
-        {
-            return SumStacked(
-                target,
-                data => MeetsConditionalEffectTarget(target, data)
-                    ? data.CriticalResistanceBonus
-                    : 0f);
         }
 
         public static float ConditionalStatusChanceBonus(UnitCombatState source, UnitCombatState target)
@@ -811,8 +801,7 @@ namespace Pakuri.InGame
 
         private static bool IsAreaLikeSkill(SkillDefinition skill)
         {
-            if (skill.RuntimeKind == SkillRuntimeKind.AreaAttack
-                || skill.RuntimeKind == SkillRuntimeKind.Field)
+            if (skill.RuntimeKind == SkillRuntimeKind.AreaAttack)
             {
                 return true;
             }

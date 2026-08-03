@@ -1,6 +1,6 @@
 /*
  * 역할: 런타임 효과 비주얼 구성.
- * 책임: 확정된 비주얼 설정으로 효과의 회전·크기·Renderer·Hitbox Collider를 구성한다.
+ * 확정된 비주얼 설정으로 효과의 회전·크기·Renderer·Hitbox Collider를 구성한다.
  */
 
 using Pakuri.Data;

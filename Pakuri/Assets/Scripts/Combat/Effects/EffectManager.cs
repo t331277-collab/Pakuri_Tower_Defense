@@ -104,33 +104,8 @@ namespace Pakuri.InGame
             return instance;
         }
 
-        /// 상태 런타임 종료를 해당 비주얼 Actor에 전달한다.
-        public void SignalStatusEffectEnded(StatusRuntimeInstance status)
-        {
-            if (status == null)
-            {
-                return;
-            }
-
-            if (!statusEffectVisuals.TryGetValue(status, out var instance)
-                || instance == null)
-            {
-                statusEffectVisuals.Remove(status);
-                return;
-            }
-
-            var actor = instance.GetComponent<BuffSkillActor>();
-            if (actor != null)
-            {
-                actor.Complete();
-                return;
-            }
-
-            RemoveEffect(instance, status);
-        }
-
         public void RemoveEffect(
-            GameObject instance,
+            GameObject instance = null,
             StatusRuntimeInstance status = null)
         {
             if (status != null)

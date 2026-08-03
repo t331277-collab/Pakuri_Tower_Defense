@@ -1037,9 +1037,6 @@ namespace Pakuri.InGame
                     }
                     RequireDefinition<ZoneSkillDefinition>(skillData);
                     return ZoneSkillExecutor.Execute(context, snapshot);
-                case SkillRuntimeKind.Field:
-                    RequireDefinition<ZoneSkillDefinition>(skillData);
-                    return ZoneSkillExecutor.Execute(context, snapshot);
                 case SkillRuntimeKind.Buff:
                 case SkillRuntimeKind.Shield:
                 case SkillRuntimeKind.Heal:
@@ -1088,14 +1085,6 @@ namespace Pakuri.InGame
                     {
                         return PrepareSingleExecutionData(context, snapshot, areaSingle);
                     }
-                    return PrepareZoneExecutionData(
-                        context,
-                        snapshot,
-                        RequireDefinition<ZoneSkillDefinition>(definition),
-                        1f,
-                        0f,
-                        null);
-                case SkillRuntimeKind.Field:
                     return PrepareZoneExecutionData(
                         context,
                         snapshot,

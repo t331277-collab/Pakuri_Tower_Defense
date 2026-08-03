@@ -1,5 +1,5 @@
 /*
- * 역할: 시간 또는 상태 수명에 맞춰 효과 오브젝트를 정리한다.
+ * 역할: 지원형 스킬의 시간 또는 상태 수명에 맞춰 효과 오브젝트를 정리한다.
  */
 
 using UnityEngine;
@@ -12,7 +12,6 @@ namespace Pakuri.InGame
     {
 
         private EffectManager effectManager;
-        private StatusRuntimeInstance persistentStatus;
         private float remainingLifetime;
         private bool hasLifetime;
 
@@ -22,23 +21,11 @@ namespace Pakuri.InGame
             float durationSeconds)
         {
             effectManager = manager;
-            persistentStatus = null;
             hasLifetime = durationSeconds > 0f;
             if (hasLifetime)
             {
                 remainingLifetime = Mathf.Max(0.01f, durationSeconds);
             }
-        }
-
-        /// 전투 상태가 끝날 때까지 표현의 생존 기준을 연결한다.
-        public void InitializePersistent(
-            EffectManager manager,
-            StatusRuntimeInstance status)
-        {
-            effectManager = manager;
-            persistentStatus = status;
-            hasLifetime = false;
-            remainingLifetime = 0f;
         }
 
         /// 표현이 맡은 수명이 끝났음을 효과 관리자에 알린다.
@@ -51,7 +38,7 @@ namespace Pakuri.InGame
 
             var manager = effectManager;
             effectManager = null;
-            manager.RemoveEffect(gameObject, persistentStatus);
+            manager.RemoveEffect(gameObject);
         }
 
         /// BuffSkillActor 컴포넌트 부착

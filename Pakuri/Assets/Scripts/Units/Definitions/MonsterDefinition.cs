@@ -39,8 +39,7 @@ namespace Pakuri.Data
             MaxHealth = 100f,
             AttackPower = 30f,
             SpellPower = 30f,
-            MoveSpeed = 1f,
-            CriticalResistance = 0f
+            MoveSpeed = 1f
         };
         public UnitDefenseStats Defenses = new UnitDefenseStats();
 

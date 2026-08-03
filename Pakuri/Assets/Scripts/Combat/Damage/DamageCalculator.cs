@@ -1,6 +1,6 @@
 /*
  * 역할: 전투 피해량 계산.
- * 책임: 시전자 보너스·피해 속성·대상 방어력을 반영해 기본 피해와 최종 피해를 계산한다.
+ * 시전자 보너스·피해 속성·대상 방어력을 반영해 기본 피해와 최종 피해를 계산한다.
  */
 
 using Pakuri.Data;
@@ -68,9 +68,6 @@ namespace Pakuri.Combat
                     target);
                 criticalChance += attackRule.Source.SkillState.PassiveCriticalChanceBonus();
                 criticalChance += attackRule.CritChanceBonus;
-                criticalChance -= target.Stats.CriticalResistance;
-                criticalChance -= StatusCombatRules.CriticalResistanceBonus(target);
-
                 if (UnityEngine.Random.value < Mathf.Clamp01(criticalChance))
                 {
                     /// 크리티컬 데미지 보너스 및 적용

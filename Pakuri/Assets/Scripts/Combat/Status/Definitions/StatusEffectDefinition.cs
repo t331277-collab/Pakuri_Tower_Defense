@@ -79,7 +79,6 @@ namespace Pakuri.Data
         public float AttackPowerBonusPerStack;
         public float DamageTakenBonusPerStack;
         public float CriticalDamageTakenBonusPerStack;
-        public float CriticalResistanceBonusPerStack;
         public float ElementResistReductionPerStack;
         public float ElementDamageTakenBonusPerStack;
 
@@ -169,7 +168,6 @@ namespace Pakuri.Data
         public float CriticalDamageTakenBonus;
         public float CriticalDamageBonus;
         public float AilmentResistanceBonus;
-        public float CriticalResistanceBonus;
         public float DamageTakenBonus;
         public float ElementResistReduction;
         public float FlatElementResistReduction;

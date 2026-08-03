@@ -84,7 +84,6 @@
 "FollowUpProjectile","FollowUpProjectile","Action","",""
 "RedistributeConsumedStatus","RedistributeConsumedStatus","OnKillAction","",""
 "RequiredSourceStatus","RequiredSourceStatus","Action","",""
-"StatusCriticalResistanceBonus","StatusCriticalResistanceBonus","Action","",""
 "StatusRuntimeKindFilter","StatusRuntimeKindFilter","Action","",""
 "TargetStatusCritBonus","TargetStatusCritBonus","CritModifier","",""
 "TargetStatusStackDamageMultiplier","TargetStatusStackDamageMultiplier","DamageModifier","",""

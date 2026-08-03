@@ -153,8 +153,7 @@ namespace Pakuri.InGame
                 SpellPower = source.SpellPower,
                 MoveSpeed = source.MoveSpeed,
                 CriticalChance = source.CriticalChance,
-                CriticalDamage = source.CriticalDamage,
-                CriticalResistance = source.CriticalResistance
+                CriticalDamage = source.CriticalDamage
             };
         }
 

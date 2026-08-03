@@ -44,7 +44,6 @@ namespace Pakuri.InGame
         public float MoveSpeed;
         public float CriticalChance;
         public float CriticalDamage;
-        public float CriticalResistance;
     }
 
     [Serializable]

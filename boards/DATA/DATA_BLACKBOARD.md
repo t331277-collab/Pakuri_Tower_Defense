@@ -1013,3 +1013,208 @@ Implemented and statically verified.
 ### History
 
 - 2026-08-03: Code Builder restored the four missing StageManager TextAsset Inspector references.
+
+## Task: 2026-08-03 Stage Runtime Catalog Migration
+
+### Task title
+
+Move Stage CSV parsing into the Loading runtime catalog.
+
+### Goals
+
+- Build one `StageDefinition` from the five Stage CSV sources in Loading.
+- Let `StageManager` consume `GameDataLoader.CurrentCatalog.Stage` instead of parsing CSV directly.
+- Preserve the existing Stage day, encounter, reward, boss, and prisoner values.
+
+### Constraints
+
+- Reuse the existing `CsvParser` and ordered Loading pipeline.
+- Keep the current Stage CSV paths and runtime Resources catalog.
+- Do not change unrelated Combat or UI behavior.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compiled. Play Mode verification remains user-owned.
+
+### Next Actions
+
+- User verifies Stage 1/2 day progression, enemy spawning, rewards, and boss selection in Play Mode.
+
+### Evidence
+
+- `Assets/Scripts/Loading/RuntimeCatalog/StageDefinition.cs` defines Stage day, encounter, and reward runtime models.
+- `Assets/Scripts/Loading/Generation/StageDefinitionBuilder.cs` parses the five stage TextAssets through `CsvParser.CsvTable.Load`.
+- `GameDataCatalogBuilder` assigns the model to `GameDataCatalog.Stage`; `GameDataLoader` requires all five Stage source references.
+- The five active Stage CSVs now contain header, type, and data rows; UTF-8 `Import-Csv` checks report 23/31/6/31/5 data rows with matching 10/14/13/14/13 columns.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and the existing 2 assembly-reference warnings.
+
+### History
+
+- 2026-08-03: Code Builder added the Stage runtime model and builder, connected the Loading catalog, normalized Stage CSV type rows, and removed StageManager's local CSV table parser.
+
+## Task: 2026-08-03 Remove Critical Resistance Authoring Schema
+
+### Task title
+
+Remove critical-resistance columns from active unit/status authoring CSVs and align Generation with the existing critical-chance bonus contract.
+
+### Goals
+
+- Remove `base_crit_resistance`, `crit_resistance` and `critical_resistance_bonus_per_stack` from current authoring schemas.
+- Remove their parser/model/generation mappings.
+- Change the Vega conditional trait row to `AllAllies` plus `StatusCriticalChanceBonus` `0.10`.
+
+### Constraints
+
+- Do not change the current CSV loading architecture or add a replacement resistance column.
+- Preserve all non-resistance unit defenses and status values, including `vulnerable` critical-damage-taken `0.03`.
+- Leave `Assets/Legacy` historical source files untouched.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implemented and statically verified; Unity runtime catalog synchronization is pending because Unity Editor processes are active.
+
+### Next Actions
+
+- Sync/reimport the current authoring CSV TextAssets in Unity, then validate the generated catalog and Vega trait behavior.
+
+### Evidence
+
+- `CsvRowParser.cs`, `CsvSourceModel.cs`, `GameDataCatalogBuilder.cs` and `GameDataCatalogBuilder.Skills.cs` no longer read or map critical-resistance fields.
+- `skill_node_definition_params.csv` and `skill_node_definitions.csv` no longer define `StatusCriticalResistanceBonus`; current passive CSV uses `StatusCriticalChanceBonus` for Vega G trait 3.
+- Current CSV checks report matching imported field counts: monsters 22 columns/5 data rows, enemies 24 columns/16 data rows, status effects 19 columns/18 data rows.
+- Active authoring/script search for `CriticalResistance`, `CriticalResistanceBonus`, `StatusCriticalResistanceBonus`, `crit_resistance`, `base_crit_resistance` and `critical_resistance_bonus_per_stack` returned no results.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal` completed with 0 errors and the existing 2 assembly-reference warnings.
+
+### History
+
+- 2026-08-03: User approved moving the design toward `CritChanceBonus` and removing the target critical-resistance stat.
+- 2026-08-03: Code Builder removed the active authoring/runtime schema fields and preserved only the existing attacker-side critical-chance bonus mechanism.
+
+## Task: 2026-08-03 AreaAttack Authoring Unification
+
+### Task title
+
+Use `AreaAttack` for the `sein-d` area skill and remove `Field` from the active skill data contract.
+
+### Goals
+
+- Change the `sein-d` `runtime_kind` value from `Field` to `AreaAttack`.
+- Ensure the authoring loader accepts only `AreaAttack` for the area-attack CSV.
+- Remove the obsolete `Field` enum value and all active generation/execution/test references.
+
+### Constraints
+
+- Preserve every other `sein-d` CSV value and keep the existing area-attack CSV layout.
+- Do not add a replacement runtime kind or alter zone damage/timing behavior.
+- Do not modify historical `Assets/Legacy` data.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implemented and statically verified; Unity TextAsset reimport/runtime catalog sync remains pending.
+
+### Next Actions
+
+- Reimport/sync the authoring CSV in Unity and validate the generated catalog after the Editor refresh.
+
+### Evidence
+
+- `skills_area_attack.csv:5` has `runtime_kind=AreaAttack`; CSV import reports all three rows with the expected 33 properties.
+- `CsvSourceLoader` area base/choice loaders now pass only `SkillRuntimeKind.AreaAttack` as the allowed runtime kind.
+- Removing `Field` from the enum makes the generic `CsvDataValidator` enum parsing reject the obsolete value automatically; no explicit Field validator branch remains.
+- Active `SkillRuntimeKind.Field` and exact `"Field"` searches returned no results.
+- Solution build completed with 0 errors and 2 existing assembly-reference warnings.
+
+### History
+
+- 2026-08-03: User requested that the `Field` skill kind and its validation rules be removed after AreaAttack unification.
+- 2026-08-03: Code Builder migrated `sein-d` and removed the obsolete data-contract references.
+
+## Task: 2026-08-03 Shorten Skill Graph Owner IDs
+
+### Task title
+
+Store only the owner suffix in `skill_graph_nodes_*.csv` and reconstruct the full owner ID from `monster_id` during parsing.
+
+### Goals
+
+- Convert values such as `eve-c-trait-1` to `c-trait-1` in the graph authoring CSVs.
+- Keep the parsed `SkillGraphNodeRow.OwnerId` canonical as `eve-c-trait-1`.
+- Avoid changing existing choice, trigger, skill and target ID tables.
+
+### Constraints
+
+- Apply the transformation to the six active `skill_graph_nodes_*.csv` files under `monster/skills/choices` only.
+- Preserve all node order, node types, arguments, target skill IDs and exclusion IDs.
+- Use `monster_id + "-" + owner_id`; existing repository IDs use hyphens.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implemented and statically verified; Unity TextAsset reimport/runtime catalog validation is pending.
+
+### Next Actions
+
+- Reimport the changed graph CSV TextAssets in Unity and run the existing CSV validation/catalog load.
+
+### Evidence
+
+- The six graph CSV files changed 858 duplicated prefixes; the post-transform import contains 858 rows with no `owner_id` still beginning with its `monster_id-` prefix.
+- `SkillGraphParser.cs` reads `monster_id` and `owner_id` separately, then canonicalizes the owner before `ValidateSkillNodeOwner`, `ResolveSkillGraphTargetSkillId` and `MaterializeSkillGraphRows` consume it.
+- The normalization is idempotent, so canonical owner IDs remain accepted during migration.
+- `git diff --check` passed and the full solution build completed with 0 errors and 2 existing assembly-reference warnings.
+
+### History
+
+- 2026-08-03: User approved the short `owner_id` authoring format and parser reconstruction approach.
+- 2026-08-03: Code Builder applied the CSV transformation and canonicalized graph owner IDs at the parser boundary.
+
+## Task: Repair CSV Header/Type Column Counts After Schema Cleanup
+
+### Goals
+
+- Keep the current authoring CSV schema loadable after the reported `monsters.csv` header/type count failure.
+- Record the exact data-file changes and static validation evidence for the runtime catalog input.
+
+### Constraints
+
+- Change only the type rows in `monsters.csv`, `enemies.csv`, and `status_effects.csv`.
+- Preserve CSV data rows and leave the parser implementation unchanged.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Completed and statically verified; Unity Editor auto-sync/reimport remains pending.
+
+### Next Actions
+
+- Let Unity reimport the changed TextAssets and verify the runtime catalog synchronization in the Editor.
+
+### Evidence
+
+- Header/type counts are aligned at 22/22 (`monsters.csv`), 24/24 (`enemies.csv`), and 19/19 (`status_effects.csv`).
+- A quote-aware scan of all 39 current authoring CSV files and all nonblank data rows returned `bad=0`.
+- `git diff --check` passed; `dotnet build Pakuri/Pakuri.sln --no-restore -v:q` completed with 0 errors and the existing 2 assembly-reference warnings.
+
+### History
+
+- 2026-08-03: The reported Unity error identified a type-row count mismatch at `CsvParser.cs:122`.
+- 2026-08-03: Code Builder repaired the three current authoring CSV type rows without changing data values or parser code.

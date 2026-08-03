@@ -41,7 +41,6 @@ namespace Pakuri.Data
         LineAttack,
         AreaAttack,
         SingleAttack,
-        Field,
         Buff,
         Shield,
         Heal,

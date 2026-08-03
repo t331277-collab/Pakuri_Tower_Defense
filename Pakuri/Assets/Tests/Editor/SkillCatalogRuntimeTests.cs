@@ -709,9 +709,6 @@ public sealed class SkillCatalogRuntimeTests
                         Is.True,
                         definition.SkillId);
                     break;
-                case SkillRuntimeKind.Field:
-                    Assert.That(definition, Is.TypeOf<ZoneSkillDefinition>(), definition.SkillId);
-                    break;
                 case SkillRuntimeKind.Buff:
                 case SkillRuntimeKind.Shield:
                 case SkillRuntimeKind.Heal:

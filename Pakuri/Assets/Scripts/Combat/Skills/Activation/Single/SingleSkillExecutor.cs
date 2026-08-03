@@ -1,6 +1,6 @@
 /*
  * 역할: 단발성 공격의 배치 계획을 실행한다.
- * 책임: 확정된 중심마다 공격을 시작하고 반복 작업의 완료를 추적한다.
+ * 확정된 중심마다 공격을 시작하고 반복 작업의 완료를 추적한다.
  */
 
 using System.Collections;
@@ -48,7 +48,7 @@ internal sealed class SingleSkillExecutor : MonoBehaviour
 		return executor.Initialize(context, snapshot);
 	}
 
-	/// 준비된 중심과 반복 배치를 실행한다.
+	/// 준비된 중심에 반복 배치를 실행한다.
 	private bool Initialize(
 		SkillExecutionContext context,
 		SkillExecutionState snapshot)
