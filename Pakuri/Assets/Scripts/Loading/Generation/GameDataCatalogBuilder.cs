@@ -106,6 +106,8 @@ namespace Pakuri.Data
             }
 
             catalog.Monsters = monsters.ToArray();
+            catalog.Summons = BuildSummons(model, catalog.StatusEffects);
+            BuildArtifactDefinitions(model, catalog);
             catalog.StageOneEnemies = BuildEnemies(model, "stage_one", catalog.StatusEffects);
             catalog.StageTwoEnemies = BuildEnemies(model, "stage_two", catalog.StatusEffects);
             catalog.Stage = StageDefinitionBuilder.Build(assetCatalog);
@@ -702,10 +704,11 @@ namespace Pakuri.Data
         private SkillDefinition[] BuildActiveSkills(
             SourceModel model,
             string monsterId,
-            StatusEffectDefinition[] statusDefinitions)
+            StatusEffectDefinition[] statusDefinitions,
+            IEnumerable<SkillRow> sourceRows = null)
         {
             var skills = FilterAndSort(
-                model.Skills.Values,
+                sourceRows ?? model.Skills.Values,
                 skill => skill.SkillKind == PakuriCsvSkillKind.Active
                     && string.Equals(skill.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase),
                 (left, right) => left.Slot.CompareTo(right.Slot));

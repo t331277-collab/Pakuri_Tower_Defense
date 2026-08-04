@@ -62,6 +62,14 @@ namespace Pakuri.Data
         public TextAsset[] EnemySkillBaseFiles;
         public TextAsset[] EnemySkillTriggerFiles;
 
+        [Header("Artifact And Summon Sources")]
+        public TextAsset Artifacts;
+        public TextAsset ArtifactSynergies;
+        public TextAsset ArtifactEffects;
+        public TextAsset ArtifactSynergyEffects;
+        public TextAsset SummonUnits;
+        public TextAsset SummonSkills;
+
         [Header("Stage Sources")]
         public TextAsset StageDay;
         public TextAsset Stage1Encounter;

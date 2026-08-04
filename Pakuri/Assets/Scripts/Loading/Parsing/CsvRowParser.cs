@@ -46,6 +46,54 @@ namespace Pakuri.Data
             public float HolyDefense;
         }
 
+        internal class ArtifactRow
+        {
+            public string Id;
+            public string DisplayName;
+            public string SynergyId;
+            public string DescriptionText;
+            public string IconPath;
+        }
+
+        internal class ArtifactSynergyLevelRow
+        {
+            public string Id;
+            public int RequiredCount;
+            public string DescriptionText;
+        }
+
+        internal class ArtifactSynergyRow
+        {
+            public string Id;
+            public string DisplayName;
+            public string Summary;
+            public string DescriptionText;
+            public ArtifactSynergyLevelRow[] Levels = Array.Empty<ArtifactSynergyLevelRow>();
+        }
+
+        internal class ArtifactEffectRow
+        {
+            public string Id;
+            public string ArtifactId;
+            public ArtifactEffectApplicationMode ApplicationMode;
+            public ArtifactEffectRecipient Recipient;
+            public string RecipientMonsterId;
+            public string TargetSkillId;
+            public string OutcomeSkillId;
+        }
+
+        internal class ArtifactSynergyEffectRow
+        {
+            public string Id;
+            public string SynergyLevelId;
+            public ArtifactEffectApplicationMode ApplicationMode;
+            public ArtifactEffectRecipient Recipient;
+            public string RecipientMonsterId;
+            public string TargetSkillId;
+            public string OutcomeSkillId;
+            public string SpawnSummonId;
+        }
+
         /// RewardChoiceRow에 해당하는 CSV 한 행을 표현한다.
         internal class RewardChoiceRow
         {
@@ -199,6 +247,71 @@ namespace Pakuri.Data
                 IceDefense = record.ReadFloat("def_ice"),
                 DarknessDefense = record.ReadFloat("def_darkness"),
                 HolyDefense = record.ReadFloat("def_holy")
+            };
+        }
+
+        internal static ArtifactRow ParseArtifactRow(CsvRecord record)
+        {
+            return new ArtifactRow
+            {
+                Id = record.ReadRequiredString("artifact_id"),
+                DisplayName = record.ReadRequiredString("artifact_display_name"),
+                SynergyId = record.ReadRequiredString("synergy_id"),
+                DescriptionText = record.ReadString("description_text"),
+                IconPath = record.ReadString("artifact_icon")
+            };
+        }
+
+        internal static ArtifactSynergyRow ParseArtifactSynergyRow(CsvRecord record)
+        {
+            var levels = new ArtifactSynergyLevelRow[4];
+            for (var i = 0; i < levels.Length; i++)
+            {
+                var prefix = "level_" + (i + 1) + "_";
+                levels[i] = new ArtifactSynergyLevelRow
+                {
+                    Id = record.ReadRequiredString(prefix + "id"),
+                    RequiredCount = record.ReadInt(prefix + "required_count"),
+                    DescriptionText = record.ReadString(prefix + "description_text")
+                };
+            }
+
+            return new ArtifactSynergyRow
+            {
+                Id = record.ReadRequiredString("synergy_id"),
+                DisplayName = record.ReadRequiredString("synergy_display_name"),
+                Summary = record.ReadString("summary"),
+                DescriptionText = record.ReadString("description_text"),
+                Levels = levels
+            };
+        }
+
+        internal static ArtifactEffectRow ParseArtifactEffectRow(CsvRecord record)
+        {
+            return new ArtifactEffectRow
+            {
+                Id = record.ReadRequiredString("effect_id"),
+                ArtifactId = record.ReadRequiredString("artifact_id"),
+                ApplicationMode = record.ReadEnum<ArtifactEffectApplicationMode>("application_mode"),
+                Recipient = record.ReadEnum<ArtifactEffectRecipient>("recipient_scope"),
+                RecipientMonsterId = record.ReadString("recipient_monster_id"),
+                TargetSkillId = record.ReadString("target_skill_id"),
+                OutcomeSkillId = record.ReadString("outcome_skill_id")
+            };
+        }
+
+        internal static ArtifactSynergyEffectRow ParseArtifactSynergyEffectRow(CsvRecord record)
+        {
+            return new ArtifactSynergyEffectRow
+            {
+                Id = record.ReadRequiredString("effect_id"),
+                SynergyLevelId = record.ReadRequiredString("synergy_level_id"),
+                ApplicationMode = record.ReadEnum<ArtifactEffectApplicationMode>("application_mode"),
+                Recipient = record.ReadEnum<ArtifactEffectRecipient>("recipient_scope"),
+                RecipientMonsterId = record.ReadString("recipient_monster_id"),
+                TargetSkillId = record.ReadString("target_skill_id"),
+                OutcomeSkillId = record.ReadString("outcome_skill_id"),
+                SpawnSummonId = record.ReadString("spawn_monster_id")
             };
         }
 

@@ -67,6 +67,12 @@ MonoBehaviour:
   EnemySkillTriggerFiles:
   - {fileID: 4900000, guid: 53048d2ee69041b380baa5dbfd184912, type: 3}
   - {fileID: 4900000, guid: 95e0cc44f6e342298c2e3f5dd6c16470, type: 3}
+  Artifacts: {fileID: 4900000, guid: 902a9ff80b7679445b29333df77327d9, type: 3}
+  ArtifactSynergies: {fileID: 4900000, guid: 38ed08401ce9a1d4aa36d0b1cf22cdf4, type: 3}
+  ArtifactEffects: {fileID: 4900000, guid: 5225d62983ac0ac45bc8c182d5f93d07, type: 3}
+  ArtifactSynergyEffects: {fileID: 4900000, guid: ae9770349806623488b8380b6f7ce908, type: 3}
+  SummonUnits: {fileID: 4900000, guid: 1938b06c2ef2c5445850dc194a4e9517, type: 3}
+  SummonSkills: {fileID: 4900000, guid: 4d95bfb70cdaf56438a12e6f4fe2b068, type: 3}
   StageDay: {fileID: 4900000, guid: 1f0de32c2b7b4d2da2e4b9340af2db31, type: 3}
   Stage1Encounter: {fileID: 4900000, guid: 2072ac159573490681d886ed77f58b13, type: 3}
   Stage1Reward: {fileID: 4900000, guid: 70a401a65360442ab6e8a8d0519db05f, type: 3}
@@ -133,6 +139,24 @@ MonoBehaviour:
     Asset: {fileID: 21300000, guid: 2845dd6426a0c6e43b392b9ab0261e00, type: 3}
   - AssetPath: Assets/Enemy/Stage2/Skill/lightning-scout_1.png
     Asset: {fileID: 21300000, guid: e1173e38ff670294d8d9d329e64f1c4b, type: 3}
+  - AssetPath: Assets/Image/Artifact/black-candlestick.png
+    Asset: {fileID: -255096247958025973, guid: 6a159b3226e98ef458fed7c26393bbb3, type: 3}
+  - AssetPath: Assets/Image/Artifact/elemental-codex.png
+    Asset: {fileID: -1431642928969493108, guid: 2c48cfed133ae334b94596d4e04c7271, type: 3}
+  - AssetPath: Assets/Image/Artifact/elemental-prism.png
+    Asset: {fileID: -4910088520043721169, guid: e10a3c94f4f653d4d977599190369175, type: 3}
+  - AssetPath: Assets/Image/Artifact/ember-crown.png
+    Asset: {fileID: -6873091199347037475, guid: 163a91c32dde8a448a49d57501672a7a, type: 3}
+  - AssetPath: Assets/Image/Artifact/frost-lens.png
+    Asset: {fileID: 3998598744161501789, guid: 59c5cb45739d8874fa957cf507865e11, type: 3}
+  - AssetPath: Assets/Image/Artifact/radiant-chalice.png
+    Asset: {fileID: 8870717685057007049, guid: 827d3603137067d45866a0b2fd2c82af, type: 3}
+  - AssetPath: Assets/Image/Artifact/rift-gem.png
+    Asset: {fileID: -7542516645456917032, guid: 59fb01ed2a13aa94da08e6ffa15fd8cf, type: 3}
+  - AssetPath: Assets/Image/Artifact/spirit-elixir.png
+    Asset: {fileID: -6752735068335856051, guid: 68d9d90c58aca164ebf919c711faa8e1, type: 3}
+  - AssetPath: Assets/Image/Artifact/storm-capacitor.png
+    Asset: {fileID: -3652683395867460764, guid: b62c24379c5ab1f4fbbadeaf3e50eb4f, type: 3}
   - AssetPath: Assets/Image/Monster/ariel/SkillEffect/1.png
     Asset: {fileID: 21300000, guid: 3476df253a7be994c9586a7baed1b9be, type: 3}
   - AssetPath: "Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\uB144 5\uC6D4

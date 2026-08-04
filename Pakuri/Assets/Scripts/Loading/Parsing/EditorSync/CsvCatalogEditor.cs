@@ -142,6 +142,20 @@ namespace Pakuri.Data
             sourceCatalog.EnemySkillTriggerFiles = LoadImportedSourceTextAssetsBySuffix(
                 AuthoringEnemySkillTriggerCsvAssetRoot,
                 "_skill_triger.csv");
+            sourceCatalog.Artifacts = LoadTextAssetOrThrow(
+                $"{ArtifactCsvAssetRoot}/{ArtifactsFileName}",
+                "Create artifacts.csv under Assets/CSVdata/Artifact before validation.");
+            sourceCatalog.ArtifactSynergies = LoadTextAssetOrThrow(
+                $"{ArtifactCsvAssetRoot}/{ArtifactSynergiesFileName}",
+                "Create artifact_synergies.csv under Assets/CSVdata/Artifact before validation.");
+            sourceCatalog.ArtifactEffects = LoadTextAssetOrThrow(
+                $"{ArtifactEffectCsvAssetRoot}/{ArtifactEffectsFileName}",
+                "Create artifact_effects.csv under Assets/CSVdata/Artifact/Effect before validation.");
+            sourceCatalog.ArtifactSynergyEffects = LoadTextAssetOrThrow(
+                $"{ArtifactEffectCsvAssetRoot}/{ArtifactSynergyEffectsFileName}",
+                "Create artifact_synergy_effects.csv under Assets/CSVdata/Artifact/Effect before validation.");
+            sourceCatalog.SummonUnits = LoadImportedSourceTextAssetOrThrow(SummonUnitsFileName);
+            sourceCatalog.SummonSkills = LoadImportedSourceTextAssetOrThrow(SummonSkillsFileName);
             sourceCatalog.StageDay = LoadTextAssetOrThrow(
                 $"{StageFlowCsvAssetRoot}/{StageFileNames.StageDay}",
                 "Create StageDay.csv under Assets/CSVdata/stage_flow before validation.");

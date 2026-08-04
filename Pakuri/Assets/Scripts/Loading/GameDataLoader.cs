@@ -35,6 +35,10 @@ namespace Pakuri.Data
         internal const string AuthoringEnemySkillBaseCsvAssetRoot = AuthoringEnemySkillCsvAssetRoot + "/base";
         internal const string AuthoringEnemySkillTriggerCsvAssetRoot = AuthoringEnemySkillCsvAssetRoot + "/triggers";
         internal const string AuthoringStatusCsvAssetRoot = AuthoringCsvAssetRoot + "/status";
+        internal const string AuthoringSummonCsvAssetRoot = AuthoringCsvAssetRoot + "/summon";
+        internal const string AuthoringSummonSkillCsvAssetRoot = AuthoringSummonCsvAssetRoot + "/skill";
+        internal const string ArtifactCsvAssetRoot = CsvDataAssetRoot + "/Artifact";
+        internal const string ArtifactEffectCsvAssetRoot = ArtifactCsvAssetRoot + "/Effect";
         internal const string StageFlowCsvAssetRoot = CsvDataAssetRoot + "/stage_flow";
         internal const string RuntimeResourcesFolderAssetPath = "Assets/Resources/Pakuri/CSVRuntime";
         internal const string RuntimeCatalogAssetPath = RuntimeResourcesFolderAssetPath + "/CsvRuntimeCatalog.asset";
@@ -59,6 +63,12 @@ namespace Pakuri.Data
         internal const string MonsterSkillChoicesPassiveFileName = "skill_choices_passive.csv";
         internal const string StatusEffectsFileName = "status_effects.csv";
         internal const string EnemiesFileName = "enemies.csv";
+        internal const string ArtifactsFileName = "artifacts.csv";
+        internal const string ArtifactSynergiesFileName = "artifact_synergies.csv";
+        internal const string ArtifactEffectsFileName = "artifact_effects.csv";
+        internal const string ArtifactSynergyEffectsFileName = "artifact_synergy_effects.csv";
+        internal const string SummonUnitsFileName = "summon_units.csv";
+        internal const string SummonSkillsFileName = "summon_units_skill.csv";
 
         internal static bool initialized;
         internal static bool failed;
@@ -115,6 +125,10 @@ namespace Pakuri.Data
                     return $"{AuthoringStatusCsvAssetRoot}/{fileName}";
                 case EnemiesFileName:
                     return $"{AuthoringEnemyCsvAssetRoot}/{fileName}";
+                case SummonUnitsFileName:
+                    return $"{AuthoringSummonCsvAssetRoot}/{fileName}";
+                case SummonSkillsFileName:
+                    return $"{AuthoringSummonSkillCsvAssetRoot}/{fileName}";
                 default:
                     return $"{AuthoringCsvAssetRoot}/{fileName}";
             }
@@ -128,7 +142,8 @@ namespace Pakuri.Data
             }
 
             var normalized = assetPath.Replace('\\', '/');
-            return normalized.StartsWith(AuthoringCsvAssetRoot + "/", StringComparison.OrdinalIgnoreCase)
+            return (normalized.StartsWith(AuthoringCsvAssetRoot + "/", StringComparison.OrdinalIgnoreCase)
+                    || normalized.StartsWith(ArtifactCsvAssetRoot + "/", StringComparison.OrdinalIgnoreCase))
                 && normalized.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
         }
 
@@ -189,7 +204,8 @@ namespace Pakuri.Data
             return
                 $"GameDataLoader loaded runtime catalog from resource source '{RuntimeCatalogResourcesPath}' " +
                 $"with {catalog.Monsters.Length} monsters, {catalog.StageOneEnemies.Length} stage-one enemies, " +
-                $"and {catalog.StageTwoEnemies.Length} stage-two enemies.";
+                $"{catalog.StageTwoEnemies.Length} stage-two enemies, {catalog.Artifacts.Length} artifacts, " +
+                $"{catalog.ArtifactSynergies.Length} artifact synergies, and {catalog.Summons.Length} summons.";
         }
 
         internal static void FailAndQuit(string message, List<string> errors)
@@ -261,6 +277,12 @@ namespace Pakuri.Data
             Require(sourceCatalog.Enemies != null, EnemiesFileName);
             Require(sourceCatalog.EnemySkillBaseFiles?.Length > 0, "enemy/skills/baseskills_*.csv");
             Require(sourceCatalog.EnemySkillTriggerFiles?.Length > 0, "enemy/skills/triggers*_skill_triger.csv");
+            Require(sourceCatalog.Artifacts != null, ArtifactsFileName);
+            Require(sourceCatalog.ArtifactSynergies != null, ArtifactSynergiesFileName);
+            Require(sourceCatalog.ArtifactEffects != null, ArtifactEffectsFileName);
+            Require(sourceCatalog.ArtifactSynergyEffects != null, ArtifactSynergyEffectsFileName);
+            Require(sourceCatalog.SummonUnits != null, SummonUnitsFileName);
+            Require(sourceCatalog.SummonSkills != null, SummonSkillsFileName);
             Require(sourceCatalog.StageDay != null, StageFileNames.StageDay);
             Require(sourceCatalog.Stage1Encounter != null, "stage_flow/Stage1/" + StageFileNames.StageEncounter);
             Require(sourceCatalog.Stage1Reward != null, "stage_flow/Stage1/" + StageFileNames.StageReward);

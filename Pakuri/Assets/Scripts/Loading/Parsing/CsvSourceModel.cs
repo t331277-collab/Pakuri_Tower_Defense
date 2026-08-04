@@ -26,6 +26,12 @@ namespace Pakuri.Data
         {
             public readonly Dictionary<string, CatalogEntryRow> CatalogMonsters = new Dictionary<string, CatalogEntryRow>(StringComparer.OrdinalIgnoreCase);
             public readonly Dictionary<string, MonsterRow> Monsters = new Dictionary<string, MonsterRow>(StringComparer.OrdinalIgnoreCase);
+            public readonly Dictionary<string, ArtifactRow> Artifacts = new Dictionary<string, ArtifactRow>(StringComparer.OrdinalIgnoreCase);
+            public readonly Dictionary<string, ArtifactSynergyRow> ArtifactSynergies = new Dictionary<string, ArtifactSynergyRow>(StringComparer.OrdinalIgnoreCase);
+            public readonly Dictionary<string, ArtifactEffectRow> ArtifactEffects = new Dictionary<string, ArtifactEffectRow>(StringComparer.OrdinalIgnoreCase);
+            public readonly Dictionary<string, ArtifactSynergyEffectRow> ArtifactSynergyEffects = new Dictionary<string, ArtifactSynergyEffectRow>(StringComparer.OrdinalIgnoreCase);
+            public readonly Dictionary<string, MonsterRow> Summons = new Dictionary<string, MonsterRow>(StringComparer.OrdinalIgnoreCase);
+            public readonly Dictionary<string, SkillRow> SummonSkills = new Dictionary<string, SkillRow>(StringComparer.OrdinalIgnoreCase);
             public readonly Dictionary<string, RewardChoiceRow> RewardChoices = new Dictionary<string, RewardChoiceRow>(StringComparer.OrdinalIgnoreCase);
             public readonly Dictionary<string, SkillRow> Skills = new Dictionary<string, SkillRow>(StringComparer.OrdinalIgnoreCase);
             public readonly Dictionary<string, SkillTriggerRow> SkillTriggers = new Dictionary<string, SkillTriggerRow>(StringComparer.OrdinalIgnoreCase);

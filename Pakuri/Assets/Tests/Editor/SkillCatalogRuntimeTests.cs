@@ -95,6 +95,43 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     [Test]
+    /// 유물·시너지·소환 CSV가 해석된 Definition과 lookup을 생성하는지 확인한다.
+    public void ArtifactAndSummonCatalogBuildsResolvedDefinitions()
+    {
+        GameDataLoader.EnsureInitialized();
+        var catalog = GameDataLoader.CurrentCatalog;
+
+        Assert.That(catalog.Artifacts, Has.Length.EqualTo(50));
+        Assert.That(catalog.ArtifactSynergies, Has.Length.EqualTo(6));
+        Assert.That(catalog.ArtifactSynergyLevels, Has.Length.EqualTo(24));
+        Assert.That(catalog.ArtifactEffects, Has.Length.EqualTo(52));
+        Assert.That(catalog.ArtifactSynergyEffects, Has.Length.EqualTo(27));
+        Assert.That(catalog.Summons, Has.Length.EqualTo(1));
+
+        var summon = catalog.GetSummon("spirit-king");
+        Assert.That(summon, Is.Not.Null);
+        Assert.That(summon.BaseStats.MaxHealth, Is.EqualTo(1000f));
+        Assert.That(summon.ActiveSkills, Has.Length.EqualTo(5));
+        Assert.That(catalog.GetMonsters(), Has.Length.EqualTo(5));
+        Assert.That(catalog.GetData<ArtifactDefinition>("elemental-prism").Icon, Is.Not.Null);
+        Assert.That(catalog.GetData<ArtifactDefinition>("resonance-compass").Icon, Is.Null);
+        Assert.That(catalog.GetActiveSkill(summon.SummonId, SkillSlot.A), Is.TypeOf<SingleSkillDefinition>());
+        Assert.That(catalog.GetActiveSkill(summon.SummonId, SkillSlot.B), Is.TypeOf<ZoneSkillDefinition>());
+
+        var spawn = catalog.GetData<ArtifactSynergyEffectDefinition>(
+            "spirit-contract-level-1-spawn-spirit-king");
+        var grant = catalog.GetData<ArtifactSynergyEffectDefinition>(
+            "spirit-contract-level-1-grant-elemental-explosion");
+        Assert.That(spawn.SpawnSummon, Is.SameAs(summon));
+        Assert.That(
+            catalog.GetData<ArtifactSynergyLevelDefinition>("spirit-contract-level-1").Effects,
+            Does.Contain(spawn));
+        Assert.That(
+            grant.OutcomeSkill,
+            Is.SameAs(catalog.GetData<SkillDefinition>("spirit-king-elemental-explosion")));
+    }
+
+    [Test]
     /// 적 유닛이 공통 런타임으로 스킬을 학습하는지 확인한다.
     public void EnemySpawnLearnsAssignedSkillsThroughSharedRuntime()
     {
@@ -685,6 +722,10 @@ public sealed class SkillCatalogRuntimeTests
         foreach (var enemy in GameDataLoader.CurrentCatalog.StageTwoEnemies)
         {
             definitions.AddRange(enemy.ActiveSkills);
+        }
+        foreach (var summon in GameDataLoader.CurrentCatalog.Summons)
+        {
+            definitions.AddRange(summon.ActiveSkills);
         }
 
         foreach (var definition in definitions)

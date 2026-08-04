@@ -34,6 +34,12 @@ namespace Pakuri.Data
                 MonsterSkillNodeDefinitionParamsFileName);
             var statusEffectTable = CsvTable.Load(sourceCatalog.StatusEffects, StatusEffectsFileName);
             var enemyTable = CsvTable.Load(sourceCatalog.Enemies, EnemiesFileName);
+            var artifactTable = CsvTable.Load(sourceCatalog.Artifacts, ArtifactsFileName);
+            var artifactSynergyTable = CsvTable.Load(sourceCatalog.ArtifactSynergies, ArtifactSynergiesFileName);
+            var artifactEffectTable = CsvTable.Load(sourceCatalog.ArtifactEffects, ArtifactEffectsFileName);
+            var artifactSynergyEffectTable = CsvTable.Load(sourceCatalog.ArtifactSynergyEffects, ArtifactSynergyEffectsFileName);
+            var summonTable = CsvTable.Load(sourceCatalog.SummonUnits, SummonUnitsFileName);
+            var summonSkillTable = CsvTable.Load(sourceCatalog.SummonSkills, SummonSkillsFileName);
 
             foreach (var record in catalogMonsterTable.Records)
             {
@@ -45,6 +51,49 @@ namespace Pakuri.Data
             {
                 var row = ParseMonsterRow(record);
                 AddUnique(model.Monsters, row.Id, row, record);
+            }
+
+            foreach (var record in artifactTable.Records)
+            {
+                var row = ParseArtifactRow(record);
+                AddUnique(model.Artifacts, row.Id, row, record);
+            }
+
+            foreach (var record in artifactSynergyTable.Records)
+            {
+                var row = ParseArtifactSynergyRow(record);
+                AddUnique(model.ArtifactSynergies, row.Id, row, record);
+            }
+
+            foreach (var record in artifactEffectTable.Records)
+            {
+                var row = ParseArtifactEffectRow(record);
+                AddUnique(model.ArtifactEffects, row.Id, row, record);
+            }
+
+            foreach (var record in artifactSynergyEffectTable.Records)
+            {
+                var row = ParseArtifactSynergyEffectRow(record);
+                AddUnique(model.ArtifactSynergyEffects, row.Id, row, record);
+            }
+
+            foreach (var record in summonTable.Records)
+            {
+                var row = ParseMonsterRow(record);
+                AddUnique(model.Summons, row.Id, row, record);
+            }
+
+            foreach (var record in summonSkillTable.Records)
+            {
+                var row = ParseSkillRow(record, PakuriCsvSkillKind.Active);
+                if (row.RuntimeKind != SkillRuntimeKind.SingleAttack
+                    && row.RuntimeKind != SkillRuntimeKind.AreaAttack)
+                {
+                    throw new CsvFatalException(
+                        $"CSV table '{SummonSkillsFileName}' contains skill '{row.Id}' with unsupported runtime_kind '{row.RuntimeKind}'.");
+                }
+
+                AddUnique(model.SummonSkills, row.Id, row, record);
             }
 
             foreach (var record in rewardChoiceTable.Records)

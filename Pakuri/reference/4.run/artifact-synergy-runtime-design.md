@@ -2,14 +2,15 @@
 
 ## 1. 문서 상태
 
-- 역할: Designer
-- 상태: Phase 1 CSV 작성 완료, Phase 2 미착수
+- 역할: Designer / Code Builder
+- 상태: Phase 1·2 완료, 유물 우선 Phase 3 미착수
 - Phase 1 범위: 두 Effect CSV와 정령왕 유닛·스킬 CSV 작성
-- 첫 runtime 구현 범위: 정령계약 시너지 1~4단계와 정령왕
-- 후속 runtime 구현 범위: 처형관, 선택받은자, 파수꾼, 포격대, 추적자, 모든 유물 고유 효과
+- 첫 runtime 구현 범위: `ArtifactState`, `SynergyState`, `ArtifactSynergyManager` 뼈대와 정령계약 소속 유물 10개
+- 첫 runtime 시너지 범위: 파티 전체 시너지 개수 계산과 Stage당 1회 로그만 수행하며 시너지 효과는 실행하지 않음
+- 후속 runtime 구현 범위: 정령계약 시너지 1~4단계와 정령왕, 나머지 유물, 처형관·선택받은자·파수꾼·포격대·추적자
 - Phase 1 제외 범위: C#, Parsing, Node/Trigger, Prefab, Scene 생성
 
-현재 저장소에는 `ArtifactSynergyManager`, `ArtifactState`, `SynergyState`, `ArtifactEffectDefinition`, `ArtifactSynergyEffectDefinition`, `UnitRole.Summon`이 없다. `Pakuri/Assets/CSVdata/Artifact/artifacts.csv`와 `artifact_synergies.csv`도 아직 Parsing 대상이 아니다. 아래 이름과 API는 Code Builder가 이후 구현할 설계 계약이다.
+현재 저장소에는 `ArtifactEffectDefinition`, `ArtifactSynergyEffectDefinition`, `ArtifactDefinition`, `ArtifactSynergyDefinition`, `ArtifactSynergyLevelDefinition`, `SummonDefinition`과 해당 CSV Loading 경로가 있다. `ArtifactSynergyManager`, `ArtifactState`, `SynergyState`, `UnitRole.Summon`은 아직 없다. 아래 Phase 3 이후 이름과 API는 후속 구현 계약이다.
 
 ## 2. 승인된 방향
 
@@ -52,7 +53,7 @@
 
 ### 3.1 Phase 1: Effect·정령왕 CSV 작성
 
-아직 Parsing에 연결하지 않고 다음 네 기초 데이터를 먼저 작성한다.
+Phase 1에서는 Parsing에 연결하지 않고 다음 네 기초 데이터를 먼저 작성했다.
 
 1. `Artifact/Effect/artifact_effects.csv`: 원문에 상세가 있는 개별 유물 50개의 패시브 추가 효과 헤더
 2. `Artifact/Effect/artifact_synergy_effects.csv`: 원문에 단계 효과가 있는 정령계약·처형관·선택받은자·파수꾼·포격대의 추가 효과 헤더
@@ -63,18 +64,23 @@
 
 ### 3.2 첫 runtime 구현
 
-Effect CSV 작성 후 실제 Parsing/Validation/Generation/runtime 구현은 정령계약만 먼저 진행한다.
+Phase 2에서 모든 Artifact·Synergy·Summon Loading과 Definition 생성은 완료됐다. 첫 runtime 구현은 정령계약 **시너지 효과**가 아니라 정령계약에 속한 **개별 유물 10개**부터 진행한다.
 
-1. 두 catalog, 정령계약 Effect CSV, 정령왕 유닛·스킬 CSV를 Loading 파이프라인에 연결
-2. `ArtifactSynergyEffectDefinition` 생성
-3. Phase 1 정령왕 유닛·스킬 source row를 기존 Monster/Single/Zone 계열 Definition으로 생성
-4. `ArtifactState`, `SynergyState`, `ArtifactSynergyManager` 연결
-5. Stage 시작 시 활성 정령계약 효과 순회·실행
+1. 각 `RunSession.RunMonsterState`에 최대 3개 유물을 소유하는 `ArtifactState` 연결
+2. `UnitCombatState`가 `UnitSkills`와 같은 방식으로 Run의 `ArtifactState` 참조 공유
+3. `ArtifactSynergyManager.PrepareStage`에서 파티 전체 유물 효과 적용 목록과 `SynergyState` 개수 재구성
+4. `StageManager`가 적 생성 전에 Stage당 한 번 `PrepareStage` 호출
+5. `SynergyState`는 시너지별 보유 개수만 계산하고 한 줄 로그를 남김
+6. 정령계약 유물 10개의 `SkillModifier` 8개와 `PassiveTrigger` 2개를 기존 Node·Trigger 경로에 연결
+7. `ArtifactSynergyEffectDefinition` 순회, 정령왕 소환, 단계별 스킬 해금은 실행하지 않음
+
+첫 대상은 `elemental-prism`, `ember-crown`, `frost-lens`, `storm-capacitor`, `radiant-chalice`, `black-candlestick`, `spirit-elixir`, `rift-gem`, `elemental-codex`, `resonance-compass`다.
 
 ### 3.3 후속 runtime 구현
 
-- 모든 개별 유물 효과
-- 처형관, 선택받은자, 파수꾼, 포격대
+- 정령계약 시너지 2/4/6/8단계와 정령왕
+- 정령계약 외 개별 유물 40개
+- 처형관, 선택받은자, 파수꾼, 포격대 시너지
 - 상세 원문 작성 뒤 추적자
 - 아래 매핑에서 `신규 필요`로 표시한 공통 Node, Trigger event, 조건 resolver
 
@@ -97,6 +103,8 @@ Pakuri/Assets/CSVdata/
 ```
 
 1차에 필요하지 않은 Single/Buff/Projectile 파일과 빈 폴더는 만들지 않는다.
+
+`artifacts.csv`의 `artifact_icon`은 `asset_path`이며, 실제 PNG가 있는 행만 `Assets/Image/Artifact/<artifact_id>.png`를 기록한다. Generation은 이를 `ArtifactDefinition.Icon`으로 해석한다.
 
 ### 4.1 `artifact_effects.csv`
 
@@ -155,7 +163,7 @@ Phase 1에서 별도 구현 정보 열을 추가하지 않고 `authoring/monster
 - 기본 공격을 주지 않으므로 `base_damage=0`, `power_coefficient=0`
 - 기존 일반 몬스터보다 느린 이동을 위해 `base_move_speed=0.6`
 - 저장소에 정령왕 아이콘·Prefab 경로가 없으므로 두 asset 열은 빈 값이며 경로를 발명하지 않는다.
-- 이 행은 일반 `monsters.csv`에 섞지 않는다. 같은 source 열을 읽어 `MonsterDefinition`을 생성하되 소환 전용 lookup에 둔다.
+- 이 행은 일반 `monsters.csv`에 섞지 않는다. 같은 source 열을 읽어 `SummonDefinition`을 생성하고 소환 전용 lookup에 둔다.
 
 ### 4.4 `summon_units_skill.csv`
 
@@ -167,7 +175,7 @@ Phase 1에서 `authoring/monster/skills/base/area_attack/skills_area_attack.csv`
 | `spirit-king-elemental-storm` | B | 원소폭풍 | `AreaAttack` | 틱당 18 / 3.5 | 10 / 6 / 0.5 | 6초 유지되는 `ZoneSkillDefinition` |
 | `spirit-king-spirit-bombardment` | C | 정령 폭격 | `SingleAttack` | 회당 70 / 2.5 | 8 / 0 / 0.35 | 최초 1회와 반복 2회를 합쳐 총 3회 실행 |
 | `spirit-king-dimensional-rift` | D | 차원붕괴 |  `SingleAttack` | 0 / 4.5 | 999 / 1.2 / 0.1 | 전투당 1회, 1.2초 동안 적을 중심으로 끌어당기는 기반 스킬 |
-| `spirit-king-dimensional-collapse-explosion` | E | 차원붕괴 폭발 | `SingleAttack` | 240 / 4.5 | 0 / 0 / 0 | 균열 종료 결과로만 실행하며 자동 해금하지 않는 후속 스킬 |
+| `spirit-king-dimensional-collapse-explosion` | E | 차원붕괴 폭발 | `SingleAttack` | 240 / 4.5 | 999 / 0 / 0 | 균열 종료 결과로만 실행하며 자동 해금하지 않는 후속 스킬 |
 
 공통 작성값:
 
@@ -178,8 +186,8 @@ Phase 1에서 `authoring/monster/skills/base/area_attack/skills_area_attack.csv`
 - 아직 정령왕 스킬 Prefab·sprite·animator·icon이 없으므로 모든 asset 열은 빈 값이다.
 - 정령 폭격은 기존 `RepeatPerTarget` Node에 `repeat_count=2`, `repeat_interval_seconds=0.35`, `repeat_damage_multiplier=1`을 연결한다. 최초 실행까지 포함해 총 3회다.
 - 차원붕괴는 신규 typed pull operation에 `radius=4.5`, `duration_seconds=1.2`, `pull_speed=8`을 주고, 종료 시 `OnExpire -> ExecuteSkill(spirit-king-dimensional-collapse-explosion)`을 연결한다.
-- 현재 `SingleSkillExecutor`는 `OnDeploymentCast`만 발행하고 반복 예약이 없으면 즉시 완료한다. timed Single 종료 `OnExpire`는 발행하지 않으므로 Phase 3에서 1.2초 pull lifecycle과 종료 이벤트만 최소 확장한다.
-- `skills_area_attack.csv` 형식에는 `Densest`, 반복 Node, 후속 스킬 연결 열이 없다. Phase 1 스킬 행은 수치와 Definition 종류를 소유하고, 선택·반복·후속 실행은 Phase 3 `effect_nodes.csv`/`effect_triggers.csv`가 소유한다.
+- 현재 `SingleSkillExecutor`는 `OnDeploymentCast`만 발행하고 반복 예약이 없으면 즉시 완료한다. timed Single 종료 `OnExpire`는 발행하지 않으므로 시너지 작업인 Phase 4에서 1.2초 pull lifecycle과 종료 이벤트만 최소 확장한다.
+- `skills_area_attack.csv` 형식에는 `Densest`, 반복 Node, 후속 스킬 연결 열이 없다. Phase 1 스킬 행은 수치와 Definition 종류를 소유하고, 선택·반복·후속 실행은 Phase 4 시너지용 `effect_nodes.csv`/`effect_triggers.csv`가 소유한다.
 
 ### 4.5 Node와 Trigger
 
@@ -206,7 +214,7 @@ CSV
   -> CsvSourceModel
   -> Validation
   -> Generation
-  -> Artifact/ArtifactSynergy/Effect + 기존 Monster/Skill Definition
+  -> Artifact/ArtifactSynergy/Effect + Summon/기존 Skill Definition
   -> RuntimeCatalog
   -> ArtifactState / SynergyState / ArtifactSynergyManager
 ```
@@ -249,7 +257,7 @@ Generation이 최종 typed 객체를 만든다.
 - `ArtifactSynergyLevelDefinition`
 - `ArtifactEffectDefinition`
 - `ArtifactSynergyEffectDefinition`
-- 정령왕용 기존 `MonsterDefinition`
+- 정령왕용 `SummonDefinition`
 - 정령왕의 기존 `SingleSkillDefinition`/`ZoneSkillDefinition`
 
 Generation 책임:
@@ -263,7 +271,7 @@ Generation 책임:
 
 현재 Trigger 결과가 Generation에서 기존 Single/Zone/Buff Definition으로 materialize되는 방향을 그대로 따른다. `SingleAttack`은 `SingleSkillDefinition`, `AreaAttack`은 `ZoneSkillDefinition`으로 생성한다. 정령왕 소환 때문에 새 `SkillDefinition` family를 만들지 않는다.
 
-정령왕은 기존 `MonsterDefinition`을 재사용하지만 playable `GameDataCatalog.Monsters`와 분리된 소환 몬스터 lookup에 등록한다. 현재 `MenifestUI.ResolveNextManifestCandidate`가 `GameDataCatalog.GetMonsters()` 전체를 후보로 사용하므로 같은 배열에 넣으면 정령왕이 파티 영입 후보가 된다.
+정령왕은 `SummonDefinition`으로 생성하고 playable `GameDataCatalog.Monsters`와 분리된 `GameDataCatalog.Summons` lookup에 등록한다. 현재 `MenifestUI.ResolveNextManifestCandidate`가 `GameDataCatalog.GetMonsters()` 전체를 후보로 사용하므로 같은 배열에 넣으면 정령왕이 파티 영입 후보가 된다.
 
 ### 5.4 RuntimeCatalog
 
@@ -282,7 +290,7 @@ RuntimeCatalog는 ID 조회를 제공한다.
 
 ### 6.1 `ArtifactDefinition`
 
-- ID, 표시명, `synergy_id`, 설명 보유
+- ID, 표시명, `synergy_id`, 설명, icon Sprite 보유
 - Generation이 연결한 `ArtifactEffectDefinition[]` 보유
 - 전투 계산과 Stage 순회는 하지 않음
 
@@ -385,9 +393,9 @@ ArtifactSynergyEffectDefinition.Reactions
 | `PassiveTrigger` | `effect_triggers.csv + effect_nodes.csv -> SkillReaction -> SkillTrigger` | 기존 gate/scheduler 뒤 `SkillExecution -> family Executor` 실행 |
 | `ExecuteSkill` | `outcome_skill_id -> Generation에서 concrete SkillDefinition 참조 확정` | `ArtifactSynergyManager.ActivateStageEffects` 또는 Trigger가 `SkillExecution` 호출 |
 | `GrantSkill` | `outcome_skill_id -> Generation에서 concrete SkillDefinition 참조 확정` | `SynergyState`가 선택 유닛/정령왕의 Stage 한정 `SkillState`에 부여 |
-| `SpawnUnit` | `spawn_monster_id -> Generation에서 기존 MonsterDefinition 참조 확정` | `ArtifactSynergyManager.ActivateStageEffects -> UnitSpawnManager.SpawnTemporaryMonster` |
+| `SpawnUnit` | `spawn_monster_id -> Generation에서 SummonDefinition 참조 확정` | `ArtifactSynergyManager.ActivateStageEffects -> UnitSpawnManager.SpawnTemporaryMonster` |
 
-현재 실제 구현 근거 파일은 `SkillGraphParser.cs`, `CsvDataValidator.cs`, `GameDataCatalogBuilder.Nodes.cs`, `SkillExecutionRules.cs`, `SkillTrigger.cs`, `SkillExecution.cs`다. `ArtifactState`와 두 Effect Definition은 아직 없으므로 Code Builder가 이 공통 경로에 연결해야 한다.
+현재 두 Effect Definition과 Loading 경로는 구현됐다. `ArtifactState`와 Effect Definition의 Node/Reaction 필드는 아직 없으므로 Phase 3~4에서 `SkillGraphParser.cs`, `GameDataCatalogBuilder.Nodes.cs`, `SkillExecutionRules.cs`, `SkillTrigger.cs`, `SkillExecution.cs` 공통 경로에 연결한다.
 
 ### 8.2 공통 Node 선택 기준
 
@@ -430,7 +438,7 @@ Manager의 Stage 호출은 하루당 한 번만 허용한다. 플레이어 등�
 
 재사용 구조:
 
-- 유닛 데이터: 기존 `MonsterDefinition`
+- 유닛 데이터: `SummonDefinition`
 - 전투 모델: 기존 `UnitCombatState`
 - 표시 Actor: 기존 `MonsterActor`
 - 생성/등록: 기존 `UnitCombatStateFactory`, `UnitSpawnManager`, `RegisterPlayer`, `NotifyPlayerUnitRegistered`
@@ -442,10 +450,10 @@ Manager의 Stage 호출은 하루당 한 번만 허용한다. 플레이어 등�
 
 - `UnitRole.Summon`: 파티 슬롯, Manifest, Offering, MonsterPanel, Day 회복 대상과 구분
 - `UnitSpawnManager.SpawnTemporaryMonster`
-- playable `Monsters`와 분리된 RuntimeCatalog 소환 몬스터 lookup
+- playable `Monsters`와 분리된 `GameDataCatalog.Summons` lookup
 - `SummonedMonsterMovementController`
 
-정령왕을 일반 `monsters.csv`/`catalog.Monsters`에 넣지 않는다. 현재 monster Validation은 모든 Monster에 A~E active와 F~J passive slot을 요구하고, `MenifestUI`는 `GetMonsters()` 전체를 영입 후보로 사용한다. 소환 몬스터 CSV는 `MonsterDefinition`을 생성하되 별도 lookup에 둔다.
+정령왕을 일반 `monsters.csv`/`catalog.Monsters`에 넣지 않는다. 현재 monster Validation은 모든 Monster에 A~E active와 F~J passive slot을 요구하고, `MenifestUI`는 `GetMonsters()` 전체를 영입 후보로 사용한다. 소환 몬스터 CSV는 `SummonDefinition`을 생성해 별도 lookup에 둔다.
 
 정령왕 기본 규칙:
 
@@ -460,7 +468,7 @@ Manager의 Stage 호출은 하루당 한 번만 허용한다. 플레이어 등�
 - 다음 Stage 준비 시 제거
 - 일반 파티원, Offering, Run 파티 슬롯에 포함하지 않음
 
-팀 효과 근거: `CombatUnitRegistry`는 `Identity.Side`로 Players/Enemies를 나누고, `SkillTargeting.TargetList`는 Player 시전자의 `Ally/AllAllies`에 `roster.Players`를 사용한다. 다만 현재 `NotifyPlayerUnitRegistered`가 등록 즉시 passive와 `CombatStart`를 실행하므로 정령왕 생성 전에 끝난 일회성 팀 효과는 자동 소급되지 않는다. 첫 runtime 수용 범위는 소환 이후 시전 효과이며, 전투 시작 효과까지 소급할지는 아래 결정 항목으로 남긴다.
+팀 효과 근거: `CombatUnitRegistry`는 `Identity.Side`로 Players/Enemies를 나누고, `SkillTargeting.TargetList`는 Player 시전자의 `Ally/AllAllies`에 `roster.Players`를 사용한다. 다만 현재 `NotifyPlayerUnitRegistered`가 등록 즉시 passive와 `CombatStart`를 실행하므로 정령왕 생성 전에 끝난 일회성 팀 효과는 자동 소급되지 않는다. 정령왕 후속 runtime 수용 범위는 소환 이후 시전 효과이며, 전투 시작 효과까지 소급할지는 아래 결정 항목으로 남긴다.
 
 이동은 현재 `EnemyActionController`만 보유한다. 적/Nexus 공격 로직을 재사용하지 않고 공통 `MoveToward` 계산만 `UnitMovementRules`로 분리해 정령왕 이동에 사용한다.
 
@@ -640,37 +648,42 @@ InGameCombatManager.Update
 - 복합 설명은 독립 effect 행으로 분리
 - 모든 유물 행은 `SkillModifier` 또는 `PassiveTrigger`
 - 시너지 행은 `SkillModifier`, `PassiveTrigger`, `ExecuteSkill`, `GrantSkill`, `SpawnUnit`
-- 아직 Parsing, C#, runtime 연결 없음
+- Phase 1 완료 시점에는 Parsing, C#, runtime 연결 없음
 - 위 Node·경로 표에서 `신규 필요`인 효과도 식별 헤더는 작성하되, 존재하지 않는 `target_skill_id`/`outcome_skill_id`는 발명하지 않고 비워 둠
 
 ### Phase 2: Artifact·정령왕 Loading 기반
 
-- 두 catalog, 정령계약 Effect, 정령왕 유닛·스킬 Parsing
-- `CsvSourceModel` source rows
-- Validation
-- `ArtifactDefinition`, `ArtifactSynergyDefinition`, level/effect Definition Generation
-- RuntimeCatalog 등록
+- 완료: 두 catalog, 두 Effect CSV, 정령왕 유닛·스킬 Parsing
+- 완료: `CsvSourceModel` source rows와 외래 키·slot·runtime 값 Validation
+- 완료: `ArtifactDefinition`, `ArtifactSynergyDefinition`, level/effect Definition, `SummonDefinition` Generation
+- 완료: RuntimeCatalog 등록과 concrete `SkillDefinition`/`SummonDefinition` 참조 해석
+- 검증: `dotnet build Pakuri/Pakuri.sln --no-restore` 오류 0, 집중 EditMode 테스트 1/1 통과
 
-### Phase 3: 정령계약 Node·Trigger 연결
+### Phase 3: 유물 상태 뼈대와 정령계약 유물 10개
 
-- 정령계약 `effect_nodes.csv`, `effect_triggers.csv`
+- `ArtifactState`, 유닛당 최대 3개
+- `RunSession.RunMonsterState`와 `UnitCombatState`가 같은 `ArtifactState` 참조 공유
+- `SynergyState`는 파티 전체 시너지별 보유 개수만 소유
+- `ArtifactSynergyManager.PrepareStage`와 `StageManager` Stage당 1회 호출 연결
+- 현재 시너지 개수를 한 줄 로그로 출력하고 시너지 Effect는 실행하지 않음
+- 정령계약 유물 10개용 `effect_nodes.csv`, `effect_triggers.csv`
+- `ArtifactEffectDefinition`에 typed Node/Reaction 참조 연결
+- `SkillModifier`는 `SkillExecutionRules`의 공통 Node 적용 경로, `PassiveTrigger`는 기존 Reaction/Trigger 경로 재사용
+- Stage 재진입 시 적용 목록을 지우고 다시 만들어 중복 누적 방지
+
+### Phase 4: 정령계약 시너지 Node·Trigger 연결
+
+- 정령계약 시너지용 `effect_nodes.csv`, `effect_triggers.csv`
 - 정령 폭격 `RepeatPerTarget` 총 3회 연결
 - 차원붕괴 pull과 종료 후 폭발 `ExecuteSkill` 연결
 - timed Single 1.2초 lifecycle과 종료 `OnExpire` 발행 추가
 - 밀집 지점·대표 속성 resolver 연결
 - `ArtifactSynergyEffectDefinition`에 typed Node/Reaction/outcome 참조 연결
 
-### Phase 4: 상태와 Stage Manager
-
-- `ArtifactState`, 유닛당 최대 3개
-- `SynergyState`
-- `ArtifactSynergyManager.PrepareStage/ActivateStageEffects`
-- `StageManager` 호출 연결
-
 ### Phase 5: 임시 아군 정령왕 runtime
 
 - `UnitRole.Summon`
-- 기존 `MonsterDefinition` 기반 Factory/Spawn
+- `SummonDefinition` 기반 Factory/Spawn
 - 별도 소환 몬스터 RuntimeCatalog lookup
 - 정령왕 Prefab binding
 - 정령왕 SingleAttack/AreaAttack 스킬 Definition 실행
@@ -694,11 +707,20 @@ InGameCombatManager.Update
 
 ## 13. 결정 필요 항목
 
-정령계약 Code Builder 착수 전 확정할 항목:
+정령계약 유물 Phase 3 완료 전 확정할 항목:
 
 - 대표 속성 집계 대상: 학습 active skill만인지 전체 보유 skill인지
 - Physical을 대표 속성 후보에 포함할지
 - 속성 동률 우선순위
+- 검은 촛대가 인정할 표식·낙인 status ID 목록
+- 정령의 비약이 인정할 저항 감소 status ID 목록
+- 균열 보석의 전 속성 저항 감소 생성·중복 정책
+- 원소 도감의 파티원별 속성 보유 판정 기준
+- 공명 나침반의 추가 피해량 또는 피해 배율
+- 같은 artifact ID의 파티 내 중복 보유·효과 중첩·시너지 개수 반영 정책
+
+정령계약 시너지·정령왕 후속 Phase 전에 확정할 항목:
+
 - 정령왕이 피해를 받고 죽을 수 있는지
 - 정령왕 생성 전에 이미 적용된 `CombatStart`/일회성 팀 효과를 정령왕에게 소급할지
 
@@ -720,12 +742,15 @@ InGameCombatManager.Update
 
 - 파티원별 유물 0~3개 제한이 `ArtifactState`에서 지켜진다.
 - 전체 파티 유물로 정령계약 단계가 계산된다.
-- 6개면 2/4/6 효과가 누적 활성화된다.
-- 다음 Day에 효과와 소환물이 중복 누적되지 않는다.
+- Phase 3에서는 계산된 시너지 개수만 Stage당 한 번 로그로 확인할 수 있다.
+- 다음 Day에 정령계약 유물 효과가 중복 누적되지 않는다.
 
 ### 실행
 
-- `ArtifactSynergyManager`가 Stage당 한 번 효과 Definition을 순회한다.
+- Phase 3의 `ArtifactSynergyManager`는 Stage당 한 번 유물 상태를 재구성하고 정령계약 유물 효과만 배포한다.
+- Phase 3에서는 `ArtifactSynergyEffectDefinition`을 실행하지 않는다.
+- 정령계약 유물의 `SkillModifier`와 `PassiveTrigger`는 기존 Node/Trigger 경로를 통과한다.
+- 아래 정령왕 실행 기준은 Phase 4~6 후속 범위다.
 - 정령왕 생성은 `SpawnUnit` Effect에서 `UnitSpawnManager.SpawnTemporaryMonster`를 통과한다.
 - 정령왕 공격은 기존 SingleAttack/AreaAttack 실행 경로를 통과한다.
 - 정령 폭격은 최초 실행을 포함해 정확히 3회 배치되고, 차원붕괴 폭발은 균열 종료 뒤 한 번만 실행된다.
@@ -738,8 +763,9 @@ InGameCombatManager.Update
 ### 범위
 
 - Phase 1 완료 판정은 두 Effect CSV와 정령왕 유닛·스킬 CSV 데이터 작성까지만 대상으로 한다.
-- 첫 runtime 완료 판정은 정령계약만 대상으로 한다.
-- 나머지 시너지와 모든 유물 고유 효과 runtime은 정령계약 검증 뒤 진행한다.
+- Phase 3 runtime 완료 판정은 상태·Manager 뼈대, 시너지 개수 로그, 정령계약 유물 10개만 대상으로 한다.
+- 정령계약 시너지 효과와 정령왕은 Phase 4 이후에 진행한다.
+- 정령계약 외 유물 40개와 다른 시너지는 정령계약 유물 검증 뒤 진행한다.
 - Tracker는 상세 원문이 준비되기 전 임의 구현하지 않는다.
 
 ## 15. 근거 파일

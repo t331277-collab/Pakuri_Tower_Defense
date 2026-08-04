@@ -16,30 +16,33 @@ Design first-class artifact/synergy additional-effect Definitions on the existin
 - Make Phase 1 the unparsed authoring of two Effect CSVs plus Spirit King unit and skill rows.
 - Route CSV through Parsing, `CsvSourceModel`, Validation and Generation before runtime use.
 - Reuse Choice-like Node/Trigger mechanics without converting effects into hidden passives or Choices.
-- Limit the first runtime implementation to Spirit Contract and a Spirit King built from existing Monster/Single/Zone Definitions.
+- Limit the first runtime implementation to the ten Spirit Contract artifacts; defer Spirit Contract synergy execution and the Spirit King.
+- Load authored artifact icon paths into `ArtifactDefinition.Icon` through the shared Sprite asset catalog.
 
 ### Constraints
 
-- Designer task: no C#, parser, Effect CSV, prefab or scene implementation in this turn.
+- Phase 2 owns Loading and Definition code only; prefab, scene, Stage Manager and combat execution remain excluded.
 - Artifact effects must generate `ArtifactEffectDefinition` or `ArtifactSynergyEffectDefinition`, not `PassiveSkillDefinition`.
 - Every individual artifact effect uses passive `SkillModifier` or `PassiveTrigger` application; synergy effects may also execute or grant concrete skills.
 - Do not invent Tracker details or unsupported Nodes/events.
-- Spirit King spawn is `SpawnUnit` effect data, not a new SkillDefinition family.
+- Spirit King spawn is `SpawnUnit` effect data and `SummonDefinition`, not a new SkillDefinition family.
 - `summon_units.csv` must copy the existing `monsters.csv` columns; `summon_units_skill.csv` must copy the existing `skills_area_attack.csv` columns without speculative metadata columns.
+- Do not invent icon paths for artifacts without an existing matching PNG.
 
 ### Role Owner
 
-Designer.
+Designer for contract; Code Builder for Phase 1 and Phase 2 implementation.
 
 ### Status
 
-Phase 1 complete: four unparsed CSVs authored and structurally verified; Phase 2 not started.
+Phase 1 and Phase 2 complete. Artifact icon CSV/runtime wiring is complete for all 9 currently available matching PNGs; the revised Phase 3 state/manager and ten Spirit Contract artifact effects are not started.
 
 ### Next Actions
 
-- Phase 2 connects the two catalogs, Spirit Contract Effect rows and Spirit King unit/skill rows to Parsing, SourceModel, Validation, Generation and RuntimeCatalog after explicit request.
-- Then implement Spirit Contract `SpawnUnit` plus existing SingleAttack/AreaAttack skills first.
-- Implement artifact and other-synergy runtime only after Spirit Contract verification and required common Node/event additions.
+- Phase 3 adds `ArtifactState`, count-only `SynergyState`, `ArtifactSynergyManager.PrepareStage` and Stage-start synergy-count logging.
+- Phase 3 connects only the ten Spirit Contract artifacts: eight `SkillModifier` effects and two `PassiveTrigger` effects.
+- Keep all `ArtifactSynergyEffectDefinition` execution, Spirit King runtime, the other 40 artifacts and other synergies deferred.
+- Add `artifact_icon` values for the remaining 41 artifacts only after matching PNG assets exist.
 
 ### Evidence
 
@@ -47,13 +50,22 @@ Phase 1 complete: four unparsed CSVs authored and structurally verified; Phase 2
 - The same design maps all 50 authored artifacts and five detailed synergies to `SkillModifier`, `PassiveTrigger`, `ExecuteSkill` or `GrantSkill`, naming existing Nodes and unsupported gaps.
 - Existing monster authoring already separates base family CSVs, choices, triggers and graph nodes under `Pakuri/Assets/CSVdata/authoring/monster/skills`.
 - Existing Loading code already follows Parsing -> Validation -> Generation -> RuntimeCatalog; artifact source rows and Definitions must join that same path.
-- `GameDataCatalog` has no Artifact/ArtifactEffect indexes, so the proposed Definitions do not exist yet.
+- `GameDataCatalog` now indexes Artifact, ArtifactEffect, Synergy and SynergyEffect Definitions; no runtime state or consumer uses them yet.
 - `SkillTriggerEvent` has no reload-complete/heal-received event and `SkillTargetSelection` has no densest selector; no Summon runtime kind is required by the revised design.
-- Current monster Validation requires A-E active and F-J passive slots, and `MenifestUI` uses `GameDataCatalog.GetMonsters()` as Manifest candidates; Spirit King must use a separate summoned-monster lookup while reusing `MonsterDefinition`.
-- `authoring/summon/summon_units.csv` and `authoring/summon/skill/summon_units_skill.csv` currently exist as empty files; the inspected reference headers are the 22-column `monsters.csv` and 33-column `skills_area_attack.csv` schemas.
+- Current monster Validation requires A-E active and F-J passive slots, and `MenifestUI` uses `GameDataCatalog.GetMonsters()` as Manifest candidates; Phase 2 therefore generates a separate `SummonDefinition` and `GameDataCatalog.Summons` lookup.
+- `authoring/summon/summon_units.csv` now contains the Spirit King row and `authoring/summon/skill/summon_units_skill.csv` contains its five skill rows using the inspected 22/33-column schemas.
 - Existing runtime Generation maps `SingleAttack` to `SingleSkillDefinition` and `AreaAttack` to `ZoneSkillDefinition`; existing `RepeatPerTarget` supports Spirit Bombardment's initial cast plus two repeats.
 - Phase 1 verification passed strict UTF-8 for all four files, exact 22/33-column reference-header matching, unique IDs, catalog foreign keys and required Spirit King values. Result: 52 artifact-effect rows covering 50 artifacts, 27 synergy-effect rows covering 20 detailed levels, one summon unit and five summon skills.
+- Phase 2 added six `CsvRuntimeCatalog` sources, dedicated artifact/synergy/effect/summon source collections, foreign-key and summon-slot/runtime validation, typed Definition generation and RuntimeCatalog lookups.
+- `GameDataCatalogBuilder` reuses the existing active-skill generator for `SummonDefinition`; generated Spirit King skills are four `SingleSkillDefinition` and one `ZoneSkillDefinition` without entering `GameDataCatalog.Monsters`.
+- Unity `Pakuri/Sync CSV Runtime Catalog Assets` updated `CsvRuntimeCatalog.asset` with all six source references.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal` completed with 0 errors and 2 existing assembly-reference warnings.
+- Focused Unity EditMode test `ArtifactAndSummonCatalogBuildsResolvedDefinitions` passed 1/1 and reported 5 monsters, 8+8 enemies, 50 artifacts, 6 synergies and 1 summon. Full `SkillCatalogRuntimeTests` ran 17 tests: 15 passed; two Trigger baseline assertions failed (`ResolvedDefinition` null entries and missing expected Silence status). Phase 2 changed no Trigger/Node source or runtime script; these failures remain a separate verification gap.
+- `artifacts.csv` now has a typed `artifact_icon` column: 50 rows preserved, 9 exact filename/ID matches populated, 41 unavailable icons blank, and 0 populated paths missing on disk.
+- All 9 referenced PNG `.meta` files use `textureType: 8`; `CsvAssetReferenceCollector`, Generation and `ArtifactDefinition.Icon` reuse the shared Sprite catalog.
+- Unity catalog sync serialized 9 Artifact Sprite paths; focused EditMode verification passed 1/1 with `elemental-prism.Icon` non-null and unavailable `resonance-compass.Icon` null.
 - The source and foundation catalog now use `정령의 비약` / `spirit-elixir`; Tracker detail remains absent.
+- Current CSV evidence identifies exactly ten Spirit Contract artifacts with eight `SkillModifier` effects and two `PassiveTrigger` effects; this is the revised first runtime scope.
 
 ### History
 
@@ -63,6 +75,9 @@ Phase 1 complete: four unparsed CSVs authored and structurally verified; Phase 2
 - 2026-08-05: User replaced the Summon-skill plan; Designer added `SpawnUnit`/`spawn_monster_id`, removed Summon Skill Definitions, and retained existing Monster/Zone Definitions.
 - 2026-08-05: Designer added Spirit King unit/skill authoring to Phase 1: HP 1000, Physical primary attribute, all defenses 50, four SingleAttack rows, one AreaAttack row, three-cast repeat routing, and the Dimensional Collapse follow-up contract.
 - 2026-08-05: Code Builder completed Phase 1 CSV authoring and non-runtime structural validation; no parser, C#, Node/Trigger, prefab or scene was added. Unity auto-import generated four standard `TextScriptImporter` `.meta` files for the authored CSV assets.
+- 2026-08-05: Code Builder completed Phase 2 Parsing, SourceModel, Validation, Definition Generation, RuntimeCatalog registration, asset sync and focused EditMode verification using a separate `SummonDefinition`.
+- 2026-08-05: Code Builder added `artifact_icon`, mapped the 9 available ID-matched images, wired the field through Parsing/asset collection/Generation, synchronized Unity RuntimeCatalog and passed focused verification.
+- 2026-08-05: User moved the first runtime target to the ten Spirit Contract artifacts; Designer moved state/manager skeleton and count-only synergy logging into Phase 3 and deferred all synergy effect execution.
 
 ## Task: 2026-08-05 Artifact Synergy Foundation CSVs
 

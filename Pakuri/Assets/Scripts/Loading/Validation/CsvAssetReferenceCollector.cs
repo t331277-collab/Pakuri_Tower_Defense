@@ -81,6 +81,11 @@ namespace Pakuri.Data
                 return assets;
             }
 
+            foreach (var artifact in model.Artifacts.Values)
+            {
+                assets.AddSprite(artifact.IconPath, $"Artifact '{artifact.Id}' artifact_icon");
+            }
+
             foreach (var skill in model.Skills.Values)
             {
                 assets.AddSprite(skill.SkillIconPath, $"Skill '{skill.Id}' skill_icon_path");
@@ -96,6 +101,29 @@ namespace Pakuri.Data
                 assets.AddAnimatorController(
                     skill.RuntimeImpactVisualAnimatorControllerPath,
                     $"Skill '{skill.Id}' runtime_impact_visual_animator_controller_path");
+            }
+
+            foreach (var summon in model.Summons.Values)
+            {
+                assets.AddSprite(summon.MonsterIconImagePath, $"Summon '{summon.Id}' MonsterIconImage");
+                assets.AddSprite(summon.ImagePath, $"Summon '{summon.Id}' Image");
+            }
+
+            foreach (var skill in model.SummonSkills.Values)
+            {
+                assets.AddSprite(skill.SkillIconPath, $"Summon skill '{skill.Id}' skill_icon_path");
+                assets.AddPrefab(skill.SkillEffectPrefabPath, $"Summon skill '{skill.Id}' skill_effect_prefab_path");
+                assets.AddPrefab(skill.Status.StatusEffectPrefabPath, $"Summon skill '{skill.Id}' status_effect_prefab_path");
+                assets.AddSprite(skill.RuntimeVisualSpritePath, $"Summon skill '{skill.Id}' runtime_visual_sprite_path");
+                assets.AddAnimatorController(
+                    skill.RuntimeVisualAnimatorControllerPath,
+                    $"Summon skill '{skill.Id}' runtime_visual_animator_controller_path");
+                assets.AddSprite(
+                    skill.RuntimeImpactVisualSpritePath,
+                    $"Summon skill '{skill.Id}' runtime_impact_visual_sprite_path");
+                assets.AddAnimatorController(
+                    skill.RuntimeImpactVisualAnimatorControllerPath,
+                    $"Summon skill '{skill.Id}' runtime_impact_visual_animator_controller_path");
             }
 
             foreach (var enemySkill in model.EnemyBaseSkills.Values)

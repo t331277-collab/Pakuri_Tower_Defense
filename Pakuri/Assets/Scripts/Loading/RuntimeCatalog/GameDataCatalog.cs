@@ -14,6 +14,12 @@ namespace Pakuri.Data
     public class GameDataCatalog : ScriptableObject
     {
         private readonly Dictionary<string, MonsterDefinition> monsters = new Dictionary<string, MonsterDefinition>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, SummonDefinition> summons = new Dictionary<string, SummonDefinition>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, ArtifactDefinition> artifacts = new Dictionary<string, ArtifactDefinition>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, ArtifactSynergyDefinition> artifactSynergies = new Dictionary<string, ArtifactSynergyDefinition>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, ArtifactSynergyLevelDefinition> artifactSynergyLevels = new Dictionary<string, ArtifactSynergyLevelDefinition>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, ArtifactEffectDefinition> artifactEffects = new Dictionary<string, ArtifactEffectDefinition>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, ArtifactSynergyEffectDefinition> artifactSynergyEffects = new Dictionary<string, ArtifactSynergyEffectDefinition>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, EnemyDefinition> enemies = new Dictionary<string, EnemyDefinition>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, SkillDefinition> activeSkills = new Dictionary<string, SkillDefinition>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, PassiveSkillDefinition> passiveSkills = new Dictionary<string, PassiveSkillDefinition>(StringComparer.OrdinalIgnoreCase);
@@ -26,6 +32,12 @@ namespace Pakuri.Data
         private readonly Dictionary<string, MonsterDefinition.RewardChoiceDefinition[]> rewardChoicesByMonster = new Dictionary<string, MonsterDefinition.RewardChoiceDefinition[]>(StringComparer.OrdinalIgnoreCase);
 
         public MonsterDefinition[] Monsters = Array.Empty<MonsterDefinition>();
+        public SummonDefinition[] Summons = Array.Empty<SummonDefinition>();
+        public ArtifactDefinition[] Artifacts = Array.Empty<ArtifactDefinition>();
+        public ArtifactSynergyDefinition[] ArtifactSynergies = Array.Empty<ArtifactSynergyDefinition>();
+        public ArtifactSynergyLevelDefinition[] ArtifactSynergyLevels = Array.Empty<ArtifactSynergyLevelDefinition>();
+        public ArtifactEffectDefinition[] ArtifactEffects = Array.Empty<ArtifactEffectDefinition>();
+        public ArtifactSynergyEffectDefinition[] ArtifactSynergyEffects = Array.Empty<ArtifactSynergyEffectDefinition>();
         public EnemyDefinition[] StageOneEnemies = Array.Empty<EnemyDefinition>();
         public EnemyDefinition[] StageTwoEnemies = Array.Empty<EnemyDefinition>();
         public StatusEffectDefinition[] StatusEffects = Array.Empty<StatusEffectDefinition>();
@@ -34,6 +46,12 @@ namespace Pakuri.Data
         public void RebuildLookup()
         {
             monsters.Clear();
+            summons.Clear();
+            artifacts.Clear();
+            artifactSynergies.Clear();
+            artifactSynergyLevels.Clear();
+            artifactEffects.Clear();
+            artifactSynergyEffects.Clear();
             enemies.Clear();
             activeSkills.Clear();
             passiveSkills.Clear();
@@ -46,6 +64,12 @@ namespace Pakuri.Data
             rewardChoicesByMonster.Clear();
 
             RegisterMonsters(Monsters);
+            RegisterSummons(Summons);
+            RegisterDefinitions(Artifacts, artifacts, definition => definition.ArtifactId);
+            RegisterDefinitions(ArtifactSynergies, artifactSynergies, definition => definition.SynergyId);
+            RegisterDefinitions(ArtifactSynergyLevels, artifactSynergyLevels, definition => definition.LevelId);
+            RegisterDefinitions(ArtifactEffects, artifactEffects, definition => definition.EffectId);
+            RegisterDefinitions(ArtifactSynergyEffects, artifactSynergyEffects, definition => definition.EffectId);
             RegisterEnemies(StageOneEnemies);
             RegisterEnemies(StageTwoEnemies);
             RegisterStatusEffects(StatusEffects);
@@ -72,6 +96,36 @@ namespace Pakuri.Data
             {
                 monsters.TryGetValue(id, out var monster);
                 resolved = monster;
+            }
+            else if (targetType == typeof(SummonDefinition))
+            {
+                summons.TryGetValue(id, out var summon);
+                resolved = summon;
+            }
+            else if (targetType == typeof(ArtifactDefinition))
+            {
+                artifacts.TryGetValue(id, out var artifact);
+                resolved = artifact;
+            }
+            else if (targetType == typeof(ArtifactSynergyDefinition))
+            {
+                artifactSynergies.TryGetValue(id, out var synergy);
+                resolved = synergy;
+            }
+            else if (targetType == typeof(ArtifactSynergyLevelDefinition))
+            {
+                artifactSynergyLevels.TryGetValue(id, out var synergyLevel);
+                resolved = synergyLevel;
+            }
+            else if (targetType == typeof(ArtifactEffectDefinition))
+            {
+                artifactEffects.TryGetValue(id, out var effect);
+                resolved = effect;
+            }
+            else if (targetType == typeof(ArtifactSynergyEffectDefinition))
+            {
+                artifactSynergyEffects.TryGetValue(id, out var synergyEffect);
+                resolved = synergyEffect;
             }
             else if (targetType == typeof(EnemyDefinition))
             {
@@ -122,6 +176,11 @@ namespace Pakuri.Data
         public MonsterDefinition GetMonster(string id)
         {
             return GetData<MonsterDefinition>(id);
+        }
+
+        public SummonDefinition GetSummon(string id)
+        {
+            return GetData<SummonDefinition>(id);
         }
 
         public SkillDefinition[] GetActiveSkills(string monsterId)
@@ -199,6 +258,44 @@ namespace Pakuri.Data
                 RegisterActiveSkills(monster.ActiveSkills);
                 RegisterPassiveSkills(monster.PassiveSkills);
                 RegisterRewardChoices(monster.InitialRewardChoices);
+            }
+        }
+
+        private void RegisterSummons(SummonDefinition[] catalogSummons)
+        {
+            if (catalogSummons == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < catalogSummons.Length; i++)
+            {
+                var summon = catalogSummons[i];
+                if (summon == null || string.IsNullOrWhiteSpace(summon.SummonId))
+                {
+                    continue;
+                }
+
+                summons[summon.SummonId] = summon;
+                activeSkillsByMonster[summon.SummonId] = summon.ActiveSkills ?? Array.Empty<SkillDefinition>();
+                RegisterActiveSkills(summon.ActiveSkills);
+            }
+        }
+
+        private static void RegisterDefinitions<T>(
+            T[] definitions,
+            Dictionary<string, T> lookup,
+            Func<T, string> getId)
+            where T : class
+        {
+            for (var i = 0; definitions != null && i < definitions.Length; i++)
+            {
+                var definition = definitions[i];
+                var id = definition == null ? string.Empty : getId(definition);
+                if (!string.IsNullOrWhiteSpace(id))
+                {
+                    lookup[id] = definition;
+                }
             }
         }
 

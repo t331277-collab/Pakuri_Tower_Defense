@@ -41,6 +41,7 @@ namespace Pakuri.Data
             }
 
             ValidateCatalogEntries(model.CatalogMonsters, model.Monsters, "catalog_monsters.csv", errors);
+            ValidateArtifactAndSummonRows(model, errors);
 
             foreach (var reward in model.RewardChoices.Values)
             {
@@ -553,6 +554,195 @@ namespace Pakuri.Data
             }
         }
 
+        private static void ValidateArtifactAndSummonRows(SourceModel model, List<string> errors)
+        {
+            if (model.Artifacts.Count == 0)
+            {
+                errors.Add("artifacts.csv has no rows.");
+            }
+
+            if (model.ArtifactSynergies.Count == 0)
+            {
+                errors.Add("artifact_synergies.csv has no rows.");
+            }
+
+            if (model.Summons.Count == 0)
+            {
+                errors.Add("summon_units.csv has no rows.");
+            }
+
+            var synergyLevelIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var synergy in model.ArtifactSynergies.Values)
+            {
+                var previousRequiredCount = 0;
+                for (var i = 0; i < synergy.Levels.Length; i++)
+                {
+                    var level = synergy.Levels[i];
+                    if (!synergyLevelIds.Add(level.Id))
+                    {
+                        errors.Add($"Artifact synergy level id '{level.Id}' is duplicated.");
+                    }
+
+                    if (level.RequiredCount <= previousRequiredCount)
+                    {
+                        errors.Add($"Artifact synergy '{synergy.Id}' level '{level.Id}' requires a count greater than the previous level.");
+                    }
+
+                    var expectedRequiredCount = (i + 1) * 2;
+                    if (level.RequiredCount != expectedRequiredCount)
+                    {
+                        errors.Add($"Artifact synergy '{synergy.Id}' level '{level.Id}' requires count '{level.RequiredCount}', expected '{expectedRequiredCount}'.");
+                    }
+
+                    previousRequiredCount = level.RequiredCount;
+                }
+            }
+
+            foreach (var artifact in model.Artifacts.Values)
+            {
+                if (!model.ArtifactSynergies.ContainsKey(artifact.SynergyId))
+                {
+                    errors.Add($"Artifact '{artifact.Id}' references unknown synergy '{artifact.SynergyId}'.");
+                }
+            }
+
+            foreach (var effect in model.ArtifactEffects.Values)
+            {
+                if (!model.Artifacts.ContainsKey(effect.ArtifactId))
+                {
+                    errors.Add($"Artifact effect '{effect.Id}' references unknown artifact '{effect.ArtifactId}'.");
+                }
+
+                ValidateArtifactEffectReferences(
+                    effect.Id,
+                    effect.ApplicationMode,
+                    effect.Recipient,
+                    effect.RecipientMonsterId,
+                    effect.TargetSkillId,
+                    effect.OutcomeSkillId,
+                    string.Empty,
+                    model,
+                    errors);
+            }
+
+            foreach (var effect in model.ArtifactSynergyEffects.Values)
+            {
+                if (!synergyLevelIds.Contains(effect.SynergyLevelId))
+                {
+                    errors.Add($"Artifact synergy effect '{effect.Id}' references unknown level '{effect.SynergyLevelId}'.");
+                }
+
+                ValidateArtifactEffectReferences(
+                    effect.Id,
+                    effect.ApplicationMode,
+                    effect.Recipient,
+                    effect.RecipientMonsterId,
+                    effect.TargetSkillId,
+                    effect.OutcomeSkillId,
+                    effect.SpawnSummonId,
+                    model,
+                    errors);
+            }
+
+            foreach (var summon in model.Summons.Values)
+            {
+                if (model.Monsters.ContainsKey(summon.Id))
+                {
+                    errors.Add($"Summon '{summon.Id}' conflicts with a monster id.");
+                }
+
+                var slots = new HashSet<SkillSlot>();
+                foreach (var skill in model.SummonSkills.Values)
+                {
+                    if (!string.Equals(skill.MonsterId, summon.Id, StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    if (!slots.Add(skill.Slot))
+                    {
+                        errors.Add($"Summon '{summon.Id}' has duplicate active slot '{skill.Slot}'.");
+                    }
+                }
+
+                for (var slot = SkillSlot.A; slot <= SkillSlot.E; slot++)
+                {
+                    if (!slots.Contains(slot))
+                    {
+                        errors.Add($"Summon '{summon.Id}' is missing active slot '{slot}'.");
+                    }
+                }
+            }
+
+            foreach (var skill in model.SummonSkills.Values)
+            {
+                if (!model.Summons.ContainsKey(skill.MonsterId))
+                {
+                    errors.Add($"Summon skill '{skill.Id}' references unknown summon '{skill.MonsterId}'.");
+                }
+
+                if (model.Skills.ContainsKey(skill.Id))
+                {
+                    errors.Add($"Summon skill '{skill.Id}' conflicts with a monster skill id.");
+                }
+
+                ValidateSkillRuntimeValues(skill, errors);
+                ValidateRuntimeStatusColumns(skill, model.StatusEffects, string.Empty, errors);
+            }
+        }
+
+        private static void ValidateArtifactEffectReferences(
+            string effectId,
+            ArtifactEffectApplicationMode applicationMode,
+            ArtifactEffectRecipient recipient,
+            string recipientMonsterId,
+            string targetSkillId,
+            string outcomeSkillId,
+            string spawnSummonId,
+            SourceModel model,
+            List<string> errors)
+        {
+            if (recipient == ArtifactEffectRecipient.SpecificMonster
+                && (string.IsNullOrWhiteSpace(recipientMonsterId)
+                    || !model.Monsters.ContainsKey(recipientMonsterId)))
+            {
+                errors.Add($"Artifact effect '{effectId}' requires a known recipient_monster_id.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(targetSkillId)
+                && !model.Skills.ContainsKey(targetSkillId)
+                && !model.SummonSkills.ContainsKey(targetSkillId))
+            {
+                errors.Add($"Artifact effect '{effectId}' references unknown target skill '{targetSkillId}'.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(outcomeSkillId)
+                && !model.Skills.ContainsKey(outcomeSkillId)
+                && !model.SummonSkills.ContainsKey(outcomeSkillId))
+            {
+                errors.Add($"Artifact effect '{effectId}' references unknown outcome skill '{outcomeSkillId}'.");
+            }
+
+            if (applicationMode == ArtifactEffectApplicationMode.GrantSkill
+                && string.IsNullOrWhiteSpace(outcomeSkillId))
+            {
+                errors.Add($"Artifact effect '{effectId}' requires outcome_skill_id for GrantSkill.");
+            }
+
+            if (applicationMode == ArtifactEffectApplicationMode.SpawnUnit)
+            {
+                if (string.IsNullOrWhiteSpace(spawnSummonId)
+                    || !model.Summons.ContainsKey(spawnSummonId))
+                {
+                    errors.Add($"Artifact effect '{effectId}' requires a known spawn_monster_id for SpawnUnit.");
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(spawnSummonId))
+            {
+                errors.Add($"Artifact effect '{effectId}' may use spawn_monster_id only with SpawnUnit.");
+            }
+        }
+
         private static void ValidateUnitRuntimeValues(SourceModel model, List<string> errors)
         {
             foreach (var monster in model.Monsters.Values)
@@ -568,6 +758,14 @@ namespace Pakuri.Data
                 if (enemy.MaxHealth <= 0f)
                 {
                     errors.Add($"Enemy '{enemy.Id}' requires positive max_health.");
+                }
+            }
+
+            foreach (var summon in model.Summons.Values)
+            {
+                if (summon.MaxHealth <= 0f)
+                {
+                    errors.Add($"Summon '{summon.Id}' requires positive max_health.");
                 }
             }
 
