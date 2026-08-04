@@ -6,13 +6,20 @@ namespace Pakuri.InGame
 {
     public sealed class StageEndPanelUI : MonoBehaviour
     {
-        [SerializeField] private Button returnButton;
+        private Button returnButton;
 
         private UnityAction boundReturnAction;
+        private bool referencesBound;
+        private bool bindingFailed;
+
+        private void Awake()
+        {
+            BindObject();
+        }
 
         public void BindReturn(UnityAction action)
         {
-            if (returnButton == null || action == null)
+            if (!BindObject() || action == null)
             {
                 return;
             }
@@ -28,7 +35,36 @@ namespace Pakuri.InGame
 
         public void SetVisible(bool visible)
         {
+            if (!BindObject())
+            {
+                return;
+            }
+
             gameObject.SetActive(visible);
+        }
+
+        private bool BindObject()
+        {
+            if (referencesBound)
+            {
+                return true;
+            }
+
+            if (bindingFailed)
+            {
+                return false;
+            }
+
+            var valid = true;
+            returnButton = UiBindingUtility.BindChild<Button>(
+                this,
+                "Button",
+                nameof(returnButton),
+                ref valid);
+
+            referencesBound = valid;
+            bindingFailed = !valid;
+            return valid;
         }
     }
 }

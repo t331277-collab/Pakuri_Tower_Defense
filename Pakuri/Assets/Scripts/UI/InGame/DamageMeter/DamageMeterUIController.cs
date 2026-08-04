@@ -17,23 +17,31 @@ namespace Pakuri.InGame
     public class DamageMeterUIController : MonoBehaviour
     {
         private const int MaxPartySlots = 5;
-        private const float RefreshIntervalSeconds = 0.2f;
+        private const float RefreshIntervalSeconds = 0.5f;
 
-        [SerializeField] private Button openButton;
-        [SerializeField] private GameObject meterRoot;
-        [SerializeField] private Button closeButton;
-        [SerializeField] private DamagePanelView[] panels = new DamagePanelView[MaxPartySlots];
-        [SerializeField] private StageManager stageManager;
-        [SerializeField] private UnitSpawnManager unitSpawnManager;
-        [SerializeField] private DamageMeterRuntimeTracker tracker;
+        private Button openButton;
+        private GameObject meterRoot;
+        private Button closeButton;
+        private DamagePanelView[] panels = new DamagePanelView[MaxPartySlots];
+        private StageManager stageManager;
+        private UnitSpawnManager unitSpawnManager;
+        private DamageMeterRuntimeTracker tracker;
+
+        private bool referencesBound;
+        private bool bindingFailed;
 
         private readonly string[] partyMonsterIds = new string[MaxPartySlots];
         private float refreshRemaining;
-        private int lastTrackerVersion = -1;
 
         /// Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.
         private void Awake()
         {
+            if (!BindObject())
+            {
+                enabled = false;
+                return;
+            }
+
             BindButtons();
             for (var i = 0; i < panels.Length; i++)
             {
@@ -57,8 +65,7 @@ namespace Pakuri.InGame
             }
 
             refreshRemaining -= Time.deltaTime;
-            var trackerVersion = tracker != null ? tracker.Version : -1;
-            if (refreshRemaining <= 0f || trackerVersion != lastTrackerVersion)
+            if (refreshRemaining <= 0f)
             {
                 RefreshNow();
             }
@@ -101,7 +108,6 @@ namespace Pakuri.InGame
             }
 
             refreshRemaining = RefreshIntervalSeconds;
-            lastTrackerVersion = tracker != null ? tracker.Version : -1;
         }
 
         /// Registry의 플레이어 순서에 맞춰 Damage Meter 행을 배치한다.
@@ -323,23 +329,68 @@ namespace Pakuri.InGame
             }
         }
 
+        private bool BindObject()
+        {
+            if (referencesBound)
+            {
+                return !bindingFailed;
+            }
+
+            referencesBound = true;
+            var valid = true;
+            openButton = UiBindingUtility.BindChild<Button>(this, "DamageMeter/OpenButton", nameof(openButton), ref valid);
+            meterRoot = UiBindingUtility.BindChildObject(this, transform, "DamageMeter/Panel", nameof(meterRoot), ref valid);
+            closeButton = UiBindingUtility.BindChild<Button>(this, "DamageMeter/Panel/Close", nameof(closeButton), ref valid);
+            stageManager = UiBindingUtility.BindSceneComponent<StageManager>(this, nameof(stageManager), ref valid);
+            unitSpawnManager = UiBindingUtility.BindSceneComponent<UnitSpawnManager>(this, nameof(unitSpawnManager), ref valid);
+            tracker = UiBindingUtility.BindSceneComponent<DamageMeterRuntimeTracker>(this, nameof(tracker), ref valid);
+
+            panels = new DamagePanelView[MaxPartySlots];
+            for (var i = 0; i < panels.Length; i++)
+            {
+                panels[i] = new DamagePanelView();
+                panels[i].BindObject(this, transform, $"DamageMeter/Panel/{i + 1}PDamagePanel", i, ref valid);
+            }
+
+            bindingFailed = !valid;
+            return valid;
+        }
+
         [Serializable]
         private class DamagePanelView
         {
-            [SerializeField] private GameObject root;
-            [SerializeField] private Image monsterImage;
-            [SerializeField] private TMP_Text monsterNameText;
-            [SerializeField] private TMP_Text totalDamageText;
-            [SerializeField] private TMP_Text totalDamagePercentText;
-            [SerializeField] private RectTransform meterBackground;
-            [SerializeField] private RectTransform meterTemplate;
-            [SerializeField] private List<RectTransform> segments = new List<RectTransform>();
+            private GameObject root;
+            private Image monsterImage;
+            private TMP_Text monsterNameText;
+            private TMP_Text totalDamageText;
+            private TMP_Text totalDamagePercentText;
+            private RectTransform meterBackground;
+            private RectTransform meterTemplate;
+            private List<RectTransform> segments = new List<RectTransform>();
 
             private Vector2 templateSize;
             private Vector2 templatePosition;
             private Vector2 templateAnchorMin;
             private Vector2 templateAnchorMax;
             private Vector2 templatePivot;
+
+            public void BindObject(
+                Component owner,
+                Transform rootTransform,
+                string path,
+                int index,
+                ref bool valid)
+            {
+                root = UiBindingUtility.BindChildObject(owner, rootTransform, path, $"panels[{index}].root", ref valid);
+                var panelTransform = root != null ? root.transform : null;
+                monsterImage = UiBindingUtility.BindChild<Image>(owner, panelTransform, "Image", $"panels[{index}].monsterImage", ref valid);
+                monsterNameText = UiBindingUtility.BindChild<TMP_Text>(owner, panelTransform, "Monster_Name_Text", $"panels[{index}].monsterNameText", ref valid);
+                totalDamageText = UiBindingUtility.BindChild<TMP_Text>(owner, panelTransform, "Total_Damage", $"panels[{index}].totalDamageText", ref valid);
+                totalDamagePercentText = UiBindingUtility.BindChild<TMP_Text>(owner, panelTransform, "Total_Damage_Persent", $"panels[{index}].totalDamagePercentText", ref valid);
+                meterBackground = UiBindingUtility.BindChild<RectTransform>(owner, panelTransform, "MeterBG", $"panels[{index}].meterBackground", ref valid);
+                meterTemplate = UiBindingUtility.BindChild<RectTransform>(owner, panelTransform, "Skill-Meter", $"panels[{index}].meterTemplate", ref valid);
+                segments = new List<RectTransform>();
+            }
 
             public void Initialize()
             {

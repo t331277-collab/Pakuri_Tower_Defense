@@ -9,24 +9,32 @@ namespace Pakuri.InGame
     /// 포로 몬스터의 영입 성공·실패 화면과 파티 추가 선택을 관리한다.
     public sealed class MenifestUI : MonoBehaviour
     {
-        [SerializeField] private GameObject manifestedFailPopUp;
-        [SerializeField] private Button manifestedFailBackButton;
-        [SerializeField] private GameObject manifestedSuccessPopUp;
-        [SerializeField] private Button dontChoiceButton;
-        [SerializeField] private Button choiceButton;
-        [SerializeField] private TMP_Text monsterNameText;
-        [SerializeField] private TMP_Text monsterDescText;
-        [SerializeField] private Image monsterImage;
-        [SerializeField] private StageManager stageManager;
-        [SerializeField] private UnitSpawnManager unitSpawnManager;
-        [SerializeField] private InGameUIManager uiManager;
+        private GameObject manifestedFailPopUp;
+        private Button manifestedFailBackButton;
+        private GameObject manifestedSuccessPopUp;
+        private Button dontChoiceButton;
+        private Button choiceButton;
+        private TMP_Text monsterNameText;
+        private TMP_Text monsterDescText;
+        private Image monsterImage;
+        private StageManager stageManager;
+        private UnitSpawnManager unitSpawnManager;
+        private InGameUIManager uiManager;
 
         private MonsterDefinition pendingManifestMonster;
+        private bool referencesBound;
+        private bool bindingFailed;
 
         public bool IsFailurePopupVisible => manifestedFailPopUp != null && manifestedFailPopUp.activeSelf;
 
         private void Awake()
         {
+            if (!BindObject())
+            {
+                enabled = false;
+                return;
+            }
+
             BindButton(manifestedFailBackButton, CompleteAfterFailure);
             BindButton(dontChoiceButton, SkipManifestChoice);
             BindButton(choiceButton, CommitManifestChoice);
@@ -34,6 +42,11 @@ namespace Pakuri.InGame
 
         public bool TryManifestPrisoner()
         {
+            if (!BindObject())
+            {
+                return false;
+            }
+
             var session = uiManager?.ResolveSession();
             var activePrisonerButton = uiManager?.ActivePrisonerButton;
             if (session == null || activePrisonerButton == null || activePrisonerButton.Consumed)
@@ -160,6 +173,79 @@ namespace Pakuri.InGame
 
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(action);
+        }
+
+        private bool BindObject()
+        {
+            if (referencesBound)
+            {
+                return true;
+            }
+
+            if (bindingFailed)
+            {
+                return false;
+            }
+
+            var valid = true;
+            manifestedFailPopUp = UiBindingUtility.BindChildObject(
+                this,
+                transform,
+                "ManifestFailPopup",
+                nameof(manifestedFailPopUp),
+                ref valid);
+            manifestedFailBackButton = UiBindingUtility.BindChild<Button>(
+                this,
+                "ManifestFailPopup/Back",
+                nameof(manifestedFailBackButton),
+                ref valid);
+            manifestedSuccessPopUp = UiBindingUtility.BindChildObject(
+                this,
+                transform,
+                "ManifestSuccessPopup",
+                nameof(manifestedSuccessPopUp),
+                ref valid);
+            dontChoiceButton = UiBindingUtility.BindChild<Button>(
+                this,
+                "ManifestSuccessPopup/DontChoiceBtn",
+                nameof(dontChoiceButton),
+                ref valid);
+            choiceButton = UiBindingUtility.BindChild<Button>(
+                this,
+                "ManifestSuccessPopup/ChoiceBtn",
+                nameof(choiceButton),
+                ref valid);
+            monsterNameText = UiBindingUtility.BindChild<TMP_Text>(
+                this,
+                "ManifestSuccessPopup/MonsterName",
+                nameof(monsterNameText),
+                ref valid);
+            monsterDescText = UiBindingUtility.BindChild<TMP_Text>(
+                this,
+                "ManifestSuccessPopup/MonsterDesc",
+                nameof(monsterDescText),
+                ref valid);
+            monsterImage = UiBindingUtility.BindChild<Image>(
+                this,
+                "ManifestSuccessPopup/MonsterImage",
+                nameof(monsterImage),
+                ref valid);
+            stageManager = UiBindingUtility.BindSceneComponent<StageManager>(
+                this,
+                nameof(stageManager),
+                ref valid);
+            unitSpawnManager = UiBindingUtility.BindSceneComponent<UnitSpawnManager>(
+                this,
+                nameof(unitSpawnManager),
+                ref valid);
+            uiManager = UiBindingUtility.BindSceneComponent<InGameUIManager>(
+                this,
+                nameof(uiManager),
+                ref valid);
+
+            referencesBound = valid;
+            bindingFailed = !valid;
+            return valid;
         }
 
     }

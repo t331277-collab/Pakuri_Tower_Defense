@@ -11,21 +11,28 @@ namespace Pakuri.InGame
     {
         private const int PrisonPartySlotCount = 5;
 
-        [SerializeField] private GameObject prisonPanel;
-        [SerializeField] private GameObject prisonerChoicePopUp;
-        [SerializeField] private Image prisonerImage;
-        [SerializeField] private TMP_Text prisonerNameText;
-        [SerializeField] private PrisonPartySlotView[] prisonPartySlots = new PrisonPartySlotView[PrisonPartySlotCount];
-        [SerializeField] private OfferingUI offeringUI;
-        [SerializeField] private MenifestUI menifestUI;
-        [SerializeField] private InGameUIManager uiManager;
+        private GameObject prisonPanel;
+        private Image prisonerImage;
+        private TMP_Text prisonerNameText;
+        private PrisonPartySlotView[] prisonPartySlots = new PrisonPartySlotView[PrisonPartySlotCount];
+        private OfferingUI offeringUI;
+        private MenifestUI menifestUI;
+        private InGameUIManager uiManager;
 
         private readonly string[] prisonSlotMonsterIds = new string[PrisonPartySlotCount];
+        private bool referencesBound;
+        private bool bindingFailed;
 
         public bool IsVisible => prisonPanel != null && prisonPanel.activeSelf;
 
         private void Awake()
         {
+            if (!BindObject())
+            {
+                enabled = false;
+                return;
+            }
+
             BindStaticButtons();
         }
 
@@ -40,7 +47,12 @@ namespace Pakuri.InGame
 
         public void Open()
         {
-            UiObjectUtility.SetActive(prisonerChoicePopUp, false);
+            if (!BindObject())
+            {
+                return;
+            }
+
+            BindStaticButtons();
             UiObjectUtility.SetActive(prisonPanel, true);
             Refresh();
         }
@@ -48,7 +60,6 @@ namespace Pakuri.InGame
         public void Hide()
         {
             UiObjectUtility.SetActive(prisonPanel, false);
-            UiObjectUtility.SetActive(prisonerChoicePopUp, false);
         }
 
         public void Refresh()
@@ -187,14 +198,116 @@ namespace Pakuri.InGame
             button.onClick.AddListener(action);
         }
 
+        private bool BindObject()
+        {
+            if (referencesBound)
+            {
+                return true;
+            }
+
+            if (bindingFailed)
+            {
+                return false;
+            }
+
+            var valid = true;
+            prisonPanel = gameObject;
+            prisonerImage = UiBindingUtility.BindChild<Image>(
+                this,
+                "Prisonal/Image",
+                nameof(prisonerImage),
+                ref valid);
+            prisonerNameText = UiBindingUtility.BindChild<TMP_Text>(
+                this,
+                "Prisonal/Image/Name",
+                nameof(prisonerNameText),
+                ref valid);
+            offeringUI = UiBindingUtility.BindSceneComponent<OfferingUI>(
+                this,
+                nameof(offeringUI),
+                ref valid);
+            menifestUI = UiBindingUtility.BindSceneComponent<MenifestUI>(
+                this,
+                nameof(menifestUI),
+                ref valid);
+            uiManager = UiBindingUtility.BindSceneComponent<InGameUIManager>(
+                this,
+                nameof(uiManager),
+                ref valid);
+
+            if (prisonPartySlots == null || prisonPartySlots.Length != PrisonPartySlotCount)
+            {
+                prisonPartySlots = new PrisonPartySlotView[PrisonPartySlotCount];
+            }
+
+            for (var i = 0; i < prisonPartySlots.Length; i++)
+            {
+                prisonPartySlots[i] = new PrisonPartySlotView();
+                prisonPartySlots[i].BindObject(this, transform, $"{i + 1}P", i, ref valid);
+            }
+
+            referencesBound = valid;
+            bindingFailed = !valid;
+            return valid;
+        }
+
         [Serializable]
         private sealed class PrisonPartySlotView
         {
-            [SerializeField] private Image image;
-            [SerializeField] private TMP_Text nameText;
-            [SerializeField] private Button button;
-            [SerializeField] private GameObject reinforcementLabel;
-            [SerializeField] private GameObject manifestedLabel;
+            private Image image;
+            private TMP_Text nameText;
+            private Button button;
+            private GameObject reinforcementLabel;
+            private GameObject manifestedLabel;
+
+            internal void BindObject(
+                Component owner,
+                Transform root,
+                string slotPath,
+                int slotIndex,
+                ref bool valid)
+            {
+                var slotRoot = root != null ? root.Find(slotPath) : null;
+                if (slotRoot == null)
+                {
+                    Debug.LogError(
+                        $"{owner.GetType().Name} BindObject failed: field 'prisonPartySlots[{slotIndex}]' at path '{slotPath}' requires a slot object.",
+                        owner);
+                    valid = false;
+                    return;
+                }
+
+                image = UiBindingUtility.BindChild<Image>(
+                    owner,
+                    slotRoot,
+                    "Image",
+                    $"prisonPartySlots[{slotIndex}].image",
+                    ref valid);
+                nameText = UiBindingUtility.BindChild<TMP_Text>(
+                    owner,
+                    slotRoot,
+                    "Image/Name",
+                    $"prisonPartySlots[{slotIndex}].nameText",
+                    ref valid);
+                button = UiBindingUtility.BindChild<Button>(
+                    owner,
+                    slotRoot,
+                    "Button",
+                    $"prisonPartySlots[{slotIndex}].button",
+                    ref valid);
+                reinforcementLabel = UiBindingUtility.BindChildObject(
+                    owner,
+                    slotRoot,
+                    "Button/Reinforcement",
+                    $"prisonPartySlots[{slotIndex}].reinforcementLabel",
+                    ref valid);
+                manifestedLabel = UiBindingUtility.BindChildObject(
+                    owner,
+                    slotRoot,
+                    "Button/Menifested",
+                    $"prisonPartySlots[{slotIndex}].manifestedLabel",
+                    ref valid);
+            }
 
             public Image Image => image;
             public TMP_Text NameText => nameText;

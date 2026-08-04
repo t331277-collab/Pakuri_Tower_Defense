@@ -17,13 +17,21 @@ namespace Pakuri.InGame
         private const int MaxPartySlots = 5;
         private const int MaxVisibleActiveSlots = 3;
 
-        [SerializeField] private Transform monsterPanelRoot;
-        [SerializeField] private MonsterPanelSlotView[] monsterSlots = new MonsterPanelSlotView[MaxPartySlots];
-        [SerializeField] private UnitSpawnManager unitSpawnManager;
+        private Transform monsterPanelRoot;
+        private MonsterPanelSlotView[] monsterSlots = new MonsterPanelSlotView[MaxPartySlots];
+        private UnitSpawnManager unitSpawnManager;
+        private bool referencesBound;
+        private bool bindingFailed;
 
         /// Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.
         private void Awake()
         {
+            if (!BindObject())
+            {
+                enabled = false;
+                return;
+            }
+
             SetPanelVisible(true);
         }
 
@@ -106,9 +114,9 @@ namespace Pakuri.InGame
         [System.Serializable]
         private class MonsterPanelSlotView
         {
-            [SerializeField] private GameObject root;
-            [SerializeField] private Image monsterImage;
-            [SerializeField] private ActiveSkillSlotView[] activeSlots = new ActiveSkillSlotView[MaxVisibleActiveSlots];
+            private GameObject root;
+            private Image monsterImage;
+            private ActiveSkillSlotView[] activeSlots = new ActiveSkillSlotView[MaxVisibleActiveSlots];
 
             private string lastMonsterId;
 
@@ -206,15 +214,53 @@ namespace Pakuri.InGame
                 }
             }
 
+            internal void BindObject(
+                Component owner,
+                Transform panelRoot,
+                string slotPath,
+                int slotIndex,
+                ref bool valid)
+            {
+                var slotRoot = panelRoot != null ? panelRoot.Find(slotPath) : null;
+                if (slotRoot == null)
+                {
+                    Debug.LogError(
+                        $"{owner.GetType().Name} BindObject failed: field 'monsterSlots[{slotIndex}]' at path '{slotPath}' requires a slot object.",
+                        owner);
+                    valid = false;
+                    return;
+                }
+
+                root = slotRoot.gameObject;
+                monsterImage = UiBindingUtility.BindChild<Image>(
+                    owner,
+                    slotRoot,
+                    "Monster Image",
+                    $"monsterSlots[{slotIndex}].monsterImage",
+                    ref valid);
+                activeSlots = new ActiveSkillSlotView[MaxVisibleActiveSlots];
+                for (var i = 0; i < activeSlots.Length; i++)
+                {
+                    activeSlots[i] = new ActiveSkillSlotView();
+                    activeSlots[i].BindObject(
+                        owner,
+                        slotRoot,
+                        $"Active{i + 1}",
+                        slotIndex,
+                        i,
+                        ref valid);
+                }
+            }
+
         }
 
         [System.Serializable]
         private class ActiveSkillSlotView
         {
-            [SerializeField] private GameObject root;
-            [SerializeField] private Image skillImage;
-            [SerializeField] private Image cooldownOverlay;
-            [SerializeField] private TMP_Text label;
+            private GameObject root;
+            private Image skillImage;
+            private Image cooldownOverlay;
+            private TMP_Text label;
 
             public void SetRuntime(SkillExecutionState runtime)
             {
@@ -296,6 +342,84 @@ namespace Pakuri.InGame
                 cooldownOverlay.fillAmount = remainingRatio;
             }
 
+            internal void BindObject(
+                Component owner,
+                Transform slotRoot,
+                string skillPath,
+                int slotIndex,
+                int skillIndex,
+                ref bool valid)
+            {
+                var skillRoot = slotRoot != null ? slotRoot.Find(skillPath) : null;
+                if (skillRoot == null)
+                {
+                    Debug.LogError(
+                        $"{owner.GetType().Name} BindObject failed: field 'monsterSlots[{slotIndex}].activeSlots[{skillIndex}]' at path '{skillPath}' requires a skill object.",
+                        owner);
+                    valid = false;
+                    return;
+                }
+
+                root = skillRoot.gameObject;
+                skillImage = UiBindingUtility.BindSelf<Image>(
+                    owner,
+                    skillRoot,
+                    $"monsterSlots[{slotIndex}].activeSlots[{skillIndex}].skillImage",
+                    ref valid);
+                cooldownOverlay = UiBindingUtility.BindChild<Image>(
+                    owner,
+                    skillRoot,
+                    "CooldownOverlay",
+                    $"monsterSlots[{slotIndex}].activeSlots[{skillIndex}].cooldownOverlay",
+                    ref valid);
+                var labelPath = skillIndex == 0 ? "Text (TMP)" : $"Text (TMP) ({skillIndex})";
+                label = UiBindingUtility.BindChild<TMP_Text>(
+                    owner,
+                    skillRoot,
+                    labelPath,
+                    $"monsterSlots[{slotIndex}].activeSlots[{skillIndex}].label",
+                    ref valid);
+            }
+
+        }
+
+        private bool BindObject()
+        {
+            if (referencesBound)
+            {
+                return true;
+            }
+
+            if (bindingFailed)
+            {
+                return false;
+            }
+
+            var valid = true;
+            monsterPanelRoot = UiBindingUtility.BindScene<Transform>(
+                this,
+                "HUD/MonsterPanel",
+                nameof(monsterPanelRoot),
+                ref valid);
+            unitSpawnManager = UiBindingUtility.BindSceneComponent<UnitSpawnManager>(
+                this,
+                nameof(unitSpawnManager),
+                ref valid);
+            monsterSlots = new MonsterPanelSlotView[MaxPartySlots];
+            for (var i = 0; i < monsterSlots.Length; i++)
+            {
+                monsterSlots[i] = new MonsterPanelSlotView();
+                monsterSlots[i].BindObject(
+                    this,
+                    monsterPanelRoot,
+                    $"{i + 1}PMonster",
+                    i,
+                    ref valid);
+            }
+
+            referencesBound = valid;
+            bindingFailed = !valid;
+            return valid;
         }
     }
 }

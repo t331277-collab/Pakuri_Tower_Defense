@@ -34,22 +34,24 @@ namespace Pakuri.InGame
             SkillSlot.J
         };
 
-        [SerializeField] private GameObject debugRootPanel;
-        [SerializeField] private GameObject debugPanel;
-        [SerializeField] private GameObject debugModifiedPanel;
-        [SerializeField] private GameObject debugPassiveModifiedPanel;
-        [SerializeField] private Button openButton;
-        [SerializeField] private Button closeButton;
-        [SerializeField] private Button[] skillButtons = new Button[10];
-        [SerializeField] private Button[] modifierOpenButtons = new Button[10];
-        [SerializeField] private Button modifierCloseButton;
-        [SerializeField] private Button passiveModifierCloseButton;
-        [SerializeField] private Button[] traitButtons = new Button[TraitButtonCount];
-        [SerializeField] private Button[] masterButtons = new Button[MasterButtonCount];
-        [SerializeField] private Button[] passiveTraitButtons = new Button[PassiveTraitButtonCount];
-        [SerializeField] private StageManager stageManager;
-        [SerializeField] private InGameCombatManager combatManager;
-        [SerializeField] private MonsterPanelUI monsterPanelUI;
+        private GameObject debugRootPanel;
+        private GameObject debugPanel;
+        private GameObject debugModifiedPanel;
+        private GameObject debugPassiveModifiedPanel;
+        private Button openButton;
+        private Button closeButton;
+        private Button[] skillButtons = new Button[10];
+        private Button[] modifierOpenButtons = new Button[10];
+        private Button modifierCloseButton;
+        private Button passiveModifierCloseButton;
+        private Button[] traitButtons = new Button[TraitButtonCount];
+        private Button[] masterButtons = new Button[MasterButtonCount];
+        private Button[] passiveTraitButtons = new Button[PassiveTraitButtonCount];
+        private StageManager stageManager;
+        private InGameCombatManager combatManager;
+        private MonsterPanelUI monsterPanelUI;
+        private bool referencesBound;
+        private bool bindingFailed;
 
         private int activeModifierSlotIndex = -1;
         private bool activeModifierIsPassive;
@@ -57,6 +59,12 @@ namespace Pakuri.InGame
         /// Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.
         private void Awake()
         {
+            if (!BindObject())
+            {
+                enabled = false;
+                return;
+            }
+
             BindButtons();
             UiObjectUtility.SetActive(debugRootPanel, false);
             UiObjectUtility.SetActive(debugPanel, false);
@@ -737,6 +745,144 @@ namespace Pakuri.InGame
 
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(action);
+        }
+
+        private bool BindObject()
+        {
+            if (referencesBound)
+            {
+                return true;
+            }
+
+            if (bindingFailed)
+            {
+                return false;
+            }
+
+            var valid = true;
+            debugRootPanel = UiBindingUtility.BindChildObject(
+                this,
+                transform,
+                "Debug/DebugPanel",
+                nameof(debugRootPanel),
+                ref valid);
+            debugPanel = UiBindingUtility.BindChildObject(
+                this,
+                transform,
+                "Debug/DebugPanel/DebugUI",
+                nameof(debugPanel),
+                ref valid);
+            debugModifiedPanel = UiBindingUtility.BindChildObject(
+                this,
+                transform,
+                "Debug/DebugPanel/DebugModifiedUI",
+                nameof(debugModifiedPanel),
+                ref valid);
+            debugPassiveModifiedPanel = UiBindingUtility.BindChildObject(
+                this,
+                transform,
+                "Debug/DebugPanel/DebugPassiveModifiedUI",
+                nameof(debugPassiveModifiedPanel),
+                ref valid);
+            openButton = UiBindingUtility.BindChild<Button>(
+                this,
+                "Debug/DebugPanel/DebugUIBtn",
+                nameof(openButton),
+                ref valid);
+            closeButton = UiBindingUtility.BindChild<Button>(
+                this,
+                "Debug/DebugPanel/DebugUI/Close",
+                nameof(closeButton),
+                ref valid);
+
+            skillButtons = new Button[DebugSlots.Length];
+            modifierOpenButtons = new Button[DebugSlots.Length];
+            var skillNames = new[] { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J" };
+            var modifierNames = new[]
+            {
+                "AmodifierBtn",
+                "BmodifierBtn",
+                "CmodifierBtn",
+                "DmodifierBtn",
+                "EmodifierBtn",
+                "EmodifierBtn",
+                "EmodifierBtn",
+                "EmodifierBtn",
+                "EmodifierBtn",
+                "EmodifierBtn"
+            };
+            for (var i = 0; i < skillButtons.Length; i++)
+            {
+                var slotPath = $"Debug/DebugPanel/DebugUI/{skillNames[i]}Btn";
+                skillButtons[i] = UiBindingUtility.BindChild<Button>(
+                    this,
+                    slotPath,
+                    $"skillButtons[{i}]",
+                    ref valid);
+                modifierOpenButtons[i] = UiBindingUtility.BindChild<Button>(
+                    this,
+                    $"{slotPath}/{modifierNames[i]}",
+                    $"modifierOpenButtons[{i}]",
+                    ref valid);
+            }
+
+            modifierCloseButton = UiBindingUtility.BindChild<Button>(
+                this,
+                "Debug/DebugPanel/DebugModifiedUI/Close",
+                nameof(modifierCloseButton),
+                ref valid);
+            passiveModifierCloseButton = UiBindingUtility.BindChild<Button>(
+                this,
+                "Debug/DebugPanel/DebugPassiveModifiedUI/Close",
+                nameof(passiveModifierCloseButton),
+                ref valid);
+
+            traitButtons = new Button[TraitButtonCount];
+            for (var i = 0; i < traitButtons.Length; i++)
+            {
+                traitButtons[i] = UiBindingUtility.BindChild<Button>(
+                    this,
+                    $"Debug/DebugPanel/DebugModifiedUI/Trait{i + 1}",
+                    $"traitButtons[{i}]",
+                    ref valid);
+            }
+
+            masterButtons = new Button[MasterButtonCount];
+            for (var i = 0; i < masterButtons.Length; i++)
+            {
+                masterButtons[i] = UiBindingUtility.BindChild<Button>(
+                    this,
+                    $"Debug/DebugPanel/DebugModifiedUI/Master{i + 1}",
+                    $"masterButtons[{i}]",
+                    ref valid);
+            }
+
+            passiveTraitButtons = new Button[PassiveTraitButtonCount];
+            for (var i = 0; i < passiveTraitButtons.Length; i++)
+            {
+                passiveTraitButtons[i] = UiBindingUtility.BindChild<Button>(
+                    this,
+                    $"Debug/DebugPanel/DebugPassiveModifiedUI/Trait{i + 1}",
+                    $"passiveTraitButtons[{i}]",
+                    ref valid);
+            }
+
+            stageManager = UiBindingUtility.BindSceneComponent<StageManager>(
+                this,
+                nameof(stageManager),
+                ref valid);
+            combatManager = UiBindingUtility.BindSceneComponent<InGameCombatManager>(
+                this,
+                nameof(combatManager),
+                ref valid);
+            monsterPanelUI = UiBindingUtility.BindSceneComponent<MonsterPanelUI>(
+                this,
+                nameof(monsterPanelUI),
+                ref valid);
+
+            referencesBound = valid;
+            bindingFailed = !valid;
+            return valid;
         }
 
     }

@@ -10,21 +10,24 @@ namespace Pakuri.InGame
 {
     public class InGameUIManager : MonoBehaviour
     {
-        [SerializeField] private StageManager stageManager;
-        [SerializeField] private InGameInfoUI infoUI;
-        [SerializeField] private RewardPanelUI rewardPanelUI;
-        [SerializeField] private PrisonPanelUI prisonPanelUI;
-        [SerializeField] private OfferingUI offeringUI;
-        [SerializeField] private MenifestUI menifestUI;
-        [SerializeField] private BossHpUI bossHpUI;
+        private StageManager stageManager;
+        private InGameInfoUI infoUI;
+        private RewardPanelUI rewardPanelUI;
+        private PrisonPanelUI prisonPanelUI;
+        private OfferingUI offeringUI;
+        private MenifestUI menifestUI;
+        private BossHpUI bossHpUI;
 
         private int shownStage = -1;
         private int shownDay = -1;
+        private bool referencesBound;
+        private bool bindingFailed;
 
         private void Awake()
         {
-            if (!ValidateReferences())
+            if (!BindObject() || !ValidateReferences())
             {
+                enabled = false;
                 return;
             }
 
@@ -135,9 +138,62 @@ namespace Pakuri.InGame
 
             Debug.LogError(
                 "InGameUIManager requires StageManager "
-                + "and all InGame UI components to be assigned in the Inspector.",
+                + "and all InGame UI components to be bound at runtime.",
                 this);
             return false;
+        }
+
+        private bool BindObject()
+        {
+            if (referencesBound)
+            {
+                return true;
+            }
+
+            if (bindingFailed)
+            {
+                return false;
+            }
+
+            var valid = true;
+            stageManager = UiBindingUtility.BindSceneComponent<StageManager>(
+                this,
+                nameof(stageManager),
+                ref valid);
+            infoUI = UiBindingUtility.BindScene<InGameInfoUI>(
+                this,
+                "HUD/InfoPanel",
+                nameof(infoUI),
+                ref valid);
+            rewardPanelUI = UiBindingUtility.BindScene<RewardPanelUI>(
+                this,
+                "Reward/RewardPanel",
+                nameof(rewardPanelUI),
+                ref valid);
+            prisonPanelUI = UiBindingUtility.BindScene<PrisonPanelUI>(
+                this,
+                "Reward/PrisonPanel",
+                nameof(prisonPanelUI),
+                ref valid);
+            offeringUI = UiBindingUtility.BindScene<OfferingUI>(
+                this,
+                "Reward/OfferingPanel",
+                nameof(offeringUI),
+                ref valid);
+            menifestUI = UiBindingUtility.BindScene<MenifestUI>(
+                this,
+                "Popup",
+                nameof(menifestUI),
+                ref valid);
+            bossHpUI = UiBindingUtility.BindScene<BossHpUI>(
+                this,
+                "HUD/BossHP",
+                nameof(bossHpUI),
+                ref valid);
+
+            referencesBound = valid;
+            bindingFailed = !valid;
+            return valid;
         }
     }
 

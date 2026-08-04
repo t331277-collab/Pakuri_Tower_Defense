@@ -22,13 +22,28 @@ namespace Pakuri.InGame
         }
 
         private readonly List<OfferingChoiceView> offeringChoices = new List<OfferingChoiceView>();
-        [SerializeField] private GameObject offeringPanel;
-        [SerializeField] private OfferingButtonView[] offeringButtonViews = new OfferingButtonView[MaxOfferingChoices];
-        [SerializeField] private InGameCombatManager combatManager;
-        [SerializeField] private InGameUIManager uiManager;
+        private GameObject offeringPanel;
+        private OfferingButtonView[] offeringButtonViews = new OfferingButtonView[MaxOfferingChoices];
+        private InGameCombatManager combatManager;
+        private InGameUIManager uiManager;
+        private bool referencesBound;
+        private bool bindingFailed;
+
+        private void Awake()
+        {
+            if (!BindObject())
+            {
+                enabled = false;
+            }
+        }
 
         public bool OpenOfferingPanel(string monsterId)
         {
+            if (!BindObject())
+            {
+                return false;
+            }
+
             var activePrisonerButton = uiManager?.ActivePrisonerButton;
             if (activePrisonerButton == null
                 || activePrisonerButton.Consumed
@@ -557,14 +572,75 @@ namespace Pakuri.InGame
         [Serializable]
         private sealed class OfferingButtonView
         {
-            [SerializeField] private Button button;
-            [SerializeField] private TMP_Text summaryLabel;
-            [SerializeField] private TMP_Text skillNameLabel;
-            [SerializeField] private TMP_Text titleLabel;
-            [SerializeField] private TMP_Text descriptionLabel;
-            [SerializeField] private Image iconImage;
-            [SerializeField] private GameObject popUp;
-            [SerializeField] private TMP_Text popUpText;
+            private Button button;
+            private TMP_Text summaryLabel;
+            private TMP_Text skillNameLabel;
+            private TMP_Text titleLabel;
+            private TMP_Text descriptionLabel;
+            private Image iconImage;
+            private GameObject popUp;
+            private TMP_Text popUpText;
+
+            internal void BindObject(
+                Component owner,
+                Transform root,
+                string choicePath,
+                int choiceIndex,
+                ref bool valid)
+            {
+                var choiceRoot = root != null ? root.Find(choicePath) : null;
+                if (choiceRoot == null)
+                {
+                    Debug.LogError(
+                        $"{owner.GetType().Name} BindObject failed: field 'offeringButtonViews[{choiceIndex}]' at path '{choicePath}' requires a choice object.",
+                        owner);
+                    valid = false;
+                    return;
+                }
+
+                button = UiBindingUtility.BindSelf<Button>(
+                    owner,
+                    choiceRoot,
+                    $"offeringButtonViews[{choiceIndex}].button",
+                    ref valid);
+                summaryLabel = UiBindingUtility.BindChild<TMP_Text>(
+                    owner,
+                    choiceRoot,
+                    "Summary",
+                    $"offeringButtonViews[{choiceIndex}].summaryLabel",
+                    ref valid);
+                skillNameLabel = UiBindingUtility.BindChild<TMP_Text>(
+                    owner,
+                    choiceRoot,
+                    "SkillName",
+                    $"offeringButtonViews[{choiceIndex}].skillNameLabel",
+                    ref valid);
+                titleLabel = UiBindingUtility.BindOptionalChild<TMP_Text>(choiceRoot, "Title");
+                descriptionLabel = UiBindingUtility.BindChild<TMP_Text>(
+                    owner,
+                    choiceRoot,
+                    "Desc",
+                    $"offeringButtonViews[{choiceIndex}].descriptionLabel",
+                    ref valid);
+                iconImage = UiBindingUtility.BindChild<Image>(
+                    owner,
+                    choiceRoot,
+                    "Icon",
+                    $"offeringButtonViews[{choiceIndex}].iconImage",
+                    ref valid);
+                popUp = UiBindingUtility.BindChildObject(
+                    owner,
+                    choiceRoot,
+                    "PopUP",
+                    $"offeringButtonViews[{choiceIndex}].popUp",
+                    ref valid);
+                popUpText = UiBindingUtility.BindChild<TMP_Text>(
+                    owner,
+                    choiceRoot,
+                    "PopUP/NewSkillPopUText",
+                    $"offeringButtonViews[{choiceIndex}].popUpText",
+                    ref valid);
+            }
 
             public Button Button => button;
             public TMP_Text SummaryLabel => summaryLabel;
@@ -574,6 +650,45 @@ namespace Pakuri.InGame
             public Image IconImage => iconImage;
             public GameObject PopUp => popUp;
             public TMP_Text PopUpText => popUpText;
+        }
+
+        private bool BindObject()
+        {
+            if (referencesBound)
+            {
+                return true;
+            }
+
+            if (bindingFailed)
+            {
+                return false;
+            }
+
+            var valid = true;
+            offeringPanel = gameObject;
+            combatManager = UiBindingUtility.BindSceneComponent<InGameCombatManager>(
+                this,
+                nameof(combatManager),
+                ref valid);
+            uiManager = UiBindingUtility.BindSceneComponent<InGameUIManager>(
+                this,
+                nameof(uiManager),
+                ref valid);
+
+            if (offeringButtonViews == null || offeringButtonViews.Length != MaxOfferingChoices)
+            {
+                offeringButtonViews = new OfferingButtonView[MaxOfferingChoices];
+            }
+
+            for (var i = 0; i < offeringButtonViews.Length; i++)
+            {
+                offeringButtonViews[i] = new OfferingButtonView();
+                offeringButtonViews[i].BindObject(this, transform, $"Choice{i + 1}", i, ref valid);
+            }
+
+            referencesBound = valid;
+            bindingFailed = !valid;
+            return valid;
         }
     }
 }

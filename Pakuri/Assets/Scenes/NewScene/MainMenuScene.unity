@@ -437,19 +437,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 441a0e8039a28f84bbe47272b77f6e5f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainMenuUIManager
-  introPanel: {fileID: 1303273200}
-  mainMenuPanel: {fileID: 350811723}
-  monsterSelectPanel: {fileID: 1780514917}
-  introGameStartButton: {fileID: 601940485}
-  runButton: {fileID: 911148571}
-  monsterSelectGameStartButton: {fileID: 914212244}
-  arielButton: {fileID: 1228248153}
-  eveButton: {fileID: 2079252401}
-  seinButton: {fileID: 1795505320}
-  vegaButton: {fileID: 1242855126}
-  rinButton: {fileID: 203769927}
-  newRunScenePath: Assets/Scenes/NewScene/InGameScene.unity
-  defaultMonsterId: eve
 --- !u!1 &203769925
 GameObject:
   m_ObjectHideFlags: 0

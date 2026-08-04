@@ -607,3 +607,269 @@ Implemented, serialized, and compiled.
 ### History
 
 - 2026-08-03: Code Builder moved end-panel Button ownership from StageManager lookup into Inspector-wired `StageEndPanelUI` components.
+
+## Task: 2026-08-04 MainMenu Runtime UI Reference Binding
+
+### Task title
+
+Remove MainMenu panel/button Inspector serialization and bind scene references at runtime.
+
+### Goals
+
+- Remove `[SerializeField]` from the three MainMenu panels and eight Button references.
+- Keep `BindButtons()` as the event-binding path.
+- Run reference binding, event binding, and initial Intro visibility from `Start()`.
+- Convert fixed scene path and default monster values to code-owned constants.
+- Log missing scene roots, paths, components, buttons, or actions as errors.
+
+### Constraints
+
+- Scope is `MainMenuUIManager.cs` and `MainMenuScene.unity` only, apart from this state record.
+- Preserve Intro → MainMenu → MonsterSelect flow, monster selection, `StartContext`, and InGameScene loading.
+- Preserve the actual scene spelling `MosterSelectUI` and the current scene path.
+- Do not modify unrelated user changes under `reference/3.combat`.
+- Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and Core/Editor compiled. Unity project-console recheck is pending because the Unity MCP instance disconnected; the only retrieved entry was an MCP disposed-object diagnostic, not a project compile error.
+
+### Next Actions
+
+- User verifies MainMenu Intro → MainMenu → MonsterSelect transitions, all five monster buttons, and InGameScene loading in Play Mode.
+- Recheck Unity Console after the Unity MCP instance reconnects.
+
+### Evidence
+
+- `MainMenuUIManager.cs` has no `[SerializeField]` fields; `BindObject()` resolves `Canvas/Intro`, `Canvas/MainMenuUI`, `Canvas/MosterSelectUI`, and all eight Button paths before `BindButtons()`.
+- Unity hierarchy inspection confirmed `Canvas/Intro/GameStart`, `Canvas/MainMenuUI/RunBtn`, `Canvas/MosterSelectUI/GameStart`, and `Ariel`, `Eve`, `Sein`, `Vega`, `Rin` Button objects, including inactive panels.
+- Missing reference and event-binding paths now emit `Debug.LogError` with field, path, and expected type before initialization stops.
+- `newRunScenePath` and `defaultMonsterId` scene fields were removed; `Assets/Scenes/NewScene/InGameScene.unity` and `eve` are code constants matching prior scene values.
+- `MainMenuScene.unity` no longer contains the 13 removed serialized reference/configuration keys.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors and 2 existing assembly-reference warnings.
+- `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors and 3 warnings, including one existing file-lock retry.
+- `git diff --check -- Pakuri/Assets/Scripts/UI/MainMenu/MainMenuUIManager.cs Pakuri/Assets/Scenes/NewScene/MainMenuScene.unity` returned no whitespace errors.
+
+### History
+
+- 2026-08-04: Code Builder replaced MainMenu Inspector panel/Button references with inactive-safe scene-root and relative-path binding, consolidated startup in `Start()`, converted fixed settings to constants, removed matching scene serialization, and preserved unrelated working-tree changes.
+
+## Task: 2026-08-04 BossHpUI Runtime Reference Binding and Invalid Entry Guard
+
+### Task title
+
+Remove BossHpUI Inspector references, bind the authored BossHP hierarchy at runtime, and guard invalid displayed-boss entries.
+
+### Goals
+
+- Remove `[SerializeField]` from the seven BossHpUI references.
+- Bind `Name`, `HPText`, `BackGround`, `Fill`, and `Shield` relative to the BossHP object.
+- Find exactly one `UnitSpawnManager` in the current scene and log missing or duplicate references as errors.
+- Prevent `Refresh()` from dereferencing a displayed entry whose combat model is null; log and clear the display safely.
+
+### Constraints
+
+- Scope is `BossHpUI.cs`, `InGameScene.unity`, and this state record.
+- Preserve BossHP display behavior and restoration of the world HP bar.
+- Preserve existing MainMenu changes and unrelated `reference/3.combat` changes.
+- Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented. Script validation, Unity InGameScene validation, Core/Editor builds, and whitespace checks passed. Runtime boss spawn/defeat behavior still requires user Play Mode verification.
+
+### Next Actions
+
+- User verifies BossHP appears for a boss, updates during damage, restores the world HP bar after defeat, and records any remaining console errors.
+- If the invalid-entry error reappears, inspect the producer that inserts the null-model `CombatUnitEntry`; this UI guard prevents the crash but does not manufacture a valid combat model.
+
+### Evidence
+
+- `BossHpUI.cs` now uses private non-serialized fields and `Awake()` calls `BindObject()` before `Hide()`.
+- `BindObject()` resolves the authored child paths and logs `Debug.LogError` on missing components or duplicate/missing `UnitSpawnManager` instances.
+- `Refresh()` checks the displayed entry's model, stats, and resources before `RefreshValues`; an invalid entry is logged once, cleared, and hidden.
+- `InGameScene.unity` BossHpUI component block no longer contains `root`, `nameText`, `hpText`, `background`, `fill`, `shield`, or `unitSpawnManager` serialized keys; the authored child names are `Name`, `HPText`, `BackGround`, `Fill`, and `Shield`.
+- `validate_script` returned 0 warnings and 0 errors for `Assets/Scripts/UI/InGame/Info/BossHpUI.cs`.
+- Unity `manage_scene validate` returned `InGameScene is clean — no issues found` with 0 issues.
+- Runtime and editor `dotnet build` both returned 0 errors and the existing 2 assembly-reference warnings.
+- `git diff --check` returned no whitespace errors.
+
+### History
+
+- 2026-08-04: Code Builder converted BossHpUI Inspector references to runtime binding, removed matching scene serialization, and added a once-logged error/log-and-clear guard for invalid combat models.
+
+## Task: 2026-08-04 InGame UI Runtime Binding Migration
+
+### Task title
+
+Replace InGame UI object-reference serialization with per-module `BindObject()` runtime binding.
+
+### Goals
+
+- Bind scene-owned UI objects and manager dependencies from the authored `InGameScene` hierarchy.
+- Keep only RewardPanel layout tuning values serialized.
+- Centralize path lookup and required-reference error logging in `UiBindingUtility`.
+- Disable a module after a required binding failure instead of continuing with silent null references.
+
+### Constraints
+
+- Preserve the authored hierarchy, component types, UI behavior, and existing manager ownership.
+- Do not convert tunable RewardPanel layout values to runtime lookup.
+- Do not claim Play Mode verification while the Unity MCP instance is unavailable.
+- Preserve unrelated working-tree changes under MainMenu and `reference/3.combat`.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and statically verified. Play Mode remains user-owned.
+
+### Next Actions
+
+- User verifies InGame HUD, Reward/Prison/Offering/Manifest flow, MonsterPanel, Damage Meter, Debug UI, end panels, and error-free scene startup in Play Mode.
+- Re-run Unity scene/console validation after the Unity MCP instance reconnects.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/UI/InGame/UiBinding.cs` provides child, scene, self, optional, and duplicate-detection binding helpers; required failures use `Debug.LogError` with owner, field, path, and expected type.
+- `InGameUIManager`, `InGameInfoUI`, `RewardPanelUI`, `PrisonPanelUI`, `OfferingUI`, `MenifestUI`, `StageEndPanelUI`, `InGameUtilityPanelController`, `MonsterPanelUI`, `DamageMeterUIController`, `DamageMeterRuntimeTracker`, and `BossHpUI` now bind required scene references at runtime.
+- `RewardPanelUI.cs` is the only InGame UI script retaining `[SerializeField]`; its four remaining fields are layout tuning values, not object references.
+- YAML hierarchy path check inspected 174 required object paths in `InGameScene.unity` and reported `missing 0`.
+- `InGameScene.unity` contains no removed InGame object-reference keys; RewardPanel layout values remain serialized.
+- Runtime and Editor `dotnet build` commands completed with 0 errors; `git diff --check` reported no whitespace errors.
+
+### History
+
+- 2026-08-04: Code Builder added the shared binding utility, migrated InGame UI modules and nested slot/choice views, removed stale object-reference serialization, preserved RewardPanel tuning fields, and corrected scene-confirmed DamageMeter, Debug, and MonsterPanel paths.
+
+## Task: 2026-08-05 Reward Flow Lazy Binding Guard
+
+### Task title
+
+Bind inactive Reward-flow UI modules before public entry methods use their references.
+
+### Goals
+
+- Prevent `RewardPanelUI.Show()` from dereferencing an unbound `uiManager` when the RewardPanel starts inactive.
+- Apply the same entry-time binding guarantee to Prison, Offering, and Menifest flow modules.
+- Preserve required-reference error logging through `UiBindingUtility` and fail safely when binding is invalid.
+
+### Constraints
+
+- Keep the existing authored hierarchy and runtime UI flow.
+- Do not add new abstractions or serialized object references.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and statically verified. Play Mode remains pending.
+
+### Next Actions
+
+- User verifies enemy-clear → RewardPanel, prisoner selection → PrisonPanel, Offering, manifest success/failure, and next-day flow in Unity Play Mode.
+
+### Evidence
+
+- `InGameScene.unity` shows `OfferingPanel`, `RewardPanel`, and `PrisonPanel` start with `m_IsActive: 0`.
+- The reported crash line was `RewardPanelUI.Show()`'s direct `uiManager.ResolvePrisonerDisplayName(...)` call; `Show()` previously did not call `BindObject()`.
+- `RewardPanelUI.Show()`, `PrisonPanelUI.Open()`, `OfferingUI.OpenOfferingPanel()`, and `MenifestUI.TryManifestPrisoner()` now return after `BindObject()` failure; RewardPanel also rebinds the Next button listener at entry.
+- Static guard inspection found `GUARD=present` for all four public reward-flow entry methods; required binding failures still log through `UiBindingUtility`.
+- Runtime and Editor `dotnet build --no-restore /p:UseSharedCompilation=false` completed with 0 errors; `git diff --check` completed without whitespace errors.
+
+### History
+
+- 2026-08-05: Code Builder traced the null dereference to inactive-panel lazy initialization and added minimum entry-point binding guards across the Reward flow.
+
+## Task: 2026-08-05 UiBinding Script Rename
+
+### Task title
+
+Rename the shared InGame binding helper file to `UiBinding.cs`.
+
+### Goals
+
+- Use `UiBinding.cs` and its matching Unity meta filename for the existing binding helper.
+- Preserve the helper class and all call sites without changing runtime behavior.
+
+### Constraints
+
+- Rename only the source/meta paths and the generated C# project include.
+- Preserve the existing Unity meta GUID and binding implementation.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compiled.
+
+### Next Actions
+
+- No code follow-up; Unity may reimport the renamed asset on the next editor refresh.
+
+### Evidence
+
+- The previous utility source/meta paths no longer exist; `UiBinding.cs` and `UiBinding.cs.meta` exist.
+- `Assembly-CSharp.csproj` now includes `Assets\\Scripts\\UI\\InGame\\UiBinding.cs`.
+- Meta GUID remains `5e1de2e7d44f4b2b9c2a0e47c9bbf214`.
+- Repository search found no old filename reference; Runtime and Editor builds completed with 0 errors and `git diff --check` passed.
+
+### History
+
+- 2026-08-05: Code Builder renamed the binding helper source and meta files, updated the project include after the first stale-reference check, and preserved the helper class name/call sites.
+
+## Task: 2026-08-05 Damage Meter Refresh Interval
+
+### Task title
+
+Limit Damage Meter UI refreshes to once every 0.5 seconds.
+
+### Goals
+
+- Keep damage accumulation event-driven in `DamageMeterRuntimeTracker`.
+- Stop `DamageMeterUIController` from refreshing immediately on every tracker version change.
+- Preserve immediate initial refresh when the meter is enabled or opened.
+
+### Constraints
+
+- Do not queue or delay actual damage records; `DamageApplied` events remain lossless.
+- Preserve the Damage Meter hierarchy, panel layout, and display calculations.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and statically compiled.
+
+### Next Actions
+
+- User verifies that damage values and segments update approximately every 0.5 seconds while the meter is open.
+
+### Evidence
+
+- `DamageMeterRuntimeTracker.Record()` still receives `InGameCombatManager.DamageApplied` and increments accumulated records immediately.
+- `DamageMeterUIController.RefreshIntervalSeconds` is `0.5f`; `Update()` now refreshes only when `refreshRemaining <= 0f`.
+- The former `tracker.Version` immediate-refresh condition and `lastTrackerVersion` state were removed from the controller.
+- Runtime and Editor builds completed with 0 errors; `git diff --check` completed without whitespace errors.
+
+### History
+
+- 2026-08-05: Code Builder changed the display timer from 0.2 to 0.5 seconds and removed version-triggered immediate UI refreshes without changing event-based damage accumulation.

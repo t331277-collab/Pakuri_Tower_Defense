@@ -12,27 +12,39 @@ namespace Pakuri.InGame
     /// 살아 있는 보스 중 최대 체력이 가장 높은 유닛의 화면 HP를 표시한다.
     public sealed class BossHpUI : MonoBehaviour
     {
-        [SerializeField] private GameObject root;
-        [SerializeField] private TMP_Text nameText;
-        [SerializeField] private TMP_Text hpText;
-        [SerializeField] private RectTransform background;
-        [SerializeField] private RectTransform fill;
-        [SerializeField] private RectTransform shield;
-        [SerializeField] private UnitSpawnManager unitSpawnManager;
+        private GameObject root;
+        private TMP_Text nameText;
+        private TMP_Text hpText;
+        private RectTransform background;
+        private RectTransform fill;
+        private RectTransform shield;
+        private UnitSpawnManager unitSpawnManager;
 
         private CombatUnitEntry displayedBoss;
+        private bool referencesBound;
+        private bool bindingFailed;
 
         private void Awake()
         {
+            BindObject();
             Hide();
         }
 
         public void Refresh()
         {
+            if (!BindObject())
+            {
+                UiObjectUtility.SetActive(root, false);
+                return;
+            }
+
             var nextBoss = SelectBoss(unitSpawnManager != null ? unitSpawnManager.Enemies : null);
             if (nextBoss != displayedBoss)
             {
-                if (displayedBoss != null && displayedBoss.IsAlive)
+                if (displayedBoss != null
+                    && displayedBoss.Model != null
+                    && displayedBoss.Model.Resources != null
+                    && displayedBoss.IsAlive)
                 {
                     SetWorldHpBarVisible(displayedBoss, true);
                 }
@@ -44,9 +56,19 @@ namespace Pakuri.InGame
                 }
             }
 
-            if (displayedBoss == null)
+            if (displayedBoss == null
+                || displayedBoss.Model == null
+                || displayedBoss.Model.Stats == null
+                || displayedBoss.Model.Resources == null)
             {
-                UiObjectUtility.SetActive(root, false);
+                if (displayedBoss != null)
+                {
+                    Debug.LogError(
+                        "BossHpUI detected a displayed boss entry with an invalid combat model and cleared it.",
+                        this);
+                }
+
+                ClearDisplayedBoss();
                 return;
             }
 
@@ -56,7 +78,40 @@ namespace Pakuri.InGame
 
         public void Hide()
         {
-            if (displayedBoss != null && displayedBoss.IsAlive)
+            ClearDisplayedBoss();
+        }
+
+        /// BossHP 하위 표시 요소와 현재 씬의 UnitSpawnManager를 런타임 참조로 연결한다.
+        private bool BindObject()
+        {
+            if (referencesBound)
+            {
+                return true;
+            }
+
+            if (bindingFailed)
+            {
+                return false;
+            }
+
+            root = gameObject;
+            var valid = true;
+            nameText = UiBindingUtility.BindChild<TMP_Text>(this, "Name", nameof(nameText), ref valid);
+            hpText = UiBindingUtility.BindChild<TMP_Text>(this, "HPText", nameof(hpText), ref valid);
+            background = UiBindingUtility.BindChild<RectTransform>(this, "BackGround", nameof(background), ref valid);
+            fill = UiBindingUtility.BindChild<RectTransform>(this, "Fill", nameof(fill), ref valid);
+            shield = UiBindingUtility.BindChild<RectTransform>(this, "Shield", nameof(shield), ref valid);
+            unitSpawnManager = UiBindingUtility.BindSceneComponent<UnitSpawnManager>(this, nameof(unitSpawnManager), ref valid);
+
+            referencesBound = valid;
+            bindingFailed = !valid;
+            return valid;
+        }
+
+        /// 현재 보스 참조를 정리하고 월드 HP바와 Canvas BossHP를 숨긴다.
+        private void ClearDisplayedBoss()
+        {
+            if (displayedBoss != null)
             {
                 SetWorldHpBarVisible(displayedBoss, true);
             }

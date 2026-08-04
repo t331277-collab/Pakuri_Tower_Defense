@@ -14,21 +14,29 @@ namespace Pakuri.InGame
     {
         private static readonly float[] TimeScales = { 1f, 1.5f, 2f };
 
-        [SerializeField] private PlayerCombatInputController playerCombatControl;
-        [SerializeField] private InGameCombatManager combatManager;
-        [SerializeField] private Button autoButton;
-        [SerializeField] private Button timeButton;
-        [SerializeField] private GameObject onePointFiveIndicator;
-        [SerializeField] private GameObject twoTimesIndicator;
+        private PlayerCombatInputController playerCombatControl;
+        private InGameCombatManager combatManager;
+        private Button autoButton;
+        private Button timeButton;
+        private GameObject onePointFiveIndicator;
+        private GameObject twoTimesIndicator;
 
         private float baseFixedDeltaTime;
         private int timeScaleIndex;
         private ColorBlock autoButtonDefaultColors;
         private bool hasAutoButtonDefaultColors;
+        private bool referencesBound;
+        private bool bindingFailed;
 
         /// Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.
         private void Awake()
         {
+            if (!BindObject())
+            {
+                enabled = false;
+                return;
+            }
+
             if (autoButton != null)
             {
                 autoButtonDefaultColors = autoButton.colors;
@@ -134,6 +142,55 @@ namespace Pakuri.InGame
             colors.pressedColor = stateColor;
             colors.selectedColor = stateColor;
             autoButton.colors = colors;
+        }
+
+        private bool BindObject()
+        {
+            if (referencesBound)
+            {
+                return true;
+            }
+
+            if (bindingFailed)
+            {
+                return false;
+            }
+
+            var valid = true;
+            playerCombatControl = UiBindingUtility.BindSceneComponent<PlayerCombatInputController>(
+                this,
+                nameof(playerCombatControl),
+                ref valid);
+            combatManager = UiBindingUtility.BindSceneComponent<InGameCombatManager>(
+                this,
+                nameof(combatManager),
+                ref valid);
+            autoButton = UiBindingUtility.BindChild<Button>(
+                this,
+                "AutoBtn",
+                nameof(autoButton),
+                ref valid);
+            timeButton = UiBindingUtility.BindChild<Button>(
+                this,
+                "TimeBtn",
+                nameof(timeButton),
+                ref valid);
+            onePointFiveIndicator = UiBindingUtility.BindChildObject(
+                this,
+                transform,
+                "TimeBtn/1.5",
+                nameof(onePointFiveIndicator),
+                ref valid);
+            twoTimesIndicator = UiBindingUtility.BindChildObject(
+                this,
+                transform,
+                "TimeBtn/2",
+                nameof(twoTimesIndicator),
+                ref valid);
+
+            referencesBound = valid;
+            bindingFailed = !valid;
+            return valid;
         }
     }
 }

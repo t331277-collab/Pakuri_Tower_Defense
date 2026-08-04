@@ -1,0 +1,572 @@
+fileFormatVersion: 2
+guid: bae7f20728bcaef46b785ae70204d797
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -6604732513600581706
+    second: Daejungryung_0
+  - first:
+      213: -1239674694211815996
+    second: Daejungryung_1
+  - first:
+      213: 3905560522274328281
+    second: Daejungryung_2
+  - first:
+      213: 2941791601390403044
+    second: Daejungryung_3
+  - first:
+      213: 3042821066677432760
+    second: Daejungryung_4
+  - first:
+      213: 6878094601156317207
+    second: Daejungryung_5
+  - first:
+      213: -2913656230056891999
+    second: Daejungryung_6
+  - first:
+      213: -6717591787061494408
+    second: Daejungryung_7
+  - first:
+      213: 819984144110735970
+    second: Daejungryung_8
+  - first:
+      213: -8692941817155703643
+    second: Daejungryung_9
+  - first:
+      213: 3623312729695665792
+    second: Daejungryung_10
+  - first:
+      213: -8642466639122784551
+    second: Daejungryung_11
+  - first:
+      213: 5907906269267927468
+    second: Daejungryung_12
+  - first:
+      213: -2400009646401526442
+    second: Daejungryung_13
+  - first:
+      213: 7333393320130221714
+    second: Daejungryung_14
+  - first:
+      213: 5066228248433638489
+    second: Daejungryung_15
+  - first:
+      213: 38431684396757598
+    second: Daejungryung_16
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Daejungryung_0
+      rect:
+        serializedVersion: 2
+        x: 473
+        y: 459
+        width: 1504
+        height: 1986
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6bf4d52b5c64754a0800000000000000
+      internalID: -6604732513600581706
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Daejungryung_1
+      rect:
+        serializedVersion: 2
+        x: 899
+        y: 458
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4c5b6760f6acbcee0800000000000000
+      internalID: -1239674694211815996
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Daejungryung_2
+      rect:
+        serializedVersion: 2
+        x: 910
+        y: 458
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9de43fa3a96533630800000000000000
+      internalID: 3905560522274328281
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Daejungryung_3
+      rect:
+        serializedVersion: 2
+        x: 915
+        y: 459
+        width: 11
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4ed3a1c00e753d820800000000000000
+      internalID: 2941791601390403044
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Daejungryung_4
+      rect:
+        serializedVersion: 2
+        x: 957
+        y: 459
+        width: 10
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b1326a73a54a3a20800000000000000
+      internalID: 3042821066677432760
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Daejungryung_5
+      rect:
+        serializedVersion: 2
+        x: 969
+        y: 459
+        width: 9
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 71054791996e37f50800000000000000
+      internalID: 6878094601156317207
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Daejungryung_6
+      rect:
+        serializedVersion: 2
+        x: 1081
+        y: 459
+        width: 8
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1a9ead1981d9097d0800000000000000
+      internalID: -2913656230056891999
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Daejungryung_7
+      rect:
+        serializedVersion: 2
+        x: 1123
+        y: 459
+        width: 10
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 87d3e1a6cd156c2a0800000000000000
+      internalID: -6717591787061494408
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Daejungryung_8
+      rect:
+        serializedVersion: 2
+        x: 1143
+        y: 458
+        width: 19
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2625c2f0c3b216b00800000000000000
+      internalID: 819984144110735970
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Daejungryung_9
+      rect:
+        serializedVersion: 2
+        x: 1185
+        y: 459
+        width: 16
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5acab4779777c5780800000000000000
+      internalID: -8692941817155703643
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Daejungryung_10
+      rect:
+        serializedVersion: 2
+        x: 1205
+        y: 458
+        width: 14
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 08e39a30bb7984230800000000000000
+      internalID: 3623312729695665792
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Daejungryung_11
+      rect:
+        serializedVersion: 2
+        x: 1219
+        y: 458
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9de1ce7a16acf0880800000000000000
+      internalID: -8642466639122784551
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Daejungryung_12
+      rect:
+        serializedVersion: 2
+        x: 1245
+        y: 459
+        width: 15
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca1a40253791df150800000000000000
+      internalID: 5907906269267927468
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Daejungryung_13
+      rect:
+        serializedVersion: 2
+        x: 1705
+        y: 459
+        width: 10
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 655e9b041f371bed0800000000000000
+      internalID: -2400009646401526442
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Daejungryung_14
+      rect:
+        serializedVersion: 2
+        x: 1739
+        y: 459
+        width: 18
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2969594ee5275c560800000000000000
+      internalID: 7333393320130221714
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Daejungryung_15
+      rect:
+        serializedVersion: 2
+        x: 1821
+        y: 458
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 95cbfeaffbbde4640800000000000000
+      internalID: 5066228248433638489
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Daejungryung_16
+      rect:
+        serializedVersion: 2
+        x: 1866
+        y: 458
+        width: 13
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e52b690d969888000800000000000000
+      internalID: 38431684396757598
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Daejungryung_0: -6604732513600581706
+      Daejungryung_1: -1239674694211815996
+      Daejungryung_10: 3623312729695665792
+      Daejungryung_11: -8642466639122784551
+      Daejungryung_12: 5907906269267927468
+      Daejungryung_13: -2400009646401526442
+      Daejungryung_14: 7333393320130221714
+      Daejungryung_15: 5066228248433638489
+      Daejungryung_16: 38431684396757598
+      Daejungryung_2: 3905560522274328281
+      Daejungryung_3: 2941791601390403044
+      Daejungryung_4: 3042821066677432760
+      Daejungryung_5: 6878094601156317207
+      Daejungryung_6: -2913656230056891999
+      Daejungryung_7: -6717591787061494408
+      Daejungryung_8: 819984144110735970
+      Daejungryung_9: -8692941817155703643
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

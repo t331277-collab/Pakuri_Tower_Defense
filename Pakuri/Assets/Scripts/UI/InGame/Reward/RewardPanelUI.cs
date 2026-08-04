@@ -10,33 +10,42 @@ namespace Pakuri.InGame
     {
         private readonly List<RewardButtonView> rewardButtons = new List<RewardButtonView>();
 
-        [SerializeField] private GameObject rewardPanel;
-        [SerializeField] private Transform rewardButtonContainer;
-        [SerializeField] private Button prisonerTemplateButton;
-        [SerializeField] private Button goldTemplateButton;
-        [SerializeField] private Button darkTemplateButton;
-        [SerializeField] private Button nextButton;
-        [SerializeField] private TMP_Text rewardSummaryText;
-        [SerializeField] private InGameUIManager uiManager;
+        private GameObject rewardPanel;
+        private Transform rewardButtonContainer;
+        private Button prisonerTemplateButton;
+        private Button goldTemplateButton;
+        private Button darkTemplateButton;
+        private Button nextButton;
+        private TMP_Text rewardSummaryText;
+        private InGameUIManager uiManager;
         [SerializeField] private Vector2 rewardButtonFirstColumnPosition = new Vector2(-321.97855f, 295f);
         [SerializeField] private float rewardButtonColumnSpacingX = 533.97855f;
         [SerializeField] private float rewardButtonRowSpacingY = 122f;
         [SerializeField] private int rewardButtonRowsPerColumn = 3;
 
         internal RewardButtonView ActivePrisonerButton { get; private set; }
+        private bool referencesBound;
+        private bool bindingFailed;
 
         private void Awake()
         {
+            if (!BindObject())
+            {
+                enabled = false;
+                return;
+            }
+
             BindButton(nextButton, ContinueToNextDay);
         }
 
         public void Show(StageManager manager)
         {
-            if (manager == null)
+            if (manager == null || !BindObject())
             {
                 return;
             }
 
+            BindButton(nextButton, ContinueToNextDay);
             Clear();
             UiObjectUtility.SetActive(rewardPanel, true);
             if (rewardSummaryText != null)
@@ -216,6 +225,60 @@ namespace Pakuri.InGame
             {
                 button.gameObject.SetActive(active);
             }
+        }
+
+        private bool BindObject()
+        {
+            if (referencesBound)
+            {
+                return true;
+            }
+
+            if (bindingFailed)
+            {
+                return false;
+            }
+
+            var valid = true;
+            rewardPanel = gameObject;
+            rewardButtonContainer = UiBindingUtility.BindChild<Transform>(
+                this,
+                "RewardBtnContainer",
+                nameof(rewardButtonContainer),
+                ref valid);
+            prisonerTemplateButton = UiBindingUtility.BindChild<Button>(
+                this,
+                "RewardBtnContainer/PrisonerBtn",
+                nameof(prisonerTemplateButton),
+                ref valid);
+            goldTemplateButton = UiBindingUtility.BindChild<Button>(
+                this,
+                "RewardBtnContainer/GoldBtn",
+                nameof(goldTemplateButton),
+                ref valid);
+            darkTemplateButton = UiBindingUtility.BindChild<Button>(
+                this,
+                "RewardBtnContainer/DarkBtn",
+                nameof(darkTemplateButton),
+                ref valid);
+            nextButton = UiBindingUtility.BindChild<Button>(
+                this,
+                "NextBtn",
+                nameof(nextButton),
+                ref valid);
+            rewardSummaryText = UiBindingUtility.BindChild<TMP_Text>(
+                this,
+                "Summary",
+                nameof(rewardSummaryText),
+                ref valid);
+            uiManager = UiBindingUtility.BindSceneComponent<InGameUIManager>(
+                this,
+                nameof(uiManager),
+                ref valid);
+
+            referencesBound = valid;
+            bindingFailed = !valid;
+            return valid;
         }
 
     }

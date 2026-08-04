@@ -2,11 +2,64 @@
 
 ## Current State
 
-There is no active monster-specific task block after the 2026-07-28 cleanup.
+Current monster-side design task: Spirit King behaves as a temporary Player-side moving monster without entering the Run party.
 
 The previous Ariel, Eve, Rin, Sein, and Vega boards are preserved under `boards/ARCHIVE/ACTIVE_BOARD_SNAPSHOT_2026-07-28/MON/`.
 
 For new monster work, inspect the exact current code and data first, then add a required-field task block here only when persistent state is needed.
+
+## Task: 2026-08-05 Spirit King Temporary Allied Monster Design
+
+### Task title
+
+Reuse existing monster combat, targeting and skill execution for a moving Spirit King summon.
+
+### Goals
+
+- Spawn Spirit King directly from the Spirit Contract Stage effect without a Summon skill family.
+- Register it as `UnitSide.Player` so `Ally/AllAllies` skills cast after spawning affect it.
+- Give it existing `SingleSkillDefinition`/`ZoneSkillDefinition` skills and automatic casting.
+- Move slowly toward the nearest enemy while remaining outside Run party ownership.
+
+### Constraints
+
+- Designer task: no C#, prefab, scene or CSV implementation.
+- Use `UnitRole.Summon` so Manifest, Offering, MonsterPanel, DamageMeter party slots and Day recovery do not treat Spirit King as a normal party monster.
+- Do not reuse Enemy AI wholesale; it is coupled to `EnemyCombatState`, the Enemy roster and Nexus attacks.
+- Do not add `SkillRuntimeKind.Summon`, `SummonSkillDefinition` or `SummonSkillExecutor`.
+- Keep summon unit and skill CSVs on the existing monster/area-attack authoring columns; do not add separate implementation metadata.
+
+### Role Owner
+
+Designer.
+
+### Status
+
+Phase 1 Spirit King source rows complete and verified; monster runtime integration not started.
+
+### Next Actions
+
+- After explicit Phase 2+ request, add Loading support, temporary allied-monster factory/spawn, prefab binding and separate summoned-monster catalog lookup.
+- Add a movement-only controller that targets nearest enemies and respects `StatusCombatRules.CanMove` and MoveSpeed modifiers.
+- Verify team buffs, enemy targeting, automatic Spirit King skills, Stage cleanup and party/UI exclusion.
+
+### Evidence
+
+- `CombatUnitRegistry.Register` places units in Players/Enemies from `Identity.Side`.
+- `SkillTargeting.TargetList` uses `roster.Players` for a Player-side caster's `Ally/AllAllies`, excluding only Nexus where required.
+- `SkillExecution.TryExecuteAutomaticSkills` scans every registered entry; `PlayerCombatInputController.CanUseAutoSkill` permits non-`EnemyCombatState` non-selected Player units.
+- `NotifyPlayerUnitRegistered` immediately executes owner passives and `CombatStart`; one-shot team effects completed before Spirit King spawn are not retroactive without an additional policy.
+- `EnemyActionController` is the only current transform movement path and is coupled to Enemy roster targeting and Nexus damage.
+- `MenifestUI.ResolveNextManifestCandidate` consumes `GameDataCatalog.GetMonsters()`, so Spirit King cannot share the playable `Monsters` array.
+- The target summon CSVs exist but are empty. The approved unit row uses HP 1000, Physical primary attribute, six defenses of 50 and move speed 0.6; no Spirit King asset paths currently exist.
+- Elemental Explosion, Spirit Bombardment, Dimensional Rift and its follow-up explosion use `SingleAttack`; Elemental Storm uses `AreaAttack`. Existing `RepeatPerTarget` supplies Bombardment's two repeats after the initial cast.
+- `summon_units.csv` now contains one 22-column Spirit King row; `summon_units_skill.csv` contains five 33-column rows. Strict UTF-8, reference headers, unique skill IDs, HP 1000, Physical attribute and all six defenses 50 were verified.
+
+### History
+
+- 2026-08-05: User changed Spirit King from a Summon skill outcome to a moving allied monster spawned through the existing unit path; Designer recorded the minimal reuse boundary.
+- 2026-08-05: Designer added exact Phase 1 Spirit King unit/skill values and split Dimensional Collapse into timed pull and outcome-only explosion definitions.
+- 2026-08-05: Code Builder completed the two summon CSVs without adding parser, runtime or asset paths; Unity auto-import generated their standard `TextScriptImporter` `.meta` files.
 
 ## Task: 2026-08-03 Boss HP Priority Display
 

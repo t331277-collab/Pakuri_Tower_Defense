@@ -4,6 +4,113 @@
 
 The pre-cleanup file, including completed and superseded data tasks, is preserved at `boards/ARCHIVE/ACTIVE_BOARD_SNAPSHOT_2026-07-28/DATA/DATA_BLACKBOARD.md`.
 
+## Task: 2026-08-05 Artifact and Synergy Runtime Reuse Design
+
+### Task title
+
+Design first-class artifact/synergy additional-effect Definitions on the existing authoring/runtime pipeline.
+
+### Goals
+
+- Define the two independent Effect Definition CSV contracts under `Artifact/Effect`.
+- Make Phase 1 the unparsed authoring of two Effect CSVs plus Spirit King unit and skill rows.
+- Route CSV through Parsing, `CsvSourceModel`, Validation and Generation before runtime use.
+- Reuse Choice-like Node/Trigger mechanics without converting effects into hidden passives or Choices.
+- Limit the first runtime implementation to Spirit Contract and a Spirit King built from existing Monster/Single/Zone Definitions.
+
+### Constraints
+
+- Designer task: no C#, parser, Effect CSV, prefab or scene implementation in this turn.
+- Artifact effects must generate `ArtifactEffectDefinition` or `ArtifactSynergyEffectDefinition`, not `PassiveSkillDefinition`.
+- Every individual artifact effect uses passive `SkillModifier` or `PassiveTrigger` application; synergy effects may also execute or grant concrete skills.
+- Do not invent Tracker details or unsupported Nodes/events.
+- Spirit King spawn is `SpawnUnit` effect data, not a new SkillDefinition family.
+- `summon_units.csv` must copy the existing `monsters.csv` columns; `summon_units_skill.csv` must copy the existing `skills_area_attack.csv` columns without speculative metadata columns.
+
+### Role Owner
+
+Designer.
+
+### Status
+
+Phase 1 complete: four unparsed CSVs authored and structurally verified; Phase 2 not started.
+
+### Next Actions
+
+- Phase 2 connects the two catalogs, Spirit Contract Effect rows and Spirit King unit/skill rows to Parsing, SourceModel, Validation, Generation and RuntimeCatalog after explicit request.
+- Then implement Spirit Contract `SpawnUnit` plus existing SingleAttack/AreaAttack skills first.
+- Implement artifact and other-synergy runtime only after Spirit Contract verification and required common Node/event additions.
+
+### Evidence
+
+- `Pakuri/reference/4.run/artifact-synergy-runtime-design.md` defines `artifact_effects.csv` and `artifact_synergy_effects.csv` as first-class Definition headers with Node/Trigger owners and Generation-resolved outcome skills.
+- The same design maps all 50 authored artifacts and five detailed synergies to `SkillModifier`, `PassiveTrigger`, `ExecuteSkill` or `GrantSkill`, naming existing Nodes and unsupported gaps.
+- Existing monster authoring already separates base family CSVs, choices, triggers and graph nodes under `Pakuri/Assets/CSVdata/authoring/monster/skills`.
+- Existing Loading code already follows Parsing -> Validation -> Generation -> RuntimeCatalog; artifact source rows and Definitions must join that same path.
+- `GameDataCatalog` has no Artifact/ArtifactEffect indexes, so the proposed Definitions do not exist yet.
+- `SkillTriggerEvent` has no reload-complete/heal-received event and `SkillTargetSelection` has no densest selector; no Summon runtime kind is required by the revised design.
+- Current monster Validation requires A-E active and F-J passive slots, and `MenifestUI` uses `GameDataCatalog.GetMonsters()` as Manifest candidates; Spirit King must use a separate summoned-monster lookup while reusing `MonsterDefinition`.
+- `authoring/summon/summon_units.csv` and `authoring/summon/skill/summon_units_skill.csv` currently exist as empty files; the inspected reference headers are the 22-column `monsters.csv` and 33-column `skills_area_attack.csv` schemas.
+- Existing runtime Generation maps `SingleAttack` to `SingleSkillDefinition` and `AreaAttack` to `ZoneSkillDefinition`; existing `RepeatPerTarget` supports Spirit Bombardment's initial cast plus two repeats.
+- Phase 1 verification passed strict UTF-8 for all four files, exact 22/33-column reference-header matching, unique IDs, catalog foreign keys and required Spirit King values. Result: 52 artifact-effect rows covering 50 artifacts, 27 synergy-effect rows covering 20 detailed levels, one summon unit and five summon skills.
+- The source and foundation catalog now use `정령의 비약` / `spirit-elixir`; Tracker detail remains absent.
+
+### History
+
+- 2026-08-05: Designer inspected current catalogs, source authoring schemas and runtime lookups, then recorded the minimal binding and skill-reuse contract.
+- 2026-08-05: User rejected the hidden-runtime-passive model; Designer replaced it with first-class additional-effect Definitions and restricted first implementation to Spirit Contract.
+- 2026-08-05: Designer classified all individual artifacts as passive modifier/trigger effects, added concrete Node/path mapping, and changed Phase 1 to authoring both Effect CSVs.
+- 2026-08-05: User replaced the Summon-skill plan; Designer added `SpawnUnit`/`spawn_monster_id`, removed Summon Skill Definitions, and retained existing Monster/Zone Definitions.
+- 2026-08-05: Designer added Spirit King unit/skill authoring to Phase 1: HP 1000, Physical primary attribute, all defenses 50, four SingleAttack rows, one AreaAttack row, three-cast repeat routing, and the Dimensional Collapse follow-up contract.
+- 2026-08-05: Code Builder completed Phase 1 CSV authoring and non-runtime structural validation; no parser, C#, Node/Trigger, prefab or scene was added. Unity auto-import generated four standard `TextScriptImporter` `.meta` files for the authored CSV assets.
+
+## Task: 2026-08-05 Artifact Synergy Foundation CSVs
+
+### Task title
+
+Create the initial artifact synergy and artifact catalogs without runtime parsing.
+
+### Goals
+
+- Create a six-row synergy catalog from `artifact-synergy-list.md`.
+- Create an artifact catalog containing every artifact currently detailed by the source document.
+- Preserve stable IDs, UI text, fixed 2/4/6/8 thresholds and artifact-to-synergy references.
+
+### Constraints
+
+- Do not add CSV parsing, runtime code or Unity `.meta` files.
+- Do not invent the missing Tracker detail section or Tracker artifact list.
+- Store both CSV files as UTF-8.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Complete. Foundation CSVs created and structurally verified; runtime parsing remains intentionally absent, and unused `sort_order` columns have been removed.
+
+### Next Actions
+
+- Author Tracker descriptions, four level effects and artifacts in the source document before filling the blank Tracker data.
+- Add parsing only through a future explicit implementation request.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/Artifact/artifact_synergies.csv` contains six synergy rows with unique IDs and 2/4/6/8 thresholds.
+- `Pakuri/Assets/CSVdata/Artifact/artifacts.csv` contains 50 unique artifacts: ten each for Spirit Contract, Executioner, Chosen One, Sentinel and Artillery.
+- Strict UTF-8 decoding and PowerShell `Import-Csv` validation passed; all 50 artifact `synergy_id` values reference an existing synergy.
+- Tracker summary and common thresholds come from the source summary, while its unavailable detailed description, level effects and artifacts remain blank/absent.
+- Neither foundation CSV contains `sort_order`; no Artifact parser or code consumer exists that requires authored ordering metadata.
+- The Spirit Contract catalog row now uses `spirit-elixir`, `정령의 비약`, and the revised all-damage/resistance-down description from the source document.
+
+### History
+
+- 2026-08-05: Code Builder created and validated the two non-parsed foundation CSV catalogs from the inspected artifact synergy reference.
+- 2026-08-05: Code Builder removed the unused `sort_order` column from both catalogs and revalidated all source text, IDs, references and thresholds.
+- 2026-08-05: Code Builder renamed the CSVs to `artifacts.csv` and `artifact_synergies.csv` and moved their existing Unity `.meta` files without changing hashes or GUIDs.
+- 2026-08-05: Designer synchronized the requested `정령의 비약` wording and stable English ID into the unparsed foundation catalog.
+
 ## Task: 2026-08-03 Remove SingleSkill Internal Delay Data Contract
 
 ### Task title

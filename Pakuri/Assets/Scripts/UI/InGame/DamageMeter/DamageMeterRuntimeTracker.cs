@@ -15,7 +15,9 @@ namespace Pakuri.InGame
     {
         private readonly Dictionary<string, MonsterDamageRecord> records = new Dictionary<string, MonsterDamageRecord>(StringComparer.OrdinalIgnoreCase);
 
-        [SerializeField] private InGameCombatManager combatManager;
+        private InGameCombatManager combatManager;
+        private bool referencesBound;
+        private bool bindingFailed;
 
         public static DamageMeterRuntimeTracker Active { get; private set; }
         public int Version { get; private set; }
@@ -23,6 +25,12 @@ namespace Pakuri.InGame
         /// Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.
         private void Awake()
         {
+            if (!BindObject())
+            {
+                enabled = false;
+                return;
+            }
+
             Active = this;
             ResetMeter();
         }
@@ -107,6 +115,29 @@ namespace Pakuri.InGame
 
             record.AddDamage(sourceId, actualDamage);
             Version++;
+        }
+
+        private bool BindObject()
+        {
+            if (referencesBound)
+            {
+                return true;
+            }
+
+            if (bindingFailed)
+            {
+                return false;
+            }
+
+            var valid = true;
+            combatManager = UiBindingUtility.BindSceneComponent<InGameCombatManager>(
+                this,
+                nameof(combatManager),
+                ref valid);
+
+            referencesBound = valid;
+            bindingFailed = !valid;
+            return valid;
         }
     }
 

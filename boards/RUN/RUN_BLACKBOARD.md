@@ -8,6 +8,113 @@ The previous Run, reward, and save/load boards are preserved under `boards/ARCHI
 
 For new Run work, inspect the exact current code and data first, then add a required-field task block here only when persistent state is needed.
 
+## Task: 2026-08-05 Artifact and Synergy Stage Runtime Design
+
+### Task title
+
+Design per-monster artifact ownership, derived synergy state and Stage-start effect composition.
+
+### Goals
+
+- Persist at most three artifact IDs per `RunMonsterState`.
+- Rebuild active synergy additional-effect Definitions once per Stage.
+- Route all combat outcomes through the existing skill trigger/execution pipeline.
+- Spawn the Spirit King through the existing monster/unit path without a Summon skill family.
+- Classify every individual artifact effect as passive modifier/trigger application.
+- Make two Effect CSVs and Spirit King unit/skill authoring Phase 1, then limit first runtime implementation to Spirit Contract.
+
+### Constraints
+
+- Designer task: no runtime implementation.
+- Do not mutate persistent unit stats/defenses cumulatively between Days.
+- Do not represent artifact effects as learned skills, hidden passives or enhancement/master Choices.
+- `ArtifactState`, `SynergyState` and `ArtifactSynergyManager` consume generated artifact effect Definitions.
+- Spirit King uses `UnitSide.Player` and a non-party `UnitRole.Summon`; no `SummonSkillDefinition` or `SummonSkillExecutor`.
+
+### Role Owner
+
+Designer.
+
+### Status
+
+Phase 1 data complete and verified; Run/runtime integration remains unstarted.
+
+### Next Actions
+
+- Implement Artifact Parsing/SourceModel/Validation/Generation/RuntimeCatalog for Spirit Contract after explicit Phase 2 request.
+- Implement `ArtifactState`, `SynergyState`, Manager Stage hooks, temporary allied-monster spawn and Spirit King skills.
+- Verify Spirit Contract 2/4/6/8 before implementing other synergies or artifact unique effects.
+
+### Evidence
+
+- `RunSession.RunMonsterState` currently owns learned `UnitSkills` and reward IDs but no artifact state.
+- `StageManager.RunCurrentDayFlow` spawns the selected player before encounter enemies and has no artifact/synergy preparation call.
+- The corrected design adds explicit `PrepareStage` and `ActivateStageEffects` calls without representing effects in `UnitSkills`.
+- `ArtifactState`, `SynergyState`, `ArtifactSynergyManager`, `UnitRole.Summon` and temporary allied-monster spawn do not exist yet.
+- The first implementation scope is Spirit Contract only; reload-complete and other synergy gaps are deferred.
+- The revised design identifies exact existing Node/Trigger/Executor routes and marks missing reload-complete, densest, temporary allied spawn/movement and conditional-crit paths as required extensions.
+- Spirit Bombardment reuses `SingleSkillDefinition` plus `RepeatPerTarget` for three total casts; Dimensional Collapse is split into pull and follow-up explosion SingleAttack Definitions. Current `SingleSkillExecutor` publishes `OnDeploymentCast` and completes without timed `OnExpire`, so that lifecycle is an explicit minimal extension.
+- `CombatUnitRegistry` groups by `Identity.Side`, and `SkillTargeting.TargetList` gives Player-side `Ally/AllAllies` skills the full `Players` list; a Player-side Spirit King therefore receives team effects cast after it spawns.
+- `SkillExecution.TryExecuteAutomaticSkills` scans all registered entries, while current movement exists only in `EnemyActionController`; Spirit King can reuse automatic skills but needs a small allied movement controller.
+- Full runtime design and acceptance criteria are recorded in `Pakuri/reference/4.run/artifact-synergy-runtime-design.md`.
+- Phase 1 now has 27 synergy-effect rows for all 20 detailed non-Tracker levels; Spirit Contract rows reference the authored Spirit King and four granted skill Definitions without adding runtime integration.
+
+### History
+
+- 2026-08-05: Designer traced Run, Stage, spawn, skill rebuild, Trigger and Executor paths and produced the Stage composition design.
+- 2026-08-05: User corrected effect identity; Designer removed hidden passive composition and specified generated Artifact effect Definitions managed by ArtifactState/SynergyState/ArtifactSynergyManager, with Spirit Contract first.
+- 2026-08-05: Designer made all individual artifacts passive modifier/trigger effects, documented concrete Node paths, and moved two Effect CSVs to Phase 1 before runtime work.
+- 2026-08-05: User removed the Summon-skill concept; Designer changed Spirit King to a temporary Player-side monster using existing Unit/Skill paths plus a movement-only extension.
+- 2026-08-05: Designer moved Spirit King unit and five skill source rows into Phase 1 and recorded the exact SingleAttack/AreaAttack execution split.
+- 2026-08-05: Code Builder authored and validated the four Phase 1 CSVs; RunSession, StageManager and runtime code remain unchanged.
+
+## Task: 2026-08-05 Artifact Synergy Foundation CSVs
+
+### Task title
+
+Record the initial Run artifact synergy and artifact catalog data.
+
+### Goals
+
+- Represent the Run artifact synergy designs as foundation CSV data.
+- Associate every currently authored artifact with its owning synergy.
+- Keep the files ready for a later parser/runtime task without implementing that task now.
+
+### Constraints
+
+- Do not connect the catalogs to RunSession, rewards, UI or runtime behavior.
+- Do not fabricate Tracker details missing from `artifact-synergy-list.md`.
+- Preserve the source document's player-facing wording without Markdown backticks.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Complete. Run artifact foundation data exists without unused ordering metadata; no gameplay system consumes it yet.
+
+### Next Actions
+
+- Complete the Tracker design and artifact list.
+- Define Run ownership and parsing in a separate explicit implementation task.
+
+### Evidence
+
+- `artifact_synergies.csv` records six synergies and their common 2/4/6/8 activation counts.
+- `artifacts.csv` records the 50 artifacts present in the source's five detailed synergy sections.
+- Import validation confirmed unique IDs and valid artifact-to-synergy references.
+- Source inspection confirmed Tracker appears only in the six-synergy summary and has no detailed section or artifact table.
+- Both catalogs omit `sort_order`; deterministic UI/runtime ordering remains deferred until a consumer defines that requirement.
+- The Spirit Contract artifact row now uses `spirit-elixir`, `정령의 비약`, and the revised all-damage/resistance-down description.
+
+### History
+
+- 2026-08-05: Code Builder added the unparsed Run artifact catalogs and recorded the source's Tracker data gap.
+- 2026-08-05: Code Builder removed unused `sort_order` fields from both unparsed catalogs and preserved the existing row order and content.
+- 2026-08-05: Code Builder renamed the CSVs and preserved their Unity `.meta` GUIDs and file contents.
+- 2026-08-05: Designer synchronized the requested `정령의 비약` change into source and the unparsed artifact catalog.
+
 ## Task: 2026-08-01 NewRunScene Monster Prefab Serialization Migration
 
 ### Task title

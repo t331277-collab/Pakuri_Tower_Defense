@@ -1,0 +1,3 @@
+"id","display_name","role_summary","element_label","primary_attribute","max_health","power_stat","base_damage","power_coefficient","base_attack_power","base_spell_power","base_move_speed","base_crit_chance","base_crit_damage","def_physical","def_fire","def_lightning","def_ice","def_darkness","def_holy","MonsterIconImage","Image"
+"id","string","string","string","enum:DamageAttribute","float","float","float","float","float","float","float","float","float","float","float","float","float","float","float","asset_path","asset_path"
+"spirit-king","정령왕","정령계약으로 소환되어 천천히 이동하며 단계별 원소 스킬을 자동 시전하는 임시 아군.","물리","Physical","1000","100","0","0","60","100","0.6","0.05","1.5","50","50","50","50","50","50","",""
