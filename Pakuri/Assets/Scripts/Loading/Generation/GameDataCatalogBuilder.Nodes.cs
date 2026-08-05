@@ -1100,6 +1100,11 @@ namespace Pakuri.Data
 				GetFloatParam(node, "repeat_interval_seconds", 0f),
 				GetFloatParam(node, "repeat_damage_multiplier", 1f)));
 		}
+		if (string.Equals(text, "PullToCenter", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new PullToCenterActionOp(
+				GetFloatParam(node, "distance_per_tick", 0f)));
+		}
 		if (string.Equals(text, "RedistributeConsumedStatus", StringComparison.OrdinalIgnoreCase))
 		{
 			StatusEffectKind statusKind = StatusValueParser.ParseStatusKind(GetParam(node, "status_id"));
@@ -1273,6 +1278,7 @@ namespace Pakuri.Data
 			|| string.Equals(handlerId, "ConsumeTargetStatusRatioOverride", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "BurstStatusStacksBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "RepeatPerTarget", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerId, "PullToCenter", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "TargetStatusCritBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "RedistributeConsumedStatus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "AdditionalDamage", StringComparison.OrdinalIgnoreCase)

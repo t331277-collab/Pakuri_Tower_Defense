@@ -79,7 +79,9 @@ namespace Pakuri.InGame
         Owner,
         Farthest,
         Random,
-        NearestOtherFromEventTarget
+        NearestOtherFromEventTarget,
+        Densest,
+        BattlefieldCenter
     }
 
     /// 스킬이 대상을 포함할 공간 형태를 구분한다.

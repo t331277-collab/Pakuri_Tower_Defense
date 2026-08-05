@@ -35,12 +35,12 @@ Code Builder
 
 ### Status
 
-Phase 0 design update in progress. Runtime implementation not yet started.
+Phase 0 design and Phase 1 skill-data/loading work complete. Runtime state, spawn, movement and target execution remain pending.
 
 ### Next Actions
 
-- Commit the corrected runtime design and data/runtime task state.
-- Implement summon skill graph/trigger loading, then synergy state, spawn, movement and scene binding in separate commits.
+- Implement synergy state, dynamic attribute and summon spawn in the next commit.
+- Implement movement, death handling and prefab/scene binding in the following commit.
 
 ### Evidence
 
@@ -48,11 +48,13 @@ Phase 0 design update in progress. Runtime implementation not yet started.
 - `ArtifactSynergyManager.PrepareStage` currently computes `SynergyState` but does not execute `ArtifactSynergyEffectDefinition` or spawn a summon.
 - `UnitSpawnManager` already owns player/enemy registration and has the scene `EnemySpawnPoint` binding; `MiddleSpawnPoint` exists in `InGameScene` but is not yet bound to summon spawning.
 - `CombatUnitRegistry` groups by `UnitSide`, `SkillTargeting` uses `roster.Players` for ally targeting, and `DamageMeterRuntimeTracker` filters `UnitRole.Monster`, establishing the reuse boundaries.
+- Phase 1 adds summon-owned graph/trigger loading and generated D `OnExpire` reaction data; execution of the generated target/pull operations is deferred.
 
 ### History
 
 - 2026-08-05: User confirmed Spirit King as a Monster-like `SummonDefinition` ally with existing MonsterActor UI, targetability, fixed movement and no same-Stage respawn.
 - 2026-08-05: Code Builder updated the runtime design with the confirmed Zone pull, target selection, skill thresholds and stage lifecycle.
+- 2026-08-05: Code Builder completed the Spirit King skill CSV/graph/trigger loading phase and verified a zero-error solution build.
 
 ## Task: 2026-08-05 Artifact Debug Acquisition Flow
 

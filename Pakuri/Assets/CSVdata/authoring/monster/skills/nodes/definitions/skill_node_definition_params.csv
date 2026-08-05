@@ -74,6 +74,7 @@
 "RepeatPerTarget","1","repeat_count","int","true",""
 "RepeatPerTarget","2","repeat_interval_seconds","float","true",""
 "RepeatPerTarget","3","repeat_damage_multiplier","float","true",""
+"PullToCenter","1","distance_per_tick","float","true",""
 "ShieldAmountMultiplier","1","multiplier","float","true",""
 "StatusActionSpeedBonus","1","bonus","float","true",""
 "StatusActionSpeedBonus","2","status_id","status_id","false",""

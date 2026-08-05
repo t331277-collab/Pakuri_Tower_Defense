@@ -243,7 +243,8 @@ namespace Pakuri.Data
 			switch (node.OwnerKind)
 			{
 			case SkillNodeOwnerKind.Skill:
-				if (!model.Skills.ContainsKey(node.OwnerId))
+				if (!model.Skills.ContainsKey(node.OwnerId)
+					&& !model.SummonSkills.ContainsKey(node.OwnerId))
 				{
 					errors.Add("Skill node '" + node.Id + "' references unknown owner skill '" + node.OwnerId + "'.");
 				}
@@ -278,7 +279,9 @@ namespace Pakuri.Data
 				errors.Add($"Skill node '{node.Id}' uses unsupported owner_kind '{node.OwnerKind}'.");
 				break;
 			}
-			if (!string.IsNullOrWhiteSpace(node.TargetSkillId) && !model.Skills.ContainsKey(node.TargetSkillId))
+			if (!string.IsNullOrWhiteSpace(node.TargetSkillId)
+				&& !model.Skills.ContainsKey(node.TargetSkillId)
+				&& !model.SummonSkills.ContainsKey(node.TargetSkillId))
 			{
 				errors.Add("Skill node '" + node.Id + "' references unknown target_skill_id '" + node.TargetSkillId + "'.");
 			}
@@ -357,7 +360,8 @@ namespace Pakuri.Data
 				}
 				break;
 			case SkillNodeValueType.SkillId:
-				if (string.IsNullOrWhiteSpace(text) || !model.Skills.ContainsKey(text))
+				if (string.IsNullOrWhiteSpace(text)
+					|| (!model.Skills.ContainsKey(text) && !model.SummonSkills.ContainsKey(text)))
 				{
 					errors.Add("Skill node param '" + param.NodeId + "." + param.ParamKey + "' references unknown skill '" + param.Value + "'.");
 				}
@@ -414,6 +418,7 @@ namespace Pakuri.Data
 					continue;
 				}
 				if (!model.Monsters.ContainsKey(skillGraphNodeRow.MonsterId)
+					&& !model.Summons.ContainsKey(skillGraphNodeRow.MonsterId)
 					&& !IsArtifactGraphOwner(model, skillGraphNodeRow))
 				{
 					list.Add("Skill graph '" + text + "' references unknown monster '" + skillGraphNodeRow.MonsterId + "'.");
@@ -426,7 +431,7 @@ namespace Pakuri.Data
 				string text3 = ResolveSkillGraphTargetSkillId(model, skillGraphNodeRow, list);
 				if (!IsArtifactGraphOwner(model, skillGraphNodeRow)
 					&& !string.IsNullOrWhiteSpace(text3)
-					&& model.Skills.TryGetValue(text3, out var value3)
+					&& TryGetSkill(model, text3, out var value3)
 					&& !string.Equals(value3.MonsterId, skillGraphNodeRow.MonsterId, StringComparison.OrdinalIgnoreCase))
 				{
 					list.Add("Skill graph '" + text + "' target skill '" + text3 + "' belongs to '" + value3.MonsterId + "', not '" + skillGraphNodeRow.MonsterId + "'.");
@@ -566,7 +571,7 @@ namespace Pakuri.Data
 			}
 			case SkillNodeOwnerKind.Skill:
 			{
-				if (!model.Skills.TryGetValue(text2, out var value3))
+				if (!TryGetSkill(model, text2, out var value3))
 				{
 					errors.Add("Skill graph '" + BuildSkillGraphKey(graph) + "' references unknown skill owner '" + text2 + "'.");
 					return graph.TargetSkillId;
@@ -612,7 +617,7 @@ namespace Pakuri.Data
 			{
 				text = graph.TargetSkillId;
 			}
-			if (!string.IsNullOrWhiteSpace(text) && !model.Skills.ContainsKey(text))
+			if (!string.IsNullOrWhiteSpace(text) && !TryGetSkill(model, text, out _))
 			{
 				errors.Add("Skill graph '" + BuildSkillGraphKey(graph) + "' resolves unknown target_skill_id '" + text + "'.");
 			}
@@ -636,6 +641,19 @@ namespace Pakuri.Data
 			return graph.OwnerKind == SkillNodeOwnerKind.Trigger
 				&& model.SkillTriggers.TryGetValue(graph.OwnerId, out var trigger)
 				&& IsArtifactEffectOwner(model, trigger.SourceSkillId, graph.MonsterId);
+		}
+
+		private static bool TryGetSkill(
+			CsvSourceModel.SourceModel model,
+			string skillId,
+			out CsvRowParser.SkillRow skill)
+		{
+			if (model.Skills.TryGetValue(skillId ?? string.Empty, out skill))
+			{
+				return true;
+			}
+
+			return model.SummonSkills.TryGetValue(skillId ?? string.Empty, out skill);
 		}
 
 		internal static bool IsArtifactEffectOwner(

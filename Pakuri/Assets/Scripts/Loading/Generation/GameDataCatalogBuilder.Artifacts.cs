@@ -59,6 +59,18 @@ namespace Pakuri.Data
                     row.Id,
                     statusDefinitions,
                     model.SummonSkills.Values);
+                var reactions = BuildSkillReactions(
+                    model,
+                    trigger => string.Equals(
+                        trigger.MonsterId,
+                        row.Id,
+                        StringComparison.OrdinalIgnoreCase),
+                    definition.ActiveSkills,
+                    statusDefinitions);
+                AttachSkillReactions(
+                    definition.ActiveSkills,
+                    null,
+                    reactions);
                 definitions[i] = definition;
             }
 
@@ -232,6 +244,7 @@ namespace Pakuri.Data
                     DisplayName = row.DisplayName,
                     Summary = row.Summary,
                     Description = row.DescriptionText,
+                    Icon = LoadSprite(row.IconPath),
                     Levels = levels
                 };
             }

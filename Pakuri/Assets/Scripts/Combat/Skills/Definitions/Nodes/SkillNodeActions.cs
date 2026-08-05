@@ -262,6 +262,17 @@ namespace Pakuri.InGame
         public float DamageMultiplier { get; }
     }
 
+    /// Zone 중심으로 대상을 일정 거리만큼 끌어당기는 규칙을 나타낸다.
+    public readonly struct PullToCenterActionOp
+    {
+        public PullToCenterActionOp(float distancePerTick)
+        {
+            DistancePerTick = distancePerTick;
+        }
+
+        public float DistancePerTick { get; }
+    }
+
     /// 소비한 상태를 처치 뒤 다시 나눌 방식을 나타낸다.
     public readonly struct RedistributeConsumedStatusActionOp
     {

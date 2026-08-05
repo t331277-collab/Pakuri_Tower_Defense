@@ -136,3 +136,4 @@
 "resonance-compass-ice","resonance-compass","resonance-compass-effect","OnOutgoingDamage","","","","","","","Ice","","","0.08","0","0.3","0","owner","112","1","0","false"
 "resonance-compass-darkness","resonance-compass","resonance-compass-effect","OnOutgoingDamage","","","","","","","Darkness","","","0.08","0","0.3","0","owner","113","1","0","false"
 "resonance-compass-holy","resonance-compass","resonance-compass-effect","OnOutgoingDamage","","","","","","","Holy","","","0.08","0","0.3","0","owner","114","1","0","false"
+"spirit-king-dimensional-rift-on-expire","spirit-king","spirit-king-dimensional-rift","OnExpire","","",,"","","","","","","1","0","0","0","owner","120","1","0","false"

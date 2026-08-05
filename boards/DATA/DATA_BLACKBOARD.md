@@ -30,23 +30,25 @@ Code Builder
 
 ### Status
 
-Phase 0 data contract documented; Phase 1 loading/graph implementation pending.
+Phase 1 loading/graph implementation complete; runtime consumption of pull/target selection remains in Phase 2/3.
 
 ### Next Actions
 
-- Update the authored Spirit King rows and existing graph/trigger definitions.
-- Extend only the shared parser/validator/generator contracts required for summon skill ownership and the typed pull operation.
+- Runtime Phase 2/3 consumes the generated `Densest`, `BattlefieldCenter` and `PullToCenterActionOp` values.
+- Unity catalog import and focused Definition assertions remain to be run in the Unity environment.
 
 ### Evidence
 
-- `summon_units.csv` and `summon_units_skill.csv` already exist and are loaded by `GameDataCatalogBuilder.BuildSummons` into a separate `SummonDefinition` lookup.
-- `CsvRowParser.ParseSkillRow` already accepts optional target-selection and repeat columns; the current summon header does not yet author them.
-- `GameDataCatalogBuilder.BuildSummons` builds active skills but does not yet attach summon-owned reactions.
-- Existing graph node and passive trigger CSV files are scanned by `CsvSourceLoader` and are the approved authoring paths.
+- `summon_units.csv` uses `base_move_speed=0.5`; `summon_units_skill.csv` now authors visual reuse, A/B/C `Densest`, D/E `BattlefieldCenter` and D `AreaAttack`.
+- Existing graph rows author C `RepeatPerTarget(2,0.35,1)`, D `PullToCenter(0.2)` and D `OnExpire -> ExecuteSkill(E)`.
+- `GameDataCatalogBuilder.BuildSummons` now attaches summon-owned reactions to the generated active skill Definitions.
+- `SkillGraphParser` and `CsvDataValidator` now accept summon-owned skills/triggers without adding a summon-specific graph/trigger file.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal` completed with 0 errors and the existing 2 assembly-reference warnings; edited CSVs import structurally with uniform columns.
 
 ### History
 
 - 2026-08-05: Code Builder recorded the corrected Zone Rift, visual reuse, Densest re-selection, pull and follow-up contracts before implementation.
+- 2026-08-05: Code Builder connected Spirit King rows and graph/trigger data to the shared summon Loading/Generation path; runtime pull and targeting execution remains deferred to the next phase.
 
 ## Task: 2026-08-05 Artifact Synergy Icon Data Binding
 

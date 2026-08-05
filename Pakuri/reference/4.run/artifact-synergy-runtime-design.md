@@ -192,7 +192,7 @@ Phase 1에서 `authoring/monster/skills/base/area_attack/skills_area_attack.csv`
 - `spell_power_coefficient=0`, `attack_power_coefficient=0`, `critical_allowed=false`: 원문의 고정 피해 80/18/70/240을 보존한다.
 - `hit_target_count`는 빈 값, 탄창·재장전 열은 `0`, 상태 효과 열은 빈 값/`0`으로 둔다.
 - `runtime_visual_scale=1`, `runtime_visual_sorting_order=0`; `runtime_hitbox_size_x/y`는 스킬 순서대로 `5/5`, `7/7`, `5/5`, `9/9`, `9/9`로 작성한다.
-- 아직 정령왕 스킬 Prefab·sprite·animator·icon이 없으므로 모든 asset 열은 빈 값이다.
+- 정령왕 스킬 Prefab·icon은 아직 별도 자산으로 만들지 않고, 런타임 sprite·animator는 승인된 Sein-C/Eve-C/Eve-D 자산 경로를 복사한다.
 - 정령 폭격은 기존 `RepeatPerTarget` Node에 `repeat_count=2`, `repeat_interval_seconds=0.35`, `repeat_damage_multiplier=1`을 연결한다. 최초 실행까지 포함해 총 3회다.
 - 차원붕괴는 기존 Zone lifecycle에 `PullToCenter(distance_per_tick=0.2)`를 연결하고, 중앙에서 데미지 0으로 1.2초 유지한다. Zone의 기존 `OnExpire -> ExecuteSkill(spirit-king-dimensional-collapse-explosion)` 경로로 종료 폭발을 실행한다.
 - 정령 폭격은 기존 `RepeatPerTarget`에 최초 시전을 포함해 2회 반복을 연결하며, 반복마다 현재 적 위치를 다시 `Densest`로 계산한다.
@@ -653,7 +653,7 @@ InGameCombatManager.Update
 
 ## 12. 구현 Phase
 
-### Phase 1: Effect·정령왕 CSV 작성
+### Phase 1: Effect·정령왕 CSV 및 기존 그래프 연결
 
 - `Artifact/Effect/artifact_effects.csv`: 현재 원문 50개 유물 효과 작성
 - `Artifact/Effect/artifact_synergy_effects.csv`: 현재 상세 원문이 있는 다섯 시너지 단계 효과 작성
@@ -664,7 +664,9 @@ InGameCombatManager.Update
 - 복합 설명은 독립 effect 행으로 분리
 - 모든 유물 행은 `SkillModifier` 또는 `PassiveTrigger`
 - 시너지 행은 `SkillModifier`, `PassiveTrigger`, `ExecuteSkill`, `GrantSkill`, `SpawnUnit`
-- Phase 1 완료 시점에는 Parsing, C#, runtime 연결 없음
+- `summon_units_skill.csv`의 optional `target_selection`으로 A/B/C는 `Densest`, D/E는 `BattlefieldCenter`를 소유
+- 정령 폭격·차원붕괴 pull·OnExpire 후속 폭발은 기존 graph/trigger CSV에 소유 행을 추가
+- Parsing, Validation, Generation은 `SummonSkills`와 summon 소유 graph/trigger를 기존 공통 경로로 통과시킴
 - 위 Node·경로 표에서 `신규 필요`인 효과도 식별 헤더는 작성하되, 존재하지 않는 `target_skill_id`/`outcome_skill_id`는 발명하지 않고 비워 둠
 
 ### Phase 2: Artifact·정령왕 Loading 기반

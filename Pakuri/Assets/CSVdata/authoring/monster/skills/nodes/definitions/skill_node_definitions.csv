@@ -29,6 +29,7 @@
 "RecastZone","RecastZone","OnExpireAction","",""
 "ReloadTimeMultiplier","ReloadTimeMultiplier","Action","",""
 "RepeatPerTarget","RepeatPerTarget","Action","",""
+"PullToCenter","PullToCenter","Action","",""
 "ShieldAmountMultiplier","ShieldAmountMultiplier","Action","",""
 "StatusActionSpeedBonus","StatusActionSpeedBonus","Action","",""
 "StatusAilmentResistanceBonus","StatusAilmentResistanceBonus","Action","",""

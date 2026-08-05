@@ -414,13 +414,17 @@ namespace Pakuri.Data
                     trigger.MonsterId);
             SkillRow sourceSkill = null;
             if (model == null
-                || (!model.Monsters.ContainsKey(trigger.MonsterId) && !artifactSource))
+                || (!model.Monsters.ContainsKey(trigger.MonsterId)
+                    && !model.Summons.ContainsKey(trigger.MonsterId)
+                    && !artifactSource))
             {
                 errors.Add($"Skill trigger '{trigger.Id}' references unknown monster '{trigger.MonsterId}'.");
             }
 
-            if (!artifactSource
-                && (model == null || !model.Skills.TryGetValue(trigger.SourceSkillId, out sourceSkill)))
+            var sourceSkillFound = model != null
+                && (model.Skills.TryGetValue(trigger.SourceSkillId, out sourceSkill)
+                    || model.SummonSkills.TryGetValue(trigger.SourceSkillId, out sourceSkill));
+            if (!artifactSource && !sourceSkillFound)
             {
                 errors.Add($"Skill trigger '{trigger.Id}' references unknown source skill '{trigger.SourceSkillId}'.");
             }
@@ -556,7 +560,8 @@ namespace Pakuri.Data
                     continue;
                 }
 
-                if (model == null || !model.Skills.TryGetValue(skillId, out _))
+                if (model == null
+                    || (!model.Skills.ContainsKey(skillId) && !model.SummonSkills.ContainsKey(skillId)))
                 {
                     errors.Add($"Skill trigger '{trigger.Id}' {columnName} references unknown skill '{skillId}'.");
                 }
