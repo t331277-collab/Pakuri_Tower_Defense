@@ -3,7 +3,7 @@
 ## 1. 문서 상태
 
 - 역할: Designer / Code Builder
-- 상태: 정령계약 시너지·정령왕 구현 착수. Phase 1·2·3의 데이터/로딩/유물 효과 기반은 완료
+- 상태: 정령계약 시너지·정령왕 Phase 1~5 구현 완료. Unity Play Mode 검증 대기
 - Phase 1 범위: 두 Effect CSV와 정령왕 유닛·스킬 CSV 작성
 - 첫 runtime 구현 범위: `ArtifactState`, `SynergyState`, `ArtifactSynergyManager` 뼈대와 정령계약 소속 유물 10개
 - 첫 runtime 시너지 범위: 파티 전체 시너지 개수 계산과 Stage당 1회 로그만 수행하며 시너지 효과는 실행하지 않음
@@ -11,7 +11,7 @@
 - 후속 runtime 구현 범위: 나머지 유물, 처형관·선택받은자·파수꾼·포격대·추적자
 - Phase 1 제외 범위: C#, Parsing, Node/Trigger, Prefab, Scene 생성
 
-현재 저장소에는 Artifact/Synergy/Summon Definition과 Loading 경로, `ArtifactState`, `SynergyState`, `ArtifactSynergyManager`, Stage 준비 연결, Artifact Effect Node/Reaction runtime 소비 경로가 있다. `UnitRole.Summon`, Definition 기반 단계별 학습과 소환 API가 연결됐고, 씬 prefab binding·이동·사망 lifecycle은 다음 Phase다.
+현재 저장소에는 Artifact/Synergy/Summon Definition과 Loading 경로, `ArtifactState`, `SynergyState`, `ArtifactSynergyManager`, Stage 준비 연결, Artifact Effect Node/Reaction runtime 소비 경로가 있다. `UnitRole.Summon`, Definition 기반 단계별 학습과 소환 API, 씬 prefab binding, `Densest` 대상 재선정, Zone pull, 이동·사망 lifecycle이 연결됐다.
 
 ## 2. 승인된 방향
 
@@ -81,7 +81,7 @@ Phase 2에서 모든 Artifact·Synergy·Summon Loading과 Definition 생성은 �
 
 ### 3.3 후속 runtime 구현
 
-- 정령계약 시너지 2/4/6/8단계와 정령왕
+- 완료: 정령계약 시너지 2/4/6/8단계와 정령왕
 - 정령계약 외 개별 유물 40개
 - 처형관, 선택받은자, 파수꾼, 포격대 시너지
 - 상세 원문 작성 뒤 추적자
@@ -344,7 +344,7 @@ RuntimeCatalog는 ID 조회를 제공한다.
 - 파티 전체 시너지별 보유 개수
 - 현재 시너지 개수 로그
 
-활성 level, 시너지 Effect와 정령왕 해금 스킬은 Phase 4 이후 범위다. 유물 효과에 필요한 파티 대표 속성과 파티원별 대표 속성은 `PrepareStage`에서 계산하고 `ActiveArtifactEffectIds` 배포로 고정한다.
+활성 level, 시너지 Effect와 정령왕 해금 스킬은 `PrepareStage`에서 현재 시너지 개수로 계산한다. 유물 효과에 필요한 파티 대표 속성과 파티원별 대표 속성은 `PrepareStage`에서 계산하고 `ActiveArtifactEffectIds` 배포로 고정한다.
 
 ### 7.3 `ArtifactSynergyManager`
 
@@ -358,7 +358,7 @@ Manager가 유물·시너지 추가 효과의 Stage 수명주기를 구현한다
 4. 개별 Artifact Effect의 `recipient_scope`를 해석해 파티 유닛에 활성 Effect ID 배포
 5. 정령계약 유물 10개만 배포하고 시너지 개수 한 줄 로그 출력
 
-Phase 4 이후에만 활성 시너지 Effect 순회, outcome Skill 실행, SpawnUnit과 정령왕 Stage 정리를 추가한다.
+`PrepareStage`가 활성 시너지 Effect를 순회해 outcome Skill을 확정하고 `SpawnUnit`으로 정령왕을 Stage마다 정리·재생성한다.
 
 Manager가 직접 `Instantiate`, `ApplyDamage`, 치명타 계산을 하지 않는다. 각 concrete Definition과 기존 Executor가 실제 결과를 실행한다.
 
@@ -402,7 +402,7 @@ ArtifactSynergyEffectDefinition.Reactions
 | `PassiveTrigger` | 기존 `passive_skill_triger.csv`와 graph node의 `effect_id` -> `SkillReaction` -> `SkillTrigger` | `SkillTrigger`가 활성 Artifact Reaction을 수집하고 기존 gate/scheduler 뒤 `SkillExecution -> family Executor` 실행 |
 | `ExecuteSkill` | `outcome_skill_id -> Generation에서 concrete SkillDefinition 참조 확정` | `ArtifactSynergyManager.ActivateStageEffects` 또는 Trigger가 `SkillExecution` 호출 |
 | `GrantSkill` | `outcome_skill_id -> Generation에서 concrete SkillDefinition 참조 확정` | `SynergyState`가 선택 유닛/정령왕의 Stage 한정 `SkillState`에 부여 |
-| `SpawnUnit` | `spawn_monster_id -> Generation에서 SummonDefinition 참조 확정` | `ArtifactSynergyManager.ActivateStageEffects -> UnitSpawnManager.SpawnTemporaryMonster` |
+| `SpawnUnit` | `spawn_monster_id -> Generation에서 SummonDefinition 참조 확정` | `ArtifactSynergyManager.ActivateStageEffects -> UnitSpawnManager.SpawnTemporarySummon` |
 
 두 Effect Definition과 Loading 경로, `ArtifactState`, Effect Definition의 Node/Reaction 필드, 기존 snapshot/Trigger 실행 연결까지 구현됐다. 새 Node/Trigger CSV나 `PassiveSkillDefinition` 없이 기존 Effect owner와 `SkillExecutionRules`/`SkillTrigger` 경로를 재사용한다.
 
@@ -700,6 +700,8 @@ InGameCombatManager.Update
 
 ### Phase 4: 정령계약 시너지 Node·Trigger 연결 및 스킬 해금
 
+상태: 완료.
+
 - 정령계약 시너지 Node·Trigger도 기존 graph-node/trigger CSV의 `Effect` owner 경로 사용
 - 정령 폭격 `RepeatPerTarget` 총 3회 연결 및 반복별 `Densest` 재선정
 - 차원붕괴 `ZoneSkill`의 `PullToCenter(0.2 unit/tick)`와 종료 후 폭발 `ExecuteSkill` 연결
@@ -709,6 +711,8 @@ InGameCombatManager.Update
 - `ArtifactSynergyEffectDefinition`에 typed Node/Reaction/outcome 참조 연결
 
 ### Phase 5: 임시 아군 정령왕 runtime
+
+상태: 완료. Unity Play Mode 검증은 사용자 작업이다.
 
 - `UnitRole.Summon`
 - `SummonDefinition` 기반 Factory/Spawn (Factory와 Manager API 구현)
@@ -721,6 +725,8 @@ InGameCombatManager.Update
 - 기존 적 대상 판정·아군 팀 대상 판정·MonsterActor HP/피해 팝업 재사용
 
 ### Phase 6: 정령계약 검증
+
+상태: 정적 검증 완료. Unity Play Mode 검증 대기.
 
 - 2/4/6/8 누적 효과와 8→6 감소 시 차원붕괴 비학습
 - 첫 Day/다음 Day에 시너지 2 이상이면 Stage당 1회 소환
@@ -777,8 +783,7 @@ InGameCombatManager.Update
 - 정령계약 유물의 `SkillModifier`와 `PassiveTrigger`는 기존 Node/Trigger 경로를 통과한다.
 - `SkillModifier`는 최종 스킬 snapshot에만 적용되며 원본 `SkillDefinition`을 변경하지 않는다.
 - Artifact Trigger는 기존 `SkillReaction` gate/scheduler를 사용하고 별도 유물 Trigger executor를 만들지 않는다.
-- 아래 정령왕 실행 기준은 Phase 4~6 후속 범위다.
-- 정령왕 생성은 `SpawnUnit` Effect에서 `UnitSpawnManager.SpawnTemporaryMonster`를 통과한다.
+- 정령왕 생성은 `SpawnUnit` Effect에서 `UnitSpawnManager.SpawnTemporarySummon`을 통과한다.
 - 정령왕 공격은 기존 SingleAttack/AreaAttack 실행 경로를 통과한다.
 - 정령 폭격은 최초 실행을 포함해 정확히 3회 배치되고, 차원붕괴 폭발은 균열 종료 뒤 한 번만 실행된다.
 - 정령왕은 `UnitSide.Player`로 등록되어 소환 이후 `Ally/AllAllies` 효과를 받고 적을 공격한다.
@@ -793,7 +798,7 @@ InGameCombatManager.Update
 
 - Phase 1 완료 판정은 두 Effect CSV와 정령왕 유닛·스킬 CSV 데이터 작성까지만 대상으로 한다.
 - Phase 3 runtime 완료 판정은 상태·Manager 뼈대, 시너지 개수 로그, 정령계약 유물 10개만 대상으로 한다.
-- 정령계약 시너지 효과와 정령왕은 Phase 4 이후에 진행한다.
+- 정령계약 시너지 효과와 정령왕은 Phase 4~5에서 구현했고 Phase 6 Play Mode 검증만 남았다.
 - 정령계약 외 유물 40개와 다른 시너지는 정령계약 유물 검증 뒤 진행한다.
 - Tracker는 상세 원문이 준비되기 전 임의 구현하지 않는다.
 

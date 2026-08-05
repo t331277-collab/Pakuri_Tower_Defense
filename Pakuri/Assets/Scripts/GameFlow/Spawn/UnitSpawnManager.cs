@@ -32,6 +32,7 @@ namespace Pakuri.InGame
         public IReadOnlyList<CombatUnitEntry> Enemies => unitRegistry.Enemies;
         public int EnemyCount => unitRegistry.EnemyCount;
         public Transform EnemySpawnPoint => enemySpawnPoint;
+        public Transform MiddleSpawnPoint => middleSpawnPoint;
 
         /// 전투 씬에 Nexus 모델을 만들고 표시 Actor와 Registry를 연결한다.
         public void RegisterNexus(NexusActor actor)
@@ -139,6 +140,35 @@ namespace Pakuri.InGame
             }
 
             return null;
+        }
+
+        /// 적이 존재하는 동안 등록된 소환수를 적 진입점까지 이동시킨다.
+        internal void TickSummons(float deltaTime)
+        {
+            if (deltaTime <= 0f || EnemyCount <= 0 || enemySpawnPoint == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < Players.Count; i++)
+            {
+                var entry = Players[i];
+                var model = entry != null ? entry.Model : null;
+                if (model == null
+                    || model.Identity == null
+                    || model.Identity.Role != UnitRole.Summon
+                    || !entry.IsAlive
+                    || entry.Transform == null
+                    || model.Stats == null)
+                {
+                    continue;
+                }
+
+                entry.Transform.position = Vector3.MoveTowards(
+                    entry.Transform.position,
+                    enemySpawnPoint.position,
+                    Mathf.Max(0f, model.Stats.MoveSpeed) * deltaTime);
+            }
         }
 
         /// RunSession에서 선택한 몬스터를 플레이어 슬롯 0에 생성한다.
@@ -320,6 +350,10 @@ namespace Pakuri.InGame
 
             UnregisterUnit(model);
             entry.HandleDefeat();
+            if (model.Identity != null && model.Identity.Role == UnitRole.Summon)
+            {
+                Destroy(entry.Actor.gameObject, 0.95f);
+            }
         }
 
         /// 기존 플레이어 몬스터가 남아 있으면 RunSession 상태를 반영해 되살리고 다시 등록한다.

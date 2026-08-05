@@ -439,12 +439,29 @@ namespace Pakuri.InGame
             SkillTargetingSpec targeting,
             AreaBlueprintSpec area)
         {
+            if (context == null)
+            {
+                return Vector2.zero;
+            }
+
             var origin = context.CasterEntry.Transform != null
                 ? context.CasterEntry.Transform.position
                 : Vector3.zero;
             if (context.HasManualTargetPoint)
             {
                 return context.ManualTargetPoint;
+            }
+
+            if (targeting != null && targeting.Selection == SkillTargetSelection.BattlefieldCenter)
+            {
+                return context.Roster != null && context.Roster.MiddleSpawnPoint != null
+                    ? context.Roster.MiddleSpawnPoint.position
+                    : origin;
+            }
+
+            if (targeting != null && targeting.Selection == SkillTargetSelection.Densest)
+            {
+                return DensestCenter(context.CasterEntry, context.Roster, targeting, area);
             }
 
             if (context.HasManualAimDirection && context.ManualAimDirection.sqrMagnitude > 0.0001f)
@@ -460,6 +477,59 @@ namespace Pakuri.InGame
             }
 
             return origin;
+        }
+
+        /// 현재 후보 중 가장 많은 대상을 포함하는 후보 위치를 고른다.
+        private static Vector2 DensestCenter(
+            CombatUnitEntry caster,
+            UnitSpawnManager roster,
+            SkillTargetingSpec targeting,
+            AreaBlueprintSpec area)
+        {
+            var origin = caster != null && caster.Transform != null
+                ? (Vector2)caster.Transform.position
+                : Vector2.zero;
+            var candidates = TargetList(caster, roster, targeting);
+            var radius = Mathf.Max(0f, BaseRadius(targeting, area));
+            var radiusSquared = radius * radius;
+            CombatUnitEntry best = null;
+            var bestCount = -1;
+            var bestDistanceSquared = float.MaxValue;
+
+            for (var i = 0; i < candidates.Count; i++)
+            {
+                var candidate = candidates[i];
+                if (candidate == null || !candidate.IsAlive || candidate.Transform == null || candidate.Model == null)
+                {
+                    continue;
+                }
+
+                var center = (Vector2)candidate.Transform.position;
+                var count = 0;
+                for (var j = 0; j < candidates.Count; j++)
+                {
+                    var other = candidates[j];
+                    if (other != null && other.IsAlive && other.Transform != null && other.Model != null
+                        && ((Vector2)other.Transform.position - center).sqrMagnitude <= radiusSquared)
+                    {
+                        count++;
+                    }
+                }
+
+                var offset = center - origin;
+                var distanceSquared = offset.sqrMagnitude;
+                if (count > bestCount
+                    || (count == bestCount && distanceSquared < bestDistanceSquared))
+                {
+                    best = candidate;
+                    bestCount = count;
+                    bestDistanceSquared = distanceSquared;
+                }
+            }
+
+            return best != null && best.Transform != null
+                ? best.Transform.position
+                : origin;
         }
 
         /// 영역 전용 값이 있으면 공통 대상 범위보다 우선한다.

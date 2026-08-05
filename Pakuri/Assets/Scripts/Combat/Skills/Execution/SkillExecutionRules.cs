@@ -615,6 +615,14 @@ namespace Pakuri.InGame
 				ApplyRepeatPerTargetAction(snapshot, repeatAction.Value);
 			}
 
+			PullToCenterActionOp? pullAction = nodes[i].GetOperation<PullToCenterActionOp>();
+			if (pullAction.HasValue)
+			{
+				snapshot.PullDistancePerTick = Mathf.Max(
+					snapshot.PullDistancePerTick,
+					pullAction.Value.DistancePerTick);
+			}
+
 			RedistributeConsumedStatusActionOp? redistributeAction = nodes[i].GetOperation<RedistributeConsumedStatusActionOp>();
 			if (redistributeAction.HasValue)
 			{

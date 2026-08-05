@@ -604,7 +604,7 @@ GameObject:
   - component: {fileID: 22466742}
   - component: {fileID: 22466741}
   m_Layer: 5
-  m_Name: Cur (2)
+  m_Name: Lv4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7202,7 +7202,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &244908309
 Transform:
   m_ObjectHideFlags: 0
@@ -18758,7 +18758,7 @@ GameObject:
   - component: {fileID: 698885445}
   - component: {fileID: 698885444}
   m_Layer: 5
-  m_Name: Cur (4)
+  m_Name: Lv8
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -28209,6 +28209,37 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1062359093}
   m_CullTransparentMesh: 1
+--- !u!1 &1064856754
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1064856755}
+  m_Layer: 0
+  m_Name: MiddleSpawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1064856755
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1064856754}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2045746498}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1066427794
 GameObject:
   m_ObjectHideFlags: 0
@@ -30841,7 +30872,7 @@ GameObject:
   - component: {fileID: 1115198736}
   - component: {fileID: 1115198735}
   m_Layer: 5
-  m_Name: Cur (3)
+  m_Name: Lv6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -38566,6 +38597,7 @@ MonoBehaviour:
   combatManager: {fileID: 1427799828}
   playerSpawnPoint: {fileID: 1137822058}
   enemySpawnPoint: {fileID: 1902957069}
+  middleSpawnPoint: {fileID: 1064856755}
   partySpawnPoints:
   - {fileID: 1137822058}
   - {fileID: 294275804}
@@ -38585,6 +38617,9 @@ MonoBehaviour:
     prefab: {fileID: 4596420534878418281, guid: d827bb1e48cabef4abeed838d6bb8e05, type: 3}
   - monsterId: vega
     prefab: {fileID: 4596420534878418281, guid: a1e586738d1b9b64a97d0caba4cd449c, type: 3}
+  summonPrefabBindings:
+  - summonId: spirit-king
+    prefab: {fileID: 3842231094034295746, guid: 22fa35ab86fc0754fa50c8086e14d1b0, type: 3}
   enemyPrefabBindings:
   - enemyId: stage1-swordsman
     prefab: {fileID: 6219452113495756200, guid: f2892daa44e860e49b1ea2b17f8682dc, type: 3}
@@ -54328,7 +54363,7 @@ GameObject:
   - component: {fileID: 2021802072}
   - component: {fileID: 2021802071}
   m_Layer: 5
-  m_Name: Cur (1)
+  m_Name: Lv2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -54548,6 +54583,7 @@ Transform:
   - {fileID: 1994287393}
   - {fileID: 1100510381}
   - {fileID: 905432076}
+  - {fileID: 1064856755}
   m_Father: {fileID: 747805541}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2072310893
@@ -55913,7 +55949,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4288190616
-  m_fontColor: {r: 0.5943396, g: 0.5943396, b: 0.5943396, a: 1}
+  m_fontColor: {r: 0.59607846, g: 0.5943396, b: 0.5943396, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:

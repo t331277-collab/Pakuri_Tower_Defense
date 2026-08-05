@@ -35,23 +35,28 @@ Code Builder
 
 ### Status
 
-Phase 0 design, Phase 1 skill-data/loading and Phase 2 synergy-state/spawn API work complete. Scene binding, movement, death lifecycle and target execution remain pending.
+Phase 0 design, Phase 1 skill-data/loading, Phase 2 synergy-state/spawn API and Phase 3 target/pull/movement/death/prefab/scene work complete. Unity Play Mode verification remains user-owned.
 
 ### Next Actions
 
-- Implement Zone pull, Densest center resolution and repeated center reselection.
-- Implement movement, death handling and prefab/scene binding in the following commit.
+- Run Unity Play Mode checks for thresholds 2/4/6/8, Densest targeting, three bombardments, Rift pull/follow-up, movement and death lifecycle.
+- Confirm the Spirit King is absent from DamageMeter while HP and damage popup remain visible.
 
 ### Evidence
 
 - `artifact-synergy-runtime-design.md` records the confirmed 2/4/6/8 thresholds, `SummonDefinition`, `ZoneSkill` Rift, 0.2 pull tick, 0.5 movement and targeting rules.
-- `ArtifactSynergyManager.PrepareStage` currently computes `SynergyState` but does not execute `ArtifactSynergyEffectDefinition` or spawn a summon.
-- `UnitSpawnManager` already owns player/enemy registration and has the scene `EnemySpawnPoint` binding; `MiddleSpawnPoint` exists in `InGameScene` but is not yet bound to summon spawning.
+- `ArtifactSynergyManager.PrepareStage` computes `SynergyState`, traverses loaded synergy effects, grants threshold skills and spawns the resolved summon.
+- `UnitSpawnManager` owns player/enemy registration, has both `EnemySpawnPoint` and `MiddleSpawnPoint` scene bindings, and binds the `spirit-king` prefab.
 - `CombatUnitRegistry` groups by `UnitSide`, `SkillTargeting` uses `roster.Players` for ally targeting, and `DamageMeterRuntimeTracker` filters `UnitRole.Monster`, establishing the reuse boundaries.
-- Phase 1 adds summon-owned graph/trigger loading and generated D `OnExpire` reaction data; execution of the generated target/pull operations is deferred.
+- Phase 1 adds summon-owned graph/trigger loading and generated D `OnExpire` reaction data; Phase 3 executes the generated target/pull operations through the existing runtime.
 - `ArtifactSynergyManager` now traverses loaded synergy levels/effects, grants only active threshold skills and calls `UnitSpawnManager.SpawnTemporarySummon`.
 - `UnitCombatStateFactory.CreateSummon` creates `UnitRole.Summon`/`UnitSide.Player` state with the selected learned skills and dynamic skill-attribute override.
 - `SkillExecution` resolves that override at snapshot preparation without mutating authored `SkillDefinition` data.
+- `SkillTargeting.AreaCenter` resolves `Densest` by maximum candidate count, then caster distance, then Registry order; `BattlefieldCenter` uses the bound `MiddleSpawnPoint`.
+- `SingleSkillExecutor` recomputes `Densest` for every Spirit Bombardment repeat.
+- `ZoneSkillActor` consumes the authored `PullToCenter(0.2)` operation for each Rift tick before the existing damage/status route.
+- `UnitSpawnManager.TickSummons` moves living summons at their generated `base_move_speed=0.5` only while enemies are registered and stops at `EnemySpawnPoint`.
+- `Daejungryung.prefab` now has the existing `MonsterActor` component, and `InGameScene` binds `MiddleSpawnPoint` plus `spirit-king` to the summon prefab.
 
 ### History
 
@@ -59,6 +64,7 @@ Phase 0 design, Phase 1 skill-data/loading and Phase 2 synergy-state/spawn API w
 - 2026-08-05: Code Builder updated the runtime design with the confirmed Zone pull, target selection, skill thresholds and stage lifecycle.
 - 2026-08-05: Code Builder completed the Spirit King skill CSV/graph/trigger loading phase and verified a zero-error solution build.
 - 2026-08-05: Code Builder implemented Definition-driven synergy thresholds, summon factory/registration API and Physical-inclusive party attribute resolution; prefab/scene binding remains next.
+- 2026-08-05: Code Builder completed Phase 3 with existing target routing, Densest reselection, Zone pull, summon movement/death lifecycle, MonsterActor prefab binding and scene references.
 
 ## Task: 2026-08-05 Artifact Debug Acquisition Flow
 

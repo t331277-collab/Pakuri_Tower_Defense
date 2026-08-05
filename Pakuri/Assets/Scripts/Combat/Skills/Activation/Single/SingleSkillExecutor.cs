@@ -106,14 +106,15 @@ internal sealed class SingleSkillExecutor : MonoBehaviour
 		{
 			for (var i = 0; i < repeatCount; i++)
 			{
+				var repeatCenter = ResolveRepeatCenter(context, repeatedSnapshot, center);
 				SingleSkillActor.ExecuteAtCenter(
 					context,
 					repeatedSnapshot,
-					center,
+					repeatCenter,
 					runtimeVisual,
 					prefab,
 					useRuntimeState: false);
-				PublishDeploymentLifecycle(context, repeatedSnapshot, center);
+				PublishDeploymentLifecycle(context, repeatedSnapshot, repeatCenter);
 			}
 			return;
 		}
@@ -146,19 +147,20 @@ internal sealed class SingleSkillExecutor : MonoBehaviour
 				|| context.CombatManager == null
 				|| context.Roster == null
 				|| context.CasterEntry == null
-				|| context.Caster == null)
+					|| context.Caster == null)
 			{
 				break;
 			}
 
+			var repeatCenter = ResolveRepeatCenter(context, snapshot, center);
 			SingleSkillActor.ExecuteAtCenter(
 				context,
 				snapshot,
-				center,
+				repeatCenter,
 				runtimeVisual,
 				prefab,
 				useRuntimeState: false);
-			PublishDeploymentLifecycle(context, snapshot, center);
+			PublishDeploymentLifecycle(context, snapshot, repeatCenter);
 		}
 
 		pendingSchedules = Mathf.Max(0, pendingSchedules - 1);
@@ -166,6 +168,22 @@ internal sealed class SingleSkillExecutor : MonoBehaviour
 		{
 			Complete();
 		}
+	}
+
+	/// 밀집 대상 스킬은 반복 시점의 현재 위치를 다시 계산한다.
+	private static Vector2 ResolveRepeatCenter(
+		SkillExecutionContext context,
+		SkillExecutionState snapshot,
+		Vector2 fallback)
+	{
+		return snapshot != null
+			&& snapshot.PreparedTargeting != null
+			&& snapshot.PreparedTargeting.Selection == SkillTargetSelection.Densest
+			? SkillTargeting.AreaCenter(
+				context,
+				snapshot.PreparedTargeting,
+				new AreaBlueprintSpec { Radius = snapshot.PreparedBaseRadius })
+			: fallback;
 	}
 
 	/// 배치 시작 사건을 전달한다.

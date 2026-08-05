@@ -112,6 +112,7 @@ namespace Pakuri.InGame
                 enemyActionController.Tick(Time.deltaTime);
             }
 
+            Units.TickSummons(Time.deltaTime);
             TickUnitStatuses(Time.deltaTime);
         }
 

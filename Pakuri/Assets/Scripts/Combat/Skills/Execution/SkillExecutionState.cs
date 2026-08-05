@@ -314,6 +314,8 @@ public class SkillExecutionState
 
 	internal float PreparedBaseRadius { get; set; }
 
+	internal float PullDistancePerTick { get; set; }
+
 	internal float PreparedVisualRadiusMultiplier { get; set; } = 1f;
 
 	internal int PreparedHitTargetCount { get; set; } = int.MaxValue;

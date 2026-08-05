@@ -131,6 +131,7 @@ namespace Pakuri.InGame
                 casterEntry,
                 roster,
                 targeting,
+                center,
                 prefabHitboxColliders,
                 damage,
                 attribute,
@@ -150,6 +151,7 @@ namespace Pakuri.InGame
             CombatUnitEntry sourceEntry,
             UnitSpawnManager unitRoster,
             SkillTargetingSpec targetingSpec,
+            Vector2 areaCenter,
             Collider2D[] hitboxColliders,
             float damagePerTick,
             DamageAttribute damageAttribute,
@@ -175,6 +177,23 @@ namespace Pakuri.InGame
                 hitboxColliders,
                 Vector2.zero,
                 eligibleTargets);
+
+            if (executionData != null && executionData.PullDistancePerTick > 0f)
+            {
+                for (var i = 0; i < eligibleTargets.Count; i++)
+                {
+                    var target = eligibleTargets[i];
+                    if (target == null || !target.IsAlive || target.Transform == null)
+                    {
+                        continue;
+                    }
+
+                    target.Transform.position = Vector2.MoveTowards(
+                        target.Transform.position,
+                        areaCenter,
+                        executionData.PullDistancePerTick);
+                }
+            }
 
             var routed = ApplyResolvedTargets(
                 manager,
