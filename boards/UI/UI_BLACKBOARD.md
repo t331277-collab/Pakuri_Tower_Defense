@@ -8,6 +8,53 @@ The previous UI and RunScene UI boards are preserved under `boards/ARCHIVE/ACTIV
 
 For new UI work, inspect the exact current scripts, scenes, prefabs, UXML, USS, or assets first, then add a required-field task block here only when persistent state is needed.
 
+## Task: 2026-08-05 Spirit Contract Artifact HUD Display
+
+### Task title
+
+Display the Spirit Contract artifact count, icon and cumulative level state in the existing single Artifact_Container.
+
+### Goals
+
+- Show `HUD/Artifact_Container` only when the party owns one or more `spirit-contract` artifacts.
+- Count owned Spirit Contract artifacts across `RunSession.PartyMembers` and write the count to `Image/Cur/Text (TMP) (1)`.
+- Resolve the synergy icon from `artifact_synergies.csv` through the existing CSV -> Definition -> runtime catalog path.
+- Turn `Lv2`, `Lv4`, `Lv6` and `Lv8` text white at counts 2, 4, 6 and 8 respectively.
+- Keep synergy effect execution out of this display-only phase.
+
+### Constraints
+
+- Display only the confirmed `spirit-contract` synergy because the scene has one `Artifact_Container`.
+- Reuse `InGameInfoUI.Refresh`/`InGameUIManager.RefreshInfo`; do not add a second HUD manager or an artifact event system.
+- Preserve the existing scene hierarchy and the user's `Lv2/Lv4/Lv6/Lv8` object names.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and statically verified. Unity MCP live validation timed out; the serialized runtime catalog asset contains the required Sprite reference and Play Mode remains user-owned.
+
+### Next Actions
+
+- User verifies artifact acquisition/debug grant updates the single HUD container, count, icon and cumulative level colors in `InGameScene` Play Mode.
+
+### Evidence
+
+- `InGameInfoUI.cs:12,35-47,49-70,136-246` binds and refreshes the existing `HUD/Artifact_Container` paths, scans every party member's `ArtifactState`, resolves catalog artifact/synergy Definitions and applies the 2/4/6/8 thresholds.
+- `artifact_synergies.csv` has the `Icon_Image` `asset_path` column and the Spirit Contract path `Assets/Image/UI/Artifact/ChatGPT Image 2026년 8월 5일 오후 03_39_55.png`.
+- `CsvRowParser.ArtifactSynergyRow`, `CsvAssetReferenceCollector`, `GameDataCatalogBuilder.Artifacts` and `ArtifactSynergyDefinition.Icon` carry the icon through the existing data pipeline.
+- `InGameScene.unity` contains one `HUD/Artifact_Container`; it is serialized inactive until the owned count is positive.
+- `CsvRuntimeCatalog.asset` contains the matching UI artifact Sprite path, GUID `8b537b0e0f060644cb22f8d33a5bbf01` and first-sprite fileID `1672546330545570191`.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and the existing 2 assembly-reference warnings; CSV column-count and icon-path checks passed.
+- Unity `Validate CSV Source Data` and console requests were attempted after refresh but returned transport timeouts; no Play Mode state was changed.
+
+### History
+
+- 2026-08-05: Code Builder added the data-driven synergy icon column/pipeline and connected the existing HUD refresh to Spirit Contract count and threshold display without implementing synergy effects.
+
 ## Task: 2026-08-05 Artifact Debug Acquisition Flow
 
 ### Task title
@@ -19,12 +66,13 @@ Add a DebugUI synergy-to-artifact acquisition flow.
 - Open `ArtifactDebugUI` from the `Debug/DebugPanel/DebugUI/ArtifactDebug` button.
 - List catalog artifact synergies on `Debug/DebugPanel/ArtifactDebugUI/A~JBtn` and list the selected synergy's artifacts on the sibling path `Debug/DebugPanel/ArtifactAchiveDebugUI/A~JBtn`.
 - Write each display name to the authored TMP text child and leave excess slots visible but non-interactable with no listener action.
-- Route an artifact choice through the existing PrisonPanel 1P-5P receiving-unit selection.
-- Return to the artifact acquisition debug list after a successful debug grant without opening the normal RewardPanel completion flow.
+- Route an artifact choice through the existing `ArtifactAchiveDebugUI/1P~5P` receiving-unit buttons without activating PrisonPanel.
+- Write each current party monster display name to the corresponding debug unit button TMP text.
+- Disable already-owned artifact buttons and close `ArtifactAchiveDebugUI` after a successful debug grant without opening the normal RewardPanel completion flow.
 
 ### Constraints
 
-- Reuse `GameDataLoader.CurrentCatalog`, `PrisonPanelUI.OpenArtifactAcquisition`, and `RunSession.TryAcquireArtifact`.
+- Reuse `GameDataLoader.CurrentCatalog` and `RunSession.CanAcquireArtifact`/`TryAcquireArtifact`.
 - Do not add a second artifact ownership or duplicate/capacity rule.
 - Do not change CSV data or add new scene objects; the existing `ArtifactDebug`, `ArtifactDebugUI`, sibling `ArtifactAchiveDebugUI`, A-J buttons and Close object are the binding targets.
 - Unity Play Mode verification remains user-owned.
@@ -46,8 +94,9 @@ Implemented and locally verified. Play Mode verification remains user-owned.
 
 - `DebugUI.cs` binds the existing ArtifactDebug button at `Debug/DebugPanel/DebugUI/ArtifactDebug`; the user-reorganized panels are siblings at `Debug/DebugPanel/ArtifactDebugUI` and `Debug/DebugPanel/ArtifactAchiveDebugUI`.
 - `DebugUI.cs` reads `ArtifactSynergies` and `Artifacts` from the loaded catalog; current CSV inspection reports 6 synergies, 10 artifacts for each of the first 5 synergies, and 0 for Tracker.
-- `InGameUIManager.cs` distinguishes debug artifact completion from normal reward completion and returns to the debug artifact list after success.
-- `PrisonPanelUI.cs` remains the only receiving-unit interaction path; its existing `CanAcquireArtifact`/`TryAcquireArtifact` checks enforce occupied-slot, duplicate and three-artifact capacity rules.
+- `DebugUI.cs` binds the existing `ArtifactAchiveDebugUI/1P~5P` buttons and their TMP text children, writes party monster names, and calls `RunSession.TryAcquireArtifact` directly.
+- `RunSession.CanAcquireArtifact`/`TryAcquireArtifact` remain the only debug grant authority and enforce occupied-slot, duplicate and three-artifact capacity rules.
+- Successful debug grants emit a `[ArtifactDebug] ... 획득` Unity log and deactivate `ArtifactAchiveDebugUI`; normal RewardPanel acquisition still uses `PrisonPanelUI`.
 - Unity `InGameScene` path inspection found all requested targets; scene validation returned 0 issues, 0 missing scripts and 0 broken prefabs.
 - The previous nested acquisition path no longer resolves; the current sibling paths resolve the ArtifactDebugUI panel and the ArtifactAchiveDebugUI A-J targets.
 - `DebugUI.cs` now uses the existing `UiBindingUtility.BindOptionalChild` for per-skill modifier buttons, so missing modifier buttons cannot make `BindObject()` fail before ArtifactDebug listeners are registered.
@@ -63,6 +112,8 @@ Implemented and locally verified. Play Mode verification remains user-owned.
 - 2026-08-05: User moved ArtifactDebugUI to be a DebugPanel child; Code Builder updated DebugUI to the sibling panel paths, verified the full A-J binding targets, compiled with 0 errors, validated the scene with 0 issues, and confirmed the existing artifact debug execution chain remains connected.
 - 2026-08-05: User removed modifier buttons; Code Builder made those bindings optional so ArtifactDebugUI can initialize independently, then verified catalog-backed A-J target paths, scene validation, Unity diagnostics, and a 0-error build.
 - 2026-08-05: User moved ArtifactAchiveDebugUI to a DebugPanel sibling; Code Builder updated its panel, Close, and A-J artifact bindings, saved InGameScene, and verified build and scene validation.
+- 2026-08-05: User required debug artifact acquisition to use the existing ArtifactAchiveDebugUI 1P-5P buttons without PrisonPanel; Code Builder bound those buttons, assigned party monster names, reused RunSession grant validation, logged successful grants, disabled owned artifacts, and removed the obsolete debug PrisonPanel completion path.
+- 2026-08-05: User reported that debug 1P-5P clicks produced no grant log; inspection found `ClearArtifactDebugState` removed their listeners and target refresh did not restore them. Code Builder now rebinds each existing unit-button listener during target refresh without changing the RunSession acquisition logic.
 
 ## Task: 2026-08-05 Boss Artifact Reward Panel Design
 

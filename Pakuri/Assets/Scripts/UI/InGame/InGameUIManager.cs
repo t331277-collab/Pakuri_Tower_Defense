@@ -18,11 +18,9 @@ namespace Pakuri.InGame
         private ArtifactUI artifactUI;
         private MenifestUI menifestUI;
         private BossHpUI bossHpUI;
-        private DebugUI debugUI;
 
         private int shownStage = -1;
         private int shownDay = -1;
-        private bool debugArtifactAcquisition;
         private bool referencesBound;
         private bool bindingFailed;
 
@@ -71,19 +69,6 @@ namespace Pakuri.InGame
 
         internal void OpenArtifactAcquisition(string artifactId)
         {
-            debugArtifactAcquisition = false;
-            artifactUI?.Hide();
-            prisonPanelUI?.OpenArtifactAcquisition(artifactId);
-        }
-
-        internal void OpenArtifactDebugAcquisition(string artifactId)
-        {
-            if (string.IsNullOrWhiteSpace(artifactId))
-            {
-                return;
-            }
-
-            debugArtifactAcquisition = true;
             artifactUI?.Hide();
             prisonPanelUI?.OpenArtifactAcquisition(artifactId);
         }
@@ -119,15 +104,6 @@ namespace Pakuri.InGame
 
         internal void CompleteArtifactAcquisition()
         {
-            if (debugArtifactAcquisition)
-            {
-                debugArtifactAcquisition = false;
-                prisonPanelUI?.Hide();
-                debugUI?.ShowArtifactAcquisitionDebug();
-                RefreshInfo();
-                return;
-            }
-
             rewardPanelUI?.ConsumeActiveArtifactButton();
             prisonPanelUI?.Hide();
             artifactUI?.Clear();
@@ -186,8 +162,7 @@ namespace Pakuri.InGame
                 && offeringUI != null
                 && artifactUI != null
                 && menifestUI != null
-                && bossHpUI != null
-                && debugUI != null)
+                && bossHpUI != null)
             {
                 return true;
             }
@@ -251,11 +226,6 @@ namespace Pakuri.InGame
                 "HUD/BossHP",
                 nameof(bossHpUI),
                 ref valid);
-            debugUI = UiBindingUtility.BindSceneComponent<DebugUI>(
-                this,
-                nameof(debugUI),
-                ref valid);
-
             referencesBound = valid;
             bindingFailed = !valid;
             return valid;

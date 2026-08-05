@@ -21,7 +21,7 @@ Connect the authored Spirit King skills to the existing graph, trigger and Defin
 
 - Do not create a new summon skill family or summon-only Node/Trigger CSV.
 - `spirit-king-dimensional-rift` is `AreaAttack`; pull is `0.2 unit/tick`, damage is zero and the existing Zone lifecycle emits the follow-up.
-- C repeats twice after the first cast, each repeat reselects the current densest enemy position.
+- C repeats twice after the first cast, cycles available Densest enemy positions, and reuses the current center when target distribution is unavailable.
 - CSV remains the source of skill values and visual resource paths; runtime code consumes generated Definitions.
 
 ### Role Owner
@@ -40,7 +40,7 @@ Phase 1 loading/graph implementation and Phase 2 Definition-driven skill ownersh
 ### Evidence
 
 - `summon_units.csv` uses `base_move_speed=0.5`; `summon_units_skill.csv` now authors visual reuse, A/B/C `Densest`, D/E `BattlefieldCenter` and D `AreaAttack`.
-- Existing graph rows author C `RepeatPerTarget(2,0.35,1)`, D `PullToCenter(0.2)` and D `OnExpire -> ExecuteSkill(E)`; the D follow-up selects `Nearest` enemies at `EventCenter` so the expiry event does not require a null `EventTarget`.
+- Existing graph rows author C `RepeatPerTarget(2,0.1,1)`, D `PullToCenter(0.2)` and D `OnExpire -> ExecuteSkill(E)`; the D follow-up selects `Nearest` enemies at `EventCenter` so the expiry event does not require a null `EventTarget`.
 - `GameDataCatalogBuilder.BuildSummons` now attaches summon-owned reactions to the generated active skill Definitions.
 - `SkillGraphParser` and `CsvDataValidator` now accept summon-owned skills/triggers without adding a summon-specific graph/trigger file.
 - `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal` completed with 0 errors and the existing 2 assembly-reference warnings; edited CSVs import structurally with uniform columns.
@@ -51,6 +51,7 @@ Phase 1 loading/graph implementation and Phase 2 Definition-driven skill ownersh
 - 2026-08-05: Code Builder recorded the corrected Zone Rift, visual reuse, Densest re-selection, pull and follow-up contracts before implementation.
 - 2026-08-05: Code Builder connected Spirit King rows and graph/trigger data to the shared summon Loading/Generation path; runtime pull and targeting execution remains deferred to the next phase.
 - 2026-08-05: Code Builder corrected the D `OnExpire` target contract and added runtime nearest fallback plus no-live-enemy gating for automatic enemy-target skills.
+- 2026-08-06: Code Builder aligned the C graph interval to `0.1`; the shared Single executor now schedules the two repeats even when `UseMultiDeployment` is false and cycles Densest targets with center fallback.
 
 ## Task: 2026-08-05 Artifact Synergy Icon Data Binding
 
@@ -178,12 +179,13 @@ Designer for contract; Code Builder for Phase 1 and Phase 2 implementation.
 
 ### Status
 
-Phase 1, Phase 2 and the ten-artifact Phase 3 data/runtime scope are complete. All Spirit Contract Effect Nodes/Reactions generate typed Definitions through the existing Effect-owner pipeline.
+Phase 1, Phase 2, the ten-artifact Phase 3 data/runtime scope, and the Spirit Contract/Spirit King runtime wiring are complete in source. Unity Play Mode verification remains.
 
 ### Next Actions
 
 - Keep future Effect additions in the existing `skill_graph_nodes_passive.csv` and `passive_skill_triger.csv` owner paths.
-- Keep all `ArtifactSynergyEffectDefinition` execution, Spirit King runtime, the other 40 artifacts and other synergies deferred.
+- Keep the other 40 artifacts and other synergies deferred.
+- User verifies Spirit King skill targeting, Zone visuals and stage behavior in Unity Play Mode.
 - Enforce no-duplicate artifact acquisition in the future acquisition flow; Phase 3 does not expand `ArtifactState` for it.
 
 ### Evidence
@@ -217,6 +219,10 @@ Phase 1, Phase 2 and the ten-artifact Phase 3 data/runtime scope are complete. A
 - Four changed CSVs pass strict parsed column-count checks; focused EditMode tests pass 3/3; solution build completes with 0 errors and the existing 2 warnings.
 - Full `SkillCatalogRuntimeTests` result is 19/21 passed; only the previously recorded Trigger baseline assertions remain failing, while every artifact catalog/state/resolver/trigger test passes.
 - Focused EditMode verification for the new Definition metadata and manager path passes 4/4; solution build completes with 0 errors, and manager search finds 0 former artifact/synergy ID constant references.
+- `summon_units_skill.csv` now authors `spirit-king-dimensional-rift` with `cooldown_seconds=20`, `target_selection=Nearest`, and the Eve-E sprite/controller paths; `artifact_synergies.csv` describes the same nearest-enemy 20-second behavior.
+- `CsvRuntimeCatalog.asset` registers the Eve-E Zone sprite path and its inspected asset GUID; the Eve-E controller was already registered. Static CSV/catalog assertions pass and `dotnet build Pakuri/Pakuri.sln --no-restore -v:q` completes with 0 errors and the existing 2 assembly-reference warnings.
+- User changed the Spirit Bombardment `3.png` importer to `spriteMode: 1` (Single); `Eve_D.anim` now references exactly three Sprite frames and uses main Sprite fileID `21300000` only for the third frame.
+- Spirit Bombardment CSV now uses `shot_interval_seconds=0.1`, doubles `radius` to `5`, `runtime_visual_scale` to `1.2876`, and doubles runtime hitbox size to `10/10`.
 
 ### History
 
@@ -235,6 +241,9 @@ Phase 1, Phase 2 and the ten-artifact Phase 3 data/runtime scope are complete. A
 - 2026-08-05: Code Builder moved the three artifact runtime state/manager scripts and Unity `.meta` files to `Combat/Artifact`, preserving GUIDs; generated Definition/source-model files were not moved because they belong to the existing Loading pipeline.
 - 2026-08-05: Code Builder organized `ArtifactDefinitions.cs` under `Combat/Artifact/Definition` while keeping CSV parser, validator and generator code in `Loading`.
 - 2026-08-05: Code Builder added `repeat_rule` and `selection_rule` to the Artifact Effect pipeline, removed manager ID constants, and verified 4/4 focused tests plus 0-error solution build.
+- 2026-08-05: Code Builder changed Spirit King Dimension Rift authoring from battlefield-center/999-second to nearest-enemy/20-second, assigned Eve-E Zone sprite/controller resources, synchronized the sprite in `CsvRuntimeCatalog.asset`, and intentionally made no GitHub commit per user instruction.
+- 2026-08-06: Code Builder reduced the Spirit Bombardment animation to three `1.png`, `2.png`, `3.png` keys, verified three curve/mapping entries and `git diff --check`, and made no GitHub commit.
+- 2026-08-06: Code Builder changed Spirit Bombardment repeat interval to `0.1` seconds and doubled its authored visual/range values; CSV assertions and `git diff --check` passed without a GitHub commit.
 
 ## Task: 2026-08-05 Artifact Synergy Foundation CSVs
 

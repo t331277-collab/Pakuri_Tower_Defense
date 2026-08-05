@@ -96,6 +96,7 @@ namespace Pakuri.Data
         public string DisplayName;
         public string Summary;
         public string Description;
+        public Sprite Icon;
         public ArtifactSynergyLevelDefinition[] Levels = Array.Empty<ArtifactSynergyLevelDefinition>();
     }
 }

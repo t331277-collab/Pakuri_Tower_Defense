@@ -20,6 +20,7 @@ namespace Pakuri.InGame
         private const int MasterButtonCount = 2;
         private const int PassiveTraitButtonCount = 3;
         private const int ArtifactDebugButtonCount = 10;
+        private const int ArtifactUnitButtonCount = 5;
 
         private static readonly SkillSlot[] DebugSlots =
         {
@@ -51,6 +52,8 @@ namespace Pakuri.InGame
         private Button[] artifactButtons = new Button[ArtifactDebugButtonCount];
         private TMP_Text[] artifactSynergyLabels = new TMP_Text[ArtifactDebugButtonCount];
         private TMP_Text[] artifactLabels = new TMP_Text[ArtifactDebugButtonCount];
+        private Button[] artifactUnitButtons = new Button[ArtifactUnitButtonCount];
+        private TMP_Text[] artifactUnitLabels = new TMP_Text[ArtifactUnitButtonCount];
         private Button modifierCloseButton;
         private Button passiveModifierCloseButton;
         private Button[] traitButtons = new Button[TraitButtonCount];
@@ -66,6 +69,7 @@ namespace Pakuri.InGame
         private ArtifactSynergyDefinition[] artifactSynergies = Array.Empty<ArtifactSynergyDefinition>();
         private ArtifactDefinition[] artifactChoices = Array.Empty<ArtifactDefinition>();
         private string selectedArtifactSynergyId = string.Empty;
+        private string selectedArtifactId = string.Empty;
 
         private int activeModifierSlotIndex = -1;
         private bool activeModifierIsPassive;
@@ -139,24 +143,12 @@ namespace Pakuri.InGame
 
         private void CloseArtifactAcquisitionDebug()
         {
+            selectedArtifactId = string.Empty;
             artifactChoices = Array.Empty<ArtifactDefinition>();
             UiObjectUtility.SetActive(artifactAcquisitionDebugPanel, false);
             UiObjectUtility.SetActive(artifactDebugPanel, true);
             RefreshArtifactSynergyButtons();
-        }
-
-        internal void ShowArtifactAcquisitionDebug()
-        {
-            if (string.IsNullOrWhiteSpace(selectedArtifactSynergyId))
-            {
-                OpenArtifactDebug();
-                return;
-            }
-
-            RefreshArtifactChoices();
-            UiObjectUtility.SetActive(debugPanel, false);
-            UiObjectUtility.SetActive(artifactDebugPanel, false);
-            UiObjectUtility.SetActive(artifactAcquisitionDebugPanel, true);
+            RefreshArtifactAcquisitionTargets();
         }
 
         private void SelectArtifactSynergy(int index)
@@ -173,7 +165,9 @@ namespace Pakuri.InGame
             }
 
             selectedArtifactSynergyId = synergy.SynergyId;
+            selectedArtifactId = string.Empty;
             RefreshArtifactChoices();
+            RefreshArtifactAcquisitionTargets();
             UiObjectUtility.SetActive(artifactDebugPanel, false);
             UiObjectUtility.SetActive(artifactAcquisitionDebugPanel, true);
         }
@@ -186,13 +180,64 @@ namespace Pakuri.InGame
             }
 
             var artifact = artifactChoices[index];
-            if (artifact == null || string.IsNullOrWhiteSpace(artifact.ArtifactId) || uiManager == null)
+            if (artifact == null || string.IsNullOrWhiteSpace(artifact.ArtifactId))
             {
                 return;
             }
 
+            var session = ResolveSession();
+            if (session == null || session.HasArtifact(artifact.ArtifactId))
+            {
+                RefreshArtifactChoices();
+                return;
+            }
+
+            selectedArtifactId = artifact.ArtifactId;
+            RefreshArtifactChoices();
+            RefreshArtifactAcquisitionTargets();
+        }
+
+        private void SelectArtifactUnit(int slotIndex)
+        {
+            if (string.IsNullOrWhiteSpace(selectedArtifactId))
+            {
+                return;
+            }
+
+            var session = ResolveSession();
+            if (session == null || slotIndex < 0 || slotIndex >= session.PartyMembers.Count)
+            {
+                return;
+            }
+
+            var member = session.PartyMembers[slotIndex];
+            if (!session.TryAcquireArtifact(member, selectedArtifactId))
+            {
+                RefreshArtifactChoices();
+                RefreshArtifactAcquisitionTargets();
+                return;
+            }
+
+            var catalog = GameDataLoader.CurrentCatalog;
+            var artifact = catalog != null
+                ? catalog.GetData<ArtifactDefinition>(selectedArtifactId)
+                : null;
+            var monster = member != null && catalog != null
+                ? catalog.GetMonster(member.MonsterId)
+                : null;
+            var artifactName = artifact != null && !string.IsNullOrWhiteSpace(artifact.DisplayName)
+                ? artifact.DisplayName
+                : selectedArtifactId;
+            var monsterName = monster != null && !string.IsNullOrWhiteSpace(monster.DisplayName)
+                ? monster.DisplayName
+                : member != null ? member.MonsterId : "Unknown";
+            Debug.Log($"[ArtifactDebug] {slotIndex + 1}P {monsterName}에게 {artifactName} 획득", this);
+
+            selectedArtifactId = string.Empty;
+            RefreshArtifactChoices();
+            RefreshArtifactAcquisitionTargets();
             UiObjectUtility.SetActive(artifactAcquisitionDebugPanel, false);
-            uiManager.OpenArtifactDebugAcquisition(artifact.ArtifactId);
+            uiManager?.RefreshInfo();
         }
 
         private void RefreshArtifactSynergyButtons()
@@ -224,6 +269,7 @@ namespace Pakuri.InGame
             var artifacts = catalog != null && catalog.Artifacts != null
                 ? catalog.Artifacts
                 : Array.Empty<ArtifactDefinition>();
+            var session = ResolveSession();
             var choices = new System.Collections.Generic.List<ArtifactDefinition>();
             for (var i = 0; i < artifacts.Length; i++)
             {
@@ -247,18 +293,57 @@ namespace Pakuri.InGame
 
                 var capturedIndex = i;
                 SetArtifactDebugLabel(artifactLabels[i], artifactChoices[i].DisplayName);
-                button.interactable = true;
+                var isAcquired = session != null && session.HasArtifact(artifactChoices[i].ArtifactId);
+                button.interactable = !isAcquired && string.IsNullOrWhiteSpace(selectedArtifactId);
                 button.onClick.AddListener(() => SelectArtifact(capturedIndex));
+            }
+
+            RefreshArtifactAcquisitionTargets();
+        }
+
+        private void RefreshArtifactAcquisitionTargets()
+        {
+            var session = ResolveSession();
+            var partyMembers = session?.PartyMembers;
+            for (var i = 0; i < artifactUnitButtons.Length; i++)
+            {
+                var button = artifactUnitButtons[i];
+                var label = artifactUnitLabels[i];
+                var member = partyMembers != null && i < partyMembers.Count
+                    ? partyMembers[i]
+                    : null;
+                var monster = member != null && GameDataLoader.CurrentCatalog != null
+                    ? GameDataLoader.CurrentCatalog.GetMonster(member.MonsterId)
+                    : null;
+                var monsterName = monster != null && !string.IsNullOrWhiteSpace(monster.DisplayName)
+                    ? monster.DisplayName
+                    : member != null ? member.MonsterId : string.Empty;
+
+                SetArtifactDebugLabel(label, monsterName);
+                if (button == null)
+                {
+                    continue;
+                }
+
+                var capturedIndex = i;
+                button.onClick.RemoveAllListeners();
+                button.onClick.AddListener(() => SelectArtifactUnit(capturedIndex));
+                button.interactable = member != null
+                    && session != null
+                    && !string.IsNullOrWhiteSpace(selectedArtifactId)
+                    && session.CanAcquireArtifact(member, selectedArtifactId);
             }
         }
 
         private void ClearArtifactDebugState()
         {
             selectedArtifactSynergyId = string.Empty;
+            selectedArtifactId = string.Empty;
             artifactSynergies = Array.Empty<ArtifactSynergyDefinition>();
             artifactChoices = Array.Empty<ArtifactDefinition>();
             ResetArtifactDebugButtons(artifactSynergyButtons, artifactSynergyLabels);
             ResetArtifactDebugButtons(artifactButtons, artifactLabels);
+            ResetArtifactDebugButtons(artifactUnitButtons, artifactUnitLabels);
         }
 
         private static void ResetArtifactDebugButtons(Button[] buttons, TMP_Text[] labels)
@@ -476,6 +561,13 @@ namespace Pakuri.InGame
             {
                 var capturedIndex = i;
                 BindButton(passiveTraitButtons[i], () => ApplyPassiveModifierChoice(capturedIndex));
+            }
+
+            artifactUnitButtons = EnsureButtonArray(artifactUnitButtons, ArtifactUnitButtonCount);
+            for (var i = 0; i < artifactUnitButtons.Length; i++)
+            {
+                var capturedIndex = i;
+                BindButton(artifactUnitButtons[i], () => SelectArtifactUnit(capturedIndex));
             }
         }
 
@@ -1064,6 +1156,22 @@ namespace Pakuri.InGame
                 artifactLabels[i] = BindDebugLabel(
                     artifactButtons[i],
                     $"artifactLabels[{i}]",
+                    ref valid);
+            }
+
+            artifactUnitButtons = new Button[ArtifactUnitButtonCount];
+            artifactUnitLabels = new TMP_Text[ArtifactUnitButtonCount];
+            for (var i = 0; i < ArtifactUnitButtonCount; i++)
+            {
+                var slotName = $"{i + 1}P";
+                artifactUnitButtons[i] = UiBindingUtility.BindChild<Button>(
+                    this,
+                    $"Debug/DebugPanel/ArtifactAchiveDebugUI/{slotName}",
+                    $"artifactUnitButtons[{i}]",
+                    ref valid);
+                artifactUnitLabels[i] = BindDebugLabel(
+                    artifactUnitButtons[i],
+                    $"artifactUnitLabels[{i}]",
                     ref valid);
             }
 

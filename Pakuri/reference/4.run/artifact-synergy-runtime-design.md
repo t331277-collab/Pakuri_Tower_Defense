@@ -183,7 +183,7 @@ Phase 1에서 `authoring/monster/skills/base/area_attack/skills_area_attack.csv`
 | `spirit-king-elemental-explosion` | A | 원소폭발 | `SingleAttack` | 80 / 2.5 | 5 / 0 / 0 | 밀집 지점 1곳에 배치되는 `SingleSkillDefinition` |
 | `spirit-king-elemental-storm` | B | 원소폭풍 | `AreaAttack` | 틱당 18 / 3.5 | 10 / 6 / 0.5 | 6초 유지되는 `ZoneSkillDefinition` |
 | `spirit-king-spirit-bombardment` | C | 정령 폭격 | `SingleAttack` | 회당 70 / 2.5 | 8 / 0 / 0.35 | 최초 1회와 반복 2회를 합쳐 총 3회 실행 |
-| `spirit-king-dimensional-rift` | D | 차원붕괴 | `AreaAttack` | 0 / 4.5 | 999 / 1.2 / 0.1 | 전투당 1회, 중앙 균열이 1.2초 동안 적을 중심으로 끌어당기는 `ZoneSkillDefinition` |
+| `spirit-king-dimensional-rift` | D | 차원붕괴 | `AreaAttack` | 0 / 4.5 | 20 / 1.2 / 0.1 | 20초마다 가까운 적 위치에 균열을 열어 1.2초 동안 적을 끌어당기는 `ZoneSkillDefinition` |
 | `spirit-king-dimensional-collapse-explosion` | E | 차원붕괴 폭발 | `SingleAttack` | 240 / 4.5 | 999 / 0 / 0 | 균열 종료 결과로만 실행하며 자동 해금하지 않는 후속 스킬 |
 
 공통 작성값:
@@ -192,9 +192,9 @@ Phase 1에서 `authoring/monster/skills/base/area_attack/skills_area_attack.csv`
 - `spell_power_coefficient=0`, `attack_power_coefficient=0`, `critical_allowed=false`: 원문의 고정 피해 80/18/70/240을 보존한다.
 - `hit_target_count`는 빈 값, 탄창·재장전 열은 `0`, 상태 효과 열은 빈 값/`0`으로 둔다.
 - `runtime_visual_scale=1`, `runtime_visual_sorting_order=0`; `runtime_hitbox_size_x/y`는 스킬 순서대로 `5/5`, `7/7`, `5/5`, `9/9`, `9/9`로 작성한다.
-- 정령왕 스킬 Prefab·icon은 아직 별도 자산으로 만들지 않고, 런타임 sprite·animator는 승인된 Sein-C/Eve-C/Eve-D 자산 경로를 복사한다.
+- 정령왕 스킬 Prefab·icon은 아직 별도 자산으로 만들지 않고, 런타임 sprite·animator는 승인된 Sein-C/Eve-C/Eve-D/Eve-E 자산 경로를 복사한다. 차원붕괴 중앙 균열은 Eve-E 스킬 이펙트를 사용한다.
 - 정령 폭격은 기존 `RepeatPerTarget` Node에 `repeat_count=2`, `repeat_interval_seconds=0.35`, `repeat_damage_multiplier=1`을 연결한다. 최초 실행까지 포함해 총 3회다.
-- 차원붕괴는 기존 Zone lifecycle에 `PullToCenter(distance_per_tick=0.2)`를 연결하고, 중앙에서 데미지 0으로 1.2초 유지한다. Zone의 기존 `OnExpire -> ExecuteSkill(spirit-king-dimensional-collapse-explosion)` 경로로 종료 폭발을 실행한다.
+- 차원붕괴는 20초 쿨다운으로 가까운 적 위치에 Zone을 배치하고, `PullToCenter(distance_per_tick=0.2)`를 연결해 데미지 0으로 1.2초 유지한다. Zone의 기존 `OnExpire -> ExecuteSkill(spirit-king-dimensional-collapse-explosion)` 경로로 종료 폭발을 실행한다.
 - 정령 폭격은 기존 `RepeatPerTarget`에 최초 시전을 포함해 2회 반복을 연결하며, 반복마다 현재 적 위치를 다시 `Densest`로 계산한다. `Densest` 결과가 없지만 가까운 생존 적이 있으면 가까운 적 위치를 사용하고, 생존 적이 없으면 적 대상 자동 스킬을 발동하지 않는다.
 - 원소폭발·원소폭풍·정령 폭격의 대상 중심은 `Densest`를 사용한다. 후보 적 위치별 반경 내 적 수가 최대인 위치를 선택하고, 동률이면 시전자와 가까운 위치, 다시 동률이면 Registry 순서를 따른다. 차원붕괴 종료 폭발은 `EventTarget`이 없는 `OnExpire`이므로 기존 균열 중심인 `EventCenter`에서 `Nearest` 적들을 선택한다.
 - `skills_area_attack.csv` 형식에 없는 선택·반복·후속 실행은 기존 graph-node/trigger CSV와 typed runtime operation으로 연결한다. 새로운 Effect 전용 CSV는 만들지 않는다.
@@ -512,7 +512,7 @@ InGameCombatManager.Update
 - 원소폭발: 5초마다 밀집 지점, 80 속성 피해
 - 원소폭풍: 6초 지속, 0.5초마다 18 속성 피해
 - 정령 폭격: 8초마다 3개 지점, 각 70 속성 피해
-- 차원붕괴: 전투 중 1회, 중앙 균열에서 `0.2 unit/tick`으로 끌어당긴 뒤 240 속성 피해
+- 차원붕괴: 20초마다 가까운 적 위치의 균열에서 `0.2 unit/tick`으로 끌어당긴 뒤 240 속성 피해
 - 시너지가 8에서 6으로 감소하면 차원붕괴를 새로 학습하지 않는다. 다음 Stage의 해금 목록은 현재 시너지로 다시 계산한다.
 
 ### 10.3 기존 경로와 공백
@@ -556,10 +556,10 @@ InGameCombatManager.Update
 
 | 시너지 | 단계 | `application_mode`와 실제 경로 | 현재 공백 |
 |---|---:|---|---|
-| 정령계약 | 2 | `SpawnUnit`: Manager -> `UnitSpawnManager.SpawnTemporarySummon`; `GrantSkill`: 정령왕에 원소폭발 `SingleAttack` 부여 | 임시 아군 spawn/이동, `Densest`, 대표 속성 resolver 신규 필요 |
-| 정령계약 | 4 | `GrantSkill`: 원소폭풍 `AreaAttack/Zone`, 기존 duration/tick 경로 | `Densest` 신규 필요 |
-| 정령계약 | 6 | `GrantSkill`: 정령 폭격 `SingleAttack`; `RepeatPerTarget(repeat_count=2, interval=0.35, multiplier=1)` | 세 배치를 서로 다른 밀집 지점으로 재선정하려면 `Densest` 반복 재선택 규칙 필요 |
-| 정령계약 | 8 | `GrantSkill`: 차원붕괴 pull `ZoneSkill`; Zone의 `OnExpire -> ExecuteSkill`로 폭발 `SingleAttack`; 쿨다운 999 | 끌어당김 typed Node, Stage 1회 gate 필요 |
+| 정령계약 | 2 | `SpawnUnit`: Manager -> `UnitSpawnManager.SpawnTemporarySummon`; `GrantSkill`: 정령왕에 원소폭발 `SingleAttack` 부여 | 구현 완료; Unity Play Mode 검증 대기 |
+| 정령계약 | 4 | `GrantSkill`: 원소폭풍 `AreaAttack/Zone`, 기존 duration/tick 경로 | 구현 완료; Unity Play Mode 검증 대기 |
+| 정령계약 | 6 | `GrantSkill`: 정령 폭격 `SingleAttack`; `RepeatPerTarget(repeat_count=2, interval=0.35, multiplier=1)` | 구현 완료; Unity Play Mode 검증 대기 |
+| 정령계약 | 8 | `GrantSkill`: 차원붕괴 pull `ZoneSkill`; Zone의 `OnExpire -> ExecuteSkill`로 폭발 `SingleAttack`; 쿨다운 20, `Nearest` 위치 | 구현 완료; Unity Play Mode 검증 대기 |
 | 처형관 | 2 | `SkillModifier`: `CritChanceBonus`; 저체력 추가분은 `ExecuteCritChanceBonus`를 체력 조건과 결합 | 현재 `TargetHealthRatioCondition`은 cast 조건이므로 hit별 체력 조건 연결 신규 필요 |
 | 처형관 | 4 | `SkillModifier`: `CritDamageBonus` | 치명타가 난 공격만 최종 피해 +8% 처리할 crit-result 조건 신규 필요 |
 | 처형관 | 6 | `SkillModifier`: 저체력 조건 + `CritDamageBonus` | 조건부 치명타 피해 Node 신규 필요 |
@@ -664,7 +664,7 @@ InGameCombatManager.Update
 - 복합 설명은 독립 effect 행으로 분리
 - 모든 유물 행은 `SkillModifier` 또는 `PassiveTrigger`
 - 시너지 행은 `SkillModifier`, `PassiveTrigger`, `ExecuteSkill`, `GrantSkill`, `SpawnUnit`
-- `summon_units_skill.csv`의 optional `target_selection`으로 A/B/C는 `Densest`, D/E는 `BattlefieldCenter`를 소유
+- `summon_units_skill.csv`의 optional `target_selection`으로 A/B/C는 `Densest`, D는 `Nearest`를 소유하며 E는 D의 `EventCenter`를 사용
 - 정령 폭격·차원붕괴 pull·OnExpire 후속 폭발은 기존 graph/trigger CSV에 소유 행을 추가
 - Parsing, Validation, Generation은 `SummonSkills`와 summon 소유 graph/trigger를 기존 공통 경로로 통과시킴
 - 위 Node·경로 표에서 `신규 필요`인 효과도 식별 헤더는 작성하되, 존재하지 않는 `target_skill_id`/`outcome_skill_id`는 발명하지 않고 비워 둠
@@ -705,7 +705,7 @@ InGameCombatManager.Update
 - 정령계약 시너지 Node·Trigger도 기존 graph-node/trigger CSV의 `Effect` owner 경로 사용
 - 정령 폭격 `RepeatPerTarget` 총 3회 연결 및 반복별 `Densest` 재선정
 - `Densest` 결과가 없을 때 가까운 적 fallback 및 생존 적이 없을 때 적 대상 자동 스킬 미발동
-- 차원붕괴 `OnExpire` 후속 폭발의 `EventTarget` null 경로 제거와 `EventCenter` 위치 유지
+- 차원붕괴 `OnExpire` 후속 폭발의 `EventTarget` null 경로 제거와 D가 선택한 가까운 적 위치의 `EventCenter` 유지
 - 차원붕괴 `ZoneSkill`의 `PullToCenter(0.2 unit/tick)`와 종료 후 폭발 `ExecuteSkill` 연결
 - 기존 Zone 1.2초 lifecycle과 종료 `OnExpire` 재사용
 - A~E 스킬 중 현재 시너지 단계에 해당하는 스킬만 정령왕에 학습

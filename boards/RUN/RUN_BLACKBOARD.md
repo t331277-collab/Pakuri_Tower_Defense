@@ -53,7 +53,10 @@ Phase 0 design, Phase 1 skill-data/loading, Phase 2 synergy-state/spawn API and 
 - `UnitCombatStateFactory.CreateSummon` creates `UnitRole.Summon`/`UnitSide.Player` state with the selected learned skills and dynamic skill-attribute override.
 - `SkillExecution` resolves that override at snapshot preparation without mutating authored `SkillDefinition` data.
 - `SkillTargeting.AreaCenter` resolves `Densest` by maximum candidate count, then caster distance, then Registry order; it falls back to the nearest live enemy, while enemy-target automatic skills are skipped when no live enemy exists; `BattlefieldCenter` uses the bound `MiddleSpawnPoint`.
-- `SingleSkillExecutor` recomputes `Densest` for every Spirit Bombardment repeat.
+- Spirit King Dimension Rift now authors `Nearest` targeting with a 20-second cooldown and uses the Eve-E runtime sprite/controller for its Zone visual; its follow-up explosion keeps the Rift `EventCenter`.
+- User changed the Spirit Bombardment `3.png` importer to Single; `Eve_D.anim` now has exactly three SpriteRenderer keys: `1.png`, `2.png`, then the Single `3.png`.
+- Spirit Bombardment now authors `0.1` second repeat spacing, radius `5`, visual scale `1.2876`, and runtime hitbox `10x10`; execution still uses the existing `RepeatPerTarget` route.
+- `SingleSkillExecutor` always schedules `RepeatPerTarget` repeats, cycles Densest repeat centers through available enemies, and reuses the fallback center when fewer targets are available; the initial cast plus two repeats therefore remains three casts.
 - `ZoneSkillActor` consumes the authored `PullToCenter(0.2)` operation for each Rift tick before the existing damage/status route.
 - `SummonActionController.Tick` moves living `UnitRole.Summon` entries at their generated `base_move_speed=0.5` only while enemies are registered, uses `UnitCollisionResolver` for enemy contact, and stops at `EnemySpawnPoint` or contact.
 - `Daejungryung.prefab` now has the existing `MonsterActor` component, and `InGameScene` binds `MiddleSpawnPoint` plus `spirit-king` to the summon prefab.
@@ -67,6 +70,10 @@ Phase 0 design, Phase 1 skill-data/loading, Phase 2 synergy-state/spawn API and 
 - 2026-08-05: Code Builder completed Phase 3 with existing target routing, Densest reselection, Zone pull, summon movement/death lifecycle, MonsterActor prefab binding and scene references.
 - 2026-08-05: Code Builder extracted summon movement from `UnitSpawnManager.TickSummons` into `SummonActionController`, connected its frame tick through `InGameCombatManager`, and reused `UnitCollisionResolver` to stop summons on enemy contact.
 - 2026-08-05: Code Builder changed Spirit King Rift `OnExpire` targeting from `EventTarget` to `Nearest` at `EventCenter`, added nearest fallback/no-live-enemy auto-skill gating, and guarded null registry lookups.
+- 2026-08-05: Code Builder changed Dimension Rift from battlefield-center/999-second authoring to nearest-enemy/20-second authoring, updated Spirit Contract text, and assigned the Eve-E sprite/controller; this work intentionally remains uncommitted per user instruction.
+- 2026-08-06: Code Builder reduced `Eve_D.anim` to exactly three frames (`1.png -> 2.png -> 3.png`) and set the clip stop to `0.25` seconds; no GitHub commit was created.
+- 2026-08-06: Code Builder updated Spirit Bombardment interval and doubled its CSV visual/range values; no GitHub commit was created.
+- 2026-08-06: Code Builder fixed the repeat-deployment gate so Spirit Bombardment executes three total casts regardless of enemy count, cycles Densest targets when possible, falls back to the existing center otherwise, and aligned the graph repeat interval to `0.1`; no GitHub commit was created.
 
 ## Task: 2026-08-05 Artifact Debug Acquisition Flow
 

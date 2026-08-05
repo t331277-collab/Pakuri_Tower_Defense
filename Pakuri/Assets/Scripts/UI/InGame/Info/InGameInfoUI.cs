@@ -2,18 +2,32 @@ using System;
 using Pakuri.Data;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Pakuri.InGame
 {
     /// InGame 상단 정보와 PrisonPanel 정보를 갱신한다.
     public sealed class InGameInfoUI : MonoBehaviour
     {
+        private const string DisplayedSynergyId = "spirit-contract";
+
         private TMP_Text stageInfoText;
         private TMP_Text goldInfoText;
         private TMP_Text darkInfoText;
         private TMP_Text prisonStageInfoText;
         private TMP_Text prisonGoldInfoText;
         private TMP_Text prisonDarkInfoText;
+        private Transform artifactContainer;
+        private Image artifactIcon;
+        private TMP_Text artifactCountText;
+        private TMP_Text artifactLv2Text;
+        private TMP_Text artifactLv4Text;
+        private TMP_Text artifactLv6Text;
+        private TMP_Text artifactLv8Text;
+        private Color artifactLv2InactiveColor;
+        private Color artifactLv4InactiveColor;
+        private Color artifactLv6InactiveColor;
+        private Color artifactLv8InactiveColor;
 
         private bool referencesBound;
         private bool bindingFailed;
@@ -23,7 +37,13 @@ namespace Pakuri.InGame
             if (!BindObject())
             {
                 enabled = false;
+                return;
             }
+
+            artifactLv2InactiveColor = artifactLv2Text != null ? artifactLv2Text.color : Color.gray;
+            artifactLv4InactiveColor = artifactLv4Text != null ? artifactLv4Text.color : Color.gray;
+            artifactLv6InactiveColor = artifactLv6Text != null ? artifactLv6Text.color : Color.gray;
+            artifactLv8InactiveColor = artifactLv8Text != null ? artifactLv8Text.color : Color.gray;
         }
 
         public void Refresh(StageManager stageManager, RunSession session, bool prisonPanelVisible)
@@ -46,6 +66,8 @@ namespace Pakuri.InGame
                 darkInfoText.gameObject.SetActive(true);
                 darkInfoText.text = $"Dark {Math.Max(0, session != null ? session.DarkTrace : 0)}";
             }
+
+            RefreshArtifactDisplay(session);
 
             if (!prisonPanelVisible)
             {
@@ -111,10 +133,116 @@ namespace Pakuri.InGame
                 "Reward/PrisonPanel/Darkinfo",
                 nameof(prisonDarkInfoText),
                 ref valid);
+            artifactContainer = UiBindingUtility.BindScene<Transform>(
+                this,
+                "HUD/Artifact_Container",
+                nameof(artifactContainer),
+                ref valid);
+            artifactIcon = UiBindingUtility.BindChild<Image>(
+                this,
+                artifactContainer,
+                "Image/Icon",
+                nameof(artifactIcon),
+                ref valid);
+            artifactCountText = UiBindingUtility.BindChild<TMP_Text>(
+                this,
+                artifactContainer,
+                "Image/Cur/Text (TMP) (1)",
+                nameof(artifactCountText),
+                ref valid);
+            artifactLv2Text = UiBindingUtility.BindChild<TMP_Text>(
+                this,
+                artifactContainer,
+                "Image/Lv2/Text (TMP) (1)",
+                nameof(artifactLv2Text),
+                ref valid);
+            artifactLv4Text = UiBindingUtility.BindChild<TMP_Text>(
+                this,
+                artifactContainer,
+                "Image/Lv4/Text (TMP) (1)",
+                nameof(artifactLv4Text),
+                ref valid);
+            artifactLv6Text = UiBindingUtility.BindChild<TMP_Text>(
+                this,
+                artifactContainer,
+                "Image/Lv6/Text (TMP) (1)",
+                nameof(artifactLv6Text),
+                ref valid);
+            artifactLv8Text = UiBindingUtility.BindChild<TMP_Text>(
+                this,
+                artifactContainer,
+                "Image/Lv8/Text (TMP) (1)",
+                nameof(artifactLv8Text),
+                ref valid);
 
             referencesBound = valid;
             bindingFailed = !valid;
             return valid;
+        }
+
+        private void RefreshArtifactDisplay(RunSession session)
+        {
+            var count = 0;
+            var catalog = GameDataLoader.CurrentCatalog;
+            var synergy = catalog != null
+                ? catalog.GetData<ArtifactSynergyDefinition>(DisplayedSynergyId)
+                : null;
+
+            if (catalog != null && session != null)
+            {
+                for (var memberIndex = 0; memberIndex < session.PartyMembers.Count; memberIndex++)
+                {
+                    var member = session.PartyMembers[memberIndex];
+                    if (member == null || member.Artifacts == null)
+                    {
+                        continue;
+                    }
+
+                    for (var artifactIndex = 0; artifactIndex < member.Artifacts.OwnedArtifactIds.Count; artifactIndex++)
+                    {
+                        var artifact = catalog.GetData<ArtifactDefinition>(
+                            member.Artifacts.OwnedArtifactIds[artifactIndex]);
+                        if (artifact != null
+                            && string.Equals(
+                                artifact.SynergyId,
+                                DisplayedSynergyId,
+                                StringComparison.OrdinalIgnoreCase))
+                        {
+                            count++;
+                        }
+                    }
+                }
+            }
+
+            if (artifactContainer != null)
+            {
+                artifactContainer.gameObject.SetActive(count > 0);
+            }
+
+            if (artifactCountText != null)
+            {
+                artifactCountText.text = count.ToString();
+            }
+
+            if (artifactIcon != null)
+            {
+                artifactIcon.sprite = synergy != null ? synergy.Icon : null;
+                artifactIcon.enabled = artifactIcon.sprite != null;
+                artifactIcon.gameObject.SetActive(artifactIcon.sprite != null);
+            }
+
+            SetArtifactLevelColor(artifactLv2Text, artifactLv2InactiveColor, count >= 2);
+            SetArtifactLevelColor(artifactLv4Text, artifactLv4InactiveColor, count >= 4);
+            SetArtifactLevelColor(artifactLv6Text, artifactLv6InactiveColor, count >= 6);
+            SetArtifactLevelColor(artifactLv8Text, artifactLv8InactiveColor, count >= 8);
+        }
+
+        private static void SetArtifactLevelColor(TMP_Text text, Color inactiveColor, bool active)
+        {
+            if (text != null)
+            {
+                text.color = active ? Color.white : inactiveColor;
+            }
         }
     }
 }

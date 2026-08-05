@@ -68,6 +68,7 @@ namespace Pakuri.Data
             public string DisplayName;
             public string Summary;
             public string DescriptionText;
+            public string IconPath;
             public ArtifactSynergyLevelRow[] Levels = Array.Empty<ArtifactSynergyLevelRow>();
         }
 
@@ -284,6 +285,7 @@ namespace Pakuri.Data
                 DisplayName = record.ReadRequiredString("synergy_display_name"),
                 Summary = record.ReadString("summary"),
                 DescriptionText = record.ReadString("description_text"),
+                IconPath = record.ReadString("Icon_Image"),
                 Levels = levels
             };
         }

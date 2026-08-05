@@ -71,8 +71,8 @@ internal sealed class SingleSkillExecutor : MonoBehaviour
 			if (snapshot.PreparedUsesResolvedDeployments)
 			{
 				PublishDeploymentLifecycle(context, snapshot, center);
-				ScheduleRepeatedDeployments(context, snapshot, center, runtimeVisual, prefab);
 			}
+			ScheduleRepeatedDeployments(context, snapshot, center, runtimeVisual, prefab);
 		}
 		CompleteIfIdle();
 		return castCommitted;
@@ -106,7 +106,7 @@ internal sealed class SingleSkillExecutor : MonoBehaviour
 		{
 			for (var i = 0; i < repeatCount; i++)
 			{
-				var repeatCenter = ResolveRepeatCenter(context, repeatedSnapshot, center);
+				var repeatCenter = ResolveRepeatCenter(context, repeatedSnapshot, center, i);
 				SingleSkillActor.ExecuteAtCenter(
 					context,
 					repeatedSnapshot,
@@ -114,7 +114,10 @@ internal sealed class SingleSkillExecutor : MonoBehaviour
 					runtimeVisual,
 					prefab,
 					useRuntimeState: false);
-				PublishDeploymentLifecycle(context, repeatedSnapshot, repeatCenter);
+				if (repeatedSnapshot.PreparedUsesResolvedDeployments)
+				{
+					PublishDeploymentLifecycle(context, repeatedSnapshot, repeatCenter);
+				}
 			}
 			return;
 		}
@@ -152,7 +155,7 @@ internal sealed class SingleSkillExecutor : MonoBehaviour
 				break;
 			}
 
-			var repeatCenter = ResolveRepeatCenter(context, snapshot, center);
+			var repeatCenter = ResolveRepeatCenter(context, snapshot, center, i);
 			SingleSkillActor.ExecuteAtCenter(
 				context,
 				snapshot,
@@ -160,7 +163,10 @@ internal sealed class SingleSkillExecutor : MonoBehaviour
 				runtimeVisual,
 				prefab,
 				useRuntimeState: false);
-			PublishDeploymentLifecycle(context, snapshot, repeatCenter);
+			if (snapshot.PreparedUsesResolvedDeployments)
+			{
+				PublishDeploymentLifecycle(context, snapshot, repeatCenter);
+			}
 		}
 
 		pendingSchedules = Mathf.Max(0, pendingSchedules - 1);
@@ -174,15 +180,26 @@ internal sealed class SingleSkillExecutor : MonoBehaviour
 	private static Vector2 ResolveRepeatCenter(
 		SkillExecutionContext context,
 		SkillExecutionState snapshot,
-		Vector2 fallback)
+		Vector2 fallback,
+		int repeatIndex)
 	{
-		return snapshot != null
-			&& snapshot.PreparedTargeting != null
-			&& snapshot.PreparedTargeting.Selection == SkillTargetSelection.Densest
-			? SkillTargeting.AreaCenter(
-				context,
-				snapshot.PreparedTargeting,
-				new AreaBlueprintSpec { Radius = snapshot.PreparedBaseRadius })
+		if (snapshot == null
+			|| snapshot.PreparedTargeting == null
+			|| snapshot.PreparedTargeting.Selection != SkillTargetSelection.Densest)
+		{
+			return fallback;
+		}
+
+		var centers = SkillTargeting.TargetAnchoredCenters(
+			context,
+			snapshot.PreparedTargeting,
+			fallback,
+			repeatIndex + 2,
+			false,
+			SkillDeploymentRepeatMode.RepeatNearest);
+		var targetIndex = repeatIndex + 1;
+		return centers != null && targetIndex < centers.Count
+			? centers[targetIndex]
 			: fallback;
 	}
 
