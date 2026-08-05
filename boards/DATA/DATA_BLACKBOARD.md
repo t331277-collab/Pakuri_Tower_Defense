@@ -4,6 +4,95 @@
 
 The pre-cleanup file, including completed and superseded data tasks, is preserved at `boards/ARCHIVE/ACTIVE_BOARD_SNAPSHOT_2026-07-28/DATA/DATA_BLACKBOARD.md`.
 
+## Task: 2026-08-05 Spirit King Skill Runtime Data
+
+### Task title
+
+Connect the authored Spirit King skills to the existing graph, trigger and Definition generation path.
+
+### Goals
+
+- Keep `summon_units.csv` in the existing monster-shaped schema with `base_move_speed=0.5`, max health 1000, Physical primary attribute and all six defenses 50.
+- Generate four `SingleSkillDefinition` skills and one `ZoneSkillDefinition` from `summon_units_skill.csv`.
+- Reuse existing visual resource fields for Sein-C Master 2 and Eve-C/Eve-D effects.
+- Author Densest targeting, three-cast bombardment, Zone pull and OnExpire follow-up in existing graph/trigger CSVs.
+
+### Constraints
+
+- Do not create a new summon skill family or summon-only Node/Trigger CSV.
+- `spirit-king-dimensional-rift` is `AreaAttack`; pull is `0.2 unit/tick`, damage is zero and the existing Zone lifecycle emits the follow-up.
+- C repeats twice after the first cast, each repeat reselects the current densest enemy position.
+- CSV remains the source of skill values and visual resource paths; runtime code consumes generated Definitions.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Phase 0 data contract documented; Phase 1 loading/graph implementation pending.
+
+### Next Actions
+
+- Update the authored Spirit King rows and existing graph/trigger definitions.
+- Extend only the shared parser/validator/generator contracts required for summon skill ownership and the typed pull operation.
+
+### Evidence
+
+- `summon_units.csv` and `summon_units_skill.csv` already exist and are loaded by `GameDataCatalogBuilder.BuildSummons` into a separate `SummonDefinition` lookup.
+- `CsvRowParser.ParseSkillRow` already accepts optional target-selection and repeat columns; the current summon header does not yet author them.
+- `GameDataCatalogBuilder.BuildSummons` builds active skills but does not yet attach summon-owned reactions.
+- Existing graph node and passive trigger CSV files are scanned by `CsvSourceLoader` and are the approved authoring paths.
+
+### History
+
+- 2026-08-05: Code Builder recorded the corrected Zone Rift, visual reuse, Densest re-selection, pull and follow-up contracts before implementation.
+
+## Task: 2026-08-05 Artifact Synergy Icon Data Binding
+
+### Task title
+
+Load the Spirit Contract HUD icon from `artifact_synergies.csv` through the existing catalog pipeline.
+
+### Goals
+
+- Add optional `Icon_Image` asset-path data to the synergy source schema.
+- Carry the field through `CsvRowParser` -> `CsvAssetReferenceCollector` -> Definition Generation -> `ArtifactSynergyDefinition.Icon`.
+- Keep the current single Spirit Contract HUD container display-only; no synergy effect execution is added.
+
+### Constraints
+
+- Use the authored asset `Assets/Image/UI/Artifact/ChatGPT Image 2026년 8월 5일 오후 03_39_55.png`.
+- Keep other synergy icon cells blank until their assets are authored; do not invent paths.
+- Reuse the existing Sprite asset catalog and runtime `LoadSprite` path.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and statically verified. Unity MCP validation timed out after the code/data change; the tracked runtime catalog entry was confirmed by direct file inspection.
+
+### Next Actions
+
+- On the next responsive Unity refresh, run the existing `Pakuri/Validate CSV Source Data` menu item to regenerate/confirm the serialized catalog automatically.
+- User verifies the icon in `InGameScene` Play Mode.
+
+### Evidence
+
+- `artifact_synergies.csv` now has 17 columns including `Icon_Image`; the type row is `asset_path`, Spirit Contract has the requested path and the other five rows are blank.
+- `CsvRowParser.cs` reads `Icon_Image` into `ArtifactSynergyRow.IconPath`.
+- `CsvAssetReferenceCollector.cs` adds each synergy icon path to the shared Sprite reference set.
+- `GameDataCatalogBuilder.Artifacts.cs` assigns `ArtifactSynergyDefinition.Icon = LoadSprite(row.IconPath)`.
+- `ArtifactDefinitions.cs` exposes `ArtifactSynergyDefinition.Icon` as a `Sprite`.
+- The asset exists and its `.meta` GUID is `8b537b0e0f060644cb22f8d33a5bbf01`; `CsvRuntimeCatalog.asset` contains the corresponding path/GUID/first-sprite fileID entry.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and the existing 2 assembly-reference warnings; CSV column-count, path-existence and diff checks passed.
+
+### History
+
+- 2026-08-05: Code Builder added the optional synergy icon field and completed source-model, validation/collection, Definition generation and runtime catalog wiring.
+
 ## Task: 2026-08-05 Boss Artifact Reward Data Contract Design
 
 ### Task title

@@ -8,6 +8,52 @@ The previous Run, reward, and save/load boards are preserved under `boards/ARCHI
 
 For new Run work, inspect the exact current code and data first, then add a required-field task block here only when persistent state is needed.
 
+## Task: 2026-08-05 Spirit Contract Synergy and Spirit King Runtime
+
+### Task title
+
+Implement Spirit Contract stage effects and the temporary Spirit King ally.
+
+### Goals
+
+- At Stage start, derive Spirit Contract count from the existing artifact ownership and learn A/B/C/D at thresholds 2/4/6/8.
+- Spawn one `SummonDefinition` Spirit King through `UnitSpawnManager` at `MiddleSpawnPoint` when count is at least 2.
+- Reuse existing Single/Zone skill, graph-node, trigger, targeting, team-target and MonsterActor HP/popup paths.
+- Move the Spirit King at speed 0.5 only while enemies exist, stop at `EnemySpawnPoint`, prevent same-Stage respawn after death, and recreate it next Stage when eligible.
+
+### Constraints
+
+- `UnitRole.Summon` and `UnitSide.Player` distinguish the temporary ally from party monsters without adding it to Manifest, Offering or Run party slots.
+- `SummonDefinition` remains separate from playable `GameDataCatalog.Monsters`.
+- Dimension Rift is a `ZoneSkillDefinition` with `PullToCenter=0.2 unit/tick`, zero damage and existing Zone `OnExpire` follow-up explosion.
+- DamageMeter excludes `UnitRole.Summon`; HP and damage popup use the existing `MonsterActor` path.
+- Every implementation phase is committed separately; Unity Play Mode remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Phase 0 design update in progress. Runtime implementation not yet started.
+
+### Next Actions
+
+- Commit the corrected runtime design and data/runtime task state.
+- Implement summon skill graph/trigger loading, then synergy state, spawn, movement and scene binding in separate commits.
+
+### Evidence
+
+- `artifact-synergy-runtime-design.md` records the confirmed 2/4/6/8 thresholds, `SummonDefinition`, `ZoneSkill` Rift, 0.2 pull tick, 0.5 movement and targeting rules.
+- `ArtifactSynergyManager.PrepareStage` currently computes `SynergyState` but does not execute `ArtifactSynergyEffectDefinition` or spawn a summon.
+- `UnitSpawnManager` already owns player/enemy registration and has the scene `EnemySpawnPoint` binding; `MiddleSpawnPoint` exists in `InGameScene` but is not yet bound to summon spawning.
+- `CombatUnitRegistry` groups by `UnitSide`, `SkillTargeting` uses `roster.Players` for ally targeting, and `DamageMeterRuntimeTracker` filters `UnitRole.Monster`, establishing the reuse boundaries.
+
+### History
+
+- 2026-08-05: User confirmed Spirit King as a Monster-like `SummonDefinition` ally with existing MonsterActor UI, targetability, fixed movement and no same-Stage respawn.
+- 2026-08-05: Code Builder updated the runtime design with the confirmed Zone pull, target selection, skill thresholds and stage lifecycle.
+
 ## Task: 2026-08-05 Artifact Debug Acquisition Flow
 
 ### Task title
@@ -16,9 +62,9 @@ Use the existing RunSession artifact ownership rules from DebugUI.
 
 ### Goals
 
-- Allow a DebugUI-selected artifact to enter the existing PrisonPanel receiving-unit flow.
+- Allow a DebugUI-selected artifact to enter the existing ArtifactAchiveDebugUI 1P-5P receiving-unit flow without opening PrisonPanel.
 - Keep `RunSession.TryAcquireArtifact` as the authority for run-wide duplicate prevention and per-unit capacity.
-- Keep normal RewardPanel artifact completion behavior separate from debug acquisition completion.
+- Keep normal RewardPanel artifact completion behavior separate from debug acquisition; debug success closes ArtifactAchiveDebugUI after the grant.
 
 ### Constraints
 
@@ -41,11 +87,11 @@ Implemented and locally verified. Play Mode verification remains user-owned.
 ### Evidence
 
 - `RunSession.CanAcquireArtifact` and `TryAcquireArtifact` remain unchanged and are still called by `PrisonPanelUI.AcquireArtifact`.
-- `InGameUIManager.OpenArtifactDebugAcquisition` marks only the UI completion context; it does not bypass `RunSession` validation.
-- `InGameUIManager.CompleteArtifactAcquisition` returns to `DebugUI` for the debug context and keeps the existing RewardPanel path for normal rewards.
+- `DebugUI` calls `RunSession.TryAcquireArtifact` from the existing ArtifactAchiveDebugUI 1P-5P buttons; it does not bypass `RunSession` validation.
+- `RunSession.CanAcquireArtifact` disables invalid debug receiving-unit buttons for duplicate artifacts, missing party members and three-artifact capacity.
 - The `RunMonsterState.Artifacts` ownership and `ArtifactState` three-item cap remain the only persisted grant state.
 - The current sibling `ArtifactDebugUI` and `ArtifactAchiveDebugUI` scene paths reach the debug artifact acquisition flow without changing the RunSession ownership contract; live hierarchy inspection found zero `EmodifierBtn` descendants under `ArtifactAchiveDebugUI`.
-- DebugUI modifier-button removal is now tolerated by optional binding; artifact acquisition still routes through the existing `PrisonPanelUI` and `RunSession` ownership checks.
+- DebugUI modifier-button removal is now tolerated by optional binding; artifact acquisition now routes through the existing debug 1P-5P buttons and `RunSession` ownership checks.
 
 ### History
 
@@ -54,6 +100,8 @@ Implemented and locally verified. Play Mode verification remains user-owned.
 - 2026-08-05: Code Builder updated the debug artifact panel binding after ArtifactDebugUI moved to a DebugPanel sibling and verified the existing acquisition return path still compiles and resolves.
 - 2026-08-05: Code Builder removed modifier-button binding as a prerequisite for artifact debug initialization; the existing debug artifact acquisition ownership path remains unchanged.
 - 2026-08-05: Code Builder updated the artifact acquisition panel to its new DebugPanel sibling path and preserved the existing RunSession/PrisonPanel ownership flow.
+- 2026-08-05: Code Builder moved debug receiving-unit selection from PrisonPanel to ArtifactAchiveDebugUI 1P-5P, assigned party names, added successful-grant logs, and removed the obsolete debug completion context while preserving the normal RewardPanel/PrisonPanel path.
+- 2026-08-05: User reported no debug grant after 1P-5P clicks; the cause was listener removal during debug-state reset. Code Builder restored only the button listener registration and left `RunSession.TryAcquireArtifact` and normal PrisonPanel acquisition unchanged.
 
 ## Task: 2026-08-05 Boss Artifact Reward Acquisition Design
 
@@ -148,6 +196,7 @@ Phase 3 is complete for all ten Spirit Contract artifacts. Stage preparation res
 ### Next Actions
 
 - Keep synergy-level effect execution and Spirit King runtime deferred to Phase 4+.
+- Carry the confirmed Spirit King runtime rules into Phase 4+: `base_move_speed=0.5`, move only while an enemy is registered, move toward `EnemySpawnPoint`, stop on arrival, no same-Stage respawn after death, and spawn a fresh unit next Stage when synergy is at least 2.
 - Enforce the confirmed no-duplicate artifact rule when the acquisition system is implemented.
 - User verifies Stage preparation, Rift battle duration and Compass follow-up visuals in Play Mode.
 
@@ -167,6 +216,8 @@ Phase 3 is complete for all ten Spirit Contract artifacts. Stage preparation res
 - Spirit Bombardment reuses `SingleSkillDefinition` plus `RepeatPerTarget` for three total casts; Dimensional Collapse is split into pull and follow-up explosion SingleAttack Definitions. Current `SingleSkillExecutor` publishes `OnDeploymentCast` and completes without timed `OnExpire`, so that lifecycle is an explicit minimal extension.
 - `CombatUnitRegistry` groups by `Identity.Side`, and `SkillTargeting.TargetList` gives Player-side `Ally/AllAllies` skills the full `Players` list; a Player-side Spirit King therefore receives team effects cast after it spawns.
 - `SkillExecution.TryExecuteAutomaticSkills` scans all registered entries, while current movement exists only in `EnemyActionController`; Spirit King can reuse automatic skills but needs a small allied movement controller.
+- `artifact-synergy-runtime-design.md` now records fixed Spirit King movement speed `0.5`, `EnemySpawnPoint` destination, no-enemy movement pause, no same-Stage respawn, next-Stage re-summon at synergy `2+`, and DamageMeter exclusion with MonsterActor HP/damage popup reuse.
+- Current targeting code confirms a Player-side Spirit King is targetable: `CombatUnitRegistry` groups Players by `Identity.Side`, `EnemyCombatDecision` searches all live `Players` except Nexus-only fallback filtering, and `SkillTargeting.IsSkillTargetable` excludes only `UnitRole.Nexus`.
 - Full runtime design and acceptance criteria are recorded in `Pakuri/reference/4.run/artifact-synergy-runtime-design.md`.
 - Phase 1 now has 27 synergy-effect rows for all 20 detailed non-Tracker levels; Spirit Contract rows reference the authored Spirit King and four granted skill Definitions without adding runtime integration.
 - Phase 2-generated Artifact/Synergy/Summon Definitions are now consumed by the Phase 3 state, manager, snapshot and Trigger paths.
@@ -197,6 +248,7 @@ Phase 3 is complete for all ten Spirit Contract artifacts. Stage preparation res
 - 2026-08-05: Code Builder moved `ArtifactState`, `SynergyState` and `ArtifactSynergyManager` plus their `.meta` files under `Combat/Artifact`, then organized `ArtifactDefinitions.cs` under `Combat/Artifact/Definition`; Loading parser, validator and generator files remained in `Loading`.
 - 2026-08-05: Code Builder replaced manager artifact/effect ID branching with Definition-owned `repeat_rule` and `selection_rule` metadata, preserving the existing Prism, Elixir and Codex behavior.
 - 2026-08-05: Code Builder removed the manager-local `ActiveSlots` array and changed representative-attribute scans to direct `SkillSlot.A` through `SkillSlot.E` iteration.
+- 2026-08-05: Designer applied the confirmed Spirit King movement/death/DamageMeter rules to the runtime design and rechecked enemy target selection against the current registry and targeting code.
 
 ## Task: 2026-08-05 Artifact Synergy Foundation CSVs
 

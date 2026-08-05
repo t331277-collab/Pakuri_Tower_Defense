@@ -3,11 +3,12 @@
 ## 1. 문서 상태
 
 - 역할: Designer / Code Builder
-- 상태: Phase 1·2·3 완료. 정령계약 유물 10종 runtime 구현·집중 EditMode 검증 완료
+- 상태: 정령계약 시너지·정령왕 구현 착수. Phase 1·2·3의 데이터/로딩/유물 효과 기반은 완료
 - Phase 1 범위: 두 Effect CSV와 정령왕 유닛·스킬 CSV 작성
 - 첫 runtime 구현 범위: `ArtifactState`, `SynergyState`, `ArtifactSynergyManager` 뼈대와 정령계약 소속 유물 10개
 - 첫 runtime 시너지 범위: 파티 전체 시너지 개수 계산과 Stage당 1회 로그만 수행하며 시너지 효과는 실행하지 않음
-- 후속 runtime 구현 범위: 정령계약 시너지 1~4단계와 정령왕, 나머지 유물, 처형관·선택받은자·파수꾼·포격대·추적자
+- 이번 구현 범위: 정령계약 시너지 2/4/6/8단계와 정령왕
+- 후속 runtime 구현 범위: 나머지 유물, 처형관·선택받은자·파수꾼·포격대·추적자
 - Phase 1 제외 범위: C#, Parsing, Node/Trigger, Prefab, Scene 생성
 
 현재 저장소에는 Artifact/Synergy/Summon Definition과 Loading 경로, `ArtifactState`, `SynergyState`, `ArtifactSynergyManager`, Stage 준비 연결, Artifact Effect Node/Reaction runtime 소비 경로가 있다. `UnitRole.Summon`과 정령왕 runtime은 아직 없다.
@@ -164,12 +165,12 @@ Phase 1에서 별도 구현 정보 열을 추가하지 않고 `authoring/monster
 ```csv
 "id","display_name","role_summary","element_label","primary_attribute","max_health","power_stat","base_damage","power_coefficient","base_attack_power","base_spell_power","base_move_speed","base_crit_chance","base_crit_damage","def_physical","def_fire","def_lightning","def_ice","def_darkness","def_holy","MonsterIconImage","Image"
 "id","string","string","string","enum:DamageAttribute","float","float","float","float","float","float","float","float","float","float","float","float","float","float","float","asset_path","asset_path"
-"spirit-king","정령왕","정령계약으로 소환되어 천천히 이동하며 단계별 원소 스킬을 자동 시전하는 임시 아군.","물리","Physical","1000","100","0","0","60","100","0.6","0.05","1.5","50","50","50","50","50","50","",""
+"spirit-king","정령왕","정령계약으로 소환되어 천천히 이동하며 단계별 원소 스킬을 자동 시전하는 임시 아군.","물리","Physical","1000","100","0","0","60","100","0.5","0.05","1.5","50","50","50","50","50","50","",""
 ```
 
 - 사용자 확정값: `max_health=1000`, `primary_attribute=Physical`, 여섯 방어력 모두 `50`
 - 기본 공격을 주지 않으므로 `base_damage=0`, `power_coefficient=0`
-- 기존 일반 몬스터보다 느린 이동을 위해 `base_move_speed=0.6`
+- 정령왕의 고정 이동 속도를 위해 `base_move_speed=0.5`
 - 저장소에 정령왕 아이콘·Prefab 경로가 없으므로 두 asset 열은 빈 값이며 경로를 발명하지 않는다.
 - 이 행은 일반 `monsters.csv`에 섞지 않는다. 같은 source 열을 읽어 `SummonDefinition`을 생성하고 소환 전용 lookup에 둔다.
 
@@ -182,7 +183,7 @@ Phase 1에서 `authoring/monster/skills/base/area_attack/skills_area_attack.csv`
 | `spirit-king-elemental-explosion` | A | 원소폭발 | `SingleAttack` | 80 / 2.5 | 5 / 0 / 0 | 밀집 지점 1곳에 배치되는 `SingleSkillDefinition` |
 | `spirit-king-elemental-storm` | B | 원소폭풍 | `AreaAttack` | 틱당 18 / 3.5 | 10 / 6 / 0.5 | 6초 유지되는 `ZoneSkillDefinition` |
 | `spirit-king-spirit-bombardment` | C | 정령 폭격 | `SingleAttack` | 회당 70 / 2.5 | 8 / 0 / 0.35 | 최초 1회와 반복 2회를 합쳐 총 3회 실행 |
-| `spirit-king-dimensional-rift` | D | 차원붕괴 |  `SingleAttack` | 0 / 4.5 | 999 / 1.2 / 0.1 | 전투당 1회, 1.2초 동안 적을 중심으로 끌어당기는 기반 스킬 |
+| `spirit-king-dimensional-rift` | D | 차원붕괴 | `AreaAttack` | 0 / 4.5 | 999 / 1.2 / 0.1 | 전투당 1회, 중앙 균열이 1.2초 동안 적을 중심으로 끌어당기는 `ZoneSkillDefinition` |
 | `spirit-king-dimensional-collapse-explosion` | E | 차원붕괴 폭발 | `SingleAttack` | 240 / 4.5 | 999 / 0 / 0 | 균열 종료 결과로만 실행하며 자동 해금하지 않는 후속 스킬 |
 
 공통 작성값:
@@ -193,9 +194,10 @@ Phase 1에서 `authoring/monster/skills/base/area_attack/skills_area_attack.csv`
 - `runtime_visual_scale=1`, `runtime_visual_sorting_order=0`; `runtime_hitbox_size_x/y`는 스킬 순서대로 `5/5`, `7/7`, `5/5`, `9/9`, `9/9`로 작성한다.
 - 아직 정령왕 스킬 Prefab·sprite·animator·icon이 없으므로 모든 asset 열은 빈 값이다.
 - 정령 폭격은 기존 `RepeatPerTarget` Node에 `repeat_count=2`, `repeat_interval_seconds=0.35`, `repeat_damage_multiplier=1`을 연결한다. 최초 실행까지 포함해 총 3회다.
-- 차원붕괴는 신규 typed pull operation에 `radius=4.5`, `duration_seconds=1.2`, `pull_speed=8`을 주고, 종료 시 `OnExpire -> ExecuteSkill(spirit-king-dimensional-collapse-explosion)`을 연결한다.
-- 현재 `SingleSkillExecutor`는 `OnDeploymentCast`만 발행하고 반복 예약이 없으면 즉시 완료한다. timed Single 종료 `OnExpire`는 발행하지 않으므로 시너지 작업인 Phase 4에서 1.2초 pull lifecycle과 종료 이벤트만 최소 확장한다.
-- `skills_area_attack.csv` 형식에는 `Densest`, 반복 Node, 후속 스킬 연결 열이 없다. Phase 1 스킬 행은 수치와 Definition 종류를 소유하고, 선택·반복·후속 실행은 Phase 4에서 기존 graph-node/trigger CSV 경로를 재사용한다.
+- 차원붕괴는 기존 Zone lifecycle에 `PullToCenter(distance_per_tick=0.2)`를 연결하고, 중앙에서 데미지 0으로 1.2초 유지한다. Zone의 기존 `OnExpire -> ExecuteSkill(spirit-king-dimensional-collapse-explosion)` 경로로 종료 폭발을 실행한다.
+- 정령 폭격은 기존 `RepeatPerTarget`에 최초 시전을 포함해 2회 반복을 연결하며, 반복마다 현재 적 위치를 다시 `Densest`로 계산한다.
+- 원소폭발·원소폭풍·정령 폭격의 대상 중심은 `Densest`를 사용한다. 후보 적 위치별 반경 내 적 수가 최대인 위치를 선택하고, 동률이면 시전자와 가까운 위치, 다시 동률이면 Registry 순서를 따른다.
+- `skills_area_attack.csv` 형식에 없는 선택·반복·후속 실행은 기존 graph-node/trigger CSV와 typed runtime operation으로 연결한다. 새로운 Effect 전용 CSV는 만들지 않는다.
 
 ### 4.5 기존 Node와 Trigger 저작 경로
 
@@ -429,9 +431,11 @@ RunSession 준비
      -> ArtifactState 확인
      -> SynergyState 재계산
      -> 정령계약 단계/해금 스킬 확정
-  -> 적 Encounter Spawn 완료
   -> ArtifactSynergyManager.ActivateStageEffects
-     -> 정령왕 임시 아군 생성
+     -> 이전 Stage 정령왕 정리
+     -> SynergyState 2 이상이면 정령왕 1명 생성
+     -> 보유 단계에 맞는 A~D 스킬만 학습
+  -> 적 Encounter Spawn 완료
   -> StageState.Combat
 ```
 
@@ -456,39 +460,43 @@ Manager의 Stage 호출은 하루당 한 번만 허용한다. 플레이어 등�
 최소 추가점:
 
 - `UnitRole.Summon`: 파티 슬롯, Manifest, Offering, MonsterPanel, Day 회복 대상과 구분
-- `UnitSpawnManager.SpawnTemporaryMonster`
+- `UnitSpawnManager.SpawnTemporarySummon`
 - playable `Monsters`와 분리된 `GameDataCatalog.Summons` lookup
-- `SummonedMonsterMovementController`
+- `UnitSpawnManager`의 기존 등록 목록을 순회하는 정령왕 이동 tick
 
 정령왕을 일반 `monsters.csv`/`catalog.Monsters`에 넣지 않는다. 현재 monster Validation은 모든 Monster에 A~E active와 F~J passive slot을 요구하고, `MenifestUI`는 `GetMonsters()` 전체를 영입 후보로 사용한다. 소환 몬스터 CSV는 `SummonDefinition`을 생성해 별도 lookup에 둔다.
 
 정령왕 기본 규칙:
 
-- Stage당 1명
+- Stage당 최대 1명
 - 전장 중앙 소환
 - `Identity.Side=Player`, `Identity.Role=Summon`
 - 기본 공격 Skill을 넣지 않음
 - `AutoSkillEnabled=true`
 - 소환 이후 시전되는 다른 몬스터의 `Ally/AllAllies` 스킬 대상에 포함
 - 적 AI의 Player 대상 후보에 포함
-- 가장 가까운 적을 향해 천천히 이동하고 설정 거리에서 정지
-- 다음 Stage 준비 시 제거
+- 소환 직후부터 `EnemySpawnPoint`를 향해 이동
+- 적이 없으면 이동하지 않으며, 적이 다시 등록되면 이동을 재개
+- 이동 속도는 `0.5`로 고정하고 `EnemySpawnPoint` 도착 후 정지
+- 정령왕 사망 후 현재 Stage에서는 재소환하지 않음
+- 다음 Stage 시작 시 시너지 개수가 2 이상이면 이전 소환물을 정리하고 새로 1명 소환
 - 일반 파티원, Offering, Run 파티 슬롯에 포함하지 않음
+- DamageMeter에는 포함하지 않고 기존 `MonsterActor`의 HP·피해 팝업만 사용
 
-팀 효과 근거: `CombatUnitRegistry`는 `Identity.Side`로 Players/Enemies를 나누고, `SkillTargeting.TargetList`는 Player 시전자의 `Ally/AllAllies`에 `roster.Players`를 사용한다. 다만 현재 `NotifyPlayerUnitRegistered`가 등록 즉시 passive와 `CombatStart`를 실행하므로 정령왕 생성 전에 끝난 일회성 팀 효과는 자동 소급되지 않는다. 정령왕 후속 runtime 수용 범위는 소환 이후 시전 효과이며, 전투 시작 효과까지 소급할지는 아래 결정 항목으로 남긴다.
+팀 효과 근거: `CombatUnitRegistry`는 `Identity.Side`로 Players/Enemies를 나누고, `SkillTargeting.TargetList`는 Player 시전자의 `Ally/AllAllies`에 `roster.Players`를 사용한다. 따라서 정령왕은 적의 공격 대상과 몬스터의 팀 대상 스킬 대상에 포함된다. `NotifyPlayerUnitRegistered`가 등록 즉시 passive와 `CombatStart`를 실행하므로 정령왕 생성 전에 끝난 일회성 팀 효과는 소급하지 않는다.
 
-이동은 현재 `EnemyActionController`만 보유한다. 적/Nexus 공격 로직을 재사용하지 않고 공통 `MoveToward` 계산만 `UnitMovementRules`로 분리해 정령왕 이동에 사용한다.
+이동은 현재 `EnemyActionController`가 `units.Enemies`만 순회하므로 그대로 재사용할 수 없다. 적 공격·대상 결정은 재사용하지 않고, 정령왕 이동을 `UnitSpawnManager` 또는 정령왕 전용 최소 이동 경로에서 처리한다. 대상은 적 유닛이 아니라 씬에 이미 연결된 `EnemySpawnPoint` Transform이다.
 
 ```text
 InGameCombatManager.Update
-  -> SummonedMonsterMovementController.Tick
+  -> UnitSpawnManager.TickSummons
   -> roster.Players 중 UnitRole.Summon
-  -> SkillTargeting.FindNearestTarget(TargetSide=Enemy, Selection=Nearest)
-  -> stop_distance 밖이면 UnitMovementRules.MoveToward
-  -> StatusCombatRules.CanMove / MoveSpeedMultiplier 적용
+  -> roster.Enemies.Count == 0이면 이동하지 않음
+  -> EnemySpawnPoint까지 0.5 * deltaTime으로 MoveTowards
+  -> EnemySpawnPoint 도착 후 이동 완료 상태 유지
 ```
 
-`base_move_speed`는 `summon_units.csv`가 소유한다. 별도 `stop_distance` 열은 만들지 않고 현재 해금된 공격 스킬 중 최소 `radius`를 정지 거리로 사용한다. 이동 AI는 스킬 선택·시전하지 않고 기존 자동 시전 루프가 담당한다.
+정령왕 이동 속도는 `summon_units.csv`의 `base_move_speed=0.5`가 소유한다. 별도 `stop_distance` 열이나 적 이동속도 resolver는 만들지 않는다. 이동 AI는 스킬 선택·시전하지 않고 기존 자동 시전 루프가 담당한다.
 
 ### 10.2 단계별 효과
 
@@ -497,14 +505,15 @@ InGameCombatManager.Update
 | 2 | 정령왕 소환, 원소폭발 해금 | `SpawnUnit` + `SingleAttack` |
 | 4 | 원소폭풍 추가 해금 | `AreaAttack`/Zone |
 | 6 | 정령 폭격 추가 해금 | `SingleAttack` + `RepeatPerTarget` 총 3회 |
-| 8 | 차원붕괴 추가 해금 | pull `SingleAttack` 종료 후 폭발 `SingleAttack` |
+| 8 | 차원붕괴 추가 해금 | pull `ZoneSkill` 종료 후 폭발 `SingleAttack` |
 
 스킬 값은 `artifact-synergy-list.md`를 그대로 사용한다.
 
 - 원소폭발: 5초마다 밀집 지점, 80 속성 피해
 - 원소폭풍: 6초 지속, 0.5초마다 18 속성 피해
 - 정령 폭격: 8초마다 3개 지점, 각 70 속성 피해
-- 차원붕괴: 전투 중 1회, 중앙 끌어당김 후 240 속성 피해
+- 차원붕괴: 전투 중 1회, 중앙 균열에서 `0.2 unit/tick`으로 끌어당긴 뒤 240 속성 피해
+- 시너지가 8에서 6으로 감소하면 차원붕괴를 새로 학습하지 않는다. 다음 Stage의 해금 목록은 현재 시너지로 다시 계산한다.
 
 ### 10.3 기존 경로와 공백
 
@@ -522,12 +531,12 @@ InGameCombatManager.Update
 
 - `SpawnUnit` effect와 임시 아군 spawn API
 - `UnitRole.Summon`과 별도 소환 몬스터 catalog lookup
-- 정령왕 이동 controller와 공통 이동 계산
+- `UnitSpawnManager`가 기존 등록 목록을 순회하는 정령왕 이동 tick
 - `SkillTargetSelection.Densest`: 적이 가장 많이 몰린 지점
 - Stage 중앙 위치 규칙
 - 정령왕 해금 스킬 구성
-- 차원붕괴 끌어당김 typed operation
-- timed Single 종료 시 `OnExpire`를 발행하는 최소 lifecycle 확장
+- 차원붕괴 끌어당김 typed operation을 기존 Zone lifecycle에 연결
+- Zone 종료 시 기존 `OnExpire`를 후속 폭발 Trigger로 연결
 - 파티 대표 피해 속성 계산
 
 ## 11. 후속 구현 명시
@@ -547,10 +556,10 @@ InGameCombatManager.Update
 
 | 시너지 | 단계 | `application_mode`와 실제 경로 | 현재 공백 |
 |---|---:|---|---|
-| 정령계약 | 2 | `SpawnUnit`: Manager -> `UnitSpawnManager.SpawnTemporaryMonster`; `GrantSkill`: 정령왕에 원소폭발 `SingleAttack` 부여 | 임시 아군 spawn/이동, `Densest`, 대표 속성 resolver 신규 필요 |
+| 정령계약 | 2 | `SpawnUnit`: Manager -> `UnitSpawnManager.SpawnTemporarySummon`; `GrantSkill`: 정령왕에 원소폭발 `SingleAttack` 부여 | 임시 아군 spawn/이동, `Densest`, 대표 속성 resolver 신규 필요 |
 | 정령계약 | 4 | `GrantSkill`: 원소폭풍 `AreaAttack/Zone`, 기존 duration/tick 경로 | `Densest` 신규 필요 |
 | 정령계약 | 6 | `GrantSkill`: 정령 폭격 `SingleAttack`; `RepeatPerTarget(repeat_count=2, interval=0.35, multiplier=1)` | 세 배치를 서로 다른 밀집 지점으로 재선정하려면 `Densest` 반복 재선택 규칙 필요 |
-| 정령계약 | 8 | `GrantSkill`: 차원붕괴 pull `SingleAttack`; `OnExpire -> ExecuteSkill`로 폭발 `SingleAttack`; 쿨다운 999 | 끌어당김 typed Node, timed Single `OnExpire`, Stage 1회 gate 필요 |
+| 정령계약 | 8 | `GrantSkill`: 차원붕괴 pull `ZoneSkill`; Zone의 `OnExpire -> ExecuteSkill`로 폭발 `SingleAttack`; 쿨다운 999 | 끌어당김 typed Node, Stage 1회 gate 필요 |
 | 처형관 | 2 | `SkillModifier`: `CritChanceBonus`; 저체력 추가분은 `ExecuteCritChanceBonus`를 체력 조건과 결합 | 현재 `TargetHealthRatioCondition`은 cast 조건이므로 hit별 체력 조건 연결 신규 필요 |
 | 처형관 | 4 | `SkillModifier`: `CritDamageBonus` | 치명타가 난 공격만 최종 피해 +8% 처리할 crit-result 조건 신규 필요 |
 | 처형관 | 6 | `SkillModifier`: 저체력 조건 + `CritDamageBonus` | 조건부 치명타 피해 Node 신규 필요 |
@@ -651,7 +660,7 @@ InGameCombatManager.Update
 - `authoring/summon/summon_units.csv`: `monsters.csv` 형식으로 정령왕 1행 작성
 - `authoring/summon/skill/summon_units_skill.csv`: `skills_area_attack.csv` 형식으로 정령왕 스킬 5행 작성
 - 정령왕은 체력 1000, 주 속성 Physical, 여섯 방어력 50으로 작성하고 나머지 값은 4.3 계약을 따른다.
-- 원소폭발·정령 폭격·차원붕괴 pull·차원붕괴 폭발은 `SingleAttack`, 원소폭풍만 `AreaAttack`으로 작성한다.
+- 원소폭발·정령 폭격·차원붕괴 폭발은 `SingleAttack`, 원소폭풍과 차원붕괴 중앙 균열은 `AreaAttack`으로 작성한다.
 - 복합 설명은 독립 effect 행으로 분리
 - 모든 유물 행은 `SkillModifier` 또는 `PassiveTrigger`
 - 시너지 행은 `SkillModifier`, `PassiveTrigger`, `ExecuteSkill`, `GrantSkill`, `SpawnUnit`
@@ -687,12 +696,13 @@ InGameCombatManager.Update
 - 정령의 비약과 원소 도감의 가변 배율은 기존 additive `DamageMultiplier` Effect ID 반복 배포로 합성
 - 균열 보석의 6속성 영구 저항 감소와 공명 나침반의 5속성 후속 피해는 기존 Trigger outcome Definition으로 실행
 
-### Phase 4: 정령계약 시너지 Node·Trigger 연결
+### Phase 4: 정령계약 시너지 Node·Trigger 연결 및 스킬 해금
 
 - 정령계약 시너지 Node·Trigger도 기존 graph-node/trigger CSV의 `Effect` owner 경로 사용
-- 정령 폭격 `RepeatPerTarget` 총 3회 연결
-- 차원붕괴 pull과 종료 후 폭발 `ExecuteSkill` 연결
-- timed Single 1.2초 lifecycle과 종료 `OnExpire` 발행 추가
+- 정령 폭격 `RepeatPerTarget` 총 3회 연결 및 반복별 `Densest` 재선정
+- 차원붕괴 `ZoneSkill`의 `PullToCenter(0.2 unit/tick)`와 종료 후 폭발 `ExecuteSkill` 연결
+- 기존 Zone 1.2초 lifecycle과 종료 `OnExpire` 재사용
+- A~E 스킬 중 현재 시너지 단계에 해당하는 스킬만 정령왕에 학습
 - 밀집 지점·대표 속성 resolver 연결
 - `ArtifactSynergyEffectDefinition`에 typed Node/Reaction/outcome 참조 연결
 
@@ -702,15 +712,18 @@ InGameCombatManager.Update
 - `SummonDefinition` 기반 Factory/Spawn
 - 별도 소환 몬스터 RuntimeCatalog lookup
 - 정령왕 Prefab binding
-- 정령왕 SingleAttack/AreaAttack 스킬 Definition 실행
+- 정령왕 SingleSkill/ZoneSkill Definition 실행
 - 단계별 스킬 해금
-- 가장 가까운 적을 향한 저속 이동과 정지 거리
+- `EnemySpawnPoint`를 향한 고정 속도 0.5 이동과 도착 정지
+- 사망 시 현재 Stage 재소환 금지, 다음 Stage에서 새 인스턴스 생성
+- 기존 적 대상 판정·아군 팀 대상 판정·MonsterActor HP/피해 팝업 재사용
 
 ### Phase 6: 정령계약 검증
 
-- 2/4/6/8 누적 효과
-- 첫 Day/다음 Day 1회 소환
+- 2/4/6/8 누적 효과와 8→6 감소 시 차원붕괴 비학습
+- 첫 Day/다음 Day에 시너지 2 이상이면 Stage당 1회 소환
 - Stage당 정령왕 1명
+- 현재 Stage 사망 후 재소환하지 않음
 - 정령왕 스킬 주기·피해·대상 위치
 - 다음 Stage 소환물 정리
 
@@ -725,10 +738,12 @@ InGameCombatManager.Update
 
 정령계약 유물 Phase 3 효과 규칙은 확정·구현됐다. 같은 artifact ID의 중복 획득 금지 규칙은 확정됐지만 실제 획득 시스템 구현 Phase에서 검사한다. 현재 `ArtifactState`의 3개 제한만 Phase 3 범위다.
 
-정령계약 시너지·정령왕 후속 Phase 전에 확정할 항목:
+정령계약 시너지·정령왕 구현에서 적용할 확정 규칙:
 
-- 정령왕이 피해를 받고 죽을 수 있는지
-- 정령왕 생성 전에 이미 적용된 `CombatStart`/일회성 팀 효과를 정령왕에게 소급할지
+- 정령왕은 기존 MonsterActor/UnitCombatState 피해 경로로 피해를 받고 죽을 수 있다.
+- 정령왕 생성 전에 이미 적용된 `CombatStart`/일회성 팀 효과는 소급하지 않는다.
+- 정령왕은 `UnitRole.Summon`과 `UnitSide.Player`로 등록하므로 적 AI의 Player 대상과 아군 `Ally/AllAllies` 대상에 포함된다.
+- 정령왕은 DamageMeter 기록에서 제외하고 HP 및 피해 팝업만 표시한다.
 
 모든 수치는 CSV가 소유한다. 코드 상수로 박지 않는다.
 
@@ -766,7 +781,9 @@ InGameCombatManager.Update
 - 정령 폭격은 최초 실행을 포함해 정확히 3회 배치되고, 차원붕괴 폭발은 균열 종료 뒤 한 번만 실행된다.
 - 정령왕은 `UnitSide.Player`로 등록되어 소환 이후 `Ally/AllAllies` 효과를 받고 적을 공격한다.
 - 정령왕은 `UnitRole.Summon`이라 Run 파티, Manifest, Offering, MonsterPanel 대상에 들어가지 않는다.
-- 정령왕 이동은 상태의 이동 가능 여부와 MoveSpeed 보정을 따른다.
+- 정령왕 이동은 적이 존재할 때만 시작·재개하고 `EnemySpawnPoint`에 도착하면 정지한다.
+- 정령왕 이동 속도는 `0.5`이며, 현재 Stage 사망 후 재소환하지 않는다.
+- 정령왕은 DamageMeter에서 제외되고 `MonsterActor`의 HP·피해 팝업만 표시한다.
 - Manager가 직접 피해를 적용하지 않는다.
 - Offering 학습 ID와 강화·마스터 Choice 목록에 유물 효과가 들어가지 않는다.
 
