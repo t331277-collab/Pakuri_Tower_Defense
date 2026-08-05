@@ -3,14 +3,14 @@
 ## 1. 문서 상태
 
 - 역할: Designer / Code Builder
-- 상태: Phase 1·2 완료, 유물 우선 Phase 3 미착수
+- 상태: Phase 1·2·3 완료. 정령계약 유물 10종 runtime 구현·집중 EditMode 검증 완료
 - Phase 1 범위: 두 Effect CSV와 정령왕 유닛·스킬 CSV 작성
 - 첫 runtime 구현 범위: `ArtifactState`, `SynergyState`, `ArtifactSynergyManager` 뼈대와 정령계약 소속 유물 10개
 - 첫 runtime 시너지 범위: 파티 전체 시너지 개수 계산과 Stage당 1회 로그만 수행하며 시너지 효과는 실행하지 않음
 - 후속 runtime 구현 범위: 정령계약 시너지 1~4단계와 정령왕, 나머지 유물, 처형관·선택받은자·파수꾼·포격대·추적자
 - Phase 1 제외 범위: C#, Parsing, Node/Trigger, Prefab, Scene 생성
 
-현재 저장소에는 `ArtifactEffectDefinition`, `ArtifactSynergyEffectDefinition`, `ArtifactDefinition`, `ArtifactSynergyDefinition`, `ArtifactSynergyLevelDefinition`, `SummonDefinition`과 해당 CSV Loading 경로가 있다. `ArtifactSynergyManager`, `ArtifactState`, `SynergyState`, `UnitRole.Summon`은 아직 없다. 아래 Phase 3 이후 이름과 API는 후속 구현 계약이다.
+현재 저장소에는 Artifact/Synergy/Summon Definition과 Loading 경로, `ArtifactState`, `SynergyState`, `ArtifactSynergyManager`, Stage 준비 연결, Artifact Effect Node/Reaction runtime 소비 경로가 있다. `UnitRole.Summon`과 정령왕 runtime은 아직 없다.
 
 ## 2. 승인된 방향
 
@@ -71,8 +71,10 @@ Phase 2에서 모든 Artifact·Synergy·Summon Loading과 Definition 생성은 �
 3. `ArtifactSynergyManager.PrepareStage`에서 파티 전체 유물 효과 적용 목록과 `SynergyState` 개수 재구성
 4. `StageManager`가 적 생성 전에 Stage당 한 번 `PrepareStage` 호출
 5. `SynergyState`는 시너지별 보유 개수만 계산하고 한 줄 로그를 남김
-6. 정령계약 유물 10개의 `SkillModifier` 8개와 `PassiveTrigger` 2개를 기존 Node·Trigger 경로에 연결
-7. `ArtifactSynergyEffectDefinition` 순회, 정령왕 소환, 단계별 스킬 해금은 실행하지 않음
+6. 각 `ArtifactState`는 영구 보유 ID와 Stage 한정 활성 Effect ID를 분리하고, Manager가 `recipient_scope`에 따라 활성 Effect를 배포
+7. 정령계약 유물 10개의 `SkillModifier` 8개와 `PassiveTrigger` 2개를 기존 Node·Trigger 경로에 연결
+8. `SkillModifier`는 `SkillExecutionRules`가 활성 Effect의 Node를 최종 snapshot에 합성하고, `PassiveTrigger`는 `SkillTrigger`가 활성 Effect의 Reaction을 기존 gate/scheduler로 전달
+9. `ArtifactSynergyEffectDefinition` 순회, 정령왕 소환, 단계별 스킬 해금은 실행하지 않음
 
 첫 대상은 `elemental-prism`, `ember-crown`, `frost-lens`, `storm-capacitor`, `radiant-chalice`, `black-candlestick`, `spirit-elixir`, `rift-gem`, `elemental-codex`, `resonance-compass`다.
 
@@ -93,9 +95,13 @@ Pakuri/Assets/CSVdata/
 │  ├─ artifact_synergies.csv
 │  └─ Effect/
 │     ├─ artifact_effects.csv
-│     ├─ artifact_synergy_effects.csv
-│     ├─ effect_nodes.csv
-│     └─ effect_triggers.csv
+│     └─ artifact_synergy_effects.csv
+├─ authoring/monster/skills/
+│  ├─ choices/passive/skill_graph_nodes_passive.csv
+│  ├─ triggers/passive/passive_skill_triger.csv
+│  └─ nodes/definitions/
+│     ├─ skill_node_definitions.csv
+│     └─ skill_node_definition_params.csv
 └─ authoring/summon/
    ├─ summon_units.csv
    └─ skill/
@@ -111,8 +117,8 @@ Pakuri/Assets/CSVdata/
 유물 고유 추가 효과의 독립 Definition 헤더다.
 
 ```csv
-"effect_id","artifact_id","application_mode","recipient_scope","recipient_monster_id","target_skill_id","outcome_skill_id"
-"id","id","enum:ArtifactEffectApplicationMode","enum:ArtifactEffectRecipient","string","skill_id","skill_id"
+"effect_id","artifact_id","application_mode","recipient_scope","repeat_rule","selection_rule","recipient_monster_id","target_skill_id","outcome_skill_id"
+"id","id","enum:ArtifactEffectApplicationMode","enum:ArtifactEffectRecipient","enum:ArtifactEffectRepeatRule","enum:ArtifactEffectSelectionRule","string","skill_id","skill_id"
 ```
 
 | 열 | 소유 의미 |
@@ -121,6 +127,8 @@ Pakuri/Assets/CSVdata/
 | `artifact_id` | `ArtifactDefinition` 외래 키 |
 | `application_mode` | 개별 유물은 `SkillModifier` 또는 `PassiveTrigger`만 허용 |
 | `recipient_scope` | 적용 대상 범위 |
+| `repeat_rule` | 반복 적용 횟수 계산 방식. `None`, 시너지 보유 유물 수, 서로 다른 대표 속성 수를 Definition에 전달 |
+| `selection_rule` | 효과 변형 선택 방식. `PartyDominantAttribute`는 원소 프리즘의 파티 대표 속성 결과만 활성화 |
 | `recipient_monster_id` | 특정 캐릭터 효과일 때 대상 Monster ID |
 | `target_skill_id` | 기존 스킬 snapshot 보정 대상, 없으면 빈 값 |
 | `outcome_skill_id` | Trigger/Stage 효과가 실행할 Generation 확정 Skill Definition, 없으면 빈 값 |
@@ -187,16 +195,17 @@ Phase 1에서 `authoring/monster/skills/base/area_attack/skills_area_attack.csv`
 - 정령 폭격은 기존 `RepeatPerTarget` Node에 `repeat_count=2`, `repeat_interval_seconds=0.35`, `repeat_damage_multiplier=1`을 연결한다. 최초 실행까지 포함해 총 3회다.
 - 차원붕괴는 신규 typed pull operation에 `radius=4.5`, `duration_seconds=1.2`, `pull_speed=8`을 주고, 종료 시 `OnExpire -> ExecuteSkill(spirit-king-dimensional-collapse-explosion)`을 연결한다.
 - 현재 `SingleSkillExecutor`는 `OnDeploymentCast`만 발행하고 반복 예약이 없으면 즉시 완료한다. timed Single 종료 `OnExpire`는 발행하지 않으므로 시너지 작업인 Phase 4에서 1.2초 pull lifecycle과 종료 이벤트만 최소 확장한다.
-- `skills_area_attack.csv` 형식에는 `Densest`, 반복 Node, 후속 스킬 연결 열이 없다. Phase 1 스킬 행은 수치와 Definition 종류를 소유하고, 선택·반복·후속 실행은 Phase 4 시너지용 `effect_nodes.csv`/`effect_triggers.csv`가 소유한다.
+- `skills_area_attack.csv` 형식에는 `Densest`, 반복 Node, 후속 스킬 연결 열이 없다. Phase 1 스킬 행은 수치와 Definition 종류를 소유하고, 선택·반복·후속 실행은 Phase 4에서 기존 graph-node/trigger CSV 경로를 재사용한다.
 
-### 4.5 Node와 Trigger
+### 4.5 기존 Node와 Trigger 저작 경로
 
-`effect_nodes.csv`와 `effect_triggers.csv`는 기존 스킬 저작 형식을 재사용한다.
+유물 전용 `effect_nodes.csv`와 `effect_triggers.csv`는 만들지 않는다. Node 정의 CSV는 operation 종류와 인자 계약만 소유하고 실제 효과 인스턴스는 기존 패시브 graph-node/trigger CSV에 작성한다.
 
-- `owner_kind`: `ArtifactEffect` 또는 `ArtifactSynergyEffect`
-- `owner_id`: 두 Effect CSV의 `effect_id`
-- `target_skill_id`, `node_order`, `node_type_id`, `arg_1..arg_12`: 기존 graph node 의미 유지
-- Trigger 조건 열: 현재 monster skill trigger CSV 의미 유지
+- `skill_graph_nodes_passive.csv`: `owner_kind=Effect`, `owner_id=<effect_id>`로 실제 Node와 인자를 작성
+- `passive_skill_triger.csv`: `source_skill_id=<effect_id>`로 실제 Trigger 사건과 gate를 작성
+- `skill_node_definitions.csv`, `skill_node_definition_params.csv`: 기존 Node type/parameter 계약을 그대로 사용
+- 현재 `SkillNodeOwnerKind.Effect`는 존재하지만 graph materialization이 완성되지 않았으므로 Phase 3에서 기존 Effect owner 경로만 완성
+- artifact Effect는 monster 소유 스킬이 아니므로 Parser/Validation은 Effect owner에 `monster_id`와 learned passive 소유권을 강제하지 않음
 
 새로운 범용 `effect_kind`, JSON payload, 문자열 수식 열은 만들지 않는다. 기존 Node로 표현되지 않는 동작만 새 typed Node/Trigger event로 추가한다.
 
@@ -227,8 +236,8 @@ CSV
 - Artifact synergy row와 level row
 - Artifact effect row
 - Artifact synergy effect row
-- Effect Node row
-- Effect Trigger row
+- 기존 graph node row의 `Effect` owner
+- 기존 passive trigger row의 artifact `effect_id` source
 - `authoring/summon/summon_units.csv` row
 - `authoring/summon/skill/summon_units_skill.csv` row
 
@@ -318,25 +327,22 @@ RuntimeCatalog는 ID 조회를 제공한다.
 
 각 `RunSession.RunMonsterState`가 하나 소유한다.
 
-- 최대 3개 `artifact_id`
-- 보유 Artifact Definition 조회 결과
-- 해당 유물의 `ArtifactEffectDefinition` 목록
+- `OwnedArtifactIds`: 영구 보유 `artifact_id`, 최대 3개
+- `ActiveArtifactEffectIds`: 현재 Stage에서 이 유닛이 실제 적용받는 Effect ID
 - `CanAdd`, `TryAdd`, `Remove`
-- 스킬 snapshot 생성 시 현재 유물 추가 효과 Node를 공통 해석기로 전달
+- Stage 준비 때 활성 Effect 목록을 비운 뒤 `recipient_scope`에 따라 다시 배포
+- 스킬 snapshot 생성 시 활성 `SkillModifier` Effect Node를 공통 해석기로 전달
 
 `ArtifactState`는 강화·마스터 Choice 목록에 유물 ID를 섞지 않는다.
 
 ### 7.2 `SynergyState`
 
-`ArtifactSynergyManager`가 Stage마다 다시 만든다.
+`ArtifactSynergyManager`가 Stage마다 다시 만든다. Phase 3에서는 개수만 소유하고 시너지 Effect를 활성화하지 않는다.
 
 - 파티 전체 시너지별 보유 개수
-- 활성 level ID
-- 활성 `ArtifactSynergyEffectDefinition` 목록
-- 정령왕에게 해금할 스킬 Definition 목록
-- 정령계약 대표 속성
+- 현재 시너지 개수 로그
 
-상위 단계가 활성화되면 하위 단계 효과도 유지한다. 정령계약 6개면 2/4/6 효과가 모두 활성화된다.
+활성 level, 시너지 Effect와 정령왕 해금 스킬은 Phase 4 이후 범위다. 유물 효과에 필요한 파티 대표 속성과 파티원별 대표 속성은 `PrepareStage`에서 계산하고 `ActiveArtifactEffectIds` 배포로 고정한다.
 
 ### 7.3 `ArtifactSynergyManager`
 
@@ -345,19 +351,20 @@ Manager가 유물·시너지 추가 효과의 Stage 수명주기를 구현한다
 제안 책임:
 
 1. `PrepareStage(RunSession)`에서 모든 `ArtifactState`를 순회
-2. Artifact Definition의 `synergy_id`로 개수 계산
-3. `SynergyState` 재구성
-4. 파티 유닛의 Artifact/시너지 추가 효과 적용 준비
-5. `ActivateStageEffects()`에서 활성 시너지 효과 Definition 순회
-6. outcome Skill은 기존 `SkillExecution` 공통 진입점으로 전달
-7. `SpawnUnit` 결과는 `ArtifactSynergyEffectDefinition -> UnitSpawnManager.SpawnTemporaryMonster`로 실행
-8. 다음 Stage 전에 이전 정령왕 제거와 Stage effect 상태 초기화
+2. 모든 `ActiveArtifactEffectIds`를 지워 Stage 재진입 중복 누적 방지
+3. Artifact Definition의 `synergy_id`로 개수 계산하고 `SynergyState` 재구성
+4. 개별 Artifact Effect의 `recipient_scope`를 해석해 파티 유닛에 활성 Effect ID 배포
+5. 정령계약 유물 10개만 배포하고 시너지 개수 한 줄 로그 출력
+
+Phase 4 이후에만 활성 시너지 Effect 순회, outcome Skill 실행, SpawnUnit과 정령왕 Stage 정리를 추가한다.
 
 Manager가 직접 `Instantiate`, `ApplyDamage`, 치명타 계산을 하지 않는다. 각 concrete Definition과 기존 Executor가 실제 결과를 실행한다.
 
 ## 8. 기존 강화·마스터 경로 재사용
 
 현재 `SkillExecutionRules.ApplyChoice`는 `SkillChoice.Nodes`를 snapshot에 적용한다. 유물 Definition을 Choice로 변환하지 않고 Node 적용 부분만 공통화한다.
+
+Phase 3의 snapshot 합성 순서는 `Definition -> 학습 Passive -> Enhancement -> Master -> Artifact SkillModifier`다. `SkillExecutionRules`는 현재 유닛의 `ArtifactState.ActiveArtifactEffectIds`만 순회하고 파티 전체를 매 시전마다 다시 검색하지 않는다.
 
 목표 구조:
 
@@ -389,13 +396,13 @@ ArtifactSynergyEffectDefinition.Reactions
 
 | `application_mode` | CSV 이후 경로 | 실행 지점 |
 |---|---|---|
-| `SkillModifier` | `effect_nodes.csv -> SkillGraphParser -> CsvDataValidator -> GameDataCatalogBuilder.Nodes -> EffectDefinition.Nodes` | `ArtifactState`/`SynergyState`가 snapshot 생성 때 `SkillExecutionRules`의 공통 Node 적용 함수 호출 |
-| `PassiveTrigger` | `effect_triggers.csv + effect_nodes.csv -> SkillReaction -> SkillTrigger` | 기존 gate/scheduler 뒤 `SkillExecution -> family Executor` 실행 |
+| `SkillModifier` | 기존 `skill_graph_nodes_passive.csv`의 `owner_kind=Effect` -> `SkillGraphParser` -> `CsvDataValidator` -> `GameDataCatalogBuilder.Nodes` -> `EffectDefinition.Nodes` | `SkillExecutionRules`가 `ArtifactState.ActiveArtifactEffectIds`를 순회하고 기존 `ApplyNodes` 호출 |
+| `PassiveTrigger` | 기존 `passive_skill_triger.csv`와 graph node의 `effect_id` -> `SkillReaction` -> `SkillTrigger` | `SkillTrigger`가 활성 Artifact Reaction을 수집하고 기존 gate/scheduler 뒤 `SkillExecution -> family Executor` 실행 |
 | `ExecuteSkill` | `outcome_skill_id -> Generation에서 concrete SkillDefinition 참조 확정` | `ArtifactSynergyManager.ActivateStageEffects` 또는 Trigger가 `SkillExecution` 호출 |
 | `GrantSkill` | `outcome_skill_id -> Generation에서 concrete SkillDefinition 참조 확정` | `SynergyState`가 선택 유닛/정령왕의 Stage 한정 `SkillState`에 부여 |
 | `SpawnUnit` | `spawn_monster_id -> Generation에서 SummonDefinition 참조 확정` | `ArtifactSynergyManager.ActivateStageEffects -> UnitSpawnManager.SpawnTemporaryMonster` |
 
-현재 두 Effect Definition과 Loading 경로는 구현됐다. `ArtifactState`와 Effect Definition의 Node/Reaction 필드는 아직 없으므로 Phase 3~4에서 `SkillGraphParser.cs`, `GameDataCatalogBuilder.Nodes.cs`, `SkillExecutionRules.cs`, `SkillTrigger.cs`, `SkillExecution.cs` 공통 경로에 연결한다.
+두 Effect Definition과 Loading 경로, `ArtifactState`, Effect Definition의 Node/Reaction 필드, 기존 snapshot/Trigger 실행 연결까지 구현됐다. 새 Node/Trigger CSV나 `PassiveSkillDefinition` 없이 기존 Effect owner와 `SkillExecutionRules`/`SkillTrigger` 경로를 재사용한다.
 
 ### 8.2 공통 Node 선택 기준
 
@@ -564,16 +571,16 @@ InGameCombatManager.Update
 
 | 유물 | mode | Node·경로 | 현재 공백 |
 |---|---|---|---|
-| 원소 프리즘 | `SkillModifier` | 파티 최고 속성 resolver -> `ConditionSkillAttribute` -> `DamageMultiplier(1.12)` | 파티 최고 속성 resolver 신규 필요 |
+| 원소 프리즘 | `SkillModifier` | 학습 active A~E의 비Physical 속성을 파티 전체에서 집계 -> 최다 속성 하나의 `ConditionSkillAttribute` -> `DamageMultiplier(1.12)` | 구현 완료. 동률은 slot A~E, 같은 slot은 1P~5P 순서 |
 | 불씨 왕관 | `SkillModifier` | `ConditionSkillAttribute(Fire)` + `DamageMultiplier(1.18)`; `ConditionStatus(fire-exposure)` + `ConditionalDamageMultiplier(1.10)` | 기존 Node 재사용 가능 |
 | 서리 렌즈 | `SkillModifier` | `ConditionSkillAttribute(Ice)` + `DamageMultiplier(1.18)`; `ConditionAnyStatus(chill,freeze)` + `ConditionalDamageMultiplier(1.10)` | 기존 Node 재사용 가능 |
 | 폭풍 축전기 | `SkillModifier` | `ConditionSkillAttribute(Lightning)` + `DamageMultiplier(1.18)`; `ConditionStatus(shock)` + `ConditionalDamageMultiplier(1.10)` | 기존 Node 재사용 가능 |
 | 성광 잔 | `SkillModifier` | `ConditionSkillAttribute(Holy)` + `DamageMultiplier(1.18)`; source shield 조건 + `DamageMultiplier(1.08)` | source 상태 조건 Node 연결 신규 필요 |
-| 검은 촛대 | `SkillModifier` | `ConditionSkillAttribute(Darkness)` + `DamageMultiplier(1.18)`; 표식/낙인 status 식 + `ConditionalDamageMultiplier(1.08)` | 적용할 실제 status ID 목록 확정 필요 |
-| 정령의 비약 | `SkillModifier` | `DamageMultiplier(1.10)`; 저항 감소 status 식 + `ConditionalDamageMultiplier(1.10)` | 모든 저항 감소를 뜻하는 실제 status ID 목록 확정 필요 |
-| 균열 보석 | `PassiveTrigger` | `CombatStart` -> 전 적 대상 Buff/Status outcome; status에 속성별 `StatusFlatElementResistReduction(5)` | 전 속성 6개 생성 규칙과 중복 정책 확정 필요 |
-| 원소 도감 | `SkillModifier` | 파티의 서로 다른 속성 보유자 수 resolver -> `DamageMultiplier(1 + count*0.04)` | 파티 집계 resolver 신규 필요 |
-| 공명 나침반 | `PassiveTrigger` | `OnOutgoingDamage`, `ProcChance=.08`, `TriggerAttributes` -> `ApplyDamage` 같은 속성 | 원문에 추가 피해량/배율 없음; 수치 확정 전 실행 데이터 작성 불가 |
+| 검은 촛대 | `SkillModifier` | `ConditionSkillAttribute(Darkness)` + `DamageMultiplier(1.18)`; `ConditionAnyStatus(name-mark;holy-exposure;sein-a-hit-mark)` + `DamageMultiplier(1.08)` | 구현 완료 |
+| 정령의 비약 | `SkillModifier` | 모든 속성 `DamageMultiplier(1.10)` + 파티 정령계약 유물 수만큼 `DamageMultiplier(1.02)` 반복 배포 | 구현 완료. 자기 자신 포함 |
+| 균열 보석 | `PassiveTrigger` | 소유자 `CombatStart` -> 전 적 대상 영구 Buff/Status outcome 6개 -> Physical/Fire/Lightning/Ice/Darkness/Holy 각각 `StatusFlatElementResistReduction(5)` | 구현 완료. 다른 source와 합산 |
+| 원소 도감 | `SkillModifier` | 파티원별 학습 active A~E 중 비Physical 대표 속성을 구하고 서로 다른 수만큼 `DamageMultiplier(1.04)` 반복 배포 | 구현 완료. 대표 속성 동률은 A~E 순서, 최종 피해는 모든 속성 대상 |
+| 공명 나침반 | `PassiveTrigger` | 비Physical `OnOutgoingDamage`, `ProcChance=.08`, `EventAppliedDamage * .30` -> 같은 속성 `ApplyDamage`; Rin 양손잡이 후속타 visual 재사용 | 구현 완료 |
 
 ### 11.3 처형관 유물
 
@@ -661,19 +668,28 @@ InGameCombatManager.Update
 
 ### Phase 3: 유물 상태 뼈대와 정령계약 유물 10개
 
-- `ArtifactState`, 유닛당 최대 3개
+상태: 완료. 정령계약 유물 10종의 modifier/trigger 데이터와 Stage 파티 resolver를 구현했고 기존 Node/Trigger 실행 경로로 검증했다.
+
+- `ArtifactState.OwnedArtifactIds`, 유닛당 최대 3개
+- `ArtifactState.ActiveArtifactEffectIds`, Stage 한정 수신 효과 목록
 - `RunSession.RunMonsterState`와 `UnitCombatState`가 같은 `ArtifactState` 참조 공유
 - `SynergyState`는 파티 전체 시너지별 보유 개수만 소유
 - `ArtifactSynergyManager.PrepareStage`와 `StageManager` Stage당 1회 호출 연결
 - 현재 시너지 개수를 한 줄 로그로 출력하고 시너지 Effect는 실행하지 않음
-- 정령계약 유물 10개용 `effect_nodes.csv`, `effect_triggers.csv`
+- 유물 전용 Node/Trigger CSV는 만들지 않음
+- 정령계약 유물 10개의 실제 Node는 기존 `skill_graph_nodes_passive.csv`, Trigger는 기존 `passive_skill_triger.csv`에 `effect_id` 소유로 작성
 - `ArtifactEffectDefinition`에 typed Node/Reaction 참조 연결
-- `SkillModifier`는 `SkillExecutionRules`의 공통 Node 적용 경로, `PassiveTrigger`는 기존 Reaction/Trigger 경로 재사용
+- `SkillModifier`는 Passive/Enhancement/Master 뒤 `SkillExecutionRules.ApplyNodes`로 최종 snapshot에 합성
+- `PassiveTrigger`는 `SkillTrigger`가 활성 Artifact Reaction을 수집하고 기존 gate/scheduler/실행 경로 재사용
+- 유물 ID를 `LearnedPassiveSkillIds`에 넣거나 `PassiveSkillDefinition`으로 생성하지 않음
 - Stage 재진입 시 적용 목록을 지우고 다시 만들어 중복 누적 방지
+- 원소 프리즘·원소 도감 대표 속성은 Physical을 제외하고 학습한 active A~E만 집계
+- 정령의 비약과 원소 도감의 가변 배율은 기존 additive `DamageMultiplier` Effect ID 반복 배포로 합성
+- 균열 보석의 6속성 영구 저항 감소와 공명 나침반의 5속성 후속 피해는 기존 Trigger outcome Definition으로 실행
 
 ### Phase 4: 정령계약 시너지 Node·Trigger 연결
 
-- 정령계약 시너지용 `effect_nodes.csv`, `effect_triggers.csv`
+- 정령계약 시너지 Node·Trigger도 기존 graph-node/trigger CSV의 `Effect` owner 경로 사용
 - 정령 폭격 `RepeatPerTarget` 총 3회 연결
 - 차원붕괴 pull과 종료 후 폭발 `ExecuteSkill` 연결
 - timed Single 1.2초 lifecycle과 종료 `OnExpire` 발행 추가
@@ -707,17 +723,7 @@ InGameCombatManager.Update
 
 ## 13. 결정 필요 항목
 
-정령계약 유물 Phase 3 완료 전 확정할 항목:
-
-- 대표 속성 집계 대상: 학습 active skill만인지 전체 보유 skill인지
-- Physical을 대표 속성 후보에 포함할지
-- 속성 동률 우선순위
-- 검은 촛대가 인정할 표식·낙인 status ID 목록
-- 정령의 비약이 인정할 저항 감소 status ID 목록
-- 균열 보석의 전 속성 저항 감소 생성·중복 정책
-- 원소 도감의 파티원별 속성 보유 판정 기준
-- 공명 나침반의 추가 피해량 또는 피해 배율
-- 같은 artifact ID의 파티 내 중복 보유·효과 중첩·시너지 개수 반영 정책
+정령계약 유물 Phase 3 효과 규칙은 확정·구현됐다. 같은 artifact ID의 중복 획득 금지 규칙은 확정됐지만 실제 획득 시스템 구현 Phase에서 검사한다. 현재 `ArtifactState`의 3개 제한만 Phase 3 범위다.
 
 정령계약 시너지·정령왕 후속 Phase 전에 확정할 항목:
 
@@ -737,10 +743,12 @@ InGameCombatManager.Update
 - Effect CSV는 최종 Definition으로 생성된다.
 - runtime에서 CSV 문자열을 다시 해석하지 않는다.
 - 유물 Effect는 `SkillChoice`나 `PassiveSkillDefinition`으로 생성되지 않는다.
+- 유물 전용 `effect_nodes.csv`, `effect_triggers.csv`는 존재하지 않고 기존 Node 정의·graph·trigger CSV를 재사용한다.
 
 ### 상태
 
-- 파티원별 유물 0~3개 제한이 `ArtifactState`에서 지켜진다.
+- 파티원별 `OwnedArtifactIds` 0~3개 제한이 `ArtifactState`에서 지켜진다.
+- `ActiveArtifactEffectIds`는 Manager가 Stage마다 비우고 `recipient_scope`에 따라 다시 배포한다.
 - 전체 파티 유물로 정령계약 단계가 계산된다.
 - Phase 3에서는 계산된 시너지 개수만 Stage당 한 번 로그로 확인할 수 있다.
 - 다음 Day에 정령계약 유물 효과가 중복 누적되지 않는다.
@@ -750,6 +758,8 @@ InGameCombatManager.Update
 - Phase 3의 `ArtifactSynergyManager`는 Stage당 한 번 유물 상태를 재구성하고 정령계약 유물 효과만 배포한다.
 - Phase 3에서는 `ArtifactSynergyEffectDefinition`을 실행하지 않는다.
 - 정령계약 유물의 `SkillModifier`와 `PassiveTrigger`는 기존 Node/Trigger 경로를 통과한다.
+- `SkillModifier`는 최종 스킬 snapshot에만 적용되며 원본 `SkillDefinition`을 변경하지 않는다.
+- Artifact Trigger는 기존 `SkillReaction` gate/scheduler를 사용하고 별도 유물 Trigger executor를 만들지 않는다.
 - 아래 정령왕 실행 기준은 Phase 4~6 후속 범위다.
 - 정령왕 생성은 `SpawnUnit` Effect에서 `UnitSpawnManager.SpawnTemporaryMonster`를 통과한다.
 - 정령왕 공격은 기존 SingleAttack/AreaAttack 실행 경로를 통과한다.

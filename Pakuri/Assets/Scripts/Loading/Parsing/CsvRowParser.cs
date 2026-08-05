@@ -77,6 +77,8 @@ namespace Pakuri.Data
             public string ArtifactId;
             public ArtifactEffectApplicationMode ApplicationMode;
             public ArtifactEffectRecipient Recipient;
+            public ArtifactEffectRepeatRule RepeatRule;
+            public ArtifactEffectSelectionRule SelectionRule;
             public string RecipientMonsterId;
             public string TargetSkillId;
             public string OutcomeSkillId;
@@ -294,6 +296,8 @@ namespace Pakuri.Data
                 ArtifactId = record.ReadRequiredString("artifact_id"),
                 ApplicationMode = record.ReadEnum<ArtifactEffectApplicationMode>("application_mode"),
                 Recipient = record.ReadEnum<ArtifactEffectRecipient>("recipient_scope"),
+                RepeatRule = record.ReadEnum<ArtifactEffectRepeatRule>("repeat_rule"),
+                SelectionRule = record.ReadEnum<ArtifactEffectSelectionRule>("selection_rule"),
                 RecipientMonsterId = record.ReadString("recipient_monster_id"),
                 TargetSkillId = record.ReadString("target_skill_id"),
                 OutcomeSkillId = record.ReadString("outcome_skill_id")

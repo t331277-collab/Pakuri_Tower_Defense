@@ -8,6 +8,129 @@ The previous UI and RunScene UI boards are preserved under `boards/ARCHIVE/ACTIV
 
 For new UI work, inspect the exact current scripts, scenes, prefabs, UXML, USS, or assets first, then add a required-field task block here only when persistent state is needed.
 
+## Task: 2026-08-05 Artifact Debug Acquisition Flow
+
+### Task title
+
+Add a DebugUI synergy-to-artifact acquisition flow.
+
+### Goals
+
+- Open `ArtifactDebugUI` from the `Debug/DebugPanel/DebugUI/ArtifactDebug` button.
+- List catalog artifact synergies on `Debug/DebugPanel/ArtifactDebugUI/A~JBtn` and list the selected synergy's artifacts on the sibling path `Debug/DebugPanel/ArtifactAchiveDebugUI/A~JBtn`.
+- Write each display name to the authored TMP text child and leave excess slots visible but non-interactable with no listener action.
+- Route an artifact choice through the existing PrisonPanel 1P-5P receiving-unit selection.
+- Return to the artifact acquisition debug list after a successful debug grant without opening the normal RewardPanel completion flow.
+
+### Constraints
+
+- Reuse `GameDataLoader.CurrentCatalog`, `PrisonPanelUI.OpenArtifactAcquisition`, and `RunSession.TryAcquireArtifact`.
+- Do not add a second artifact ownership or duplicate/capacity rule.
+- Do not change CSV data or add new scene objects; the existing `ArtifactDebug`, `ArtifactDebugUI`, sibling `ArtifactAchiveDebugUI`, A-J buttons and Close object are the binding targets.
+- Unity Play Mode verification remains user-owned.
+- The per-skill modifier buttons are optional; deleting them must not disable the artifact debug binding.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally verified. Play Mode verification remains user-owned.
+
+### Next Actions
+
+- User verifies DebugUI → synergy → artifact → 1P-5P acquisition in Play Mode, including duplicate and full-artifact recipients.
+
+### Evidence
+
+- `DebugUI.cs` binds the existing ArtifactDebug button at `Debug/DebugPanel/DebugUI/ArtifactDebug`; the user-reorganized panels are siblings at `Debug/DebugPanel/ArtifactDebugUI` and `Debug/DebugPanel/ArtifactAchiveDebugUI`.
+- `DebugUI.cs` reads `ArtifactSynergies` and `Artifacts` from the loaded catalog; current CSV inspection reports 6 synergies, 10 artifacts for each of the first 5 synergies, and 0 for Tracker.
+- `InGameUIManager.cs` distinguishes debug artifact completion from normal reward completion and returns to the debug artifact list after success.
+- `PrisonPanelUI.cs` remains the only receiving-unit interaction path; its existing `CanAcquireArtifact`/`TryAcquireArtifact` checks enforce occupied-slot, duplicate and three-artifact capacity rules.
+- Unity `InGameScene` path inspection found all requested targets; scene validation returned 0 issues, 0 missing scripts and 0 broken prefabs.
+- The previous nested acquisition path no longer resolves; the current sibling paths resolve the ArtifactDebugUI panel and the ArtifactAchiveDebugUI A-J targets.
+- `DebugUI.cs` now uses the existing `UiBindingUtility.BindOptionalChild` for per-skill modifier buttons, so missing modifier buttons cannot make `BindObject()` fail before ArtifactDebug listeners are registered.
+- Post-change live scene inspection resolved all 10 synergy A-J and 10 artifact A-J paths; the old nested panel path resolved 0 objects.
+- All six `EmodifierBtn` objects found under `ArtifactAchiveDebugUI/E~JBtn` were deleted; no `EmodifierBtn` remains below `ArtifactAchiveDebugUI` while unrelated DebugUI modifier buttons remain.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal` completed with 0 errors and the existing 2 assembly-reference warnings.
+- Unity script validation reported 0 errors for `DebugUI.cs`, `InGameUIManager.cs` and `PrisonPanelUI.cs`; only the existing generic string-concatenation warnings were reported.
+
+### History
+
+- 2026-08-05: Code Builder added catalog-backed synergy and artifact A-J debug lists, connected artifact selection to PrisonPanel acquisition, added debug completion return behavior, and preserved the normal RewardPanel artifact flow.
+- 2026-08-05: User reorganized the DebugUI hierarchy; Code Builder corrected the nested ArtifactDebugUI binding paths, confirmed the missing `정령계약` display was caused by the stale path, deleted the six ArtifactAchiveDebugUI EmodifierBtn children, saved InGameScene, and revalidated the scene.
+- 2026-08-05: User moved ArtifactDebugUI to be a DebugPanel child; Code Builder updated DebugUI to the sibling panel paths, verified the full A-J binding targets, compiled with 0 errors, validated the scene with 0 issues, and confirmed the existing artifact debug execution chain remains connected.
+- 2026-08-05: User removed modifier buttons; Code Builder made those bindings optional so ArtifactDebugUI can initialize independently, then verified catalog-backed A-J target paths, scene validation, Unity diagnostics, and a 0-error build.
+- 2026-08-05: User moved ArtifactAchiveDebugUI to a DebugPanel sibling; Code Builder updated its panel, Close, and A-J artifact bindings, saved InGameScene, and verified build and scene validation.
+
+## Task: 2026-08-05 Boss Artifact Reward Panel Design
+
+### Task title
+
+Use fixed RewardPanel slots for all stage rewards and remove legacy templates.
+
+### Goals
+
+- Use the authored `RewardBtn` through `RewardBtn (12)` objects in order for every reward entry.
+- Put the reward category in each slot's `Summary` and the detail/value in `What`.
+- Reuse `RewardPanelUI` reward-button consumption behavior without runtime cloning.
+- Open the existing `UI/Reward/ArtifactPanel` from a new artifact reward button.
+- Bind each choice from loaded Definitions: synergy display name to `Summary`, artifact icon to `Icon`, description to `Desc`, and artifact display name to `ArtifactName`.
+- After an artifact choice, reuse PrisonPanel as the receiving-unit selector: occupied 1P-5P slots show only `Acquisition` under their Button.
+- Return to `RewardPanel` after one artifact is acquired.
+
+### Constraints
+
+- Reuse the existing reward-button, PrisonPanel slot and `Button.interactable` flows; do not introduce a second party roster or generic offer framework.
+- ArtifactPanel uses a dedicated minimal `ArtifactUI`; only its three choice labels are named `ArtifactName`.
+- The four legacy direct children `PrisonerBtn`, `DarkBtn`, `GoldBtn`, and `ArtifactBtn` are removed from `RewardBtnContainer`.
+- `Summon` does not exist in the hierarchy; the existing field is `Summary`.
+- Preserve one generated offer set while the reward remains unconsumed so closing/reopening cannot reroll it.
+- Acquisition mode must suppress the existing `Reinforcement` and `Menifested` button labels and must not enter Offering or manifestation behavior.
+- An occupied unit already holding three artifacts remains visible with `Acquisition` active. Keep its Button component and GameObject enabled; block only input with `Button.interactable = false`.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and corrected for Day5 Midboss, Day10 Midboss and Day11 Boss rewards. RewardPanel now uses fixed authored slots 0-12; Play Mode rendering verification remains user-owned.
+
+### Next Actions
+
+- User: verify the artifact reward button on Day5, Day10 and Day11 in Play Mode.
+- Add an icon asset/path for `resonance-compass` when that missing source asset is authored.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/UI/InGame/Reward/RewardPanelUI.cs` binds `RewardBtn` through `RewardBtn (12)` and activates them in reward order; it no longer instantiates reward buttons.
+- `Pakuri/Assets/Scripts/UI/InGame/Reward/RewardButtonView.cs` resets each fixed slot and writes `Summary`/`What` before binding its click action.
+- `Pakuri/Assets/Scripts/UI/InGame/Reward/OfferingUI.cs` already implements three-choice binding and in-place Fisher-Yates shuffle.
+- `Pakuri/Assets/Scripts/UI/InGame/InGameUIManager.cs` binds Reward, Prison, and Offering panels but not ArtifactPanel.
+- Inspected `InGameScene` hierarchy contains `UI/Reward/ArtifactPanel/Choice1..3` with `Summary`, `SkillName`, `Desc`, and `Icon`; ArtifactPanel currently carries `OfferingUI`.
+- `PrisonPanelUI` already binds and refreshes five shared slot views, but each slot currently routes occupied clicks to Offering and the next empty slot to manifestation.
+- Live Unity hierarchy inspection found `1P/Button/Acquisition` inactive, while 2P-5P Buttons contain only `Reinforcement` and `Menifested`.
+- Current `PrisonPanelUI.RefreshPrisonPartySlot` already uses `Button.interactable` independently from Button GameObject visibility, so acquisition capacity can reuse that exact input-blocking mechanism.
+- `ArtifactUI.cs` prepares at most three unowned Spirit Contract choices once, binds Definition display/icon/description fields, and carries the selected ID into PrisonPanel.
+- `RewardPanelUI.cs` omits the artifact button when no choice is available, displays the actual remaining choice count, and leaves `NextBtn` skippable.
+- `PrisonPanelUI.cs` shows `Acquisition` for occupied slots, keeps full slots visible with `Button.interactable=false`, and returns through `InGameUIManager.CompleteArtifactAcquisition` after a successful grant.
+- Unity hierarchy validation reported zero issues, zero missing scripts and zero broken prefabs; the scene contains three `ArtifactName` labels and five `Acquisition` children.
+- `InGameScene.unity` contains `RewardBtn` through `RewardBtn (12)`, each with `Summary` and `What` children; live hierarchy search found all 13 slots.
+- Live hierarchy search found no `PrisonerBtn`, `DarkBtn`, `GoldBtn`, or `ArtifactBtn` after the scoped deletion.
+- `StageManager` now forwards the nonnegative `artifact_choice_count` without a second exact-`Boss` gate, so all three configured Midboss/Boss reward rows reach the existing button clone path.
+
+### History
+
+- 2026-08-05: Traced current reward and offering UI paths; selected smallest separate ArtifactUI design rather than expanding OfferingUI into a generic controller.
+- 2026-08-05: User selected a two-step artifact flow: ArtifactPanel chooses the artifact, then PrisonPanel acquisition mode chooses the receiving occupied party slot.
+- 2026-08-05: User required full-artifact slots to remain enabled and visible; only their click interaction is blocked, without disabling the Button component or GameObject.
+- 2026-08-05: Code Builder implemented the ArtifactPanel and PrisonPanel acquisition flow, preserved skippable `NextBtn`, saved `InGameScene`, and verified focused artifact tests 7/7.
+- 2026-08-05: User reported no artifact reward button in Play Mode; Designer verified the scene/template path and isolated the unresolved boundary to Boss eligibility versus runtime button integration.
+- 2026-08-05: User confirmed Day5/10 Midboss eligibility; Code Builder removed the duplicate Day11-only gate and verified the shared choice path.
+- 2026-08-05: Code Builder replaced runtime reward-template cloning with the 13 authored RewardBtn slots, mapped category/value text to Summary/What, removed the four legacy template objects, saved InGameScene, and passed script/scene validation plus the project build.
+
 ## Task: 2026-07-29 Field Unit Query Migration
 
 ### Task title

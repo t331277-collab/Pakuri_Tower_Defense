@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
 using Pakuri.Combat;
@@ -98,13 +99,12 @@ public sealed class SkillCatalogRuntimeTests
     /// 유물·시너지·소환 CSV가 해석된 Definition과 lookup을 생성하는지 확인한다.
     public void ArtifactAndSummonCatalogBuildsResolvedDefinitions()
     {
-        GameDataLoader.EnsureInitialized();
-        var catalog = GameDataLoader.CurrentCatalog;
+        var catalog = ReloadGameDataCatalog();
 
         Assert.That(catalog.Artifacts, Has.Length.EqualTo(50));
         Assert.That(catalog.ArtifactSynergies, Has.Length.EqualTo(6));
         Assert.That(catalog.ArtifactSynergyLevels, Has.Length.EqualTo(24));
-        Assert.That(catalog.ArtifactEffects, Has.Length.EqualTo(52));
+        Assert.That(catalog.ArtifactEffects, Has.Length.EqualTo(62));
         Assert.That(catalog.ArtifactSynergyEffects, Has.Length.EqualTo(27));
         Assert.That(catalog.Summons, Has.Length.EqualTo(1));
 
@@ -115,6 +115,33 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(catalog.GetMonsters(), Has.Length.EqualTo(5));
         Assert.That(catalog.GetData<ArtifactDefinition>("elemental-prism").Icon, Is.Not.Null);
         Assert.That(catalog.GetData<ArtifactDefinition>("resonance-compass").Icon, Is.Null);
+        Assert.That(
+            catalog.GetData<ArtifactEffectDefinition>("ember-crown-effect").Nodes,
+            Has.Length.EqualTo(2));
+        Assert.That(
+            catalog.GetData<ArtifactEffectDefinition>("frost-lens-status-effect").Nodes,
+            Has.Length.EqualTo(2));
+        Assert.That(
+            catalog.GetData<ArtifactEffectDefinition>("elemental-prism-holy-effect").Nodes,
+            Has.Length.EqualTo(2));
+        Assert.That(
+            catalog.GetData<ArtifactEffectDefinition>("black-candlestick-mark-effect").Nodes,
+            Has.Length.EqualTo(2));
+        Assert.That(
+            catalog.GetData<ArtifactEffectDefinition>("rift-gem-effect").Reactions,
+            Has.Length.EqualTo(6));
+        Assert.That(
+            catalog.GetData<ArtifactEffectDefinition>("resonance-compass-effect").Reactions,
+            Has.Length.EqualTo(5));
+        Assert.That(
+            catalog.GetData<ArtifactEffectDefinition>("spirit-elixir-contract-count-effect").RepeatRule,
+            Is.EqualTo(ArtifactEffectRepeatRule.SynergyArtifactCount));
+        Assert.That(
+            catalog.GetData<ArtifactEffectDefinition>("elemental-codex-effect").RepeatRule,
+            Is.EqualTo(ArtifactEffectRepeatRule.DistinctRepresentativeAttributeCount));
+        Assert.That(
+            catalog.GetData<ArtifactEffectDefinition>("elemental-prism-holy-effect").SelectionRule,
+            Is.EqualTo(ArtifactEffectSelectionRule.PartyDominantAttribute));
         Assert.That(catalog.GetActiveSkill(summon.SummonId, SkillSlot.A), Is.TypeOf<SingleSkillDefinition>());
         Assert.That(catalog.GetActiveSkill(summon.SummonId, SkillSlot.B), Is.TypeOf<ZoneSkillDefinition>());
 
@@ -129,6 +156,30 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(
             grant.OutcomeSkill,
             Is.SameAs(catalog.GetData<SkillDefinition>("spirit-king-elemental-explosion")));
+    }
+
+    [Test]
+    /// Stage 1/2의 Day5·Day10 Midboss와 Day11 Boss가 모두 유물 선택 세 개를 제공하는지 확인한다.
+    public void StageArtifactRewardsIncludeMidbossAndBoss()
+    {
+        var stage = ReloadGameDataCatalog().Stage;
+        var rewardIds = new[]
+        {
+            "reward-stage1-midboss",
+            "reward-stage1-day10-midboss",
+            "reward-stage1-boss",
+            "reward-stage2-midboss",
+            "reward-stage2-day10-midboss",
+            "reward-stage2-boss"
+        };
+
+        for (var i = 0; i < rewardIds.Length; i++)
+        {
+            Assert.That(stage.FindReward(rewardIds[i]).ArtifactChoiceCount, Is.EqualTo(3));
+        }
+
+        Assert.That(stage.FindReward("reward-stage1-normal").ArtifactChoiceCount, Is.Zero);
+        Assert.That(stage.FindReward("reward-stage2-normal").ArtifactChoiceCount, Is.Zero);
     }
 
     [Test]
@@ -445,6 +496,200 @@ public sealed class SkillCatalogRuntimeTests
         {
             UnityEngine.Object.DestroyImmediate(monster);
         }
+    }
+
+    [Test]
+    /// 유물 상태가 최대 세 개를 지키고 Stage 준비 결과를 런타임과 공유하는지 확인한다.
+    public void MonsterRuntimeSharesPreparedArtifactState()
+    {
+        var catalog = ReloadGameDataCatalog();
+        var monster = catalog.GetMonster("sein");
+        var session = RunSession.Begin(monster);
+        var runState = session.GetPartyMemberState(monster.MonsterId);
+
+        Assert.That(runState.Artifacts.TryAdd("ember-crown"), Is.True);
+        Assert.That(runState.Artifacts.TryAdd("frost-lens"), Is.True);
+        Assert.That(runState.Artifacts.TryAdd("storm-capacitor"), Is.True);
+        Assert.That(runState.Artifacts.TryAdd("radiant-chalice"), Is.False);
+
+        new ArtifactSynergyManager().PrepareStage(session, catalog);
+        var model = new UnitCombatStateFactory().CreateSelectedMonster(monster, runState);
+
+        Assert.That(model.Artifacts, Is.SameAs(runState.Artifacts));
+        Assert.That(model.Artifacts.ActiveArtifactEffectIds, Has.Count.EqualTo(6));
+        Assert.That(
+            model.Artifacts.ActiveArtifactEffectIds,
+            Does.Contain("frost-lens-status-effect"));
+    }
+
+    [Test]
+    /// RunSession 유물 획득이 파티 중복과 유닛별 세 개 제한을 함께 지키는지 확인한다.
+    public void ArtifactAcquisitionRejectsPartyDuplicateAndFullRecipient()
+    {
+        var catalog = ReloadGameDataCatalog();
+        var ariel = catalog.GetMonster("ariel");
+        var eve = catalog.GetMonster("eve");
+        var session = RunSession.Begin(ariel);
+
+        Assert.That(session.TryAddPartyMonster(eve, out _), Is.True);
+        var arielState = session.GetPartyMemberState("ariel");
+        var eveState = session.GetPartyMemberState("eve");
+
+        Assert.That(session.TryAcquireArtifact(arielState, "ember-crown"), Is.True);
+        Assert.That(session.TryAcquireArtifact(eveState, "ember-crown"), Is.False);
+        Assert.That(session.TryAcquireArtifact(arielState, "frost-lens"), Is.True);
+        Assert.That(session.TryAcquireArtifact(arielState, "storm-capacitor"), Is.True);
+        Assert.That(session.TryAcquireArtifact(arielState, "radiant-chalice"), Is.False);
+        Assert.That(session.CanAcquireArtifact(eveState, "radiant-chalice"), Is.True);
+    }
+
+    [Test]
+    /// 유물 후보가 남은 개수만 표시되고 모든 파티원이 가득 차면 생성되지 않는지 확인한다.
+    public void ArtifactChoicesRespectRemainingPoolAndPartyCapacity()
+    {
+        var catalog = ReloadGameDataCatalog();
+        var session = RunSession.Begin(catalog.GetMonster("ariel"));
+        Assert.That(session.TryAddPartyMonster(catalog.GetMonster("eve"), out _), Is.True);
+        Assert.That(session.TryAddPartyMonster(catalog.GetMonster("rin"), out _), Is.True);
+
+        var artifactIds = new[]
+        {
+            "elemental-prism",
+            "ember-crown",
+            "frost-lens",
+            "storm-capacitor",
+            "radiant-chalice",
+            "black-candlestick",
+            "spirit-elixir",
+            "rift-gem",
+            "elemental-codex"
+        };
+        for (var i = 0; i < artifactIds.Length - 1; i++)
+        {
+            Assert.That(session.PartyMembers[i / 3].Artifacts.TryAdd(artifactIds[i]), Is.True);
+        }
+
+        var testObject = new GameObject("ArtifactUITest");
+        testObject.SetActive(false);
+        try
+        {
+            var artifactUI = testObject.AddComponent<ArtifactUI>();
+            Assert.That(artifactUI.PrepareChoices(session, 3), Is.EqualTo(2));
+
+            Assert.That(session.PartyMembers[2].Artifacts.TryAdd(artifactIds[8]), Is.True);
+            Assert.That(artifactUI.PrepareChoices(session, 3), Is.Zero);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(testObject);
+        }
+    }
+
+    [Test]
+    /// 활성 유물 Effect Node가 기존 스킬 snapshot 마지막에 합성되는지 확인한다.
+    public void PreparedArtifactModifierAppliesToSkillSnapshot()
+    {
+        var catalog = ReloadGameDataCatalog();
+        var monster = catalog.GetMonster("sein");
+        var skill = catalog.GetActiveSkill("sein", SkillSlot.A);
+        var session = RunSession.Begin(monster);
+        var runState = session.GetPartyMemberState(monster.MonsterId);
+        runState.Artifacts.TryAdd("ember-crown");
+        new ArtifactSynergyManager().PrepareStage(session, catalog);
+
+        var model = new UnitCombatStateFactory().CreateSelectedMonster(monster, runState);
+        model.SkillState.RebuildLearnedSkillState(
+            model,
+            new[] { skill },
+            Array.Empty<PassiveSkillDefinition>());
+        var snapshot = model.SkillState.CreateExecutionData(
+            model,
+            model.SkillState.FindBySkillId(skill.SkillId),
+            null);
+
+        Assert.That(snapshot.DamageMultiplier, Is.EqualTo(1.18f).Within(0.0001f));
+    }
+
+    [Test]
+    /// 대표 속성·정령계약 개수·서로 다른 대표 속성이 Stage 유물 효과에 반영되는지 확인한다.
+    public void SpiritContractArtifactsResolvePartyStateAtStageStart()
+    {
+        var catalog = ReloadGameDataCatalog();
+        var ariel = catalog.GetMonster("ariel");
+        var eve = catalog.GetMonster("eve");
+        var session = RunSession.Begin(ariel);
+
+        Assert.That(session.TryAddPartyMonster(eve, out _), Is.True);
+        var arielState = session.GetPartyMemberState("ariel");
+        var eveState = session.GetPartyMemberState("eve");
+        arielState.Skills.AddActiveSkill("ariel-c");
+        Assert.That(arielState.Artifacts.TryAdd("elemental-prism"), Is.True);
+        Assert.That(arielState.Artifacts.TryAdd("spirit-elixir"), Is.True);
+        Assert.That(arielState.Artifacts.TryAdd("elemental-codex"), Is.True);
+        Assert.That(eveState.Artifacts.TryAdd("rift-gem"), Is.True);
+
+        var manager = new ArtifactSynergyManager();
+        manager.PrepareStage(session, catalog);
+
+        Assert.That(manager.Synergies.GetCount("spirit-contract"), Is.EqualTo(4));
+        Assert.That(
+            arielState.Artifacts.ActiveArtifactEffectIds,
+            Does.Contain("elemental-prism-holy-effect"));
+        Assert.That(
+            arielState.Artifacts.ActiveArtifactEffectIds,
+            Does.Not.Contain("elemental-prism-lightning-effect"));
+        Assert.That(
+            arielState.Artifacts.ActiveArtifactEffectIds.Count(
+                id => id == "spirit-elixir-contract-count-effect"),
+            Is.EqualTo(4));
+        Assert.That(
+            arielState.Artifacts.ActiveArtifactEffectIds.Count(
+                id => id == "elemental-codex-effect"),
+            Is.EqualTo(2));
+        Assert.That(
+            arielState.Artifacts.ActiveArtifactEffectIds,
+            Does.Not.Contain("rift-gem-effect"));
+        Assert.That(
+            eveState.Artifacts.ActiveArtifactEffectIds,
+            Does.Contain("rift-gem-effect"));
+
+        var model = new UnitCombatStateFactory().CreateSelectedMonster(ariel, arielState);
+        model.SkillState.RebuildLearnedSkillState(
+            model,
+            catalog.GetActiveSkills(ariel.MonsterId),
+            catalog.GetPassiveSkills(ariel.MonsterId));
+        var snapshot = model.SkillState.CreateExecutionData(
+            model,
+            model.SkillState.FindBySkillId("ariel-a"),
+            null);
+
+        Assert.That(snapshot.DamageMultiplier, Is.EqualTo(1.38f).Within(0.0001f));
+    }
+
+    [Test]
+    /// 균열 보석과 공명 나침반이 기존 Trigger 결과로 생성되는지 확인한다.
+    public void SpiritContractTriggerArtifactsBuildExistingRuntimeReactions()
+    {
+        var catalog = ReloadGameDataCatalog();
+        var rift = catalog.GetData<ArtifactEffectDefinition>("rift-gem-effect");
+        var compass = catalog.GetData<ArtifactEffectDefinition>("resonance-compass-effect");
+
+        Assert.That(
+            Array.TrueForAll(
+                rift.Reactions,
+                reaction => reaction.Event == SkillTriggerEvent.CombatStart
+                    && reaction.Effect?.ResolvedDefinition is BuffSkillDefinition),
+            Is.True);
+        Assert.That(
+            Array.TrueForAll(
+                compass.Reactions,
+                reaction => reaction.Event == SkillTriggerEvent.OnOutgoingDamage
+                    && reaction.ProcChance == 0.08f
+                    && reaction.DamageValueSource
+                        == SkillTriggerDamageValueSource.EventAppliedDamage
+                    && reaction.DamageValueMultiplier == 0.30f
+                    && reaction.Effect?.ResolvedDefinition is SingleSkillDefinition),
+            Is.True);
     }
 
     [Test]
@@ -910,6 +1155,17 @@ public sealed class SkillCatalogRuntimeTests
         unit.Identity.Side = side;
         unit.Resources.CurrentHealth = 1f;
         return unit;
+    }
+
+    /// 반복 EditMode 실행에서도 Unity 객체 수명에 남은 정적 카탈로그를 재사용하지 않는다.
+    private static GameDataCatalog ReloadGameDataCatalog()
+    {
+        var flags = BindingFlags.Static | BindingFlags.NonPublic;
+        typeof(GameDataLoader).GetField("runtimeCatalog", flags)?.SetValue(null, null);
+        typeof(GameDataLoader).GetField("initialized", flags)?.SetValue(null, false);
+        typeof(GameDataLoader).GetField("failed", flags)?.SetValue(null, false);
+        GameDataLoader.EnsureInitialized();
+        return GameDataLoader.CurrentCatalog;
     }
 
     /// 지속 스킬 검증용 정의를 만든다.

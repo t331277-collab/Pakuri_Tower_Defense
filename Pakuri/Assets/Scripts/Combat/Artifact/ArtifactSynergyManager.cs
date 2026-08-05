@@ -1,0 +1,301 @@
+/*
+ * 역할: Stage 시작 시 유물 효과와 시너지 개수를 준비한다.
+ * 책임: 보유 유물을 집계하고 정령계약 개별 유물 Effect를 대상 유닛에 배포한다.
+ */
+
+using System;
+using System.Linq;
+using Pakuri.Combat;
+using Pakuri.Data;
+using UnityEngine;
+
+namespace Pakuri.InGame
+{
+    public sealed class ArtifactSynergyManager
+    {
+        public SynergyState Synergies { get; } = new SynergyState();
+
+        public void PrepareStage(RunSession session, GameDataCatalog catalog = null)
+        {
+            if (session == null)
+            {
+                throw new ArgumentNullException(nameof(session));
+            }
+
+            catalog ??= GameDataLoader.CurrentCatalog;
+            Synergies.Clear();
+
+            for (var i = 0; i < session.PartyMembers.Count; i++)
+            {
+                session.PartyMembers[i].Artifacts.ClearActiveEffects();
+            }
+
+            for (var ownerIndex = 0; ownerIndex < session.PartyMembers.Count; ownerIndex++)
+            {
+                var owner = session.PartyMembers[ownerIndex];
+                for (var artifactIndex = 0;
+                    artifactIndex < owner.Artifacts.OwnedArtifactIds.Count;
+                    artifactIndex++)
+                {
+                    var artifactId = owner.Artifacts.OwnedArtifactIds[artifactIndex];
+                    var artifact = catalog.GetData<ArtifactDefinition>(artifactId)
+                        ?? throw new InvalidOperationException(
+                            $"Artifact data '{artifactId}' is required before preparing a Stage.");
+                    Synergies.Add(artifact.SynergyId);
+                }
+            }
+
+            var dominantAttribute = ResolvePartyDominantAttribute(session, catalog);
+            var representativeAttributeCount =
+                CountDistinctRepresentativeAttributes(session, catalog);
+
+            for (var ownerIndex = 0; ownerIndex < session.PartyMembers.Count; ownerIndex++)
+            {
+                var owner = session.PartyMembers[ownerIndex];
+                for (var artifactIndex = 0;
+                    artifactIndex < owner.Artifacts.OwnedArtifactIds.Count;
+                    artifactIndex++)
+                {
+                    var artifactId = owner.Artifacts.OwnedArtifactIds[artifactIndex];
+                    var artifact = catalog.GetData<ArtifactDefinition>(artifactId)
+                        ?? throw new InvalidOperationException(
+                            $"Artifact data '{artifactId}' is required before preparing a Stage.");
+
+                    DistributeEffects(
+                        session,
+                        owner,
+                        artifact,
+                        dominantAttribute,
+                        representativeAttributeCount);
+                }
+            }
+
+            var counts = string.Join(
+                ", ",
+                Synergies.Counts
+                    .OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase)
+                    .Select(pair => $"{pair.Key}={pair.Value}"));
+            Debug.Log($"[ArtifactSynergy] {(counts.Length > 0 ? counts : "none")}");
+        }
+
+        private void DistributeEffects(
+            RunSession session,
+            RunSession.RunMonsterState owner,
+            ArtifactDefinition artifact,
+            DamageAttribute? dominantAttribute,
+            int representativeAttributeCount)
+        {
+            for (var effectIndex = 0; effectIndex < artifact.Effects.Length; effectIndex++)
+            {
+                var effect = artifact.Effects[effectIndex];
+                if (effect == null)
+                {
+                    continue;
+                }
+
+                if (effect.SelectionRule == ArtifactEffectSelectionRule.PartyDominantAttribute
+                    && (!dominantAttribute.HasValue
+                        || !EffectMatchesAttribute(effect, dominantAttribute.Value)))
+                {
+                    continue;
+                }
+
+                var repeatCount = GetEffectRepeatCount(
+                    artifact,
+                    effect,
+                    representativeAttributeCount);
+                if (effect.Recipient == ArtifactEffectRecipient.Stage)
+                {
+                    AddEffect(owner, effect.EffectId, repeatCount);
+                    continue;
+                }
+
+                for (var memberIndex = 0;
+                    memberIndex < session.PartyMembers.Count;
+                    memberIndex++)
+                {
+                    var member = session.PartyMembers[memberIndex];
+                    if (effect.Recipient == ArtifactEffectRecipient.AllAllies
+                        || (effect.Recipient == ArtifactEffectRecipient.SpecificMonster
+                            && string.Equals(
+                                member.MonsterId,
+                                effect.RecipientMonsterId,
+                                StringComparison.OrdinalIgnoreCase)))
+                    {
+                        AddEffect(member, effect.EffectId, repeatCount);
+                    }
+                }
+            }
+        }
+
+        private int GetEffectRepeatCount(
+            ArtifactDefinition artifact,
+            ArtifactEffectDefinition effect,
+            int representativeAttributeCount)
+        {
+            if (effect.RepeatRule == ArtifactEffectRepeatRule.SynergyArtifactCount)
+            {
+                return Synergies.GetCount(artifact.SynergyId);
+            }
+
+            return effect.RepeatRule == ArtifactEffectRepeatRule.DistinctRepresentativeAttributeCount
+                ? representativeAttributeCount
+                : 1;
+        }
+
+        private static void AddEffect(
+            RunSession.RunMonsterState member,
+            string effectId,
+            int repeatCount)
+        {
+            for (var i = 0; i < repeatCount; i++)
+            {
+                member.Artifacts.AddActiveEffect(effectId);
+            }
+        }
+
+        private static bool EffectMatchesAttribute(
+            ArtifactEffectDefinition effect,
+            DamageAttribute attribute)
+        {
+            for (var i = 0; i < effect.Nodes.Length; i++)
+            {
+                var condition = effect.Nodes[i]?.GetOperation<SkillAttributeConditionOp>();
+                if (condition.HasValue)
+                {
+                    return condition.Value.Attribute == attribute;
+                }
+            }
+
+            return false;
+        }
+
+        private static DamageAttribute? ResolvePartyDominantAttribute(
+            RunSession session,
+            GameDataCatalog catalog)
+        {
+            var counts = new int[Enum.GetValues(typeof(DamageAttribute)).Length];
+            for (var memberIndex = 0; memberIndex < session.PartyMembers.Count; memberIndex++)
+            {
+                CountLearnedElementalSkills(session.PartyMembers[memberIndex], catalog, counts);
+            }
+
+            var maximum = 0;
+            for (var i = (int)DamageAttribute.Fire; i < counts.Length; i++)
+            {
+                maximum = Math.Max(maximum, counts[i]);
+            }
+
+            if (maximum == 0)
+            {
+                return null;
+            }
+
+            for (var slot = SkillSlot.A; slot <= SkillSlot.E; slot++)
+            {
+                for (var memberIndex = 0;
+                    memberIndex < session.PartyMembers.Count;
+                    memberIndex++)
+                {
+                    if (TryGetLearnedSkill(
+                            session.PartyMembers[memberIndex],
+                            catalog,
+                            slot,
+                            out var skill)
+                        && skill.Element != DamageAttribute.Physical
+                        && counts[(int)skill.Element] == maximum)
+                    {
+                        return skill.Element;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private static int CountDistinctRepresentativeAttributes(
+            RunSession session,
+            GameDataCatalog catalog)
+        {
+            var found = new bool[Enum.GetValues(typeof(DamageAttribute)).Length];
+            var count = 0;
+            for (var memberIndex = 0; memberIndex < session.PartyMembers.Count; memberIndex++)
+            {
+                var attribute = ResolveRepresentativeAttribute(
+                    session.PartyMembers[memberIndex],
+                    catalog);
+                if (attribute.HasValue && !found[(int)attribute.Value])
+                {
+                    found[(int)attribute.Value] = true;
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private static DamageAttribute? ResolveRepresentativeAttribute(
+            RunSession.RunMonsterState member,
+            GameDataCatalog catalog)
+        {
+            var counts = new int[Enum.GetValues(typeof(DamageAttribute)).Length];
+            CountLearnedElementalSkills(member, catalog, counts);
+
+            var maximum = 0;
+            for (var i = (int)DamageAttribute.Fire; i < counts.Length; i++)
+            {
+                maximum = Math.Max(maximum, counts[i]);
+            }
+
+            if (maximum == 0)
+            {
+                return null;
+            }
+
+            for (var slot = SkillSlot.A; slot <= SkillSlot.E; slot++)
+            {
+                if (TryGetLearnedSkill(
+                        member,
+                        catalog,
+                        slot,
+                        out var skill)
+                    && skill.Element != DamageAttribute.Physical
+                    && counts[(int)skill.Element] == maximum)
+                {
+                    return skill.Element;
+                }
+            }
+
+            return null;
+        }
+
+        private static void CountLearnedElementalSkills(
+            RunSession.RunMonsterState member,
+            GameDataCatalog catalog,
+            int[] counts)
+        {
+            for (var slot = SkillSlot.A; slot <= SkillSlot.E; slot++)
+            {
+                if (TryGetLearnedSkill(
+                        member,
+                        catalog,
+                        slot,
+                        out var skill)
+                    && skill.Element != DamageAttribute.Physical)
+                {
+                    counts[(int)skill.Element]++;
+                }
+            }
+        }
+
+        private static bool TryGetLearnedSkill(
+            RunSession.RunMonsterState member,
+            GameDataCatalog catalog,
+            SkillSlot slot,
+            out SkillDefinition skill)
+        {
+            skill = catalog.GetActiveSkill(member.MonsterId, slot);
+            return skill != null && member.Skills.HasActiveSkill(skill.SkillId);
+        }
+    }
+}

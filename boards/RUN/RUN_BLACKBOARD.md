@@ -8,6 +8,109 @@ The previous Run, reward, and save/load boards are preserved under `boards/ARCHI
 
 For new Run work, inspect the exact current code and data first, then add a required-field task block here only when persistent state is needed.
 
+## Task: 2026-08-05 Artifact Debug Acquisition Flow
+
+### Task title
+
+Use the existing RunSession artifact ownership rules from DebugUI.
+
+### Goals
+
+- Allow a DebugUI-selected artifact to enter the existing PrisonPanel receiving-unit flow.
+- Keep `RunSession.TryAcquireArtifact` as the authority for run-wide duplicate prevention and per-unit capacity.
+- Keep normal RewardPanel artifact completion behavior separate from debug acquisition completion.
+
+### Constraints
+
+- Do not create a second artifact grant or ownership collection.
+- Debug acquisition still requires an occupied party member and rejects a member with three artifacts or an already-owned artifact.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally verified. Play Mode verification remains user-owned.
+
+### Next Actions
+
+- User verifies debug acquisition state mutation and duplicate/capacity rejection in Play Mode.
+
+### Evidence
+
+- `RunSession.CanAcquireArtifact` and `TryAcquireArtifact` remain unchanged and are still called by `PrisonPanelUI.AcquireArtifact`.
+- `InGameUIManager.OpenArtifactDebugAcquisition` marks only the UI completion context; it does not bypass `RunSession` validation.
+- `InGameUIManager.CompleteArtifactAcquisition` returns to `DebugUI` for the debug context and keeps the existing RewardPanel path for normal rewards.
+- The `RunMonsterState.Artifacts` ownership and `ArtifactState` three-item cap remain the only persisted grant state.
+- The current sibling `ArtifactDebugUI` and `ArtifactAchiveDebugUI` scene paths reach the debug artifact acquisition flow without changing the RunSession ownership contract; live hierarchy inspection found zero `EmodifierBtn` descendants under `ArtifactAchiveDebugUI`.
+- DebugUI modifier-button removal is now tolerated by optional binding; artifact acquisition still routes through the existing `PrisonPanelUI` and `RunSession` ownership checks.
+
+### History
+
+- 2026-08-05: Code Builder connected DebugUI artifact choices to the existing RunSession/PrisonPanel acquisition path without duplicating ownership rules.
+- 2026-08-05: Code Builder corrected the user-reorganized ArtifactDebug hierarchy path and removed only the ArtifactAchiveDebugUI modifier children, preserving the existing RunSession acquisition rules.
+- 2026-08-05: Code Builder updated the debug artifact panel binding after ArtifactDebugUI moved to a DebugPanel sibling and verified the existing acquisition return path still compiles and resolves.
+- 2026-08-05: Code Builder removed modifier-button binding as a prerequisite for artifact debug initialization; the existing debug artifact acquisition ownership path remains unchanged.
+- 2026-08-05: Code Builder updated the artifact acquisition panel to its new DebugPanel sibling path and preserved the existing RunSession/PrisonPanel ownership flow.
+
+## Task: 2026-08-05 Boss Artifact Reward Acquisition Design
+
+### Task title
+
+Grant one non-duplicate artifact after an eligible boss combat reward choice.
+
+### Goals
+
+- Prepare an artifact reward on configured Day5 Midboss, Day10 Midboss and Day11 Boss reward rows when `artifact_choice_count` requests choices.
+- Draw up to three unowned artifacts uniformly without replacement.
+- Keep the selected artifact pending while PrisonPanel selects an occupied 1P-5P receiving unit, then commit through `RunSession`, consume the RewardPanel artifact button, and reopen RewardPanel.
+- Keep acquired IDs in the receiving `RunMonsterState.Artifacts` so existing next-Stage artifact composition can use them.
+
+### Constraints
+
+- `ArtifactState.TryAdd` enforces local capacity; run-wide duplicate prevention lives in `RunSession` rather than UI code.
+- Ownership remains per monster. ArtifactPanel selects the artifact and PrisonPanel acquisition mode selects the receiving occupied party member.
+- Selection must be generated once per pending reward and not rerolled by reopening the panel.
+- Artifact rewards remain skippable through the existing RewardPanel `NextBtn`.
+- PrisonPanel blocks clicks for a three-artifact recipient, but `RunSession.TryAcquireArtifact` remains the authoritative capacity check and must reject the same request independently.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and corrected for Stage 1/2 Day5, Day10 and Day11. `artifact_choice_count` is now the single reward eligibility source; Play Mode verification remains user-owned.
+
+### Next Actions
+
+- User: verify the artifact reward button and acquisition/skip flow on Day5, Day10 and Day11 in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/GameFlow/Stage/StageManager.cs` calls `PrepareReward()` after combat and currently prepares only gold, dark trace, and prisoners.
+- `Pakuri/Assets/Scripts/GameFlow/RunSession.cs` stores one `ArtifactState` per `RunMonsterState` but exposes no artifact acquisition API.
+- `Pakuri/Assets/Scripts/Combat/Artifact/ArtifactState.cs` has capacity three and no duplicate check.
+- `Pakuri/Assets/Scripts/Combat/Artifact/ArtifactSynergyManager.cs` reads owned artifact IDs at Stage preparation, so a reward committed before next day naturally becomes active next Stage.
+- Current runtime design limits implemented individual effects to the ten Spirit Contract artifacts; the other forty remain deferred.
+- `PrisonPanelUI.Refresh()` already maps `RunSession.PartyMembers` in 1P-5P order, providing the exact receiving-member index without a second party roster.
+- `StageManager.PrepareReward()` now clamps and forwards `currentReward.ArtifactChoiceCount`; normal rows remain zero while configured Midboss/Boss rows provide three.
+- `RunSession.TryAcquireArtifact()` validates party membership, run-wide duplicate ownership and the recipient's three-artifact capacity before committing.
+- Focused Unity EditMode artifact tests passed 7/7, including duplicate/capacity rejection and reduced/all-full choice counts.
+- `Pakuri.sln` builds with zero errors; the two reported warnings are pre-existing assembly-reference warnings.
+- Focused EditMode verification passed 2/2 for the six Stage 1/2 Midboss/Boss reward counts and the existing remaining-pool/capacity behavior.
+
+### History
+
+- 2026-08-05: Defined boss gate, equal-probability no-replacement draw, centralized acquisition authority, and next-Stage activation boundary.
+- 2026-08-05: User resolved artifact ownership selection: choose an artifact first, then choose its receiving occupied party slot through PrisonPanel acquisition mode.
+- 2026-08-05: User specified that a full recipient slot stays visible/enabled and only its click is blocked; RunSession validation remains the final guard.
+- 2026-08-05: Code Builder implemented Boss-only pending choices, uniform no-replacement Spirit Contract draws, centralized acquisition, skip behavior and final-boss reward ordering.
+- 2026-08-05: Designer investigated the missing-button report and found no missing scene template or clone call; the outstanding discriminator is the tested Stage/Day.
+- 2026-08-05: User confirmed Midboss inclusion; Code Builder made reward data the single gate and enabled Stage 1/2 Day5, Day10 and Day11.
+
 ## Task: 2026-08-05 Artifact and Synergy Stage Runtime Design
 
 ### Task title
@@ -18,6 +121,7 @@ Design per-monster artifact ownership, derived synergy state and Stage-start eff
 
 - Persist at most three artifact IDs per `RunMonsterState`.
 - Rebuild per-unit artifact effects and count-only synergy state once per Stage.
+- Separate persistent owned artifact IDs from Stage-active effect IDs distributed by recipient scope.
 - Route all combat outcomes through the existing skill trigger/execution pipeline.
 - Defer Spirit King spawn and all synergy-effect execution until after the artifact-first runtime is verified.
 - Classify every individual artifact effect as passive modifier/trigger application.
@@ -25,40 +129,58 @@ Design per-monster artifact ownership, derived synergy state and Stage-start eff
 
 ### Constraints
 
-- Designer task: no runtime implementation.
+- Code Builder Phase 3 task; Unity Play Mode verification remains user-owned.
 - Do not mutate persistent unit stats/defenses cumulatively between Days.
 - Do not represent artifact effects as learned skills, hidden passives or enhancement/master Choices.
 - `ArtifactState`, `SynergyState` and `ArtifactSynergyManager` consume generated artifact effect Definitions.
+- `SkillExecutionRules` consumes active `SkillModifier` effects after learned skill composition; `SkillTrigger` collects active artifact Reactions without converting them to learned passives.
+- Do not create artifact-only Node/Trigger CSVs; reuse the existing passive graph-node/trigger authoring path.
 - Spirit King uses `UnitSide.Player` and a non-party `UnitRole.Summon`; no `SummonSkillDefinition` or `SummonSkillExecutor`.
 
 ### Role Owner
 
-Designer.
+Code Builder.
 
 ### Status
 
-Phase 1 and Phase 2 data/Definition work is complete; the revised artifact-first Run/runtime integration remains unstarted.
+Phase 3 is complete for all ten Spirit Contract artifacts. Stage preparation resolves party artifact count, Prism/Codex representative attributes and variable modifier repetition, then distributes existing Node/Trigger effects.
 
 ### Next Actions
 
-- Implement `ArtifactState`, count-only `SynergyState`, `ArtifactSynergyManager.PrepareStage` and the `StageManager` hook.
-- Log current party synergy counts once per Stage without executing synergy Definitions.
-- Implement and verify only the ten Spirit Contract artifact effects before the Spirit Contract 2/4/6/8 synergy and Spirit King runtime.
+- Keep synergy-level effect execution and Spirit King runtime deferred to Phase 4+.
+- Enforce the confirmed no-duplicate artifact rule when the acquisition system is implemented.
+- User verifies Stage preparation, Rift battle duration and Compass follow-up visuals in Play Mode.
 
 ### Evidence
 
-- `RunSession.RunMonsterState` currently owns learned `UnitSkills` and reward IDs but no artifact state.
-- `StageManager.RunCurrentDayFlow` spawns the selected player before encounter enemies and has no artifact/synergy preparation call.
-- The corrected artifact-first design adds `PrepareStage` without executing `ArtifactSynergyEffectDefinition` or representing effects in `UnitSkills`.
-- `ArtifactState`, `SynergyState`, `ArtifactSynergyManager`, `UnitRole.Summon` and temporary allied-monster spawn do not exist yet.
-- The first implementation scope is the ten Spirit Contract artifacts only: eight `SkillModifier` effects and two `PassiveTrigger` effects; all synergy gaps are deferred.
+- `RunSession.RunMonsterState` and `UnitCombatState` now share one `ArtifactState`; `ArtifactState.TryAdd` enforces the three-item cap.
+- `StageManager.RunCurrentDayFlow` calls `ArtifactSynergyManager.PrepareStage` before player restoration; the Manager clears and redistributes Stage-active effect IDs and only logs synergy counts.
+- `ArtifactEffectDefinition` now owns generated `SkillNode[]` and `SkillReaction[]` without entering `LearnedPassiveSkillIds`.
+- `SkillExecutionRules.BuildExecutionData` applies active artifact modifiers after passive, Enhancement and Master composition; `SkillTrigger` schedules active artifact Reactions through the existing gate/scheduler.
+- Existing graph/trigger CSVs now accept artifact Effect ownership; no artifact-only Node/Trigger file was created.
+- Current data fully authors all ten Spirit Contract artifacts: eight `SkillModifier` artifacts and two `PassiveTrigger` artifacts; synergy-level effects remain deferred.
+- `ArtifactSynergyManager.PrepareStage` uses two passes: count all synergies first, then resolve and distribute dynamic Spirit Contract effects without changing skill Definitions.
+- Prism counts learned active A-E attributes across the party, excludes Physical, and breaks ties by A-E then 1P-5P; Codex counts distinct per-member representatives with Physical excluded.
+- Spirit Elixir repeats its existing +2% Effect once per Spirit Contract artifact, including itself; Codex repeats its existing +4% Effect once per distinct representative attribute.
+- Rift Gem assigns six permanent `CombatStart` resistance-down reactions to its owner so the battlefield-wide effects fire once; Resonance Compass uses five elemental `OnOutgoingDamage` reactions at 8% and `EventAppliedDamage * 0.30`.
 - The revised design identifies exact existing Node/Trigger/Executor routes and marks missing reload-complete, densest, temporary allied spawn/movement and conditional-crit paths as required extensions.
 - Spirit Bombardment reuses `SingleSkillDefinition` plus `RepeatPerTarget` for three total casts; Dimensional Collapse is split into pull and follow-up explosion SingleAttack Definitions. Current `SingleSkillExecutor` publishes `OnDeploymentCast` and completes without timed `OnExpire`, so that lifecycle is an explicit minimal extension.
 - `CombatUnitRegistry` groups by `Identity.Side`, and `SkillTargeting.TargetList` gives Player-side `Ally/AllAllies` skills the full `Players` list; a Player-side Spirit King therefore receives team effects cast after it spawns.
 - `SkillExecution.TryExecuteAutomaticSkills` scans all registered entries, while current movement exists only in `EnemyActionController`; Spirit King can reuse automatic skills but needs a small allied movement controller.
 - Full runtime design and acceptance criteria are recorded in `Pakuri/reference/4.run/artifact-synergy-runtime-design.md`.
 - Phase 1 now has 27 synergy-effect rows for all 20 detailed non-Tracker levels; Spirit Contract rows reference the authored Spirit King and four granted skill Definitions without adding runtime integration.
-- Phase 2 now generates and indexes all Artifact/Synergy/Summon Definitions, but `ArtifactState`, `SynergyState`, `ArtifactSynergyManager` and every artifact runtime consumer remain absent.
+- Phase 2-generated Artifact/Synergy/Summon Definitions are now consumed by the Phase 3 state, manager, snapshot and Trigger paths.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and the existing 2 assembly-reference warnings.
+- Strict CSV parsing found no malformed rows in the four changed CSV files.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal` completed with 0 errors and the existing 2 assembly-reference warnings.
+- `artifact_effects.csv` now carries typed `repeat_rule` and `selection_rule` fields through SourceModel, Validation, Generation and `ArtifactEffectDefinition`; `ArtifactSynergyManager` has 0 references to the former artifact/synergy ID constants.
+- `ArtifactDefinitions.cs` is organized at `Pakuri/Assets/Scripts/Combat/Artifact/Definition/ArtifactDefinitions.cs`; Loading retains the CSV parser, validator and generator, while the Definition namespace/API remains unchanged.
+- Focused EditMode verification passed 4/4 for catalog Definition fields, prepared artifact state, snapshot application and dynamic Spirit Contract resolution. Full EditMode remains 19/21 with only the two recorded Trigger baseline failures.
+- `ArtifactSynergyManager` no longer owns a duplicate `ActiveSlots` array; its three active-skill scans directly iterate `SkillSlot.A` through `SkillSlot.E`, preserving the required tie order. Focused EditMode verification passed 4/4 and the solution build completed with 0 errors.
+- Code Builder moved the three artifact runtime ownership scripts and their Unity `.meta` files to `Pakuri/Assets/Scripts/Combat/Artifact`: `ArtifactState`, `SynergyState` and `ArtifactSynergyManager`; source references to the old `Units/Runtime` and `GameFlow` paths are 0, and the existing `.meta` GUIDs were preserved.
+- Unity regenerated `Pakuri/Assembly-CSharp.csproj` with the three `Combat/Artifact` paths; editor compilation is idle with 0 console errors, and the solution build completed with 0 errors.
+- Focused EditMode verification passed 3/3: catalog/Definition generation, dynamic Stage party resolution and Rift/Compass existing Trigger outcomes.
+- Full `SkillCatalogRuntimeTests` ran 21 tests: 19 passed. The only failures are the same pre-existing Trigger baseline assertions at `SkillCatalogRuntimeTests.cs:665` and `:782`; all artifact tests pass in the full fixture.
 
 ### History
 
@@ -69,6 +191,12 @@ Phase 1 and Phase 2 data/Definition work is complete; the revised artifact-first
 - 2026-08-05: Designer moved Spirit King unit and five skill source rows into Phase 1 and recorded the exact SingleAttack/AreaAttack execution split.
 - 2026-08-05: Code Builder authored and validated the four Phase 1 CSVs; RunSession, StageManager and runtime code remain unchanged.
 - 2026-08-05: User restricted the next implementation target to the ten Spirit Contract artifacts; Designer made synergy state count/log-only and deferred Spirit King and all synergy-effect execution.
+- 2026-08-05: User selected independent ArtifactState snapshot application instead of runtime passive composition; Designer removed artifact-only Node/Trigger CSVs and fixed Phase 3 to reuse existing graph-node/trigger execution paths.
+- 2026-08-05: Code Builder implemented the shared ArtifactState, count-only SynergyState, Stage preparation hook, Effect Node/Reaction generation and existing snapshot/Trigger consumers; authored only gameplay values already fixed by source/design evidence.
+- 2026-08-05: Code Builder completed all ten Spirit Contract artifact effects with the confirmed resolver, status, stacking and follow-up rules; synergy-level execution and duplicate acquisition enforcement remain deferred.
+- 2026-08-05: Code Builder moved `ArtifactState`, `SynergyState` and `ArtifactSynergyManager` plus their `.meta` files under `Combat/Artifact`, then organized `ArtifactDefinitions.cs` under `Combat/Artifact/Definition`; Loading parser, validator and generator files remained in `Loading`.
+- 2026-08-05: Code Builder replaced manager artifact/effect ID branching with Definition-owned `repeat_rule` and `selection_rule` metadata, preserving the existing Prism, Elixir and Codex behavior.
+- 2026-08-05: Code Builder removed the manager-local `ActiveSlots` array and changed representative-attribute scans to direct `SkillSlot.A` through `SkillSlot.E` iteration.
 
 ## Task: 2026-08-05 Artifact Synergy Foundation CSVs
 

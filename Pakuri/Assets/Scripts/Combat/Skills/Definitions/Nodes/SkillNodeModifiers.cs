@@ -57,6 +57,21 @@ namespace Pakuri.InGame
         public StatusStackCondition Condition { get; }
     }
 
+    /// OR/AND 상태식을 만족한 대상에 적용할 피해 배율이다.
+    public readonly struct ConditionalStatusGroupDamageActionOp
+    {
+        public ConditionalStatusGroupDamageActionOp(
+            float damageMultiplier,
+            StatusConditionGroup[] groups)
+        {
+            DamageMultiplier = damageMultiplier;
+            Groups = groups ?? System.Array.Empty<StatusConditionGroup>();
+        }
+
+        public float DamageMultiplier { get; }
+        public StatusConditionGroup[] Groups { get; }
+    }
+
     /// 대상 상태가 치명타 확률을 바꾸는 규칙을 나타낸다.
     public readonly struct ConditionalCritChanceActionOp
     {

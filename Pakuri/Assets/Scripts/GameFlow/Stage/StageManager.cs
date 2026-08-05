@@ -20,6 +20,7 @@ namespace Pakuri.InGame
         private readonly List<StageEncounterDefinition> activeEncounterRows = new List<StageEncounterDefinition>();
         private readonly List<string> pendingPrisonerEnemyIds = new List<string>();
         private readonly List<string> prisonerCandidatePool = new List<string>();
+        private readonly ArtifactSynergyManager artifactSynergyManager = new ArtifactSynergyManager();
 
         [SerializeField] private InGameCombatManager combatManager;
         [SerializeField] private UnitSpawnManager unitSpawnManager;
@@ -47,6 +48,7 @@ namespace Pakuri.InGame
         public int PendingGoldReward { get; private set; }
         public int PendingDarkTraceReward { get; private set; }
         public int PendingPrisonerCount { get; private set; }
+        public int PendingArtifactChoiceCount { get; private set; }
         public float PendingManifestSuccessChance => currentReward != null ? currentReward.ManifestSuccessChance : 0.7f;
         public RunSession ActiveSession => activeSession;
 
@@ -100,7 +102,15 @@ namespace Pakuri.InGame
             PendingGoldReward = 0;
             PendingDarkTraceReward = 0;
             PendingPrisonerCount = 0;
+            PendingArtifactChoiceCount = 0;
             combatManager.ResetCombatState();
+
+            if (IsConfiguredWinDay())
+            {
+                ShowWinPanel();
+                State = StageState.Victory;
+                return;
+            }
 
             AdvanceDay();
             RestorePlayerHealthForNextDay();
@@ -156,6 +166,7 @@ namespace Pakuri.InGame
                 BeginRunSession();
             }
 
+            artifactSynergyManager.PrepareStage(activeSession);
             unitSpawnManager.SpawnSelectedPlayerUnit(activeSession);
 
             EnsureNexusRegistered();
@@ -170,14 +181,6 @@ namespace Pakuri.InGame
 
             State = StageState.Combat;
             yield return WaitForEnemyClear();
-
-            if (IsConfiguredWinDay())
-            {
-                ShowWinPanel();
-                State = StageState.Victory;
-                flowCoroutine = null;
-                yield break;
-            }
 
             PrepareReward();
             State = StageState.RewardReady;
@@ -240,6 +243,7 @@ namespace Pakuri.InGame
             PendingGoldReward = currentReward.Gold;
             PendingDarkTraceReward = currentReward.DarkTrace;
             PendingPrisonerCount = currentReward.RollPrisonerCount();
+            PendingArtifactChoiceCount = Math.Max(0, currentReward.ArtifactChoiceCount);
 
             AddGuaranteedPrisoners();
             BuildPrisonerCandidatePool();

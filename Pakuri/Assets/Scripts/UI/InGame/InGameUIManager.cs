@@ -15,11 +15,14 @@ namespace Pakuri.InGame
         private RewardPanelUI rewardPanelUI;
         private PrisonPanelUI prisonPanelUI;
         private OfferingUI offeringUI;
+        private ArtifactUI artifactUI;
         private MenifestUI menifestUI;
         private BossHpUI bossHpUI;
+        private DebugUI debugUI;
 
         private int shownStage = -1;
         private int shownDay = -1;
+        private bool debugArtifactAcquisition;
         private bool referencesBound;
         private bool bindingFailed;
 
@@ -54,6 +57,37 @@ namespace Pakuri.InGame
 
         internal RewardButtonView ActivePrisonerButton => rewardPanelUI?.ActivePrisonerButton;
 
+        internal int PrepareArtifactChoices(int requestedCount)
+        {
+            return artifactUI != null
+                ? artifactUI.PrepareChoices(ResolveSession(), requestedCount)
+                : 0;
+        }
+
+        internal bool OpenArtifactPanel()
+        {
+            return artifactUI != null && artifactUI.OpenPreparedChoices();
+        }
+
+        internal void OpenArtifactAcquisition(string artifactId)
+        {
+            debugArtifactAcquisition = false;
+            artifactUI?.Hide();
+            prisonPanelUI?.OpenArtifactAcquisition(artifactId);
+        }
+
+        internal void OpenArtifactDebugAcquisition(string artifactId)
+        {
+            if (string.IsNullOrWhiteSpace(artifactId))
+            {
+                return;
+            }
+
+            debugArtifactAcquisition = true;
+            artifactUI?.Hide();
+            prisonPanelUI?.OpenArtifactAcquisition(artifactId);
+        }
+
         internal void OpenPrisonPanel()
         {
             prisonPanelUI?.Open();
@@ -62,6 +96,7 @@ namespace Pakuri.InGame
         internal void ContinueToNextDay()
         {
             HideTransientPanels();
+            artifactUI?.Clear();
             rewardPanelUI?.Clear();
             shownStage = -1;
             shownDay = -1;
@@ -80,6 +115,24 @@ namespace Pakuri.InGame
         internal void ConsumeActivePrisonerButton()
         {
             rewardPanelUI?.ConsumeActivePrisonerButton();
+        }
+
+        internal void CompleteArtifactAcquisition()
+        {
+            if (debugArtifactAcquisition)
+            {
+                debugArtifactAcquisition = false;
+                prisonPanelUI?.Hide();
+                debugUI?.ShowArtifactAcquisitionDebug();
+                RefreshInfo();
+                return;
+            }
+
+            rewardPanelUI?.ConsumeActiveArtifactButton();
+            prisonPanelUI?.Hide();
+            artifactUI?.Clear();
+            rewardPanelUI?.SetVisible(true);
+            RefreshInfo();
         }
 
         internal void RefreshInfo()
@@ -119,6 +172,7 @@ namespace Pakuri.InGame
             rewardPanelUI?.Hide();
             prisonPanelUI?.Hide();
             offeringUI?.Hide();
+            artifactUI?.Hide();
             menifestUI?.Hide();
             bossHpUI?.Hide();
         }
@@ -130,8 +184,10 @@ namespace Pakuri.InGame
                 && rewardPanelUI != null
                 && prisonPanelUI != null
                 && offeringUI != null
+                && artifactUI != null
                 && menifestUI != null
-                && bossHpUI != null)
+                && bossHpUI != null
+                && debugUI != null)
             {
                 return true;
             }
@@ -180,6 +236,11 @@ namespace Pakuri.InGame
                 "Reward/OfferingPanel",
                 nameof(offeringUI),
                 ref valid);
+            artifactUI = UiBindingUtility.BindScene<ArtifactUI>(
+                this,
+                "Reward/ArtifactPanel",
+                nameof(artifactUI),
+                ref valid);
             menifestUI = UiBindingUtility.BindScene<MenifestUI>(
                 this,
                 "Popup",
@@ -189,6 +250,10 @@ namespace Pakuri.InGame
                 this,
                 "HUD/BossHP",
                 nameof(bossHpUI),
+                ref valid);
+            debugUI = UiBindingUtility.BindSceneComponent<DebugUI>(
+                this,
+                nameof(debugUI),
                 ref valid);
 
             referencesBound = valid;

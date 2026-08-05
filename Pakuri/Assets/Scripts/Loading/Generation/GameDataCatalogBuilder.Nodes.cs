@@ -967,6 +967,23 @@ namespace Pakuri.Data
 		{
 			return SkillNode.FromOperation(new CastConditionOp(GetFloatParam(node, "threshold", 0f)));
 		}
+		if (string.Equals(text, "ConditionSkillAttribute", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new SkillAttributeConditionOp(
+				GetEnumParam(node, "attribute", DamageAttribute.Physical)));
+		}
+		if (string.Equals(text, "ConditionAnyStatus", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new TargetStatusConditionOp(
+				StatusValueParser.ParseConditionStatusExpression(
+					GetParam(node, "status_ids"))));
+		}
+		if (string.Equals(text, "RequiredSourceStatus", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new SourceStatusConditionOp(
+				StatusValueParser.ParseStatusKind(GetParam(node, "status_id")),
+				Mathf.Max(1, GetIntParam(node, "min_stacks", 1))));
+		}
 		if (string.Equals(text, "TargetHealthRatioThresholdBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return SkillNode.FromOperation(new CastConditionOp(GetFloatParam(node, "threshold_bonus", 0f)));

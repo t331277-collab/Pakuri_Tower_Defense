@@ -30,6 +30,8 @@ public class SkillExecutionState
 
 	internal readonly List<ConditionalDamageActionOp> conditionalDamageActions = new List<ConditionalDamageActionOp>();
 
+	internal readonly List<ConditionalStatusGroupDamageActionOp> conditionalStatusGroupDamageActions = new List<ConditionalStatusGroupDamageActionOp>();
+
 	internal readonly List<ConditionalCritChanceActionOp> conditionalCritChanceActions = new List<ConditionalCritChanceActionOp>();
 
 	internal readonly List<BurstDamageActionOp> burstDamageActions = new List<BurstDamageActionOp>();
@@ -409,6 +411,8 @@ public class SkillExecutionState
 	public IReadOnlyList<SkillReaction> Reactions => reactions;
 
 	internal IReadOnlyList<ConditionalDamageActionOp> ConditionalDamageActions => conditionalDamageActions;
+
+	internal IReadOnlyList<ConditionalStatusGroupDamageActionOp> ConditionalStatusGroupDamageActions => conditionalStatusGroupDamageActions;
 
 	internal IReadOnlyList<ConditionalCritChanceActionOp> ConditionalCritChanceActions => conditionalCritChanceActions;
 

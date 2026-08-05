@@ -107,7 +107,7 @@ namespace Pakuri.Data
 
             catalog.Monsters = monsters.ToArray();
             catalog.Summons = BuildSummons(model, catalog.StatusEffects);
-            BuildArtifactDefinitions(model, catalog);
+            BuildArtifactDefinitions(model, catalog, catalog.StatusEffects);
             catalog.StageOneEnemies = BuildEnemies(model, "stage_one", catalog.StatusEffects);
             catalog.StageTwoEnemies = BuildEnemies(model, "stage_two", catalog.StatusEffects);
             catalog.Stage = StageDefinitionBuilder.Build(assetCatalog);
@@ -839,10 +839,25 @@ namespace Pakuri.Data
             SkillDefinition[] activeSkills,
             StatusEffectDefinition[] statusDefinitions)
         {
+            return BuildSkillReactions(
+                model,
+                trigger => string.Equals(
+                    trigger.MonsterId,
+                    monsterId,
+                    StringComparison.OrdinalIgnoreCase),
+                activeSkills,
+                statusDefinitions);
+        }
+
+        private SkillReaction[] BuildSkillReactions(
+            SourceModel model,
+            Predicate<SkillTriggerRow> includes,
+            SkillDefinition[] activeSkills,
+            StatusEffectDefinition[] statusDefinitions)
+        {
             var triggers = FilterAndSort(
                 model.SkillTriggers.Values,
-                trigger => string.Equals(trigger.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase)
-                    && !IsNormalCastEffect(trigger),
+                trigger => includes(trigger) && !IsNormalCastEffect(trigger),
                 (left, right) => left.SortOrder.CompareTo(right.SortOrder));
 
             var definitions = new SkillReaction[triggers.Count];

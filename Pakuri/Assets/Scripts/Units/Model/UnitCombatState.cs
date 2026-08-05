@@ -95,6 +95,7 @@ namespace Pakuri.InGame
         public UnitCombatResources Resources = new UnitCombatResources();
         public UnitSkills Skills = new UnitSkills();
         public UnitSkills SkillState = new UnitSkills();
+        public ArtifactState Artifacts = new ArtifactState();
         public UnitStatusCollection Statuses = new UnitStatusCollection();
         public bool IsBoss;
         public bool AutoAttackEnabled = true;

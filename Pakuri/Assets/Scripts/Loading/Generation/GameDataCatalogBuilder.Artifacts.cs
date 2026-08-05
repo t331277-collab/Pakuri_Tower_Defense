@@ -9,6 +9,7 @@ using Pakuri.InGame;
 using UnityEngine;
 using static Pakuri.Data.CsvRowParser;
 using static Pakuri.Data.CsvSourceModel;
+using static Pakuri.Data.SkillGraphParser;
 
 namespace Pakuri.Data
 {
@@ -64,7 +65,10 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        private void BuildArtifactDefinitions(SourceModel model, GameDataCatalog catalog)
+        private void BuildArtifactDefinitions(
+            SourceModel model,
+            GameDataCatalog catalog,
+            StatusEffectDefinition[] statusDefinitions)
         {
             var skills = new Dictionary<string, SkillDefinition>(StringComparer.OrdinalIgnoreCase);
             for (var i = 0; i < catalog.Monsters.Length; i++)
@@ -76,7 +80,7 @@ namespace Pakuri.Data
                 AddSkills(skills, catalog.Summons[i].ActiveSkills);
             }
 
-            catalog.ArtifactEffects = BuildArtifactEffects(model, skills);
+            catalog.ArtifactEffects = BuildArtifactEffects(model, skills, statusDefinitions);
             catalog.ArtifactSynergyEffects = BuildArtifactSynergyEffects(model, skills, catalog.Summons);
             catalog.Artifacts = BuildArtifacts(model, catalog.ArtifactEffects);
             catalog.ArtifactSynergies = BuildArtifactSynergies(model, catalog.ArtifactSynergyEffects);
@@ -90,8 +94,10 @@ namespace Pakuri.Data
 
         private ArtifactEffectDefinition[] BuildArtifactEffects(
             SourceModel model,
-            Dictionary<string, SkillDefinition> skills)
+            Dictionary<string, SkillDefinition> skills,
+            StatusEffectDefinition[] statusDefinitions)
         {
+            var allSkills = new List<SkillDefinition>(skills.Values).ToArray();
             var rows = FilterAndSort(
                 model.ArtifactEffects.Values,
                 _ => true,
@@ -106,9 +112,24 @@ namespace Pakuri.Data
                     ArtifactId = row.ArtifactId,
                     ApplicationMode = row.ApplicationMode,
                     Recipient = row.Recipient,
+                    RepeatRule = row.RepeatRule,
+                    SelectionRule = row.SelectionRule,
                     RecipientMonsterId = row.RecipientMonsterId,
                     TargetSkill = ResolveSkill(skills, row.TargetSkillId),
-                    OutcomeSkill = ResolveSkill(skills, row.OutcomeSkillId)
+                    OutcomeSkill = ResolveSkill(skills, row.OutcomeSkillId),
+                    Nodes = MapSkillNodes(BuildSkillNodes(
+                        model,
+                        SkillNodeOwnerKind.Effect,
+                        row.Id,
+                        row.TargetSkillId)),
+                    Reactions = BuildSkillReactions(
+                        model,
+                        trigger => string.Equals(
+                            trigger.SourceSkillId,
+                            row.Id,
+                            StringComparison.OrdinalIgnoreCase),
+                        allSkills,
+                        statusDefinitions)
                 };
             }
 

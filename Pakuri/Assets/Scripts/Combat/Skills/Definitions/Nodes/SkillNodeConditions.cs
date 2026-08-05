@@ -99,6 +99,41 @@ namespace Pakuri.Data
 
 namespace Pakuri.InGame
 {
+    /// 유물 효과가 적용될 스킬 속성을 제한한다.
+    public readonly struct SkillAttributeConditionOp
+    {
+        public SkillAttributeConditionOp(DamageAttribute attribute)
+        {
+            Attribute = attribute;
+        }
+
+        public DamageAttribute Attribute { get; }
+    }
+
+    /// 유물 효과가 적용될 시전자 상태를 제한한다.
+    public readonly struct SourceStatusConditionOp
+    {
+        public SourceStatusConditionOp(StatusEffectKind statusKind, int minimumStacks)
+        {
+            StatusKind = statusKind;
+            MinimumStacks = minimumStacks;
+        }
+
+        public StatusEffectKind StatusKind { get; }
+        public int MinimumStacks { get; }
+    }
+
+    /// 적중 대상의 상태식이 다음 피해 보정을 허용하는 조건이다.
+    public readonly struct TargetStatusConditionOp
+    {
+        public TargetStatusConditionOp(StatusConditionGroup[] groups)
+        {
+            Groups = groups ?? Array.Empty<StatusConditionGroup>();
+        }
+
+        public StatusConditionGroup[] Groups { get; }
+    }
+
     /// 반응 결과로 수행할 상태 변화를 대상 규칙과 연결한다.
     [Serializable]
     public sealed class SkillReactionCommand

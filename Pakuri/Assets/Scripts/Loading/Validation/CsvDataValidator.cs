@@ -407,16 +407,25 @@ namespace Pakuri.Data
                 return;
             }
 
-            if (model == null || !model.Monsters.ContainsKey(trigger.MonsterId))
+            var artifactSource = model != null
+                && SkillGraphParser.IsArtifactEffectOwner(
+                    model,
+                    trigger.SourceSkillId,
+                    trigger.MonsterId);
+            SkillRow sourceSkill = null;
+            if (model == null
+                || (!model.Monsters.ContainsKey(trigger.MonsterId) && !artifactSource))
             {
                 errors.Add($"Skill trigger '{trigger.Id}' references unknown monster '{trigger.MonsterId}'.");
             }
 
-            if (model == null || !model.Skills.TryGetValue(trigger.SourceSkillId, out var sourceSkill))
+            if (!artifactSource
+                && (model == null || !model.Skills.TryGetValue(trigger.SourceSkillId, out sourceSkill)))
             {
                 errors.Add($"Skill trigger '{trigger.Id}' references unknown source skill '{trigger.SourceSkillId}'.");
             }
-            else if (!string.Equals(sourceSkill.MonsterId, trigger.MonsterId, StringComparison.OrdinalIgnoreCase))
+            else if (!artifactSource
+                && !string.Equals(sourceSkill.MonsterId, trigger.MonsterId, StringComparison.OrdinalIgnoreCase))
             {
                 errors.Add($"Skill trigger '{trigger.Id}' source skill '{trigger.SourceSkillId}' belongs to '{sourceSkill.MonsterId}', not '{trigger.MonsterId}'.");
             }
@@ -617,6 +626,8 @@ namespace Pakuri.Data
                     effect.Id,
                     effect.ApplicationMode,
                     effect.Recipient,
+                    effect.RepeatRule,
+                    effect.SelectionRule,
                     effect.RecipientMonsterId,
                     effect.TargetSkillId,
                     effect.OutcomeSkillId,
@@ -636,6 +647,8 @@ namespace Pakuri.Data
                     effect.Id,
                     effect.ApplicationMode,
                     effect.Recipient,
+                    ArtifactEffectRepeatRule.None,
+                    ArtifactEffectSelectionRule.None,
                     effect.RecipientMonsterId,
                     effect.TargetSkillId,
                     effect.OutcomeSkillId,
@@ -695,6 +708,8 @@ namespace Pakuri.Data
             string effectId,
             ArtifactEffectApplicationMode applicationMode,
             ArtifactEffectRecipient recipient,
+            ArtifactEffectRepeatRule repeatRule,
+            ArtifactEffectSelectionRule selectionRule,
             string recipientMonsterId,
             string targetSkillId,
             string outcomeSkillId,
@@ -702,6 +717,20 @@ namespace Pakuri.Data
             SourceModel model,
             List<string> errors)
         {
+            if (repeatRule != ArtifactEffectRepeatRule.None
+                && (applicationMode != ArtifactEffectApplicationMode.SkillModifier
+                    || recipient != ArtifactEffectRecipient.AllAllies))
+            {
+                errors.Add($"Artifact effect '{effectId}' repeat_rule requires SkillModifier and AllAllies.");
+            }
+
+            if (selectionRule != ArtifactEffectSelectionRule.None
+                && (applicationMode != ArtifactEffectApplicationMode.SkillModifier
+                    || recipient != ArtifactEffectRecipient.AllAllies))
+            {
+                errors.Add($"Artifact effect '{effectId}' selection_rule requires SkillModifier and AllAllies.");
+            }
+
             if (recipient == ArtifactEffectRecipient.SpecificMonster
                 && (string.IsNullOrWhiteSpace(recipientMonsterId)
                     || !model.Monsters.ContainsKey(recipientMonsterId)))

@@ -247,6 +247,22 @@ internal static class SkillTrigger
 				ExecuteSourceOwnedTriggers(combatManager, roster, source, text, SkillTriggerEvent.CombatStart, new TriggerExecutionContext(source, source, eventCenter, null, 0f, 0f, DamageAttribute.Physical, text, source));
 			}
 		}
+		ExecuteArtifactOwnerTriggers(
+			combatManager,
+			roster,
+			roster.Find(source),
+			source,
+			SkillTriggerEvent.CombatStart,
+			new TriggerExecutionContext(
+				source,
+				source,
+				eventCenter,
+				null,
+				0f,
+				0f,
+				DamageAttribute.Physical,
+				string.Empty,
+				source));
 	}
 
 	/// 보호막 종료 사건을 반응 판정에 전달한다.
@@ -467,7 +483,7 @@ internal static class SkillTrigger
 		{
 			CombatUnitEntry unitEntry = entries[i];
 			UnitCombatState unitState = unitEntry?.Model;
-			if (unitEntry == null || unitState == null || unitState.Skills == null || unitState.Skills.LearnedPassiveSkillIds.Count == 0)
+			if (unitEntry == null || unitState == null || unitState.Skills == null)
 			{
 				continue;
 			}
@@ -499,6 +515,58 @@ internal static class SkillTrigger
 						triggerContext,
 						ResolveTriggeredDamage(trigger, triggerContext));
 					}
+				}
+			}
+			ExecuteArtifactOwnerTriggers(
+				combatManager,
+				roster,
+				unitEntry,
+				unitState,
+				triggerEvent,
+				triggerContext);
+		}
+	}
+
+	private static void ExecuteArtifactOwnerTriggers(
+		InGameCombatManager combatManager,
+		UnitSpawnManager roster,
+		CombatUnitEntry ownerEntry,
+		UnitCombatState owner,
+		SkillTriggerEvent triggerEvent,
+		TriggerExecutionContext triggerContext)
+	{
+		var effectIds = owner?.Artifacts?.ActiveArtifactEffectIds;
+		if (combatManager == null || roster == null || ownerEntry == null || effectIds == null)
+		{
+			return;
+		}
+
+		for (var effectIndex = 0; effectIndex < effectIds.Count; effectIndex++)
+		{
+			if (!GameDataLoader.CurrentCatalog.TryGetData(
+					effectIds[effectIndex],
+					out ArtifactEffectDefinition effect)
+				|| effect == null
+				|| effect.ApplicationMode != ArtifactEffectApplicationMode.PassiveTrigger)
+			{
+				continue;
+			}
+
+			for (var triggerIndex = 0; triggerIndex < effect.Reactions.Length; triggerIndex++)
+			{
+				var trigger = effect.Reactions[triggerIndex];
+				if (ShouldRunArtifactOwnerTrigger(trigger, owner, triggerEvent, triggerContext)
+					&& PassesCountGate(combatManager, owner, trigger)
+					&& PassesProcGate(combatManager, owner, trigger))
+				{
+					SkillExecution.ScheduleReaction(
+						combatManager,
+						roster,
+						ownerEntry,
+						owner,
+						trigger,
+						triggerContext,
+						ResolveTriggeredDamage(trigger, triggerContext));
 				}
 			}
 		}
@@ -534,6 +602,33 @@ internal static class SkillTrigger
 			return MatchesEventSourceScope(trigger.EventSourceScope, owner, triggerContext.EventSource);
 		}
 		return false;
+	}
+
+	private static bool ShouldRunArtifactOwnerTrigger(
+		SkillReaction trigger,
+		UnitCombatState owner,
+		SkillTriggerEvent triggerEvent,
+		TriggerExecutionContext triggerContext)
+	{
+		return trigger != null
+			&& owner != null
+			&& trigger.Event == triggerEvent
+			&& MatchesEventSkillId(trigger.EventSkillIds, triggerContext.EventSourceSkillId)
+			&& StatusConditionRules.MatchesSkillRuntimeKinds(
+				trigger.EventSkillRuntimeKindValues,
+				triggerContext.EventSourceSkillId)
+			&& (!trigger.RequireEventExecute || triggerContext.EventWasExecute)
+			&& MeetsSourceStatusRequirement(
+				owner,
+				trigger.RequiredSourceStatusKind,
+				trigger.RequiredSourceStatusMinStacks)
+			&& MatchesConditionStatus(trigger, triggerContext.Status)
+			&& MatchesConditionStatusSourceSkill(
+				trigger.ConditionStatusSourceSkillIds,
+				triggerContext.EventTarget,
+				triggerContext.EventTriggerSourceSkillId)
+			&& MatchesTriggerAttribute(trigger.TriggerAttributes, triggerContext.EventAttribute)
+			&& MatchesEventSourceScope(trigger.EventSourceScope, owner, triggerContext.EventSource);
 	}
 
 	/// 소유자가 요구 선택을 모두 갖췄는지 확인한다.

@@ -277,6 +277,7 @@ namespace Pakuri.InGame
                 ?? throw new InvalidOperationException(
                     $"Party state '{model.Identity.DefinitionId}' is required before restoring.");
             model.Skills = state.Skills;
+            model.Artifacts = state.Artifacts;
             model.SkillState.RebuildLearnedSkillState(model);
         }
 

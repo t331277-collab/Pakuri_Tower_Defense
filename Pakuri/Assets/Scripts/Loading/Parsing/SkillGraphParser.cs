@@ -263,13 +263,9 @@ namespace Pakuri.Data
 				}
 				break;
 			case SkillNodeOwnerKind.Effect:
-				if (string.IsNullOrWhiteSpace(node.OwnerId))
+				if (!IsArtifactEffectOwner(model, node.OwnerId, node.MonsterId))
 				{
-					errors.Add("Skill node '" + node.Id + "' requires owner_id for effect-owned nodes.");
-				}
-				if (string.IsNullOrWhiteSpace(node.TargetSkillId) || !model.Skills.ContainsKey(node.TargetSkillId))
-				{
-					errors.Add("Skill node '" + node.Id + "' effect owner '" + node.OwnerId + "' requires a known target_skill_id.");
+					errors.Add("Skill node '" + node.Id + "' references unknown artifact effect owner '" + node.OwnerId + "'.");
 				}
 				break;
 			case SkillNodeOwnerKind.Trigger:
@@ -417,7 +413,8 @@ namespace Pakuri.Data
 					list.Add($"Skill graph '{text}' has duplicate node_order '{skillGraphNodeRow.NodeOrder}'.");
 					continue;
 				}
-				if (!model.Monsters.ContainsKey(skillGraphNodeRow.MonsterId))
+				if (!model.Monsters.ContainsKey(skillGraphNodeRow.MonsterId)
+					&& !IsArtifactGraphOwner(model, skillGraphNodeRow))
 				{
 					list.Add("Skill graph '" + text + "' references unknown monster '" + skillGraphNodeRow.MonsterId + "'.");
 				}
@@ -427,7 +424,10 @@ namespace Pakuri.Data
 					continue;
 				}
 				string text3 = ResolveSkillGraphTargetSkillId(model, skillGraphNodeRow, list);
-				if (!string.IsNullOrWhiteSpace(text3) && model.Skills.TryGetValue(text3, out var value3) && !string.Equals(value3.MonsterId, skillGraphNodeRow.MonsterId, StringComparison.OrdinalIgnoreCase))
+				if (!IsArtifactGraphOwner(model, skillGraphNodeRow)
+					&& !string.IsNullOrWhiteSpace(text3)
+					&& model.Skills.TryGetValue(text3, out var value3)
+					&& !string.Equals(value3.MonsterId, skillGraphNodeRow.MonsterId, StringComparison.OrdinalIgnoreCase))
 				{
 					list.Add("Skill graph '" + text + "' target skill '" + text3 + "' belongs to '" + value3.MonsterId + "', not '" + skillGraphNodeRow.MonsterId + "'.");
 				}
@@ -590,8 +590,20 @@ namespace Pakuri.Data
 					errors.Add("Skill graph trigger owner '" + text2 + "' belongs to '" + value.MonsterId + "', not '" + graph.MonsterId + "'.");
 				}
 				text = value.SourceSkillId;
+				if (IsArtifactEffectOwner(model, text, graph.MonsterId))
+				{
+					text = graph.TargetSkillId;
+					break;
+				}
 				break;
 			}
+			case SkillNodeOwnerKind.Effect:
+				if (!IsArtifactEffectOwner(model, text2, graph.MonsterId))
+				{
+					errors.Add("Skill graph '" + BuildSkillGraphKey(graph) + "' references unknown artifact effect owner '" + text2 + "'.");
+				}
+				text = graph.TargetSkillId;
+				break;
 			default:
 				errors.Add($"Skill graph '{BuildSkillGraphKey(graph)}' uses unsupported owner_kind '{graph.OwnerKind}'.");
 				return graph.TargetSkillId;
@@ -600,11 +612,40 @@ namespace Pakuri.Data
 			{
 				text = graph.TargetSkillId;
 			}
-			if (string.IsNullOrWhiteSpace(text) || !model.Skills.ContainsKey(text))
+			if (!string.IsNullOrWhiteSpace(text) && !model.Skills.ContainsKey(text))
 			{
 				errors.Add("Skill graph '" + BuildSkillGraphKey(graph) + "' resolves unknown target_skill_id '" + text + "'.");
 			}
 			return text;
+		}
+
+		private static bool IsArtifactGraphOwner(
+			CsvSourceModel.SourceModel model,
+			SkillGraphNodeRow graph)
+		{
+			if (model == null || graph == null)
+			{
+				return false;
+			}
+
+			if (graph.OwnerKind == SkillNodeOwnerKind.Effect)
+			{
+				return IsArtifactEffectOwner(model, graph.OwnerId, graph.MonsterId);
+			}
+
+			return graph.OwnerKind == SkillNodeOwnerKind.Trigger
+				&& model.SkillTriggers.TryGetValue(graph.OwnerId, out var trigger)
+				&& IsArtifactEffectOwner(model, trigger.SourceSkillId, graph.MonsterId);
+		}
+
+		internal static bool IsArtifactEffectOwner(
+			CsvSourceModel.SourceModel model,
+			string effectId,
+			string artifactId)
+		{
+			return model != null
+				&& model.ArtifactEffects.TryGetValue(effectId ?? string.Empty, out var effect)
+				&& string.Equals(effect.ArtifactId, artifactId, StringComparison.OrdinalIgnoreCase);
 		}
 
 		internal static void ValidateSkillGraphAllowedValue(string graphNodeKey, SkillNodeTypeParamRow param, string value, List<string> errors)

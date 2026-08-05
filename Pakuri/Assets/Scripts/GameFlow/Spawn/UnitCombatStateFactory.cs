@@ -140,6 +140,7 @@ namespace Pakuri.InGame
             if (runState != null)
             {
                 model.Skills = runState.Skills;
+                model.Artifacts = runState.Artifacts;
             }
             return model;
         }

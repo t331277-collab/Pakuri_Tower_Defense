@@ -4,6 +4,55 @@
 
 The pre-cleanup file, including completed and superseded data tasks, is preserved at `boards/ARCHIVE/ACTIVE_BOARD_SNAPSHOT_2026-07-28/DATA/DATA_BLACKBOARD.md`.
 
+## Task: 2026-08-05 Boss Artifact Reward Data Contract Design
+
+### Task title
+
+Use StageDay boss classification and existing artifact Definitions for reward choices.
+
+### Goals
+
+- Enable artifact rewards for Stage 1/2 `Day5Midboss`, `Day10Midboss` and `Boss` rows through `artifact_choice_count`.
+- Keep `StageReward.csv` `artifact_choice_count` as the choice-count switch; no new reward CSV or schema.
+- Populate ArtifactPanel from `ArtifactDefinition` and `ArtifactSynergyDefinition`, not direct CSV reads.
+
+### Constraints
+
+- Reuse the existing StageDay, StageReward and loaded Definition contracts; no new reward CSV or schema.
+- The first release draw pool is limited to the ten `spirit-contract` artifacts with implemented effects.
+- `resonance-compass` has no authored `artifact_icon` path; its choice intentionally hides the missing Icon instead of inventing an asset.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented. Stage 1/2 Day5 Midboss, Day10 Midboss and Day11 Boss reward counts are three; normal rows remain zero. The Spirit Contract pool has 9/10 authored icons.
+
+### Next Actions
+
+- Author and assign an icon for `resonance-compass` when the source asset is available.
+- User: verify rendered text and icon assignments in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/stage_flow/StageDay.csv` contains Boss at Stage 1 Day 11 and Stage 2 Day 11.
+- Stage 1 and Stage 2 `StageReward.csv` already define `artifact_choice_count`; both midboss rows and boss rows currently use value 3.
+- `Pakuri/Assets/Scripts/Loading/Generation/StageDefinitionBuilder.cs` already parses `artifact_choice_count` into `ArtifactChoiceCount`.
+- `Pakuri/Assets/Scripts/Combat/Artifact/Definition/ArtifactDefinitions.cs` exposes artifact display name, synergy ID, description, and loaded Sprite icon plus synergy display name.
+- UTF-8 `Import-Csv` inspection excluding the type row reported 50 artifacts, 9 nonempty icon paths, and 41 missing icon paths.
+- Stage 1 and Stage 2 `StageReward.csv` use `artifact_choice_count=3` on Day5 Midboss, Day10 Midboss and Day11 Boss; normal and inactive elite rows remain zero.
+- Runtime binding uses `ArtifactDefinition.DisplayName` -> `ArtifactName`, `Description` -> `Desc`, `Icon` -> `Icon`, and `ArtifactSynergyDefinition.DisplayName` -> `Summary`.
+- Both StageReward files were reimported as Unity TextAssets, and focused catalog verification passed all six eligible reward IDs at count three.
+
+### History
+
+- 2026-08-05: Chose existing StageDay/StageReward and Definition contracts; rejected a new artifact-reward CSV as unnecessary.
+- 2026-08-05: Code Builder normalized both StageReward files for Boss-only artifact choices and restricted runtime draws to the ten Spirit Contract Definitions.
+- 2026-08-05: Designer rechecked the missing-button report against current Stage data and recorded the Day11-only eligibility boundary for user confirmation.
+- 2026-08-05: User confirmed Midboss inclusion; Code Builder restored count three on all four Midboss rows and removed the redundant runtime combat-type gate.
+
 ## Task: 2026-08-05 Artifact and Synergy Runtime Reuse Design
 
 ### Task title
@@ -12,7 +61,7 @@ Design first-class artifact/synergy additional-effect Definitions on the existin
 
 ### Goals
 
-- Define the two independent Effect Definition CSV contracts under `Artifact/Effect`.
+- Keep the two Effect header CSV contracts under `Artifact/Effect` and reuse the existing passive graph-node/trigger authoring files for concrete effect behavior.
 - Make Phase 1 the unparsed authoring of two Effect CSVs plus Spirit King unit and skill rows.
 - Route CSV through Parsing, `CsvSourceModel`, Validation and Generation before runtime use.
 - Reuse Choice-like Node/Trigger mechanics without converting effects into hidden passives or Choices.
@@ -23,6 +72,7 @@ Design first-class artifact/synergy additional-effect Definitions on the existin
 
 - Phase 2 owns Loading and Definition code only; prefab, scene, Stage Manager and combat execution remain excluded.
 - Artifact effects must generate `ArtifactEffectDefinition` or `ArtifactSynergyEffectDefinition`, not `PassiveSkillDefinition`.
+- Do not add artifact-only `effect_nodes.csv` or `effect_triggers.csv`; use existing `skill_graph_nodes_passive.csv`, `passive_skill_triger.csv` and Node definition contracts with `effect_id` ownership.
 - Every individual artifact effect uses passive `SkillModifier` or `PassiveTrigger` application; synergy effects may also execute or grant concrete skills.
 - Do not invent Tracker details or unsupported Nodes/events.
 - Spirit King spawn is `SpawnUnit` effect data and `SummonDefinition`, not a new SkillDefinition family.
@@ -35,20 +85,21 @@ Designer for contract; Code Builder for Phase 1 and Phase 2 implementation.
 
 ### Status
 
-Phase 1 and Phase 2 complete. Artifact icon CSV/runtime wiring is complete for all 9 currently available matching PNGs; the revised Phase 3 state/manager and ten Spirit Contract artifact effects are not started.
+Phase 1, Phase 2 and the ten-artifact Phase 3 data/runtime scope are complete. All Spirit Contract Effect Nodes/Reactions generate typed Definitions through the existing Effect-owner pipeline.
 
 ### Next Actions
 
-- Phase 3 adds `ArtifactState`, count-only `SynergyState`, `ArtifactSynergyManager.PrepareStage` and Stage-start synergy-count logging.
-- Phase 3 connects only the ten Spirit Contract artifacts: eight `SkillModifier` effects and two `PassiveTrigger` effects.
+- Keep future Effect additions in the existing `skill_graph_nodes_passive.csv` and `passive_skill_triger.csv` owner paths.
 - Keep all `ArtifactSynergyEffectDefinition` execution, Spirit King runtime, the other 40 artifacts and other synergies deferred.
-- Add `artifact_icon` values for the remaining 41 artifacts only after matching PNG assets exist.
+- Enforce no-duplicate artifact acquisition in the future acquisition flow; Phase 3 does not expand `ArtifactState` for it.
 
 ### Evidence
 
 - `Pakuri/reference/4.run/artifact-synergy-runtime-design.md` defines `artifact_effects.csv` and `artifact_synergy_effects.csv` as first-class Definition headers with Node/Trigger owners and Generation-resolved outcome skills.
 - The same design maps all 50 authored artifacts and five detailed synergies to `SkillModifier`, `PassiveTrigger`, `ExecuteSkill` or `GrantSkill`, naming existing Nodes and unsupported gaps.
 - Existing monster authoring already separates base family CSVs, choices, triggers and graph nodes under `Pakuri/Assets/CSVdata/authoring/monster/skills`.
+- `skill_node_definitions.csv` and `skill_node_definition_params.csv` define operation contracts, while `skill_graph_nodes_passive.csv` and `passive_skill_triger.csv` already own concrete Node/Trigger instances.
+- `SkillNodeOwnerKind.Effect` now materializes ArtifactEffect-owned graph rows, and artifact-owned Trigger rows validate their effect source without requiring a monster skill.
 - Existing Loading code already follows Parsing -> Validation -> Generation -> RuntimeCatalog; artifact source rows and Definitions must join that same path.
 - `GameDataCatalog` now indexes Artifact, ArtifactEffect, Synergy and SynergyEffect Definitions; no runtime state or consumer uses them yet.
 - `SkillTriggerEvent` has no reload-complete/heal-received event and `SkillTargetSelection` has no densest selector; no Summon runtime kind is required by the revised design.
@@ -60,12 +111,19 @@ Phase 1 and Phase 2 complete. Artifact icon CSV/runtime wiring is complete for a
 - `GameDataCatalogBuilder` reuses the existing active-skill generator for `SummonDefinition`; generated Spirit King skills are four `SingleSkillDefinition` and one `ZoneSkillDefinition` without entering `GameDataCatalog.Monsters`.
 - Unity `Pakuri/Sync CSV Runtime Catalog Assets` updated `CsvRuntimeCatalog.asset` with all six source references.
 - `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal` completed with 0 errors and 2 existing assembly-reference warnings.
+- Artifact runtime ownership scripts are organized under `Pakuri/Assets/Scripts/Combat/Artifact`, and `ArtifactDefinitions.cs` is under `Combat/Artifact/Definition`; Loading parser, validator and generator files remain under `Loading`.
 - Focused Unity EditMode test `ArtifactAndSummonCatalogBuildsResolvedDefinitions` passed 1/1 and reported 5 monsters, 8+8 enemies, 50 artifacts, 6 synergies and 1 summon. Full `SkillCatalogRuntimeTests` ran 17 tests: 15 passed; two Trigger baseline assertions failed (`ResolvedDefinition` null entries and missing expected Silence status). Phase 2 changed no Trigger/Node source or runtime script; these failures remain a separate verification gap.
 - `artifacts.csv` now has a typed `artifact_icon` column: 50 rows preserved, 9 exact filename/ID matches populated, 41 unavailable icons blank, and 0 populated paths missing on disk.
 - All 9 referenced PNG `.meta` files use `textureType: 8`; `CsvAssetReferenceCollector`, Generation and `ArtifactDefinition.Icon` reuse the shared Sprite catalog.
-- Unity catalog sync serialized 9 Artifact Sprite paths; focused EditMode verification passed 1/1 with `elemental-prism.Icon` non-null and unavailable `resonance-compass.Icon` null.
+- Unity catalog sync serialized 9 matched Artifact Sprite paths; `elemental-prism.Icon` resolves and unmatched `resonance-compass.Icon` remains null.
 - The source and foundation catalog now use `정령의 비약` / `spirit-elixir`; Tracker detail remains absent.
 - Current CSV evidence identifies exactly ten Spirit Contract artifacts with eight `SkillModifier` effects and two `PassiveTrigger` effects; this is the revised first runtime scope.
+- `artifact_effects.csv` now has 62 effect rows; dynamic Prism variants and split conditional/count effects remain independent generated Definitions.
+- `artifact_effects.csv` has 64 rows including header/type rows, 9 columns, 2 typed repeat-rule rows and 5 typed Prism selection-rule rows; all rows pass uniform column-count validation.
+- `GameDataCatalogBuilder` generates typed Nodes/Reactions on `ArtifactEffectDefinition`; all ten Spirit Contract artifacts now have concrete existing Node/Trigger data.
+- Four changed CSVs pass strict parsed column-count checks; focused EditMode tests pass 3/3; solution build completes with 0 errors and the existing 2 warnings.
+- Full `SkillCatalogRuntimeTests` result is 19/21 passed; only the previously recorded Trigger baseline assertions remain failing, while every artifact catalog/state/resolver/trigger test passes.
+- Focused EditMode verification for the new Definition metadata and manager path passes 4/4; solution build completes with 0 errors, and manager search finds 0 former artifact/synergy ID constant references.
 
 ### History
 
@@ -78,6 +136,12 @@ Phase 1 and Phase 2 complete. Artifact icon CSV/runtime wiring is complete for a
 - 2026-08-05: Code Builder completed Phase 2 Parsing, SourceModel, Validation, Definition Generation, RuntimeCatalog registration, asset sync and focused EditMode verification using a separate `SummonDefinition`.
 - 2026-08-05: Code Builder added `artifact_icon`, mapped the 9 available ID-matched images, wired the field through Parsing/asset collection/Generation, synchronized Unity RuntimeCatalog and passed focused verification.
 - 2026-08-05: User moved the first runtime target to the ten Spirit Contract artifacts; Designer moved state/manager skeleton and count-only synergy logging into Phase 3 and deferred all synergy effect execution.
+- 2026-08-05: User rejected artifact-only Node/Trigger CSVs; Designer changed Phase 3 to independent ArtifactState ownership plus existing passive graph-node/trigger authoring reuse, without creating `PassiveSkillDefinition` data.
+- 2026-08-05: Code Builder completed Effect-owner pipeline integration and authored only the confirmed Spirit Contract modifier nodes, leaving decision-dependent data absent rather than guessed.
+- 2026-08-05: Code Builder authored the resolved Prism, Black Candlestick, Spirit Elixir, Rift Gem, Elemental Codex and Resonance Compass data and verified generated Definitions plus dynamic Stage distribution.
+- 2026-08-05: Code Builder moved the three artifact runtime state/manager scripts and Unity `.meta` files to `Combat/Artifact`, preserving GUIDs; generated Definition/source-model files were not moved because they belong to the existing Loading pipeline.
+- 2026-08-05: Code Builder organized `ArtifactDefinitions.cs` under `Combat/Artifact/Definition` while keeping CSV parser, validator and generator code in `Loading`.
+- 2026-08-05: Code Builder added `repeat_rule` and `selection_rule` to the Artifact Effect pipeline, removed manager ID constants, and verified 4/4 focused tests plus 0-error solution build.
 
 ## Task: 2026-08-05 Artifact Synergy Foundation CSVs
 

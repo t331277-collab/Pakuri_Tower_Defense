@@ -26,6 +26,7 @@ namespace Pakuri.InGame
         {
             public string MonsterId;
             public readonly UnitSkills Skills = new UnitSkills();
+            public readonly ArtifactState Artifacts = new ArtifactState();
             public readonly List<string> ChosenRewardIds = new List<string>();
         }
 
@@ -255,6 +256,56 @@ namespace Pakuri.InGame
         {
             Gold += Math.Max(0, goldReward);
             DarkTrace += Math.Max(0, darkTraceReward);
+        }
+
+        public bool HasArtifactCapacity()
+        {
+            for (var i = 0; i < partyMembers.Count; i++)
+            {
+                var member = partyMembers[i];
+                if (member != null && member.Artifacts.OwnedArtifactIds.Count < ArtifactState.MaxOwnedArtifactCount)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public bool HasArtifact(string artifactId)
+        {
+            if (string.IsNullOrWhiteSpace(artifactId))
+            {
+                return false;
+            }
+
+            for (var i = 0; i < partyMembers.Count; i++)
+            {
+                var ownedIds = partyMembers[i].Artifacts.OwnedArtifactIds;
+                for (var j = 0; j < ownedIds.Count; j++)
+                {
+                    if (string.Equals(ownedIds[j], artifactId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        public bool CanAcquireArtifact(RunMonsterState member, string artifactId)
+        {
+            return member != null
+                && partyMembers.Contains(member)
+                && !HasArtifact(artifactId)
+                && member.Artifacts.CanAdd(artifactId);
+        }
+
+        public bool TryAcquireArtifact(RunMonsterState member, string artifactId)
+        {
+            return CanAcquireArtifact(member, artifactId)
+                && member.Artifacts.TryAdd(artifactId);
         }
 
         /// 아직 파티에 없는 몬스터를 다음 슬롯에 추가한다.

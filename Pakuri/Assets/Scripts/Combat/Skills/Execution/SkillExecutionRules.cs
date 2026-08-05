@@ -57,7 +57,67 @@ namespace Pakuri.InGame
             ApplyPassiveBaseModifiers(snapshot, owner, skill);
             ApplyChoices(snapshot, owner.Skills.ChosenEnhancementIds, skill, owner, roster);
             ApplyChoices(snapshot, owner.Skills.ChosenMasterSkillIds, skill, owner, roster);
+            ApplyArtifactModifiers(snapshot, owner, skill);
             return snapshot;
+        }
+
+        private static void ApplyArtifactModifiers(
+            SkillExecutionState snapshot,
+            UnitCombatState owner,
+            SkillDefinition skill)
+        {
+            var effectIds = owner?.Artifacts?.ActiveArtifactEffectIds;
+            if (snapshot == null || skill == null || effectIds == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < effectIds.Count; i++)
+            {
+                if (!GameDataLoader.CurrentCatalog.TryGetData(
+                        effectIds[i],
+                        out ArtifactEffectDefinition effect)
+                    || effect == null
+                    || effect.ApplicationMode != ArtifactEffectApplicationMode.SkillModifier
+                    || (effect.TargetSkill != null
+                        && !string.Equals(
+                            effect.TargetSkill.SkillId,
+                            skill.SkillId,
+                            StringComparison.OrdinalIgnoreCase))
+                    || !ArtifactConditionsMatch(effect.Nodes, owner, skill))
+                {
+                    continue;
+                }
+
+                ApplyNodes(snapshot, effect.Nodes, skill.SkillId);
+            }
+        }
+
+        private static bool ArtifactConditionsMatch(
+            IReadOnlyList<SkillNode> nodes,
+            UnitCombatState owner,
+            SkillDefinition skill)
+        {
+            for (var i = 0; nodes != null && i < nodes.Count; i++)
+            {
+                var attribute = nodes[i]?.GetOperation<SkillAttributeConditionOp>();
+                if (attribute.HasValue && skill.Element != attribute.Value.Attribute)
+                {
+                    return false;
+                }
+
+                var status = nodes[i]?.GetOperation<SourceStatusConditionOp>();
+                if (status.HasValue
+                    && (status.Value.StatusKind == StatusEffectKind.Shield
+                        ? owner.GetTotalShield() <= 0f
+                        : owner.Statuses.GetStacks(status.Value.StatusKind)
+                            < status.Value.MinimumStacks))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// 학습이 끝난 스킬의 고정 실행값을 런타임 상태에 기록한다.
@@ -414,12 +474,21 @@ namespace Pakuri.InGame
 		{
 			return;
 		}
+		TargetStatusConditionOp? pendingTargetStatus = null;
 		for (int i = 0; i < nodes.Count; i++)
 		{
 			if (nodes[i] == null
 				|| (!string.IsNullOrWhiteSpace(targetSkillId)
+					&& !string.IsNullOrWhiteSpace(nodes[i].TargetSkillId)
 					&& !string.Equals(nodes[i].TargetSkillId, targetSkillId, StringComparison.OrdinalIgnoreCase)))
 			{
+				continue;
+			}
+
+			var targetStatus = nodes[i].GetOperation<TargetStatusConditionOp>();
+			if (targetStatus.HasValue)
+			{
+				pendingTargetStatus = targetStatus;
 				continue;
 			}
 
@@ -462,7 +531,19 @@ namespace Pakuri.InGame
 			SkillActionOp? skillActionOp = nodes[i].GetOperation<SkillActionOp>();
 			if (skillActionOp.HasValue)
 			{
-				ApplyNodeAction(snapshot, skillActionOp.Value);
+				if (pendingTargetStatus.HasValue
+					&& skillActionOp.Value.Kind == SkillActionOpKind.DamageMultiplier)
+				{
+					snapshot.conditionalStatusGroupDamageActions.Add(
+						new ConditionalStatusGroupDamageActionOp(
+							skillActionOp.Value.Amount,
+							pendingTargetStatus.Value.Groups));
+					pendingTargetStatus = null;
+				}
+				else
+				{
+					ApplyNodeAction(snapshot, skillActionOp.Value);
+				}
 			}
 
 			ConsecutiveHitActionOp? consecutiveHitAction = nodes[i].GetOperation<ConsecutiveHitActionOp>();
@@ -1334,6 +1415,16 @@ namespace Pakuri.InGame
                     multiplier *= action.DamageMultiplier;
                 }
             }
+
+			var groupedActions = data.ConditionalStatusGroupDamageActions;
+			for (var i = 0; i < groupedActions.Count; i++)
+			{
+				var action = groupedActions[i];
+				if (StatusConditionRules.MatchesConditionStatus(target, action.Groups))
+				{
+					multiplier *= action.DamageMultiplier;
+				}
+			}
 
             return multiplier;
         }
