@@ -218,11 +218,19 @@ namespace Pakuri.InGame
 
         private CombatUnitEntry Find(UnitCombatState model, Component actor)
         {
+            if (model == null || model.Identity == null)
+            {
+                return null;
+            }
+
             var unitId = model.Identity.UnitId;
             for (var i = 0; i < entries.Count; i++)
             {
                 var entry = entries[i];
-                if (entry.Model.Identity.UnitId == unitId)
+                if (entry != null
+                    && entry.Model != null
+                    && entry.Model.Identity != null
+                    && entry.Model.Identity.UnitId == unitId)
                 {
                     return entry;
                 }

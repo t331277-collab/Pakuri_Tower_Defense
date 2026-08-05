@@ -40,7 +40,7 @@ Phase 1 loading/graph implementation and Phase 2 Definition-driven skill ownersh
 ### Evidence
 
 - `summon_units.csv` uses `base_move_speed=0.5`; `summon_units_skill.csv` now authors visual reuse, A/B/C `Densest`, D/E `BattlefieldCenter` and D `AreaAttack`.
-- Existing graph rows author C `RepeatPerTarget(2,0.35,1)`, D `PullToCenter(0.2)` and D `OnExpire -> ExecuteSkill(E)`.
+- Existing graph rows author C `RepeatPerTarget(2,0.35,1)`, D `PullToCenter(0.2)` and D `OnExpire -> ExecuteSkill(E)`; the D follow-up selects `Nearest` enemies at `EventCenter` so the expiry event does not require a null `EventTarget`.
 - `GameDataCatalogBuilder.BuildSummons` now attaches summon-owned reactions to the generated active skill Definitions.
 - `SkillGraphParser` and `CsvDataValidator` now accept summon-owned skills/triggers without adding a summon-specific graph/trigger file.
 - `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal` completed with 0 errors and the existing 2 assembly-reference warnings; edited CSVs import structurally with uniform columns.
@@ -50,6 +50,7 @@ Phase 1 loading/graph implementation and Phase 2 Definition-driven skill ownersh
 
 - 2026-08-05: Code Builder recorded the corrected Zone Rift, visual reuse, Densest re-selection, pull and follow-up contracts before implementation.
 - 2026-08-05: Code Builder connected Spirit King rows and graph/trigger data to the shared summon Loading/Generation path; runtime pull and targeting execution remains deferred to the next phase.
+- 2026-08-05: Code Builder corrected the D `OnExpire` target contract and added runtime nearest fallback plus no-live-enemy gating for automatic enemy-target skills.
 
 ## Task: 2026-08-05 Artifact Synergy Icon Data Binding
 

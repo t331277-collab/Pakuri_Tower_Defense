@@ -399,6 +399,14 @@ namespace Pakuri.InGame
                         continue;
                     }
 
+                    var targeting = runtime?.Data?.Targeting;
+                    if (targeting != null
+                        && targeting.TargetSide == SkillTargetSide.Enemy
+                        && SkillTargeting.FindNearestTarget(entry, roster, targeting) == null)
+                    {
+                        continue;
+                    }
+
                     TryExecuteSelected(entry, runtime, roster, combatManager);
                 }
             }

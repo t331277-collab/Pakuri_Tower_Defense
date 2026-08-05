@@ -527,8 +527,14 @@ namespace Pakuri.InGame
                 }
             }
 
-            return best != null && best.Transform != null
-                ? best.Transform.position
+            if (best != null && best.Transform != null)
+            {
+                return best.Transform.position;
+            }
+
+            var nearest = FindNearestTarget(caster, roster, targeting);
+            return nearest != null && nearest.Transform != null
+                ? nearest.Transform.position
                 : origin;
         }
 

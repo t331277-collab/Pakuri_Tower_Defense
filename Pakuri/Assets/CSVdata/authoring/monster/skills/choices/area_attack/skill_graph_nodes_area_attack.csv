@@ -43,5 +43,5 @@
 "sein","Trigger","d-master-2","sein-d","3","SetDuration","3","","","","","","","","","","","",""
 "sein","Trigger","d-master-2","sein-d","4","ShowVisual","Assets/Image/Monster/Sein/SkillEffect/Sprite/C-1.png","Assets/Image/Monster/Sein/SkillEffect/Sprite/C-1.controller","1","0","3.593319","1.8302448","","","","","","",""
 "spirit-king","Skill","spirit-king-dimensional-rift","spirit-king-dimensional-rift","1","PullToCenter","0.2","","","","","","","","","","","",""
-"spirit-king","Trigger","spirit-king-dimensional-rift-on-expire","spirit-king-dimensional-rift","1","SelectTargets","Enemy","EventTarget","Circle","EventCenter","Center","true","","","","","","",""
+"spirit-king","Trigger","spirit-king-dimensional-rift-on-expire","spirit-king-dimensional-rift","1","SelectTargets","Enemy","Nearest","Circle","EventCenter","Center","true","","","","","","",""
 "spirit-king","Trigger","spirit-king-dimensional-rift-on-expire","spirit-king-dimensional-rift","2","ExecuteSkill","spirit-king-dimensional-collapse-explosion","1","","","","","","","","","","",""

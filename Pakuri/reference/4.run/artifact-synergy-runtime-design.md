@@ -195,8 +195,8 @@ Phase 1에서 `authoring/monster/skills/base/area_attack/skills_area_attack.csv`
 - 정령왕 스킬 Prefab·icon은 아직 별도 자산으로 만들지 않고, 런타임 sprite·animator는 승인된 Sein-C/Eve-C/Eve-D 자산 경로를 복사한다.
 - 정령 폭격은 기존 `RepeatPerTarget` Node에 `repeat_count=2`, `repeat_interval_seconds=0.35`, `repeat_damage_multiplier=1`을 연결한다. 최초 실행까지 포함해 총 3회다.
 - 차원붕괴는 기존 Zone lifecycle에 `PullToCenter(distance_per_tick=0.2)`를 연결하고, 중앙에서 데미지 0으로 1.2초 유지한다. Zone의 기존 `OnExpire -> ExecuteSkill(spirit-king-dimensional-collapse-explosion)` 경로로 종료 폭발을 실행한다.
-- 정령 폭격은 기존 `RepeatPerTarget`에 최초 시전을 포함해 2회 반복을 연결하며, 반복마다 현재 적 위치를 다시 `Densest`로 계산한다.
-- 원소폭발·원소폭풍·정령 폭격의 대상 중심은 `Densest`를 사용한다. 후보 적 위치별 반경 내 적 수가 최대인 위치를 선택하고, 동률이면 시전자와 가까운 위치, 다시 동률이면 Registry 순서를 따른다.
+- 정령 폭격은 기존 `RepeatPerTarget`에 최초 시전을 포함해 2회 반복을 연결하며, 반복마다 현재 적 위치를 다시 `Densest`로 계산한다. `Densest` 결과가 없지만 가까운 생존 적이 있으면 가까운 적 위치를 사용하고, 생존 적이 없으면 적 대상 자동 스킬을 발동하지 않는다.
+- 원소폭발·원소폭풍·정령 폭격의 대상 중심은 `Densest`를 사용한다. 후보 적 위치별 반경 내 적 수가 최대인 위치를 선택하고, 동률이면 시전자와 가까운 위치, 다시 동률이면 Registry 순서를 따른다. 차원붕괴 종료 폭발은 `EventTarget`이 없는 `OnExpire`이므로 기존 균열 중심인 `EventCenter`에서 `Nearest` 적들을 선택한다.
 - `skills_area_attack.csv` 형식에 없는 선택·반복·후속 실행은 기존 graph-node/trigger CSV와 typed runtime operation으로 연결한다. 새로운 Effect 전용 CSV는 만들지 않는다.
 
 ### 4.5 기존 Node와 Trigger 저작 경로
@@ -704,6 +704,8 @@ InGameCombatManager.Update
 
 - 정령계약 시너지 Node·Trigger도 기존 graph-node/trigger CSV의 `Effect` owner 경로 사용
 - 정령 폭격 `RepeatPerTarget` 총 3회 연결 및 반복별 `Densest` 재선정
+- `Densest` 결과가 없을 때 가까운 적 fallback 및 생존 적이 없을 때 적 대상 자동 스킬 미발동
+- 차원붕괴 `OnExpire` 후속 폭발의 `EventTarget` null 경로 제거와 `EventCenter` 위치 유지
 - 차원붕괴 `ZoneSkill`의 `PullToCenter(0.2 unit/tick)`와 종료 후 폭발 `ExecuteSkill` 연결
 - 기존 Zone 1.2초 lifecycle과 종료 `OnExpire` 재사용
 - A~E 스킬 중 현재 시너지 단계에 해당하는 스킬만 정령왕에 학습
