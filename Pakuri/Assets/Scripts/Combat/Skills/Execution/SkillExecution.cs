@@ -1210,9 +1210,9 @@ namespace Pakuri.InGame
             snapshot.PreparedOrigin = origin;
             snapshot.PreparedDirections = directions;
             snapshot.PreparedDamage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick);
-            snapshot.PreparedDamageAttribute = skill.DamagePerTick != null
-                ? skill.DamagePerTick.Element
-                : skill.Element;
+            snapshot.PreparedDamageAttribute = SkillExecutionRules.ResolveSkillAttribute(
+                context.Caster,
+                skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element);
             snapshot.PreparedStatus = SkillExecutionRules.StatusSpec(
                 snapshot.OnHitStatusOverride ?? skill.OnHitStatus,
                 snapshot);
@@ -1300,9 +1300,9 @@ namespace Pakuri.InGame
                 : skill.SkillEffectPrefab;
             snapshot.PreparedCenters = centers;
             snapshot.PreparedDamage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick);
-            snapshot.PreparedDamageAttribute = skill.DamagePerTick != null
-                ? skill.DamagePerTick.Element
-                : skill.Element;
+            snapshot.PreparedDamageAttribute = SkillExecutionRules.ResolveSkillAttribute(
+                context.Caster,
+                skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element);
             snapshot.PreparedStatus = SkillExecutionRules.StatusSpec(skill.OnTickStatus, snapshot);
             snapshot.PreparedBaseRadius = baseRadius;
             snapshot.PreparedVisualRadiusMultiplier = radiusMultiplier;
@@ -1412,9 +1412,9 @@ namespace Pakuri.InGame
             snapshot.PreparedDirections = directions;
             snapshot.PreparedBoundaries = boundaries;
             snapshot.PreparedDamage = DamageCalculator.CalculateRawDamage(context.Caster, skill.Damage);
-            snapshot.PreparedDamageAttribute = skill.Damage != null
-                ? skill.Damage.Element
-                : skill.Element;
+            snapshot.PreparedDamageAttribute = SkillExecutionRules.ResolveSkillAttribute(
+                context.Caster,
+                skill.Damage != null ? skill.Damage.Element : skill.Element);
             snapshot.PreparedStatus = status;
             snapshot.PreparedCriticalAllowed = skill.Damage != null && skill.Damage.CriticalAllowed;
             snapshot.PreparedProjectileSpeed = speed;
@@ -1532,9 +1532,9 @@ namespace Pakuri.InGame
             snapshot.PreparedDamage = snapshot.HasRawDamageOverride
                 ? snapshot.RawDamageOverride
                 : DamageCalculator.CalculateRawDamage(context.Caster, skill.Damage);
-            snapshot.PreparedDamageAttribute = skill.Damage != null
-                ? skill.Damage.Element
-                : skill.Element;
+            snapshot.PreparedDamageAttribute = SkillExecutionRules.ResolveSkillAttribute(
+                context.Caster,
+                skill.Damage != null ? skill.Damage.Element : skill.Element);
             snapshot.PreparedStatus = SkillExecutionRules.StatusSpec(skill.OnHitStatus, snapshot);
             snapshot.PreparedCriticalAllowed = skill.Damage != null && skill.Damage.CriticalAllowed;
             snapshot.PreparedHitTargetCount = skill.HitAllTargets || skill.HitTargetCount == int.MaxValue
@@ -1578,7 +1578,9 @@ namespace Pakuri.InGame
             snapshot.PreparedBuffEffectKind = skill.EffectKind;
             snapshot.PreparedTargeting = skill.Targeting;
             snapshot.PreparedRuntimeVisual = skill.RuntimeVisual;
-            snapshot.PreparedDamageAttribute = skill.Element;
+            snapshot.PreparedDamageAttribute = SkillExecutionRules.ResolveSkillAttribute(
+                context.Caster,
+                skill.Element);
             snapshot.PreparedTargets = skill.EffectKind == BuffEffectKind.Heal
                 ? SkillTargeting.OrderedTargets(context, skill.Targeting)
                 : SkillTargeting.BuffTargets(

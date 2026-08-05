@@ -4,6 +4,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Pakuri.Combat;
 using Pakuri.Data;
@@ -15,7 +16,10 @@ namespace Pakuri.InGame
     {
         public SynergyState Synergies { get; } = new SynergyState();
 
-        public void PrepareStage(RunSession session, GameDataCatalog catalog = null)
+        public void PrepareStage(
+            RunSession session,
+            GameDataCatalog catalog = null,
+            UnitSpawnManager spawnManager = null)
         {
             if (session == null)
             {
@@ -76,6 +80,75 @@ namespace Pakuri.InGame
                     .OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase)
                     .Select(pair => $"{pair.Key}={pair.Value}"));
             Debug.Log($"[ArtifactSynergy] {(counts.Length > 0 ? counts : "none")}");
+
+            if (spawnManager != null)
+            {
+                ActivateStageEffects(session, catalog, spawnManager);
+            }
+        }
+
+        private void ActivateStageEffects(
+            RunSession session,
+            GameDataCatalog catalog,
+            UnitSpawnManager spawnManager)
+        {
+            spawnManager.DespawnSummons();
+
+            SummonDefinition summon = null;
+            var learnedSkills = new List<SkillDefinition>();
+            var learnedSkillIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var pair in Synergies.Counts)
+            {
+                var synergy = catalog.GetData<ArtifactSynergyDefinition>(pair.Key);
+                if (synergy == null)
+                {
+                    continue;
+                }
+
+                for (var levelIndex = 0; levelIndex < synergy.Levels.Length; levelIndex++)
+                {
+                    var level = synergy.Levels[levelIndex];
+                    if (level == null || level.RequiredCount > pair.Value)
+                    {
+                        continue;
+                    }
+
+                    for (var effectIndex = 0; effectIndex < level.Effects.Length; effectIndex++)
+                    {
+                        var effect = level.Effects[effectIndex];
+                        if (effect == null)
+                        {
+                            continue;
+                        }
+
+                        if (effect.ApplicationMode == ArtifactEffectApplicationMode.SpawnUnit
+                            && effect.SpawnSummon != null
+                            && summon == null)
+                        {
+                            summon = effect.SpawnSummon;
+                        }
+
+                        if (effect.ApplicationMode == ArtifactEffectApplicationMode.GrantSkill
+                            && effect.Recipient == ArtifactEffectRecipient.Summon
+                            && effect.OutcomeSkill != null
+                            && learnedSkillIds.Add(effect.OutcomeSkill.SkillId))
+                        {
+                            learnedSkills.Add(effect.OutcomeSkill);
+                        }
+                    }
+                }
+            }
+
+            if (summon == null)
+            {
+                return;
+            }
+
+            spawnManager.SpawnTemporarySummon(
+                summon,
+                learnedSkills,
+                ResolveSummonSkillAttribute(session, catalog));
         }
 
         private void DistributeEffects(
@@ -211,6 +284,56 @@ namespace Pakuri.InGame
             }
 
             return null;
+        }
+
+        private static DamageAttribute ResolveSummonSkillAttribute(
+            RunSession session,
+            GameDataCatalog catalog)
+        {
+            var counts = new int[Enum.GetValues(typeof(DamageAttribute)).Length];
+            for (var memberIndex = 0; memberIndex < session.PartyMembers.Count; memberIndex++)
+            {
+                for (var slot = SkillSlot.A; slot <= SkillSlot.E; slot++)
+                {
+                    if (TryGetLearnedSkill(
+                            session.PartyMembers[memberIndex],
+                            catalog,
+                            slot,
+                            out var skill))
+                    {
+                        counts[(int)skill.Element]++;
+                    }
+                }
+            }
+
+            var maximum = 0;
+            for (var i = 0; i < counts.Length; i++)
+            {
+                maximum = Math.Max(maximum, counts[i]);
+            }
+
+            if (maximum == 0)
+            {
+                return DamageAttribute.Physical;
+            }
+
+            for (var slot = SkillSlot.A; slot <= SkillSlot.E; slot++)
+            {
+                for (var memberIndex = 0; memberIndex < session.PartyMembers.Count; memberIndex++)
+                {
+                    if (TryGetLearnedSkill(
+                            session.PartyMembers[memberIndex],
+                            catalog,
+                            slot,
+                            out var skill)
+                        && counts[(int)skill.Element] == maximum)
+                    {
+                        return skill.Element;
+                    }
+                }
+            }
+
+            return DamageAttribute.Physical;
         }
 
         private static int CountDistinctRepresentativeAttributes(

@@ -11,7 +11,7 @@
 - 후속 runtime 구현 범위: 나머지 유물, 처형관·선택받은자·파수꾼·포격대·추적자
 - Phase 1 제외 범위: C#, Parsing, Node/Trigger, Prefab, Scene 생성
 
-현재 저장소에는 Artifact/Synergy/Summon Definition과 Loading 경로, `ArtifactState`, `SynergyState`, `ArtifactSynergyManager`, Stage 준비 연결, Artifact Effect Node/Reaction runtime 소비 경로가 있다. `UnitRole.Summon`과 정령왕 runtime은 아직 없다.
+현재 저장소에는 Artifact/Synergy/Summon Definition과 Loading 경로, `ArtifactState`, `SynergyState`, `ArtifactSynergyManager`, Stage 준비 연결, Artifact Effect Node/Reaction runtime 소비 경로가 있다. `UnitRole.Summon`, Definition 기반 단계별 학습과 소환 API가 연결됐고, 씬 prefab binding·이동·사망 lifecycle은 다음 Phase다.
 
 ## 2. 승인된 방향
 
@@ -459,8 +459,8 @@ Manager의 Stage 호출은 하루당 한 번만 허용한다. 플레이어 등�
 
 최소 추가점:
 
-- `UnitRole.Summon`: 파티 슬롯, Manifest, Offering, MonsterPanel, Day 회복 대상과 구분
-- `UnitSpawnManager.SpawnTemporarySummon`
+- `UnitRole.Summon`: 파티 슬롯, Manifest, Offering, MonsterPanel, Day 회복 대상과 구분 (구현)
+- `UnitSpawnManager.SpawnTemporarySummon` (구현)
 - playable `Monsters`와 분리된 `GameDataCatalog.Summons` lookup
 - `UnitSpawnManager`의 기존 등록 목록을 순회하는 정령왕 이동 tick
 
@@ -534,10 +534,10 @@ InGameCombatManager.Update
 - `UnitSpawnManager`가 기존 등록 목록을 순회하는 정령왕 이동 tick
 - `SkillTargetSelection.Densest`: 적이 가장 많이 몰린 지점
 - Stage 중앙 위치 규칙
-- 정령왕 해금 스킬 구성
+- 정령왕 해금 스킬 구성 (Definition의 `GrantSkill` 순회로 구현)
 - 차원붕괴 끌어당김 typed operation을 기존 Zone lifecycle에 연결
 - Zone 종료 시 기존 `OnExpire`를 후속 폭발 Trigger로 연결
-- 파티 대표 피해 속성 계산
+- 파티 대표 피해 속성 계산 (정령왕은 Physical 포함, 동률은 1P→5P와 A→E)
 
 ## 11. 후속 구현 명시
 
@@ -711,11 +711,11 @@ InGameCombatManager.Update
 ### Phase 5: 임시 아군 정령왕 runtime
 
 - `UnitRole.Summon`
-- `SummonDefinition` 기반 Factory/Spawn
+- `SummonDefinition` 기반 Factory/Spawn (Factory와 Manager API 구현)
 - 별도 소환 몬스터 RuntimeCatalog lookup
 - 정령왕 Prefab binding
 - 정령왕 SingleSkill/ZoneSkill Definition 실행
-- 단계별 스킬 해금
+- 단계별 스킬 해금 (2/4/6/8 threshold 순회 구현)
 - `EnemySpawnPoint`를 향한 고정 속도 0.5 이동과 도착 정지
 - 사망 시 현재 Stage 재소환 금지, 다음 Stage에서 새 인스턴스 생성
 - 기존 적 대상 판정·아군 팀 대상 판정·MonsterActor HP/피해 팝업 재사용

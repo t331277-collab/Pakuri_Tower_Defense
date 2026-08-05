@@ -35,11 +35,11 @@ Code Builder
 
 ### Status
 
-Phase 0 design and Phase 1 skill-data/loading work complete. Runtime state, spawn, movement and target execution remain pending.
+Phase 0 design, Phase 1 skill-data/loading and Phase 2 synergy-state/spawn API work complete. Scene binding, movement, death lifecycle and target execution remain pending.
 
 ### Next Actions
 
-- Implement synergy state, dynamic attribute and summon spawn in the next commit.
+- Implement Zone pull, Densest center resolution and repeated center reselection.
 - Implement movement, death handling and prefab/scene binding in the following commit.
 
 ### Evidence
@@ -49,12 +49,16 @@ Phase 0 design and Phase 1 skill-data/loading work complete. Runtime state, spaw
 - `UnitSpawnManager` already owns player/enemy registration and has the scene `EnemySpawnPoint` binding; `MiddleSpawnPoint` exists in `InGameScene` but is not yet bound to summon spawning.
 - `CombatUnitRegistry` groups by `UnitSide`, `SkillTargeting` uses `roster.Players` for ally targeting, and `DamageMeterRuntimeTracker` filters `UnitRole.Monster`, establishing the reuse boundaries.
 - Phase 1 adds summon-owned graph/trigger loading and generated D `OnExpire` reaction data; execution of the generated target/pull operations is deferred.
+- `ArtifactSynergyManager` now traverses loaded synergy levels/effects, grants only active threshold skills and calls `UnitSpawnManager.SpawnTemporarySummon`.
+- `UnitCombatStateFactory.CreateSummon` creates `UnitRole.Summon`/`UnitSide.Player` state with the selected learned skills and dynamic skill-attribute override.
+- `SkillExecution` resolves that override at snapshot preparation without mutating authored `SkillDefinition` data.
 
 ### History
 
 - 2026-08-05: User confirmed Spirit King as a Monster-like `SummonDefinition` ally with existing MonsterActor UI, targetability, fixed movement and no same-Stage respawn.
 - 2026-08-05: Code Builder updated the runtime design with the confirmed Zone pull, target selection, skill thresholds and stage lifecycle.
 - 2026-08-05: Code Builder completed the Spirit King skill CSV/graph/trigger loading phase and verified a zero-error solution build.
+- 2026-08-05: Code Builder implemented Definition-driven synergy thresholds, summon factory/registration API and Physical-inclusive party attribute resolution; prefab/scene binding remains next.
 
 ## Task: 2026-08-05 Artifact Debug Acquisition Flow
 

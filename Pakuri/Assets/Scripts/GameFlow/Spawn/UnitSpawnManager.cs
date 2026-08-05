@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
@@ -18,16 +19,19 @@ namespace Pakuri.InGame
         [SerializeField] private InGameCombatManager combatManager;
         [SerializeField] private Transform playerSpawnPoint;
         [SerializeField] private Transform enemySpawnPoint;
+        [SerializeField] private Transform middleSpawnPoint;
         [SerializeField] private Transform[] partySpawnPoints = new Transform[5];
         [SerializeField] private Transform runtimeEnemyRoot;
         [SerializeField] private Transform runtimeMonsterRoot;
         [SerializeField] private MonsterPrefabBinding[] monsterPrefabBindings = Array.Empty<MonsterPrefabBinding>();
         [SerializeField] private EnemyPrefabBinding[] enemyPrefabBindings = Array.Empty<EnemyPrefabBinding>();
+        [SerializeField] private SummonPrefabBinding[] summonPrefabBindings = Array.Empty<SummonPrefabBinding>();
 
         public IReadOnlyList<CombatUnitEntry> Entries => unitRegistry.Entries;
         public IReadOnlyList<CombatUnitEntry> Players => unitRegistry.Players;
         public IReadOnlyList<CombatUnitEntry> Enemies => unitRegistry.Enemies;
         public int EnemyCount => unitRegistry.EnemyCount;
+        public Transform EnemySpawnPoint => enemySpawnPoint;
 
         /// 전투 씬에 Nexus 모델을 만들고 표시 Actor와 Registry를 연결한다.
         public void RegisterNexus(NexusActor actor)
@@ -63,6 +67,78 @@ namespace Pakuri.InGame
 
             public string EnemyId => enemyId;
             public GameObject Prefab => prefab;
+        }
+
+        [Serializable]
+        private class SummonPrefabBinding
+        {
+            [SerializeField] private string summonId = string.Empty;
+            [SerializeField] private GameObject prefab = null;
+
+            public string SummonId => summonId;
+            public GameObject Prefab => prefab;
+        }
+
+        internal GameObject SpawnTemporarySummon(
+            SummonDefinition definition,
+            IReadOnlyList<SkillDefinition> learnedSkills,
+            DamageAttribute skillAttribute)
+        {
+            if (definition == null)
+            {
+                throw new ArgumentNullException(nameof(definition));
+            }
+
+            if (FindSummon() != null)
+            {
+                return null;
+            }
+
+            var prefab = ResolveSummonPrefab(definition.SummonId);
+            var model = unitStateFactory.CreateSummon(definition, learnedSkills, skillAttribute);
+            var spawnedUnit = Instantiate(
+                prefab,
+                middleSpawnPoint.position,
+                middleSpawnPoint.rotation,
+                runtimeMonsterRoot);
+            spawnedUnit.name = $"{prefab.name}_SpiritKing";
+
+            var actor = BindMonsterActor(spawnedUnit, model);
+            RegisterPlayer(model, actor, spawnedUnit.transform);
+            Debug.Log($"[ArtifactSynergy] Summoned '{definition.SummonId}' with {learnedSkills?.Count ?? 0} learned skills.");
+            return spawnedUnit;
+        }
+
+        internal void DespawnSummons()
+        {
+            var summonModels = new List<UnitCombatState>();
+            for (var i = 0; i < Players.Count; i++)
+            {
+                var model = Players[i]?.Model;
+                if (model != null && model.Identity.Role == UnitRole.Summon)
+                {
+                    summonModels.Add(model);
+                }
+            }
+
+            for (var i = 0; i < summonModels.Count; i++)
+            {
+                DespawnUnit(summonModels[i]);
+            }
+        }
+
+        internal CombatUnitEntry FindSummon()
+        {
+            for (var i = 0; i < Players.Count; i++)
+            {
+                var entry = Players[i];
+                if (entry?.Model?.Identity.Role == UnitRole.Summon)
+                {
+                    return entry;
+                }
+            }
+
+            return null;
         }
 
         /// RunSession에서 선택한 몬스터를 플레이어 슬롯 0에 생성한다.
@@ -426,6 +502,20 @@ namespace Pakuri.InGame
             }
 
             throw new InvalidOperationException($"Enemy prefab '{enemyId}' is required.");
+        }
+
+        private GameObject ResolveSummonPrefab(string summonId)
+        {
+            for (var i = 0; i < summonPrefabBindings.Length; i++)
+            {
+                var binding = summonPrefabBindings[i];
+                if (string.Equals(summonId, binding.SummonId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return RequirePrefab(binding.Prefab, summonId);
+                }
+            }
+
+            throw new InvalidOperationException($"Summon prefab '{summonId}' is required.");
         }
 
         private static GameObject RequirePrefab(GameObject prefab, string unitId)

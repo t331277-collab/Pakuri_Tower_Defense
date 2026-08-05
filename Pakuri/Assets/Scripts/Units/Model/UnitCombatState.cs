@@ -21,7 +21,8 @@ namespace Pakuri.InGame
     {
         Monster,
         Enemy,
-        Nexus
+        Nexus,
+        Summon
     }
 
     [Serializable]
@@ -97,6 +98,7 @@ namespace Pakuri.InGame
         public UnitSkills SkillState = new UnitSkills();
         public ArtifactState Artifacts = new ArtifactState();
         public UnitStatusCollection Statuses = new UnitStatusCollection();
+        public DamageAttribute? SkillDamageAttributeOverride;
         public bool IsBoss;
         public bool AutoAttackEnabled = true;
         public bool AutoSkillEnabled = true;

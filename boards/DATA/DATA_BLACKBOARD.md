@@ -30,11 +30,11 @@ Code Builder
 
 ### Status
 
-Phase 1 loading/graph implementation complete; runtime consumption of pull/target selection remains in Phase 2/3.
+Phase 1 loading/graph implementation and Phase 2 Definition-driven skill ownership are complete; runtime consumption of pull/target selection remains in Phase 3.
 
 ### Next Actions
 
-- Runtime Phase 2/3 consumes the generated `Densest`, `BattlefieldCenter` and `PullToCenterActionOp` values.
+- Runtime Phase 3 consumes the generated `Densest`, `BattlefieldCenter` and `PullToCenterActionOp` values.
 - Unity catalog import and focused Definition assertions remain to be run in the Unity environment.
 
 ### Evidence
@@ -44,6 +44,7 @@ Phase 1 loading/graph implementation complete; runtime consumption of pull/targe
 - `GameDataCatalogBuilder.BuildSummons` now attaches summon-owned reactions to the generated active skill Definitions.
 - `SkillGraphParser` and `CsvDataValidator` now accept summon-owned skills/triggers without adding a summon-specific graph/trigger file.
 - `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal` completed with 0 errors and the existing 2 assembly-reference warnings; edited CSVs import structurally with uniform columns.
+- `ArtifactSynergyManager` consumes generated `ArtifactSynergyEffectDefinition.OutcomeSkill` and `SpawnSummon` references; no synergy ID or skill ID switch was added.
 
 ### History
 

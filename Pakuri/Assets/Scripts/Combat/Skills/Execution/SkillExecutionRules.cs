@@ -16,6 +16,15 @@ namespace Pakuri.InGame
     public static class SkillExecutionRules
     {
 
+        internal static DamageAttribute ResolveSkillAttribute(
+            UnitCombatState caster,
+            DamageAttribute authoredAttribute)
+        {
+            return caster != null && caster.SkillDamageAttributeOverride.HasValue
+                ? caster.SkillDamageAttributeOverride.Value
+                : authoredAttribute;
+        }
+
         /// 원본 스킬의 기본 규칙만 반영한 실행 기준을 만든다.
         public static SkillExecutionState CreateDefinitionSnapshot(SkillDefinition source)
         {

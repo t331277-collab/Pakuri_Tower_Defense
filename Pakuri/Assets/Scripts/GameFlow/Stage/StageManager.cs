@@ -166,10 +166,12 @@ namespace Pakuri.InGame
                 BeginRunSession();
             }
 
-            artifactSynergyManager.PrepareStage(activeSession);
             unitSpawnManager.SpawnSelectedPlayerUnit(activeSession);
 
             EnsureNexusRegistered();
+            artifactSynergyManager.PrepareStage(
+                activeSession,
+                spawnManager: unitSpawnManager);
 
             currentDay = stageDefinition.FindDay(activeSession.StageIndex, activeSession.DayIndex);
             currentReward = stageDefinition.FindReward(currentDay.RewardRuleId);

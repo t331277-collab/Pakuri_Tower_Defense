@@ -30,6 +30,55 @@ namespace Pakuri.InGame
             return CreateMonster(definition, UnitSide.Player, UnitRole.Monster, slotIndex, "party", runState);
         }
 
+        public UnitCombatState CreateSummon(
+            SummonDefinition definition,
+            IReadOnlyList<SkillDefinition> learnedSkills,
+            DamageAttribute skillAttribute)
+        {
+            if (definition == null)
+            {
+                throw new ArgumentNullException(nameof(definition));
+            }
+
+            var maxHealth = definition.BaseStats.MaxHealth;
+            var model = new UnitCombatState
+            {
+                Identity = new UnitIdentity
+                {
+                    UnitId = BuildUnitId("summon", definition.SummonId, 0),
+                    DefinitionId = definition.SummonId,
+                    DisplayName = definition.DisplayName,
+                    Side = UnitSide.Player,
+                    Role = UnitRole.Summon,
+                    SlotIndex = -1
+                },
+                Stats = MapStats(definition.BaseStats, maxHealth),
+                Defenses = CreateRuntimeDefenses(definition.Defenses),
+                Resources = new UnitCombatResources
+                {
+                    CurrentHealth = maxHealth,
+                    CurrentShield = 0f
+                },
+                SkillDamageAttributeOverride = skillAttribute,
+                AutoAttackEnabled = false,
+                AutoSkillEnabled = true
+            };
+
+            for (var i = 0; learnedSkills != null && i < learnedSkills.Count; i++)
+            {
+                if (learnedSkills[i] != null)
+                {
+                    model.Skills.AddActiveSkill(learnedSkills[i].SkillId);
+                }
+            }
+
+            model.SkillState.RebuildLearnedSkillState(
+                model,
+                definition.ActiveSkills,
+                Array.Empty<PassiveSkillDefinition>());
+            return model;
+        }
+
         public EnemyCombatState CreateEnemy(EnemyDefinition definition, int slotIndex = 0, bool isBoss = false)
         {
             var stats = definition.Stats;
