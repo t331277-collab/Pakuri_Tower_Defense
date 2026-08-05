@@ -55,7 +55,7 @@ Phase 0 design, Phase 1 skill-data/loading, Phase 2 synergy-state/spawn API and 
 - `SkillTargeting.AreaCenter` resolves `Densest` by maximum candidate count, then caster distance, then Registry order; `BattlefieldCenter` uses the bound `MiddleSpawnPoint`.
 - `SingleSkillExecutor` recomputes `Densest` for every Spirit Bombardment repeat.
 - `ZoneSkillActor` consumes the authored `PullToCenter(0.2)` operation for each Rift tick before the existing damage/status route.
-- `UnitSpawnManager.TickSummons` moves living summons at their generated `base_move_speed=0.5` only while enemies are registered and stops at `EnemySpawnPoint`.
+- `SummonActionController.Tick` moves living `UnitRole.Summon` entries at their generated `base_move_speed=0.5` only while enemies are registered, uses `UnitCollisionResolver` for enemy contact, and stops at `EnemySpawnPoint` or contact.
 - `Daejungryung.prefab` now has the existing `MonsterActor` component, and `InGameScene` binds `MiddleSpawnPoint` plus `spirit-king` to the summon prefab.
 
 ### History
@@ -65,6 +65,7 @@ Phase 0 design, Phase 1 skill-data/loading, Phase 2 synergy-state/spawn API and 
 - 2026-08-05: Code Builder completed the Spirit King skill CSV/graph/trigger loading phase and verified a zero-error solution build.
 - 2026-08-05: Code Builder implemented Definition-driven synergy thresholds, summon factory/registration API and Physical-inclusive party attribute resolution; prefab/scene binding remains next.
 - 2026-08-05: Code Builder completed Phase 3 with existing target routing, Densest reselection, Zone pull, summon movement/death lifecycle, MonsterActor prefab binding and scene references.
+- 2026-08-05: Code Builder extracted summon movement from `UnitSpawnManager.TickSummons` into `SummonActionController`, connected its frame tick through `InGameCombatManager`, and reused `UnitCollisionResolver` to stop summons on enemy contact.
 
 ## Task: 2026-08-05 Artifact Debug Acquisition Flow
 

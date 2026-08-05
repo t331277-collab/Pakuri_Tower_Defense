@@ -142,35 +142,6 @@ namespace Pakuri.InGame
             return null;
         }
 
-        /// 적이 존재하는 동안 등록된 소환수를 적 진입점까지 이동시킨다.
-        internal void TickSummons(float deltaTime)
-        {
-            if (deltaTime <= 0f || EnemyCount <= 0 || enemySpawnPoint == null)
-            {
-                return;
-            }
-
-            for (var i = 0; i < Players.Count; i++)
-            {
-                var entry = Players[i];
-                var model = entry != null ? entry.Model : null;
-                if (model == null
-                    || model.Identity == null
-                    || model.Identity.Role != UnitRole.Summon
-                    || !entry.IsAlive
-                    || entry.Transform == null
-                    || model.Stats == null)
-                {
-                    continue;
-                }
-
-                entry.Transform.position = Vector3.MoveTowards(
-                    entry.Transform.position,
-                    enemySpawnPoint.position,
-                    Mathf.Max(0f, model.Stats.MoveSpeed) * deltaTime);
-            }
-        }
-
         /// RunSession에서 선택한 몬스터를 플레이어 슬롯 0에 생성한다.
         public void SpawnSelectedPlayerUnit(RunSession session)
         {

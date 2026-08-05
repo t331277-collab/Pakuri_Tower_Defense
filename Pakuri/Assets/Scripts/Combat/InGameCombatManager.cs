@@ -55,6 +55,7 @@ namespace Pakuri.InGame
     {
         [SerializeField] private UnitSpawnManager unitSpawnManager;
         private EnemyActionController enemyActionController;
+        private SummonActionController summonActionController;
         private readonly SkillExecution skillExecution = new SkillExecution();
         [SerializeField] private PlayerCombatInputController playerCombatControl;
         private readonly HashSet<UnitCombatState> combatStartDispatchedUnits = new HashSet<UnitCombatState>();
@@ -87,6 +88,7 @@ namespace Pakuri.InGame
         private void Awake()
         {
             enemyActionController = new EnemyActionController(Units, skillExecution, this);
+            summonActionController = new SummonActionController(Units);
             combatStartDispatchedUnits.Clear();
             SkillTrigger.Reset(this);
         }
@@ -112,7 +114,7 @@ namespace Pakuri.InGame
                 enemyActionController.Tick(Time.deltaTime);
             }
 
-            Units.TickSummons(Time.deltaTime);
+            summonActionController.Tick(Time.deltaTime);
             TickUnitStatuses(Time.deltaTime);
         }
 

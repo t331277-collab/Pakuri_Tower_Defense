@@ -462,7 +462,7 @@ Manager의 Stage 호출은 하루당 한 번만 허용한다. 플레이어 등�
 - `UnitRole.Summon`: 파티 슬롯, Manifest, Offering, MonsterPanel, Day 회복 대상과 구분 (구현)
 - `UnitSpawnManager.SpawnTemporarySummon` (구현)
 - playable `Monsters`와 분리된 `GameDataCatalog.Summons` lookup
-- `UnitSpawnManager`의 기존 등록 목록을 순회하는 정령왕 이동 tick
+- `SummonActionController`가 기존 등록 목록의 `UnitRole.Summon`을 순회하는 이동 tick
 
 정령왕을 일반 `monsters.csv`/`catalog.Monsters`에 넣지 않는다. 현재 monster Validation은 모든 Monster에 A~E active와 F~J passive slot을 요구하고, `MenifestUI`는 `GetMonsters()` 전체를 영입 후보로 사용한다. 소환 몬스터 CSV는 `SummonDefinition`을 생성해 별도 lookup에 둔다.
 
@@ -485,15 +485,15 @@ Manager의 Stage 호출은 하루당 한 번만 허용한다. 플레이어 등�
 
 팀 효과 근거: `CombatUnitRegistry`는 `Identity.Side`로 Players/Enemies를 나누고, `SkillTargeting.TargetList`는 Player 시전자의 `Ally/AllAllies`에 `roster.Players`를 사용한다. 따라서 정령왕은 적의 공격 대상과 몬스터의 팀 대상 스킬 대상에 포함된다. `NotifyPlayerUnitRegistered`가 등록 즉시 passive와 `CombatStart`를 실행하므로 정령왕 생성 전에 끝난 일회성 팀 효과는 소급하지 않는다.
 
-이동은 현재 `EnemyActionController`가 `units.Enemies`만 순회하므로 그대로 재사용할 수 없다. 적 공격·대상 결정은 재사용하지 않고, 정령왕 이동을 `UnitSpawnManager` 또는 정령왕 전용 최소 이동 경로에서 처리한다. 대상은 적 유닛이 아니라 씬에 이미 연결된 `EnemySpawnPoint` Transform이다.
+이동은 현재 `EnemyActionController`가 `units.Enemies`만 순회하므로 그대로 재사용할 수 없다. 적 공격·대상 결정은 재사용하지 않고, 정령왕 이동은 `SummonActionController`가 담당한다. `UnitSpawnManager`는 spawn·registry·lifecycle과 `EnemySpawnPoint` 제공만 담당한다. 대상은 적 유닛이 아니라 씬에 이미 연결된 `EnemySpawnPoint` Transform이다. 적 접촉은 기존 `UnitCollisionResolver`로 판정한다.
 
 ```text
 InGameCombatManager.Update
-  -> UnitSpawnManager.TickSummons
+  -> SummonActionController.Tick
   -> roster.Players 중 UnitRole.Summon
   -> roster.Enemies.Count == 0이면 이동하지 않음
-  -> EnemySpawnPoint까지 0.5 * deltaTime으로 MoveTowards
-  -> EnemySpawnPoint 도착 후 이동 완료 상태 유지
+  -> EnemySpawnPoint까지 base_move_speed * deltaTime으로 MoveTowards
+  -> Enemy 접촉 또는 EnemySpawnPoint 도착 후 이동 정지
 ```
 
 정령왕 이동 속도는 `summon_units.csv`의 `base_move_speed=0.5`가 소유한다. 별도 `stop_distance` 열이나 적 이동속도 resolver는 만들지 않는다. 이동 AI는 스킬 선택·시전하지 않고 기존 자동 시전 루프가 담당한다.
@@ -531,7 +531,7 @@ InGameCombatManager.Update
 
 - `SpawnUnit` effect와 임시 아군 spawn API
 - `UnitRole.Summon`과 별도 소환 몬스터 catalog lookup
-- `UnitSpawnManager`가 기존 등록 목록을 순회하는 정령왕 이동 tick
+- `SummonActionController`가 기존 등록 목록의 `UnitRole.Summon`을 순회하는 이동 tick
 - `SkillTargetSelection.Densest`: 적이 가장 많이 몰린 지점
 - Stage 중앙 위치 규칙
 - 정령왕 해금 스킬 구성 (Definition의 `GrantSkill` 순회로 구현)
