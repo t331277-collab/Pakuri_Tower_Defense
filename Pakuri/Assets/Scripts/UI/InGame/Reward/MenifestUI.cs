@@ -138,8 +138,8 @@ namespace Pakuri.InGame
             {
                 var monster = monsters[i];
                 if (monster == null
-                    || string.IsNullOrWhiteSpace(monster.MonsterId)
-                    || session.GetPartyMemberState(monster.MonsterId) != null)
+                    || string.IsNullOrWhiteSpace(monster.MonsterName)
+                    || session.GetPartyMemberState(monster.MonsterName) != null)
                 {
                     continue;
                 }

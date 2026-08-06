@@ -65,27 +65,27 @@ namespace Pakuri.Data
 
             RegisterMonsters(Monsters);
             RegisterSummons(Summons);
-            RegisterDefinitions(Artifacts, artifacts, definition => definition.ArtifactId);
-            RegisterDefinitions(ArtifactSynergies, artifactSynergies, definition => definition.SynergyId);
-            RegisterDefinitions(ArtifactSynergyLevels, artifactSynergyLevels, definition => definition.LevelId);
-            RegisterDefinitions(ArtifactEffects, artifactEffects, definition => definition.EffectId);
-            RegisterDefinitions(ArtifactSynergyEffects, artifactSynergyEffects, definition => definition.EffectId);
+            RegisterDefinitions(Artifacts, artifacts, definition => definition.ArtifactName);
+            RegisterDefinitions(ArtifactSynergies, artifactSynergies, definition => definition.SynergyName);
+            RegisterDefinitions(ArtifactSynergyLevels, artifactSynergyLevels, definition => definition.LevelName);
+            RegisterDefinitions(ArtifactEffects, artifactEffects, definition => definition.EffectName);
+            RegisterDefinitions(ArtifactSynergyEffects, artifactSynergyEffects, definition => definition.EffectName);
             RegisterEnemies(StageOneEnemies);
             RegisterEnemies(StageTwoEnemies);
             RegisterStatusEffects(StatusEffects);
         }
 
-        public T GetData<T>(string id)
+        public T GetData<T>(string Name)
             where T : class
         {
-            return TryGetData(id, out T value) ? value : null;
+            return TryGetData(Name, out T value) ? value : null;
         }
 
-        public bool TryGetData<T>(string id, out T value)
+        public bool TryGetData<T>(string Name, out T value)
             where T : class
         {
             value = null;
-            if (string.IsNullOrWhiteSpace(id))
+            if (string.IsNullOrWhiteSpace(Name))
             {
                 return false;
             }
@@ -94,67 +94,67 @@ namespace Pakuri.Data
             var targetType = typeof(T);
             if (targetType == typeof(MonsterDefinition))
             {
-                monsters.TryGetValue(id, out var monster);
+                monsters.TryGetValue(Name, out var monster);
                 resolved = monster;
             }
             else if (targetType == typeof(SummonDefinition))
             {
-                summons.TryGetValue(id, out var summon);
+                summons.TryGetValue(Name, out var summon);
                 resolved = summon;
             }
             else if (targetType == typeof(ArtifactDefinition))
             {
-                artifacts.TryGetValue(id, out var artifact);
+                artifacts.TryGetValue(Name, out var artifact);
                 resolved = artifact;
             }
             else if (targetType == typeof(ArtifactSynergyDefinition))
             {
-                artifactSynergies.TryGetValue(id, out var synergy);
+                artifactSynergies.TryGetValue(Name, out var synergy);
                 resolved = synergy;
             }
             else if (targetType == typeof(ArtifactSynergyLevelDefinition))
             {
-                artifactSynergyLevels.TryGetValue(id, out var synergyLevel);
+                artifactSynergyLevels.TryGetValue(Name, out var synergyLevel);
                 resolved = synergyLevel;
             }
             else if (targetType == typeof(ArtifactEffectDefinition))
             {
-                artifactEffects.TryGetValue(id, out var effect);
+                artifactEffects.TryGetValue(Name, out var effect);
                 resolved = effect;
             }
             else if (targetType == typeof(ArtifactSynergyEffectDefinition))
             {
-                artifactSynergyEffects.TryGetValue(id, out var synergyEffect);
+                artifactSynergyEffects.TryGetValue(Name, out var synergyEffect);
                 resolved = synergyEffect;
             }
             else if (targetType == typeof(EnemyDefinition))
             {
-                enemies.TryGetValue(id, out var enemy);
+                enemies.TryGetValue(Name, out var enemy);
                 resolved = enemy;
             }
             else if (targetType == typeof(SkillDefinition))
             {
-                activeSkills.TryGetValue(id, out var activeSkill);
+                activeSkills.TryGetValue(Name, out var activeSkill);
                 resolved = activeSkill;
             }
             else if (targetType == typeof(PassiveSkillDefinition))
             {
-                passiveSkills.TryGetValue(id, out var passiveSkill);
+                passiveSkills.TryGetValue(Name, out var passiveSkill);
                 resolved = passiveSkill;
             }
             else if (targetType == typeof(StatusEffectDefinition))
             {
-                statusEffects.TryGetValue(id, out var statusEffect);
+                statusEffects.TryGetValue(Name, out var statusEffect);
                 resolved = statusEffect;
             }
             else if (targetType == typeof(SkillChoice))
             {
-                skillChoices.TryGetValue(id, out var choice);
+                skillChoices.TryGetValue(Name, out var choice);
                 resolved = choice;
             }
             else if (targetType == typeof(MonsterDefinition.RewardChoiceDefinition))
             {
-                rewardChoices.TryGetValue(id, out var rewardChoice);
+                rewardChoices.TryGetValue(Name, out var rewardChoice);
                 resolved = rewardChoice;
             }
 
@@ -173,34 +173,34 @@ namespace Pakuri.Data
             return statusRuntimeData.TryGetValue(kind, out var status) ? status : null;
         }
 
-        public MonsterDefinition GetMonster(string id)
+        public MonsterDefinition GetMonster(string Name)
         {
-            return GetData<MonsterDefinition>(id);
+            return GetData<MonsterDefinition>(Name);
         }
 
-        public SummonDefinition GetSummon(string id)
+        public SummonDefinition GetSummon(string Name)
         {
-            return GetData<SummonDefinition>(id);
+            return GetData<SummonDefinition>(Name);
         }
 
-        public SkillDefinition[] GetActiveSkills(string monsterId)
+        public SkillDefinition[] GetActiveSkills(string monsterName)
         {
-            return GetRegistered(activeSkillsByMonster, monsterId);
+            return GetRegistered(activeSkillsByMonster, monsterName);
         }
 
-        public PassiveSkillDefinition[] GetPassiveSkills(string monsterId)
+        public PassiveSkillDefinition[] GetPassiveSkills(string monsterName)
         {
-            return GetRegistered(passiveSkillsByMonster, monsterId);
+            return GetRegistered(passiveSkillsByMonster, monsterName);
         }
 
-        public MonsterDefinition.RewardChoiceDefinition[] GetRewardChoices(string monsterId)
+        public MonsterDefinition.RewardChoiceDefinition[] GetRewardChoices(string monsterName)
         {
-            return GetRegistered(rewardChoicesByMonster, monsterId);
+            return GetRegistered(rewardChoicesByMonster, monsterName);
         }
 
-        public SkillDefinition GetActiveSkill(string monsterId, SkillSlot slot)
+        public SkillDefinition GetActiveSkill(string monsterName, SkillSlot slot)
         {
-            var skills = GetActiveSkills(monsterId);
+            var skills = GetActiveSkills(monsterName);
             for (var i = 0; i < skills.Length; i++)
             {
                 if (skills[i] != null && skills[i].Slot == slot)
@@ -212,9 +212,9 @@ namespace Pakuri.Data
             return null;
         }
 
-        public PassiveSkillDefinition ResolvePassiveSkill(string monsterId, SkillSlot slot)
+        public PassiveSkillDefinition ResolvePassiveSkill(string monsterName, SkillSlot slot)
         {
-            var passives = GetPassiveSkills(monsterId);
+            var passives = GetPassiveSkills(monsterName);
             for (var i = 0; i < passives.Length; i++)
             {
                 if (passives[i] != null && passives[i].Slot == slot)
@@ -226,10 +226,10 @@ namespace Pakuri.Data
             return null;
         }
 
-        private static T[] GetRegistered<T>(Dictionary<string, T[]> lookup, string id)
+        private static T[] GetRegistered<T>(Dictionary<string, T[]> lookup, string Name)
         {
-            return !string.IsNullOrWhiteSpace(id)
-                && lookup.TryGetValue(id, out var values)
+            return !string.IsNullOrWhiteSpace(Name)
+                && lookup.TryGetValue(Name, out var values)
                 && values != null
                 ? values
                 : Array.Empty<T>();
@@ -245,15 +245,15 @@ namespace Pakuri.Data
             for (var i = 0; i < catalogMonsters.Length; i++)
             {
                 var monster = catalogMonsters[i];
-                if (monster == null || string.IsNullOrWhiteSpace(monster.MonsterId))
+                if (monster == null || string.IsNullOrWhiteSpace(monster.MonsterName))
                 {
                     continue;
                 }
 
-                monsters[monster.MonsterId] = monster;
-                activeSkillsByMonster[monster.MonsterId] = monster.ActiveSkills ?? Array.Empty<SkillDefinition>();
-                passiveSkillsByMonster[monster.MonsterId] = monster.PassiveSkills ?? Array.Empty<PassiveSkillDefinition>();
-                rewardChoicesByMonster[monster.MonsterId] = monster.InitialRewardChoices ?? Array.Empty<MonsterDefinition.RewardChoiceDefinition>();
+                monsters[monster.MonsterName] = monster;
+                activeSkillsByMonster[monster.MonsterName] = monster.ActiveSkills ?? Array.Empty<SkillDefinition>();
+                passiveSkillsByMonster[monster.MonsterName] = monster.PassiveSkills ?? Array.Empty<PassiveSkillDefinition>();
+                rewardChoicesByMonster[monster.MonsterName] = monster.InitialRewardChoices ?? Array.Empty<MonsterDefinition.RewardChoiceDefinition>();
 
                 RegisterActiveSkills(monster.ActiveSkills);
                 RegisterPassiveSkills(monster.PassiveSkills);
@@ -271,13 +271,13 @@ namespace Pakuri.Data
             for (var i = 0; i < catalogSummons.Length; i++)
             {
                 var summon = catalogSummons[i];
-                if (summon == null || string.IsNullOrWhiteSpace(summon.SummonId))
+                if (summon == null || string.IsNullOrWhiteSpace(summon.SummonName))
                 {
                     continue;
                 }
 
-                summons[summon.SummonId] = summon;
-                activeSkillsByMonster[summon.SummonId] = summon.ActiveSkills ?? Array.Empty<SkillDefinition>();
+                summons[summon.SummonName] = summon;
+                activeSkillsByMonster[summon.SummonName] = summon.ActiveSkills ?? Array.Empty<SkillDefinition>();
                 RegisterActiveSkills(summon.ActiveSkills);
             }
         }
@@ -285,16 +285,16 @@ namespace Pakuri.Data
         private static void RegisterDefinitions<T>(
             T[] definitions,
             Dictionary<string, T> lookup,
-            Func<T, string> getId)
+            Func<T, string> getName)
             where T : class
         {
             for (var i = 0; definitions != null && i < definitions.Length; i++)
             {
                 var definition = definitions[i];
-                var id = definition == null ? string.Empty : getId(definition);
-                if (!string.IsNullOrWhiteSpace(id))
+                var Name = definition == null ? string.Empty : getName(definition);
+                if (!string.IsNullOrWhiteSpace(Name))
                 {
-                    lookup[id] = definition;
+                    lookup[Name] = definition;
                 }
             }
         }
@@ -309,9 +309,9 @@ namespace Pakuri.Data
             for (var i = 0; i < catalogEnemies.Length; i++)
             {
                 var enemy = catalogEnemies[i];
-                if (enemy != null && !string.IsNullOrWhiteSpace(enemy.EnemyId))
+                if (enemy != null && !string.IsNullOrWhiteSpace(enemy.EnemyName))
                 {
-                    enemies[enemy.EnemyId] = enemy;
+                    enemies[enemy.EnemyName] = enemy;
                     if (enemy.PassiveSkill != null)
                     {
                         RegisterPassiveSkills(new[] { enemy.PassiveSkill });
@@ -330,9 +330,9 @@ namespace Pakuri.Data
             for (var i = 0; i < catalogStatusEffects.Length; i++)
             {
                 var status = catalogStatusEffects[i];
-                if (status != null && !string.IsNullOrWhiteSpace(status.StatusEffectId))
+                if (status != null && !string.IsNullOrWhiteSpace(status.StatusEffectName))
                 {
-                    statusEffects[status.StatusEffectId] = status;
+                    statusEffects[status.StatusEffectName] = status;
                     if (status.RuntimeData != null)
                     {
                         statusRuntimeData[status.Kind] = status.RuntimeData;
@@ -351,12 +351,12 @@ namespace Pakuri.Data
             for (var i = 0; i < skills.Length; i++)
             {
                 var skill = skills[i];
-                if (skill == null || string.IsNullOrWhiteSpace(skill.SkillId))
+                if (skill == null || string.IsNullOrWhiteSpace(skill.SkillName))
                 {
                     continue;
                 }
 
-                activeSkills[skill.SkillId] = skill;
+                activeSkills[skill.SkillName] = skill;
                 RegisterSkillChoices(skill.EnhancementChoices);
                 RegisterSkillChoices(skill.MasterChoices);
             }
@@ -372,12 +372,12 @@ namespace Pakuri.Data
             for (var i = 0; i < passives.Length; i++)
             {
                 var passive = passives[i];
-                if (passive == null || string.IsNullOrWhiteSpace(passive.SkillId))
+                if (passive == null || string.IsNullOrWhiteSpace(passive.SkillName))
                 {
                     continue;
                 }
 
-                passiveSkills[passive.SkillId] = passive;
+                passiveSkills[passive.SkillName] = passive;
                 RegisterSkillChoices(passive.EnhancementChoices);
             }
         }
@@ -392,9 +392,9 @@ namespace Pakuri.Data
             for (var i = 0; i < rewards.Length; i++)
             {
                 var reward = rewards[i];
-                if (reward != null && !string.IsNullOrWhiteSpace(reward.RewardId))
+                if (reward != null && !string.IsNullOrWhiteSpace(reward.RewardName))
                 {
-                    rewardChoices[reward.RewardId] = reward;
+                    rewardChoices[reward.RewardName] = reward;
                 }
             }
         }
@@ -409,9 +409,9 @@ namespace Pakuri.Data
             for (var i = 0; i < choices.Length; i++)
             {
                 var choice = choices[i];
-                if (choice != null && !string.IsNullOrWhiteSpace(choice.ChoiceId))
+                if (choice != null && !string.IsNullOrWhiteSpace(choice.ChoiceName))
                 {
-                    skillChoices[choice.ChoiceId] = choice;
+                    skillChoices[choice.ChoiceName] = choice;
                 }
             }
         }

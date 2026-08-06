@@ -1,4 +1,4 @@
-﻿/*
+/*
  * 역할: 상태 효과 데이터 계약.
  * 책임: 상태 종류·중첩·지속 시간·주기 효과·보호막·배율·Trigger 정보를 정의한다.
  */
@@ -59,7 +59,7 @@ namespace Pakuri.Data
     public class StatusEffectDefinition
     {
 
-        public string StatusEffectId;
+        public string StatusEffectName;
         public string StatusEffectLabel;
         public StatusEffectKind Kind;
         public StatusEffectClassification Classification;
@@ -86,7 +86,7 @@ namespace Pakuri.Data
 
         public StatusRuntimeData RuntimeData;
 
-        public string Id => StatusEffectId;
+        public string Name => StatusEffectName;
         public string DisplayName => StatusEffectLabel;
         public int DefaultMaxStacks => MaxStacks;
         public bool Permanent => IsPermanent;
@@ -144,7 +144,7 @@ namespace Pakuri.Data
         public StatusEffectKind Kind = StatusEffectKind.None;
         public string StatusTag;
         public string StatusName;
-        public string SourceSkillId;
+        public string SourceSkillName;
         public StatusTargetScope TargetScope = StatusTargetScope.Unspecified;
         public StatusMergePolicy MergePolicy = StatusMergePolicy.Unspecified;
         public ShieldRefreshRule ShieldAmountRefreshPolicy = ShieldRefreshRule.TakeHighest;
@@ -188,7 +188,7 @@ namespace Pakuri.Data
         public float ConditionalDamageTakenBonus;
         public SkillRuntimeKindCondition[] ConditionalIncomingSkillRuntimeKindValues = Array.Empty<SkillRuntimeKindCondition>();
         public StatusConditionGroup[] ConditionalTargetStatusGroups = Array.Empty<StatusConditionGroup>();
-        public string[] ConditionalTargetStatusSourceSkillIds = Array.Empty<string>();
+        public string[] ConditionalTargetStatusSourceSkillNames = Array.Empty<string>();
         public SkillTargetSide ConditionalTargetSide = SkillTargetSide.Self;
         public float ConditionalTargetHealthRatioMax;
 
@@ -198,7 +198,7 @@ namespace Pakuri.Data
         public SkillRuntimeKindCondition[] ConditionalOutgoingSkillRuntimeKindValues = Array.Empty<SkillRuntimeKindCondition>();
 
         [Header("Applied Status Duration Bonus")]
-        public string AppliedStatusDurationBonusStatusId;
+        public string AppliedStatusDurationBonusStatusName;
         public float AppliedStatusDurationBonus;
 
         [Header("Outgoing Additional Damage")]

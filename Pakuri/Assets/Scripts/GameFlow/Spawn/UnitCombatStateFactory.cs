@@ -45,8 +45,8 @@ namespace Pakuri.InGame
             {
                 Identity = new UnitIdentity
                 {
-                    UnitId = BuildUnitId("summon", definition.SummonId, 0),
-                    DefinitionId = definition.SummonId,
+                    UnitName = BuildUnitName("summon", definition.SummonName, 0),
+                    DefinitionName = definition.SummonName,
                     DisplayName = definition.DisplayName,
                     Side = UnitSide.Player,
                     Role = UnitRole.Summon,
@@ -68,7 +68,7 @@ namespace Pakuri.InGame
             {
                 if (learnedSkills[i] != null)
                 {
-                    model.Skills.AddActiveSkill(learnedSkills[i].SkillId);
+                    model.Skills.AddActiveSkill(learnedSkills[i].SkillName);
                 }
             }
 
@@ -87,8 +87,8 @@ namespace Pakuri.InGame
             {
                 Identity = new UnitIdentity
                 {
-                    UnitId = BuildUnitId("enemy", definition.EnemyId, slotIndex),
-                    DefinitionId = definition.EnemyId,
+                    UnitName = BuildUnitName("enemy", definition.EnemyName, slotIndex),
+                    DefinitionName = definition.EnemyName,
                     DisplayName = definition.DisplayName,
                     Side = UnitSide.Enemy,
                     Role = UnitRole.Enemy,
@@ -115,14 +115,14 @@ namespace Pakuri.InGame
                     var skill = definition.ActiveSkills[i];
                     if (skill != null)
                     {
-                        model.Skills.AddActiveSkill(skill.SkillId);
+                        model.Skills.AddActiveSkill(skill.SkillName);
                     }
                 }
             }
 
             if (definition.PassiveSkill != null)
             {
-                model.Skills.AddPassiveSkill(definition.PassiveSkill.SkillId);
+                model.Skills.AddPassiveSkill(definition.PassiveSkill.SkillName);
             }
 
             return model;
@@ -134,8 +134,8 @@ namespace Pakuri.InGame
             {
                 Identity = new UnitIdentity
                 {
-                    UnitId = "nexus",
-                    DefinitionId = "nexus",
+                    UnitName = "nexus",
+                    DefinitionName = "nexus",
                     DisplayName = "Nexus",
                     Side = UnitSide.Player,
                     Role = UnitRole.Nexus,
@@ -168,8 +168,8 @@ namespace Pakuri.InGame
             {
                 Identity = new UnitIdentity
                 {
-                    UnitId = BuildUnitId(unitIdPrefix, definition.MonsterId, slotIndex),
-                    DefinitionId = definition.MonsterId,
+                    UnitName = BuildUnitName(unitIdPrefix, definition.MonsterName, slotIndex),
+                    DefinitionName = definition.MonsterName,
                     DisplayName = definition.DisplayName,
                     Side = side,
                     Role = role,
@@ -220,9 +220,9 @@ namespace Pakuri.InGame
             };
         }
 
-        private static string BuildUnitId(string prefix, string definitionId, int slotIndex)
+        private static string BuildUnitName(string prefix, string definitionName, int slotIndex)
         {
-            return $"{prefix}-{definitionId}-{slotIndex}";
+            return $"{prefix}-{definitionName}-{slotIndex}";
         }
     }
 }

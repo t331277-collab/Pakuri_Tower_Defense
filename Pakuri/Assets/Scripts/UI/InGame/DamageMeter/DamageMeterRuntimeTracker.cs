@@ -67,15 +67,15 @@ namespace Pakuri.InGame
             Version++;
         }
 
-        public bool TryGetRecord(string monsterId, out MonsterDamageRecord record)
+        public bool TryGetRecord(string monsterName, out MonsterDamageRecord record)
         {
-            if (string.IsNullOrWhiteSpace(monsterId))
+            if (string.IsNullOrWhiteSpace(monsterName))
             {
                 record = null;
                 return false;
             }
 
-            return records.TryGetValue(monsterId, out record);
+            return records.TryGetValue(monsterName, out record);
         }
 
         private void Record(AttackRule attackRule, InGameResourceChangeResult result)
@@ -86,7 +86,7 @@ namespace Pakuri.InGame
             if (identity == null
                 || identity.Side != UnitSide.Player
                 || identity.Role != UnitRole.Monster
-                || string.IsNullOrWhiteSpace(identity.DefinitionId))
+                || string.IsNullOrWhiteSpace(identity.DefinitionName))
             {
                 return;
             }
@@ -99,21 +99,21 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var sourceId = !string.IsNullOrWhiteSpace(attackRule.DamageMeterSourceId)
-                ? attackRule.DamageMeterSourceId
-                : attackRule.SourceSkillId;
-            if (string.IsNullOrWhiteSpace(sourceId))
+            var sourceName = !string.IsNullOrWhiteSpace(attackRule.DamageMeterSourceName)
+                ? attackRule.DamageMeterSourceName
+                : attackRule.SourceSkillName;
+            if (string.IsNullOrWhiteSpace(sourceName))
             {
-                sourceId = "Unknown";
+                sourceName = "Unknown";
             }
 
-            if (!records.TryGetValue(identity.DefinitionId, out var record))
+            if (!records.TryGetValue(identity.DefinitionName, out var record))
             {
                 record = new MonsterDamageRecord();
-                records.Add(identity.DefinitionId, record);
+                records.Add(identity.DefinitionName, record);
             }
 
-            record.AddDamage(sourceId, actualDamage);
+            record.AddDamage(sourceName, actualDamage);
             Version++;
         }
 
@@ -149,12 +149,12 @@ namespace Pakuri.InGame
         public float TotalDamage { get; private set; }
         public IReadOnlyList<SkillDamageRecord> OrderedSources => orderedSources;
 
-        public void AddDamage(string sourceId, float amount)
+        public void AddDamage(string sourceName, float amount)
         {
-            if (!sources.TryGetValue(sourceId, out var source))
+            if (!sources.TryGetValue(sourceName, out var source))
             {
-                source = new SkillDamageRecord(sourceId);
-                sources.Add(sourceId, source);
+                source = new SkillDamageRecord(sourceName);
+                sources.Add(sourceName, source);
                 orderedSources.Add(source);
             }
 
@@ -166,12 +166,12 @@ namespace Pakuri.InGame
     public class SkillDamageRecord
     {
 
-        public SkillDamageRecord(string sourceId)
+        public SkillDamageRecord(string sourceName)
         {
-            SourceId = sourceId;
+            SourceName = sourceName;
         }
 
-        public string SourceId { get; }
+        public string SourceName { get; }
         public float Damage { get; private set; }
 
         public void AddDamage(float amount)

@@ -53,30 +53,30 @@ namespace Pakuri.InGame
         [Serializable]
         private class MonsterPrefabBinding
         {
-            [SerializeField] private string monsterId = string.Empty;
+            [SerializeField] private string monsterName = string.Empty;
             [SerializeField] private GameObject prefab = null;
 
-            public string MonsterId => monsterId;
+            public string MonsterName => monsterName;
             public GameObject Prefab => prefab;
         }
 
         [Serializable]
         private class EnemyPrefabBinding
         {
-            [SerializeField] private string enemyId = string.Empty;
+            [SerializeField] private string enemyName = string.Empty;
             [SerializeField] private GameObject prefab = null;
 
-            public string EnemyId => enemyId;
+            public string EnemyName => enemyName;
             public GameObject Prefab => prefab;
         }
 
         [Serializable]
         private class SummonPrefabBinding
         {
-            [SerializeField] private string summonId = string.Empty;
+            [SerializeField] private string summonName = string.Empty;
             [SerializeField] private GameObject prefab = null;
 
-            public string SummonId => summonId;
+            public string SummonName => summonName;
             public GameObject Prefab => prefab;
         }
 
@@ -95,7 +95,7 @@ namespace Pakuri.InGame
                 return null;
             }
 
-            var prefab = ResolveSummonPrefab(definition.SummonId);
+            var prefab = ResolveSummonPrefab(definition.SummonName);
             var model = unitStateFactory.CreateSummon(definition, learnedSkills, skillAttribute);
             var spawnedUnit = Instantiate(
                 prefab,
@@ -106,7 +106,7 @@ namespace Pakuri.InGame
 
             var actor = BindMonsterActor(spawnedUnit, model);
             RegisterPlayer(model, actor, spawnedUnit.transform);
-            Debug.Log($"[ArtifactSynergy] Summoned '{definition.SummonId}' with {learnedSkills?.Count ?? 0} learned skills.");
+            Debug.Log($"[ArtifactSynergy] Summoned '{definition.SummonName}' with {learnedSkills?.Count ?? 0} learned skills.");
             return spawnedUnit;
         }
 
@@ -161,8 +161,8 @@ namespace Pakuri.InGame
             out UnitCombatState model,
             out MonsterActor actor)
         {
-            var selectedMonsterId = session.SelectedMonsterId;
-            var prefab = ResolveMonsterPrefab(selectedMonsterId);
+            var selectedMonsterName = session.SelectedMonsterName;
+            var prefab = ResolveMonsterPrefab(selectedMonsterName);
             model = CreateSelectedModel(session);
 
             var spawnPosition = playerSpawnPoint.position;
@@ -188,10 +188,10 @@ namespace Pakuri.InGame
             RunSession activeSession,
             int partySlotIndex)
         {
-            var prefab = ResolveMonsterPrefab(monster.MonsterId);
+            var prefab = ResolveMonsterPrefab(monster.MonsterName);
 
-            var runState = activeSession.GetPartyMemberState(monster.MonsterId)
-                ?? throw new InvalidOperationException($"Party state '{monster.MonsterId}' is required before spawning.");
+            var runState = activeSession.GetPartyMemberState(monster.MonsterName)
+                ?? throw new InvalidOperationException($"Party state '{monster.MonsterName}' is required before spawning.");
             var model = unitStateFactory.CreateManifestedMonster(monster, runState, partySlotIndex);
             model.SkillState.RebuildLearnedSkillState(model);
 
@@ -207,8 +207,8 @@ namespace Pakuri.InGame
         }
 
         /// 적 정의와 스폰 위치를 사용해 전투 씬에 적을 생성한다.
-        public GameObject SpawnEnemyById(
-            string enemyId,
+        public GameObject SpawnEnemyByName(
+            string enemyName,
             int spawnIndex,
             float spawnX,
             float spawnYMin,
@@ -216,8 +216,8 @@ namespace Pakuri.InGame
             float healthMultiplier,
             bool isBoss)
         {
-            var prefab = ResolveEnemyPrefab(enemyId);
-            return SpawnEnemyUnit(prefab, enemyId, spawnIndex, spawnX, spawnYMin, spawnYMax, healthMultiplier, isBoss);
+            var prefab = ResolveEnemyPrefab(enemyName);
+            return SpawnEnemyUnit(prefab, enemyName, spawnIndex, spawnX, spawnYMin, spawnYMax, healthMultiplier, isBoss);
         }
 
         /// RunSession에서 전달된 파티 정보를 사용해 스테이지를 넘어갈 때 플레이어 파티를 복구한다.
@@ -241,9 +241,9 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                var monsterId = session.PartyMembers[slotIndex].MonsterId;
-                var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId)
-                    ?? throw new InvalidOperationException($"Party monster data '{monsterId}' is required.");
+                var monsterName = session.PartyMembers[slotIndex].MonsterName;
+                var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterName)
+                    ?? throw new InvalidOperationException($"Party monster data '{monsterName}' is required.");
 
                 CreateManifestedMonster(monster, session, slotIndex);
             }
@@ -354,9 +354,9 @@ namespace Pakuri.InGame
             RunSession activeSession,
             UnitCombatState model)
         {
-            var state = activeSession.GetPartyMemberState(model.Identity.DefinitionId)
+            var state = activeSession.GetPartyMemberState(model.Identity.DefinitionName)
                 ?? throw new InvalidOperationException(
-                    $"Party state '{model.Identity.DefinitionId}' is required before restoring.");
+                    $"Party state '{model.Identity.DefinitionName}' is required before restoring.");
             model.Skills = state.Skills;
             model.Artifacts = state.Artifacts;
             model.SkillState.RebuildLearnedSkillState(model);
@@ -391,9 +391,9 @@ namespace Pakuri.InGame
         /// 선택한 몬스터의 RunSession 파티 상태를 사용해 전투 모델을 만든다.
         private UnitCombatState CreateSelectedModel(RunSession session)
         {
-            var monster = ResolveMonsterDefinition(session.SelectedMonsterId);
-            var runState = session.GetPartyMemberState(monster.MonsterId)
-                ?? throw new InvalidOperationException($"Party state '{monster.MonsterId}' is required before spawning.");
+            var monster = ResolveMonsterDefinition(session.SelectedMonsterName);
+            var runState = session.GetPartyMemberState(monster.MonsterName)
+                ?? throw new InvalidOperationException($"Party state '{monster.MonsterName}' is required before spawning.");
             var model = unitStateFactory.CreateSelectedMonster(monster, runState, 0);
             model.SkillState.RebuildLearnedSkillState(model);
             return model;
@@ -401,7 +401,7 @@ namespace Pakuri.InGame
 
         private GameObject SpawnEnemyUnit(
             GameObject prefab,
-            string enemyId,
+            string enemyName,
             int spawnIndex,
             float spawnX,
             float spawnYMin,
@@ -409,7 +409,7 @@ namespace Pakuri.InGame
             float healthMultiplier,
             bool isBoss)
         {
-            var model = CreateEnemyModel(enemyId, spawnIndex, isBoss);
+            var model = CreateEnemyModel(enemyName, spawnIndex, isBoss);
             ApplyEnemyHealthMultiplier(model, healthMultiplier);
 
             var spawnPosition = new Vector3(
@@ -425,9 +425,9 @@ namespace Pakuri.InGame
             return spawnedUnit;
         }
 
-        private EnemyCombatState CreateEnemyModel(string enemyId, int slotIndex, bool isBoss)
+        private EnemyCombatState CreateEnemyModel(string enemyName, int slotIndex, bool isBoss)
         {
-            var enemy = ResolveEnemyDefinition(enemyId);
+            var enemy = ResolveEnemyDefinition(enemyName);
             var model = unitStateFactory.CreateEnemy(enemy, slotIndex, isBoss);
 
             model.SkillState.RebuildLearnedSkillState(
@@ -439,16 +439,16 @@ namespace Pakuri.InGame
             return model;
         }
 
-        private MonsterDefinition ResolveMonsterDefinition(string monsterId)
+        private MonsterDefinition ResolveMonsterDefinition(string monsterName)
         {
-            return GameDataLoader.CurrentCatalog.GetData<MonsterDefinition>(monsterId)
-                ?? throw new InvalidOperationException($"Monster data '{monsterId}' is required.");
+            return GameDataLoader.CurrentCatalog.GetData<MonsterDefinition>(monsterName)
+                ?? throw new InvalidOperationException($"Monster data '{monsterName}' is required.");
         }
 
-        private EnemyDefinition ResolveEnemyDefinition(string enemyId)
+        private EnemyDefinition ResolveEnemyDefinition(string enemyName)
         {
-            return GameDataLoader.CurrentCatalog.GetData<EnemyDefinition>(enemyId)
-                ?? throw new InvalidOperationException($"Enemy data '{enemyId}' is required.");
+            return GameDataLoader.CurrentCatalog.GetData<EnemyDefinition>(enemyName)
+                ?? throw new InvalidOperationException($"Enemy data '{enemyName}' is required.");
         }
 
         private MonsterActor BindMonsterActor(GameObject spawnedUnit, UnitCombatState model)
@@ -481,53 +481,53 @@ namespace Pakuri.InGame
             return entry;
         }
 
-        private GameObject ResolveMonsterPrefab(string monsterId)
+        private GameObject ResolveMonsterPrefab(string monsterName)
         {
             for (var i = 0; i < monsterPrefabBindings.Length; i++)
             {
                 var binding = monsterPrefabBindings[i];
-                if (string.Equals(monsterId, binding.MonsterId, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(monsterName, binding.MonsterName, StringComparison.OrdinalIgnoreCase))
                 {
-                    return RequirePrefab(binding.Prefab, monsterId);
+                    return RequirePrefab(binding.Prefab, monsterName);
                 }
             }
 
-            throw new InvalidOperationException($"Monster prefab '{monsterId}' is required.");
+            throw new InvalidOperationException($"Monster prefab '{monsterName}' is required.");
         }
 
-        private GameObject ResolveEnemyPrefab(string enemyId)
+        private GameObject ResolveEnemyPrefab(string enemyName)
         {
             for (var i = 0; i < enemyPrefabBindings.Length; i++)
             {
                 var binding = enemyPrefabBindings[i];
-                if (string.Equals(enemyId, binding.EnemyId, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(enemyName, binding.EnemyName, StringComparison.OrdinalIgnoreCase))
                 {
-                    return RequirePrefab(binding.Prefab, enemyId);
+                    return RequirePrefab(binding.Prefab, enemyName);
                 }
             }
 
-            throw new InvalidOperationException($"Enemy prefab '{enemyId}' is required.");
+            throw new InvalidOperationException($"Enemy prefab '{enemyName}' is required.");
         }
 
-        private GameObject ResolveSummonPrefab(string summonId)
+        private GameObject ResolveSummonPrefab(string summonName)
         {
             for (var i = 0; i < summonPrefabBindings.Length; i++)
             {
                 var binding = summonPrefabBindings[i];
-                if (string.Equals(summonId, binding.SummonId, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(summonName, binding.SummonName, StringComparison.OrdinalIgnoreCase))
                 {
-                    return RequirePrefab(binding.Prefab, summonId);
+                    return RequirePrefab(binding.Prefab, summonName);
                 }
             }
 
-            throw new InvalidOperationException($"Summon prefab '{summonId}' is required.");
+            throw new InvalidOperationException($"Summon prefab '{summonName}' is required.");
         }
 
-        private static GameObject RequirePrefab(GameObject prefab, string unitId)
+        private static GameObject RequirePrefab(GameObject prefab, string unitName)
         {
             return prefab != null
                 ? prefab
-                : throw new InvalidOperationException($"Unit prefab '{unitId}' is required.");
+                : throw new InvalidOperationException($"Unit prefab '{unitName}' is required.");
         }
 
         private static void ApplyEnemyHealthMultiplier(EnemyCombatState model, float healthMultiplier)

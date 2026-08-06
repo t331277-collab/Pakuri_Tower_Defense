@@ -15,7 +15,7 @@ namespace Pakuri.Data
 
 internal sealed class ActiveSkillBuildData
 {
-	public string SkillId;
+	public string SkillName;
 	public string DisplayName;
 	public SkillSlot Slot;
 	public SkillRuntimeKind RuntimeKind;
@@ -60,7 +60,7 @@ internal sealed class ActiveSkillBuildData
 	public string HitTargetCount;
 	public bool UsePrefabHitbox;
 	public string TargetSelection;
-	public string TargetSelectionStatusId;
+	public string TargetSelectionStatusName;
 	public int TargetSelectionStatusMinStacks;
 	public float CooldownSeconds;
 	public float ActiveDurationSeconds;
@@ -74,17 +74,17 @@ internal sealed class ActiveSkillBuildData
 	public float ProjectileSpeed;
 	public int PierceCount;
 	public bool CriticalAllowed = true;
-	public string DeploymentRequiredTargetStatusId;
+	public string DeploymentRequiredTargetStatusName;
 	public int DeploymentRequiredTargetStatusMinStacks;
-	public string TargetStatusStackStatusId;
+	public string TargetStatusStackStatusName;
 	public int TargetStatusStackMaxStacks;
 	public float TargetStatusStackBaseDamage;
 	public float TargetStatusStackAttackPowerCoefficient;
 	public float TargetStatusStackSpellPowerCoefficient;
-	public string ConsumeTargetStatusId;
+	public string ConsumeTargetStatusName;
 	public float ConsumeTargetStatusRatio;
 	public int ConsumeTargetStatusStacks;
-	public string StatusEffectId;
+	public string StatusEffectName;
 	public float StatusChance;
 	public string StatusEffectLabel;
 	public GameObject StatusEffectPrefab;
@@ -114,7 +114,7 @@ internal sealed class ActiveSkillBuildData
 
 internal sealed class PassiveSkillBuildData
 {
-	public string PassiveId;
+	public string PassiveName;
 	public string DisplayName;
 	public SkillSlot Slot;
 	public SkillSlot RequiredActiveSlot;
@@ -130,10 +130,10 @@ internal sealed class PassiveSkillBuildData
 
 internal sealed class SkillChoiceBuildData
 {
-	public string ChoiceId;
-	public string MonsterId;
-	public string SkillId;
-	public string TargetSkillId;
+	public string ChoiceName;
+	public string MonsterName;
+	public string SkillName;
+	public string TargetSkillName;
 	public SkillChoiceGroup ChoiceGroup;
 	public string Title;
 	public Sprite SkillIcon;
@@ -147,12 +147,12 @@ internal sealed partial class GameDataCatalogBuilder
 {
 
 	private static SkillDefinition BuildActiveDefinition(
-		string ownerId,
+		string ownerName,
 		ActiveSkillBuildData source,
 		StatusEffectDefinition[] statusDefinitions)
 	{
 		SkillDefinition skillRuntimeData = CreateConcreteActiveSkill(source);
-		MapCommonFields(skillRuntimeData, ownerId, source);
+		MapCommonFields(skillRuntimeData, ownerName, source);
 		MapActiveFields(skillRuntimeData, null, source, statusDefinitions);
 		return skillRuntimeData;
 	}
@@ -160,8 +160,8 @@ internal sealed partial class GameDataCatalogBuilder
 	private static PassiveSkillDefinition BuildPassiveDefinition(MonsterDefinition monster, PassiveSkillBuildData source)
 	{
 		PassiveSkillDefinition passiveSkillExecutionDefinition = CreateRuntimeData<PassiveSkillDefinition>();
-		passiveSkillExecutionDefinition.SkillId = source.PassiveId;
-		passiveSkillExecutionDefinition.SkillName = source.DisplayName;
+		passiveSkillExecutionDefinition.SkillName = source.PassiveName;
+		passiveSkillExecutionDefinition.DisplayName = source.DisplayName;
 		passiveSkillExecutionDefinition.Slot = source.Slot;
 		passiveSkillExecutionDefinition.RuntimeKind = SkillRuntimeKind.Passive;
 		passiveSkillExecutionDefinition.ImplementationState = source.ImplementationState;
@@ -191,10 +191,10 @@ internal sealed partial class GameDataCatalogBuilder
 			var choice = source[i];
 			choices[i] = new SkillChoice
 			{
-				ChoiceId = choice.ChoiceId,
-				MonsterId = choice.MonsterId,
-				SkillId = choice.SkillId,
-				TargetSkillId = choice.TargetSkillId,
+				ChoiceName = choice.ChoiceName,
+				MonsterName = choice.MonsterName,
+				SkillName = choice.SkillName,
+				TargetSkillName = choice.TargetSkillName,
 				ChoiceGroup = choice.ChoiceGroup,
 				Title = choice.Title,
 				SkillIcon = choice.SkillIcon,
@@ -258,11 +258,11 @@ internal sealed partial class GameDataCatalogBuilder
 
 	private static void MapCommonFields(
 		SkillDefinition skill,
-		string monsterId,
+		string monsterName,
 		ActiveSkillBuildData source)
 	{
-		skill.SkillId = source.SkillId;
-		skill.SkillName = source.DisplayName;
+		skill.SkillName = source.SkillName;
+		skill.DisplayName = source.DisplayName;
 		skill.Slot = source.Slot;
 		skill.RuntimeKind = source.RuntimeKind;
 		skill.ImplementationState = source.ImplementationState;
@@ -293,11 +293,11 @@ internal sealed partial class GameDataCatalogBuilder
 		{
 			skill.Targeting.Selection = result;
 		}
-		skill.Targeting.SelectionStatusId = source.TargetSelectionStatusId;
-		if (!string.IsNullOrWhiteSpace(source.TargetSelectionStatusId))
+		skill.Targeting.SelectionStatusName = source.TargetSelectionStatusName;
+		if (!string.IsNullOrWhiteSpace(source.TargetSelectionStatusName))
 		{
 			skill.Targeting.SelectionStatusKind = StatusValueParser.ParseStatusKind(
-				source.TargetSelectionStatusId);
+				source.TargetSelectionStatusName);
 		}
 		skill.Targeting.SelectionStatusMinStacks = Mathf.Max(0, source.TargetSelectionStatusMinStacks);
 		skill.Targeting.Shape = MapShape(source.RuntimeKind);
@@ -371,7 +371,7 @@ internal sealed partial class GameDataCatalogBuilder
 			bool hitAllTargets2;
 			int hitTargetCount2;
 			bool flag = TryResolveHitTargetCount(source.HitTargetCount, out hitAllTargets2, out hitTargetCount2);
-			bool flag2 = !string.IsNullOrWhiteSpace(source.DeploymentRequiredTargetStatusId);
+			bool flag2 = !string.IsNullOrWhiteSpace(source.DeploymentRequiredTargetStatusName);
 			bool flag3 = source.RuntimeVisual != null && source.RuntimeVisual.Hitbox != null && source.RuntimeVisual.Hitbox.HasHitbox();
 			bool flag4 = !hitAllTargets2 && flag && hitTargetCount2 > 1 && (source.SkillEffectPrefab != null || flag3);
 			singleSkillExecutionDefinition.Area.Radius = source.Radius;
@@ -391,11 +391,11 @@ internal sealed partial class GameDataCatalogBuilder
 			{
 				singleSkillExecutionDefinition.DeploymentCount = hitTargetCount2;
 			}
-			singleSkillExecutionDefinition.DeploymentRequiredTargetStatusId = source.DeploymentRequiredTargetStatusId;
+			singleSkillExecutionDefinition.DeploymentRequiredTargetStatusName = source.DeploymentRequiredTargetStatusName;
 			singleSkillExecutionDefinition.DeploymentRequiredTargetStatusMinStacks = Mathf.Max(0, source.DeploymentRequiredTargetStatusMinStacks);
-			singleSkillExecutionDefinition.TargetStatusStackStatusId = source.TargetStatusStackStatusId;
+			singleSkillExecutionDefinition.TargetStatusStackStatusName = source.TargetStatusStackStatusName;
 			singleSkillExecutionDefinition.TargetStatusStackMaxStacks = Mathf.Max(0, source.TargetStatusStackMaxStacks);
-			singleSkillExecutionDefinition.ConsumeTargetStatusId = source.ConsumeTargetStatusId;
+			singleSkillExecutionDefinition.ConsumeTargetStatusName = source.ConsumeTargetStatusName;
 			singleSkillExecutionDefinition.ConsumeTargetStatusRatio = Mathf.Clamp01(source.ConsumeTargetStatusRatio);
 			singleSkillExecutionDefinition.ConsumeTargetStatusStacks = Mathf.Max(0, source.ConsumeTargetStatusStacks);
 			singleSkillExecutionDefinition.ExecuteHealthRatioThreshold = Mathf.Clamp01(source.ExecuteHealthRatioThreshold);
@@ -419,22 +419,22 @@ internal sealed partial class GameDataCatalogBuilder
 			singleSkillExecutionDefinition.TargetStatusStackDamage.SpellPowerCoefficient = source.TargetStatusStackSpellPowerCoefficient;
 			singleSkillExecutionDefinition.TargetStatusStackDamage.CriticalAllowed = false;
 			ApplySingleBaseNodes(singleSkillExecutionDefinition, source.Nodes, source.Attribute);
-			if (!string.IsNullOrWhiteSpace(singleSkillExecutionDefinition.DeploymentRequiredTargetStatusId))
+			if (!string.IsNullOrWhiteSpace(singleSkillExecutionDefinition.DeploymentRequiredTargetStatusName))
 			{
 				singleSkillExecutionDefinition.DeploymentRequiredTargetStatusKind = StatusValueParser.ParseStatusKind(
-					singleSkillExecutionDefinition.DeploymentRequiredTargetStatusId);
+					singleSkillExecutionDefinition.DeploymentRequiredTargetStatusName);
 			}
-			if (!string.IsNullOrWhiteSpace(singleSkillExecutionDefinition.TargetStatusStackStatusId))
+			if (!string.IsNullOrWhiteSpace(singleSkillExecutionDefinition.TargetStatusStackStatusName))
 			{
 				singleSkillExecutionDefinition.TargetStatusStackStatusKind = StatusValueParser.ParseStatusKind(
-					singleSkillExecutionDefinition.TargetStatusStackStatusId);
+					singleSkillExecutionDefinition.TargetStatusStackStatusName);
 			}
-			if (!string.IsNullOrWhiteSpace(singleSkillExecutionDefinition.ConsumeTargetStatusId))
+			if (!string.IsNullOrWhiteSpace(singleSkillExecutionDefinition.ConsumeTargetStatusName))
 			{
 				singleSkillExecutionDefinition.ConsumeTargetStatusKind = StatusValueParser.ParseStatusKind(
-					singleSkillExecutionDefinition.ConsumeTargetStatusId);
+					singleSkillExecutionDefinition.ConsumeTargetStatusName);
 			}
-			if (!string.IsNullOrWhiteSpace(singleSkillExecutionDefinition.DeploymentRequiredTargetStatusId))
+			if (!string.IsNullOrWhiteSpace(singleSkillExecutionDefinition.DeploymentRequiredTargetStatusName))
 			{
 				singleSkillExecutionDefinition.UsePrefabHitbox = true;
 				singleSkillExecutionDefinition.UseMultiDeployment = true;
@@ -496,8 +496,8 @@ internal sealed partial class GameDataCatalogBuilder
 		var radius = Mathf.Max(0f, source.Radius);
 		var arrivalSkill = new SingleSkillDefinition
 		{
-			SkillId = source.SkillId + "@arrival",
-			SkillName = source.DisplayName + " Arrival",
+			SkillName = source.SkillName + "@arrival",
+			DisplayName = source.DisplayName + " Arrival",
 			RuntimeKind = SkillRuntimeKind.SingleAttack,
 			ImplementationState = SkillImplementationState.RuntimeImplemented,
 			IsActive = false,
@@ -547,7 +547,7 @@ internal sealed partial class GameDataCatalogBuilder
 
 	private static void MapDamage(SkillDamageSpec damage, ActiveSkillBuildData source)
 	{
-		damage.SkillId = source.SkillId;
+		damage.SkillName = source.SkillName;
 		damage.Element = source.Attribute;
 		damage.BaseDamage = source.BaseDamage;
 		damage.AttackPowerCoefficient = source.AttackPowerCoefficient;
@@ -608,11 +608,11 @@ internal sealed partial class GameDataCatalogBuilder
 		ActiveSkillBuildData source,
 		StatusEffectDefinition[] statusDefinitions)
 	{
-		if (string.IsNullOrWhiteSpace(source.StatusEffectId))
+		if (string.IsNullOrWhiteSpace(source.StatusEffectName))
 		{
 			return null;
 		}
-		StatusEffectKind kind = StatusValueParser.ParseStatusKind(source.StatusEffectId);
+		StatusEffectKind kind = StatusValueParser.ParseStatusKind(source.StatusEffectName);
 		StatusRuntimeData runtimeStatusData =
 			GetStatusRuntimeData(kind, statusDefinitions, source.StatusEffectLabel);
 
@@ -668,7 +668,7 @@ internal sealed partial class GameDataCatalogBuilder
 			runtimeStatusData.Modifiers.AttackPowerBonus = source.StatusAttackPowerBonus;
 		}
 		runtimeStatusData.Modifiers.DamageBonusRate = source.StatusDamageBonusRate;
-		runtimeStatusData.SourceSkillId = source.SkillId;
+		runtimeStatusData.SourceSkillName = source.SkillName;
 		if (!string.IsNullOrWhiteSpace(source.StatusTargetScope))
 		{
 			runtimeStatusData.TargetScope = StatusValueParser.ParseTargetScope(source.StatusTargetScope);
@@ -744,19 +744,19 @@ internal sealed partial class GameDataCatalogBuilder
 		{
 			if (skillNodeDefinition != null && skillNodeDefinition.EnabledByDefault)
 			{
-				string a = skillNodeDefinition.HandlerId;
+				string a = skillNodeDefinition.HandlerName;
 				if (a == null)
 				{
 					a = string.Empty;
 				}
 				if (string.Equals(a, "StatusFilteredDeployment", StringComparison.OrdinalIgnoreCase))
 				{
-					single.DeploymentRequiredTargetStatusId = GetParam(skillNodeDefinition, "status_id");
+					single.DeploymentRequiredTargetStatusName = GetParam(skillNodeDefinition, "status_name");
 					single.DeploymentRequiredTargetStatusMinStacks = Mathf.Max(1, GetIntParam(skillNodeDefinition, "min_stacks", 1));
 				}
 				else if (string.Equals(a, "TargetStatusStackDamage", StringComparison.OrdinalIgnoreCase))
 				{
-					single.TargetStatusStackStatusId = GetParam(skillNodeDefinition, "status_id");
+					single.TargetStatusStackStatusName = GetParam(skillNodeDefinition, "status_name");
 					single.TargetStatusStackMaxStacks = Mathf.Max(0, GetIntParam(skillNodeDefinition, "max_stacks", 0));
 					single.TargetStatusStackDamage.Element = attribute;
 					single.TargetStatusStackDamage.BaseDamage = GetFloatParam(skillNodeDefinition, "base_damage", 0f);

@@ -11,7 +11,7 @@ namespace Pakuri.InGame
     public sealed class ArtifactUI : MonoBehaviour
     {
         private const int MaxArtifactChoices = 3;
-        private const string RewardSynergyId = "spirit-contract";
+        private const string RewardSynergyName = "spirit-contract";
 
         private readonly List<ArtifactDefinition> choices = new List<ArtifactDefinition>();
         private ArtifactButtonView[] buttonViews = new ArtifactButtonView[MaxArtifactChoices];
@@ -40,8 +40,8 @@ namespace Pakuri.InGame
             {
                 var artifact = artifacts[i];
                 if (artifact != null
-                    && string.Equals(artifact.SynergyId, RewardSynergyId, StringComparison.OrdinalIgnoreCase)
-                    && !session.HasArtifact(artifact.ArtifactId))
+                    && string.Equals(artifact.SynergyName, RewardSynergyName, StringComparison.OrdinalIgnoreCase)
+                    && !session.HasArtifact(artifact.ArtifactName))
                 {
                     choices.Add(artifact);
                 }
@@ -110,15 +110,15 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var artifactId = choices[choiceIndex].ArtifactId;
+            var artifactName = choices[choiceIndex].ArtifactName;
             Hide();
-            uiManager?.OpenArtifactAcquisition(artifactId);
+            uiManager?.OpenArtifactAcquisition(artifactName);
         }
 
         private static void BindChoice(ArtifactButtonView view, ArtifactDefinition artifact)
         {
-            var synergy = GameDataLoader.CurrentCatalog.GetData<ArtifactSynergyDefinition>(artifact.SynergyId);
-            view.Summary.text = synergy != null ? synergy.DisplayName : artifact.SynergyId;
+            var synergy = GameDataLoader.CurrentCatalog.GetData<ArtifactSynergyDefinition>(artifact.SynergyName);
+            view.Summary.text = synergy != null ? synergy.DisplayName : artifact.SynergyName;
             view.ArtifactName.text = artifact.DisplayName;
             view.Description.text = artifact.Description;
             view.Icon.sprite = artifact.Icon;

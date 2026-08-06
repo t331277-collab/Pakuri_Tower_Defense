@@ -1,5 +1,5 @@
-"choice_id","skill_id","monster_id","target_skill_id","sort_order","title","description_text"
-"id","string","string","string","int","string","string"
+"choice_name","skill_name","monster_name","target_skill_name","sort_order","title","description_text"
+"name","string","string","string","int","string","string"
 "ariel-f-trait-1","ariel-f","ariel","","0","특성 1","모든 아군 신성 피해 +6%"
 "ariel-f-trait-2","ariel-f","ariel","ariel-a","1","특성 2","심판의 빛 탄창 +2"
 "ariel-f-trait-3","ariel-f","ariel","","2","특성 3","신성 스킬을 보유한 아군의 치명타 확률 +8%"

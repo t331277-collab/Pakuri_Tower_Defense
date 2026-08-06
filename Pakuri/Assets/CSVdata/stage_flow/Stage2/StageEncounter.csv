@@ -1,4 +1,4 @@
-encounter_id,spawn_order,enemy_id,count,interval_sec,spawn_x,spawn_y_min,spawn_y_max,is_boss_candidate,is_guaranteed_boss,boss_health_multiplier_min,boss_health_multiplier_max,guaranteed_prisoner,notes
+encounter_name,spawn_order,enemy_name,count,interval_sec,spawn_x,spawn_y_min,spawn_y_max,is_boss_candidate,is_guaranteed_boss,boss_health_multiplier_min,boss_health_multiplier_max,guaranteed_prisoner,notes
 string,int,string,int,float,float,float,float,bool,bool,float,float,bool,string
 stage2-day1-normal,0,stage2-fire-dragon-slayer,1,1,9.02,-5,5,true,false,20,30,true,Stage 2 opening fire enemy boss candidate.
 stage2-day1-normal,1,stage2-lightning-scout,1,1,9.02,-5,5,true,false,20,30,false,Stage 2 opening lightning enemy boss candidate.

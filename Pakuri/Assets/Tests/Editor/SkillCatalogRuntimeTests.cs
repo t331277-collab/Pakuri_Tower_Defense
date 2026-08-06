@@ -14,7 +14,7 @@ public sealed class SkillCatalogRuntimeTests
     /// 선택 의미가 지정 스킬에만 반영되는지 확인한다.
     public void ChoiceNodesApplyOnlyToTheirTargetSkill()
     {
-        var skill = new SkillDefinition { SkillId = "skill-a" };
+        var skill = new SkillDefinition { SkillName = "skill-a" };
         var choice = new SkillChoice
         {
             Nodes = new[]
@@ -35,7 +35,7 @@ public sealed class SkillCatalogRuntimeTests
     /// 반응 배율이 기존 피해 보정과 합성되는지 확인한다.
     public void ReactionDamageMultiplierScalesExistingSkillModifier()
     {
-        var data = new SkillExecutionState(new SkillDefinition { SkillId = "vega-b" });
+        var data = new SkillExecutionState(new SkillDefinition { SkillName = "vega-b" });
         var apply = typeof(SkillExecutionState).GetMethod(
             "ApplyDynamicDamageMultiplier",
             BindingFlags.Instance | BindingFlags.NonPublic);
@@ -59,11 +59,11 @@ public sealed class SkillCatalogRuntimeTests
     {
         var catalog = ScriptableObject.CreateInstance<GameDataCatalog>();
         var monster = ScriptableObject.CreateInstance<MonsterDefinition>();
-        var skill = new SkillDefinition { SkillId = "skill-a", Slot = SkillSlot.A };
+        var skill = new SkillDefinition { SkillName = "skill-a", Slot = SkillSlot.A };
 
         try
         {
-            monster.MonsterId = "monster-a";
+            monster.MonsterName = "monster-a";
             monster.ActiveSkills = new[] { skill };
             catalog.Monsters = new[] { monster };
             catalog.RebuildLookup();
@@ -72,17 +72,17 @@ public sealed class SkillCatalogRuntimeTests
             Assert.That(catalog.GetActiveSkill("monster-a", SkillSlot.A), Is.SameAs(skill));
 
             var owner = new UnitCombatState();
-            owner.Skills.AddActiveSkill(skill.SkillId);
+            owner.Skills.AddActiveSkill(skill.SkillName);
             owner.SkillState.RebuildLearnedSkillState(
                 owner,
                 new[] { skill },
                 Array.Empty<PassiveSkillDefinition>());
-            var firstState = owner.SkillState.FindBySkillId("skill-a");
+            var firstState = owner.SkillState.FindBySkillName("skill-a");
             owner.SkillState.RebuildLearnedSkillState(
                 owner,
                 new[] { skill },
                 Array.Empty<PassiveSkillDefinition>());
-            var secondState = owner.SkillState.FindBySkillId("skill-a");
+            var secondState = owner.SkillState.FindBySkillName("skill-a");
 
             Assert.That(secondState, Is.Not.SameAs(firstState));
             Assert.That(firstState.Data, Is.SameAs(skill));
@@ -142,8 +142,8 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(
             catalog.GetData<ArtifactEffectDefinition>("elemental-prism-holy-effect").SelectionRule,
             Is.EqualTo(ArtifactEffectSelectionRule.PartyDominantAttribute));
-        Assert.That(catalog.GetActiveSkill(summon.SummonId, SkillSlot.A), Is.TypeOf<SingleSkillDefinition>());
-        Assert.That(catalog.GetActiveSkill(summon.SummonId, SkillSlot.B), Is.TypeOf<ZoneSkillDefinition>());
+        Assert.That(catalog.GetActiveSkill(summon.SummonName, SkillSlot.A), Is.TypeOf<SingleSkillDefinition>());
+        Assert.That(catalog.GetActiveSkill(summon.SummonName, SkillSlot.B), Is.TypeOf<ZoneSkillDefinition>());
 
         var spawn = catalog.GetData<ArtifactSynergyEffectDefinition>(
             "spirit-contract-level-1-spawn-spirit-king");
@@ -163,7 +163,7 @@ public sealed class SkillCatalogRuntimeTests
     public void StageArtifactRewardsIncludeMidbossAndBoss()
     {
         var stage = ReloadGameDataCatalog().Stage;
-        var rewardIds = new[]
+        var rewardNames = new[]
         {
             "reward-stage1-midboss",
             "reward-stage1-day10-midboss",
@@ -173,9 +173,9 @@ public sealed class SkillCatalogRuntimeTests
             "reward-stage2-boss"
         };
 
-        for (var i = 0; i < rewardIds.Length; i++)
+        for (var i = 0; i < rewardNames.Length; i++)
         {
-            Assert.That(stage.FindReward(rewardIds[i]).ArtifactChoiceCount, Is.EqualTo(3));
+            Assert.That(stage.FindReward(rewardNames[i]).ArtifactChoiceCount, Is.EqualTo(3));
         }
 
         Assert.That(stage.FindReward("reward-stage1-normal").ArtifactChoiceCount, Is.Zero);
@@ -189,12 +189,12 @@ public sealed class SkillCatalogRuntimeTests
         var enemy = ScriptableObject.CreateInstance<EnemyDefinition>();
         var active = new SkillDefinition
         {
-            SkillId = "enemy-active",
+            SkillName = "enemy-active",
             IsActive = true
         };
         var passive = new PassiveSkillDefinition
         {
-            SkillId = "enemy-passive",
+            SkillName = "enemy-passive",
             IsActive = false,
             ModifierKind = PassiveModifierKind.DamageUp,
             HasModifierAttribute = true,
@@ -204,7 +204,7 @@ public sealed class SkillCatalogRuntimeTests
 
         try
         {
-            enemy.EnemyId = "enemy-a";
+            enemy.EnemyName = "enemy-a";
             enemy.ActiveSkills = new[] { active };
             enemy.PassiveSkill = passive;
 
@@ -214,10 +214,10 @@ public sealed class SkillCatalogRuntimeTests
                 enemy.ActiveSkills,
                 new[] { enemy.PassiveSkill });
 
-            Assert.That(model.Skills.HasActiveSkill(active.SkillId), Is.True);
-            Assert.That(model.Skills.HasPassiveSkill(passive.SkillId), Is.True);
-            Assert.That(model.SkillState.FindBySkillId(active.SkillId).Data, Is.SameAs(active));
-            Assert.That(model.SkillState.FindBySkillId(passive.SkillId).Data, Is.SameAs(passive));
+            Assert.That(model.Skills.HasActiveSkill(active.SkillName), Is.True);
+            Assert.That(model.Skills.HasPassiveSkill(passive.SkillName), Is.True);
+            Assert.That(model.SkillState.FindBySkillName(active.SkillName).Data, Is.SameAs(active));
+            Assert.That(model.SkillState.FindBySkillName(passive.SkillName).Data, Is.SameAs(passive));
             Assert.That(
                 model.SkillState.PassiveOutgoingDamageBonus(DamageAttribute.Physical),
                 Is.EqualTo(0.1f).Within(0.0001f));
@@ -245,7 +245,7 @@ public sealed class SkillCatalogRuntimeTests
         };
         for (var i = 0; i < passives.Length; i++)
         {
-            owner.Skills.AddPassiveSkill(passives[i].SkillId);
+            owner.Skills.AddPassiveSkill(passives[i].SkillName);
         }
 
         owner.SkillState.RebuildLearnedSkillState(
@@ -276,12 +276,12 @@ public sealed class SkillCatalogRuntimeTests
         for (var i = 0; i < enemies.Count; i++)
         {
             var enemy = enemies[i];
-            Assert.That(enemy.PassiveSkill, Is.Not.Null, enemy.EnemyId);
-            Assert.That(enemy.PassiveSkill.ModifierKind, Is.Not.EqualTo(PassiveModifierKind.None), enemy.EnemyId);
+            Assert.That(enemy.PassiveSkill, Is.Not.Null, enemy.EnemyName);
+            Assert.That(enemy.PassiveSkill.ModifierKind, Is.Not.EqualTo(PassiveModifierKind.None), enemy.EnemyName);
             Assert.That(
-                catalog.GetData<PassiveSkillDefinition>(enemy.PassiveSkill.SkillId),
+                catalog.GetData<PassiveSkillDefinition>(enemy.PassiveSkill.SkillName),
                 Is.SameAs(enemy.PassiveSkill),
-                enemy.EnemyId);
+                enemy.EnemyName);
 
             var model = new UnitCombatStateFactory().CreateEnemy(enemy);
             model.SkillState.RebuildLearnedSkillState(
@@ -289,11 +289,11 @@ public sealed class SkillCatalogRuntimeTests
                 enemy.ActiveSkills,
                 new[] { enemy.PassiveSkill });
 
-            Assert.That(model.Skills.HasPassiveSkill(enemy.PassiveSkill.SkillId), Is.True, enemy.EnemyId);
+            Assert.That(model.Skills.HasPassiveSkill(enemy.PassiveSkill.SkillName), Is.True, enemy.EnemyName);
             Assert.That(
-                model.SkillState.FindBySkillId(enemy.PassiveSkill.SkillId)?.Data,
+                model.SkillState.FindBySkillName(enemy.PassiveSkill.SkillName)?.Data,
                 Is.SameAs(enemy.PassiveSkill),
-                enemy.EnemyId);
+                enemy.EnemyName);
         }
     }
 
@@ -306,12 +306,12 @@ public sealed class SkillCatalogRuntimeTests
 
         var chainEnemy = Array.Find(
             catalog.StageTwoEnemies,
-            enemy => enemy.EnemyId == "stage2-lightning-scout");
+            enemy => enemy.EnemyName == "stage2-lightning-scout");
         var chainSkill = Array.Find(
             chainEnemy.ActiveSkills,
-            skill => skill.SkillId == "ChainLightning");
+            skill => skill.SkillName == "ChainLightning");
         var chainTrigger = CollectReactions(chainEnemy.ActiveSkills).Find(
-            reaction => reaction.ReactionId == "ChainLightning__chain_on_hit");
+            reaction => reaction.ReactionName == "ChainLightning__chain_on_hit");
 
         Assert.That(chainSkill, Is.TypeOf<SingleSkillDefinition>());
         Assert.That(chainTrigger, Is.Not.Null);
@@ -335,15 +335,15 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(
             Array.Exists(
                 chainEnemy.ActiveSkills,
-                skill => skill.SkillId.Contains("__chain")),
+                skill => skill.SkillName.Contains("__chain")),
             Is.False);
 
         var chargeEnemy = Array.Find(
             catalog.StageTwoEnemies,
-            enemy => enemy.EnemyId == "stage2-drake");
+            enemy => enemy.EnemyName == "stage2-drake");
         var chargeSkill = Array.Find(
             chargeEnemy.ActiveSkills,
-            skill => skill.SkillId == "OpeningCharge");
+            skill => skill.SkillName == "OpeningCharge");
         Assert.That(chargeSkill, Is.TypeOf<BuffSkillDefinition>());
         Assert.That(
             ((BuffSkillDefinition)chargeSkill).EffectKind,
@@ -351,10 +351,10 @@ public sealed class SkillCatalogRuntimeTests
 
         var shieldEnemy = Array.Find(
             catalog.StageOneEnemies,
-            enemy => enemy.EnemyId == "stage1-guardian-captain");
+            enemy => enemy.EnemyName == "stage1-guardian-captain");
         var shieldSkill = Array.Find(
             shieldEnemy.ActiveSkills,
-            skill => skill.SkillId == "GuardianFlag");
+            skill => skill.SkillName == "GuardianFlag");
         Assert.That(shieldSkill, Is.TypeOf<BuffSkillDefinition>());
         Assert.That(
             ((BuffSkillDefinition)shieldSkill).EffectKind,
@@ -373,7 +373,7 @@ public sealed class SkillCatalogRuntimeTests
             owner.Resources.CurrentHealth = 1f;
             var charge = new BuffSkillDefinition
             {
-                SkillId = "charge",
+                SkillName = "charge",
                 IsActive = true,
                 RuntimeKind = SkillRuntimeKind.Buff,
                 EffectKind = BuffEffectKind.Charge,
@@ -400,7 +400,7 @@ public sealed class SkillCatalogRuntimeTests
                 0f,
                 0,
                 1f,
-                charge.SkillId,
+                charge.SkillName,
                 false,
                 false,
                 true);
@@ -436,10 +436,10 @@ public sealed class SkillCatalogRuntimeTests
         try
         {
             var owner = new EnemyCombatState();
-            var source = new SingleSkillDefinition { SkillId = "source-skill" };
+            var source = new SingleSkillDefinition { SkillName = "source-skill" };
             var triggered = new BuffSkillDefinition
             {
-                SkillId = "triggered-charge",
+                SkillName = "triggered-charge",
                 RuntimeKind = SkillRuntimeKind.Buff,
                 EffectKind = BuffEffectKind.Charge
             };
@@ -453,19 +453,19 @@ public sealed class SkillCatalogRuntimeTests
             var prepare = typeof(SkillExecution).GetMethod(
                 "PrepareExecutionData",
                 BindingFlags.Static | BindingFlags.NonPublic);
-            var preparedSkillId = typeof(SkillExecutionState).GetProperty(
-                "PreparedSkillId",
+            var preparedSkillName = typeof(SkillExecutionState).GetProperty(
+                "PreparedSkillName",
                 BindingFlags.Instance | BindingFlags.NonPublic);
 
             Assert.That(prepare, Is.Not.Null);
-            Assert.That(preparedSkillId, Is.Not.Null);
+            Assert.That(preparedSkillName, Is.Not.Null);
             Assert.That(
                 prepare.Invoke(null, new object[] { context, sourceSnapshot, triggered }),
                 Is.True);
             Assert.That(
-                preparedSkillId.GetValue(sourceSnapshot),
-                Is.EqualTo(triggered.SkillId));
-            Assert.That(sourceSnapshot.SkillId, Is.EqualTo(source.SkillId));
+                preparedSkillName.GetValue(sourceSnapshot),
+                Is.EqualTo(triggered.SkillName));
+            Assert.That(sourceSnapshot.SkillName, Is.EqualTo(source.SkillName));
         }
         finally
         {
@@ -481,9 +481,9 @@ public sealed class SkillCatalogRuntimeTests
 
         try
         {
-            monster.MonsterId = "monster-a";
+            monster.MonsterName = "monster-a";
             var session = RunSession.Begin(monster);
-            var runState = session.GetPartyMemberState(monster.MonsterId);
+            var runState = session.GetPartyMemberState(monster.MonsterName);
             var model = new UnitCombatStateFactory().CreateSelectedMonster(monster, runState);
 
             Assert.That(model.Skills, Is.SameAs(runState.Skills));
@@ -505,7 +505,7 @@ public sealed class SkillCatalogRuntimeTests
         var catalog = ReloadGameDataCatalog();
         var monster = catalog.GetMonster("sein");
         var session = RunSession.Begin(monster);
-        var runState = session.GetPartyMemberState(monster.MonsterId);
+        var runState = session.GetPartyMemberState(monster.MonsterName);
 
         Assert.That(runState.Artifacts.TryAdd("ember-crown"), Is.True);
         Assert.That(runState.Artifacts.TryAdd("frost-lens"), Is.True);
@@ -516,9 +516,9 @@ public sealed class SkillCatalogRuntimeTests
         var model = new UnitCombatStateFactory().CreateSelectedMonster(monster, runState);
 
         Assert.That(model.Artifacts, Is.SameAs(runState.Artifacts));
-        Assert.That(model.Artifacts.ActiveArtifactEffectIds, Has.Count.EqualTo(6));
+        Assert.That(model.Artifacts.ActiveArtifactEffectNames, Has.Count.EqualTo(6));
         Assert.That(
-            model.Artifacts.ActiveArtifactEffectIds,
+            model.Artifacts.ActiveArtifactEffectNames,
             Does.Contain("frost-lens-status-effect"));
     }
 
@@ -552,7 +552,7 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(session.TryAddPartyMonster(catalog.GetMonster("eve"), out _), Is.True);
         Assert.That(session.TryAddPartyMonster(catalog.GetMonster("rin"), out _), Is.True);
 
-        var artifactIds = new[]
+        var artifactNames = new[]
         {
             "elemental-prism",
             "ember-crown",
@@ -564,9 +564,9 @@ public sealed class SkillCatalogRuntimeTests
             "rift-gem",
             "elemental-codex"
         };
-        for (var i = 0; i < artifactIds.Length - 1; i++)
+        for (var i = 0; i < artifactNames.Length - 1; i++)
         {
-            Assert.That(session.PartyMembers[i / 3].Artifacts.TryAdd(artifactIds[i]), Is.True);
+            Assert.That(session.PartyMembers[i / 3].Artifacts.TryAdd(artifactNames[i]), Is.True);
         }
 
         var testObject = new GameObject("ArtifactUITest");
@@ -576,7 +576,7 @@ public sealed class SkillCatalogRuntimeTests
             var artifactUI = testObject.AddComponent<ArtifactUI>();
             Assert.That(artifactUI.PrepareChoices(session, 3), Is.EqualTo(2));
 
-            Assert.That(session.PartyMembers[2].Artifacts.TryAdd(artifactIds[8]), Is.True);
+            Assert.That(session.PartyMembers[2].Artifacts.TryAdd(artifactNames[8]), Is.True);
             Assert.That(artifactUI.PrepareChoices(session, 3), Is.Zero);
         }
         finally
@@ -593,7 +593,7 @@ public sealed class SkillCatalogRuntimeTests
         var monster = catalog.GetMonster("sein");
         var skill = catalog.GetActiveSkill("sein", SkillSlot.A);
         var session = RunSession.Begin(monster);
-        var runState = session.GetPartyMemberState(monster.MonsterId);
+        var runState = session.GetPartyMemberState(monster.MonsterName);
         runState.Artifacts.TryAdd("ember-crown");
         new ArtifactSynergyManager().PrepareStage(session, catalog);
 
@@ -604,7 +604,7 @@ public sealed class SkillCatalogRuntimeTests
             Array.Empty<PassiveSkillDefinition>());
         var snapshot = model.SkillState.CreateExecutionData(
             model,
-            model.SkillState.FindBySkillId(skill.SkillId),
+            model.SkillState.FindBySkillName(skill.SkillName),
             null);
 
         Assert.That(snapshot.DamageMultiplier, Is.EqualTo(1.18f).Within(0.0001f));
@@ -633,34 +633,34 @@ public sealed class SkillCatalogRuntimeTests
 
         Assert.That(manager.Synergies.GetCount("spirit-contract"), Is.EqualTo(4));
         Assert.That(
-            arielState.Artifacts.ActiveArtifactEffectIds,
+            arielState.Artifacts.ActiveArtifactEffectNames,
             Does.Contain("elemental-prism-holy-effect"));
         Assert.That(
-            arielState.Artifacts.ActiveArtifactEffectIds,
+            arielState.Artifacts.ActiveArtifactEffectNames,
             Does.Not.Contain("elemental-prism-lightning-effect"));
         Assert.That(
-            arielState.Artifacts.ActiveArtifactEffectIds.Count(
-                id => id == "spirit-elixir-contract-count-effect"),
+            arielState.Artifacts.ActiveArtifactEffectNames.Count(
+                Name => Name == "spirit-elixir-contract-count-effect"),
             Is.EqualTo(4));
         Assert.That(
-            arielState.Artifacts.ActiveArtifactEffectIds.Count(
-                id => id == "elemental-codex-effect"),
+            arielState.Artifacts.ActiveArtifactEffectNames.Count(
+                Name => Name == "elemental-codex-effect"),
             Is.EqualTo(2));
         Assert.That(
-            arielState.Artifacts.ActiveArtifactEffectIds,
+            arielState.Artifacts.ActiveArtifactEffectNames,
             Does.Not.Contain("rift-gem-effect"));
         Assert.That(
-            eveState.Artifacts.ActiveArtifactEffectIds,
+            eveState.Artifacts.ActiveArtifactEffectNames,
             Does.Contain("rift-gem-effect"));
 
         var model = new UnitCombatStateFactory().CreateSelectedMonster(ariel, arielState);
         model.SkillState.RebuildLearnedSkillState(
             model,
-            catalog.GetActiveSkills(ariel.MonsterId),
-            catalog.GetPassiveSkills(ariel.MonsterId));
+            catalog.GetActiveSkills(ariel.MonsterName),
+            catalog.GetPassiveSkills(ariel.MonsterName));
         var snapshot = model.SkillState.CreateExecutionData(
             model,
-            model.SkillState.FindBySkillId("ariel-a"),
+            model.SkillState.FindBySkillName("ariel-a"),
             null);
 
         Assert.That(snapshot.DamageMultiplier, Is.EqualTo(1.38f).Within(0.0001f));
@@ -731,7 +731,7 @@ public sealed class SkillCatalogRuntimeTests
                 trigger.Command?.Kind == SkillReactionCommandKind.ExtendStatusDuration),
             Is.Empty);
         var zoneRecast = triggers.Find(
-            trigger => trigger.ReactionId == "eve-e-master-1");
+            trigger => trigger.ReactionName == "eve-e-master-1");
         Assert.That(zoneRecast?.Effect, Is.Not.Null);
         Assert.That(zoneRecast.Effect.IsRecast, Is.True);
         Assert.That(
@@ -790,7 +790,7 @@ public sealed class SkillCatalogRuntimeTests
         var leakedNonTriggers = triggers.FindAll(trigger =>
             trigger.Event == SkillTriggerEvent.OnCast
             || (trigger.Event == SkillTriggerEvent.OnSkillCast
-                && (trigger.EventSkillIds == null || trigger.EventSkillIds.Length == 0)));
+                && (trigger.EventSkillNames == null || trigger.EventSkillNames.Length == 0)));
         var workingTriggers = triggers.FindAll(trigger =>
             trigger.Effect != null
             || trigger.Command != null);
@@ -816,15 +816,15 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(castEffects, Has.Count.EqualTo(73));
         Assert.That(
             workingTriggers.Exists(trigger =>
-                trigger.ReactionId == "ariel-b-trait4-shield-expire"),
+                trigger.ReactionName == "ariel-b-trait4-shield-expire"),
             Is.True);
         Assert.That(
             workingTriggers.Exists(trigger =>
-                trigger.ReactionId == "eve-b-master-2"
+                trigger.ReactionName == "eve-b-master-2"
                 && trigger.Effect != null),
             Is.True);
         var arielShieldDamage = castEffects.Find(
-            effect => effect.EffectId == "ariel-b-trait-5");
+            effect => effect.EffectName == "ariel-b-trait-5");
         Assert.That(arielShieldDamage, Is.Not.Null);
         var arielShieldDefinition =
             arielShieldDamage.ResolvedDefinition as BuffSkillDefinition;
@@ -846,27 +846,27 @@ public sealed class SkillCatalogRuntimeTests
             Is.EqualTo(StatusEffectKind.Shield));
         Assert.That(
             castEffects.Exists(effect =>
-                effect.EffectId == "eve-h-trait-3"),
+                effect.EffectName == "eve-h-trait-3"),
             Is.False);
         Assert.That(
             castEffects.Exists(effect =>
-                effect.EffectId == "ariel-e-trait-4"),
+                effect.EffectName == "ariel-e-trait-4"),
             Is.False);
         Assert.That(
             castEffects.Exists(effect =>
-                effect.EffectId == "ariel-a-master-2"),
+                effect.EffectName == "ariel-a-master-2"),
             Is.False);
         Assert.That(
             workingTriggers.Exists(trigger =>
-                trigger.ReactionId
+                trigger.ReactionName
                     == "ariel-a-master2-holy-exposure-on-hit"
                 && trigger.Effect?.ResolvedDefinition is BuffSkillDefinition),
             Is.True);
         var vegaSecondSlash = castEffects.Find(
-            effect => effect.EffectId == "vega-b-master1-second-slash");
+            effect => effect.EffectName == "vega-b-master1-second-slash");
         Assert.That(vegaSecondSlash, Is.Not.Null);
         Assert.That(
-            vegaSecondSlash.ResolvedDefinition?.SkillId,
+            vegaSecondSlash.ResolvedDefinition?.SkillName,
             Is.EqualTo("vega-b"));
         Assert.That(vegaSecondSlash.DamageMultiplier, Is.EqualTo(0.45f));
         Assert.That(vegaSecondSlash.DelaySeconds, Is.EqualTo(0.4f));
@@ -875,7 +875,7 @@ public sealed class SkillCatalogRuntimeTests
             vegaSecondSlash.OnHitStatusOverride?.Status?.Kind,
             Is.EqualTo(StatusEffectKind.Silence));
         var arielSecondWave = castEffects.Find(
-            effect => effect.EffectId == "ariel-c-master-2");
+            effect => effect.EffectName == "ariel-c-master-2");
         Assert.That(arielSecondWave, Is.Not.Null);
         Assert.That(arielSecondWave.UseSourcePreparedCenter, Is.True);
         Assert.That(arielSecondWave.DelaySeconds, Is.EqualTo(1f));
@@ -904,7 +904,7 @@ public sealed class SkillCatalogRuntimeTests
             passiveChoices.All(choice => choice.ChoiceGroup == SkillChoiceGroup.PassiveEnhancement),
             Is.True);
         Assert.That(
-            effects.Count(effect => effect.EffectId.Contains("-base-effect-")),
+            effects.Count(effect => effect.EffectName.Contains("-base-effect-")),
             Is.EqualTo(30));
 
         var modifiers = effects
@@ -912,9 +912,9 @@ public sealed class SkillCatalogRuntimeTests
                 && buff.EffectKind == BuffEffectKind.Status
                 && buff.AttachedStatus?.Status?.Kind == StatusEffectKind.PassiveBuff)
             .ToArray();
-        StatusRuntimeData Modifier(string effectId) =>
+        StatusRuntimeData Modifier(string effectName) =>
             ((BuffSkillDefinition)modifiers.Single(effect =>
-                effect.EffectId == effectId).ResolvedDefinition).AttachedStatus.Status;
+                effect.EffectName == effectName).ResolvedDefinition).AttachedStatus.Status;
 
         Assert.That(modifiers, Has.Length.EqualTo(58));
         Assert.That(modifiers.All(effect =>
@@ -925,7 +925,7 @@ public sealed class SkillCatalogRuntimeTests
         }), Is.True);
 
         var eveShield = (BuffSkillDefinition)effects.Single(effect =>
-            effect.EffectId == "eve-f-base-effect-1").ResolvedDefinition;
+            effect.EffectName == "eve-f-base-effect-1").ResolvedDefinition;
         Assert.That(eveShield.ShieldDuration, Is.EqualTo(12f));
 
         var shieldedAlly = new UnitCombatState();
@@ -987,30 +987,30 @@ public sealed class SkillCatalogRuntimeTests
         var seinOwner = new UnitCombatState();
         var seinBase = catalog.GetData<PassiveSkillDefinition>("sein-i");
         var seinTarget = catalog.GetData<SkillDefinition>("sein-d");
-        seinOwner.Skills.AddPassiveSkill(seinBase.SkillId);
-        seinOwner.Skills.AddActiveSkill(seinTarget.SkillId);
+        seinOwner.Skills.AddPassiveSkill(seinBase.SkillName);
+        seinOwner.Skills.AddActiveSkill(seinTarget.SkillName);
         seinOwner.SkillState.RebuildLearnedSkillState(
             seinOwner,
             new[] { seinTarget },
             new[] { seinBase });
         var seinSnapshot = seinOwner.SkillState.CreateExecutionData(
             seinOwner,
-            seinOwner.SkillState.FindBySkillId(seinTarget.SkillId),
+            seinOwner.SkillState.FindBySkillName(seinTarget.SkillName),
             null);
         Assert.That(seinSnapshot.ShotIntervalMultiplier, Is.EqualTo(0.8f).Within(0.0001f));
 
         var vegaOwner = new UnitCombatState();
         var vegaBase = catalog.GetData<PassiveSkillDefinition>("vega-h");
         var vegaTarget = catalog.GetData<SkillDefinition>("vega-c");
-        vegaOwner.Skills.AddPassiveSkill(vegaBase.SkillId);
-        vegaOwner.Skills.AddActiveSkill(vegaTarget.SkillId);
+        vegaOwner.Skills.AddPassiveSkill(vegaBase.SkillName);
+        vegaOwner.Skills.AddActiveSkill(vegaTarget.SkillName);
         vegaOwner.SkillState.RebuildLearnedSkillState(
             vegaOwner,
             new[] { vegaTarget },
             new[] { vegaBase });
         var vegaSnapshot = vegaOwner.SkillState.CreateExecutionData(
             vegaOwner,
-            vegaOwner.SkillState.FindBySkillId(vegaTarget.SkillId),
+            vegaOwner.SkillState.FindBySkillName(vegaTarget.SkillName),
             null);
         Assert.That(vegaSnapshot.DurationMultiplier, Is.EqualTo(1.2f).Within(0.0001f));
     }
@@ -1038,8 +1038,8 @@ public sealed class SkillCatalogRuntimeTests
                 for (var i = 0; i < monster.PassiveSkills.Length; i++)
                 {
                     if (string.Equals(
-                        monster.PassiveSkills[i]?.SkillId,
-                        trigger.SourceSkillId,
+                        monster.PassiveSkills[i]?.SkillName,
+                        trigger.SourceSkillName,
                         StringComparison.OrdinalIgnoreCase))
                     {
                         passiveOwned = true;
@@ -1113,30 +1113,30 @@ public sealed class SkillCatalogRuntimeTests
             {
                 case SkillRuntimeKind.MagazineProjectile:
                 case SkillRuntimeKind.CooldownProjectile:
-                    Assert.That(definition, Is.TypeOf<ProjectileSkillDefinition>(), definition.SkillId);
+                    Assert.That(definition, Is.TypeOf<ProjectileSkillDefinition>(), definition.SkillName);
                     break;
                 case SkillRuntimeKind.LineAttack:
-                    Assert.That(definition, Is.TypeOf<LineSkillDefinition>(), definition.SkillId);
+                    Assert.That(definition, Is.TypeOf<LineSkillDefinition>(), definition.SkillName);
                     break;
                 case SkillRuntimeKind.SingleAttack:
                 case SkillRuntimeKind.Mark:
                 case SkillRuntimeKind.Execute:
-                    Assert.That(definition, Is.TypeOf<SingleSkillDefinition>(), definition.SkillId);
+                    Assert.That(definition, Is.TypeOf<SingleSkillDefinition>(), definition.SkillName);
                     break;
                 case SkillRuntimeKind.AreaAttack:
                     Assert.That(
                         definition is SingleSkillDefinition || definition is ZoneSkillDefinition,
                         Is.True,
-                        definition.SkillId);
+                        definition.SkillName);
                     break;
                 case SkillRuntimeKind.Buff:
                 case SkillRuntimeKind.Shield:
                 case SkillRuntimeKind.Heal:
-                    Assert.That(definition, Is.TypeOf<BuffSkillDefinition>(), definition.SkillId);
+                    Assert.That(definition, Is.TypeOf<BuffSkillDefinition>(), definition.SkillName);
                     break;
                 default:
                     Assert.Fail(
-                        definition.SkillId + " has unsupported runtime kind "
+                        definition.SkillName + " has unsupported runtime kind "
                         + definition.RuntimeKind);
                     break;
             }
@@ -1205,11 +1205,11 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(catalog.StatusEffects, Is.Not.Empty);
         foreach (var definition in catalog.StatusEffects)
         {
-            Assert.That(definition.RuntimeData, Is.Not.Null, definition.StatusEffectId);
+            Assert.That(definition.RuntimeData, Is.Not.Null, definition.StatusEffectName);
             Assert.That(
                 catalog.GetStatusRuntimeData(definition.Kind),
                 Is.SameAs(definition.RuntimeData),
-                definition.StatusEffectId);
+                definition.StatusEffectName);
             Assert.That(definition.RuntimeData.Definition, Is.SameAs(definition));
         }
     }
@@ -1277,10 +1277,10 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     /// 충돌 검증용 전투 모델을 만든다.
-    private static UnitCombatState CreateCollisionTestUnit(string unitId, UnitSide side)
+    private static UnitCombatState CreateCollisionTestUnit(string unitName, UnitSide side)
     {
         var unit = new UnitCombatState();
-        unit.Identity.UnitId = unitId;
+        unit.Identity.UnitName = unitName;
         unit.Identity.Side = side;
         unit.Resources.CurrentHealth = 1f;
         return unit;
@@ -1299,14 +1299,14 @@ public sealed class SkillCatalogRuntimeTests
 
     /// 지속 스킬 검증용 정의를 만든다.
     private static PassiveSkillDefinition CreatePassive(
-        string skillId,
+        string skillName,
         PassiveModifierKind kind,
         float value,
         DamageAttribute? attribute = null)
     {
         return new PassiveSkillDefinition
         {
-            SkillId = skillId,
+            SkillName = skillName,
             IsActive = false,
             ModifierKind = kind,
             HasModifierAttribute = attribute.HasValue,

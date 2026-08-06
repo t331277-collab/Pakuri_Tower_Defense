@@ -146,7 +146,7 @@ public partial class SingleSkillActor
 						snapshot.RadiusMultiplier,
 						snapshot.RadiusBonus);
 				}
-				flag2 = ApplyPrefabHitbox(context.CombatManager, context.CasterEntry, context.Roster, snapshot.PreparedTargeting, gameObject, num, damage, attribute, statusSpec, context.Caster, context.SourceSkillId, skillRuntimeInstance, snapshot.PreparedCriticalAllowed, critChanceBonus, critDamageBonus, snapshot, context.EventTarget, context.LockToEventTarget);
+				flag2 = ApplyPrefabHitbox(context.CombatManager, context.CasterEntry, context.Roster, snapshot.PreparedTargeting, gameObject, num, damage, attribute, statusSpec, context.Caster, context.SourceSkillName, skillRuntimeInstance, snapshot.PreparedCriticalAllowed, critChanceBonus, critDamageBonus, snapshot, context.EventTarget, context.LockToEventTarget);
 				SingleSkillActor.Attach(gameObject).InitializeAnimation(effects);
 			}
 		}
@@ -175,13 +175,13 @@ public partial class SingleSkillActor
 		}
 		if (snapshot.PreparedUsesHitTargetCount && snapshot.PreparedHitTargetCount != int.MaxValue)
 		{
-			return ApplyLimitedTargets(context.CombatManager, context.CasterEntry, context.Roster, snapshot.PreparedTargeting, effectiveHitTargetCount, damage, attribute, statusSpec, context.Caster, context.SourceSkillId, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, snapshot, center, context.EventTarget, context.LockToEventTarget);
+			return ApplyLimitedTargets(context.CombatManager, context.CasterEntry, context.Roster, snapshot.PreparedTargeting, effectiveHitTargetCount, damage, attribute, statusSpec, context.Caster, context.SourceSkillName, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, snapshot, center, context.EventTarget, context.LockToEventTarget);
 		}
-		return ApplyAreaTargets(context.CombatManager, context.CasterEntry, context.Roster, snapshot.PreparedTargeting, center, radius, coverAll, damage, attribute, statusSpec, context.Caster, context.SourceSkillId, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, snapshot, context.EventTarget, context.LockToEventTarget);
+		return ApplyAreaTargets(context.CombatManager, context.CasterEntry, context.Roster, snapshot.PreparedTargeting, center, radius, coverAll, damage, attribute, statusSpec, context.Caster, context.SourceSkillName, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, snapshot, context.EventTarget, context.LockToEventTarget);
 	}
 
 	/// 충돌 영역 결과를 공통 피해 경로에 연결한다.
-	private static bool ApplyPrefabHitbox(InGameCombatManager manager, CombatUnitEntry sourceEntry, UnitSpawnManager unitRoster, SkillTargetingSpec targetingSpec, GameObject hitboxObject, int maxTargets, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, UnitCombatState source, string sourceSkillId, SkillExecutionState sourceRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SkillExecutionState snapshot, UnitCombatState eventTarget, bool lockToEventTarget)
+	private static bool ApplyPrefabHitbox(InGameCombatManager manager, CombatUnitEntry sourceEntry, UnitSpawnManager unitRoster, SkillTargetingSpec targetingSpec, GameObject hitboxObject, int maxTargets, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, UnitCombatState source, string sourceSkillName, SkillExecutionState sourceRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SkillExecutionState snapshot, UnitCombatState eventTarget, bool lockToEventTarget)
 	{
 		if (manager == null || sourceEntry == null || unitRoster == null || hitboxObject == null || maxTargets <= 0)
 		{
@@ -211,7 +211,7 @@ public partial class SingleSkillActor
 				Vector2 hitPosition = ((unitEntry.Transform != null) ? ((Vector2)unitEntry.Transform.position) : Vector2.zero);
 				bool isCoreHit = coreCollisionTargets.Contains(unitEntry);
 				TargetDamageResolution damageResolution = TargetDamage(snapshot, damage, unitEntry.Model, critChanceBonus, isCoreHit);
-                InGameResourceChangeResult result2 = manager.ApplyDamage(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, critDamageBonus, sourceSkillId, false, damageResolution.IsExecute, null, damageResolution.FinalDamageMultiplier, isTrigger: snapshot.IsTrigger);
+                InGameResourceChangeResult result2 = manager.ApplyDamage(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, critDamageBonus, sourceSkillName, false, damageResolution.IsExecute, null, damageResolution.FinalDamageMultiplier, isTrigger: snapshot.IsTrigger);
 				int consumedStacks = ConsumePendingTargetStatusStacks(manager, unitEntry.Model, snapshot, damageResolution);
 				SkillExecution.HandleSingleKillRecovery(sourceRuntime, snapshot, result2, damageResolution.IsExecute);
 				TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry, result2, consumedStacks);
@@ -219,8 +219,8 @@ public partial class SingleSkillActor
 				{
 					StatusCombatRules.ApplyStatus(manager, unitEntry.Model, statusSpec, source);
 				}
-				TryApplyCoreOnHitAdditionalDamage(manager, snapshot, source, sourceSkillId, unitEntry, damageResolution.Damage, isCoreHit);
-				ZoneSkillActor.PublishHitOutcome(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry, hitPosition, damageResolution.Damage);
+				TryApplyCoreOnHitAdditionalDamage(manager, snapshot, source, sourceSkillName, unitEntry, damageResolution.Damage, isCoreHit);
+				ZoneSkillActor.PublishHitOutcome(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillName, unitEntry, hitPosition, damageResolution.Damage);
 				result = true;
 				num++;
 				if (num >= maxTargets)
@@ -235,7 +235,7 @@ public partial class SingleSkillActor
 	}
 
 	/// 제한된 대상 목록에 피해를 적용한다.
-	private static bool ApplyLimitedTargets(InGameCombatManager manager, CombatUnitEntry sourceEntry, UnitSpawnManager unitRoster, SkillTargetingSpec targetingSpec, int maxTargets, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, UnitCombatState source, string sourceSkillId, SkillExecutionState sourceRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SkillExecutionState snapshot, Vector2 center, UnitCombatState eventTarget, bool lockToEventTarget)
+	private static bool ApplyLimitedTargets(InGameCombatManager manager, CombatUnitEntry sourceEntry, UnitSpawnManager unitRoster, SkillTargetingSpec targetingSpec, int maxTargets, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, UnitCombatState source, string sourceSkillName, SkillExecutionState sourceRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SkillExecutionState snapshot, Vector2 center, UnitCombatState eventTarget, bool lockToEventTarget)
 	{
 		if (manager == null || sourceEntry == null || unitRoster == null || maxTargets <= 0)
 		{
@@ -249,7 +249,7 @@ public partial class SingleSkillActor
 			CombatUnitEntry unitEntry = list[i];
 			Vector2 hitPosition = ((unitEntry.Transform != null) ? ((Vector2)unitEntry.Transform.position) : center);
 			TargetDamageResolution damageResolution = TargetDamage(snapshot, damage, unitEntry.Model, critChanceBonus, isCoreHit: false);
-            InGameResourceChangeResult result2 = manager.ApplyDamage(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, critDamageBonus, sourceSkillId, false, damageResolution.IsExecute, null, damageResolution.FinalDamageMultiplier, isTrigger: snapshot.IsTrigger);
+            InGameResourceChangeResult result2 = manager.ApplyDamage(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, critDamageBonus, sourceSkillName, false, damageResolution.IsExecute, null, damageResolution.FinalDamageMultiplier, isTrigger: snapshot.IsTrigger);
 			int consumedStacks = ConsumePendingTargetStatusStacks(manager, unitEntry.Model, snapshot, damageResolution);
 			SkillExecution.HandleSingleKillRecovery(sourceRuntime, snapshot, result2, damageResolution.IsExecute);
 			TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry, result2, consumedStacks);
@@ -257,7 +257,7 @@ public partial class SingleSkillActor
 			{
 				StatusCombatRules.ApplyStatus(manager, unitEntry.Model, statusSpec, source);
 			}
-				ZoneSkillActor.PublishHitOutcome(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry, hitPosition, damageResolution.Damage);
+				ZoneSkillActor.PublishHitOutcome(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillName, unitEntry, hitPosition, damageResolution.Damage);
 			result = true;
 			num++;
 			if (num >= maxTargets)
@@ -271,7 +271,7 @@ public partial class SingleSkillActor
 	}
 
 	/// 범위 안 대상에 피해를 적용한다.
-	private static bool ApplyAreaTargets(InGameCombatManager manager, CombatUnitEntry sourceEntry, UnitSpawnManager unitRoster, SkillTargetingSpec targetingSpec, Vector2 center, float radius, bool coverAll, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, UnitCombatState source, string sourceSkillId, SkillExecutionState sourceRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SkillExecutionState snapshot, UnitCombatState eventTarget, bool lockToEventTarget)
+	private static bool ApplyAreaTargets(InGameCombatManager manager, CombatUnitEntry sourceEntry, UnitSpawnManager unitRoster, SkillTargetingSpec targetingSpec, Vector2 center, float radius, bool coverAll, float damage, DamageAttribute attribute, StatusApplicationSpec statusSpec, UnitCombatState source, string sourceSkillName, SkillExecutionState sourceRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SkillExecutionState snapshot, UnitCombatState eventTarget, bool lockToEventTarget)
 	{
 		if (manager == null || sourceEntry == null || unitRoster == null)
 		{
@@ -287,7 +287,7 @@ public partial class SingleSkillActor
 			}
 			Vector2 hitPosition = ((unitEntry.Transform != null) ? ((Vector2)unitEntry.Transform.position) : center);
 			TargetDamageResolution damageResolution = TargetDamage(snapshot, damage, unitEntry.Model, critChanceBonus, isCoreHit: false);
-            InGameResourceChangeResult result = manager.ApplyDamage(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, critDamageBonus, sourceSkillId, false, damageResolution.IsExecute, null, damageResolution.FinalDamageMultiplier, isTrigger: snapshot.IsTrigger);
+            InGameResourceChangeResult result = manager.ApplyDamage(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, critDamageBonus, sourceSkillName, false, damageResolution.IsExecute, null, damageResolution.FinalDamageMultiplier, isTrigger: snapshot.IsTrigger);
 			int consumedStacks = ConsumePendingTargetStatusStacks(manager, unitEntry.Model, snapshot, damageResolution);
 			SkillExecution.HandleSingleKillRecovery(sourceRuntime, snapshot, result, damageResolution.IsExecute);
 			TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry, result, consumedStacks);
@@ -295,7 +295,7 @@ public partial class SingleSkillActor
 			{
 				StatusCombatRules.ApplyStatus(manager, unitEntry.Model, statusSpec, source);
 			}
-				ZoneSkillActor.PublishHitOutcome(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry, hitPosition, damageResolution.Damage);
+				ZoneSkillActor.PublishHitOutcome(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillName, unitEntry, hitPosition, damageResolution.Damage);
 			TryApplyHitCountCooldownRefund(sourceRuntime, snapshot, 1);
 			TryExecuteOnHitCountEffects(manager, unitRoster, sourceEntry, sourceRuntime, snapshot, 1, center);
 			return true;
@@ -310,7 +310,7 @@ public partial class SingleSkillActor
 			{
 				Vector2 hitPosition2 = ((unitEntry2.Transform != null) ? ((Vector2)unitEntry2.Transform.position) : center);
 				TargetDamageResolution damageResolution2 = TargetDamage(snapshot, damage, unitEntry2.Model, critChanceBonus, isCoreHit: false);
-                InGameResourceChangeResult result3 = manager.ApplyDamage(unitEntry2.Model, damageResolution2.Damage, attribute, source, criticalAllowed, damageResolution2.CritChanceBonus, critDamageBonus, sourceSkillId, false, damageResolution2.IsExecute, null, damageResolution2.FinalDamageMultiplier, isTrigger: snapshot.IsTrigger);
+                InGameResourceChangeResult result3 = manager.ApplyDamage(unitEntry2.Model, damageResolution2.Damage, attribute, source, criticalAllowed, damageResolution2.CritChanceBonus, critDamageBonus, sourceSkillName, false, damageResolution2.IsExecute, null, damageResolution2.FinalDamageMultiplier, isTrigger: snapshot.IsTrigger);
 				int consumedStacks2 = ConsumePendingTargetStatusStacks(manager, unitEntry2.Model, snapshot, damageResolution2);
 				SkillExecution.HandleSingleKillRecovery(sourceRuntime, snapshot, result3, damageResolution2.IsExecute);
 				TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry2, result3, consumedStacks2);
@@ -318,7 +318,7 @@ public partial class SingleSkillActor
 				{
 					StatusCombatRules.ApplyStatus(manager, unitEntry2.Model, statusSpec, source);
 				}
-				ZoneSkillActor.PublishHitOutcome(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry2, hitPosition2, damageResolution2.Damage);
+				ZoneSkillActor.PublishHitOutcome(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillName, unitEntry2, hitPosition2, damageResolution2.Damage);
 				result2 = true;
 				num++;
 			}
@@ -356,7 +356,7 @@ public partial class SingleSkillActor
 	}
 
 	/// 핵심 적중의 추가 피해를 적용한다.
-	private static void TryApplyCoreOnHitAdditionalDamage(InGameCombatManager manager, SkillExecutionState snapshot, UnitCombatState source, string sourceSkillId, CombatUnitEntry target, float primaryDamage, bool isCoreHit)
+	private static void TryApplyCoreOnHitAdditionalDamage(InGameCombatManager manager, SkillExecutionState snapshot, UnitCombatState source, string sourceSkillName, CombatUnitEntry target, float primaryDamage, bool isCoreHit)
 	{
 		if (manager == null || source == null || target == null || !target.IsAlive || target.Model == null || primaryDamage <= 0f
 			|| !SkillExecutionRules.ResolveCoreAdditionalDamage(
@@ -378,7 +378,7 @@ public partial class SingleSkillActor
 			criticalAllowed: false,
 			0f,
 			0f,
-			sourceSkillId,
+			sourceSkillName,
 			true,
 			false,
 			null,
@@ -407,11 +407,11 @@ public partial class SingleSkillActor
 				SkillTriggerEvent.OnHitCount,
 				new SkillExecutionContext(
 					sourceEntry.Model,
-					sourceRuntime != null && !string.IsNullOrWhiteSpace(sourceRuntime.SkillId)
-						? sourceRuntime.SkillId
-						: !string.IsNullOrWhiteSpace(snapshot.PreparedSkillId)
-							? snapshot.PreparedSkillId
-							: snapshot.SkillId,
+					sourceRuntime != null && !string.IsNullOrWhiteSpace(sourceRuntime.SkillName)
+						? sourceRuntime.SkillName
+						: !string.IsNullOrWhiteSpace(snapshot.PreparedSkillName)
+							? snapshot.PreparedSkillName
+							: snapshot.SkillName,
 					null,
 					center,
 					0f,

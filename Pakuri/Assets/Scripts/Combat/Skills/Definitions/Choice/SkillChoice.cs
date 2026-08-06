@@ -24,10 +24,10 @@ namespace Pakuri.InGame
     [Serializable]
     public class SkillChoice
     {
-        public string ChoiceId;
-        public string MonsterId;
-        public string SkillId;
-        public string TargetSkillId;
+        public string ChoiceName;
+        public string MonsterName;
+        public string SkillName;
+        public string TargetSkillName;
         public SkillChoiceGroup ChoiceGroup;
         public string Title;
         public Sprite SkillIcon;

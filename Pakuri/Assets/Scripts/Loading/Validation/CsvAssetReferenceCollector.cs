@@ -83,52 +83,52 @@ namespace Pakuri.Data
 
             foreach (var artifact in model.Artifacts.Values)
             {
-                assets.AddSprite(artifact.IconPath, $"Artifact '{artifact.Id}' artifact_icon");
+                assets.AddSprite(artifact.IconPath, $"Artifact '{artifact.Name}' artifact_icon");
             }
 
             foreach (var synergy in model.ArtifactSynergies.Values)
             {
-                assets.AddSprite(synergy.IconPath, $"Artifact synergy '{synergy.Id}' Icon_Image");
+                assets.AddSprite(synergy.IconPath, $"Artifact synergy '{synergy.Name}' Icon_Image");
             }
 
             foreach (var skill in model.Skills.Values)
             {
-                assets.AddSprite(skill.SkillIconPath, $"Skill '{skill.Id}' skill_icon_path");
-                assets.AddPrefab(skill.SkillEffectPrefabPath, $"Skill '{skill.Id}' skill_effect_prefab_path");
-                assets.AddPrefab(skill.Status.StatusEffectPrefabPath, $"Skill '{skill.Id}' status_effect_prefab_path");
-                assets.AddSprite(skill.RuntimeVisualSpritePath, $"Skill '{skill.Id}' runtime_visual_sprite_path");
+                assets.AddSprite(skill.SkillIconPath, $"Skill '{skill.Name}' skill_icon_path");
+                assets.AddPrefab(skill.SkillEffectPrefabPath, $"Skill '{skill.Name}' skill_effect_prefab_path");
+                assets.AddPrefab(skill.Status.StatusEffectPrefabPath, $"Skill '{skill.Name}' status_effect_prefab_path");
+                assets.AddSprite(skill.RuntimeVisualSpritePath, $"Skill '{skill.Name}' runtime_visual_sprite_path");
                 assets.AddAnimatorController(
                     skill.RuntimeVisualAnimatorControllerPath,
-                    $"Skill '{skill.Id}' runtime_visual_animator_controller_path");
+                    $"Skill '{skill.Name}' runtime_visual_animator_controller_path");
                 assets.AddSprite(
                     skill.RuntimeImpactVisualSpritePath,
-                    $"Skill '{skill.Id}' runtime_impact_visual_sprite_path");
+                    $"Skill '{skill.Name}' runtime_impact_visual_sprite_path");
                 assets.AddAnimatorController(
                     skill.RuntimeImpactVisualAnimatorControllerPath,
-                    $"Skill '{skill.Id}' runtime_impact_visual_animator_controller_path");
+                    $"Skill '{skill.Name}' runtime_impact_visual_animator_controller_path");
             }
 
             foreach (var summon in model.Summons.Values)
             {
-                assets.AddSprite(summon.MonsterIconImagePath, $"Summon '{summon.Id}' MonsterIconImage");
-                assets.AddSprite(summon.ImagePath, $"Summon '{summon.Id}' Image");
+                assets.AddSprite(summon.MonsterIconImagePath, $"Summon '{summon.Name}' MonsterIconImage");
+                assets.AddSprite(summon.ImagePath, $"Summon '{summon.Name}' Image");
             }
 
             foreach (var skill in model.SummonSkills.Values)
             {
-                assets.AddSprite(skill.SkillIconPath, $"Summon skill '{skill.Id}' skill_icon_path");
-                assets.AddPrefab(skill.SkillEffectPrefabPath, $"Summon skill '{skill.Id}' skill_effect_prefab_path");
-                assets.AddPrefab(skill.Status.StatusEffectPrefabPath, $"Summon skill '{skill.Id}' status_effect_prefab_path");
-                assets.AddSprite(skill.RuntimeVisualSpritePath, $"Summon skill '{skill.Id}' runtime_visual_sprite_path");
+                assets.AddSprite(skill.SkillIconPath, $"Summon skill '{skill.Name}' skill_icon_path");
+                assets.AddPrefab(skill.SkillEffectPrefabPath, $"Summon skill '{skill.Name}' skill_effect_prefab_path");
+                assets.AddPrefab(skill.Status.StatusEffectPrefabPath, $"Summon skill '{skill.Name}' status_effect_prefab_path");
+                assets.AddSprite(skill.RuntimeVisualSpritePath, $"Summon skill '{skill.Name}' runtime_visual_sprite_path");
                 assets.AddAnimatorController(
                     skill.RuntimeVisualAnimatorControllerPath,
-                    $"Summon skill '{skill.Id}' runtime_visual_animator_controller_path");
+                    $"Summon skill '{skill.Name}' runtime_visual_animator_controller_path");
                 assets.AddSprite(
                     skill.RuntimeImpactVisualSpritePath,
-                    $"Summon skill '{skill.Id}' runtime_impact_visual_sprite_path");
+                    $"Summon skill '{skill.Name}' runtime_impact_visual_sprite_path");
                 assets.AddAnimatorController(
                     skill.RuntimeImpactVisualAnimatorControllerPath,
-                    $"Summon skill '{skill.Id}' runtime_impact_visual_animator_controller_path");
+                    $"Summon skill '{skill.Name}' runtime_impact_visual_animator_controller_path");
             }
 
             foreach (var enemySkill in model.EnemyBaseSkills.Values)
@@ -143,15 +143,15 @@ namespace Pakuri.Data
                     continue;
                 }
 
-                assets.AddSprite(skill.RuntimeVisualSpritePath, $"Enemy base skill '{skill.Id}' runtime_visual_sprite_path");
+                assets.AddSprite(skill.RuntimeVisualSpritePath, $"Enemy base skill '{skill.Name}' runtime_visual_sprite_path");
                 assets.AddAnimatorController(
                     skill.RuntimeVisualAnimatorControllerPath,
-                    $"Enemy base skill '{skill.Id}' runtime_visual_animator_controller_path");
+                    $"Enemy base skill '{skill.Name}' runtime_visual_animator_controller_path");
             }
 
             foreach (var choice in model.SkillChoices.Values)
             {
-                assets.AddSprite(choice.SkillIconPath, $"Skill choice '{choice.Id}' skill_icon_path");
+                assets.AddSprite(choice.SkillIconPath, $"Skill choice '{choice.Name}' skill_icon_path");
             }
 
             foreach (var param in model.SkillNodeParams)
@@ -164,34 +164,34 @@ namespace Pakuri.Data
                 if (param.ParamKey != null
                     && param.ParamKey.IndexOf("sprite", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
-                    assets.AddSprite(param.Value, $"Skill node param '{param.NodeId}.{param.ParamKey}'");
+                    assets.AddSprite(param.Value, $"Skill node param '{param.NodeName}.{param.ParamKey}'");
                 }
                 else if (param.ParamKey != null
                     && param.ParamKey.IndexOf("animator", StringComparison.OrdinalIgnoreCase) >= 0
                     && param.ParamKey.IndexOf("controller", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
-                    assets.AddAnimatorController(param.Value, $"Skill node param '{param.NodeId}.{param.ParamKey}'");
+                    assets.AddAnimatorController(param.Value, $"Skill node param '{param.NodeName}.{param.ParamKey}'");
                 }
                 else
                 {
-                    assets.AddPrefab(param.Value, $"Skill node param '{param.NodeId}.{param.ParamKey}'");
+                    assets.AddPrefab(param.Value, $"Skill node param '{param.NodeName}.{param.ParamKey}'");
                 }
             }
 
             foreach (var status in model.StatusEffects.Values)
             {
-                assets.AddPrefab(status.StatusEffectPrefabPath, $"Status effect '{status.Id}' status_effect_prefab_path");
+                assets.AddPrefab(status.StatusEffectPrefabPath, $"Status effect '{status.Name}' status_effect_prefab_path");
             }
 
             foreach (var monster in model.Monsters.Values)
             {
-                assets.AddSprite(monster.MonsterIconImagePath, $"Monster '{monster.Id}' MonsterIconImage");
-                assets.AddSprite(monster.ImagePath, $"Monster '{monster.Id}' Image");
+                assets.AddSprite(monster.MonsterIconImagePath, $"Monster '{monster.Name}' MonsterIconImage");
+                assets.AddSprite(monster.ImagePath, $"Monster '{monster.Name}' Image");
             }
 
             foreach (var enemy in model.Enemies.Values)
             {
-                assets.AddSprite(enemy.ImagePath, $"Enemy '{enemy.Id}' Image");
+                assets.AddSprite(enemy.ImagePath, $"Enemy '{enemy.Name}' Image");
             }
 
             return assets;

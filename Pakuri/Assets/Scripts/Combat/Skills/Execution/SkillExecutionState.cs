@@ -16,7 +16,7 @@ namespace Pakuri.InGame
 public class SkillExecutionState
 {
 
-	internal readonly HashSet<string> activeChoiceIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+	internal readonly HashSet<string> activeChoiceNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
 	internal readonly Dictionary<string, float> statusActionSpeedBonuses = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
 
@@ -52,7 +52,7 @@ public class SkillExecutionState
 
 	public SkillDefinition Source { get; }
 
-	public string SkillId { get; }
+	public string SkillName { get; }
 
 	public float DamageMultiplier { get; internal set; }
 
@@ -136,7 +136,7 @@ public class SkillExecutionState
 
 	public bool HasStatusActionSpeedBonus { get; internal set; }
 
-	public string StatusActionSpeedBonusStatusId { get; internal set; }
+	public string StatusActionSpeedBonusStatusName { get; internal set; }
 
 	public float StatusActionSpeedBonus { get; internal set; }
 
@@ -208,7 +208,7 @@ public class SkillExecutionState
 
 	public DamageAttribute OnHitChainDamageAttribute { get; internal set; }
 
-	public string ReloadReduceTargetSkillId { get; internal set; }
+	public string ReloadReduceTargetSkillName { get; internal set; }
 
 	public float ReloadReduceSecondsPerHit { get; internal set; }
 
@@ -226,7 +226,7 @@ public class SkillExecutionState
 
 	public DamageAttribute CoreOnHitAdditionalDamageAttribute { get; internal set; }
 
-	public string HitCountCooldownRefundTargetSkillId { get; internal set; }
+	public string HitCountCooldownRefundTargetSkillName { get; internal set; }
 
 	public int HitCountCooldownRefundMinTargets { get; internal set; }
 
@@ -264,7 +264,7 @@ public class SkillExecutionState
 
 	public GameObject SkillEffectPrefab { get; internal set; }
 
-	internal string PreparedSkillId { get; set; }
+	internal string PreparedSkillName { get; set; }
 
 	internal SkillTargetingSpec PreparedTargeting { get; set; }
 
@@ -486,10 +486,10 @@ public class SkillExecutionState
 	public SkillExecutionState(SkillDefinition source)
 	{
 		Source = source;
-		SkillId = string.Empty;
+		SkillName = string.Empty;
 		if (source != null)
 		{
-			SkillId = source.SkillId;
+			SkillName = source.SkillName;
 		}
 		DamageMultiplier = 1f;
 		ShieldAmountMultiplier = 1f;
@@ -542,7 +542,7 @@ public class SkillExecutionState
     internal float effectiveBurstInterval;
     internal float effectiveCooldownDuration;
     internal int queuedBurstShotsRemaining;
-    internal string consecutiveHitTargetUnitId;
+    internal string consecutiveHitTargetUnitName;
     internal int consecutiveHitRepeatCount;
 
     public bool IsCasting => CastRemaining > 0f;
@@ -584,32 +584,32 @@ public class SkillExecutionState
 	}
 
 	/// 현재 실행값에 반영된 학습 선택을 기록한다.
-	public void AddActiveChoiceId(string choiceId)
+	public void AddActiveChoiceName(string choiceName)
 	{
-		if (!string.IsNullOrWhiteSpace(choiceId))
+		if (!string.IsNullOrWhiteSpace(choiceName))
 		{
-			activeChoiceIds.Add(choiceId);
+			activeChoiceNames.Add(choiceName);
 		}
 	}
 
 	/// 현재 실행이 특정 학습 선택의 영향을 받는지 확인한다.
-	public bool HasActiveChoice(string choiceId)
+	public bool HasActiveChoice(string choiceName)
 	{
-		if (!string.IsNullOrWhiteSpace(choiceId))
+		if (!string.IsNullOrWhiteSpace(choiceName))
 		{
-			return activeChoiceIds.Contains(choiceId);
+			return activeChoiceNames.Contains(choiceName);
 		}
 		return false;
 	}
 
 	/// 상태 지속시간 보정량을 읽는다.
-	public float StatusDurationBonus(string statusId)
+	public float StatusDurationBonus(string statusName)
 	{
-		if (string.IsNullOrWhiteSpace(statusId))
+		if (string.IsNullOrWhiteSpace(statusName))
 		{
 			return 0f;
 		}
-		if (!statusDurationBonuses.TryGetValue(statusId, out var value))
+		if (!statusDurationBonuses.TryGetValue(statusName, out var value))
 		{
 			return 0f;
 		}
@@ -617,10 +617,10 @@ public class SkillExecutionState
 	}
 
 	/// 상태 행동 속도 보정량을 읽는다.
-	public float GetStatusActionSpeedBonus(string statusId)
+	public float GetStatusActionSpeedBonus(string statusName)
 	{
 		float num = StatusActionSpeedBonus;
-		if (!string.IsNullOrWhiteSpace(statusId) && statusActionSpeedBonuses.TryGetValue(statusId, out var value))
+		if (!string.IsNullOrWhiteSpace(statusName) && statusActionSpeedBonuses.TryGetValue(statusName, out var value))
 		{
 			num += value;
 		}
@@ -628,13 +628,13 @@ public class SkillExecutionState
 	}
 
 	/// 상태 최대 중첩 보정량을 읽는다.
-	public int StatusMaxStacksBonus(string statusId)
+	public int StatusMaxStacksBonus(string statusName)
 	{
-		if (string.IsNullOrWhiteSpace(statusId))
+		if (string.IsNullOrWhiteSpace(statusName))
 		{
 			return 0;
 		}
-		if (!statusMaxStacksBonuses.TryGetValue(statusId, out var value))
+		if (!statusMaxStacksBonuses.TryGetValue(statusName, out var value))
 		{
 			return 0;
 		}
@@ -642,13 +642,13 @@ public class SkillExecutionState
 	}
 
 	/// 대상 상태 중첩 피해 보정량을 읽는다.
-	public float TargetStatusStackDamageRateBonus(string statusId)
+	public float TargetStatusStackDamageRateBonus(string statusName)
 	{
-		if (string.IsNullOrWhiteSpace(statusId))
+		if (string.IsNullOrWhiteSpace(statusName))
 		{
 			return 0f;
 		}
-		if (!targetStatusStackDamageRateBonuses.TryGetValue(statusId, out var value))
+		if (!targetStatusStackDamageRateBonuses.TryGetValue(statusName, out var value))
 		{
 			return 0f;
 		}
@@ -656,13 +656,13 @@ public class SkillExecutionState
 	}
 
 	/// 반응 발동 확률 보정량을 읽는다.
-	public float TriggerProcChanceBonus(string triggerId)
+	public float TriggerProcChanceBonus(string triggerName)
 	{
-		if (string.IsNullOrWhiteSpace(triggerId))
+		if (string.IsNullOrWhiteSpace(triggerName))
 		{
 			return 0f;
 		}
-		if (!triggerProcChanceBonuses.TryGetValue(triggerId, out var value))
+		if (!triggerProcChanceBonuses.TryGetValue(triggerName, out var value))
 		{
 			return 0f;
 		}

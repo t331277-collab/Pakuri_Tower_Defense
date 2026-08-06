@@ -9,7 +9,7 @@ namespace Pakuri.InGame
     public class SkillNode
     {
         private readonly object operation;
-        public string TargetSkillId { get; internal set; }
+        public string TargetSkillName { get; internal set; }
 
         /// 하나의 규칙을 대상 범위와 함께 다룰 수 있게 감싼다.
         private SkillNode(object operation)
@@ -30,9 +30,9 @@ namespace Pakuri.InGame
         }
 
         /// 특정 스킬에만 적용할 규칙 노드를 만든다.
-        public static SkillNode FromOperation<T>(T op, string targetSkillId) where T : struct
+        public static SkillNode FromOperation<T>(T op, string targetSkillName) where T : struct
         {
-            return new SkillNode(op) { TargetSkillId = targetSkillId ?? string.Empty };
+            return new SkillNode(op) { TargetSkillName = targetSkillName ?? string.Empty };
         }
     }
 }

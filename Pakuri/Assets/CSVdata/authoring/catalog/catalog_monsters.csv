@@ -1,5 +1,5 @@
-id,monster_id,sort_order
-id,string,int
+name,monster_name,sort_order
+name,string,int
 catalog-monster-ariel,ariel,0
 catalog-monster-eve,eve,1
 catalog-monster-rin,rin,2

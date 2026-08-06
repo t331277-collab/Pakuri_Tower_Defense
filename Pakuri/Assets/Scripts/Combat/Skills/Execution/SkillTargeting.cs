@@ -608,13 +608,13 @@ namespace Pakuri.InGame
             }
 
             centers.Clear();
-            var claimedUnitIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var claimedUnitNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             for (var i = 0; i < orderedTargets.Count && centers.Count < deploymentCount; i++)
             {
                 var target = orderedTargets[i];
                 var identity = target != null && target.Model != null ? target.Model.Identity : null;
-                var unitId = identity != null ? identity.UnitId : string.Empty;
-                if (!string.IsNullOrWhiteSpace(unitId) && !claimedUnitIds.Add(unitId))
+                var unitName = identity != null ? identity.UnitName : string.Empty;
+                if (!string.IsNullOrWhiteSpace(unitName) && !claimedUnitNames.Add(unitName))
                 {
                     continue;
                 }
@@ -816,10 +816,10 @@ namespace Pakuri.InGame
                 hitModel = hitTarget.Model;
             }
 
-            var hitId = string.Empty;
+            var hitName = string.Empty;
             if (hitModel != null && hitModel.Identity != null)
             {
-                hitId = hitModel.Identity.UnitId;
+                hitName = hitModel.Identity.UnitName;
             }
 
             var sourceSide = UnitSide.Player;
@@ -851,12 +851,12 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                var candidateId = string.Empty;
+                var candidateName = string.Empty;
                 if (candidate.Model.Identity != null)
                 {
-                    candidateId = candidate.Model.Identity.UnitId;
+                    candidateName = candidate.Model.Identity.UnitName;
                 }
-                if (!string.IsNullOrWhiteSpace(hitId) && candidateId == hitId)
+                if (!string.IsNullOrWhiteSpace(hitName) && candidateName == hitName)
                 {
                     continue;
                 }

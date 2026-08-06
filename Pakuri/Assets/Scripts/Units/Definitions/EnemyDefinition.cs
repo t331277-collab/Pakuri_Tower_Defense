@@ -15,7 +15,7 @@ namespace Pakuri.Data
     public class EnemyDefinition : ScriptableObject
     {
 
-        public string EnemyId;
+        public string EnemyName;
         public string DisplayName;
         public Sprite Image;
         public DamageAttribute Attribute;

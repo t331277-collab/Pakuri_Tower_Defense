@@ -118,7 +118,7 @@ namespace Pakuri.InGame
             private Image monsterImage;
             private ActiveSkillSlotView[] activeSlots = new ActiveSkillSlotView[MaxVisibleActiveSlots];
 
-            private string lastMonsterId;
+            private string lastMonsterName;
 
             public void SetRuntime(UnitCombatState model)
             {
@@ -127,12 +127,12 @@ namespace Pakuri.InGame
                     return;
                 }
 
-                var monsterId = string.Empty;
+                var monsterName = string.Empty;
                 if (model != null)
                 {
-                    monsterId = model.Identity.DefinitionId;
+                    monsterName = model.Identity.DefinitionName;
                 }
-                if (string.IsNullOrWhiteSpace(monsterId))
+                if (string.IsNullOrWhiteSpace(monsterName))
                 {
                     SetVisible(false);
                     SetSlotsActive(0);
@@ -140,19 +140,19 @@ namespace Pakuri.InGame
                 }
 
                 SetVisible(true);
-                RefreshMonsterImage(monsterId);
+                RefreshMonsterImage(monsterName);
                 RefreshActiveSlots(model);
             }
 
-            private void RefreshMonsterImage(string monsterId)
+            private void RefreshMonsterImage(string monsterName)
             {
-                if (monsterImage == null || string.Equals(lastMonsterId, monsterId, System.StringComparison.OrdinalIgnoreCase))
+                if (monsterImage == null || string.Equals(lastMonsterName, monsterName, System.StringComparison.OrdinalIgnoreCase))
                 {
                     return;
                 }
 
-                lastMonsterId = monsterId;
-                var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId);
+                lastMonsterName = monsterName;
+                var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterName);
                 if (monster != null && monster.MonsterIconImage != null)
                 {
                     monsterImage.sprite = monster.MonsterIconImage;

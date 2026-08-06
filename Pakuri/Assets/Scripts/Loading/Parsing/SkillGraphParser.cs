@@ -35,46 +35,46 @@ namespace Pakuri.Data
 			Bool,
 			Enum,
 			AssetPath,
-			SkillId,
-			StatusId,
-			ChoiceId
+			SkillName,
+			StatusName,
+			ChoiceName
 		}
 
 		/// SkillNodeRow에 해당하는 CSV 한 행을 표현한다.
 		internal class SkillNodeRow
 		{
-			public string Id;
+			public string Name;
 
-			public string MonsterId;
+			public string MonsterName;
 
 			public SkillNodeOwnerKind OwnerKind;
 
-			public string OwnerId;
+			public string OwnerName;
 
-			public string TargetSkillId;
+			public string TargetSkillName;
 
-			public string HandlerId;
+			public string HandlerName;
 
 			public int SortOrder;
 
 			public bool EnabledByDefault;
 
-			public string RequiresActiveChoiceId;
+			public string RequiresActiveChoiceName;
 
-			public string ExcludesActiveChoiceId;
+			public string ExcludesActiveChoiceName;
 
-			public string RequiresPassiveSkillId;
+			public string RequiresPassiveSkillName;
 
-			public string ExcludesPassiveSkillId;
+			public string ExcludesPassiveSkillName;
 
 		}
 
 		/// SkillNodeParamRow에 해당하는 CSV 한 행을 표현한다.
 		internal class SkillNodeParamRow
 		{
-			public string NodeId;
+			public string NodeName;
 
-			public string MonsterId;
+			public string MonsterName;
 
 			public string ParamKey;
 
@@ -86,16 +86,16 @@ namespace Pakuri.Data
 		/// SkillNodeTypeRow에 해당하는 CSV 한 행을 표현한다.
 		internal class SkillNodeTypeRow
 		{
-			public string Id;
+			public string Name;
 
-			public string HandlerId;
+			public string HandlerName;
 
 		}
 
 		/// SkillNodeTypeParamRow에 해당하는 CSV 한 행을 표현한다.
 		internal class SkillNodeTypeParamRow
 		{
-			public string NodeTypeId;
+			public string NodeTypeName;
 
 			public int ParamOrder;
 
@@ -111,29 +111,29 @@ namespace Pakuri.Data
 		/// SkillGraphNodeRow에 해당하는 CSV 한 행을 표현한다.
 		internal class SkillGraphNodeRow
 		{
-			public string MonsterId;
+			public string MonsterName;
 
 			public SkillNodeOwnerKind OwnerKind;
 
-			public string OwnerId;
+			public string OwnerName;
 
-			public string TargetSkillId;
+			public string TargetSkillName;
 
 			public int NodeOrder;
 
-			public string NodeTypeId;
+			public string NodeTypeName;
 
 			public readonly string[] Args = new string[12];
 
-			public string ExcludesActiveChoiceId;
+			public string ExcludesActiveChoiceName;
 		}
 
 		internal static SkillNodeTypeRow ParseSkillNodeTypeRow(CsvParser.CsvRecord record)
 		{
 			return new SkillNodeTypeRow
 			{
-				Id = record.ReadRequiredString("node_type_id"),
-				HandlerId = record.ReadRequiredString("handler_id")
+				Name = record.ReadRequiredString("node_type_name"),
+				HandlerName = record.ReadRequiredString("handler_name")
 			};
 		}
 
@@ -141,7 +141,7 @@ namespace Pakuri.Data
 		{
 			return new SkillNodeTypeParamRow
 			{
-				NodeTypeId = record.ReadRequiredString("node_type_id"),
+				NodeTypeName = record.ReadRequiredString("node_type_name"),
 				ParamOrder = record.ReadInt("param_order"),
 				ParamKey = record.ReadRequiredString("param_key"),
 				ValueType = ParseSkillNodeValueType(record.ReadRequiredString("value_type"), record),
@@ -152,17 +152,17 @@ namespace Pakuri.Data
 
 		internal static SkillGraphNodeRow ParseSkillGraphNodeRow(CsvParser.CsvRecord record)
 		{
-			var monsterId = record.ReadRequiredString("monster_id");
-			var ownerId = record.ReadRequiredString("owner_id");
+			var monsterName = record.ReadRequiredString("monster_name");
+			var ownerName = record.ReadRequiredString("owner_name");
 			SkillGraphNodeRow skillGraphNodeRow = new SkillGraphNodeRow
 			{
-				MonsterId = monsterId,
+				MonsterName = monsterName,
 				OwnerKind = record.ReadEnum<SkillNodeOwnerKind>("owner_kind"),
-				OwnerId = NormalizeOwnerId(monsterId, ownerId),
-				TargetSkillId = CsvRowParser.ReadOptionalStringIfColumnExists(record, "target_skill_id"),
+				OwnerName = NormalizeOwnerName(monsterName, ownerName),
+				TargetSkillName = CsvRowParser.ReadOptionalStringIfColumnExists(record, "target_skill_name"),
 				NodeOrder = record.ReadInt("node_order"),
-				NodeTypeId = record.ReadRequiredString("node_type_id"),
-				ExcludesActiveChoiceId = CsvRowParser.ReadOptionalStringIfColumnExists(record, "excludes_active_choice_id")
+				NodeTypeName = record.ReadRequiredString("node_type_name"),
+				ExcludesActiveChoiceName = CsvRowParser.ReadOptionalStringIfColumnExists(record, "excludes_active_choice_name")
 			};
 			for (int i = 0; i < skillGraphNodeRow.Args.Length; i++)
 			{
@@ -171,20 +171,20 @@ namespace Pakuri.Data
 			return skillGraphNodeRow;
 		}
 
-		/// 그래프 CSV의 짧은 owner_id를 저장소의 전역 ID로 복원한다.
-		internal static string NormalizeOwnerId(string monsterId, string ownerId)
+		/// 그래프 CSV의 짧은 owner_name를 저장소의 전역 Name로 복원한다.
+		internal static string NormalizeOwnerName(string monsterName, string ownerName)
 		{
-			if (string.IsNullOrWhiteSpace(monsterId) || string.IsNullOrWhiteSpace(ownerId))
+			if (string.IsNullOrWhiteSpace(monsterName) || string.IsNullOrWhiteSpace(ownerName))
 			{
-				return ownerId;
+				return ownerName;
 			}
 
-			var normalizedMonsterId = monsterId.Trim();
-			var normalizedOwnerId = ownerId.Trim();
-			var prefix = normalizedMonsterId + "-";
-			return normalizedOwnerId.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
-				? normalizedOwnerId
-				: prefix + normalizedOwnerId;
+			var normalizedMonsterName = monsterName.Trim();
+			var normalizedOwnerName = ownerName.Trim();
+			var prefix = normalizedMonsterName + "-";
+			return normalizedOwnerName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+				? normalizedOwnerName
+				: prefix + normalizedOwnerName;
 		}
 
 		internal static SkillNodeValueType ParseSkillNodeValueType(string rawValue, CsvParser.CsvRecord record)
@@ -197,9 +197,9 @@ namespace Pakuri.Data
 				"bool" => SkillNodeValueType.Bool,
 				"enum" => SkillNodeValueType.Enum,
 				"asset_path" => SkillNodeValueType.AssetPath,
-				"skill_id" => SkillNodeValueType.SkillId,
-				"status_id" => SkillNodeValueType.StatusId,
-				"choice_id" => SkillNodeValueType.ChoiceId,
+				"skill_name" => SkillNodeValueType.SkillName,
+				"status_name" => SkillNodeValueType.StatusName,
+				"choice_name" => SkillNodeValueType.ChoiceName,
 				_ => throw new CsvParser.CsvFatalException($"CSV row {record.RowNumber} in '{record.TableName}' has unsupported value_type '{rawValue}'."),
 			};
 		}
@@ -214,20 +214,20 @@ namespace Pakuri.Data
 			Dictionary<string, HashSet<string>> dictionary2 = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
 			foreach (SkillNodeParamRow skillNodeParam in model.SkillNodeParams)
 			{
-				if (!model.SkillNodes.ContainsKey(skillNodeParam.NodeId))
+				if (!model.SkillNodes.ContainsKey(skillNodeParam.NodeName))
 				{
-					errors.Add("Skill node param '" + skillNodeParam.ParamKey + "' references unknown node_id '" + skillNodeParam.NodeId + "'.");
+					errors.Add("Skill node param '" + skillNodeParam.ParamKey + "' references unknown node_name '" + skillNodeParam.NodeName + "'.");
 					continue;
 				}
-				if (!dictionary.TryGetValue(skillNodeParam.NodeId, out var value))
+				if (!dictionary.TryGetValue(skillNodeParam.NodeName, out var value))
 				{
 					value = new List<SkillNodeParamRow>();
-					dictionary.Add(skillNodeParam.NodeId, value);
-					dictionary2.Add(skillNodeParam.NodeId, new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+					dictionary.Add(skillNodeParam.NodeName, value);
+					dictionary2.Add(skillNodeParam.NodeName, new HashSet<string>(StringComparer.OrdinalIgnoreCase));
 				}
-				if (!dictionary2[skillNodeParam.NodeId].Add(skillNodeParam.ParamKey))
+				if (!dictionary2[skillNodeParam.NodeName].Add(skillNodeParam.ParamKey))
 				{
-					errors.Add("Skill node '" + skillNodeParam.NodeId + "' has duplicate param '" + skillNodeParam.ParamKey + "'.");
+					errors.Add("Skill node '" + skillNodeParam.NodeName + "' has duplicate param '" + skillNodeParam.ParamKey + "'.");
 				}
 				value.Add(skillNodeParam);
 				ValidateSkillNodeParamValue(skillNodeParam, model, assetCatalog, errors);
@@ -244,80 +244,80 @@ namespace Pakuri.Data
 			switch (node.OwnerKind)
 			{
 			case SkillNodeOwnerKind.Skill:
-				if (!model.Skills.ContainsKey(node.OwnerId)
-					&& !model.SummonSkills.ContainsKey(node.OwnerId))
+				if (!model.Skills.ContainsKey(node.OwnerName)
+					&& !model.SummonSkills.ContainsKey(node.OwnerName))
 				{
-					errors.Add("Skill node '" + node.Id + "' references unknown owner skill '" + node.OwnerId + "'.");
+					errors.Add("Skill node '" + node.Name + "' references unknown owner skill '" + node.OwnerName + "'.");
 				}
 				break;
 			case SkillNodeOwnerKind.Passive:
 			{
-				if (!model.Skills.TryGetValue(node.OwnerId, out var value) || value.SkillKind != PakuriCsvSkillKind.Passive)
+				if (!model.Skills.TryGetValue(node.OwnerName, out var value) || value.SkillKind != PakuriCsvSkillKind.Passive)
 				{
-					errors.Add("Skill node '" + node.Id + "' references unknown passive owner '" + node.OwnerId + "'.");
+					errors.Add("Skill node '" + node.Name + "' references unknown passive owner '" + node.OwnerName + "'.");
 				}
 				break;
 			}
 			case SkillNodeOwnerKind.Base:
-				if (!model.SkillTriggers.TryGetValue(node.OwnerId, out var baseTrigger)
-					|| !string.IsNullOrWhiteSpace(baseTrigger.RequiresActiveChoiceId)
-					|| !model.Skills.TryGetValue(baseTrigger.SourceSkillId, out var baseSkill)
+				if (!model.SkillTriggers.TryGetValue(node.OwnerName, out var baseTrigger)
+					|| !string.IsNullOrWhiteSpace(baseTrigger.RequiresActiveChoiceName)
+					|| !model.Skills.TryGetValue(baseTrigger.SourceSkillName, out var baseSkill)
 					|| baseSkill.SkillKind != PakuriCsvSkillKind.Passive)
 				{
-					errors.Add("Skill node '" + node.Id + "' references unknown passive Base owner '" + node.OwnerId + "'.");
+					errors.Add("Skill node '" + node.Name + "' references unknown passive Base owner '" + node.OwnerName + "'.");
 				}
 				break;
 			case SkillNodeOwnerKind.Choice:
-				if (!model.SkillChoices.ContainsKey(node.OwnerId))
+				if (!model.SkillChoices.ContainsKey(node.OwnerName))
 				{
-					errors.Add("Skill node '" + node.Id + "' references unknown choice owner '" + node.OwnerId + "'.");
+					errors.Add("Skill node '" + node.Name + "' references unknown choice owner '" + node.OwnerName + "'.");
 				}
 				break;
 			case SkillNodeOwnerKind.Effect:
-				if (!IsArtifactEffectOwner(model, node.OwnerId, node.MonsterId))
+				if (!IsArtifactEffectOwner(model, node.OwnerName, node.MonsterName))
 				{
-					errors.Add("Skill node '" + node.Id + "' references unknown artifact effect owner '" + node.OwnerId + "'.");
+					errors.Add("Skill node '" + node.Name + "' references unknown artifact effect owner '" + node.OwnerName + "'.");
 				}
 				break;
 			case SkillNodeOwnerKind.Trigger:
-				if (!model.SkillTriggers.ContainsKey(node.OwnerId))
+				if (!model.SkillTriggers.ContainsKey(node.OwnerName))
 				{
-					errors.Add("Skill node '" + node.Id + "' references unknown trigger owner '" + node.OwnerId + "'.");
+					errors.Add("Skill node '" + node.Name + "' references unknown trigger owner '" + node.OwnerName + "'.");
 				}
 				break;
 			default:
-				errors.Add($"Skill node '{node.Id}' uses unsupported owner_kind '{node.OwnerKind}'.");
+				errors.Add($"Skill node '{node.Name}' uses unsupported owner_kind '{node.OwnerKind}'.");
 				break;
 			}
-			if (!string.IsNullOrWhiteSpace(node.TargetSkillId)
-				&& !model.Skills.ContainsKey(node.TargetSkillId)
-				&& !model.SummonSkills.ContainsKey(node.TargetSkillId))
+			if (!string.IsNullOrWhiteSpace(node.TargetSkillName)
+				&& !model.Skills.ContainsKey(node.TargetSkillName)
+				&& !model.SummonSkills.ContainsKey(node.TargetSkillName))
 			{
-				errors.Add("Skill node '" + node.Id + "' references unknown target_skill_id '" + node.TargetSkillId + "'.");
+				errors.Add("Skill node '" + node.Name + "' references unknown target_skill_name '" + node.TargetSkillName + "'.");
 			}
 		}
 
 		internal static void ValidateSkillNodeGateReferences(SkillNodeRow node, CsvSourceModel.SourceModel model, List<string> errors)
 		{
-			ValidateChoiceGate(node.Id, "requires_active_choice_id", node.RequiresActiveChoiceId, model, errors);
-			ValidateChoiceGate(node.Id, "excludes_active_choice_id", node.ExcludesActiveChoiceId, model, errors);
-			ValidatePassiveGate(node.Id, "requires_passive_skill_id", node.RequiresPassiveSkillId, model, errors);
-			ValidatePassiveGate(node.Id, "excludes_passive_skill_id", node.ExcludesPassiveSkillId, model, errors);
+			ValidateChoiceGate(node.Name, "requires_active_choice_name", node.RequiresActiveChoiceName, model, errors);
+			ValidateChoiceGate(node.Name, "excludes_active_choice_name", node.ExcludesActiveChoiceName, model, errors);
+			ValidatePassiveGate(node.Name, "requires_passive_skill_name", node.RequiresPassiveSkillName, model, errors);
+			ValidatePassiveGate(node.Name, "excludes_passive_skill_name", node.ExcludesPassiveSkillName, model, errors);
 		}
 
-		internal static void ValidateChoiceGate(string nodeId, string columnName, string choiceId, CsvSourceModel.SourceModel model, List<string> errors)
+		internal static void ValidateChoiceGate(string nodeName, string columnName, string choiceName, CsvSourceModel.SourceModel model, List<string> errors)
 		{
-			if (!string.IsNullOrWhiteSpace(choiceId) && !model.SkillChoices.ContainsKey(choiceId))
+			if (!string.IsNullOrWhiteSpace(choiceName) && !model.SkillChoices.ContainsKey(choiceName))
 			{
-				errors.Add("Skill node '" + nodeId + "' " + columnName + " references unknown choice '" + choiceId + "'.");
+				errors.Add("Skill node '" + nodeName + "' " + columnName + " references unknown choice '" + choiceName + "'.");
 			}
 		}
 
-		internal static void ValidatePassiveGate(string nodeId, string columnName, string passiveId, CsvSourceModel.SourceModel model, List<string> errors)
+		internal static void ValidatePassiveGate(string nodeName, string columnName, string passiveName, CsvSourceModel.SourceModel model, List<string> errors)
 		{
-			if (!string.IsNullOrWhiteSpace(passiveId) && (!model.Skills.TryGetValue(passiveId, out var value) || value.SkillKind != PakuriCsvSkillKind.Passive))
+			if (!string.IsNullOrWhiteSpace(passiveName) && (!model.Skills.TryGetValue(passiveName, out var value) || value.SkillKind != PakuriCsvSkillKind.Passive))
 			{
-				errors.Add("Skill node '" + nodeId + "' " + columnName + " references unknown passive '" + passiveId + "'.");
+				errors.Add("Skill node '" + nodeName + "' " + columnName + " references unknown passive '" + passiveName + "'.");
 			}
 		}
 
@@ -333,14 +333,14 @@ namespace Pakuri.Data
 			case SkillNodeValueType.String:
 				if (string.Equals(param.ParamKey, "status_ids", StringComparison.OrdinalIgnoreCase))
 				{
-					CsvDataValidator.ValidateStatusIdList(param.NodeId, text, model, errors);
+					CsvDataValidator.ValidateStatusIdList(param.NodeName, text, model, errors);
 				}
 				break;
 			case SkillNodeValueType.Int:
 			{
 				if (!int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var _))
 				{
-					errors.Add("Skill node param '" + param.NodeId + "." + param.ParamKey + "' value '" + param.Value + "' is not a valid int.");
+					errors.Add("Skill node param '" + param.NodeName + "." + param.ParamKey + "' value '" + param.Value + "' is not a valid int.");
 				}
 				break;
 			}
@@ -348,7 +348,7 @@ namespace Pakuri.Data
 			{
 				if (!float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var _))
 				{
-					errors.Add("Skill node param '" + param.NodeId + "." + param.ParamKey + "' value '" + param.Value + "' is not a valid float.");
+					errors.Add("Skill node param '" + param.NodeName + "." + param.ParamKey + "' value '" + param.Value + "' is not a valid float.");
 				}
 				break;
 			}
@@ -356,7 +356,7 @@ namespace Pakuri.Data
 			{
 				if (!bool.TryParse(text, out var _))
 				{
-					errors.Add("Skill node param '" + param.NodeId + "." + param.ParamKey + "' value '" + param.Value + "' is not a valid bool.");
+					errors.Add("Skill node param '" + param.NodeName + "." + param.ParamKey + "' value '" + param.Value + "' is not a valid bool.");
 				}
 				break;
 			}
@@ -366,32 +366,32 @@ namespace Pakuri.Data
 			case SkillNodeValueType.AssetPath:
 				if (string.IsNullOrWhiteSpace(text) || assetCatalog == null || (!assetCatalog.HasSprite(text) && !assetCatalog.HasPrefab(text) && !assetCatalog.HasAnimatorController(text)))
 				{
-					errors.Add("Skill node param '" + param.NodeId + "." + param.ParamKey + "' references unknown asset path '" + param.Value + "'.");
+					errors.Add("Skill node param '" + param.NodeName + "." + param.ParamKey + "' references unknown asset path '" + param.Value + "'.");
 				}
 				break;
-			case SkillNodeValueType.SkillId:
+			case SkillNodeValueType.SkillName:
 				if (string.IsNullOrWhiteSpace(text)
 					|| (!model.Skills.ContainsKey(text) && !model.SummonSkills.ContainsKey(text)))
 				{
-					errors.Add("Skill node param '" + param.NodeId + "." + param.ParamKey + "' references unknown skill '" + param.Value + "'.");
+					errors.Add("Skill node param '" + param.NodeName + "." + param.ParamKey + "' references unknown skill '" + param.Value + "'.");
 				}
 				break;
-			case SkillNodeValueType.StatusId:
+			case SkillNodeValueType.StatusName:
 			{
 				if (string.IsNullOrWhiteSpace(text) || !model.StatusEffects.ContainsKey(text))
 				{
-					errors.Add("Skill node param '" + param.NodeId + "." + param.ParamKey + "' references unknown status '" + param.Value + "'.");
+					errors.Add("Skill node param '" + param.NodeName + "." + param.ParamKey + "' references unknown status '" + param.Value + "'.");
 				}
 				break;
 			}
-			case SkillNodeValueType.ChoiceId:
+			case SkillNodeValueType.ChoiceName:
 				if (string.IsNullOrWhiteSpace(text) || !model.SkillChoices.ContainsKey(text))
 				{
-					errors.Add("Skill node param '" + param.NodeId + "." + param.ParamKey + "' references unknown choice '" + param.Value + "'.");
+					errors.Add("Skill node param '" + param.NodeName + "." + param.ParamKey + "' references unknown choice '" + param.Value + "'.");
 				}
 				break;
 			default:
-				errors.Add($"Skill node param '{param.NodeId}.{param.ParamKey}' has unsupported value_type '{param.ValueType}'.");
+				errors.Add($"Skill node param '{param.NodeName}.{param.ParamKey}' has unsupported value_type '{param.ValueType}'.");
 				break;
 			}
 		}
@@ -400,7 +400,7 @@ namespace Pakuri.Data
 		{
 			if (string.IsNullOrWhiteSpace(value))
 			{
-				errors.Add("Skill node param '" + param.NodeId + "." + param.ParamKey + "' requires a non-empty enum value.");
+				errors.Add("Skill node param '" + param.NodeName + "." + param.ParamKey + "' requires a non-empty enum value.");
 			}
 		}
 
@@ -427,47 +427,47 @@ namespace Pakuri.Data
 					list.Add($"Skill graph '{text}' has duplicate node_order '{skillGraphNodeRow.NodeOrder}'.");
 					continue;
 				}
-				if (!model.Monsters.ContainsKey(skillGraphNodeRow.MonsterId)
-					&& !model.Summons.ContainsKey(skillGraphNodeRow.MonsterId)
+				if (!model.Monsters.ContainsKey(skillGraphNodeRow.MonsterName)
+					&& !model.Summons.ContainsKey(skillGraphNodeRow.MonsterName)
 					&& !IsArtifactGraphOwner(model, skillGraphNodeRow))
 				{
-					list.Add("Skill graph '" + text + "' references unknown monster '" + skillGraphNodeRow.MonsterId + "'.");
+					list.Add("Skill graph '" + text + "' references unknown monster '" + skillGraphNodeRow.MonsterName + "'.");
 				}
-				if (!model.SkillNodeTypes.TryGetValue(skillGraphNodeRow.NodeTypeId, out var value))
+				if (!model.SkillNodeTypes.TryGetValue(skillGraphNodeRow.NodeTypeName, out var value))
 				{
-					list.Add("Skill graph node '" + text2 + "' references unknown node_type_id '" + skillGraphNodeRow.NodeTypeId + "'.");
+					list.Add("Skill graph node '" + text2 + "' references unknown node_type_name '" + skillGraphNodeRow.NodeTypeName + "'.");
 					continue;
 				}
-				string text3 = ResolveSkillGraphTargetSkillId(model, skillGraphNodeRow, list);
+				string text3 = ResolveSkillGraphTargetSkillName(model, skillGraphNodeRow, list);
 				if (!IsArtifactGraphOwner(model, skillGraphNodeRow)
 					&& !string.IsNullOrWhiteSpace(text3)
 					&& TryGetSkill(model, text3, out var value3)
-					&& !string.Equals(value3.MonsterId, skillGraphNodeRow.MonsterId, StringComparison.OrdinalIgnoreCase))
+					&& !string.Equals(value3.MonsterName, skillGraphNodeRow.MonsterName, StringComparison.OrdinalIgnoreCase))
 				{
-					list.Add("Skill graph '" + text + "' target skill '" + text3 + "' belongs to '" + value3.MonsterId + "', not '" + skillGraphNodeRow.MonsterId + "'.");
+					list.Add("Skill graph '" + text + "' target skill '" + text3 + "' belongs to '" + value3.MonsterName + "', not '" + skillGraphNodeRow.MonsterName + "'.");
 				}
-				string text4 = BuildGeneratedSkillGraphNodeId(skillGraphNodeRow);
+				string text4 = BuildGeneratedSkillGraphNodeName(skillGraphNodeRow);
 				if (!hashSet2.Add(text4) || model.SkillNodes.ContainsKey(text4))
 				{
-					list.Add("Skill graph generated duplicate node id '" + text4 + "'.");
+					list.Add("Skill graph generated duplicate node Name '" + text4 + "'.");
 					continue;
 				}
 				list2.Add(new SkillNodeRow
 				{
-					Id = text4,
-					MonsterId = skillGraphNodeRow.MonsterId,
+					Name = text4,
+					MonsterName = skillGraphNodeRow.MonsterName,
 					OwnerKind = skillGraphNodeRow.OwnerKind,
-					OwnerId = skillGraphNodeRow.OwnerId,
-					TargetSkillId = text3,
-					HandlerId = value.HandlerId,
+					OwnerName = skillGraphNodeRow.OwnerName,
+					TargetSkillName = text3,
+					HandlerName = value.HandlerName,
 					SortOrder = skillGraphNodeRow.NodeOrder,
 					EnabledByDefault = true,
-					RequiresActiveChoiceId = string.Empty,
-					ExcludesActiveChoiceId = skillGraphNodeRow.ExcludesActiveChoiceId,
-					RequiresPassiveSkillId = string.Empty,
-					ExcludesPassiveSkillId = string.Empty
+					RequiresActiveChoiceName = string.Empty,
+					ExcludesActiveChoiceName = skillGraphNodeRow.ExcludesActiveChoiceName,
+					RequiresPassiveSkillName = string.Empty,
+					ExcludesPassiveSkillName = string.Empty
 				});
-				dictionary.TryGetValue(skillGraphNodeRow.NodeTypeId, out var value5);
+				dictionary.TryGetValue(skillGraphNodeRow.NodeTypeName, out var value5);
 				if (value5 == null)
 				{
 					value5 = new List<SkillNodeTypeParamRow>();
@@ -489,8 +489,8 @@ namespace Pakuri.Data
 					ValidateSkillGraphAllowedValue(text2, skillNodeTypeParamRow, value6, list);
 					list3.Add(new SkillNodeParamRow
 					{
-						NodeId = text4,
-						MonsterId = skillGraphNodeRow.MonsterId,
+						NodeName = text4,
+						MonsterName = skillGraphNodeRow.MonsterName,
 						ParamKey = skillNodeTypeParamRow.ParamKey,
 						ValueType = skillNodeTypeParamRow.ValueType,
 						Value = value6
@@ -500,7 +500,7 @@ namespace Pakuri.Data
 				{
 					if (!string.IsNullOrWhiteSpace(skillGraphNodeRow.Args[l]) && !hashSet4.Contains(l + 1))
 					{
-						list.Add($"Skill graph node '{text2}' sets arg_{l + 1}, but node type '{skillGraphNodeRow.NodeTypeId}' has no matching param definition.");
+						list.Add($"Skill graph node '{text2}' sets arg_{l + 1}, but node type '{skillGraphNodeRow.NodeTypeName}' has no matching param definition.");
 					}
 				}
 			}
@@ -510,7 +510,7 @@ namespace Pakuri.Data
 			}
 			for (int n = 0; n < list2.Count; n++)
 			{
-				model.SkillNodes.Add(list2[n].Id, list2[n]);
+				model.SkillNodes.Add(list2[n].Name, list2[n]);
 			}
 			model.SkillNodeParams.AddRange(list3);
 		}
@@ -522,28 +522,28 @@ namespace Pakuri.Data
 			for (int i = 0; i < model.SkillNodeTypeParams.Count; i++)
 			{
 				SkillNodeTypeParamRow skillNodeTypeParamRow = model.SkillNodeTypeParams[i];
-				if (!model.SkillNodeTypes.ContainsKey(skillNodeTypeParamRow.NodeTypeId))
+				if (!model.SkillNodeTypes.ContainsKey(skillNodeTypeParamRow.NodeTypeName))
 				{
-					errors.Add("Skill node type param '" + skillNodeTypeParamRow.NodeTypeId + "." + skillNodeTypeParamRow.ParamKey + "' references unknown node_type_id.");
+					errors.Add("Skill node type param '" + skillNodeTypeParamRow.NodeTypeName + "." + skillNodeTypeParamRow.ParamKey + "' references unknown node_type_name.");
 					continue;
 				}
 				if (skillNodeTypeParamRow.ParamOrder < 1 || skillNodeTypeParamRow.ParamOrder > 12)
 				{
-					errors.Add("Skill node type param '" + skillNodeTypeParamRow.NodeTypeId + "." + skillNodeTypeParamRow.ParamKey + "' requires param_order between 1 and 12.");
+					errors.Add("Skill node type param '" + skillNodeTypeParamRow.NodeTypeName + "." + skillNodeTypeParamRow.ParamKey + "' requires param_order between 1 and 12.");
 					continue;
 				}
-				string item = $"{skillNodeTypeParamRow.NodeTypeId}:{skillNodeTypeParamRow.ParamOrder}";
-				string item2 = skillNodeTypeParamRow.NodeTypeId + ":" + skillNodeTypeParamRow.ParamKey;
+				string item = $"{skillNodeTypeParamRow.NodeTypeName}:{skillNodeTypeParamRow.ParamOrder}";
+				string item2 = skillNodeTypeParamRow.NodeTypeName + ":" + skillNodeTypeParamRow.ParamKey;
 				if (!hashSet.Add(item) || !hashSet.Add(item2))
 				{
-					errors.Add("Skill node type '" + skillNodeTypeParamRow.NodeTypeId + "' has duplicate param order or key for '" + skillNodeTypeParamRow.ParamKey + "'.");
+					errors.Add("Skill node type '" + skillNodeTypeParamRow.NodeTypeName + "' has duplicate param order or key for '" + skillNodeTypeParamRow.ParamKey + "'.");
 				}
 				else
 				{
-					if (!dictionary.TryGetValue(skillNodeTypeParamRow.NodeTypeId, out var value))
+					if (!dictionary.TryGetValue(skillNodeTypeParamRow.NodeTypeName, out var value))
 					{
 						value = new List<SkillNodeTypeParamRow>();
-						dictionary.Add(skillNodeTypeParamRow.NodeTypeId, value);
+						dictionary.Add(skillNodeTypeParamRow.NodeTypeName, value);
 					}
 					value.Add(skillNodeTypeParamRow);
 				}
@@ -555,9 +555,9 @@ namespace Pakuri.Data
 			return dictionary;
 		}
 
-		internal static string ResolveSkillGraphTargetSkillId(CsvSourceModel.SourceModel model, SkillGraphNodeRow graph, List<string> errors)
+		internal static string ResolveSkillGraphTargetSkillName(CsvSourceModel.SourceModel model, SkillGraphNodeRow graph, List<string> errors)
 		{
-			string text2 = graph?.OwnerId ?? string.Empty;
+			string text2 = graph?.OwnerName ?? string.Empty;
 			string text;
 			switch (graph.OwnerKind)
 			{
@@ -566,16 +566,16 @@ namespace Pakuri.Data
 				if (!model.SkillChoices.TryGetValue(text2, out var value2))
 				{
 					errors.Add("Skill graph '" + BuildSkillGraphKey(graph) + "' references unknown choice owner '" + text2 + "'.");
-					return graph.TargetSkillId;
+					return graph.TargetSkillName;
 				}
-				if (!string.Equals(value2.MonsterId, graph.MonsterId, StringComparison.OrdinalIgnoreCase))
+				if (!string.Equals(value2.MonsterName, graph.MonsterName, StringComparison.OrdinalIgnoreCase))
 				{
-					errors.Add("Skill graph choice owner '" + text2 + "' belongs to '" + value2.MonsterId + "', not '" + graph.MonsterId + "'.");
+					errors.Add("Skill graph choice owner '" + text2 + "' belongs to '" + value2.MonsterName + "', not '" + graph.MonsterName + "'.");
 				}
-				text = value2.TargetSkillId;
+				text = value2.TargetSkillName;
 				if (string.IsNullOrWhiteSpace(text))
 				{
-					text = value2.SkillId;
+					text = value2.SkillName;
 				}
 				break;
 			}
@@ -584,11 +584,11 @@ namespace Pakuri.Data
 				if (!TryGetSkill(model, text2, out var value3))
 				{
 					errors.Add("Skill graph '" + BuildSkillGraphKey(graph) + "' references unknown skill owner '" + text2 + "'.");
-					return graph.TargetSkillId;
+					return graph.TargetSkillName;
 				}
-				if (!string.Equals(value3.MonsterId, graph.MonsterId, StringComparison.OrdinalIgnoreCase))
+				if (!string.Equals(value3.MonsterName, graph.MonsterName, StringComparison.OrdinalIgnoreCase))
 				{
-					errors.Add("Skill graph skill owner '" + text2 + "' belongs to '" + value3.MonsterId + "', not '" + graph.MonsterId + "'.");
+					errors.Add("Skill graph skill owner '" + text2 + "' belongs to '" + value3.MonsterName + "', not '" + graph.MonsterName + "'.");
 				}
 				text = text2;
 				break;
@@ -598,16 +598,16 @@ namespace Pakuri.Data
 				if (!model.SkillTriggers.TryGetValue(text2, out var value))
 				{
 					errors.Add("Skill graph '" + BuildSkillGraphKey(graph) + "' references unknown trigger owner '" + text2 + "'.");
-					return graph.TargetSkillId;
+					return graph.TargetSkillName;
 				}
-				if (!string.Equals(value.MonsterId, graph.MonsterId, StringComparison.OrdinalIgnoreCase))
+				if (!string.Equals(value.MonsterName, graph.MonsterName, StringComparison.OrdinalIgnoreCase))
 				{
-					errors.Add("Skill graph trigger owner '" + text2 + "' belongs to '" + value.MonsterId + "', not '" + graph.MonsterId + "'.");
+					errors.Add("Skill graph trigger owner '" + text2 + "' belongs to '" + value.MonsterName + "', not '" + graph.MonsterName + "'.");
 				}
-				text = value.SourceSkillId;
-				if (IsArtifactEffectOwner(model, text, graph.MonsterId))
+				text = value.SourceSkillName;
+				if (IsArtifactEffectOwner(model, text, graph.MonsterName))
 				{
-					text = graph.TargetSkillId;
+					text = graph.TargetSkillName;
 					break;
 				}
 				break;
@@ -617,33 +617,33 @@ namespace Pakuri.Data
 				if (!model.SkillTriggers.TryGetValue(text2, out var baseTrigger))
 				{
 					errors.Add("Skill graph '" + BuildSkillGraphKey(graph) + "' references unknown Base owner '" + text2 + "'.");
-					return graph.TargetSkillId;
+					return graph.TargetSkillName;
 				}
-				if (!string.Equals(baseTrigger.MonsterId, graph.MonsterId, StringComparison.OrdinalIgnoreCase))
+				if (!string.Equals(baseTrigger.MonsterName, graph.MonsterName, StringComparison.OrdinalIgnoreCase))
 				{
-					errors.Add("Skill graph Base owner '" + text2 + "' belongs to '" + baseTrigger.MonsterId + "', not '" + graph.MonsterId + "'.");
+					errors.Add("Skill graph Base owner '" + text2 + "' belongs to '" + baseTrigger.MonsterName + "', not '" + graph.MonsterName + "'.");
 				}
-				text = baseTrigger.SourceSkillId;
+				text = baseTrigger.SourceSkillName;
 				break;
 			}
 			case SkillNodeOwnerKind.Effect:
-				if (!IsArtifactEffectOwner(model, text2, graph.MonsterId))
+				if (!IsArtifactEffectOwner(model, text2, graph.MonsterName))
 				{
 					errors.Add("Skill graph '" + BuildSkillGraphKey(graph) + "' references unknown artifact effect owner '" + text2 + "'.");
 				}
-				text = graph.TargetSkillId;
+				text = graph.TargetSkillName;
 				break;
 			default:
 				errors.Add($"Skill graph '{BuildSkillGraphKey(graph)}' uses unsupported owner_kind '{graph.OwnerKind}'.");
-				return graph.TargetSkillId;
+				return graph.TargetSkillName;
 			}
-			if (!string.IsNullOrWhiteSpace(graph.TargetSkillId))
+			if (!string.IsNullOrWhiteSpace(graph.TargetSkillName))
 			{
-				text = graph.TargetSkillId;
+				text = graph.TargetSkillName;
 			}
 			if (!string.IsNullOrWhiteSpace(text) && !TryGetSkill(model, text, out _))
 			{
-				errors.Add("Skill graph '" + BuildSkillGraphKey(graph) + "' resolves unknown target_skill_id '" + text + "'.");
+				errors.Add("Skill graph '" + BuildSkillGraphKey(graph) + "' resolves unknown target_skill_name '" + text + "'.");
 			}
 			return text;
 		}
@@ -659,35 +659,35 @@ namespace Pakuri.Data
 
 			if (graph.OwnerKind == SkillNodeOwnerKind.Effect)
 			{
-				return IsArtifactEffectOwner(model, graph.OwnerId, graph.MonsterId);
+				return IsArtifactEffectOwner(model, graph.OwnerName, graph.MonsterName);
 			}
 
 			return graph.OwnerKind == SkillNodeOwnerKind.Trigger
-				&& model.SkillTriggers.TryGetValue(graph.OwnerId, out var trigger)
-				&& IsArtifactEffectOwner(model, trigger.SourceSkillId, graph.MonsterId);
+				&& model.SkillTriggers.TryGetValue(graph.OwnerName, out var trigger)
+				&& IsArtifactEffectOwner(model, trigger.SourceSkillName, graph.MonsterName);
 		}
 
 		private static bool TryGetSkill(
 			CsvSourceModel.SourceModel model,
-			string skillId,
+			string skillName,
 			out CsvRowParser.SkillRow skill)
 		{
-			if (model.Skills.TryGetValue(skillId ?? string.Empty, out skill))
+			if (model.Skills.TryGetValue(skillName ?? string.Empty, out skill))
 			{
 				return true;
 			}
 
-			return model.SummonSkills.TryGetValue(skillId ?? string.Empty, out skill);
+			return model.SummonSkills.TryGetValue(skillName ?? string.Empty, out skill);
 		}
 
 		internal static bool IsArtifactEffectOwner(
 			CsvSourceModel.SourceModel model,
-			string effectId,
-			string artifactId)
+			string effectName,
+			string artifactName)
 		{
 			return model != null
-				&& model.ArtifactEffects.TryGetValue(effectId ?? string.Empty, out var effect)
-				&& string.Equals(effect.ArtifactId, artifactId, StringComparison.OrdinalIgnoreCase);
+				&& model.ArtifactEffects.TryGetValue(effectName ?? string.Empty, out var effect)
+				&& string.Equals(effect.ArtifactName, artifactName, StringComparison.OrdinalIgnoreCase);
 		}
 
 		internal static void ValidateSkillGraphAllowedValue(string graphNodeKey, SkillNodeTypeParamRow param, string value, List<string> errors)
@@ -739,14 +739,14 @@ namespace Pakuri.Data
 		{
 			return graph == null
 				? string.Empty
-				: $"{graph.MonsterId}:{graph.OwnerKind}:{graph.OwnerId}:{graph.TargetSkillId}";
+				: $"{graph.MonsterName}:{graph.OwnerKind}:{graph.OwnerName}:{graph.TargetSkillName}";
 		}
 
-		internal static string BuildGeneratedSkillGraphNodeId(SkillGraphNodeRow graph)
+		internal static string BuildGeneratedSkillGraphNodeName(SkillGraphNodeRow graph)
 		{
 			return graph == null
 				? string.Empty
-				: $"{graph.OwnerKind}:{graph.OwnerId}:{graph.TargetSkillId}:{graph.NodeOrder}";
+				: $"{graph.OwnerKind}:{graph.OwnerName}:{graph.TargetSkillName}:{graph.NodeOrder}";
 		}
 
 	}

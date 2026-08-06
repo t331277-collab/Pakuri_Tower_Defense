@@ -9,7 +9,7 @@ namespace Pakuri.InGame
     /// InGame 상단 정보와 PrisonPanel 정보를 갱신한다.
     public sealed class InGameInfoUI : MonoBehaviour
     {
-        private const string DisplayedSynergyId = "spirit-contract";
+        private const string DisplayedSynergyName = "spirit-contract";
 
         private TMP_Text stageInfoText;
         private TMP_Text goldInfoText;
@@ -185,7 +185,7 @@ namespace Pakuri.InGame
             var count = 0;
             var catalog = GameDataLoader.CurrentCatalog;
             var synergy = catalog != null
-                ? catalog.GetData<ArtifactSynergyDefinition>(DisplayedSynergyId)
+                ? catalog.GetData<ArtifactSynergyDefinition>(DisplayedSynergyName)
                 : null;
 
             if (catalog != null && session != null)
@@ -198,14 +198,14 @@ namespace Pakuri.InGame
                         continue;
                     }
 
-                    for (var artifactIndex = 0; artifactIndex < member.Artifacts.OwnedArtifactIds.Count; artifactIndex++)
+                    for (var artifactIndex = 0; artifactIndex < member.Artifacts.OwnedArtifactNames.Count; artifactIndex++)
                     {
                         var artifact = catalog.GetData<ArtifactDefinition>(
-                            member.Artifacts.OwnedArtifactIds[artifactIndex]);
+                            member.Artifacts.OwnedArtifactNames[artifactIndex]);
                         if (artifact != null
                             && string.Equals(
-                                artifact.SynergyId,
-                                DisplayedSynergyId,
+                                artifact.SynergyName,
+                                DisplayedSynergyName,
                                 StringComparison.OrdinalIgnoreCase))
                         {
                             count++;

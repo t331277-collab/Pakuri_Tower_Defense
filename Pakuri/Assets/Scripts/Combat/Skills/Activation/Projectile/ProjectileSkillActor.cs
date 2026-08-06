@@ -16,7 +16,7 @@ namespace Pakuri.InGame
     public class ProjectileSkillActor : MonoBehaviour
     {
 
-        private readonly HashSet<string> hitUnitIds = new HashSet<string>();
+        private readonly HashSet<string> hitUnitNames = new HashSet<string>();
         private readonly List<CombatUnitEntry> collisionTargets = new List<CombatUnitEntry>();
 
         private InGameCombatManager combatManager;
@@ -37,7 +37,7 @@ namespace Pakuri.InGame
         private float branchDamageSearchRadius;
         private SkillExecutionState runtime;
         private SkillExecutionState executionData;
-        private string sourceSkillId;
+        private string sourceSkillName;
         private bool isMagazineLastProjectile;
         private bool magazineLastProjectileTriggerFired;
         private bool criticalAllowed;
@@ -69,7 +69,7 @@ namespace Pakuri.InGame
             float boundaryX,
             float lifetimeSeconds)
         {
-            hitUnitIds.Clear();
+            hitUnitNames.Clear();
             combatManager = manager;
             effectManager = manager.Effects;
             visualOnly = false;
@@ -89,7 +89,7 @@ namespace Pakuri.InGame
             branchDamageSearchRadius = 0f;
             runtime = null;
             executionData = null;
-            sourceSkillId = null;
+            sourceSkillName = null;
             isMagazineLastProjectile = false;
             magazineLastProjectileTriggerFired = false;
             criticalAllowed = false;
@@ -143,8 +143,8 @@ namespace Pakuri.InGame
             Vector2 preparedArrivalPoint,
             SkillExecutionState sourceRuntime,
             SkillExecutionState snapshot,
-            string ignoredUnitId = null,
-            string skillId = null,
+            string ignoredUnitName = null,
+            string skillName = null,
             bool magazineLastProjectile = false,
             bool allowCritical = false,
             float criticalChanceBonus = 0f,
@@ -174,15 +174,15 @@ namespace Pakuri.InGame
             arrivalCenter = preparedArrivalPoint;
             runtime = sourceRuntime;
             executionData = snapshot;
-            sourceSkillId = skillId;
+            sourceSkillName = skillName;
             isMagazineLastProjectile = magazineLastProjectile;
             magazineLastProjectileTriggerFired = false;
             criticalAllowed = allowCritical;
             critChanceBonus = criticalChanceBonus;
             critDamageBonus = criticalDamageBonus;
-            if (!string.IsNullOrWhiteSpace(ignoredUnitId))
+            if (!string.IsNullOrWhiteSpace(ignoredUnitName))
             {
-                hitUnitIds.Add(ignoredUnitId);
+                hitUnitNames.Add(ignoredUnitName);
             }
         }
 
@@ -301,8 +301,8 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var unitId = target.Model.Identity != null ? target.Model.Identity.UnitId : null;
-            if (!string.IsNullOrWhiteSpace(unitId) && !hitUnitIds.Add(unitId))
+            var unitName = target.Model.Identity != null ? target.Model.Identity.UnitName : null;
+            if (!string.IsNullOrWhiteSpace(unitName) && !hitUnitNames.Add(unitName))
             {
                 return false;
             }
@@ -312,7 +312,7 @@ namespace Pakuri.InGame
             if (contactDamageEnabled)
             {
                 resolvedDamage = damage;
-                var damageResult = combatManager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, owner, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, false, false, null, HitDamageMultiplier(target.Model), isTrigger: executionData != null && executionData.IsTrigger);
+                var damageResult = combatManager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, owner, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillName, false, false, null, HitDamageMultiplier(target.Model), isTrigger: executionData != null && executionData.IsTrigger);
                 if (!damageResult.IsDead)
                 {
                     StatusCombatRules.ApplyStatus(combatManager, target.Model, statusOnHit, owner);
@@ -326,7 +326,7 @@ namespace Pakuri.InGame
                 executionData,
                 combatManager != null && combatManager.Units != null ? combatManager.Units.Find(owner) : null,
                 owner,
-                sourceSkillId,
+                sourceSkillName,
                 target,
                 hitPosition,
                 resolvedDamage);
@@ -387,7 +387,7 @@ namespace Pakuri.InGame
                 combatManager,
                 combatManager != null ? combatManager.Units : null,
                 owner,
-                sourceSkillId,
+                sourceSkillName,
                 true,
                 transform.position);
         }
@@ -442,7 +442,7 @@ namespace Pakuri.InGame
                     criticalAllowed,
                     critChanceBonus,
                     critDamageBonus,
-                    sourceSkillId,
+                    sourceSkillName,
                     true,
                     false,
                     null,
@@ -590,7 +590,7 @@ namespace Pakuri.InGame
                     rawDamageOverride: 0f,
                     recastGeneration: 0,
                     damageMultiplier: 1f,
-                    sourceSkillId: sourceSkillId,
+                    sourceSkillName: sourceSkillName,
                     lockToEventTarget: false,
                     publishSkillLifecycleEvents: false,
                     beginCast: false,
@@ -625,7 +625,7 @@ namespace Pakuri.InGame
                     SkillTriggerEvent.OnExpire,
                     new SkillExecutionContext(
                         owner,
-                        sourceSkillId,
+                        sourceSkillName,
                         arrivalEventTarget,
                         arrivalCenter,
                         0f,

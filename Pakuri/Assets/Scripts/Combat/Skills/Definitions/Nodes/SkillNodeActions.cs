@@ -12,7 +12,7 @@ namespace Pakuri.InGame
     /// 시전이나 지속 효과에서 이어질 실제 스킬 결과를 정의한다.
     public sealed class SkillCastEffect
     {
-        public string EffectId;
+        public string EffectName;
         public float DelaySeconds;
         public SkillDefinition ResolvedDefinition;
         public float DamageMultiplier = 1f;
@@ -113,7 +113,7 @@ namespace Pakuri.InGame
             Kind = kind;
             Amount = amount;
             Count = 0;
-            ReferenceId = string.Empty;
+            ReferenceName = string.Empty;
         }
 
         /// 발사 수와 중첩처럼 정수로 표현되는 변화를 만든다.
@@ -122,31 +122,31 @@ namespace Pakuri.InGame
             Kind = kind;
             Amount = 0f;
             Count = count;
-            ReferenceId = string.Empty;
+            ReferenceName = string.Empty;
         }
 
         /// 특정 대상 규칙에 연결된 연속값 변화를 만든다.
-        public SkillActionOp(SkillActionOpKind kind, string referenceId, float amount)
+        public SkillActionOp(SkillActionOpKind kind, string referenceName, float amount)
         {
             Kind = kind;
             Amount = amount;
             Count = 0;
-            ReferenceId = referenceId ?? string.Empty;
+            ReferenceName = referenceName ?? string.Empty;
         }
 
         /// 특정 대상 규칙에 연결된 횟수 변화를 만든다.
-        public SkillActionOp(SkillActionOpKind kind, string referenceId, int count)
+        public SkillActionOp(SkillActionOpKind kind, string referenceName, int count)
         {
             Kind = kind;
             Amount = 0f;
             Count = count;
-            ReferenceId = referenceId ?? string.Empty;
+            ReferenceName = referenceName ?? string.Empty;
         }
 
         public SkillActionOpKind Kind { get; }
         public float Amount { get; }
         public int Count { get; }
-        public string ReferenceId { get; }
+        public string ReferenceName { get; }
     }
 
     /// 같은 대상을 반복해서 맞힐 때 커질 피해를 나타낸다.
@@ -383,16 +383,16 @@ namespace Pakuri.InGame
     {
         /// 충분한 대상을 맞혔을 때 돌려받을 대기시간을 정의한다.
         public HitCountCooldownRefundActionOp(
-            string targetSkillId,
+            string targetSkillName,
             int minimumTargets,
             float ratio)
         {
-            TargetSkillId = targetSkillId ?? string.Empty;
+            TargetSkillName = targetSkillName ?? string.Empty;
             MinimumTargets = minimumTargets;
             Ratio = ratio;
         }
 
-        public string TargetSkillId { get; }
+        public string TargetSkillName { get; }
         public int MinimumTargets { get; }
         public float Ratio { get; }
     }
@@ -401,13 +401,13 @@ namespace Pakuri.InGame
     public readonly struct ReloadReducePerHitActionOp
     {
         /// 적중할 때마다 줄어들 재장전 시간을 정의한다.
-        public ReloadReducePerHitActionOp(string targetSkillId, float secondsPerHit)
+        public ReloadReducePerHitActionOp(string targetSkillName, float secondsPerHit)
         {
-            TargetSkillId = targetSkillId ?? string.Empty;
+            TargetSkillName = targetSkillName ?? string.Empty;
             SecondsPerHit = secondsPerHit;
         }
 
-        public string TargetSkillId { get; }
+        public string TargetSkillName { get; }
         public float SecondsPerHit { get; }
     }
 

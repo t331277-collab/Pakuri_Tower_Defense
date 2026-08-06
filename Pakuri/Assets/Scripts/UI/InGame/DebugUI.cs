@@ -68,8 +68,8 @@ namespace Pakuri.InGame
 
         private ArtifactSynergyDefinition[] artifactSynergies = Array.Empty<ArtifactSynergyDefinition>();
         private ArtifactDefinition[] artifactChoices = Array.Empty<ArtifactDefinition>();
-        private string selectedArtifactSynergyId = string.Empty;
-        private string selectedArtifactId = string.Empty;
+        private string selectedArtifactSynergyName = string.Empty;
+        private string selectedArtifactName = string.Empty;
 
         private int activeModifierSlotIndex = -1;
         private bool activeModifierIsPassive;
@@ -143,7 +143,7 @@ namespace Pakuri.InGame
 
         private void CloseArtifactAcquisitionDebug()
         {
-            selectedArtifactId = string.Empty;
+            selectedArtifactName = string.Empty;
             artifactChoices = Array.Empty<ArtifactDefinition>();
             UiObjectUtility.SetActive(artifactAcquisitionDebugPanel, false);
             UiObjectUtility.SetActive(artifactDebugPanel, true);
@@ -159,13 +159,13 @@ namespace Pakuri.InGame
             }
 
             var synergy = artifactSynergies[index];
-            if (synergy == null || string.IsNullOrWhiteSpace(synergy.SynergyId))
+            if (synergy == null || string.IsNullOrWhiteSpace(synergy.SynergyName))
             {
                 return;
             }
 
-            selectedArtifactSynergyId = synergy.SynergyId;
-            selectedArtifactId = string.Empty;
+            selectedArtifactSynergyName = synergy.SynergyName;
+            selectedArtifactName = string.Empty;
             RefreshArtifactChoices();
             RefreshArtifactAcquisitionTargets();
             UiObjectUtility.SetActive(artifactDebugPanel, false);
@@ -180,26 +180,26 @@ namespace Pakuri.InGame
             }
 
             var artifact = artifactChoices[index];
-            if (artifact == null || string.IsNullOrWhiteSpace(artifact.ArtifactId))
+            if (artifact == null || string.IsNullOrWhiteSpace(artifact.ArtifactName))
             {
                 return;
             }
 
             var session = ResolveSession();
-            if (session == null || session.HasArtifact(artifact.ArtifactId))
+            if (session == null || session.HasArtifact(artifact.ArtifactName))
             {
                 RefreshArtifactChoices();
                 return;
             }
 
-            selectedArtifactId = artifact.ArtifactId;
+            selectedArtifactName = artifact.ArtifactName;
             RefreshArtifactChoices();
             RefreshArtifactAcquisitionTargets();
         }
 
         private void SelectArtifactUnit(int slotIndex)
         {
-            if (string.IsNullOrWhiteSpace(selectedArtifactId))
+            if (string.IsNullOrWhiteSpace(selectedArtifactName))
             {
                 return;
             }
@@ -211,7 +211,7 @@ namespace Pakuri.InGame
             }
 
             var member = session.PartyMembers[slotIndex];
-            if (!session.TryAcquireArtifact(member, selectedArtifactId))
+            if (!session.TryAcquireArtifact(member, selectedArtifactName))
             {
                 RefreshArtifactChoices();
                 RefreshArtifactAcquisitionTargets();
@@ -220,20 +220,20 @@ namespace Pakuri.InGame
 
             var catalog = GameDataLoader.CurrentCatalog;
             var artifact = catalog != null
-                ? catalog.GetData<ArtifactDefinition>(selectedArtifactId)
+                ? catalog.GetData<ArtifactDefinition>(selectedArtifactName)
                 : null;
             var monster = member != null && catalog != null
-                ? catalog.GetMonster(member.MonsterId)
+                ? catalog.GetMonster(member.MonsterName)
                 : null;
             var artifactName = artifact != null && !string.IsNullOrWhiteSpace(artifact.DisplayName)
                 ? artifact.DisplayName
-                : selectedArtifactId;
+                : selectedArtifactName;
             var monsterName = monster != null && !string.IsNullOrWhiteSpace(monster.DisplayName)
                 ? monster.DisplayName
-                : member != null ? member.MonsterId : "Unknown";
+                : member != null ? member.MonsterName : "Unknown";
             Debug.Log($"[ArtifactDebug] {slotIndex + 1}P {monsterName}에게 {artifactName} 획득", this);
 
-            selectedArtifactId = string.Empty;
+            selectedArtifactName = string.Empty;
             RefreshArtifactChoices();
             RefreshArtifactAcquisitionTargets();
             UiObjectUtility.SetActive(artifactAcquisitionDebugPanel, false);
@@ -275,7 +275,7 @@ namespace Pakuri.InGame
             {
                 var artifact = artifacts[i];
                 if (artifact != null
-                    && string.Equals(artifact.SynergyId, selectedArtifactSynergyId, StringComparison.OrdinalIgnoreCase))
+                    && string.Equals(artifact.SynergyName, selectedArtifactSynergyName, StringComparison.OrdinalIgnoreCase))
                 {
                     choices.Add(artifact);
                 }
@@ -293,8 +293,8 @@ namespace Pakuri.InGame
 
                 var capturedIndex = i;
                 SetArtifactDebugLabel(artifactLabels[i], artifactChoices[i].DisplayName);
-                var isAcquired = session != null && session.HasArtifact(artifactChoices[i].ArtifactId);
-                button.interactable = !isAcquired && string.IsNullOrWhiteSpace(selectedArtifactId);
+                var isAcquired = session != null && session.HasArtifact(artifactChoices[i].ArtifactName);
+                button.interactable = !isAcquired && string.IsNullOrWhiteSpace(selectedArtifactName);
                 button.onClick.AddListener(() => SelectArtifact(capturedIndex));
             }
 
@@ -313,11 +313,11 @@ namespace Pakuri.InGame
                     ? partyMembers[i]
                     : null;
                 var monster = member != null && GameDataLoader.CurrentCatalog != null
-                    ? GameDataLoader.CurrentCatalog.GetMonster(member.MonsterId)
+                    ? GameDataLoader.CurrentCatalog.GetMonster(member.MonsterName)
                     : null;
                 var monsterName = monster != null && !string.IsNullOrWhiteSpace(monster.DisplayName)
                     ? monster.DisplayName
-                    : member != null ? member.MonsterId : string.Empty;
+                    : member != null ? member.MonsterName : string.Empty;
 
                 SetArtifactDebugLabel(label, monsterName);
                 if (button == null)
@@ -330,15 +330,15 @@ namespace Pakuri.InGame
                 button.onClick.AddListener(() => SelectArtifactUnit(capturedIndex));
                 button.interactable = member != null
                     && session != null
-                    && !string.IsNullOrWhiteSpace(selectedArtifactId)
-                    && session.CanAcquireArtifact(member, selectedArtifactId);
+                    && !string.IsNullOrWhiteSpace(selectedArtifactName)
+                    && session.CanAcquireArtifact(member, selectedArtifactName);
             }
         }
 
         private void ClearArtifactDebugState()
         {
-            selectedArtifactSynergyId = string.Empty;
-            selectedArtifactId = string.Empty;
+            selectedArtifactSynergyName = string.Empty;
+            selectedArtifactName = string.Empty;
             artifactSynergies = Array.Empty<ArtifactSynergyDefinition>();
             artifactChoices = Array.Empty<ArtifactDefinition>();
             ResetArtifactDebugButtons(artifactSynergyButtons, artifactSynergyLabels);
@@ -400,20 +400,20 @@ namespace Pakuri.InGame
             }
 
             var sourceSkill = GameDataLoader.CurrentCatalog.GetActiveSkill(
-                monster.MonsterId,
+                monster.MonsterName,
                 DebugSlots[slotIndex]);
-            if (sourceSkill == null || string.IsNullOrWhiteSpace(sourceSkill.SkillId))
+            if (sourceSkill == null || string.IsNullOrWhiteSpace(sourceSkill.SkillName))
             {
                 return;
             }
 
-            var state = session.GetPartyMemberState(monster.MonsterId);
+            var state = session.GetPartyMemberState(monster.MonsterName);
             if (!session.CanLearnActive(state, monster, sourceSkill))
             {
                 return;
             }
 
-            CommitDebugOfferingChoice(session, monster, null, sourceSkill.SkillId, string.Empty);
+            CommitDebugOfferingChoice(session, monster, null, sourceSkill.SkillName, string.Empty);
         }
 
         private void TryLearnPassiveSlot(int slotIndex)
@@ -424,20 +424,20 @@ namespace Pakuri.InGame
             }
 
             var passive = GameDataLoader.CurrentCatalog.ResolvePassiveSkill(
-                monster.MonsterId,
+                monster.MonsterName,
                 DebugSlots[slotIndex]);
-            if (passive == null || string.IsNullOrWhiteSpace(passive.SkillId))
+            if (passive == null || string.IsNullOrWhiteSpace(passive.SkillName))
             {
                 return;
             }
 
-            var state = session.GetPartyMemberState(monster.MonsterId);
+            var state = session.GetPartyMemberState(monster.MonsterName);
             if (!session.CanLearnPassive(state, monster, passive))
             {
                 return;
             }
 
-            CommitDebugOfferingChoice(session, monster, null, string.Empty, passive.SkillId);
+            CommitDebugOfferingChoice(session, monster, null, string.Empty, passive.SkillName);
         }
 
         private void RefreshRuntimeSkillModels()
@@ -473,10 +473,10 @@ namespace Pakuri.InGame
             {
                 model = selectedEntry.Model;
             }
-            var monsterId = ResolveMonsterId(session, model);
-            var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId);
+            var monsterName = ResolveMonsterName(session, model);
+            var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterName);
             var state = session != null && monster != null
-                ? session.GetPartyMemberState(monster.MonsterId)
+                ? session.GetPartyMemberState(monster.MonsterName)
                 : null;
 
             for (var i = 0; i < skillButtons.Length && i < DebugSlots.Length; i++)
@@ -491,23 +491,23 @@ namespace Pakuri.InGame
                 var slot = DebugSlots[i];
                 var isPassiveSlot = IsPassiveSlot(i);
                 var activeSkill = !isPassiveSlot && monster != null
-                    ? GameDataLoader.CurrentCatalog.GetActiveSkill(monster.MonsterId, slot)
+                    ? GameDataLoader.CurrentCatalog.GetActiveSkill(monster.MonsterName, slot)
                     : null;
                 var passiveSkill = isPassiveSlot && monster != null
-                    ? GameDataLoader.CurrentCatalog.ResolvePassiveSkill(monster.MonsterId, slot)
+                    ? GameDataLoader.CurrentCatalog.ResolvePassiveSkill(monster.MonsterName, slot)
                     : null;
                 var hasSkill = isPassiveSlot
-                    ? passiveSkill != null && !string.IsNullOrWhiteSpace(passiveSkill.SkillId)
-                    : activeSkill != null && !string.IsNullOrWhiteSpace(activeSkill.SkillId);
+                    ? passiveSkill != null && !string.IsNullOrWhiteSpace(passiveSkill.SkillName)
+                    : activeSkill != null && !string.IsNullOrWhiteSpace(activeSkill.SkillName);
                 var learned = hasSkill && state != null && (isPassiveSlot
-                    ? state.Skills.HasPassiveSkill(passiveSkill.SkillId)
-                    : state.Skills.HasActiveSkill(activeSkill.SkillId));
+                    ? state.Skills.HasPassiveSkill(passiveSkill.SkillName)
+                    : state.Skills.HasActiveSkill(activeSkill.SkillName));
 
                 button.interactable = hasSkill && !learned;
                 if (label != null)
                 {
                     label.text = hasSkill
-                        ? string.Format("{0}\n{1}", slot, learned ? "Learned" : isPassiveSlot ? passiveSkill.SkillName : activeSkill.SkillName)
+                        ? string.Format("{0}\n{1}", slot, learned ? "Learned" : isPassiveSlot ? passiveSkill.DisplayName : activeSkill.DisplayName)
                         : string.Format("{0}\nNone", slot);
                 }
 
@@ -608,26 +608,26 @@ namespace Pakuri.InGame
             monster = null;
             var selectedEntry = ResolveSelectedPlayerEntry();
             var model = selectedEntry != null ? selectedEntry.Model : null;
-            var monsterId = ResolveMonsterId(session, model);
-            if (session == null || string.IsNullOrWhiteSpace(monsterId))
+            var monsterName = ResolveMonsterName(session, model);
+            if (session == null || string.IsNullOrWhiteSpace(monsterName))
             {
                 return false;
             }
 
-            monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId);
+            monster = GameDataLoader.CurrentCatalog.GetMonster(monsterName);
             return monster != null;
         }
 
-        private static string ResolveMonsterId(RunSession session, UnitCombatState model)
+        private static string ResolveMonsterName(RunSession session, UnitCombatState model)
         {
-            if (model != null && model.Identity != null && !string.IsNullOrWhiteSpace(model.Identity.DefinitionId))
+            if (model != null && model.Identity != null && !string.IsNullOrWhiteSpace(model.Identity.DefinitionName))
             {
-                return model.Identity.DefinitionId;
+                return model.Identity.DefinitionName;
             }
 
             if (session != null)
             {
-                return session.SelectedMonsterId;
+                return session.SelectedMonsterName;
             }
 
             return string.Empty;
@@ -661,12 +661,12 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var state = monster != null ? session.GetPartyMemberState(monster.MonsterId) : null;
+            var state = monster != null ? session.GetPartyMemberState(monster.MonsterName) : null;
             if (sourceSkill == null
-                || string.IsNullOrWhiteSpace(sourceSkill.SkillId)
+                || string.IsNullOrWhiteSpace(sourceSkill.SkillName)
                 || monster == null
                 || state == null
-                || !state.Skills.HasActiveSkill(sourceSkill.SkillId))
+                || !state.Skills.HasActiveSkill(sourceSkill.SkillName))
             {
                 UiObjectUtility.SetActive(debugModifiedPanel, false);
                 UiObjectUtility.SetActive(debugPassiveModifiedPanel, false);
@@ -689,12 +689,12 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var state = monster != null ? session.GetPartyMemberState(monster.MonsterId) : null;
+            var state = monster != null ? session.GetPartyMemberState(monster.MonsterName) : null;
             if (passive == null
-                || string.IsNullOrWhiteSpace(passive.SkillId)
+                || string.IsNullOrWhiteSpace(passive.SkillName)
                 || monster == null
                 || state == null
-                || !state.Skills.HasPassiveSkill(passive.SkillId))
+                || !state.Skills.HasPassiveSkill(passive.SkillName))
             {
                 UiObjectUtility.SetActive(debugModifiedPanel, false);
                 UiObjectUtility.SetActive(debugPassiveModifiedPanel, false);
@@ -715,8 +715,8 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var state = session.GetPartyMemberState(monster.MonsterId);
-            if (state == null || sourceSkill == null || string.IsNullOrWhiteSpace(sourceSkill.SkillId))
+            var state = session.GetPartyMemberState(monster.MonsterName);
+            if (state == null || sourceSkill == null || string.IsNullOrWhiteSpace(sourceSkill.SkillName))
             {
                 return;
             }
@@ -728,12 +728,12 @@ namespace Pakuri.InGame
             }
 
             var choice = choices[choiceIndex];
-            if (!session.CanChooseSkillChoice(state, sourceSkill.SkillId, choice))
+            if (!session.CanChooseSkillChoice(state, sourceSkill.SkillName, choice))
             {
                 return;
             }
 
-            CommitDebugOfferingChoice(session, monster, choice, sourceSkill.SkillId, string.Empty);
+            CommitDebugOfferingChoice(session, monster, choice, sourceSkill.SkillName, string.Empty);
 
             RefreshModifierChoiceButtons();
         }
@@ -745,8 +745,8 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var state = session.GetPartyMemberState(monster.MonsterId);
-            if (state == null || passive == null || string.IsNullOrWhiteSpace(passive.SkillId))
+            var state = session.GetPartyMemberState(monster.MonsterName);
+            if (state == null || passive == null || string.IsNullOrWhiteSpace(passive.SkillName))
             {
                 return;
             }
@@ -758,12 +758,12 @@ namespace Pakuri.InGame
             }
 
             var choice = choices[choiceIndex];
-            if (!session.CanChooseSkillChoice(state, passive.SkillId, choice))
+            if (!session.CanChooseSkillChoice(state, passive.SkillName, choice))
             {
                 return;
             }
 
-            CommitDebugOfferingChoice(session, monster, choice, string.Empty, passive.SkillId);
+            CommitDebugOfferingChoice(session, monster, choice, string.Empty, passive.SkillName);
             RefreshModifierChoiceButtons();
         }
 
@@ -789,7 +789,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var state = session.GetPartyMemberState(monster.MonsterId);
+            var state = session.GetPartyMemberState(monster.MonsterName);
             if (state == null)
             {
                 SetModifierButtonsInactive(traitButtons);
@@ -805,8 +805,8 @@ namespace Pakuri.InGame
                 ? sourceSkill.MasterChoices
                 : Array.Empty<SkillChoice>();
 
-            BindModifierChoiceButtons(traitButtons, enhancementChoices, session, state, sourceSkill.SkillId);
-            BindModifierChoiceButtons(masterButtons, masterChoices, session, state, sourceSkill.SkillId);
+            BindModifierChoiceButtons(traitButtons, enhancementChoices, session, state, sourceSkill.SkillName);
+            BindModifierChoiceButtons(masterButtons, masterChoices, session, state, sourceSkill.SkillName);
             SetModifierButtonsInactive(passiveTraitButtons);
         }
 
@@ -826,7 +826,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var state = session.GetPartyMemberState(monster.MonsterId);
+            var state = session.GetPartyMemberState(monster.MonsterName);
             if (state == null)
             {
                 SetModifierButtonsInactive(passiveTraitButtons);
@@ -839,7 +839,7 @@ namespace Pakuri.InGame
                 ? passive.EnhancementChoices
                 : Array.Empty<SkillChoice>();
 
-            BindModifierChoiceButtons(passiveTraitButtons, enhancementChoices, session, state, passive.SkillId);
+            BindModifierChoiceButtons(passiveTraitButtons, enhancementChoices, session, state, passive.SkillName);
             SetModifierButtonsInactive(traitButtons);
             SetModifierButtonsInactive(masterButtons);
         }
@@ -849,7 +849,7 @@ namespace Pakuri.InGame
             SkillChoice[] choices,
             RunSession session,
             RunSession.RunMonsterState state,
-            string sourceSkillId)
+            string sourceSkillName)
         {
             if (buttons == null)
             {
@@ -866,7 +866,7 @@ namespace Pakuri.InGame
 
                 var hasChoice = choices != null && i < choices.Length && choices[i] != null;
                 button.gameObject.SetActive(hasChoice);
-                button.interactable = hasChoice && session.CanChooseSkillChoice(state, sourceSkillId, choices[i]);
+                button.interactable = hasChoice && session.CanChooseSkillChoice(state, sourceSkillName, choices[i]);
 
                 var label = button.GetComponentInChildren<TMP_Text>(true);
                 if (label != null)
@@ -920,7 +920,7 @@ namespace Pakuri.InGame
             }
 
             sourceSkill = GameDataLoader.CurrentCatalog.GetActiveSkill(
-                monster.MonsterId,
+                monster.MonsterName,
                 DebugSlots[slotIndex]);
             return sourceSkill != null;
         }
@@ -942,7 +942,7 @@ namespace Pakuri.InGame
             }
 
             passive = GameDataLoader.CurrentCatalog.ResolvePassiveSkill(
-                monster.MonsterId,
+                monster.MonsterName,
                 DebugSlots[slotIndex]);
             return passive != null;
         }
@@ -951,27 +951,27 @@ namespace Pakuri.InGame
             RunSession session,
             MonsterDefinition monster,
             SkillChoice choice,
-            string activeSkillId,
-            string passiveSkillId)
+            string activeSkillName,
+            string passiveSkillName)
         {
             if (session == null || monster == null)
             {
                 return;
             }
 
-            var rewardId = ResolveRewardId(monster, choice, activeSkillId, passiveSkillId);
-            string choiceId = string.Empty;
+            var rewardName = ResolveRewardName(monster, choice, activeSkillName, passiveSkillName);
+            string choiceName = string.Empty;
             if (choice != null)
             {
-                choiceId = choice.ChoiceId;
+                choiceName = choice.ChoiceName;
             }
-            var state = session.GetPartyMemberState(monster.MonsterId);
+            var state = session.GetPartyMemberState(monster.MonsterName);
             if (state == null)
             {
                 return;
             }
 
-            session.RecordOfferingChoice(state, rewardId, choiceId, activeSkillId, passiveSkillId);
+            session.RecordOfferingChoice(state, rewardName, choiceName, activeSkillName, passiveSkillName);
 
             RefreshRuntimeSkillModels();
             RefreshButtonLabels();
@@ -979,11 +979,11 @@ namespace Pakuri.InGame
             monsterPanelUI?.RefreshNow();
         }
 
-        private static string ResolveRewardId(
+        private static string ResolveRewardName(
             MonsterDefinition monster,
             SkillChoice choice,
-            string activeSkillId,
-            string passiveSkillId)
+            string activeSkillName,
+            string passiveSkillName)
         {
             if (choice == null)
             {
@@ -992,27 +992,27 @@ namespace Pakuri.InGame
 
             if (monster == null)
             {
-                return choice.ChoiceId;
+                return choice.ChoiceName;
             }
 
-            var rewards = GameDataLoader.CurrentCatalog.GetRewardChoices(monster.MonsterId);
-            var choiceId = choice.ChoiceId;
+            var rewards = GameDataLoader.CurrentCatalog.GetRewardChoices(monster.MonsterName);
+            var choiceName = choice.ChoiceName;
             for (var i = 0; i < rewards.Length; i++)
             {
                 var reward = rewards[i];
-                if (reward == null || string.IsNullOrWhiteSpace(reward.RewardId))
+                if (reward == null || string.IsNullOrWhiteSpace(reward.RewardName))
                 {
                     continue;
                 }
 
-                if (!string.IsNullOrWhiteSpace(choiceId)
-                    && string.Equals(reward.RewardId, choiceId, StringComparison.OrdinalIgnoreCase))
+                if (!string.IsNullOrWhiteSpace(choiceName)
+                    && string.Equals(reward.RewardName, choiceName, StringComparison.OrdinalIgnoreCase))
                 {
-                    return reward.RewardId;
+                    return reward.RewardName;
                 }
             }
 
-            return choiceId;
+            return choiceName;
         }
 
         private static bool IsPassiveSlot(int slotIndex)

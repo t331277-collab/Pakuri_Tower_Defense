@@ -25,16 +25,16 @@ namespace Pakuri.InGame
             }
 
             var routed = false;
-            var skillId = !string.IsNullOrWhiteSpace(snapshot.PreparedSkillId)
-                ? snapshot.PreparedSkillId
-                : snapshot.SkillId;
+            var skillName = !string.IsNullOrWhiteSpace(snapshot.PreparedSkillName)
+                ? snapshot.PreparedSkillName
+                : snapshot.SkillName;
             for (var i = 0; i < snapshot.PreparedCenters.Count; i++)
             {
                 var center = snapshot.PreparedCenters[i];
                 var objectName = snapshot.PreparedIsRecast ? "InGameRecastZone" : "ZoneSkill";
-                if (!string.IsNullOrWhiteSpace(skillId))
+                if (!string.IsNullOrWhiteSpace(skillName))
                 {
-                    objectName += "_" + skillId;
+                    objectName += "_" + skillName;
                 }
 
                 var instance = effects.CreateEffect(new EffectCreateRequest(

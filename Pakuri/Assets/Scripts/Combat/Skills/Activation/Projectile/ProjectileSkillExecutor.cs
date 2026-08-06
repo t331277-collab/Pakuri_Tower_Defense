@@ -148,12 +148,12 @@ namespace Pakuri.InGame
             }
 
             SkillExecution.AdvanceProjectileLaunchCount(context.Runtime);
-            var skillId = !string.IsNullOrWhiteSpace(snapshot.PreparedSkillId)
-                ? snapshot.PreparedSkillId
-                : snapshot.SkillId;
-            var objectName = string.IsNullOrWhiteSpace(skillId)
+            var skillName = !string.IsNullOrWhiteSpace(snapshot.PreparedSkillName)
+                ? snapshot.PreparedSkillName
+                : snapshot.SkillName;
+            var objectName = string.IsNullOrWhiteSpace(skillName)
                 ? "Projectile"
-                : "Projectile_" + skillId;
+                : "Projectile_" + skillName;
             var instance = effects.CreateEffect(new EffectCreateRequest(
                 snapshot.PreparedRuntimeVisual,
                 null,
@@ -198,7 +198,7 @@ namespace Pakuri.InGame
                 context.Runtime,
                 launchSnapshot,
                 null,
-                skillId,
+                skillName,
                 isMagazineLastProjectile,
                 snapshot.PreparedCriticalAllowed,
                 snapshot.CritChanceBonus,

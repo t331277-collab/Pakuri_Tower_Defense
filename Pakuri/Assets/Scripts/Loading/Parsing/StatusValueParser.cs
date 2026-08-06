@@ -1,6 +1,6 @@
 /*
  * 역할: 상태 효과 표현식 파싱.
- * 책임: CSV 저작에 쓰이는 상태 ID·목록·중첩·지속 시간·조건식을 파싱한다.
+ * 책임: CSV 저작에 쓰이는 상태 Name·목록·중첩·지속 시간·조건식을 파싱한다.
  */
 
 using System;
@@ -30,16 +30,16 @@ namespace Pakuri.Data
                 return kind;
             }
 
-            throw new InvalidOperationException($"Unsupported status id '{value}'.");
+            throw new InvalidOperationException($"Unsupported status Name '{value}'.");
         }
 
         public static StatusEffectKind[] ParseStatusKinds(string rawValue)
         {
-            var statusIds = ParseIdList(rawValue);
-            var kinds = new StatusEffectKind[statusIds.Length];
-            for (var i = 0; i < statusIds.Length; i++)
+            var statusNames = ParseIdList(rawValue);
+            var kinds = new StatusEffectKind[statusNames.Length];
+            for (var i = 0; i < statusNames.Length; i++)
             {
-                kinds[i] = ParseStatusKind(statusIds[i]);
+                kinds[i] = ParseStatusKind(statusNames[i]);
             }
 
             return kinds;
@@ -76,7 +76,7 @@ namespace Pakuri.Data
                         return false;
                     }
 
-                    var statusId = requirementText;
+                    var statusName = requirementText;
                     var minStacks = 1;
                     var separatorIndex = requirementText.IndexOf(">=", StringComparison.OrdinalIgnoreCase);
                     var separatorLength = 2;
@@ -88,7 +88,7 @@ namespace Pakuri.Data
 
                     if (separatorIndex >= 0)
                     {
-                        statusId = requirementText.Substring(0, separatorIndex).Trim();
+                        statusName = requirementText.Substring(0, separatorIndex).Trim();
                         var minStackText = requirementText.Substring(separatorIndex + separatorLength).Trim();
                         if (!int.TryParse(minStackText, out minStacks) || minStacks <= 0)
                         {
@@ -97,7 +97,7 @@ namespace Pakuri.Data
                         }
                     }
 
-                    if (!TryParseStatusKind(statusId, out var kind))
+                    if (!TryParseStatusKind(statusName, out var kind))
                     {
                         groups = Array.Empty<StatusConditionGroup>();
                         return false;
@@ -169,17 +169,17 @@ namespace Pakuri.Data
             }
 
             var tokens = rawValue.Split(';', ',');
-            var ids = new List<string>();
+            var Names = new List<string>();
             for (var i = 0; i < tokens.Length; i++)
             {
-                var id = tokens[i].Trim();
-                if (!string.IsNullOrWhiteSpace(id))
+                var Name = tokens[i].Trim();
+                if (!string.IsNullOrWhiteSpace(Name))
                 {
-                    ids.Add(id);
+                    Names.Add(Name);
                 }
             }
 
-            return ids.ToArray();
+            return Names.ToArray();
         }
 
         public static DamageAttribute[] ParseDamageAttributes(string rawValue)

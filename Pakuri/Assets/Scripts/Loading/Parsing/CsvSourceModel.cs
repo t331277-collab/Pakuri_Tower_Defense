@@ -50,8 +50,8 @@ namespace Pakuri.Data
         /// CatalogEntryRow에 해당하는 CSV 한 행을 표현한다.
         internal class CatalogEntryRow
         {
-            public string Id;
-            public string RefId;
+            public string Name;
+            public string RefName;
             public int SortOrder;
         }
 
@@ -59,8 +59,8 @@ namespace Pakuri.Data
         {
             return new CatalogEntryRow
             {
-                Id = record.ReadRequiredString("id"),
-                RefId = record.ReadRequiredString(refColumnName),
+                Name = record.ReadRequiredString("Name"),
+                RefName = record.ReadRequiredString(refColumnName),
                 SortOrder = record.ReadInt("sort_order")
             };
         }
@@ -68,7 +68,7 @@ namespace Pakuri.Data
         /// StatusEffectRow에 해당하는 CSV 한 행을 표현한다.
         internal class StatusEffectRow
         {
-            public string Id;
+            public string Name;
             public string Label;
             public StatusEffectClassification Classification;
             public bool HasAttribute;
@@ -94,7 +94,7 @@ namespace Pakuri.Data
         {
             return new StatusEffectRow
             {
-                Id = record.ReadRequiredString("status_effect_id"),
+                Name = record.ReadRequiredString("status_effect_name"),
                 Label = record.ReadRequiredString("status_effect_label"),
                 Classification = record.ReadEnum<StatusEffectClassification>("effect_type"),
                 HasAttribute = TryReadDamageAttribute(record, "attribute", out var attribute),
@@ -133,7 +133,7 @@ namespace Pakuri.Data
         /// StatusPayloadRow에 해당하는 CSV 한 행을 표현한다.
         internal class StatusPayloadRow
         {
-            public string StatusEffectId;
+            public string StatusEffectName;
             public float StatusChance;
             public string StatusEffectLabel;
             public string StatusEffectPrefabPath;
@@ -167,7 +167,7 @@ namespace Pakuri.Data
         {
             var payload = new StatusPayloadRow
             {
-                StatusEffectId = ReadStatusString(record, "status_effect_id", allowMissingColumns),
+                StatusEffectName = ReadStatusString(record, "status_effect_name", allowMissingColumns),
                 StatusChance = ReadStatusFloat(record, "status_chance", allowMissingColumns),
                 StatusEffectLabel = ReadStatusString(record, "status_effect_label", allowMissingColumns),
                 StatusEffectPrefabPath = ReadStatusString(record, "status_effect_prefab_path", allowMissingColumns),

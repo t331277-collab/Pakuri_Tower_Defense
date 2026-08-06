@@ -19,13 +19,13 @@ namespace Pakuri.InGame
         public bool HitAllTargets;
         public int HitTargetCount = 1;
         public int DeploymentCount = 1;
-        public string DeploymentRequiredTargetStatusId;
+        public string DeploymentRequiredTargetStatusName;
         public StatusEffectKind DeploymentRequiredTargetStatusKind;
         public int DeploymentRequiredTargetStatusMinStacks;
-        public string TargetStatusStackStatusId;
+        public string TargetStatusStackStatusName;
         public StatusEffectKind TargetStatusStackStatusKind;
         public int TargetStatusStackMaxStacks;
-        public string ConsumeTargetStatusId;
+        public string ConsumeTargetStatusName;
         public StatusEffectKind ConsumeTargetStatusKind;
         public float ConsumeTargetStatusRatio;
         public int ConsumeTargetStatusStacks;

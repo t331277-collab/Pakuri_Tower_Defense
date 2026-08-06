@@ -43,13 +43,13 @@ namespace Pakuri.Data
     [Serializable]
     public sealed class ArtifactEffectDefinition
     {
-        public string EffectId;
-        public string ArtifactId;
+        public string EffectName;
+        public string ArtifactName;
         public ArtifactEffectApplicationMode ApplicationMode;
         public ArtifactEffectRecipient Recipient;
         public ArtifactEffectRepeatRule RepeatRule;
         public ArtifactEffectSelectionRule SelectionRule;
-        public string RecipientMonsterId;
+        public string RecipientMonsterName;
         public SkillDefinition TargetSkill;
         public SkillDefinition OutcomeSkill;
         public SkillNode[] Nodes = Array.Empty<SkillNode>();
@@ -59,11 +59,11 @@ namespace Pakuri.Data
     [Serializable]
     public sealed class ArtifactSynergyEffectDefinition
     {
-        public string EffectId;
-        public string SynergyLevelId;
+        public string EffectName;
+        public string SynergyLevelName;
         public ArtifactEffectApplicationMode ApplicationMode;
         public ArtifactEffectRecipient Recipient;
-        public string RecipientMonsterId;
+        public string RecipientMonsterName;
         public SkillDefinition TargetSkill;
         public SkillDefinition OutcomeSkill;
         public SummonDefinition SpawnSummon;
@@ -72,9 +72,9 @@ namespace Pakuri.Data
     [Serializable]
     public sealed class ArtifactDefinition
     {
-        public string ArtifactId;
+        public string ArtifactName;
         public string DisplayName;
-        public string SynergyId;
+        public string SynergyName;
         public string Description;
         public Sprite Icon;
         public ArtifactEffectDefinition[] Effects = Array.Empty<ArtifactEffectDefinition>();
@@ -83,7 +83,7 @@ namespace Pakuri.Data
     [Serializable]
     public sealed class ArtifactSynergyLevelDefinition
     {
-        public string LevelId;
+        public string LevelName;
         public int RequiredCount;
         public string Description;
         public ArtifactSynergyEffectDefinition[] Effects = Array.Empty<ArtifactSynergyEffectDefinition>();
@@ -92,7 +92,7 @@ namespace Pakuri.Data
     [Serializable]
     public sealed class ArtifactSynergyDefinition
     {
-        public string SynergyId;
+        public string SynergyName;
         public string DisplayName;
         public string Summary;
         public string Description;

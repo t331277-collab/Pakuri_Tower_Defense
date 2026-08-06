@@ -20,8 +20,8 @@ namespace Pakuri.InGame
         private MenifestUI menifestUI;
         private InGameUIManager uiManager;
 
-        private readonly string[] prisonSlotMonsterIds = new string[PrisonPartySlotCount];
-        private string pendingArtifactId;
+        private readonly string[] prisonSlotMonsterNames = new string[PrisonPartySlotCount];
+        private string pendingArtifactName;
         private bool referencesBound;
         private bool bindingFailed;
 
@@ -54,20 +54,20 @@ namespace Pakuri.InGame
                 return;
             }
 
-            pendingArtifactId = string.Empty;
+            pendingArtifactName = string.Empty;
             BindStaticButtons();
             UiObjectUtility.SetActive(prisonPanel, true);
             Refresh();
         }
 
-        public void OpenArtifactAcquisition(string artifactId)
+        public void OpenArtifactAcquisition(string artifactName)
         {
-            if (string.IsNullOrWhiteSpace(artifactId) || !BindObject())
+            if (string.IsNullOrWhiteSpace(artifactName) || !BindObject())
             {
                 return;
             }
 
-            pendingArtifactId = artifactId;
+            pendingArtifactName = artifactName;
             BindStaticButtons();
             UiObjectUtility.SetActive(prisonPanel, true);
             Refresh();
@@ -76,7 +76,7 @@ namespace Pakuri.InGame
         public void Hide()
         {
             UiObjectUtility.SetActive(prisonPanel, false);
-            pendingArtifactId = string.Empty;
+            pendingArtifactName = string.Empty;
         }
 
         public void Refresh()
@@ -88,7 +88,7 @@ namespace Pakuri.InGame
             var occupiedCount = partyMembers != null
                 ? Math.Min(partyMembers.Count, PrisonPartySlotCount)
                 : 0;
-            var isArtifactAcquisition = !string.IsNullOrWhiteSpace(pendingArtifactId);
+            var isArtifactAcquisition = !string.IsNullOrWhiteSpace(pendingArtifactName);
             UiObjectUtility.SetActive(prisonerArea, !isArtifactAcquisition);
             for (var i = 0; i < prisonPartySlots.Length; i++)
             {
@@ -96,13 +96,13 @@ namespace Pakuri.InGame
                 var isNextManifestSlot = occupiedCount > 0
                     && occupiedCount < PrisonPartySlotCount
                     && i == occupiedCount;
-                var monsterId = isOccupied ? partyMembers[i].MonsterId : string.Empty;
-                prisonSlotMonsterIds[i] = monsterId;
+                var monsterName = isOccupied ? partyMembers[i].MonsterName : string.Empty;
+                prisonSlotMonsterNames[i] = monsterName;
                 var canAcquireArtifact = isOccupied
-                    && session.CanAcquireArtifact(partyMembers[i], pendingArtifactId);
+                    && session.CanAcquireArtifact(partyMembers[i], pendingArtifactName);
                 RefreshPrisonPartySlot(
                     prisonPartySlots[i],
-                    monsterId,
+                    monsterName,
                     isOccupied,
                     isNextManifestSlot,
                     isArtifactAcquisition,
@@ -122,16 +122,16 @@ namespace Pakuri.InGame
                 return;
             }
 
-            if (!string.IsNullOrWhiteSpace(pendingArtifactId))
+            if (!string.IsNullOrWhiteSpace(pendingArtifactName))
             {
                 AcquireArtifact(slotIndex);
                 return;
             }
 
-            var monsterId = prisonSlotMonsterIds[slotIndex];
-            if (!string.IsNullOrWhiteSpace(monsterId))
+            var monsterName = prisonSlotMonsterNames[slotIndex];
+            if (!string.IsNullOrWhiteSpace(monsterName))
             {
-                if (offeringUI != null && offeringUI.OpenOfferingPanel(monsterId))
+                if (offeringUI != null && offeringUI.OpenOfferingPanel(monsterName))
                 {
                     UiObjectUtility.SetActive(prisonPanel, false);
                 }
@@ -164,19 +164,19 @@ namespace Pakuri.InGame
             }
 
             var member = session.PartyMembers[slotIndex];
-            if (!session.TryAcquireArtifact(member, pendingArtifactId))
+            if (!session.TryAcquireArtifact(member, pendingArtifactName))
             {
                 Refresh();
                 return;
             }
 
-            pendingArtifactId = string.Empty;
+            pendingArtifactName = string.Empty;
             uiManager?.CompleteArtifactAcquisition();
         }
 
         private static void RefreshPrisonPartySlot(
             PrisonPartySlotView slot,
-            string monsterId,
+            string monsterName,
             bool isOccupied,
             bool isNextManifestSlot,
             bool isArtifactAcquisition,
@@ -207,12 +207,12 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId);
+            var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterName);
             if (slot.NameText != null)
             {
                 slot.NameText.text = monster != null && !string.IsNullOrWhiteSpace(monster.DisplayName)
                     ? monster.DisplayName
-                    : monsterId;
+                    : monsterName;
             }
 
             if (slot.Image != null)
@@ -226,8 +226,8 @@ namespace Pakuri.InGame
         private void RefreshSelectedPrisoner()
         {
             var activePrisonerButton = uiManager?.ActivePrisonerButton;
-            var prisonerId = activePrisonerButton != null ? activePrisonerButton.PrisonerId : string.Empty;
-            var hasPrisoner = !string.IsNullOrWhiteSpace(prisonerId);
+            var prisonerName = activePrisonerButton != null ? activePrisonerButton.PrisonerName : string.Empty;
+            var hasPrisoner = !string.IsNullOrWhiteSpace(prisonerName);
             UiObjectUtility.SetActive(prisonerImage != null ? prisonerImage.gameObject : null, hasPrisoner);
             if (!hasPrisoner)
             {
@@ -236,10 +236,10 @@ namespace Pakuri.InGame
 
             if (prisonerNameText != null)
             {
-                prisonerNameText.text = uiManager.ResolvePrisonerDisplayName(prisonerId);
+                prisonerNameText.text = uiManager.ResolvePrisonerDisplayName(prisonerName);
             }
 
-            var enemy = GameDataLoader.CurrentCatalog.GetData<EnemyDefinition>(prisonerId);
+            var enemy = GameDataLoader.CurrentCatalog.GetData<EnemyDefinition>(prisonerName);
             if (prisonerImage != null)
             {
                 prisonerImage.sprite = enemy != null ? enemy.Image : null;

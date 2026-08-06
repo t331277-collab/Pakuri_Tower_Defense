@@ -51,7 +51,7 @@ namespace Pakuri.InGame
             StatusRuntimeInstance status;
             if (mergedExisting)
             {
-                status = Find(kind, statusData.SourceSkillId);
+                status = Find(kind, statusData.SourceSkillName);
             }
             else
             {
@@ -138,9 +138,9 @@ namespace Pakuri.InGame
             return false;
         }
 
-        public bool Has(StatusEffectKind kind, string sourceSkillId)
+        public bool Has(StatusEffectKind kind, string sourceSkillName)
         {
-            var status = Find(kind, sourceSkillId);
+            var status = Find(kind, sourceSkillName);
             return status != null && status.Stacks > 0;
         }
 
@@ -204,17 +204,17 @@ namespace Pakuri.InGame
 
         public bool Remove(
             StatusEffectKind kind,
-            string sourceSkillId,
+            string sourceSkillName,
             ICollection<StatusRuntimeInstance> removedStatuses)
         {
             var removed = false;
-            var hasSourceSkillId = !string.IsNullOrWhiteSpace(sourceSkillId);
+            var hasSourceSkillName = !string.IsNullOrWhiteSpace(sourceSkillName);
             for (var i = statuses.Count - 1; i >= 0; i--)
             {
                 var status = statuses[i];
                 if (status == null
                     || status.Kind != kind
-                    || (hasSourceSkillId && !string.Equals(status.SourceSkillId, sourceSkillId, StringComparison.OrdinalIgnoreCase)))
+                    || (hasSourceSkillName && !string.Equals(status.SourceSkillName, sourceSkillName, StringComparison.OrdinalIgnoreCase)))
                 {
                     continue;
                 }
@@ -347,9 +347,9 @@ namespace Pakuri.InGame
             }
         }
 
-        private StatusRuntimeInstance Find(StatusEffectKind kind, string sourceSkillId = null)
+        private StatusRuntimeInstance Find(StatusEffectKind kind, string sourceSkillName = null)
         {
-            var hasSourceSkillId = !string.IsNullOrWhiteSpace(sourceSkillId);
+            var hasSourceSkillName = !string.IsNullOrWhiteSpace(sourceSkillName);
             for (var i = 0; i < statuses.Count; i++)
             {
                 var status = statuses[i];
@@ -358,7 +358,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                if (!hasSourceSkillId || string.Equals(status.SourceSkillId, sourceSkillId, StringComparison.OrdinalIgnoreCase))
+                if (!hasSourceSkillName || string.Equals(status.SourceSkillName, sourceSkillName, StringComparison.OrdinalIgnoreCase))
                 {
                     return status;
                 }
@@ -370,7 +370,7 @@ namespace Pakuri.InGame
         private static bool HasSourceAwareIdentity(StatusRuntimeData statusData)
         {
             return statusData != null
-                && !string.IsNullOrWhiteSpace(statusData.SourceSkillId)
+                && !string.IsNullOrWhiteSpace(statusData.SourceSkillName)
                 && statusData.MergePolicy != StatusMergePolicy.Unspecified;
         }
 
@@ -427,10 +427,10 @@ namespace Pakuri.InGame
         }
 
         public StatusRuntimeData SourceData { get; private set; }
-        public string SourceSkillId { get; private set; }
+        public string SourceSkillName { get; private set; }
         public UnitCombatState SourceUnit { get; private set; }
-        public string SourceUnitId { get; private set; }
-        public string SourceDefinitionId { get; private set; }
+        public string SourceUnitName { get; private set; }
+        public string SourceDefinitionName { get; private set; }
         public StatusTargetScope TargetScope { get; private set; } = StatusTargetScope.Unspecified;
         public StatusMergePolicy MergePolicy { get; private set; } = StatusMergePolicy.Unspecified;
         public ShieldRefreshRule ShieldAmountRefreshPolicy { get; private set; } = ShieldRefreshRule.TakeHighest;
@@ -451,7 +451,7 @@ namespace Pakuri.InGame
 
         public void SetSourceMetadata(StatusRuntimeData sourceData)
         {
-            SourceSkillId = sourceData.SourceSkillId;
+            SourceSkillName = sourceData.SourceSkillName;
             TargetScope = sourceData.TargetScope;
             MergePolicy = sourceData.MergePolicy;
             ShieldAmountRefreshPolicy = sourceData.ShieldAmountRefreshPolicy;
@@ -460,15 +460,15 @@ namespace Pakuri.InGame
         public void SetSourceUnit(UnitCombatState source)
         {
             SourceUnit = source;
-            SourceUnitId = string.Empty;
-            SourceDefinitionId = string.Empty;
+            SourceUnitName = string.Empty;
+            SourceDefinitionName = string.Empty;
             if (source == null || source.Identity == null)
             {
                 return;
             }
 
-            SourceUnitId = source.Identity.UnitId;
-            SourceDefinitionId = source.Identity.DefinitionId;
+            SourceUnitName = source.Identity.UnitName;
+            SourceDefinitionName = source.Identity.DefinitionName;
         }
 
         public void AddStacks(int stacks, int maxStacks)

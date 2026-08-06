@@ -1,5 +1,5 @@
-"monster_id","owner_kind","owner_id","target_skill_id","node_order","node_type_id","arg_1","arg_2","arg_3","arg_4","arg_5","arg_6","arg_7","arg_8","arg_9","arg_10","arg_11","arg_12","excludes_active_choice_id"
-"string","enum","string","skill_id","int","string","string","string","string","string","string","string","string","string","string","string","string","string","choice_id"
+"monster_name","owner_kind","owner_name","target_skill_name","node_order","node_type_name","arg_1","arg_2","arg_3","arg_4","arg_5","arg_6","arg_7","arg_8","arg_9","arg_10","arg_11","arg_12","excludes_active_choice_name"
+"string","enum","string","skill_name","int","string","string","string","string","string","string","string","string","string","string","string","string","string","choice_name"
 "ariel","Choice","a-trait-1","ariel-a","1","DamageMultiplier","1.25","","","","","","","","","","","",""
 "ariel","Choice","a-trait-2","","1","MagazineBonus","3","","","","","","","","","","","",""
 "ariel","Choice","a-trait-3","","1","ReloadTimeMultiplier","0.8","","","","","","","","","","","",""

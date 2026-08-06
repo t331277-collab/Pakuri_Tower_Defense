@@ -67,10 +67,10 @@ namespace Pakuri.InGame
             return artifactUI != null && artifactUI.OpenPreparedChoices();
         }
 
-        internal void OpenArtifactAcquisition(string artifactId)
+        internal void OpenArtifactAcquisition(string artifactName)
         {
             artifactUI?.Hide();
-            prisonPanelUI?.OpenArtifactAcquisition(artifactId);
+            prisonPanelUI?.OpenArtifactAcquisition(artifactName);
         }
 
         internal void OpenPrisonPanel()
@@ -124,15 +124,15 @@ namespace Pakuri.InGame
             return stageManager != null ? stageManager.ActiveSession : null;
         }
 
-        internal string ResolvePrisonerDisplayName(string prisonerId)
+        internal string ResolvePrisonerDisplayName(string prisonerName)
         {
-            var enemy = GameDataLoader.CurrentCatalog.GetData<EnemyDefinition>(prisonerId);
+            var enemy = GameDataLoader.CurrentCatalog.GetData<EnemyDefinition>(prisonerName);
             if (enemy != null && !string.IsNullOrWhiteSpace(enemy.DisplayName))
             {
                 return enemy.DisplayName;
             }
 
-            return string.IsNullOrWhiteSpace(prisonerId) ? "Unknown" : prisonerId;
+            return string.IsNullOrWhiteSpace(prisonerName) ? "Unknown" : prisonerName;
         }
 
         private void ShowRewardPanel()

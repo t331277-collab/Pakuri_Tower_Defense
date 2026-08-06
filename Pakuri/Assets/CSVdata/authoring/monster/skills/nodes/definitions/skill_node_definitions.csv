@@ -1,4 +1,4 @@
-"node_type_id","handler_id","node_kind","runtime_support_state","runtime_support_notes"
+"node_type_name","handler_name","node_kind","runtime_support_state","runtime_support_notes"
 "string","string","enum","string","string"
 "ApplyShield","ApplyShield","Action","",""
 "ApplyStatus","ApplyStatus","Action","",""

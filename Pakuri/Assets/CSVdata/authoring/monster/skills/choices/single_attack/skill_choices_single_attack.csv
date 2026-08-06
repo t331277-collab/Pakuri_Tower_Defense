@@ -1,5 +1,5 @@
-"choice_id","skill_id","monster_id","choice_group","sort_order","title","description_text"
-"id","string","string","enum:SkillChoiceGroup","int","string","string"
+"choice_name","skill_name","monster_name","choice_group","sort_order","title","description_text"
+"name","string","string","enum:SkillChoiceGroup","int","string","string"
 "ariel-c-trait-1","ariel-c","ariel","ActiveEnhancement","0","특성 1","위력 +25%"
 "ariel-c-trait-2","ariel-c","ariel","ActiveEnhancement","1","특성 2","행동속도 증가량 +6%"
 "ariel-c-trait-3","ariel-c","ariel","ActiveEnhancement","2","특성 3","버프 지속시간 +2초"

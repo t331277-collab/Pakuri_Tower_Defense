@@ -38607,51 +38607,51 @@ MonoBehaviour:
   runtimeEnemyRoot: {fileID: 727702651}
   runtimeMonsterRoot: {fileID: 1094400654}
   monsterPrefabBindings:
-  - monsterId: ariel
+  - monsterName: ariel
     prefab: {fileID: 4596420534878418281, guid: 6cab17e3f2f1775429ecb9a204438d9a, type: 3}
-  - monsterId: eve
+  - monsterName: eve
     prefab: {fileID: 4596420534878418281, guid: 768bb9d217c3cc64a84cd7059fe5e154, type: 3}
-  - monsterId: rin
+  - monsterName: rin
     prefab: {fileID: 4596420534878418281, guid: 45d446ad22f4f2f4d94f4ab1039c5b0a, type: 3}
-  - monsterId: sein
+  - monsterName: sein
     prefab: {fileID: 4596420534878418281, guid: d827bb1e48cabef4abeed838d6bb8e05, type: 3}
-  - monsterId: vega
+  - monsterName: vega
     prefab: {fileID: 4596420534878418281, guid: a1e586738d1b9b64a97d0caba4cd449c, type: 3}
   summonPrefabBindings:
-  - summonId: spirit-king
+  - summonName: spirit-king
     prefab: {fileID: 3842231094034295746, guid: 22fa35ab86fc0754fa50c8086e14d1b0, type: 3}
   enemyPrefabBindings:
-  - enemyId: stage1-swordsman
+  - enemyName: stage1-swordsman
     prefab: {fileID: 6219452113495756200, guid: f2892daa44e860e49b1ea2b17f8682dc, type: 3}
-  - enemyId: stage1-shieldbearer
+  - enemyName: stage1-shieldbearer
     prefab: {fileID: 6219452113495756200, guid: 134892515805b3848858777fbb9c2892, type: 3}
-  - enemyId: stage1-archer
+  - enemyName: stage1-archer
     prefab: {fileID: 6219452113495756200, guid: bffcd0db2ede5a34a9297596966f6697, type: 3}
-  - enemyId: stage1-rogue
+  - enemyName: stage1-rogue
     prefab: {fileID: 6219452113495756200, guid: 41679be8164df3d4fa09bc87aa4c1fb7, type: 3}
-  - enemyId: stage1-priest
+  - enemyName: stage1-priest
     prefab: {fileID: 6219452113495756200, guid: 1fd46dd360e001847b2d0e89ded130d9, type: 3}
-  - enemyId: stage1-guardian-captain
+  - enemyName: stage1-guardian-captain
     prefab: {fileID: 6219452113495756200, guid: 4dbb60015bf26c445abc28930bee2cec, type: 3}
-  - enemyId: stage1-attack-captain
+  - enemyName: stage1-attack-captain
     prefab: {fileID: 6219452113495756200, guid: f7f5b002997b494478c4744a6d3f3fef, type: 3}
-  - enemyId: stage1-hero-karin
+  - enemyName: stage1-hero-karin
     prefab: {fileID: 6219452113495756200, guid: 078cea88ffc67744e8f02da371344665, type: 3}
-  - enemyId: stage2-fire-dragon-slayer
+  - enemyName: stage2-fire-dragon-slayer
     prefab: {fileID: 5195311948756499146, guid: d38697eb45dd1e545a70f50c2f1271c5, type: 3}
-  - enemyId: stage2-lightning-scout
+  - enemyName: stage2-lightning-scout
     prefab: {fileID: 555655491228033923, guid: 9775c4f15a895ee4d908adf3d4d60e0f, type: 3}
-  - enemyId: stage2-ice-guard
+  - enemyName: stage2-ice-guard
     prefab: {fileID: 5203276214274935459, guid: 11493774af27ab04b9bb68b8a81e818c, type: 3}
-  - enemyId: stage2-dark-assassin
+  - enemyName: stage2-dark-assassin
     prefab: {fileID: 2261757788458218692, guid: 24a588c20e65bda43aaf8ae0f686e7fd, type: 3}
-  - enemyId: stage2-holy-priest
+  - enemyName: stage2-holy-priest
     prefab: {fileID: 5070576057754673694, guid: 6e297186b69d483408ca8b4b97acea25, type: 3}
-  - enemyId: stage2-ethan
+  - enemyName: stage2-ethan
     prefab: {fileID: 3292185792058007014, guid: 1077e6a3c9701b842ac08178aa2bce7c, type: 3}
-  - enemyId: stage2-drake
+  - enemyName: stage2-drake
     prefab: {fileID: 2901641940831284134, guid: 4ca246702baa4fd45b4921ba449d94a9, type: 3}
-  - enemyId: stage2-arsen
+  - enemyName: stage2-arsen
     prefab: {fileID: 7149419201978181015, guid: 352837e4f845dc54ab09d08e639b5f66, type: 3}
 --- !u!114 &1427799831
 MonoBehaviour:

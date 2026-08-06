@@ -1,4 +1,4 @@
-﻿/*
+/*
  * 역할: Damage Meter UI 표시.
  * 책임: 행을 생성하고 Tracker Snapshot을 연결해 합계와 InGame Meter Panel을 갱신한다.
  */
@@ -30,7 +30,7 @@ namespace Pakuri.InGame
         private bool referencesBound;
         private bool bindingFailed;
 
-        private readonly string[] partyMonsterIds = new string[MaxPartySlots];
+        private readonly string[] partyMonsterNames = new string[MaxPartySlots];
         private float refreshRemaining;
 
         /// Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.
@@ -95,15 +95,15 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                var monsterId = partyMonsterIds[i];
-                if (string.IsNullOrWhiteSpace(monsterId))
+                var monsterName = partyMonsterNames[i];
+                if (string.IsNullOrWhiteSpace(monsterName))
                 {
                     panel.SetVisible(false);
                     continue;
                 }
 
-                var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId);
-                tracker.TryGetRecord(monsterId, out var record);
+                var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterName);
+                tracker.TryGetRecord(monsterName, out var record);
                 panel.SetRuntime(monster, record, leaderDamage, ResolveDisplayName, ResolveSortKey);
             }
 
@@ -113,14 +113,14 @@ namespace Pakuri.InGame
         /// Registry의 플레이어 순서에 맞춰 Damage Meter 행을 배치한다.
         private void BuildPartyOrder()
         {
-            Array.Clear(partyMonsterIds, 0, partyMonsterIds.Length);
+            Array.Clear(partyMonsterNames, 0, partyMonsterNames.Length);
 
             var session = stageManager != null ? stageManager.ActiveSession : null;
             if (session != null && session.PartyMembers.Count > 0)
             {
-                for (var i = 0; i < session.PartyMembers.Count && i < partyMonsterIds.Length; i++)
+                for (var i = 0; i < session.PartyMembers.Count && i < partyMonsterNames.Length; i++)
                 {
-                    partyMonsterIds[i] = session.PartyMembers[i].MonsterId;
+                    partyMonsterNames[i] = session.PartyMembers[i].MonsterName;
                 }
 
                 return;
@@ -131,17 +131,17 @@ namespace Pakuri.InGame
                 : null;
             if (selectedPlayer != null && selectedPlayer.Model.Identity != null)
             {
-                partyMonsterIds[0] = selectedPlayer.Model.Identity.DefinitionId;
+                partyMonsterNames[0] = selectedPlayer.Model.Identity.DefinitionName;
             }
         }
 
         private float ResolveLeaderDamage()
         {
             var max = 0f;
-            for (var i = 0; i < partyMonsterIds.Length; i++)
+            for (var i = 0; i < partyMonsterNames.Length; i++)
             {
-                var monsterId = partyMonsterIds[i];
-                if (tracker != null && tracker.TryGetRecord(monsterId, out var record))
+                var monsterName = partyMonsterNames[i];
+                if (tracker != null && tracker.TryGetRecord(monsterName, out var record))
                 {
                     max = Mathf.Max(max, record.TotalDamage);
                 }
@@ -150,51 +150,51 @@ namespace Pakuri.InGame
             return max;
         }
 
-        private string ResolveDisplayName(string monsterId, string sourceId)
+        private string ResolveDisplayName(string monsterName, string sourceName)
         {
             var manager = GameDataLoader.CurrentCatalog;
-            var monster = manager.GetMonster(monsterId);
+            var monster = manager.GetMonster(monsterName);
             if (monster != null)
             {
-                var skillName = ResolveSkillDisplayName(monster, sourceId);
+                var skillName = ResolveSkillDisplayName(monster, sourceName);
                 if (!string.IsNullOrWhiteSpace(skillName))
                 {
                     return skillName;
                 }
 
-                var reaction = FindReaction(monster, sourceId);
+                var reaction = FindReaction(monster, sourceName);
                 var choiceTitle = ResolveChoiceTitleForReaction(reaction);
                 if (!string.IsNullOrWhiteSpace(choiceTitle))
                 {
                     return choiceTitle;
                 }
 
-                var triggerSourceName = ResolveTriggerSourceDisplayName(monster, sourceId, reaction);
+                var triggerSourceName = ResolveTriggerSourceDisplayName(monster, sourceName, reaction);
                 if (!string.IsNullOrWhiteSpace(triggerSourceName))
                 {
                     return triggerSourceName;
                 }
             }
 
-            var choice = manager.GetData<SkillChoice>(sourceId);
+            var choice = manager.GetData<SkillChoice>(sourceName);
             if (choice != null && !string.IsNullOrWhiteSpace(choice.Title))
             {
                 return choice.Title;
             }
 
-            return string.IsNullOrWhiteSpace(sourceId) ? "Unknown" : sourceId;
+            return string.IsNullOrWhiteSpace(sourceName) ? "Unknown" : sourceName;
         }
 
-        private int ResolveSortKey(string monsterId, string sourceId, int firstSeenIndex)
+        private int ResolveSortKey(string monsterName, string sourceName, int firstSeenIndex)
         {
-            var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterId);
+            var monster = GameDataLoader.CurrentCatalog.GetMonster(monsterName);
             var activeSkills = monster != null ? monster.ActiveSkills : null;
             if (activeSkills != null)
             {
                 for (var i = 0; i < activeSkills.Length; i++)
                 {
                     var skill = activeSkills[i];
-                    if (skill != null && string.Equals(skill.SkillId, sourceId, StringComparison.OrdinalIgnoreCase))
+                    if (skill != null && string.Equals(skill.SkillName, sourceName, StringComparison.OrdinalIgnoreCase))
                     {
                         return i;
                     }
@@ -206,7 +206,7 @@ namespace Pakuri.InGame
 
         private static string ResolveTriggerSourceDisplayName(
             MonsterDefinition monster,
-            string sourceId,
+            string sourceName,
             SkillReaction trigger)
         {
             if (trigger == null)
@@ -214,38 +214,38 @@ namespace Pakuri.InGame
                 return string.Empty;
             }
 
-            var sourceSkillId = trigger.SourceSkillId;
-            if (string.IsNullOrWhiteSpace(sourceSkillId)
-                || string.Equals(sourceSkillId, sourceId, StringComparison.OrdinalIgnoreCase))
+            var sourceSkillName = trigger.SourceSkillName;
+            if (string.IsNullOrWhiteSpace(sourceSkillName)
+                || string.Equals(sourceSkillName, sourceName, StringComparison.OrdinalIgnoreCase))
             {
                 return string.Empty;
             }
 
-            var passiveName = FindSkillDisplayName(monster?.PassiveSkills, sourceSkillId);
+            var passiveName = FindSkillDisplayName(monster?.PassiveSkills, sourceSkillName);
             return !string.IsNullOrWhiteSpace(passiveName)
                 ? passiveName
-                : FindSkillDisplayName(monster?.ActiveSkills, sourceSkillId);
+                : FindSkillDisplayName(monster?.ActiveSkills, sourceSkillName);
         }
 
         private static string ResolveChoiceTitleForReaction(SkillReaction reaction)
         {
-            return reaction?.RequiredActiveChoiceIds != null
-                && reaction.RequiredActiveChoiceIds.Length > 0
-                    ? ResolveChoiceTitle(reaction.RequiredActiveChoiceIds[0])
+            return reaction?.RequiredActiveChoiceNames != null
+                && reaction.RequiredActiveChoiceNames.Length > 0
+                    ? ResolveChoiceTitle(reaction.RequiredActiveChoiceNames[0])
                     : string.Empty;
         }
 
         private static SkillReaction FindReaction(
             MonsterDefinition monster,
-            string reactionId)
+            string reactionName)
         {
-            var reaction = FindReaction(monster?.ActiveSkills, reactionId);
-            return reaction ?? FindReaction(monster?.PassiveSkills, reactionId);
+            var reaction = FindReaction(monster?.ActiveSkills, reactionName);
+            return reaction ?? FindReaction(monster?.PassiveSkills, reactionName);
         }
 
         private static SkillReaction FindReaction(
             SkillDefinition[] skills,
-            string reactionId)
+            string reactionName)
         {
             for (var i = 0; skills != null && i < skills.Length; i++)
             {
@@ -254,8 +254,8 @@ namespace Pakuri.InGame
                 for (var j = 0; j < reactions.Count; j++)
                 {
                     if (string.Equals(
-                        reactions[j].ReactionId,
-                        reactionId,
+                        reactions[j].ReactionName,
+                        reactionName,
                         StringComparison.OrdinalIgnoreCase))
                     {
                         return reactions[j];
@@ -265,24 +265,24 @@ namespace Pakuri.InGame
             return null;
         }
 
-        private static string ResolveChoiceTitle(string choiceId)
+        private static string ResolveChoiceTitle(string choiceName)
         {
-            var choice = GameDataLoader.CurrentCatalog.GetData<SkillChoice>(choiceId);
+            var choice = GameDataLoader.CurrentCatalog.GetData<SkillChoice>(choiceName);
             return choice != null ? choice.Title : string.Empty;
         }
 
-        private static string ResolveSkillDisplayName(MonsterDefinition monster, string sourceId)
+        private static string ResolveSkillDisplayName(MonsterDefinition monster, string sourceName)
         {
-            var activeName = FindSkillDisplayName(monster?.ActiveSkills, sourceId);
+            var activeName = FindSkillDisplayName(monster?.ActiveSkills, sourceName);
             if (!string.IsNullOrWhiteSpace(activeName))
             {
                 return activeName;
             }
 
-            return FindSkillDisplayName(monster?.PassiveSkills, sourceId);
+            return FindSkillDisplayName(monster?.PassiveSkills, sourceName);
         }
 
-        private static string FindSkillDisplayName(SkillDefinition[] skills, string sourceId)
+        private static string FindSkillDisplayName(SkillDefinition[] skills, string sourceName)
         {
             if (skills == null)
             {
@@ -292,9 +292,9 @@ namespace Pakuri.InGame
             for (var i = 0; i < skills.Length; i++)
             {
                 var skill = skills[i];
-                if (skill != null && string.Equals(skill.SkillId, sourceId, StringComparison.OrdinalIgnoreCase))
+                if (skill != null && string.Equals(skill.SkillName, sourceName, StringComparison.OrdinalIgnoreCase))
                 {
-                    return skill.SkillName;
+                    return skill.DisplayName;
                 }
             }
             return string.Empty;
@@ -425,10 +425,10 @@ namespace Pakuri.InGame
             {
                 SetVisible(true);
 
-                var monsterId = monster != null ? monster.MonsterId : string.Empty;
+                var monsterName = monster != null ? monster.MonsterName : string.Empty;
                 if (monsterNameText != null)
                 {
-                    monsterNameText.text = monster != null ? monster.DisplayName : monsterId;
+                    monsterNameText.text = monster != null ? monster.DisplayName : monsterName;
                 }
 
                 RefreshImage(monster);
@@ -445,7 +445,7 @@ namespace Pakuri.InGame
                     totalDamagePercentText.text = percent + "%";
                 }
 
-                RefreshSegments(monsterId, record, leaderDamage, displayNameResolver, sortKeyResolver);
+                RefreshSegments(monsterName, record, leaderDamage, displayNameResolver, sortKeyResolver);
             }
 
             public void SetVisible(bool visible)
@@ -475,7 +475,7 @@ namespace Pakuri.InGame
             }
 
             private void RefreshSegments(
-                string monsterId,
+                string monsterName,
                 MonsterDamageRecord record,
                 float leaderDamage,
                 Func<string, string, string> displayNameResolver,
@@ -486,7 +486,7 @@ namespace Pakuri.InGame
                     return;
                 }
 
-                var visibleSources = BuildVisibleSources(record, monsterId, sortKeyResolver);
+                var visibleSources = BuildVisibleSources(record, monsterName, sortKeyResolver);
                 EnsureSegmentCount(visibleSources.Count);
                 if (leaderDamage <= 0f || visibleSources.Count == 0)
                 {
@@ -520,7 +520,7 @@ namespace Pakuri.InGame
                     var label = segment.GetComponentInChildren<TMP_Text>(true);
                     if (label != null)
                     {
-                        var displayName = displayNameResolver(monsterId, source.SourceId);
+                        var displayName = displayNameResolver(monsterName, source.SourceName);
                         label.text = string.Format("{0} {1}", displayName, FormatCompact(source.Damage));
                     }
                 }
@@ -528,7 +528,7 @@ namespace Pakuri.InGame
 
             private List<SortedSkillSource> BuildVisibleSources(
                 MonsterDamageRecord record,
-                string monsterId,
+                string monsterName,
                 Func<string, string, int, int> sortKeyResolver)
             {
                 var result = new List<SortedSkillSource>();
@@ -546,7 +546,7 @@ namespace Pakuri.InGame
                         continue;
                     }
 
-                    var sortKey = sortKeyResolver != null ? sortKeyResolver(monsterId, source.SourceId, i) : i;
+                    var sortKey = sortKeyResolver != null ? sortKeyResolver(monsterName, source.SourceName, i) : i;
                     result.Add(new SortedSkillSource(source, sortKey, i));
                 }
 

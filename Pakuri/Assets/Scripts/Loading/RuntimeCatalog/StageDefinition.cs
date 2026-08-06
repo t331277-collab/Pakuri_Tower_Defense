@@ -23,12 +23,12 @@ namespace Pakuri.Data
             return null;
         }
 
-        public StageRewardDefinition FindReward(string rewardRuleId)
+        public StageRewardDefinition FindReward(string rewardRuleName)
         {
             for (var i = 0; i < Rewards.Length; i++)
             {
                 var row = Rewards[i];
-                if (string.Equals(row.RewardRuleId, rewardRuleId, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(row.RewardRuleName, rewardRuleName, StringComparison.OrdinalIgnoreCase))
                 {
                     return row;
                 }
@@ -37,14 +37,14 @@ namespace Pakuri.Data
             return null;
         }
 
-        public void FindEncounterRows(string encounterId, System.Collections.Generic.List<StageEncounterDefinition> results)
+        public void FindEncounterRows(string encounterName, System.Collections.Generic.List<StageEncounterDefinition> results)
         {
             results.Clear();
 
             for (var i = 0; i < Encounters.Length; i++)
             {
                 var row = Encounters[i];
-                if (string.Equals(row.EncounterId, encounterId, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(row.EncounterName, encounterName, StringComparison.OrdinalIgnoreCase))
                 {
                     results.Add(row);
                 }
@@ -61,8 +61,8 @@ namespace Pakuri.Data
         public int Day;
         public string DayKey;
         public string CombatType;
-        public string EncounterId;
-        public string RewardRuleId;
+        public string EncounterName;
+        public string RewardRuleName;
         public float EliteOptionChance;
         public bool ShopOptionEnabled;
         public bool EventRollEnabled;
@@ -72,9 +72,9 @@ namespace Pakuri.Data
     [Serializable]
     public sealed class StageEncounterDefinition
     {
-        public string EncounterId;
+        public string EncounterName;
         public int SpawnOrder;
-        public string EnemyId;
+        public string EnemyName;
         public int Count;
         public float IntervalSeconds;
         public float SpawnX;
@@ -92,7 +92,7 @@ namespace Pakuri.Data
     [Serializable]
     public sealed class StageRewardDefinition
     {
-        public string RewardRuleId;
+        public string RewardRuleName;
         public string CombatType;
         public int Stage;
         public int Gold;

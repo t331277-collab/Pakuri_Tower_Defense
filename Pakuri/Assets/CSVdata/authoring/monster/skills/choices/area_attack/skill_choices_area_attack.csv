@@ -1,5 +1,5 @@
-"choice_id","skill_id","monster_id","choice_group","sort_order","title","description_text"
-"id","string","string","enum:SkillChoiceGroup","int","string","string"
+"choice_name","skill_name","monster_name","choice_group","sort_order","title","description_text"
+"name","string","string","enum:SkillChoiceGroup","int","string","string"
 "eve-c-trait-1","eve-c","eve","ActiveEnhancement","0","특성 1","범위 +25%, 지속시간 +15%"
 "eve-c-trait-2","eve-c","eve","ActiveEnhancement","1","특성 2","피해 주기 속도 +25%, 추위 부여량 +1"
 "eve-c-trait-3","eve-c","eve","ActiveEnhancement","2","특성 3","위력 +30%, 쿨다운 -15%"

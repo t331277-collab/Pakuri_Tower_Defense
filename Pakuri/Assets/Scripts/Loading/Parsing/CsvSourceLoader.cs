@@ -43,44 +43,44 @@ namespace Pakuri.Data
 
             foreach (var record in catalogMonsterTable.Records)
             {
-                var row = ParseCatalogEntry(record, "monster_id");
-                AddUnique(model.CatalogMonsters, row.Id, row, record);
+                var row = ParseCatalogEntry(record, "monster_name");
+                AddUnique(model.CatalogMonsters, row.Name, row, record);
             }
 
             foreach (var record in monsterTable.Records)
             {
                 var row = ParseMonsterRow(record);
-                AddUnique(model.Monsters, row.Id, row, record);
+                AddUnique(model.Monsters, row.Name, row, record);
             }
 
             foreach (var record in artifactTable.Records)
             {
                 var row = ParseArtifactRow(record);
-                AddUnique(model.Artifacts, row.Id, row, record);
+                AddUnique(model.Artifacts, row.Name, row, record);
             }
 
             foreach (var record in artifactSynergyTable.Records)
             {
                 var row = ParseArtifactSynergyRow(record);
-                AddUnique(model.ArtifactSynergies, row.Id, row, record);
+                AddUnique(model.ArtifactSynergies, row.Name, row, record);
             }
 
             foreach (var record in artifactEffectTable.Records)
             {
                 var row = ParseArtifactEffectRow(record);
-                AddUnique(model.ArtifactEffects, row.Id, row, record);
+                AddUnique(model.ArtifactEffects, row.Name, row, record);
             }
 
             foreach (var record in artifactSynergyEffectTable.Records)
             {
                 var row = ParseArtifactSynergyEffectRow(record);
-                AddUnique(model.ArtifactSynergyEffects, row.Id, row, record);
+                AddUnique(model.ArtifactSynergyEffects, row.Name, row, record);
             }
 
             foreach (var record in summonTable.Records)
             {
                 var row = ParseMonsterRow(record);
-                AddUnique(model.Summons, row.Id, row, record);
+                AddUnique(model.Summons, row.Name, row, record);
             }
 
             foreach (var record in summonSkillTable.Records)
@@ -90,16 +90,16 @@ namespace Pakuri.Data
                     && row.RuntimeKind != SkillRuntimeKind.AreaAttack)
                 {
                     throw new CsvFatalException(
-                        $"CSV table '{SummonSkillsFileName}' contains skill '{row.Id}' with unsupported runtime_kind '{row.RuntimeKind}'.");
+                        $"CSV table '{SummonSkillsFileName}' contains skill '{row.Name}' with unsupported runtime_kind '{row.RuntimeKind}'.");
                 }
 
-                AddUnique(model.SummonSkills, row.Id, row, record);
+                AddUnique(model.SummonSkills, row.Name, row, record);
             }
 
             foreach (var record in rewardChoiceTable.Records)
             {
                 var row = ParseRewardChoiceRow(record);
-                AddUnique(model.RewardChoices, row.Id, row, record);
+                AddUnique(model.RewardChoices, row.Name, row, record);
             }
 
             LoadSkillRows(
@@ -138,13 +138,13 @@ namespace Pakuri.Data
             foreach (var record in statusEffectTable.Records)
             {
                 var row = ParseStatusEffectRow(record);
-                AddUnique(model.StatusEffects, row.Id, row, record);
+                AddUnique(model.StatusEffects, row.Name, row, record);
             }
 
             foreach (var record in skillNodeDefinitionTable.Records)
             {
                 var row = ParseSkillNodeTypeRow(record);
-                AddUnique(model.SkillNodeTypes, row.Id, row, record);
+                AddUnique(model.SkillNodeTypes, row.Name, row, record);
             }
 
             foreach (var record in skillNodeDefinitionParamTable.Records)
@@ -160,7 +160,7 @@ namespace Pakuri.Data
                 foreach (var record in skillTriggerTable.Records)
                 {
                     var row = ParseSkillTriggerRow(record);
-                    AddUnique(model.SkillTriggers, row.Id, row, record);
+                    AddUnique(model.SkillTriggers, row.Name, row, record);
                 }
             }
 
@@ -172,7 +172,7 @@ namespace Pakuri.Data
                 foreach (var record in skillTriggerTable.Records)
                 {
                     var row = ParseSkillTriggerRow(record);
-                    AddUnique(model.SkillTriggers, row.Id, row, record);
+                    AddUnique(model.SkillTriggers, row.Name, row, record);
                 }
             }
 
@@ -232,7 +232,7 @@ namespace Pakuri.Data
             foreach (var record in enemyTable.Records)
             {
                 var row = ParseEnemyRow(record);
-                AddUnique(model.Enemies, row.Id, row, record);
+                AddUnique(model.Enemies, row.Name, row, record);
             }
 
             for (var assetIndex = 0; assetIndex < sourceCatalog.EnemySkillBaseFiles.Length; assetIndex++)
@@ -243,7 +243,7 @@ namespace Pakuri.Data
                 foreach (var record in table.Records)
                 {
                     var row = ParseEnemyBaseSkillRow(record, tableName);
-                    AddUnique(model.EnemyBaseSkills, row.Skill.Id, row, record);
+                    AddUnique(model.EnemyBaseSkills, row.Skill.Name, row, record);
                 }
             }
 
@@ -254,7 +254,7 @@ namespace Pakuri.Data
                 foreach (var record in table.Records)
                 {
                     var row = ParseEnemyTriggerRow(record);
-                    AddUnique(model.EnemyTriggers, row.Id, row, record);
+                    AddUnique(model.EnemyTriggers, row.Name, row, record);
                 }
             }
 
@@ -293,14 +293,14 @@ namespace Pakuri.Data
                 if (!IsAllowedSkillRuntimeKind(row.RuntimeKind, allowedRuntimeKinds))
                 {
                     throw new CsvFatalException(
-                        $"CSV table '{tableName}' contains skill '{row.Id}' with unsupported runtime_kind '{row.RuntimeKind}'.",
+                        $"CSV table '{tableName}' contains skill '{row.Name}' with unsupported runtime_kind '{row.RuntimeKind}'.",
                         new List<string>
                         {
-                            $"Move skill '{row.Id}' to the split monster skill CSV that owns runtime_kind '{row.RuntimeKind}'."
+                            $"Move skill '{row.Name}' to the split monster skill CSV that owns runtime_kind '{row.RuntimeKind}'."
                         });
                 }
 
-                AddUnique(model.Skills, row.Id, row, record);
+                AddUnique(model.Skills, row.Name, row, record);
             }
         }
 
@@ -363,27 +363,27 @@ namespace Pakuri.Data
             foreach (var record in choiceTable.Records)
             {
                 var row = ParseSkillChoiceRow(record, implicitChoiceGroup);
-                if (!model.Skills.TryGetValue(row.SkillId, out var ownerSkill))
+                if (!model.Skills.TryGetValue(row.SkillName, out var ownerSkill))
                 {
                     throw new CsvFatalException(
-                        $"CSV table '{tableName}' contains choice '{row.Id}' for unknown owner skill '{row.SkillId}'.",
+                        $"CSV table '{tableName}' contains choice '{row.Name}' for unknown owner skill '{row.SkillName}'.",
                         new List<string>
                         {
-                            $"Define skill '{row.SkillId}' in the split monster skill CSV before adding its choices."
+                            $"Define skill '{row.SkillName}' in the split monster skill CSV before adding its choices."
                         });
                 }
 
                 if (!IsAllowedSkillRuntimeKind(ownerSkill.RuntimeKind, allowedOwnerRuntimeKinds))
                 {
                     throw new CsvFatalException(
-                        $"CSV table '{tableName}' contains choice '{row.Id}' for skill '{row.SkillId}' with unsupported owner runtime_kind '{ownerSkill.RuntimeKind}'.",
+                        $"CSV table '{tableName}' contains choice '{row.Name}' for skill '{row.SkillName}' with unsupported owner runtime_kind '{ownerSkill.RuntimeKind}'.",
                         new List<string>
                         {
-                            $"Move choice '{row.Id}' to the split monster skill choice CSV that owns runtime_kind '{ownerSkill.RuntimeKind}'."
+                            $"Move choice '{row.Name}' to the split monster skill choice CSV that owns runtime_kind '{ownerSkill.RuntimeKind}'."
                         });
                 }
 
-                AddUnique(model.SkillChoices, row.Id, row, record);
+                AddUnique(model.SkillChoices, row.Name, row, record);
             }
         }
 
@@ -414,21 +414,21 @@ namespace Pakuri.Data
             return asset.name + ".csv";
         }
 
-        internal static void AddUnique<T>(Dictionary<string, T> dictionary, string id, T value, CsvRecord record)
+        internal static void AddUnique<T>(Dictionary<string, T> dictionary, string Name, T value, CsvRecord record)
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (string.IsNullOrWhiteSpace(Name))
             {
                 throw new CsvFatalException(
-                    $"CSV row {record.RowNumber} in '{record.TableName}' is missing a required id value.");
+                    $"CSV row {record.RowNumber} in '{record.TableName}' is missing a required Name value.");
             }
 
-            if (dictionary.ContainsKey(id))
+            if (dictionary.ContainsKey(Name))
             {
                 throw new CsvFatalException(
-                    $"CSV row {record.RowNumber} in '{record.TableName}' uses duplicate id '{id}'.");
+                    $"CSV row {record.RowNumber} in '{record.TableName}' uses duplicate Name '{Name}'.");
             }
 
-            dictionary.Add(id, value);
+            dictionary.Add(Name, value);
         }
     }
 }

@@ -27,8 +27,8 @@ namespace Pakuri.Data
                     Day = record.ReadInt("day"),
                     DayKey = record.ReadRequiredString("day_key"),
                     CombatType = record.ReadRequiredString("combat_type"),
-                    EncounterId = record.ReadRequiredString("encounter_id"),
-                    RewardRuleId = record.ReadRequiredString("reward_rule_id"),
+                    EncounterName = record.ReadRequiredString("encounter_name"),
+                    RewardRuleName = record.ReadRequiredString("reward_rule_name"),
                     EliteOptionChance = record.ReadFloat("elite_option_chance"),
                     ShopOptionEnabled = record.ReadBool("shop_option_enabled"),
                     EventRollEnabled = record.ReadBool("event_roll_enabled"),
@@ -53,9 +53,9 @@ namespace Pakuri.Data
             {
                 rows.Add(new StageEncounterDefinition
                 {
-                    EncounterId = record.ReadRequiredString("encounter_id"),
+                    EncounterName = record.ReadRequiredString("encounter_name"),
                     SpawnOrder = record.ReadInt("spawn_order"),
-                    EnemyId = record.ReadRequiredString("enemy_id"),
+                    EnemyName = record.ReadRequiredString("enemy_name"),
                     Count = record.ReadInt("count"),
                     IntervalSeconds = record.ReadFloat("interval_sec"),
                     SpawnX = record.ReadFloat("spawn_x"),
@@ -85,7 +85,7 @@ namespace Pakuri.Data
             {
                 rows.Add(new StageRewardDefinition
                 {
-                    RewardRuleId = record.ReadRequiredString("reward_rule_id"),
+                    RewardRuleName = record.ReadRequiredString("reward_rule_name"),
                     CombatType = record.ReadRequiredString("combat_type"),
                     Stage = record.ReadInt("stage"),
                     Gold = record.ReadInt("gold"),

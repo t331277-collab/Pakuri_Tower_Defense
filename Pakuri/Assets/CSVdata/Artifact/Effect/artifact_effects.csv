@@ -1,5 +1,5 @@
-"effect_id","artifact_id","application_mode","recipient_scope","repeat_rule","selection_rule","recipient_monster_id","target_skill_id","outcome_skill_id"
-"id","id","enum:ArtifactEffectApplicationMode","enum:ArtifactEffectRecipient","enum:ArtifactEffectRepeatRule","enum:ArtifactEffectSelectionRule","string","skill_id","skill_id"
+"effect_name","artifact_name","application_mode","recipient_scope","repeat_rule","selection_rule","recipient_monster_name","target_skill_name","outcome_skill_name"
+"name","name","enum:ArtifactEffectApplicationMode","enum:ArtifactEffectRecipient","enum:ArtifactEffectRepeatRule","enum:ArtifactEffectSelectionRule","string","skill_name","skill_name"
 "elemental-prism-fire-effect","elemental-prism","SkillModifier","AllAllies","None","PartyDominantAttribute","","",""
 "elemental-prism-lightning-effect","elemental-prism","SkillModifier","AllAllies","None","PartyDominantAttribute","","",""
 "elemental-prism-ice-effect","elemental-prism","SkillModifier","AllAllies","None","PartyDominantAttribute","","",""

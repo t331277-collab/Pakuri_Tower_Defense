@@ -119,20 +119,20 @@ internal static class SkillTrigger
 
 		public DamageAttribute EventAttribute { get; }
 
-		public string EventSourceSkillId { get; }
+		public string EventSourceSkillName { get; }
 
 		public UnitCombatState EventSource { get; }
 
 		public bool EventWasExecute { get; }
 
-		public string EventTriggerSourceSkillId { get; }
+		public string EventTriggerSourceSkillName { get; }
 
 		public int EventHitCount { get; }
 
 		public int RecastGeneration { get; }
 
 		/// 지연 실행 뒤에도 사건 당시의 판정 기준을 그대로 사용하게 한다.
-		public TriggerExecutionContext(UnitCombatState eventTarget, UnitCombatState attacker, Vector2 eventCenter, StatusRuntimeInstance status, float shieldAbsorbedAmount, float eventAppliedDamage, DamageAttribute eventAttribute, string eventSourceSkillId, UnitCombatState eventSource = null, bool eventWasExecute = false, string eventTriggerSourceSkillId = null, int eventHitCount = 0, int recastGeneration = 0)
+		public TriggerExecutionContext(UnitCombatState eventTarget, UnitCombatState attacker, Vector2 eventCenter, StatusRuntimeInstance status, float shieldAbsorbedAmount, float eventAppliedDamage, DamageAttribute eventAttribute, string eventSourceSkillName, UnitCombatState eventSource = null, bool eventWasExecute = false, string eventTriggerSourceSkillName = null, int eventHitCount = 0, int recastGeneration = 0)
 		{
 			EventTarget = eventTarget;
 			Attacker = attacker;
@@ -152,10 +152,10 @@ internal static class SkillTrigger
 			}
 			EventAppliedDamage = eventAppliedDamage;
 			EventAttribute = eventAttribute;
-			EventSourceSkillId = eventSourceSkillId;
+			EventSourceSkillName = eventSourceSkillName;
 			EventSource = eventSource;
 			EventWasExecute = eventWasExecute;
-			EventTriggerSourceSkillId = eventTriggerSourceSkillId;
+			EventTriggerSourceSkillName = eventTriggerSourceSkillName;
 			EventHitCount = Mathf.Max(0, eventHitCount);
 			RecastGeneration = Mathf.Max(0, recastGeneration);
 		}
@@ -198,7 +198,7 @@ internal static class SkillTrigger
 			0f,
 			actionContext.EventDamage,
 			DamageAttribute.Physical,
-			actionContext.SourceSkillId,
+			actionContext.SourceSkillName,
 			actionContext.Source,
 			eventHitCount: actionContext.HitCount,
 			recastGeneration: actionContext.RecastGeneration);
@@ -206,7 +206,7 @@ internal static class SkillTrigger
 			actionContext.CombatManager,
 			actionContext.Roster,
 			actionContext.Source,
-			actionContext.SourceSkillId,
+			actionContext.SourceSkillName,
 			triggerEvent,
 			triggerContext);
 		ExecutePassiveOwnerTriggers(
@@ -217,11 +217,11 @@ internal static class SkillTrigger
 	}
 
 	/// 투사체 적중 사건을 반응 판정에 전달한다.
-	public static void ExecuteProjectileHit(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillId, bool isMagazineLastProjectile, Vector2 eventCenter)
+	public static void ExecuteProjectileHit(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillName, bool isMagazineLastProjectile, Vector2 eventCenter)
 	{
 		if (isMagazineLastProjectile)
 		{
-			ExecuteSourceOwnedTriggers(combatManager, roster, source, sourceSkillId, SkillTriggerEvent.OnMagazineLastProjectileHit, new TriggerExecutionContext(source, null, eventCenter, null, 0f, 0f, DamageAttribute.Physical, sourceSkillId, source));
+			ExecuteSourceOwnedTriggers(combatManager, roster, source, sourceSkillName, SkillTriggerEvent.OnMagazineLastProjectileHit, new TriggerExecutionContext(source, null, eventCenter, null, 0f, 0f, DamageAttribute.Physical, sourceSkillName, source));
 		}
 	}
 
@@ -241,7 +241,7 @@ internal static class SkillTrigger
 		for (int i = 0; i < readOnlyList.Count; i++)
 		{
 			SkillExecutionState skillRuntimeInstance = readOnlyList[i];
-			string text = ((skillRuntimeInstance != null && skillRuntimeInstance.Data != null) ? skillRuntimeInstance.Data.SkillId : string.Empty);
+			string text = ((skillRuntimeInstance != null && skillRuntimeInstance.Data != null) ? skillRuntimeInstance.Data.SkillName : string.Empty);
 			if (!string.IsNullOrWhiteSpace(text))
 			{
 				ExecuteSourceOwnedTriggers(combatManager, roster, source, text, SkillTriggerEvent.CombatStart, new TriggerExecutionContext(source, source, eventCenter, null, 0f, 0f, DamageAttribute.Physical, text, source));
@@ -270,8 +270,8 @@ internal static class SkillTrigger
 	{
 		if (shieldTarget != null && shieldStatus != null && shieldStatus.IsShieldStatus)
 		{
-			UnitCombatState unitState = SourceModel(roster, shieldStatus.SourceUnitId, shieldStatus.SourceDefinitionId);
-			string text = ((!string.IsNullOrWhiteSpace(shieldStatus.SourceSkillId)) ? shieldStatus.SourceSkillId : string.Empty);
+			UnitCombatState unitState = SourceModel(roster, shieldStatus.SourceUnitName, shieldStatus.SourceDefinitionName);
+			string text = ((!string.IsNullOrWhiteSpace(shieldStatus.SourceSkillName)) ? shieldStatus.SourceSkillName : string.Empty);
 			Vector2 eventCenter = UnitPosition(roster, shieldTarget);
 			TriggerExecutionContext triggerContext = new TriggerExecutionContext(shieldTarget, null, eventCenter, shieldStatus, 0f, 0f, DamageAttribute.Physical, text, unitState);
 			ExecuteSourceOwnedTriggers(combatManager, roster, unitState, text, SkillTriggerEvent.OnShieldExpire, triggerContext);
@@ -284,8 +284,8 @@ internal static class SkillTrigger
 	{
 		if (shieldTarget != null && shieldStatus != null && shieldStatus.IsShieldStatus && !(absorbedAmount <= 0f))
 		{
-			UnitCombatState unitState = SourceModel(roster, shieldStatus.SourceUnitId, shieldStatus.SourceDefinitionId);
-			string text = ((!string.IsNullOrWhiteSpace(shieldStatus.SourceSkillId)) ? shieldStatus.SourceSkillId : string.Empty);
+			UnitCombatState unitState = SourceModel(roster, shieldStatus.SourceUnitName, shieldStatus.SourceDefinitionName);
+			string text = ((!string.IsNullOrWhiteSpace(shieldStatus.SourceSkillName)) ? shieldStatus.SourceSkillName : string.Empty);
 			Vector2 eventCenter = ((attacker != null) ? UnitPosition(roster, attacker) : UnitPosition(roster, shieldTarget));
 			TriggerExecutionContext triggerContext = new TriggerExecutionContext(attacker, attacker, eventCenter, shieldStatus, absorbedAmount, 0f, DamageAttribute.Physical, text, unitState);
 			ExecuteSourceOwnedTriggers(combatManager, roster, unitState, text, SkillTriggerEvent.OnShieldAbsorb, triggerContext);
@@ -311,8 +311,8 @@ internal static class SkillTrigger
 	{
 		if (statusOwner != null && status != null)
 		{
-			UnitCombatState unitState = SourceModel(roster, status.SourceUnitId, status.SourceDefinitionId);
-			string text = ((!string.IsNullOrWhiteSpace(status.SourceSkillId)) ? status.SourceSkillId : string.Empty);
+			UnitCombatState unitState = SourceModel(roster, status.SourceUnitName, status.SourceDefinitionName);
+			string text = ((!string.IsNullOrWhiteSpace(status.SourceSkillName)) ? status.SourceSkillName : string.Empty);
 			Vector2 eventCenter = UnitPosition(roster, statusOwner);
 			TriggerExecutionContext triggerContext = new TriggerExecutionContext(statusOwner, null, eventCenter, status, 0f, 0f, DamageAttribute.Physical, text, unitState);
 			ExecuteSourceOwnedTriggers(combatManager, roster, unitState, text, SkillTriggerEvent.OnStatusExpire, triggerContext);
@@ -345,15 +345,15 @@ internal static class SkillTrigger
 	}
 
 	/// 외부 피해 사건을 반응 판정에 전달한다.
-	public static void ExecuteOutgoingDamage(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillId, UnitCombatState eventTarget, DamageAttribute attribute, float eventAppliedDamage, bool eventWasExecute, float sourceBaseDamage)
+	public static void ExecuteOutgoingDamage(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillName, UnitCombatState eventTarget, DamageAttribute attribute, float eventAppliedDamage, bool eventWasExecute, float sourceBaseDamage)
 	{
 		if (!(combatManager == null) && roster != null && source != null && eventAppliedDamage > 0f)
 		{
 			Vector2 eventCenter = ((eventTarget != null) ? UnitPosition(roster, eventTarget) : UnitPosition(roster, source));
-			TriggerExecutionContext triggerContext = new TriggerExecutionContext(eventTarget, null, eventCenter, null, 0f, eventAppliedDamage, attribute, sourceSkillId, source, eventWasExecute);
-			ExecuteSourceOwnedTriggers(combatManager, roster, source, sourceSkillId, SkillTriggerEvent.OnOutgoingDamage, triggerContext);
+			TriggerExecutionContext triggerContext = new TriggerExecutionContext(eventTarget, null, eventCenter, null, 0f, eventAppliedDamage, attribute, sourceSkillName, source, eventWasExecute);
+			ExecuteSourceOwnedTriggers(combatManager, roster, source, sourceSkillName, SkillTriggerEvent.OnOutgoingDamage, triggerContext);
 			ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnOutgoingDamage, triggerContext);
-			ApplyOutgoingAdditionalDamageStatuses(combatManager, eventTarget, source, sourceSkillId, attribute, sourceBaseDamage);
+			ApplyOutgoingAdditionalDamageStatuses(combatManager, eventTarget, source, sourceSkillName, attribute, sourceBaseDamage);
 		}
 	}
 
@@ -362,7 +362,7 @@ internal static class SkillTrigger
 		InGameCombatManager combatManager,
 		UnitCombatState target,
 		UnitCombatState source,
-		string sourceSkillId,
+		string sourceSkillName,
 		DamageAttribute triggerAttribute,
 		float sourceBaseDamage)
 	{
@@ -391,49 +391,49 @@ internal static class SkillTrigger
 				spec.DamageAttribute,
 				source,
 				criticalAllowed: true,
-				sourceSkillId: sourceSkillId,
+				sourceSkillName: sourceSkillName,
 				suppressOutgoingDamageTriggers: true);
 		}
 	}
 
 	/// 스킬 시전 사건을 반응 판정에 전달한다.
-	public static void ExecuteSkillCast(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillId, Vector2 eventCenter, string eventTriggerSourceSkillId = null)
+	public static void ExecuteSkillCast(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillName, Vector2 eventCenter, string eventTriggerSourceSkillName = null)
 	{
 		if (!(combatManager == null) && roster != null && source != null)
 		{
-			TriggerExecutionContext triggerContext = new TriggerExecutionContext(source, source, eventCenter, null, 0f, 0f, DamageAttribute.Physical, sourceSkillId, source, eventWasExecute: false, eventTriggerSourceSkillId: eventTriggerSourceSkillId);
-			ExecuteSourceOwnedTriggers(combatManager, roster, source, sourceSkillId, SkillTriggerEvent.OnSkillCast, triggerContext);
+			TriggerExecutionContext triggerContext = new TriggerExecutionContext(source, source, eventCenter, null, 0f, 0f, DamageAttribute.Physical, sourceSkillName, source, eventWasExecute: false, eventTriggerSourceSkillName: eventTriggerSourceSkillName);
+			ExecuteSourceOwnedTriggers(combatManager, roster, source, sourceSkillName, SkillTriggerEvent.OnSkillCast, triggerContext);
 			ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnSkillCast, triggerContext);
 		}
 	}
 
 	/// 처치 사건을 반응 판정에 전달한다.
-	public static void ExecuteKill(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillId, UnitCombatState eventTarget, DamageAttribute attribute, float eventAppliedDamage, bool eventWasExecute = false)
+	public static void ExecuteKill(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillName, UnitCombatState eventTarget, DamageAttribute attribute, float eventAppliedDamage, bool eventWasExecute = false)
 	{
 		if (!(combatManager == null) && roster != null && source != null)
 		{
 			Vector2 eventCenter = ((eventTarget != null) ? UnitPosition(roster, eventTarget) : UnitPosition(roster, source));
-			TriggerExecutionContext triggerContext = new TriggerExecutionContext(eventTarget, source, eventCenter, null, 0f, eventAppliedDamage, attribute, sourceSkillId, source, eventWasExecute);
-			ExecuteSourceOwnedTriggers(combatManager, roster, source, sourceSkillId, SkillTriggerEvent.OnKill, triggerContext);
+			TriggerExecutionContext triggerContext = new TriggerExecutionContext(eventTarget, source, eventCenter, null, 0f, eventAppliedDamage, attribute, sourceSkillName, source, eventWasExecute);
+			ExecuteSourceOwnedTriggers(combatManager, roster, source, sourceSkillName, SkillTriggerEvent.OnKill, triggerContext);
 			ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnKill, triggerContext);
 		}
 	}
 
 	/// 사건을 만든 스킬의 반응을 판정한다.
-	private static void ExecuteSourceOwnedTriggers(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillId, SkillTriggerEvent triggerEvent, TriggerExecutionContext triggerContext)
+	private static void ExecuteSourceOwnedTriggers(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillName, SkillTriggerEvent triggerEvent, TriggerExecutionContext triggerContext)
 	{
-		if (combatManager == null || roster == null || source == null || string.IsNullOrWhiteSpace(sourceSkillId))
+		if (combatManager == null || roster == null || source == null || string.IsNullOrWhiteSpace(sourceSkillName))
 		{
 			return;
 		}
-		SkillReaction[] array = SourceOwnedTriggers(source, sourceSkillId, roster);
+		SkillReaction[] array = SourceOwnedTriggers(source, sourceSkillName, roster);
 		if (array == null || array.Length == 0)
 		{
 			return;
 		}
 		foreach (SkillReaction trigger in array)
 		{
-			if (ShouldRunSourceOwnedTrigger(trigger, source, sourceSkillId, triggerEvent, triggerContext))
+			if (ShouldRunSourceOwnedTrigger(trigger, source, sourceSkillName, triggerEvent, triggerContext))
 			{
                 SkillExecution.ScheduleReaction(
 					combatManager,
@@ -450,13 +450,13 @@ internal static class SkillTrigger
 	/// 사건을 만든 스킬에 연결된 반응을 모은다.
 	private static SkillReaction[] SourceOwnedTriggers(
 		UnitCombatState source,
-		string sourceSkillId,
+		string sourceSkillName,
 		UnitSpawnManager roster)
 	{
 		SkillExecutionState sourceSkill = null;
 		if (source != null && source.Skills != null)
 		{
-			sourceSkill = source.SkillState.FindBySkillId(sourceSkillId);
+			sourceSkill = source.SkillState.FindBySkillName(sourceSkillName);
 		}
 
 		if (sourceSkill == null || sourceSkill.Data == null)
@@ -535,16 +535,16 @@ internal static class SkillTrigger
 		SkillTriggerEvent triggerEvent,
 		TriggerExecutionContext triggerContext)
 	{
-		var effectIds = owner?.Artifacts?.ActiveArtifactEffectIds;
-		if (combatManager == null || roster == null || ownerEntry == null || effectIds == null)
+		var effectNames = owner?.Artifacts?.ActiveArtifactEffectNames;
+		if (combatManager == null || roster == null || ownerEntry == null || effectNames == null)
 		{
 			return;
 		}
 
-		for (var effectIndex = 0; effectIndex < effectIds.Count; effectIndex++)
+		for (var effectIndex = 0; effectIndex < effectNames.Count; effectIndex++)
 		{
 			if (!GameDataLoader.CurrentCatalog.TryGetData(
-					effectIds[effectIndex],
+					effectNames[effectIndex],
 					out ArtifactEffectDefinition effect)
 				|| effect == null
 				|| effect.ApplicationMode != ArtifactEffectApplicationMode.PassiveTrigger)
@@ -573,9 +573,9 @@ internal static class SkillTrigger
 	}
 
 	/// 발생원 반응의 모든 게이트를 통과했는지 확인한다.
-	private static bool ShouldRunSourceOwnedTrigger(SkillReaction trigger, UnitCombatState source, string sourceSkillId, SkillTriggerEvent triggerEvent, TriggerExecutionContext triggerContext)
+	private static bool ShouldRunSourceOwnedTrigger(SkillReaction trigger, UnitCombatState source, string sourceSkillName, SkillTriggerEvent triggerEvent, TriggerExecutionContext triggerContext)
 	{
-		if (trigger != null && trigger.Event == triggerEvent && string.Equals(trigger.SourceSkillId, sourceSkillId, StringComparison.OrdinalIgnoreCase) && MatchesEventSkillId(trigger.EventSkillIds, triggerContext.EventSourceSkillId) && StatusConditionRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKindValues, triggerContext.EventSourceSkillId) && (!trigger.RequireEventExecute || triggerContext.EventWasExecute) && HasAllChoices(source, trigger.RequiredActiveChoiceIds) && !HasAnyChoice(source, trigger.ExcludedActiveChoiceIds))
+		if (trigger != null && trigger.Event == triggerEvent && string.Equals(trigger.SourceSkillName, sourceSkillName, StringComparison.OrdinalIgnoreCase) && MatchesEventSkillName(trigger.EventSkillNames, triggerContext.EventSourceSkillName) && StatusConditionRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKindValues, triggerContext.EventSourceSkillName) && (!trigger.RequireEventExecute || triggerContext.EventWasExecute) && HasAllChoices(source, trigger.RequiredActiveChoiceNames) && !HasAnyChoice(source, trigger.ExcludedActiveChoiceNames))
 		{
 			return MeetsSourceStatusRequirement(source, trigger.RequiredSourceStatusKind, trigger.RequiredSourceStatusMinStacks);
 		}
@@ -585,7 +585,7 @@ internal static class SkillTrigger
 	/// 지속 반응의 모든 게이트를 통과했는지 확인한다.
 	private static bool ShouldRunPassiveOwnerTrigger(SkillReaction trigger, UnitCombatState owner, SkillTriggerEvent triggerEvent, TriggerExecutionContext triggerContext)
 	{
-		if (trigger == null || owner == null || owner.Skills == null || trigger.Event != triggerEvent || string.IsNullOrWhiteSpace(trigger.SourceSkillId) || !owner.Skills.HasPassiveSkill(trigger.SourceSkillId) || !MatchesEventSkillId(trigger.EventSkillIds, triggerContext.EventSourceSkillId) || !StatusConditionRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKindValues, triggerContext.EventSourceSkillId) || (trigger.RequireEventExecute && !triggerContext.EventWasExecute) || !HasAllChoices(owner, trigger.RequiredActiveChoiceIds) || HasAnyChoice(owner, trigger.ExcludedActiveChoiceIds) || !MeetsSourceStatusRequirement(owner, trigger.RequiredSourceStatusKind, trigger.RequiredSourceStatusMinStacks))
+		if (trigger == null || owner == null || owner.Skills == null || trigger.Event != triggerEvent || string.IsNullOrWhiteSpace(trigger.SourceSkillName) || !owner.Skills.HasPassiveSkill(trigger.SourceSkillName) || !MatchesEventSkillName(trigger.EventSkillNames, triggerContext.EventSourceSkillName) || !StatusConditionRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKindValues, triggerContext.EventSourceSkillName) || (trigger.RequireEventExecute && !triggerContext.EventWasExecute) || !HasAllChoices(owner, trigger.RequiredActiveChoiceNames) || HasAnyChoice(owner, trigger.ExcludedActiveChoiceNames) || !MeetsSourceStatusRequirement(owner, trigger.RequiredSourceStatusKind, trigger.RequiredSourceStatusMinStacks))
 		{
 			return false;
 		}
@@ -593,7 +593,7 @@ internal static class SkillTrigger
 		{
 			return false;
 		}
-		if (!MatchesConditionStatusSourceSkill(trigger.ConditionStatusSourceSkillIds, triggerContext.EventTarget, triggerContext.EventTriggerSourceSkillId))
+		if (!MatchesConditionStatusSourceSkill(trigger.ConditionStatusSourceSkillNames, triggerContext.EventTarget, triggerContext.EventTriggerSourceSkillName))
 		{
 			return false;
 		}
@@ -613,10 +613,10 @@ internal static class SkillTrigger
 		return trigger != null
 			&& owner != null
 			&& trigger.Event == triggerEvent
-			&& MatchesEventSkillId(trigger.EventSkillIds, triggerContext.EventSourceSkillId)
+			&& MatchesEventSkillName(trigger.EventSkillNames, triggerContext.EventSourceSkillName)
 			&& StatusConditionRules.MatchesSkillRuntimeKinds(
 				trigger.EventSkillRuntimeKindValues,
-				triggerContext.EventSourceSkillId)
+				triggerContext.EventSourceSkillName)
 			&& (!trigger.RequireEventExecute || triggerContext.EventWasExecute)
 			&& MeetsSourceStatusRequirement(
 				owner,
@@ -624,17 +624,17 @@ internal static class SkillTrigger
 				trigger.RequiredSourceStatusMinStacks)
 			&& MatchesConditionStatus(trigger, triggerContext.Status)
 			&& MatchesConditionStatusSourceSkill(
-				trigger.ConditionStatusSourceSkillIds,
+				trigger.ConditionStatusSourceSkillNames,
 				triggerContext.EventTarget,
-				triggerContext.EventTriggerSourceSkillId)
+				triggerContext.EventTriggerSourceSkillName)
 			&& MatchesTriggerAttribute(trigger.TriggerAttributes, triggerContext.EventAttribute)
 			&& MatchesEventSourceScope(trigger.EventSourceScope, owner, triggerContext.EventSource);
 	}
 
 	/// 소유자가 요구 선택을 모두 갖췄는지 확인한다.
-	private static bool HasAllChoices(UnitCombatState source, string[] choiceIds)
+	private static bool HasAllChoices(UnitCombatState source, string[] choiceNames)
 	{
-		if (choiceIds == null || choiceIds.Length == 0)
+		if (choiceNames == null || choiceNames.Length == 0)
 		{
 			return true;
 		}
@@ -642,9 +642,9 @@ internal static class SkillTrigger
 		{
 			return false;
 		}
-		for (int i = 0; i < choiceIds.Length; i++)
+		for (int i = 0; i < choiceNames.Length; i++)
 		{
-			if (!source.Skills.HasChoice(choiceIds[i]))
+			if (!source.Skills.HasChoice(choiceNames[i]))
 			{
 				return false;
 			}
@@ -653,15 +653,15 @@ internal static class SkillTrigger
 	}
 
 	/// 소유자가 요구 선택 중 하나를 갖췄는지 확인한다.
-	private static bool HasAnyChoice(UnitCombatState source, string[] choiceIds)
+	private static bool HasAnyChoice(UnitCombatState source, string[] choiceNames)
 	{
-		if (choiceIds == null || choiceIds.Length == 0 || source == null || source.Skills == null)
+		if (choiceNames == null || choiceNames.Length == 0 || source == null || source.Skills == null)
 		{
 			return false;
 		}
-		for (int i = 0; i < choiceIds.Length; i++)
+		for (int i = 0; i < choiceNames.Length; i++)
 		{
-			if (source.Skills.HasChoice(choiceIds[i]))
+			if (source.Skills.HasChoice(choiceNames[i]))
 			{
 				return true;
 			}
@@ -725,7 +725,7 @@ internal static class SkillTrigger
 		{
 			return false;
 		}
-		float num = UnitSkills.PassiveChoices(owner, trigger.SourceSkillId).TriggerProcChanceBonus(trigger.ReactionId);
+		float num = UnitSkills.PassiveChoices(owner, trigger.SourceSkillName).TriggerProcChanceBonus(trigger.ReactionName);
 		float num2 = ((trigger.ProcChance > 0f) ? Mathf.Clamp01(trigger.ProcChance + num) : Mathf.Clamp01(1f + num));
 		if (num2 <= 0f || UnityEngine.Random.value > num2)
 		{
@@ -808,19 +808,19 @@ internal static class SkillTrigger
 	}
 
 	/// 사건 스킬 식별자가 반응 조건과 맞는지 확인한다.
-	private static bool MatchesEventSkillId(string[] skillIds, string eventSkillId)
+	private static bool MatchesEventSkillName(string[] skillNames, string eventSkillName)
 	{
-		if (skillIds == null || skillIds.Length == 0)
+		if (skillNames == null || skillNames.Length == 0)
 		{
 			return true;
 		}
-		if (string.IsNullOrWhiteSpace(eventSkillId))
+		if (string.IsNullOrWhiteSpace(eventSkillName))
 		{
 			return false;
 		}
-		for (int i = 0; i < skillIds.Length; i++)
+		for (int i = 0; i < skillNames.Length; i++)
 		{
-			if (string.Equals(skillIds[i], eventSkillId, StringComparison.OrdinalIgnoreCase))
+			if (string.Equals(skillNames[i], eventSkillName, StringComparison.OrdinalIgnoreCase))
 			{
 				return true;
 			}
@@ -829,9 +829,9 @@ internal static class SkillTrigger
 	}
 
 	/// 상태 발생 스킬이 반응 조건과 맞는지 확인한다.
-	private static bool MatchesConditionStatusSourceSkill(string[] sourceSkillIds, UnitCombatState target, string eventTriggerSourceSkillId = null)
+	private static bool MatchesConditionStatusSourceSkill(string[] sourceSkillNames, UnitCombatState target, string eventTriggerSourceSkillName = null)
 	{
-		if (sourceSkillIds == null || sourceSkillIds.Length == 0)
+		if (sourceSkillNames == null || sourceSkillNames.Length == 0)
 		{
 			return true;
 		}
@@ -851,13 +851,13 @@ internal static class SkillTrigger
 			string text = string.Empty;
 			if (runtimeStatusData != null)
 			{
-				text = runtimeStatusData.SourceSkillId;
+				text = runtimeStatusData.SourceSkillName;
 			}
 			if (!string.IsNullOrWhiteSpace(text))
 			{
-				for (int i = 0; i < sourceSkillIds.Length; i++)
+				for (int i = 0; i < sourceSkillNames.Length; i++)
 				{
-					string text2 = sourceSkillIds[i];
+					string text2 = sourceSkillNames[i];
 					if (!string.IsNullOrWhiteSpace(text2) && string.Equals(text2, text, StringComparison.OrdinalIgnoreCase))
 					{
 						return true;
@@ -866,14 +866,14 @@ internal static class SkillTrigger
 			}
 			num++;
 		}
-		if (string.IsNullOrWhiteSpace(eventTriggerSourceSkillId))
+		if (string.IsNullOrWhiteSpace(eventTriggerSourceSkillName))
 		{
 			return false;
 		}
-		for (int j = 0; j < sourceSkillIds.Length; j++)
+		for (int j = 0; j < sourceSkillNames.Length; j++)
 		{
-			string text3 = sourceSkillIds[j];
-			if (!string.IsNullOrWhiteSpace(text3) && string.Equals(text3, eventTriggerSourceSkillId, StringComparison.OrdinalIgnoreCase))
+			string text3 = sourceSkillNames[j];
+			if (!string.IsNullOrWhiteSpace(text3) && string.Equals(text3, eventTriggerSourceSkillName, StringComparison.OrdinalIgnoreCase))
 			{
 				return true;
 			}
@@ -888,8 +888,8 @@ internal static class SkillTrigger
 		{
 			return true;
 		}
-		string text = ((left != null && left.Identity != null) ? left.Identity.UnitId : string.Empty);
-		string b = ((right != null && right.Identity != null) ? right.Identity.UnitId : string.Empty);
+		string text = ((left != null && left.Identity != null) ? left.Identity.UnitName : string.Empty);
+		string b = ((right != null && right.Identity != null) ? right.Identity.UnitName : string.Empty);
 		if (!string.IsNullOrWhiteSpace(text))
 		{
 			return string.Equals(text, b, StringComparison.OrdinalIgnoreCase);
@@ -900,16 +900,16 @@ internal static class SkillTrigger
 	/// 지속 반응의 내부 대기 식별자를 만든다.
 	private static string BuildPassiveTriggerCooldownKey(UnitCombatState owner, SkillReaction trigger)
 	{
-		string obj = ((owner != null && owner.Identity != null && !string.IsNullOrWhiteSpace(owner.Identity.UnitId)) ? owner.Identity.UnitId : ((owner != null) ? owner.GetHashCode().ToString() : "unknown"));
-		string text = ((trigger != null && !string.IsNullOrWhiteSpace(trigger.ReactionId)) ? trigger.ReactionId : ((trigger != null) ? trigger.SourceSkillId : "unknown"));
+		string obj = ((owner != null && owner.Identity != null && !string.IsNullOrWhiteSpace(owner.Identity.UnitName)) ? owner.Identity.UnitName : ((owner != null) ? owner.GetHashCode().ToString() : "unknown"));
+		string text = ((trigger != null && !string.IsNullOrWhiteSpace(trigger.ReactionName)) ? trigger.ReactionName : ((trigger != null) ? trigger.SourceSkillName : "unknown"));
 		return obj + ":" + text;
 	}
 
 	/// 상태가 기억한 발생원을 현재 전투 명단에서 복원한다.
 	private static UnitCombatState SourceModel(
 		UnitSpawnManager roster,
-		string sourceUnitId,
-		string sourceDefinitionId)
+		string sourceUnitName,
+		string sourceDefinitionName)
 	{
 		if (roster == null)
 		{
@@ -922,8 +922,8 @@ internal static class SkillTrigger
 			var model = entries[i] != null ? entries[i].Model : null;
 			var identity = model != null ? model.Identity : null;
 			if (identity != null
-				&& !string.IsNullOrWhiteSpace(sourceUnitId)
-				&& string.Equals(identity.UnitId, sourceUnitId, StringComparison.OrdinalIgnoreCase))
+				&& !string.IsNullOrWhiteSpace(sourceUnitName)
+				&& string.Equals(identity.UnitName, sourceUnitName, StringComparison.OrdinalIgnoreCase))
 			{
 				return model;
 			}
@@ -934,8 +934,8 @@ internal static class SkillTrigger
 			var model = entries[i] != null ? entries[i].Model : null;
 			var identity = model != null ? model.Identity : null;
 			if (identity != null
-				&& !string.IsNullOrWhiteSpace(sourceDefinitionId)
-				&& string.Equals(identity.DefinitionId, sourceDefinitionId, StringComparison.OrdinalIgnoreCase))
+				&& !string.IsNullOrWhiteSpace(sourceDefinitionName)
+				&& string.Equals(identity.DefinitionName, sourceDefinitionName, StringComparison.OrdinalIgnoreCase))
 			{
 				return model;
 			}

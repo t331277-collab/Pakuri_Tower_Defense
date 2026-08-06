@@ -16,10 +16,10 @@ namespace Pakuri.InGame
 
         public IReadOnlyDictionary<string, int> Counts => counts;
 
-        public int GetCount(string synergyId)
+        public int GetCount(string synergyName)
         {
-            return !string.IsNullOrWhiteSpace(synergyId)
-                && counts.TryGetValue(synergyId, out var count)
+            return !string.IsNullOrWhiteSpace(synergyName)
+                && counts.TryGetValue(synergyName, out var count)
                     ? count
                     : 0;
         }
@@ -29,14 +29,14 @@ namespace Pakuri.InGame
             counts.Clear();
         }
 
-        internal void Add(string synergyId)
+        internal void Add(string synergyName)
         {
-            if (string.IsNullOrWhiteSpace(synergyId))
+            if (string.IsNullOrWhiteSpace(synergyName))
             {
                 return;
             }
 
-            counts[synergyId] = GetCount(synergyId) + 1;
+            counts[synergyName] = GetCount(synergyName) + 1;
         }
     }
 }

@@ -20,10 +20,10 @@ namespace Pakuri.InGame
             bool criticalAllowed,
             float critChanceBonus,
             float critDamageBonus,
-            string sourceSkillId,
+            string sourceSkillName,
             bool suppressOutgoingDamageTriggers,
             bool sourceHitWasExecute,
-            string damageMeterSourceId,
+            string damageMeterSourceName,
             float finalDamageBonus,
             bool isTrigger = false)
         {
@@ -31,10 +31,10 @@ namespace Pakuri.InGame
             CriticalAllowed = criticalAllowed;
             CritChanceBonus = critChanceBonus;
             CritDamageBonus = critDamageBonus;
-            SourceSkillId = sourceSkillId;
+            SourceSkillName = sourceSkillName;
             SuppressOutgoingDamageTriggers = suppressOutgoingDamageTriggers;
             SourceHitWasExecute = sourceHitWasExecute;
-            DamageMeterSourceId = damageMeterSourceId;
+            DamageMeterSourceName = damageMeterSourceName;
             FinalDamageBonus = finalDamageBonus;
             IsTrigger = isTrigger;
         }
@@ -43,10 +43,10 @@ namespace Pakuri.InGame
         public bool CriticalAllowed { get; }
         public float CritChanceBonus { get; }
         public float CritDamageBonus { get; }
-        public string SourceSkillId { get; }
+        public string SourceSkillName { get; }
         public bool SuppressOutgoingDamageTriggers { get; }
         public bool SourceHitWasExecute { get; }
-        public string DamageMeterSourceId { get; }
+        public string DamageMeterSourceName { get; }
         public float FinalDamageBonus { get; }
         internal bool IsTrigger { get; }
     }
@@ -195,10 +195,10 @@ namespace Pakuri.InGame
             bool criticalAllowed = false,
             float critChanceBonus = 0f,
             float critDamageBonus = 0f,
-            string sourceSkillId = null,
+            string sourceSkillName = null,
             bool suppressOutgoingDamageTriggers = false,
             bool sourceHitWasExecute = false,
-            string damageMeterSourceId = null,
+            string damageMeterSourceName = null,
             float finalDamageMultiplier = 1f,
             bool isTrigger = false)
         {
@@ -206,7 +206,7 @@ namespace Pakuri.InGame
             var depletedShields = new List<StatusRuntimeInstance>();
             var absorbedShields = new List<ShieldAbsorptionRecord>();
             var finalDamageBonus = Mathf.Max(0f, finalDamageMultiplier) - 1f;
-            var attackRule = new AttackRule(source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, suppressOutgoingDamageTriggers, sourceHitWasExecute, damageMeterSourceId, finalDamageBonus, isTrigger);
+            var attackRule = new AttackRule(source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillName, suppressOutgoingDamageTriggers, sourceHitWasExecute, damageMeterSourceName, finalDamageBonus, isTrigger);
             var result = ApplyDamageToResources(target, baseDamage, attribute, attackRule, depletedShields, absorbedShields);
 
             if (!result.Changed)
@@ -239,7 +239,7 @@ namespace Pakuri.InGame
                         this,
                         Units,
                         attackRule.Source,
-                        attackRule.SourceSkillId,
+                        attackRule.SourceSkillName,
                         target,
                         attribute,
                         result.AppliedDamage,
@@ -252,7 +252,7 @@ namespace Pakuri.InGame
                         this,
                         Units,
                         attackRule.Source,
-                        attackRule.SourceSkillId,
+                        attackRule.SourceSkillName,
                         target,
                         attribute,
                         result.AppliedDamage,

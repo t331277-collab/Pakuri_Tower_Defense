@@ -113,7 +113,7 @@ namespace Pakuri.InGame
                     SkillTriggerEvent.OnExpire,
                     new SkillExecutionContext(
                         casterEntry.Model,
-                        SourceSkillId(snapshot, runtime),
+                        SourceSkillName(snapshot, runtime),
                         null,
                         center,
                         0f,
@@ -137,7 +137,7 @@ namespace Pakuri.InGame
                 attribute,
                 statusSpec,
                 sourceModel,
-                SourceSkillId(snapshot, runtime),
+                SourceSkillName(snapshot, runtime),
                 runtime,
                 criticalAllowed,
                 critChanceBonus,
@@ -157,7 +157,7 @@ namespace Pakuri.InGame
             DamageAttribute damageAttribute,
             StatusApplicationSpec onHitStatus,
             UnitCombatState source,
-            string sourceSkillId,
+            string sourceSkillName,
             SkillExecutionState sourceRuntime,
             bool criticalAllowed,
             float critChanceBonus,
@@ -204,7 +204,7 @@ namespace Pakuri.InGame
                 damageAttribute,
                 onHitStatus,
                 source,
-                sourceSkillId,
+                sourceSkillName,
                 sourceRuntime,
                 criticalAllowed,
                 critChanceBonus,
@@ -223,7 +223,7 @@ namespace Pakuri.InGame
             DamageAttribute damageAttribute,
             StatusApplicationSpec onHitStatus,
             UnitCombatState source,
-            string sourceSkillId,
+            string sourceSkillName,
             SkillExecutionState sourceRuntime,
             bool criticalAllowed,
             float critChanceBonus,
@@ -262,7 +262,7 @@ namespace Pakuri.InGame
                     criticalAllowed,
                     critChanceBonus,
                     critDamageBonus,
-                    sourceSkillId,
+                    sourceSkillName,
                     false,
                     false,
                     null,
@@ -283,7 +283,7 @@ namespace Pakuri.InGame
                     executionData,
                     sourceEntry,
                     source,
-                    sourceSkillId,
+                    sourceSkillName,
                     target,
                     hitPosition,
                     resolvedDamage);
@@ -301,7 +301,7 @@ namespace Pakuri.InGame
             SkillExecutionState skillData,
             CombatUnitEntry sourceEntry,
             UnitCombatState source,
-            string sourceSkillId,
+            string sourceSkillName,
             CombatUnitEntry hitTarget,
             Vector2 hitPosition,
             float primaryBaseDamage)
@@ -319,12 +319,12 @@ namespace Pakuri.InGame
                     runtime,
                     hitTarget.Model,
                     publishSkillLifecycleEvents: runtime != null,
-                    sourceSkillId: sourceSkillId);
+                    sourceSkillName: sourceSkillName);
                 SkillTrigger.PublishLifecycleEvent(
                     SkillTriggerEvent.OnHit,
                     new SkillExecutionContext(
                         source,
-                        sourceSkillId,
+                        sourceSkillName,
                         hitTarget.Model,
                         hitPosition,
                         primaryBaseDamage,
@@ -346,7 +346,7 @@ namespace Pakuri.InGame
             }
 
             var hasReloadReduction =
-                !string.IsNullOrWhiteSpace(skillData.ReloadReduceTargetSkillId)
+                !string.IsNullOrWhiteSpace(skillData.ReloadReduceTargetSkillName)
                 && skillData.ReloadReduceSecondsPerHit > 0f;
             if (!skillData.HasOnHitAdditionalDamageBehavior && !hasReloadReduction)
             {
@@ -364,8 +364,8 @@ namespace Pakuri.InGame
                     && runtime.Owner != null
                     && runtime.Owner.Skills != null)
                 {
-                    var reloadSkill = runtime.Owner.SkillState.FindBySkillId(
-                        skillData.ReloadReduceTargetSkillId);
+                    var reloadSkill = runtime.Owner.SkillState.FindBySkillName(
+                        skillData.ReloadReduceTargetSkillName);
                     if (reloadSkill != null && reloadSkill.IsReloading)
                     {
                         SkillExecution.ReduceReloadRemaining(
@@ -395,7 +395,7 @@ namespace Pakuri.InGame
                         criticalAllowed: false,
                         0f,
                         0f,
-                        sourceSkillId,
+                        sourceSkillName,
                         true,
                         false,
                         null,
@@ -432,7 +432,7 @@ namespace Pakuri.InGame
                                 criticalAllowed: false,
                                 0f,
                                 0f,
-                                sourceSkillId,
+                                sourceSkillName,
                                 true,
                                 false,
                                 null,
@@ -449,16 +449,16 @@ namespace Pakuri.InGame
         }
 
         /// 후속 사건이 원래 시전자를 추적할 식별자를 고른다.
-        private static string SourceSkillId(SkillExecutionState executionData, SkillExecutionState sourceRuntime)
+        private static string SourceSkillName(SkillExecutionState executionData, SkillExecutionState sourceRuntime)
         {
-            if (sourceRuntime != null && !string.IsNullOrWhiteSpace(sourceRuntime.SkillId))
+            if (sourceRuntime != null && !string.IsNullOrWhiteSpace(sourceRuntime.SkillName))
             {
-                return sourceRuntime.SkillId;
+                return sourceRuntime.SkillName;
             }
 
             if (executionData != null)
             {
-                return executionData.SkillId;
+                return executionData.SkillName;
             }
 
             return string.Empty;

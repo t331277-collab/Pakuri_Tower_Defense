@@ -1,5 +1,5 @@
-choice_id,monster_id,active_skill_id,passive_skill_id,sort_order
-id,string,string,string,int
+choice_name,monster_name,active_skill_name,passive_skill_name,sort_order
+name,string,string,string,int
 ariel-a-trait-1,ariel,ariel-a,,0
 ariel-a-trait-2,ariel,ariel-a,,1
 ariel-a-trait-3,ariel,ariel-a,,2

@@ -139,7 +139,7 @@ namespace Pakuri.InGame
     public sealed class SkillReactionCommand
     {
         public SkillReactionCommandKind Kind;
-        public string TargetId;
+        public string TargetName;
         public StatusEffectKind StatusKind;
         public float Ratio;
         public float DurationSeconds;
@@ -152,18 +152,18 @@ namespace Pakuri.InGame
     [Serializable]
     public sealed class SkillReaction
     {
-        public string ReactionId;
-        public string SourceSkillId;
+        public string ReactionName;
+        public string SourceSkillName;
         public bool IsTrigger = true;
         public SkillTriggerEvent Event;
-        public string[] RequiredActiveChoiceIds = Array.Empty<string>();
-        public string[] ExcludedActiveChoiceIds = Array.Empty<string>();
+        public string[] RequiredActiveChoiceNames = Array.Empty<string>();
+        public string[] ExcludedActiveChoiceNames = Array.Empty<string>();
         public StatusEffectKind RequiredSourceStatusKind;
         public int RequiredSourceStatusMinStacks;
         public StatusConditionGroup[] ConditionStatuses = Array.Empty<StatusConditionGroup>();
-        public string[] ConditionStatusSourceSkillIds = Array.Empty<string>();
+        public string[] ConditionStatusSourceSkillNames = Array.Empty<string>();
         public DamageAttribute[] TriggerAttributes = Array.Empty<DamageAttribute>();
-        public string[] EventSkillIds = Array.Empty<string>();
+        public string[] EventSkillNames = Array.Empty<string>();
         public SkillRuntimeKindCondition[] EventSkillRuntimeKindValues =
             Array.Empty<SkillRuntimeKindCondition>();
         public float ProcChance = 1f;

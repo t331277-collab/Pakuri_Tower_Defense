@@ -20,12 +20,12 @@ namespace Pakuri.Data
 
         public class RewardChoiceDefinition
         {
-            public string RewardId = "reward-id";
-            public string ActiveSkillId = string.Empty;
-            public string PassiveSkillId = string.Empty;
+            public string RewardName = "reward-Name";
+            public string ActiveSkillName = string.Empty;
+            public string PassiveSkillName = string.Empty;
         }
 
-        public string MonsterId = "monster-id";
+        public string MonsterName = "monster-Name";
         public string DisplayName = "Monster";
         [TextArea(2, 4)] public string RoleSummary = "Role summary.";
         public string ElementLabel = "Element";

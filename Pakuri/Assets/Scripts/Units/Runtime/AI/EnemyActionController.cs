@@ -240,9 +240,9 @@ namespace Pakuri.InGame
                 snapshot.PreparedDamageAttribute,
                 enemyModel,
                 true,
-                sourceSkillId: !string.IsNullOrWhiteSpace(snapshot.PreparedSkillId)
-                    ? snapshot.PreparedSkillId
-                    : runtime.SkillId);
+                sourceSkillName: !string.IsNullOrWhiteSpace(snapshot.PreparedSkillName)
+                    ? snapshot.PreparedSkillName
+                    : runtime.SkillName);
             if (!damageResult.IsDead && snapshot.PreparedStatus != null)
             {
                 StatusCombatRules.ApplyStatus(

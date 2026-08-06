@@ -1,5 +1,5 @@
-skill_id,display_name,modifier_kind,attribute,modifier_value
-id,string,enum:PassiveModifierKind,string,float
+skill_name,display_name,modifier_kind,attribute,modifier_value
+name,string,enum:PassiveModifierKind,string,float
 enemy-sword-mastery,검술 숙련,DamageUp,Physical,0.10
 enemy-thick-armor,두꺼운 갑옷,DefenseUp,,0.10
 enemy-precision-aim,정조준,CritChanceUp,,0.08

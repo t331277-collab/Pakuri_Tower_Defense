@@ -108,14 +108,14 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var skillId = !string.IsNullOrWhiteSpace(snapshot.PreparedSkillId)
-                ? snapshot.PreparedSkillId
-                : snapshot.SkillId;
+            var skillName = !string.IsNullOrWhiteSpace(snapshot.PreparedSkillName)
+                ? snapshot.PreparedSkillName
+                : snapshot.SkillName;
             var center = snapshot.PreparedOrigin
                 + direction * (snapshot.PreparedLength * 0.5f);
-            var objectName = string.IsNullOrWhiteSpace(skillId)
+            var objectName = string.IsNullOrWhiteSpace(skillName)
                 ? "LineSkill"
-                : "LineSkill_" + skillId;
+                : "LineSkill_" + skillName;
             var instance = effects.CreateEffect(new EffectCreateRequest(
                 snapshot.PreparedRuntimeVisual,
                 snapshot.PreparedSkillEffectPrefab,
@@ -155,13 +155,13 @@ namespace Pakuri.InGame
                 context.Runtime,
                 snapshot,
                 context.Caster,
-                skillId,
+                skillName,
                 snapshot.PreparedCriticalAllowed,
                 snapshot.CritChanceBonus,
                 snapshot.CritDamageBonus);
             SkillTrigger.PublishLifecycleEvent(
                 SkillTriggerEvent.OnDeploymentCast,
-                new SkillExecutionContext(context.Caster, skillId, null, center, 0f, 0, snapshot, context));
+                new SkillExecutionContext(context.Caster, skillName, null, center, 0f, 0, snapshot, context));
             return true;
         }
     }

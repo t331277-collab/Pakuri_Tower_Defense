@@ -17,10 +17,10 @@ namespace Pakuri.InGame
     public class UnitSkills
     {
 
-        private readonly HashSet<string> learnedActiveSkillIds = new HashSet<string>();
-        private readonly HashSet<string> learnedPassiveSkillIds = new HashSet<string>();
-        private readonly HashSet<string> chosenEnhancementIds = new HashSet<string>();
-        private readonly HashSet<string> chosenMasterSkillIds = new HashSet<string>();
+        private readonly HashSet<string> learnedActiveSkillNames = new HashSet<string>();
+        private readonly HashSet<string> learnedPassiveSkillNames = new HashSet<string>();
+        private readonly HashSet<string> chosenEnhancementNames = new HashSet<string>();
+        private readonly HashSet<string> chosenMasterSkillNames = new HashSet<string>();
 
         private static readonly SkillSlot[] ActiveSlots =
         {
@@ -31,46 +31,46 @@ namespace Pakuri.InGame
             SkillSlot.E
         };
 
-        public IReadOnlyCollection<string> LearnedActiveSkillIds => learnedActiveSkillIds;
-        public IReadOnlyCollection<string> LearnedPassiveSkillIds => learnedPassiveSkillIds;
-        public IReadOnlyCollection<string> ChosenEnhancementIds => chosenEnhancementIds;
-        public IReadOnlyCollection<string> ChosenMasterSkillIds => chosenMasterSkillIds;
+        public IReadOnlyCollection<string> LearnedActiveSkillNames => learnedActiveSkillNames;
+        public IReadOnlyCollection<string> LearnedPassiveSkillNames => learnedPassiveSkillNames;
+        public IReadOnlyCollection<string> ChosenEnhancementNames => chosenEnhancementNames;
+        public IReadOnlyCollection<string> ChosenMasterSkillNames => chosenMasterSkillNames;
 
-        public void AddChoice(string choiceId)
+        public void AddChoice(string choiceName)
         {
-            if (string.IsNullOrWhiteSpace(choiceId))
+            if (string.IsNullOrWhiteSpace(choiceName))
             {
                 return;
             }
 
-            if (!GameDataLoader.CurrentCatalog.TryGetData(choiceId, out SkillChoice choice))
+            if (!GameDataLoader.CurrentCatalog.TryGetData(choiceName, out SkillChoice choice))
             {
-                throw new InvalidOperationException($"Unknown learned skill choice '{choiceId}'.");
+                throw new InvalidOperationException($"Unknown learned skill choice '{choiceName}'.");
             }
 
             if (choice.ChoiceGroup == SkillChoiceGroup.ActiveMaster)
             {
-                AddMasterSkill(choiceId);
+                AddMasterSkill(choiceName);
             }
             else
             {
-                AddEnhancement(choiceId);
+                AddEnhancement(choiceName);
             }
         }
 
-        public void AddActiveSkill(string skillId)
+        public void AddActiveSkill(string skillName)
         {
-            if (!string.IsNullOrWhiteSpace(skillId))
+            if (!string.IsNullOrWhiteSpace(skillName))
             {
-                learnedActiveSkillIds.Add(skillId);
+                learnedActiveSkillNames.Add(skillName);
             }
         }
 
-        public bool HasActiveSkill(string skillId)
+        public bool HasActiveSkill(string skillName)
         {
-            foreach (var learnedSkillId in learnedActiveSkillIds)
+            foreach (var learnedSkillName in learnedActiveSkillNames)
             {
-                if (string.Equals(learnedSkillId, skillId, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(learnedSkillName, skillName, StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
@@ -79,27 +79,27 @@ namespace Pakuri.InGame
             return false;
         }
 
-        public void RemoveActiveSkill(string skillId)
+        public void RemoveActiveSkill(string skillName)
         {
-            if (!string.IsNullOrWhiteSpace(skillId))
+            if (!string.IsNullOrWhiteSpace(skillName))
             {
-                learnedActiveSkillIds.Remove(skillId);
+                learnedActiveSkillNames.Remove(skillName);
             }
         }
 
-        public void AddPassiveSkill(string skillId)
+        public void AddPassiveSkill(string skillName)
         {
-            if (!string.IsNullOrWhiteSpace(skillId))
+            if (!string.IsNullOrWhiteSpace(skillName))
             {
-                learnedPassiveSkillIds.Add(skillId);
+                learnedPassiveSkillNames.Add(skillName);
             }
         }
 
-        public bool HasPassiveSkill(string skillId)
+        public bool HasPassiveSkill(string skillName)
         {
-            foreach (var learnedSkillId in learnedPassiveSkillIds)
+            foreach (var learnedSkillName in learnedPassiveSkillNames)
             {
-                if (string.Equals(learnedSkillId, skillId, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(learnedSkillName, skillName, StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
@@ -108,67 +108,67 @@ namespace Pakuri.InGame
             return false;
         }
 
-        public void RemovePassiveSkill(string skillId)
+        public void RemovePassiveSkill(string skillName)
         {
-            if (!string.IsNullOrWhiteSpace(skillId))
+            if (!string.IsNullOrWhiteSpace(skillName))
             {
-                learnedPassiveSkillIds.Remove(skillId);
+                learnedPassiveSkillNames.Remove(skillName);
             }
         }
 
-        public void AddEnhancement(string choiceId)
+        public void AddEnhancement(string choiceName)
         {
-            if (!string.IsNullOrWhiteSpace(choiceId))
+            if (!string.IsNullOrWhiteSpace(choiceName))
             {
-                chosenEnhancementIds.Add(choiceId);
+                chosenEnhancementNames.Add(choiceName);
             }
         }
 
-        public bool HasEnhancement(string choiceId)
+        public bool HasEnhancement(string choiceName)
         {
-            return !string.IsNullOrWhiteSpace(choiceId) && chosenEnhancementIds.Contains(choiceId);
+            return !string.IsNullOrWhiteSpace(choiceName) && chosenEnhancementNames.Contains(choiceName);
         }
 
-        public void RemoveEnhancement(string choiceId)
+        public void RemoveEnhancement(string choiceName)
         {
-            if (!string.IsNullOrWhiteSpace(choiceId))
+            if (!string.IsNullOrWhiteSpace(choiceName))
             {
-                chosenEnhancementIds.Remove(choiceId);
+                chosenEnhancementNames.Remove(choiceName);
             }
         }
 
-        public void AddMasterSkill(string choiceId)
+        public void AddMasterSkill(string choiceName)
         {
-            if (!string.IsNullOrWhiteSpace(choiceId))
+            if (!string.IsNullOrWhiteSpace(choiceName))
             {
-                chosenMasterSkillIds.Add(choiceId);
+                chosenMasterSkillNames.Add(choiceName);
             }
         }
 
-        public bool HasMasterSkill(string choiceId)
+        public bool HasMasterSkill(string choiceName)
         {
-            return !string.IsNullOrWhiteSpace(choiceId) && chosenMasterSkillIds.Contains(choiceId);
+            return !string.IsNullOrWhiteSpace(choiceName) && chosenMasterSkillNames.Contains(choiceName);
         }
 
-        public void RemoveMasterSkill(string choiceId)
+        public void RemoveMasterSkill(string choiceName)
         {
-            if (!string.IsNullOrWhiteSpace(choiceId))
+            if (!string.IsNullOrWhiteSpace(choiceName))
             {
-                chosenMasterSkillIds.Remove(choiceId);
+                chosenMasterSkillNames.Remove(choiceName);
             }
         }
 
-        public bool HasChoice(string choiceId)
+        public bool HasChoice(string choiceName)
         {
-            return HasEnhancement(choiceId) || HasMasterSkill(choiceId);
+            return HasEnhancement(choiceName) || HasMasterSkill(choiceName);
         }
 
         public void Clear()
         {
-            learnedActiveSkillIds.Clear();
-            learnedPassiveSkillIds.Clear();
-            chosenEnhancementIds.Clear();
-            chosenMasterSkillIds.Clear();
+            learnedActiveSkillNames.Clear();
+            learnedPassiveSkillNames.Clear();
+            chosenEnhancementNames.Clear();
+            chosenMasterSkillNames.Clear();
             activeSkills.Clear();
             passiveSkills.Clear();
         }
@@ -192,8 +192,8 @@ namespace Pakuri.InGame
 
             if (activeDefinitions == null && passiveDefinitions == null)
             {
-                var monsterId = owner.Identity != null ? owner.Identity.DefinitionId : null;
-                if (string.IsNullOrWhiteSpace(monsterId))
+                var monsterName = owner.Identity != null ? owner.Identity.DefinitionName : null;
+                if (string.IsNullOrWhiteSpace(monsterName))
                 {
                     return;
                 }
@@ -201,7 +201,7 @@ namespace Pakuri.InGame
                 var activeSkills = new List<SkillDefinition>();
                 for (var i = 0; i < ActiveSlots.Length; i++)
                 {
-                    var definition = GameDataLoader.CurrentCatalog.GetActiveSkill(monsterId, ActiveSlots[i]);
+                    var definition = GameDataLoader.CurrentCatalog.GetActiveSkill(monsterName, ActiveSlots[i]);
                     if (definition != null)
                     {
                         activeSkills.Add(definition);
@@ -209,7 +209,7 @@ namespace Pakuri.InGame
                 }
 
                 activeDefinitions = activeSkills.ToArray();
-                passiveDefinitions = GameDataLoader.CurrentCatalog.GetPassiveSkills(monsterId);
+                passiveDefinitions = GameDataLoader.CurrentCatalog.GetPassiveSkills(monsterName);
             }
 
             if (activeDefinitions != null)
@@ -217,7 +217,7 @@ namespace Pakuri.InGame
                 for (var i = 0; i < activeDefinitions.Length; i++)
                 {
                     var definition = activeDefinitions[i];
-                    if (definition != null && owner.Skills.HasActiveSkill(definition.SkillId))
+                    if (definition != null && owner.Skills.HasActiveSkill(definition.SkillName))
                     {
                         AddOrReplace(new SkillExecutionState(owner, definition));
                     }
@@ -229,7 +229,7 @@ namespace Pakuri.InGame
                 for (var i = 0; i < passiveDefinitions.Length; i++)
                 {
                     var definition = passiveDefinitions[i];
-                    if (definition != null && owner.Skills.HasPassiveSkill(definition.SkillId))
+                    if (definition != null && owner.Skills.HasPassiveSkill(definition.SkillName))
                     {
                         AddOrReplace(new SkillExecutionState(owner, definition));
                     }
@@ -300,7 +300,7 @@ namespace Pakuri.InGame
             {
                 skills = activeSkills;
             }
-            var existingIndex = FindIndexBySkillId(skills, instance.SkillId);
+            var existingIndex = FindIndexBySkillName(skills, instance.SkillName);
             if (existingIndex >= 0)
             {
                 skills[existingIndex] = instance;
@@ -337,15 +337,15 @@ namespace Pakuri.InGame
         }
 
         /// 활성·지속 목록에서 식별자가 같은 스킬을 찾는다.
-        public SkillExecutionState FindBySkillId(string skillId)
+        public SkillExecutionState FindBySkillName(string skillName)
         {
-            var index = FindIndexBySkillId(activeSkills, skillId);
+            var index = FindIndexBySkillName(activeSkills, skillName);
             if (index >= 0)
             {
                 return activeSkills[index];
             }
 
-            index = FindIndexBySkillId(passiveSkills, skillId);
+            index = FindIndexBySkillName(passiveSkills, skillName);
             if (index >= 0)
             {
                 return passiveSkills[index];
@@ -382,11 +382,11 @@ namespace Pakuri.InGame
         }
 
         /// 보유 스킬 전체에서 식별자가 같은 선택 효과를 찾는다.
-        public SkillChoice FindChoice(string choiceId)
+        public SkillChoice FindChoice(string choiceName)
         {
             for (var i = 0; i < activeSkills.Count; i++)
             {
-                var choice = FindChoice(activeSkills[i].Data, choiceId);
+                var choice = FindChoice(activeSkills[i].Data, choiceName);
                 if (choice != null)
                 {
                     return choice;
@@ -395,7 +395,7 @@ namespace Pakuri.InGame
 
             for (var i = 0; i < passiveSkills.Count; i++)
             {
-                var choice = FindChoice(passiveSkills[i].Data, choiceId);
+                var choice = FindChoice(passiveSkills[i].Data, choiceName);
                 if (choice != null)
                 {
                     return choice;
@@ -434,12 +434,12 @@ namespace Pakuri.InGame
         }
 
         /// 목록에서 식별자가 같은 스킬의 위치를 찾는다.
-        private static int FindIndexBySkillId(List<SkillExecutionState> skills, string skillId)
+        private static int FindIndexBySkillName(List<SkillExecutionState> skills, string skillName)
         {
             for (var i = 0; i < skills.Count; i++)
             {
                 var runtime = skills[i];
-                if (runtime != null && string.Equals(runtime.SkillId, skillId, StringComparison.OrdinalIgnoreCase))
+                if (runtime != null && string.Equals(runtime.SkillName, skillName, StringComparison.OrdinalIgnoreCase))
                 {
                     return i;
                 }
@@ -510,15 +510,15 @@ namespace Pakuri.InGame
         }
 
         /// 한 스킬의 강화·마스터·지속 선택지에서 식별자가 같은 항목을 찾는다.
-        private static SkillChoice FindChoice(SkillDefinition skill, string choiceId)
+        private static SkillChoice FindChoice(SkillDefinition skill, string choiceName)
         {
-            var choice = FindChoice(skill.EnhancementChoices, choiceId);
+            var choice = FindChoice(skill.EnhancementChoices, choiceName);
             if (choice != null)
             {
                 return choice;
             }
 
-            choice = FindChoice(skill.MasterChoices, choiceId);
+            choice = FindChoice(skill.MasterChoices, choiceName);
             if (choice != null)
             {
                 return choice;
@@ -528,11 +528,11 @@ namespace Pakuri.InGame
         }
 
         /// 선택지 목록에서 식별자가 같은 항목을 찾는다.
-        private static SkillChoice FindChoice(SkillChoice[] choices, string choiceId)
+        private static SkillChoice FindChoice(SkillChoice[] choices, string choiceName)
         {
             for (var i = 0; i < choices.Length; i++)
             {
-                if (string.Equals(choices[i].ChoiceId, choiceId, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(choices[i].ChoiceName, choiceName, StringComparison.OrdinalIgnoreCase))
                 {
                     return choices[i];
                 }
@@ -542,28 +542,28 @@ namespace Pakuri.InGame
         }
 
         /// 지속 효과 선택을 실행값으로 모은다.
-        public static SkillExecutionState PassiveChoices(UnitCombatState owner, string passiveId)
+        public static SkillExecutionState PassiveChoices(UnitCombatState owner, string passiveName)
         {
-            return Choices(owner, passiveId, true);
+            return Choices(owner, passiveName, true);
         }
 
         /// 활성 효과 선택을 실행값으로 모은다.
-        public static SkillExecutionState ActiveChoices(UnitCombatState owner, string skillId)
+        public static SkillExecutionState ActiveChoices(UnitCombatState owner, string skillName)
         {
-            return Choices(owner, skillId, false);
+            return Choices(owner, skillName, false);
         }
 
         /// 선택 효과를 스킬별 실행값으로 합친다.
-        private static SkillExecutionState Choices(UnitCombatState owner, string skillId, bool useTargetSkillId)
+        private static SkillExecutionState Choices(UnitCombatState owner, string skillName, bool useTargetSkillName)
         {
             var snapshot = new SkillExecutionState(null);
-            if (owner == null || owner.Skills == null || string.IsNullOrWhiteSpace(skillId))
+            if (owner == null || owner.Skills == null || string.IsNullOrWhiteSpace(skillName))
             {
                 return snapshot;
             }
 
-            ApplyResolvedChoices(snapshot, owner, skillId, useTargetSkillId, owner.Skills.ChosenEnhancementIds);
-            ApplyResolvedChoices(snapshot, owner, skillId, useTargetSkillId, owner.Skills.ChosenMasterSkillIds);
+            ApplyResolvedChoices(snapshot, owner, skillName, useTargetSkillName, owner.Skills.ChosenEnhancementNames);
+            ApplyResolvedChoices(snapshot, owner, skillName, useTargetSkillName, owner.Skills.ChosenMasterSkillNames);
             return snapshot;
         }
 
@@ -571,30 +571,30 @@ namespace Pakuri.InGame
         private static void ApplyResolvedChoices(
             SkillExecutionState snapshot,
             UnitCombatState owner,
-            string skillId,
-            bool useTargetSkillId,
-            IReadOnlyCollection<string> choiceIds)
+            string skillName,
+            bool useTargetSkillName,
+            IReadOnlyCollection<string> choiceNames)
         {
-            foreach (var choiceId in choiceIds)
+            foreach (var choiceName in choiceNames)
             {
-                var choice = owner.SkillState.FindChoice(choiceId);
+                var choice = owner.SkillState.FindChoice(choiceName);
                 if (choice == null)
                 {
                     continue;
                 }
 
-                var choiceSkillId = choice.SkillId;
-                if (useTargetSkillId && !string.IsNullOrWhiteSpace(choice.TargetSkillId))
+                var choiceSkillName = choice.SkillName;
+                if (useTargetSkillName && !string.IsNullOrWhiteSpace(choice.TargetSkillName))
                 {
-                    choiceSkillId = choice.TargetSkillId;
+                    choiceSkillName = choice.TargetSkillName;
                 }
 
-                if (!string.Equals(choiceSkillId, skillId, StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(choiceSkillName, skillName, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
 
-                snapshot.AddActiveChoiceId(choice.ChoiceId);
+                snapshot.AddActiveChoiceName(choice.ChoiceName);
                 SkillExecutionRules.ApplyChoice(snapshot, choice);
             }
         }

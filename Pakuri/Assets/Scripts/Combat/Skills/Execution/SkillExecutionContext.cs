@@ -28,16 +28,16 @@ namespace Pakuri.InGame
             bool lockToEventTarget = false,
             bool publishSkillLifecycleEvents = true,
             bool applyDamageMultiplierToShield = true,
-            string sourceSkillId = null)
+            string sourceSkillName = null)
         {
             CombatManager = combatManager;
             Roster = roster;
             CasterEntry = casterEntry;
             Runtime = runtime;
             Source = casterEntry != null ? casterEntry.Model : null;
-            SourceSkillId = string.IsNullOrWhiteSpace(sourceSkillId)
-                ? runtime != null && runtime.Data != null ? runtime.Data.SkillId : string.Empty
-                : sourceSkillId;
+            SourceSkillName = string.IsNullOrWhiteSpace(sourceSkillName)
+                ? runtime != null && runtime.Data != null ? runtime.Data.SkillName : string.Empty
+                : sourceSkillName;
             EventTarget = eventTarget;
             EventCenter = casterEntry != null && casterEntry.Transform != null
                 ? (Vector2)casterEntry.Transform.position
@@ -58,7 +58,7 @@ namespace Pakuri.InGame
         /// 발생한 사건에 기존 시전 기준을 이어 붙여 후속 판정을 준비한다.
         public SkillExecutionContext(
             UnitCombatState source,
-            string sourceSkillId,
+            string sourceSkillName,
             UnitCombatState eventTarget,
             Vector2 eventCenter,
             float eventDamage,
@@ -67,7 +67,7 @@ namespace Pakuri.InGame
             SkillExecutionContext executionContext = null)
         {
             Source = source;
-            SourceSkillId = sourceSkillId ?? string.Empty;
+            SourceSkillName = sourceSkillName ?? string.Empty;
             EventTarget = eventTarget;
             EventCenter = eventCenter;
             EventDamage = eventDamage;
@@ -87,7 +87,7 @@ namespace Pakuri.InGame
 
         public UnitCombatState Source { get; }
 
-        public string SourceSkillId { get; }
+        public string SourceSkillName { get; }
 
         public UnitCombatState EventTarget { get; }
 

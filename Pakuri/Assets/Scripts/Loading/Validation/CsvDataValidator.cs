@@ -45,109 +45,109 @@ namespace Pakuri.Data
 
             foreach (var reward in model.RewardChoices.Values)
             {
-                if (!model.Monsters.ContainsKey(reward.MonsterId))
+                if (!model.Monsters.ContainsKey(reward.MonsterName))
                 {
-                    errors.Add($"Reward choice '{reward.Id}' references unknown monster '{reward.MonsterId}'.");
+                    errors.Add($"Reward choice '{reward.Name}' references unknown monster '{reward.MonsterName}'.");
                 }
 
-                 if (!model.SkillChoices.TryGetValue(reward.Id, out var rewardChoice))
+                 if (!model.SkillChoices.TryGetValue(reward.Name, out var rewardChoice))
                  {
-                     errors.Add($"Reward choice '{reward.Id}' has no matching skill choice row with the same choice_id.");
+                     errors.Add($"Reward choice '{reward.Name}' has no matching skill choice row with the same choice_name.");
                      continue;
                  }
 
-                 if (!string.Equals(rewardChoice.MonsterId, reward.MonsterId, StringComparison.OrdinalIgnoreCase))
+                 if (!string.Equals(rewardChoice.MonsterName, reward.MonsterName, StringComparison.OrdinalIgnoreCase))
                  {
                      errors.Add(
-                         $"Reward choice '{reward.Id}' monster mismatch: reward monster '{reward.MonsterId}', choice monster '{rewardChoice.MonsterId}'.");
+                         $"Reward choice '{reward.Name}' monster mismatch: reward monster '{reward.MonsterName}', choice monster '{rewardChoice.MonsterName}'.");
                  }
 
-                if (!string.IsNullOrWhiteSpace(reward.ActiveSkillId))
+                if (!string.IsNullOrWhiteSpace(reward.ActiveSkillName))
                 {
-                    if (!model.Skills.TryGetValue(reward.ActiveSkillId, out var activeSkill))
+                    if (!model.Skills.TryGetValue(reward.ActiveSkillName, out var activeSkill))
                     {
-                        errors.Add($"Reward choice '{reward.Id}' references unknown active skill '{reward.ActiveSkillId}'.");
+                        errors.Add($"Reward choice '{reward.Name}' references unknown active skill '{reward.ActiveSkillName}'.");
                     }
-                    else if (!string.Equals(activeSkill.MonsterId, reward.MonsterId, StringComparison.OrdinalIgnoreCase))
+                    else if (!string.Equals(activeSkill.MonsterName, reward.MonsterName, StringComparison.OrdinalIgnoreCase))
                     {
                         errors.Add(
-                            $"Reward choice '{reward.Id}' active skill '{reward.ActiveSkillId}' belongs to '{activeSkill.MonsterId}', not '{reward.MonsterId}'.");
+                            $"Reward choice '{reward.Name}' active skill '{reward.ActiveSkillName}' belongs to '{activeSkill.MonsterName}', not '{reward.MonsterName}'.");
                     }
                     else if (activeSkill.SkillKind != PakuriCsvSkillKind.Active)
                     {
-                        errors.Add($"Reward choice '{reward.Id}' targets non-active skill '{reward.ActiveSkillId}'.");
+                        errors.Add($"Reward choice '{reward.Name}' targets non-active skill '{reward.ActiveSkillName}'.");
                     }
-                    else if (!string.Equals(rewardChoice.SkillId, reward.ActiveSkillId, StringComparison.OrdinalIgnoreCase))
+                    else if (!string.Equals(rewardChoice.SkillName, reward.ActiveSkillName, StringComparison.OrdinalIgnoreCase))
                     {
                         errors.Add(
-                            $"Reward choice '{reward.Id}' active gate '{reward.ActiveSkillId}' does not match choice skill '{rewardChoice.SkillId}'.");
+                            $"Reward choice '{reward.Name}' active gate '{reward.ActiveSkillName}' does not match choice skill '{rewardChoice.SkillName}'.");
                     }
                     else if (rewardChoice.ChoiceGroup == SkillChoiceGroup.PassiveEnhancement)
                     {
-                        errors.Add($"Reward choice '{reward.Id}' points passive choice group through active_skill_id.");
+                        errors.Add($"Reward choice '{reward.Name}' points passive choice group through active_skill_name.");
                     }
                 }
 
-                if (!string.IsNullOrWhiteSpace(reward.PassiveSkillId))
+                if (!string.IsNullOrWhiteSpace(reward.PassiveSkillName))
                 {
-                    if (!model.Skills.TryGetValue(reward.PassiveSkillId, out var passiveSkill))
+                    if (!model.Skills.TryGetValue(reward.PassiveSkillName, out var passiveSkill))
                     {
-                        errors.Add($"Reward choice '{reward.Id}' references unknown passive skill '{reward.PassiveSkillId}'.");
+                        errors.Add($"Reward choice '{reward.Name}' references unknown passive skill '{reward.PassiveSkillName}'.");
                     }
-                    else if (!string.Equals(passiveSkill.MonsterId, reward.MonsterId, StringComparison.OrdinalIgnoreCase))
+                    else if (!string.Equals(passiveSkill.MonsterName, reward.MonsterName, StringComparison.OrdinalIgnoreCase))
                     {
                         errors.Add(
-                            $"Reward choice '{reward.Id}' passive skill '{reward.PassiveSkillId}' belongs to '{passiveSkill.MonsterId}', not '{reward.MonsterId}'.");
+                            $"Reward choice '{reward.Name}' passive skill '{reward.PassiveSkillName}' belongs to '{passiveSkill.MonsterName}', not '{reward.MonsterName}'.");
                     }
                     else if (passiveSkill.SkillKind != PakuriCsvSkillKind.Passive)
                     {
-                        errors.Add($"Reward choice '{reward.Id}' targets non-passive skill '{reward.PassiveSkillId}'.");
+                        errors.Add($"Reward choice '{reward.Name}' targets non-passive skill '{reward.PassiveSkillName}'.");
                     }
-                    else if (!string.Equals(rewardChoice.SkillId, reward.PassiveSkillId, StringComparison.OrdinalIgnoreCase))
+                    else if (!string.Equals(rewardChoice.SkillName, reward.PassiveSkillName, StringComparison.OrdinalIgnoreCase))
                     {
                         errors.Add(
-                            $"Reward choice '{reward.Id}' passive gate '{reward.PassiveSkillId}' does not match choice skill '{rewardChoice.SkillId}'.");
+                            $"Reward choice '{reward.Name}' passive gate '{reward.PassiveSkillName}' does not match choice skill '{rewardChoice.SkillName}'.");
                     }
                     else if (rewardChoice.ChoiceGroup != SkillChoiceGroup.PassiveEnhancement)
                     {
-                        errors.Add($"Reward choice '{reward.Id}' points active choice group through passive_skill_id.");
+                        errors.Add($"Reward choice '{reward.Name}' points active choice group through passive_skill_name.");
                     }
                 }
 
-                if (string.IsNullOrWhiteSpace(reward.ActiveSkillId) && string.IsNullOrWhiteSpace(reward.PassiveSkillId))
+                if (string.IsNullOrWhiteSpace(reward.ActiveSkillName) && string.IsNullOrWhiteSpace(reward.PassiveSkillName))
                 {
-                    errors.Add($"Reward choice '{reward.Id}' must target either active_skill_id or passive_skill_id.");
+                    errors.Add($"Reward choice '{reward.Name}' must target either active_skill_name or passive_skill_name.");
                 }
             }
 
             foreach (var skill in model.Skills.Values)
             {
-                if (!model.Monsters.ContainsKey(skill.MonsterId))
+                if (!model.Monsters.ContainsKey(skill.MonsterName))
                 {
-                    errors.Add($"Skill '{skill.Id}' references unknown monster '{skill.MonsterId}'.");
+                    errors.Add($"Skill '{skill.Name}' references unknown monster '{skill.MonsterName}'.");
                 }
 
                 if (skill.SkillKind == PakuriCsvSkillKind.Active && skill.Slot > SkillSlot.E)
                 {
-                    errors.Add($"Active skill '{skill.Id}' uses passive slot '{skill.Slot}'.");
+                    errors.Add($"Active skill '{skill.Name}' uses passive slot '{skill.Slot}'.");
                 }
 
                 if (skill.SkillKind == PakuriCsvSkillKind.Passive && skill.Slot < SkillSlot.F)
                 {
-                    errors.Add($"Passive skill '{skill.Id}' uses active slot '{skill.Slot}'.");
+                    errors.Add($"Passive skill '{skill.Name}' uses active slot '{skill.Slot}'.");
                 }
 
                 ValidateSkillRuntimeValues(skill, errors);
                 if (!string.IsNullOrWhiteSpace(skill.TargetSelection)
                     && !Enum.TryParse<SkillTargetSelection>(skill.TargetSelection, true, out _))
                 {
-                    errors.Add($"Skill '{skill.Id}' has unsupported target_selection '{skill.TargetSelection}'.");
+                    errors.Add($"Skill '{skill.Name}' has unsupported target_selection '{skill.TargetSelection}'.");
                 }
 
                 if (!string.IsNullOrWhiteSpace(skill.HitTargetCount)
                     && !IsSupportedHitTargetCount(skill.HitTargetCount))
                 {
-                    errors.Add($"Skill '{skill.Id}' has unsupported hit_target_count '{skill.HitTargetCount}'. Expected positive integer or global.");
+                    errors.Add($"Skill '{skill.Name}' has unsupported hit_target_count '{skill.HitTargetCount}'. Expected positive integer or global.");
                 }
 
                 ValidateRuntimeStatusColumns(skill, model.StatusEffects, string.Empty, errors);
@@ -164,7 +164,7 @@ namespace Pakuri.Data
                 if (!string.IsNullOrWhiteSpace(enemySkill.Skill.HitTargetCount)
                     && !IsSupportedHitTargetCount(enemySkill.Skill.HitTargetCount))
                 {
-                    errors.Add($"Skill '{enemySkill.Skill.Id}' has unsupported hit_target_count '{enemySkill.Skill.HitTargetCount}'. Expected positive integer or global.");
+                    errors.Add($"Skill '{enemySkill.Skill.Name}' has unsupported hit_target_count '{enemySkill.Skill.HitTargetCount}'. Expected positive integer or global.");
                 }
 
                 ValidateRuntimeStatusColumns(enemySkill.Skill, model.StatusEffects, enemySkill.TargetScope, errors);
@@ -182,33 +182,33 @@ namespace Pakuri.Data
 
             foreach (var choice in model.SkillChoices.Values)
             {
-                if (!model.Monsters.ContainsKey(choice.MonsterId))
+                if (!model.Monsters.ContainsKey(choice.MonsterName))
                 {
-                    errors.Add($"Skill choice '{choice.Id}' references unknown monster '{choice.MonsterId}'.");
+                    errors.Add($"Skill choice '{choice.Name}' references unknown monster '{choice.MonsterName}'.");
                 }
 
-                if (!model.Skills.TryGetValue(choice.SkillId, out var skill))
+                if (!model.Skills.TryGetValue(choice.SkillName, out var skill))
                 {
-                    errors.Add($"Skill choice '{choice.Id}' references unknown skill '{choice.SkillId}'.");
+                    errors.Add($"Skill choice '{choice.Name}' references unknown skill '{choice.SkillName}'.");
                     continue;
                 }
 
-                if (!string.Equals(skill.MonsterId, choice.MonsterId, StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(skill.MonsterName, choice.MonsterName, StringComparison.OrdinalIgnoreCase))
                 {
                     errors.Add(
-                        $"Skill choice '{choice.Id}' monster mismatch: choice monster '{choice.MonsterId}', skill monster '{skill.MonsterId}'.");
+                        $"Skill choice '{choice.Name}' monster mismatch: choice monster '{choice.MonsterName}', skill monster '{skill.MonsterName}'.");
                 }
 
                 if (skill.SkillKind == PakuriCsvSkillKind.Active
                     && choice.ChoiceGroup == SkillChoiceGroup.PassiveEnhancement)
                 {
-                    errors.Add($"Skill choice '{choice.Id}' uses passive-only choice group on active skill '{choice.SkillId}'.");
+                    errors.Add($"Skill choice '{choice.Name}' uses passive-only choice group on active skill '{choice.SkillName}'.");
                 }
 
                 if (skill.SkillKind == PakuriCsvSkillKind.Passive
                     && choice.ChoiceGroup != SkillChoiceGroup.PassiveEnhancement)
                 {
-                    errors.Add($"Skill choice '{choice.Id}' uses active choice group on passive skill '{choice.SkillId}'.");
+                    errors.Add($"Skill choice '{choice.Name}' uses active choice group on passive skill '{choice.SkillName}'.");
                 }
 
             }
@@ -229,7 +229,7 @@ namespace Pakuri.Data
 
                 foreach (var skill in model.Skills.Values)
                 {
-                    if (!string.Equals(skill.MonsterId, monster.Id, StringComparison.OrdinalIgnoreCase))
+                    if (!string.Equals(skill.MonsterName, monster.Name, StringComparison.OrdinalIgnoreCase))
                     {
                         continue;
                     }
@@ -252,44 +252,44 @@ namespace Pakuri.Data
                     }
                 }
 
-                ValidateExpectedSlots(monster.Id, activeSlots, SkillSlot.A, SkillSlot.E, "active", errors);
-                ValidateExpectedSlots(monster.Id, passiveSlots, SkillSlot.F, SkillSlot.J, "passive", errors);
+                ValidateExpectedSlots(monster.Name, activeSlots, SkillSlot.A, SkillSlot.E, "active", errors);
+                ValidateExpectedSlots(monster.Name, passiveSlots, SkillSlot.F, SkillSlot.J, "passive", errors);
 
                 if (slotA == null)
                 {
-                    errors.Add($"Monster '{monster.Id}' is missing slot A active skill.");
+                    errors.Add($"Monster '{monster.Name}' is missing slot A active skill.");
                 }
                 else
                 {
                     if (!slotA.IsDefaultLearned)
                     {
-                        errors.Add($"Monster '{monster.Id}' slot A active skill must be default learned.");
+                        errors.Add($"Monster '{monster.Name}' slot A active skill must be default learned.");
                     }
 
                     if (!string.IsNullOrWhiteSpace(monster.ActiveSkillName)
                         && !string.Equals(monster.ActiveSkillName, slotA.DisplayName, StringComparison.Ordinal))
                     {
                         errors.Add(
-                            $"Monster '{monster.Id}' active_skill_name '{monster.ActiveSkillName}' does not match slot A display name '{slotA.DisplayName}'.");
+                            $"Monster '{monster.Name}' active_skill_name '{monster.ActiveSkillName}' does not match slot A display name '{slotA.DisplayName}'.");
                     }
                 }
 
                 if (slotF == null)
                 {
-                    errors.Add($"Monster '{monster.Id}' is missing slot F passive skill.");
+                    errors.Add($"Monster '{monster.Name}' is missing slot F passive skill.");
                 }
                 else
                 {
                     if (!slotF.IsAvailableWithoutActiveRequirement)
                     {
-                        errors.Add($"Monster '{monster.Id}' slot F passive must be available without active requirement.");
+                        errors.Add($"Monster '{monster.Name}' slot F passive must be available without active requirement.");
                     }
 
                     if (!string.IsNullOrWhiteSpace(monster.PassiveSkillName)
                         && !string.Equals(monster.PassiveSkillName, slotF.DisplayName, StringComparison.Ordinal))
                     {
                         errors.Add(
-                            $"Monster '{monster.Id}' passive_skill_name '{monster.PassiveSkillName}' does not match slot F display name '{slotF.DisplayName}'.");
+                            $"Monster '{monster.Name}' passive_skill_name '{monster.PassiveSkillName}' does not match slot F display name '{slotF.DisplayName}'.");
                     }
                 }
             }
@@ -313,42 +313,42 @@ namespace Pakuri.Data
                 return;
             }
 
-            if (!string.IsNullOrWhiteSpace(skill.DeploymentRequiredTargetStatusId)
-                && (statusEffects == null || !statusEffects.ContainsKey(skill.DeploymentRequiredTargetStatusId)))
+            if (!string.IsNullOrWhiteSpace(skill.DeploymentRequiredTargetStatusName)
+                && (statusEffects == null || !statusEffects.ContainsKey(skill.DeploymentRequiredTargetStatusName)))
             {
-                errors.Add($"Skill '{skill.Id}' uses unsupported deployment_required_target_status_id '{skill.DeploymentRequiredTargetStatusId}'.");
+                errors.Add($"Skill '{skill.Name}' uses unsupported deployment_required_target_status_name '{skill.DeploymentRequiredTargetStatusName}'.");
             }
 
-            if (!string.IsNullOrWhiteSpace(skill.TargetSelectionStatusId)
-                && (statusEffects == null || !statusEffects.ContainsKey(skill.TargetSelectionStatusId)))
+            if (!string.IsNullOrWhiteSpace(skill.TargetSelectionStatusName)
+                && (statusEffects == null || !statusEffects.ContainsKey(skill.TargetSelectionStatusName)))
             {
-                errors.Add($"Skill '{skill.Id}' uses unsupported target_selection_status_id '{skill.TargetSelectionStatusId}'.");
+                errors.Add($"Skill '{skill.Name}' uses unsupported target_selection_status_name '{skill.TargetSelectionStatusName}'.");
             }
 
-            if (!string.IsNullOrWhiteSpace(skill.TargetStatusStackStatusId)
-                && (statusEffects == null || !statusEffects.ContainsKey(skill.TargetStatusStackStatusId)))
+            if (!string.IsNullOrWhiteSpace(skill.TargetStatusStackStatusName)
+                && (statusEffects == null || !statusEffects.ContainsKey(skill.TargetStatusStackStatusName)))
             {
-                errors.Add($"Skill '{skill.Id}' uses unsupported target_status_stack_status_id '{skill.TargetStatusStackStatusId}'.");
+                errors.Add($"Skill '{skill.Name}' uses unsupported target_status_stack_status_name '{skill.TargetStatusStackStatusName}'.");
             }
 
-            if (!string.IsNullOrWhiteSpace(skill.ConsumeTargetStatusId)
-                && (statusEffects == null || !statusEffects.ContainsKey(skill.ConsumeTargetStatusId)))
+            if (!string.IsNullOrWhiteSpace(skill.ConsumeTargetStatusName)
+                && (statusEffects == null || !statusEffects.ContainsKey(skill.ConsumeTargetStatusName)))
             {
-                errors.Add($"Skill '{skill.Id}' uses unsupported consume_target_status_id '{skill.ConsumeTargetStatusId}'.");
+                errors.Add($"Skill '{skill.Name}' uses unsupported consume_target_status_name '{skill.ConsumeTargetStatusName}'.");
             }
 
             var status = skill.Status;
             var statusKey = string.Empty;
-            if (!string.IsNullOrWhiteSpace(status.StatusEffectId))
+            if (!string.IsNullOrWhiteSpace(status.StatusEffectName))
             {
-                statusKey = status.StatusEffectId.Trim();
+                statusKey = status.StatusEffectName.Trim();
             }
 
             if (string.IsNullOrWhiteSpace(statusKey))
             {
                 if (status.StatusChance > 0f)
                 {
-                    errors.Add($"Skill '{skill.Id}' has status_chance '{status.StatusChance}' but no status_effect_id.");
+                    errors.Add($"Skill '{skill.Name}' has status_chance '{status.StatusChance}' but no status_effect_name.");
                 }
 
                 return;
@@ -357,13 +357,13 @@ namespace Pakuri.Data
             StatusEffectRow statusDefinition = null;
             if (statusEffects == null || !statusEffects.TryGetValue(statusKey, out statusDefinition))
             {
-                errors.Add($"Skill '{skill.Id}' uses status_effect_id '{statusKey}' but status_effects.csv has no matching row.");
+                errors.Add($"Skill '{skill.Name}' uses status_effect_name '{statusKey}' but status_effects.csv has no matching row.");
                 return;
             }
 
             if (!StatusValueParser.TryParseStatusKind(statusKey, out var kind))
             {
-                errors.Add($"Skill '{skill.Id}' uses status_effect_id '{statusKey}' that cannot map to StatusEffectKind.");
+                errors.Add($"Skill '{skill.Name}' uses status_effect_name '{statusKey}' that cannot map to StatusEffectKind.");
                 return;
             }
 
@@ -372,12 +372,12 @@ namespace Pakuri.Data
                 if (string.IsNullOrWhiteSpace(targetScope)
                     && !StatusValueParser.TryParseTargetScope(status.StatusTargetScope, out _))
                 {
-                    errors.Add($"Skill '{skill.Id}' requires supported status_target_scope. Expected self or all_allies.");
+                    errors.Add($"Skill '{skill.Name}' requires supported status_target_scope. Expected self or all_allies.");
                 }
 
                 if (!StatusValueParser.TryParseMergePolicy(status.StatusMergePolicy, out _))
                 {
-                    errors.Add($"Skill '{skill.Id}' requires supported status_merge_policy for buff status '{statusKey}'.");
+                    errors.Add($"Skill '{skill.Name}' requires supported status_merge_policy for buff status '{statusKey}'.");
                 }
             }
 
@@ -385,12 +385,12 @@ namespace Pakuri.Data
             {
                 if (!StatusValueParser.TryParseShieldRefreshRule(status.ShieldAmountRefreshPolicy, out _))
                 {
-                    errors.Add($"Skill '{skill.Id}' requires supported shield_amount_refresh_policy for shield status.");
+                    errors.Add($"Skill '{skill.Name}' requires supported shield_amount_refresh_policy for shield status.");
                 }
 
                 if (status.StatusDurationSeconds <= 0f)
                 {
-                    errors.Add($"Skill '{skill.Id}' requires positive status_duration_seconds for shield status.");
+                    errors.Add($"Skill '{skill.Name}' requires positive status_duration_seconds for shield status.");
                 }
             }
         }
@@ -408,94 +408,94 @@ namespace Pakuri.Data
             var artifactSource = model != null
                 && SkillGraphParser.IsArtifactEffectOwner(
                     model,
-                    trigger.SourceSkillId,
-                    trigger.MonsterId);
+                    trigger.SourceSkillName,
+                    trigger.MonsterName);
             SkillRow sourceSkill = null;
             if (model == null
-                || (!model.Monsters.ContainsKey(trigger.MonsterId)
-                    && !model.Summons.ContainsKey(trigger.MonsterId)
+                || (!model.Monsters.ContainsKey(trigger.MonsterName)
+                    && !model.Summons.ContainsKey(trigger.MonsterName)
                     && !artifactSource))
             {
-                errors.Add($"Skill trigger '{trigger.Id}' references unknown monster '{trigger.MonsterId}'.");
+                errors.Add($"Skill trigger '{trigger.Name}' references unknown monster '{trigger.MonsterName}'.");
             }
 
             var sourceSkillFound = model != null
-                && (model.Skills.TryGetValue(trigger.SourceSkillId, out sourceSkill)
-                    || model.SummonSkills.TryGetValue(trigger.SourceSkillId, out sourceSkill));
+                && (model.Skills.TryGetValue(trigger.SourceSkillName, out sourceSkill)
+                    || model.SummonSkills.TryGetValue(trigger.SourceSkillName, out sourceSkill));
             if (!artifactSource && !sourceSkillFound)
             {
-                errors.Add($"Skill trigger '{trigger.Id}' references unknown source skill '{trigger.SourceSkillId}'.");
+                errors.Add($"Skill trigger '{trigger.Name}' references unknown source skill '{trigger.SourceSkillName}'.");
             }
             else if (!artifactSource
-                && !string.Equals(sourceSkill.MonsterId, trigger.MonsterId, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(sourceSkill.MonsterName, trigger.MonsterName, StringComparison.OrdinalIgnoreCase))
             {
-                errors.Add($"Skill trigger '{trigger.Id}' source skill '{trigger.SourceSkillId}' belongs to '{sourceSkill.MonsterId}', not '{trigger.MonsterId}'.");
+                errors.Add($"Skill trigger '{trigger.Name}' source skill '{trigger.SourceSkillName}' belongs to '{sourceSkill.MonsterName}', not '{trigger.MonsterName}'.");
             }
 
-            if (!string.IsNullOrWhiteSpace(trigger.RequiredSourceStatusId)
-                && (model == null || !model.StatusEffects.ContainsKey(trigger.RequiredSourceStatusId)))
+            if (!string.IsNullOrWhiteSpace(trigger.RequiredSourceStatusName)
+                && (model == null || !model.StatusEffects.ContainsKey(trigger.RequiredSourceStatusName)))
             {
-                errors.Add($"Skill trigger '{trigger.Id}' uses unsupported required_source_status_id '{trigger.RequiredSourceStatusId}'.");
+                errors.Add($"Skill trigger '{trigger.Name}' uses unsupported required_source_status_name '{trigger.RequiredSourceStatusName}'.");
             }
 
-            var hasOwnedNodes = HasOwnedTriggerNodeSource(model, trigger.Id);
+            var hasOwnedNodes = HasOwnedTriggerNodeSource(model, trigger.Name);
             if (!hasOwnedNodes)
             {
-                errors.Add($"Skill trigger '{trigger.Id}' requires at least one owned node.");
+                errors.Add($"Skill trigger '{trigger.Name}' requires at least one owned node.");
             }
 
             if (trigger.RepeatCount <= 0)
             {
-                errors.Add($"Skill trigger '{trigger.Id}' requires repeat_count greater than 0.");
+                errors.Add($"Skill trigger '{trigger.Name}' requires repeat_count greater than 0.");
             }
 
             if (trigger.RepeatIntervalSeconds < 0f)
             {
-                errors.Add($"Skill trigger '{trigger.Id}' has negative repeat_interval_seconds.");
+                errors.Add($"Skill trigger '{trigger.Name}' has negative repeat_interval_seconds.");
             }
 
             if (trigger.TriggerDelaySeconds < 0f)
             {
-                errors.Add($"Skill trigger '{trigger.Id}' has negative trigger_delay_seconds.");
+                errors.Add($"Skill trigger '{trigger.Name}' has negative trigger_delay_seconds.");
             }
 
             if (trigger.TriggerEveryCount < 0)
             {
-                errors.Add($"Skill trigger '{trigger.Id}' has negative trigger_every_count.");
+                errors.Add($"Skill trigger '{trigger.Name}' has negative trigger_every_count.");
             }
 
             if (!ValidateEventSourceScope(trigger.EventSourceScope))
             {
-                errors.Add($"Skill trigger '{trigger.Id}' has unsupported event_source_scope '{trigger.EventSourceScope}'. Expected owner or all_allies.");
+                errors.Add($"Skill trigger '{trigger.Name}' has unsupported event_source_scope '{trigger.EventSourceScope}'. Expected owner or all_allies.");
             }
 
             if (trigger.ProcChance < 0f || trigger.ProcChance > 1f)
             {
-                errors.Add($"Skill trigger '{trigger.Id}' has proc_chance '{trigger.ProcChance}' outside 0..1.");
+                errors.Add($"Skill trigger '{trigger.Name}' has proc_chance '{trigger.ProcChance}' outside 0..1.");
             }
 
             if (trigger.InternalCooldownSeconds < 0f)
             {
-                errors.Add($"Skill trigger '{trigger.Id}' has negative internal_cooldown_seconds.");
+                errors.Add($"Skill trigger '{trigger.Name}' has negative internal_cooldown_seconds.");
             }
 
-            ValidateTriggerChoiceReference(trigger.RequiresActiveChoiceId, trigger, model, "requires_active_choice_id", errors);
-            ValidateTriggerChoiceReference(trigger.ExcludesActiveChoiceId, trigger, model, "excludes_active_choice_id", errors);
+            ValidateTriggerChoiceReference(trigger.RequiresActiveChoiceName, trigger, model, "requires_active_choice_name", errors);
+            ValidateTriggerChoiceReference(trigger.ExcludesActiveChoiceName, trigger, model, "excludes_active_choice_name", errors);
 
-            ValidateStatusConditionExpression(trigger.Id, trigger.ConditionStatusId, model, errors);
+            ValidateStatusConditionExpression(trigger.Name, trigger.ConditionStatusName, model, errors);
 
             if (!string.IsNullOrWhiteSpace(trigger.TriggerAttribute)
                 && !ValidateTriggerAttributes(trigger.TriggerAttribute))
             {
-                errors.Add($"Skill trigger '{trigger.Id}' uses unsupported trigger_attribute '{trigger.TriggerAttribute}'.");
+                errors.Add($"Skill trigger '{trigger.Name}' uses unsupported trigger_attribute '{trigger.TriggerAttribute}'.");
             }
 
             if (!ValidateSkillRuntimeKindList(trigger.EventSkillRuntimeKinds))
             {
-                errors.Add($"Skill trigger '{trigger.Id}' uses unsupported event_skill_runtime_kinds '{trigger.EventSkillRuntimeKinds}'.");
+                errors.Add($"Skill trigger '{trigger.Name}' uses unsupported event_skill_runtime_kinds '{trigger.EventSkillRuntimeKinds}'.");
             }
 
-            ValidateSkillIdList(trigger.EventSkillId, trigger, model, "event_skill_id", errors);
+            ValidateSkillIdList(trigger.EventSkillName, trigger, model, "event_skill_name", errors);
         }
 
         internal static bool ValidateSkillRuntimeKindList(string rawValue)
@@ -534,34 +534,34 @@ namespace Pakuri.Data
         }
 
         internal static void ValidateSkillIdList(
-            string rawSkillIds,
+            string rawSkillNames,
             SkillTriggerRow trigger,
             SourceModel model,
             string columnName,
             List<string> errors)
         {
-            if (string.IsNullOrWhiteSpace(rawSkillIds))
+            if (string.IsNullOrWhiteSpace(rawSkillNames))
             {
                 return;
             }
 
-            var skillIds = rawSkillIds.Split(';', ',');
-            for (var i = 0; i < skillIds.Length; i++)
+            var skillNames = rawSkillNames.Split(';', ',');
+            for (var i = 0; i < skillNames.Length; i++)
             {
-                var skillId = string.Empty;
-                if (skillIds[i] != null)
+                var skillName = string.Empty;
+                if (skillNames[i] != null)
                 {
-                    skillId = skillIds[i].Trim();
+                    skillName = skillNames[i].Trim();
                 }
-                if (string.IsNullOrWhiteSpace(skillId))
+                if (string.IsNullOrWhiteSpace(skillName))
                 {
                     continue;
                 }
 
                 if (model == null
-                    || (!model.Skills.ContainsKey(skillId) && !model.SummonSkills.ContainsKey(skillId)))
+                    || (!model.Skills.ContainsKey(skillName) && !model.SummonSkills.ContainsKey(skillName)))
                 {
-                    errors.Add($"Skill trigger '{trigger.Id}' {columnName} references unknown skill '{skillId}'.");
+                    errors.Add($"Skill trigger '{trigger.Name}' {columnName} references unknown skill '{skillName}'.");
                 }
             }
         }
@@ -583,27 +583,27 @@ namespace Pakuri.Data
                 errors.Add("summon_units.csv has no rows.");
             }
 
-            var synergyLevelIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var synergyLevelNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var synergy in model.ArtifactSynergies.Values)
             {
                 var previousRequiredCount = 0;
                 for (var i = 0; i < synergy.Levels.Length; i++)
                 {
                     var level = synergy.Levels[i];
-                    if (!synergyLevelIds.Add(level.Id))
+                    if (!synergyLevelNames.Add(level.Name))
                     {
-                        errors.Add($"Artifact synergy level id '{level.Id}' is duplicated.");
+                        errors.Add($"Artifact synergy level Name '{level.Name}' is duplicated.");
                     }
 
                     if (level.RequiredCount <= previousRequiredCount)
                     {
-                        errors.Add($"Artifact synergy '{synergy.Id}' level '{level.Id}' requires a count greater than the previous level.");
+                        errors.Add($"Artifact synergy '{synergy.Name}' level '{level.Name}' requires a count greater than the previous level.");
                     }
 
                     var expectedRequiredCount = (i + 1) * 2;
                     if (level.RequiredCount != expectedRequiredCount)
                     {
-                        errors.Add($"Artifact synergy '{synergy.Id}' level '{level.Id}' requires count '{level.RequiredCount}', expected '{expectedRequiredCount}'.");
+                        errors.Add($"Artifact synergy '{synergy.Name}' level '{level.Name}' requires count '{level.RequiredCount}', expected '{expectedRequiredCount}'.");
                     }
 
                     previousRequiredCount = level.RequiredCount;
@@ -612,28 +612,28 @@ namespace Pakuri.Data
 
             foreach (var artifact in model.Artifacts.Values)
             {
-                if (!model.ArtifactSynergies.ContainsKey(artifact.SynergyId))
+                if (!model.ArtifactSynergies.ContainsKey(artifact.SynergyName))
                 {
-                    errors.Add($"Artifact '{artifact.Id}' references unknown synergy '{artifact.SynergyId}'.");
+                    errors.Add($"Artifact '{artifact.Name}' references unknown synergy '{artifact.SynergyName}'.");
                 }
             }
 
             foreach (var effect in model.ArtifactEffects.Values)
             {
-                if (!model.Artifacts.ContainsKey(effect.ArtifactId))
+                if (!model.Artifacts.ContainsKey(effect.ArtifactName))
                 {
-                    errors.Add($"Artifact effect '{effect.Id}' references unknown artifact '{effect.ArtifactId}'.");
+                    errors.Add($"Artifact effect '{effect.Name}' references unknown artifact '{effect.ArtifactName}'.");
                 }
 
                 ValidateArtifactEffectReferences(
-                    effect.Id,
+                    effect.Name,
                     effect.ApplicationMode,
                     effect.Recipient,
                     effect.RepeatRule,
                     effect.SelectionRule,
-                    effect.RecipientMonsterId,
-                    effect.TargetSkillId,
-                    effect.OutcomeSkillId,
+                    effect.RecipientMonsterName,
+                    effect.TargetSkillName,
+                    effect.OutcomeSkillName,
                     string.Empty,
                     model,
                     errors);
@@ -641,43 +641,43 @@ namespace Pakuri.Data
 
             foreach (var effect in model.ArtifactSynergyEffects.Values)
             {
-                if (!synergyLevelIds.Contains(effect.SynergyLevelId))
+                if (!synergyLevelNames.Contains(effect.SynergyLevelName))
                 {
-                    errors.Add($"Artifact synergy effect '{effect.Id}' references unknown level '{effect.SynergyLevelId}'.");
+                    errors.Add($"Artifact synergy effect '{effect.Name}' references unknown level '{effect.SynergyLevelName}'.");
                 }
 
                 ValidateArtifactEffectReferences(
-                    effect.Id,
+                    effect.Name,
                     effect.ApplicationMode,
                     effect.Recipient,
                     ArtifactEffectRepeatRule.None,
                     ArtifactEffectSelectionRule.None,
-                    effect.RecipientMonsterId,
-                    effect.TargetSkillId,
-                    effect.OutcomeSkillId,
-                    effect.SpawnSummonId,
+                    effect.RecipientMonsterName,
+                    effect.TargetSkillName,
+                    effect.OutcomeSkillName,
+                    effect.SpawnSummonName,
                     model,
                     errors);
             }
 
             foreach (var summon in model.Summons.Values)
             {
-                if (model.Monsters.ContainsKey(summon.Id))
+                if (model.Monsters.ContainsKey(summon.Name))
                 {
-                    errors.Add($"Summon '{summon.Id}' conflicts with a monster id.");
+                    errors.Add($"Summon '{summon.Name}' conflicts with a monster Name.");
                 }
 
                 var slots = new HashSet<SkillSlot>();
                 foreach (var skill in model.SummonSkills.Values)
                 {
-                    if (!string.Equals(skill.MonsterId, summon.Id, StringComparison.OrdinalIgnoreCase))
+                    if (!string.Equals(skill.MonsterName, summon.Name, StringComparison.OrdinalIgnoreCase))
                     {
                         continue;
                     }
 
                     if (!slots.Add(skill.Slot))
                     {
-                        errors.Add($"Summon '{summon.Id}' has duplicate active slot '{skill.Slot}'.");
+                        errors.Add($"Summon '{summon.Name}' has duplicate active slot '{skill.Slot}'.");
                     }
                 }
 
@@ -685,21 +685,21 @@ namespace Pakuri.Data
                 {
                     if (!slots.Contains(slot))
                     {
-                        errors.Add($"Summon '{summon.Id}' is missing active slot '{slot}'.");
+                        errors.Add($"Summon '{summon.Name}' is missing active slot '{slot}'.");
                     }
                 }
             }
 
             foreach (var skill in model.SummonSkills.Values)
             {
-                if (!model.Summons.ContainsKey(skill.MonsterId))
+                if (!model.Summons.ContainsKey(skill.MonsterName))
                 {
-                    errors.Add($"Summon skill '{skill.Id}' references unknown summon '{skill.MonsterId}'.");
+                    errors.Add($"Summon skill '{skill.Name}' references unknown summon '{skill.MonsterName}'.");
                 }
 
-                if (model.Skills.ContainsKey(skill.Id))
+                if (model.Skills.ContainsKey(skill.Name))
                 {
-                    errors.Add($"Summon skill '{skill.Id}' conflicts with a monster skill id.");
+                    errors.Add($"Summon skill '{skill.Name}' conflicts with a monster skill Name.");
                 }
 
                 ValidateSkillRuntimeValues(skill, errors);
@@ -708,15 +708,15 @@ namespace Pakuri.Data
         }
 
         private static void ValidateArtifactEffectReferences(
-            string effectId,
+            string effectName,
             ArtifactEffectApplicationMode applicationMode,
             ArtifactEffectRecipient recipient,
             ArtifactEffectRepeatRule repeatRule,
             ArtifactEffectSelectionRule selectionRule,
-            string recipientMonsterId,
-            string targetSkillId,
-            string outcomeSkillId,
-            string spawnSummonId,
+            string recipientMonsterName,
+            string targetSkillName,
+            string outcomeSkillName,
+            string spawnSummonName,
             SourceModel model,
             List<string> errors)
         {
@@ -724,54 +724,54 @@ namespace Pakuri.Data
                 && (applicationMode != ArtifactEffectApplicationMode.SkillModifier
                     || recipient != ArtifactEffectRecipient.AllAllies))
             {
-                errors.Add($"Artifact effect '{effectId}' repeat_rule requires SkillModifier and AllAllies.");
+                errors.Add($"Artifact effect '{effectName}' repeat_rule requires SkillModifier and AllAllies.");
             }
 
             if (selectionRule != ArtifactEffectSelectionRule.None
                 && (applicationMode != ArtifactEffectApplicationMode.SkillModifier
                     || recipient != ArtifactEffectRecipient.AllAllies))
             {
-                errors.Add($"Artifact effect '{effectId}' selection_rule requires SkillModifier and AllAllies.");
+                errors.Add($"Artifact effect '{effectName}' selection_rule requires SkillModifier and AllAllies.");
             }
 
             if (recipient == ArtifactEffectRecipient.SpecificMonster
-                && (string.IsNullOrWhiteSpace(recipientMonsterId)
-                    || !model.Monsters.ContainsKey(recipientMonsterId)))
+                && (string.IsNullOrWhiteSpace(recipientMonsterName)
+                    || !model.Monsters.ContainsKey(recipientMonsterName)))
             {
-                errors.Add($"Artifact effect '{effectId}' requires a known recipient_monster_id.");
+                errors.Add($"Artifact effect '{effectName}' requires a known recipient_monster_name.");
             }
 
-            if (!string.IsNullOrWhiteSpace(targetSkillId)
-                && !model.Skills.ContainsKey(targetSkillId)
-                && !model.SummonSkills.ContainsKey(targetSkillId))
+            if (!string.IsNullOrWhiteSpace(targetSkillName)
+                && !model.Skills.ContainsKey(targetSkillName)
+                && !model.SummonSkills.ContainsKey(targetSkillName))
             {
-                errors.Add($"Artifact effect '{effectId}' references unknown target skill '{targetSkillId}'.");
+                errors.Add($"Artifact effect '{effectName}' references unknown target skill '{targetSkillName}'.");
             }
 
-            if (!string.IsNullOrWhiteSpace(outcomeSkillId)
-                && !model.Skills.ContainsKey(outcomeSkillId)
-                && !model.SummonSkills.ContainsKey(outcomeSkillId))
+            if (!string.IsNullOrWhiteSpace(outcomeSkillName)
+                && !model.Skills.ContainsKey(outcomeSkillName)
+                && !model.SummonSkills.ContainsKey(outcomeSkillName))
             {
-                errors.Add($"Artifact effect '{effectId}' references unknown outcome skill '{outcomeSkillId}'.");
+                errors.Add($"Artifact effect '{effectName}' references unknown outcome skill '{outcomeSkillName}'.");
             }
 
             if (applicationMode == ArtifactEffectApplicationMode.GrantSkill
-                && string.IsNullOrWhiteSpace(outcomeSkillId))
+                && string.IsNullOrWhiteSpace(outcomeSkillName))
             {
-                errors.Add($"Artifact effect '{effectId}' requires outcome_skill_id for GrantSkill.");
+                errors.Add($"Artifact effect '{effectName}' requires outcome_skill_name for GrantSkill.");
             }
 
             if (applicationMode == ArtifactEffectApplicationMode.SpawnUnit)
             {
-                if (string.IsNullOrWhiteSpace(spawnSummonId)
-                    || !model.Summons.ContainsKey(spawnSummonId))
+                if (string.IsNullOrWhiteSpace(spawnSummonName)
+                    || !model.Summons.ContainsKey(spawnSummonName))
                 {
-                    errors.Add($"Artifact effect '{effectId}' requires a known spawn_monster_id for SpawnUnit.");
+                    errors.Add($"Artifact effect '{effectName}' requires a known spawn_monster_name for SpawnUnit.");
                 }
             }
-            else if (!string.IsNullOrWhiteSpace(spawnSummonId))
+            else if (!string.IsNullOrWhiteSpace(spawnSummonName))
             {
-                errors.Add($"Artifact effect '{effectId}' may use spawn_monster_id only with SpawnUnit.");
+                errors.Add($"Artifact effect '{effectName}' may use spawn_monster_name only with SpawnUnit.");
             }
         }
 
@@ -781,7 +781,7 @@ namespace Pakuri.Data
             {
                 if (monster.MaxHealth <= 0f)
                 {
-                    errors.Add($"Monster '{monster.Id}' requires positive max_health.");
+                    errors.Add($"Monster '{monster.Name}' requires positive max_health.");
                 }
             }
 
@@ -789,7 +789,7 @@ namespace Pakuri.Data
             {
                 if (enemy.MaxHealth <= 0f)
                 {
-                    errors.Add($"Enemy '{enemy.Id}' requires positive max_health.");
+                    errors.Add($"Enemy '{enemy.Name}' requires positive max_health.");
                 }
             }
 
@@ -797,7 +797,7 @@ namespace Pakuri.Data
             {
                 if (summon.MaxHealth <= 0f)
                 {
-                    errors.Add($"Summon '{summon.Id}' requires positive max_health.");
+                    errors.Add($"Summon '{summon.Name}' requires positive max_health.");
                 }
             }
 
@@ -815,7 +815,7 @@ namespace Pakuri.Data
 
                 if (skill.CastRange <= 0f)
                 {
-                    errors.Add($"Enemy skill '{skill.Skill.Id}' requires positive cast_range for hostile targeting.");
+                    errors.Add($"Enemy skill '{skill.Skill.Name}' requires positive cast_range for hostile targeting.");
                 }
             }
         }
@@ -825,27 +825,27 @@ namespace Pakuri.Data
             if (!string.IsNullOrWhiteSpace(skill.RuntimeVisualAnchor)
                 && !Enum.TryParse<RuntimeSkillVisualAnchor>(skill.RuntimeVisualAnchor, true, out _))
             {
-                errors.Add($"Skill '{skill.Id}' has unsupported runtime_visual_anchor '{skill.RuntimeVisualAnchor}'.");
+                errors.Add($"Skill '{skill.Name}' has unsupported runtime_visual_anchor '{skill.RuntimeVisualAnchor}'.");
             }
 
             if (skill.RuntimeVisualScale <= 0f || skill.RuntimeImpactVisualScale <= 0f)
             {
-                errors.Add($"Skill '{skill.Id}' requires positive runtime visual scale values.");
+                errors.Add($"Skill '{skill.Name}' requires positive runtime visual scale values.");
             }
 
             if (skill.RuntimeHitboxSizeX < 0f || skill.RuntimeHitboxSizeY < 0f)
             {
-                errors.Add($"Skill '{skill.Id}' has a negative runtime hitbox size.");
+                errors.Add($"Skill '{skill.Name}' has a negative runtime hitbox size.");
             }
 
             if (skill.SkillKind == PakuriCsvSkillKind.Active && skill.RuntimeKind == SkillRuntimeKind.Passive)
             {
-                errors.Add($"Active skill '{skill.Id}' cannot use Passive runtime_kind.");
+                errors.Add($"Active skill '{skill.Name}' cannot use Passive runtime_kind.");
             }
 
             if (skill.SkillKind == PakuriCsvSkillKind.Passive && skill.RuntimeKind != SkillRuntimeKind.Passive)
             {
-                errors.Add($"Passive skill '{skill.Id}' must use Passive runtime_kind.");
+                errors.Add($"Passive skill '{skill.Name}' must use Passive runtime_kind.");
             }
 
             if (skill.Radius < 0f
@@ -860,7 +860,7 @@ namespace Pakuri.Data
                 || skill.Status.StatusChance < 0f
                 || skill.Status.StatusChance > 1f)
             {
-                errors.Add($"Skill '{skill.Id}' contains a negative runtime value or a status chance outside 0..1.");
+                errors.Add($"Skill '{skill.Name}' contains a negative runtime value or a status chance outside 0..1.");
             }
 
             if (skill.SkillKind == PakuriCsvSkillKind.Passive)
@@ -872,22 +872,22 @@ namespace Pakuri.Data
             {
                 if (skill.MagazineCapacity <= 0)
                 {
-                    errors.Add($"Magazine projectile '{skill.Id}' requires positive magazine_capacity.");
+                    errors.Add($"Magazine projectile '{skill.Name}' requires positive magazine_capacity.");
                 }
 
                 if (skill.ReloadSeconds <= 0f)
                 {
-                    errors.Add($"Magazine projectile '{skill.Id}' requires positive reload_seconds.");
+                    errors.Add($"Magazine projectile '{skill.Name}' requires positive reload_seconds.");
                 }
 
                 if (skill.ShotIntervalSeconds <= 0f)
                 {
-                    errors.Add($"Magazine projectile '{skill.Id}' requires positive shot_interval_seconds.");
+                    errors.Add($"Magazine projectile '{skill.Name}' requires positive shot_interval_seconds.");
                 }
 
                 if (skill.ProjectileSpeed <= 0f)
                 {
-                    errors.Add($"Projectile skill '{skill.Id}' requires positive projectile_speed.");
+                    errors.Add($"Projectile skill '{skill.Name}' requires positive projectile_speed.");
                 }
 
                 return;
@@ -897,7 +897,7 @@ namespace Pakuri.Data
             {
                 if (skill.ProjectileSpeed <= 0f)
                 {
-                    errors.Add($"Projectile skill '{skill.Id}' requires positive projectile_speed.");
+                    errors.Add($"Projectile skill '{skill.Name}' requires positive projectile_speed.");
                 }
 
                 return;
@@ -905,15 +905,15 @@ namespace Pakuri.Data
 
             if (skill.CooldownSeconds <= 0f)
             {
-                errors.Add($"Active skill '{skill.Id}' requires positive cooldown_seconds.");
+                errors.Add($"Active skill '{skill.Name}' requires positive cooldown_seconds.");
             }
         }
 
         internal static bool HasOwnedTriggerNodeSource(
             SourceModel model,
-            string triggerId)
+            string triggerName)
         {
-            if (model == null || string.IsNullOrWhiteSpace(triggerId))
+            if (model == null || string.IsNullOrWhiteSpace(triggerName))
             {
                 return false;
             }
@@ -924,7 +924,7 @@ namespace Pakuri.Data
                 if (graph != null
                     && (graph.OwnerKind == SkillNodeOwnerKind.Trigger
                         || graph.OwnerKind == SkillNodeOwnerKind.Base)
-                    && string.Equals(graph.OwnerId, triggerId, StringComparison.OrdinalIgnoreCase))
+                    && string.Equals(graph.OwnerName, triggerName, StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
@@ -992,85 +992,85 @@ namespace Pakuri.Data
         }
 
         internal static void ValidateTriggerChoiceReference(
-            string choiceId,
+            string choiceName,
             SkillTriggerRow trigger,
             SourceModel model,
             string columnName,
             List<string> errors)
         {
-            if (string.IsNullOrWhiteSpace(choiceId))
+            if (string.IsNullOrWhiteSpace(choiceName))
             {
                 return;
             }
 
-            var choiceIds = choiceId.Split(';', ',');
-            for (var i = 0; i < choiceIds.Length; i++)
+            var choiceNames = choiceName.Split(';', ',');
+            for (var i = 0; i < choiceNames.Length; i++)
             {
-                var currentChoiceId = string.Empty;
-                if (choiceIds[i] != null)
+                var currentChoiceName = string.Empty;
+                if (choiceNames[i] != null)
                 {
-                    currentChoiceId = choiceIds[i].Trim();
+                    currentChoiceName = choiceNames[i].Trim();
                 }
-                if (string.IsNullOrWhiteSpace(currentChoiceId))
+                if (string.IsNullOrWhiteSpace(currentChoiceName))
                 {
                     continue;
                 }
 
-                if (model == null || !model.SkillChoices.TryGetValue(currentChoiceId, out var choice))
+                if (model == null || !model.SkillChoices.TryGetValue(currentChoiceName, out var choice))
                 {
-                    errors.Add($"Skill trigger '{trigger.Id}' {columnName} references unknown choice '{currentChoiceId}'.");
+                    errors.Add($"Skill trigger '{trigger.Name}' {columnName} references unknown choice '{currentChoiceName}'.");
                     continue;
                 }
 
-                if (!ChoiceAppliesToSkillId(choice, trigger.SourceSkillId))
+                if (!ChoiceAppliesToSkillName(choice, trigger.SourceSkillName))
                 {
-                    errors.Add($"Skill trigger '{trigger.Id}' {columnName} choice '{currentChoiceId}' does not apply to source skill '{trigger.SourceSkillId}'.");
+                    errors.Add($"Skill trigger '{trigger.Name}' {columnName} choice '{currentChoiceName}' does not apply to source skill '{trigger.SourceSkillName}'.");
                 }
             }
         }
 
-        internal static bool ChoiceAppliesToSkillId(SkillChoiceRow choice, string skillId)
+        internal static bool ChoiceAppliesToSkillName(SkillChoiceRow choice, string skillName)
         {
-            if (choice == null || string.IsNullOrWhiteSpace(skillId))
+            if (choice == null || string.IsNullOrWhiteSpace(skillName))
             {
                 return false;
             }
 
-            if (string.Equals(choice.SkillId, skillId, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(choice.SkillName, skillName, StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }
 
-            return string.Equals(choice.TargetSkillId, skillId, StringComparison.OrdinalIgnoreCase);
+            return string.Equals(choice.TargetSkillName, skillName, StringComparison.OrdinalIgnoreCase);
         }
 
         internal static void ValidateStatusIdList(
-            string ownerId,
+            string ownerName,
             string rawValue,
             SourceModel model,
             List<string> errors)
         {
             if (string.IsNullOrWhiteSpace(rawValue))
             {
-                errors.Add($"Skill node '{ownerId}' requires status_ids.");
+                errors.Add($"Skill node '{ownerName}' requires status_ids.");
                 return;
             }
 
-            var statusIds = rawValue.Split(';');
-            for (var i = 0; i < statusIds.Length; i++)
+            var statusNames = rawValue.Split(';');
+            for (var i = 0; i < statusNames.Length; i++)
             {
-                var statusId = statusIds[i].Trim();
-                if (string.IsNullOrWhiteSpace(statusId)
+                var statusName = statusNames[i].Trim();
+                if (string.IsNullOrWhiteSpace(statusName)
                     || model == null
-                    || !model.StatusEffects.ContainsKey(statusId))
+                    || !model.StatusEffects.ContainsKey(statusName))
                 {
-                    errors.Add($"Skill node '{ownerId}' references unknown status '{statusId}' in status_ids.");
+                    errors.Add($"Skill node '{ownerName}' references unknown status '{statusName}' in status_ids.");
                 }
             }
         }
 
         private static void ValidateStatusConditionExpression(
-            string ownerId,
+            string ownerName,
             string rawValue,
             SourceModel model,
             List<string> errors)
@@ -1082,7 +1082,7 @@ namespace Pakuri.Data
 
             if (!StatusValueParser.TryParseConditionStatusExpression(rawValue, out _))
             {
-                errors.Add($"Skill trigger '{ownerId}' uses unsupported condition_status_id '{rawValue}'.");
+                errors.Add($"Skill trigger '{ownerName}' uses unsupported condition_status_name '{rawValue}'.");
                 return;
             }
 
@@ -1093,7 +1093,7 @@ namespace Pakuri.Data
                 for (var requirementIndex = 0; requirementIndex < requirements.Length; requirementIndex++)
                 {
                     var requirement = requirements[requirementIndex].Trim();
-                    var statusId = requirement;
+                    var statusName = requirement;
                     var separatorIndex = requirement.IndexOf(">=", StringComparison.Ordinal);
                     if (separatorIndex < 0)
                     {
@@ -1102,12 +1102,12 @@ namespace Pakuri.Data
 
                     if (separatorIndex >= 0)
                     {
-                        statusId = requirement.Substring(0, separatorIndex).Trim();
+                        statusName = requirement.Substring(0, separatorIndex).Trim();
                     }
 
-                    if (model == null || !model.StatusEffects.ContainsKey(statusId))
+                    if (model == null || !model.StatusEffects.ContainsKey(statusName))
                     {
-                        errors.Add($"Skill trigger '{ownerId}' references unknown status '{statusId}' in condition_status_id.");
+                        errors.Add($"Skill trigger '{ownerName}' references unknown status '{statusName}' in condition_status_name.");
                     }
                 }
             }
@@ -1120,25 +1120,25 @@ namespace Pakuri.Data
                 return;
             }
 
-            if (!StatusValueParser.TryParseStatusKind(status.Id, out var kind) || kind == StatusEffectKind.None)
+            if (!StatusValueParser.TryParseStatusKind(status.Name, out var kind) || kind == StatusEffectKind.None)
             {
-                errors.Add($"Status effect '{status.Id}' is not supported by StatusEffectKind.");
+                errors.Add($"Status effect '{status.Name}' is not supported by StatusEffectKind.");
             }
 
             if (kind == StatusEffectKind.Shield
-                && !string.Equals(status.Id, "shield", StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(status.Name, "shield", StringComparison.OrdinalIgnoreCase))
             {
-                errors.Add($"Shield status row '{status.Id}' must use canonical id 'shield'.");
+                errors.Add($"Shield status row '{status.Name}' must use canonical Name 'shield'.");
             }
 
             if (status.BaseStackAmount <= 0)
             {
-                errors.Add($"Status effect '{status.Id}' requires base_stack_amount greater than 0.");
+                errors.Add($"Status effect '{status.Name}' requires base_stack_amount greater than 0.");
             }
 
             if (!status.IsPermanent && status.DefaultDurationSeconds < 0f)
             {
-                errors.Add($"Status effect '{status.Id}' has negative default_duration_seconds.");
+                errors.Add($"Status effect '{status.Name}' has negative default_duration_seconds.");
             }
         }
 
@@ -1209,17 +1209,17 @@ namespace Pakuri.Data
             for (var i = 0; i < model.SkillGraphNodes.Count; i++)
             {
                 var graph = model.SkillGraphNodes[i];
-                if (!model.SkillNodeTypes.TryGetValue(graph.NodeTypeId, out var nodeType))
+                if (!model.SkillNodeTypes.TryGetValue(graph.NodeTypeName, out var nodeType))
                 {
                     continue;
                 }
-                if (GameDataCatalogBuilder.CanProcessNode(graph.OwnerKind.ToString(), nodeType.HandlerId))
+                if (GameDataCatalogBuilder.CanProcessNode(graph.OwnerKind.ToString(), nodeType.HandlerName))
                 {
                     continue;
                 }
 
                 errors.Add(
-                    $"Skill graph '{BuildSkillGraphKey(graph)}' node '{graph.NodeOrder}' uses handler '{nodeType.HandlerId}' without a combat conversion route.");
+                    $"Skill graph '{BuildSkillGraphKey(graph)}' node '{graph.NodeOrder}' uses handler '{nodeType.HandlerName}' without a combat conversion route.");
             }
         }
 
@@ -1234,13 +1234,13 @@ namespace Pakuri.Data
                     || !node.EnabledByDefault
                     || (node.OwnerKind != SkillNodeOwnerKind.Trigger
                         && node.OwnerKind != SkillNodeOwnerKind.Base)
-                    || !GameDataCatalogBuilder.IsTriggerOutcomeHandler(node.HandlerId))
+                    || !GameDataCatalogBuilder.IsTriggerOutcomeHandler(node.HandlerName))
                 {
                     continue;
                 }
 
-                counts.TryGetValue(node.OwnerId, out var count);
-                counts[node.OwnerId] = count + 1;
+                counts.TryGetValue(node.OwnerName, out var count);
+                counts[node.OwnerName] = count + 1;
             }
 
             foreach (var pair in counts)
@@ -1284,15 +1284,15 @@ namespace Pakuri.Data
 
             foreach (var entry in entries.Values)
             {
-                if (!targetLookup.ContainsKey(entry.RefId))
+                if (!targetLookup.ContainsKey(entry.RefName))
                 {
-                    errors.Add($"{tableName} entry '{entry.Id}' references unknown id '{entry.RefId}'.");
+                    errors.Add($"{tableName} entry '{entry.Name}' references unknown Name '{entry.RefName}'.");
                 }
             }
         }
 
         internal static void ValidateExpectedSlots(
-            string monsterId,
+            string monsterName,
             HashSet<SkillSlot> slots,
             SkillSlot first,
             SkillSlot last,
@@ -1303,41 +1303,41 @@ namespace Pakuri.Data
             {
                 if (!slots.Contains(slot))
                 {
-                    errors.Add($"Monster '{monsterId}' is missing {kindLabel} slot '{slot}'.");
+                    errors.Add($"Monster '{monsterName}' is missing {kindLabel} slot '{slot}'.");
                 }
             }
         }
 
         internal static void ValidateEnemyRows(SourceModel model, List<string> errors)
         {
-            var referencedActiveSkillIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var referencedPassiveIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var referencedActiveSkillNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var referencedPassiveNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var stageSortKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var enemy in model.Enemies.Values)
             {
-                if (!string.Equals(enemy.StageId, "stage_one", StringComparison.OrdinalIgnoreCase)
-                    && !string.Equals(enemy.StageId, "stage_two", StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(enemy.StageName, "stage_one", StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(enemy.StageName, "stage_two", StringComparison.OrdinalIgnoreCase))
                 {
-                    errors.Add($"Enemy '{enemy.Id}' has unsupported stage_id '{enemy.StageId}'.");
+                    errors.Add($"Enemy '{enemy.Name}' has unsupported stage_name '{enemy.StageName}'.");
                 }
 
                 if (enemy.SortOrder < 0)
                 {
-                    errors.Add($"Enemy '{enemy.Id}' has negative sort_order '{enemy.SortOrder}'.");
+                    errors.Add($"Enemy '{enemy.Name}' has negative sort_order '{enemy.SortOrder}'.");
                 }
-                else if (!stageSortKeys.Add(enemy.StageId + ":" + enemy.SortOrder))
+                else if (!stageSortKeys.Add(enemy.StageName + ":" + enemy.SortOrder))
                 {
-                    errors.Add($"Enemy stage '{enemy.StageId}' has duplicate sort_order '{enemy.SortOrder}'.");
+                    errors.Add($"Enemy stage '{enemy.StageName}' has duplicate sort_order '{enemy.SortOrder}'.");
                 }
 
                 if (enemy.NexusDamage <= 0f)
                 {
-                    errors.Add($"Enemy '{enemy.Id}' requires positive nexus_damage.");
+                    errors.Add($"Enemy '{enemy.Name}' requires positive nexus_damage.");
                 }
 
-                ValidateEnemySkillSlot(model, enemy, enemy.SkillSlotAId, SkillSlot.A, referencedActiveSkillIds, errors);
-                ValidateEnemySkillSlot(model, enemy, enemy.SkillSlotBId, SkillSlot.B, referencedActiveSkillIds, errors);
-                ValidateEnemyPassive(model, enemy, referencedPassiveIds, errors);
+                ValidateEnemySkillSlot(model, enemy, enemy.SkillSlotAName, SkillSlot.A, referencedActiveSkillNames, errors);
+                ValidateEnemySkillSlot(model, enemy, enemy.SkillSlotBName, SkillSlot.B, referencedActiveSkillNames, errors);
+                ValidateEnemyPassive(model, enemy, referencedPassiveNames, errors);
             }
 
             foreach (var baseSkill in model.EnemyBaseSkills.Values)
@@ -1349,28 +1349,28 @@ namespace Pakuri.Data
 
                 if (baseSkill.Skill.SkillKind == PakuriCsvSkillKind.Passive)
                 {
-                    if (!referencedPassiveIds.Contains(baseSkill.Skill.Id))
+                    if (!referencedPassiveNames.Contains(baseSkill.Skill.Name))
                     {
-                        errors.Add($"Enemy passive skill '{baseSkill.Skill.Id}' is not referenced by enemies.csv passive_id.");
+                        errors.Add($"Enemy passive skill '{baseSkill.Skill.Name}' is not referenced by enemies.csv passive_name.");
                     }
                 }
-                else if (!referencedActiveSkillIds.Contains(baseSkill.Skill.Id))
+                else if (!referencedActiveSkillNames.Contains(baseSkill.Skill.Name))
                 {
-                    errors.Add($"Enemy base skill '{baseSkill.Skill.Id}' is not referenced by an Enemy A/B skill slot.");
+                    errors.Add($"Enemy base skill '{baseSkill.Skill.Name}' is not referenced by an Enemy A/B skill slot.");
                 }
             }
 
             foreach (var trigger in model.EnemyTriggers.Values)
             {
-                if (!model.EnemyBaseSkills.TryGetValue(trigger.SourceSkillId, out var sourceSkill)
+                if (!model.EnemyBaseSkills.TryGetValue(trigger.SourceSkillName, out var sourceSkill)
                     || sourceSkill == null
                     || sourceSkill.Skill == null)
                 {
-                    errors.Add($"Enemy trigger '{trigger.Id}' references unknown source skill '{trigger.SourceSkillId}'.");
+                    errors.Add($"Enemy trigger '{trigger.Name}' references unknown source skill '{trigger.SourceSkillName}'.");
                 }
-                if (!model.EnemyBaseSkills.ContainsKey(trigger.TriggeredSkillId))
+                if (!model.EnemyBaseSkills.ContainsKey(trigger.TriggeredSkillName))
                 {
-                    errors.Add($"Enemy trigger '{trigger.Id}' references unknown triggered skill '{trigger.TriggeredSkillId}'.");
+                    errors.Add($"Enemy trigger '{trigger.Name}' references unknown triggered skill '{trigger.TriggeredSkillName}'.");
                 }
             }
 
@@ -1381,45 +1381,45 @@ namespace Pakuri.Data
         internal static void ValidateEnemySkillSlot(
             SourceModel model,
             EnemyRow enemy,
-            string skillId,
+            string skillName,
             SkillSlot slot,
-            HashSet<string> referencedSkillIds,
+            HashSet<string> referencedSkillNames,
             List<string> errors)
         {
-            if (!model.EnemyBaseSkills.TryGetValue(skillId, out var skill)
+            if (!model.EnemyBaseSkills.TryGetValue(skillName, out var skill)
                 || skill == null
                 || skill.Skill == null)
             {
-                errors.Add($"Enemy '{enemy.Id}' slot '{slot}' references unknown base skill '{skillId}'.");
+                errors.Add($"Enemy '{enemy.Name}' slot '{slot}' references unknown base skill '{skillName}'.");
                 return;
             }
 
             if (skill.Skill.SkillKind != PakuriCsvSkillKind.Active
                 || skill.Skill.RuntimeKind == SkillRuntimeKind.Passive)
             {
-                errors.Add($"Enemy '{enemy.Id}' slot '{slot}' must reference an active skill, but '{skillId}' is passive.");
+                errors.Add($"Enemy '{enemy.Name}' slot '{slot}' must reference an active skill, but '{skillName}' is passive.");
                 return;
             }
 
-            referencedSkillIds.Add(skillId);
+            referencedSkillNames.Add(skillName);
         }
 
         internal static void ValidateEnemyPassive(
             SourceModel model,
             EnemyRow enemy,
-            HashSet<string> referencedPassiveIds,
+            HashSet<string> referencedPassiveNames,
             List<string> errors)
         {
-            var passiveId = string.Empty;
-            if (enemy.PassiveId != null)
+            var passiveName = string.Empty;
+            if (enemy.PassiveName != null)
             {
-                passiveId = enemy.PassiveId.Trim();
+                passiveName = enemy.PassiveName.Trim();
             }
-            if (!model.EnemyBaseSkills.TryGetValue(passiveId, out var passive)
+            if (!model.EnemyBaseSkills.TryGetValue(passiveName, out var passive)
                 || passive == null
                 || passive.Skill == null)
             {
-                errors.Add($"Enemy '{enemy.Id}' references unknown passive_id '{passiveId}'.");
+                errors.Add($"Enemy '{enemy.Name}' references unknown passive_name '{passiveName}'.");
                 return;
             }
 
@@ -1427,38 +1427,38 @@ namespace Pakuri.Data
                 || passive.Skill.RuntimeKind != SkillRuntimeKind.Passive
                 || passive.Skill.Slot != SkillSlot.F)
             {
-                errors.Add($"Enemy '{enemy.Id}' passive_id '{passiveId}' must reference an Enemy passive definition.");
+                errors.Add($"Enemy '{enemy.Name}' passive_name '{passiveName}' must reference an Enemy passive definition.");
             }
 
             if (passive.PassiveModifierKind == PassiveModifierKind.None)
             {
-                errors.Add($"Enemy passive '{passiveId}' requires a supported modifier_kind.");
+                errors.Add($"Enemy passive '{passiveName}' requires a supported modifier_kind.");
             }
 
             if (passive.PassiveModifierKind == PassiveModifierKind.DamageUp
                 && !passive.PassiveHasAttribute)
             {
-                errors.Add($"Enemy passive '{passiveId}' requires attribute for DamageUp.");
+                errors.Add($"Enemy passive '{passiveName}' requires attribute for DamageUp.");
             }
 
             if (passive.PassiveModifierKind != PassiveModifierKind.DamageUp
                 && passive.PassiveModifierKind != PassiveModifierKind.DefenseUp
                 && passive.PassiveHasAttribute)
             {
-                errors.Add($"Enemy passive '{passiveId}' cannot use attribute with '{passive.PassiveModifierKind}'.");
+                errors.Add($"Enemy passive '{passiveName}' cannot use attribute with '{passive.PassiveModifierKind}'.");
             }
 
             if (passive.PassiveModifierValue <= 0f)
             {
-                errors.Add($"Enemy passive '{passiveId}' requires a positive modifier_value.");
+                errors.Add($"Enemy passive '{passiveName}' requires a positive modifier_value.");
             }
 
-            referencedPassiveIds.Add(passiveId);
+            referencedPassiveNames.Add(passiveName);
         }
 
         internal static void ValidateEnemyCombatStartTrigger(
             SourceModel model,
-            string skillId,
+            string skillName,
             SkillRuntimeKind runtimeKind,
             List<string> errors)
         {
@@ -1467,8 +1467,8 @@ namespace Pakuri.Data
             {
                 if (trigger.Enabled
                     && trigger.TriggerEvent == SkillTriggerEvent.CombatStart
-                    && string.Equals(trigger.SourceSkillId, skillId, StringComparison.OrdinalIgnoreCase)
-                    && string.Equals(trigger.TriggeredSkillId, skillId, StringComparison.OrdinalIgnoreCase))
+                    && string.Equals(trigger.SourceSkillName, skillName, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(trigger.TriggeredSkillName, skillName, StringComparison.OrdinalIgnoreCase))
                 {
                     count++;
                 }
@@ -1476,7 +1476,7 @@ namespace Pakuri.Data
 
             if (count != 1)
             {
-                errors.Add($"Enemy skill '{skillId}' requires exactly one enabled CombatStart trigger; found '{count}'.");
+                errors.Add($"Enemy skill '{skillName}' requires exactly one enabled CombatStart trigger; found '{count}'.");
             }
         }
 

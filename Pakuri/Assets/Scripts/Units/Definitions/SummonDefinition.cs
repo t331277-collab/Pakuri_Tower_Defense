@@ -12,7 +12,7 @@ namespace Pakuri.Data
 {
     public class SummonDefinition : ScriptableObject
     {
-        public string SummonId;
+        public string SummonName;
         public string DisplayName;
         [TextArea(2, 4)] public string RoleSummary;
         public string ElementLabel;

@@ -11,7 +11,7 @@ using UnityEngine.UI;
 public class MainMenuUIManager : MonoBehaviour
 {
     private const string NewRunScenePath = "Assets/Scenes/NewScene/InGameScene.unity";
-    private const string DefaultMonsterId = "eve";
+    private const string DefaultMonsterName = "eve";
 
     private GameObject introPanel;
     private GameObject mainMenuPanel;
@@ -25,7 +25,7 @@ public class MainMenuUIManager : MonoBehaviour
     private Button vegaButton;
     private Button rinButton;
 
-    private string selectedMonsterId;
+    private string selectedMonsterName;
 
     /// 컴포넌트가 첫 프레임을 처리하기 전에 런타임 초기화를 마친다.
     private void Start()
@@ -176,16 +176,16 @@ public class MainMenuUIManager : MonoBehaviour
         SetOnlyActive(monsterSelectPanel);
     }
 
-    private void SelectMonster(string monsterId)
+    private void SelectMonster(string monsterName)
     {
-        selectedMonsterId = monsterId;
+        selectedMonsterName = monsterName;
     }
 
     /// 선택한 몬스터를 StartContext에 저장하고 Run 씬을 연다.
     private void StartSelectedMonsterRun()
     {
-        var monsterId = string.IsNullOrWhiteSpace(selectedMonsterId) ? DefaultMonsterId : selectedMonsterId;
-            StartContext.Prepare(monsterId);
+        var monsterName = string.IsNullOrWhiteSpace(selectedMonsterName) ? DefaultMonsterName : selectedMonsterName;
+            StartContext.Prepare(monsterName);
 
         if (string.IsNullOrWhiteSpace(NewRunScenePath))
         {

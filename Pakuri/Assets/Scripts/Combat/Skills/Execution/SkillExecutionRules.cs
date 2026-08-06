@@ -31,7 +31,7 @@ namespace Pakuri.InGame
             var snapshot = new SkillExecutionState(source);
             if (source != null)
             {
-                ApplyNodes(snapshot, source.Nodes, source.SkillId);
+                ApplyNodes(snapshot, source.Nodes, source.SkillName);
             }
             return snapshot;
         }
@@ -47,7 +47,7 @@ namespace Pakuri.InGame
             {
                 snapshot.SkillEffectPrefab = choice.SkillEffectPrefab;
             }
-            ApplyNodes(snapshot, choice.Nodes, snapshot.SkillId);
+            ApplyNodes(snapshot, choice.Nodes, snapshot.SkillName);
         }
 
         /// 소유자가 실제로 배운 모든 효과를 순서대로 합성한다.
@@ -63,18 +63,18 @@ namespace Pakuri.InGame
                 return snapshot;
             }
 
-            foreach (var passiveId in owner.Skills.LearnedPassiveSkillIds)
+            foreach (var passiveName in owner.Skills.LearnedPassiveSkillNames)
             {
-                var passiveRuntime = owner.SkillState.FindBySkillId(passiveId);
+                var passiveRuntime = owner.SkillState.FindBySkillName(passiveName);
                 if (passiveRuntime?.Data is PassiveSkillDefinition passive
                     && passive.BaseNodes != null)
                 {
-                    ApplyNodes(snapshot, passive.BaseNodes, skill.SkillId);
+                    ApplyNodes(snapshot, passive.BaseNodes, skill.SkillName);
                 }
             }
 
-            ApplyChoices(snapshot, owner.Skills.ChosenEnhancementIds, skill, owner, roster);
-            ApplyChoices(snapshot, owner.Skills.ChosenMasterSkillIds, skill, owner, roster);
+            ApplyChoices(snapshot, owner.Skills.ChosenEnhancementNames, skill, owner, roster);
+            ApplyChoices(snapshot, owner.Skills.ChosenMasterSkillNames, skill, owner, roster);
             ApplyArtifactModifiers(snapshot, owner, skill);
             return snapshot;
         }
@@ -84,30 +84,30 @@ namespace Pakuri.InGame
             UnitCombatState owner,
             SkillDefinition skill)
         {
-            var effectIds = owner?.Artifacts?.ActiveArtifactEffectIds;
-            if (snapshot == null || skill == null || effectIds == null)
+            var effectNames = owner?.Artifacts?.ActiveArtifactEffectNames;
+            if (snapshot == null || skill == null || effectNames == null)
             {
                 return;
             }
 
-            for (var i = 0; i < effectIds.Count; i++)
+            for (var i = 0; i < effectNames.Count; i++)
             {
                 if (!GameDataLoader.CurrentCatalog.TryGetData(
-                        effectIds[i],
+                        effectNames[i],
                         out ArtifactEffectDefinition effect)
                     || effect == null
                     || effect.ApplicationMode != ArtifactEffectApplicationMode.SkillModifier
                     || (effect.TargetSkill != null
                         && !string.Equals(
-                            effect.TargetSkill.SkillId,
-                            skill.SkillId,
+                            effect.TargetSkill.SkillName,
+                            skill.SkillName,
                             StringComparison.OrdinalIgnoreCase))
                     || !ArtifactConditionsMatch(effect.Nodes, owner, skill))
                 {
                     continue;
                 }
 
-                ApplyNodes(snapshot, effect.Nodes, skill.SkillId);
+                ApplyNodes(snapshot, effect.Nodes, skill.SkillName);
             }
         }
 
@@ -263,22 +263,22 @@ namespace Pakuri.InGame
         /// 선택된 강화 목록을 실행값에 반영한다.
         private static void ApplyChoices(
             SkillExecutionState snapshot,
-            IReadOnlyCollection<string> choiceIds,
+            IReadOnlyCollection<string> choiceNames,
             SkillDefinition skill,
             UnitCombatState owner,
             UnitSpawnManager roster)
         {
-            if (snapshot == null || choiceIds == null || skill == null || owner?.SkillState == null)
+            if (snapshot == null || choiceNames == null || skill == null || owner?.SkillState == null)
             {
                 return;
             }
 
-            foreach (var choiceId in choiceIds)
+            foreach (var choiceName in choiceNames)
             {
-                var choice = owner.SkillState.FindChoice(choiceId);
+                var choice = owner.SkillState.FindChoice(choiceName);
                 if (AppliesToSkill(choice, skill))
                 {
-                    snapshot.AddActiveChoiceId(choice.ChoiceId);
+                    snapshot.AddActiveChoiceName(choice.ChoiceName);
                     ApplyChoice(snapshot, choice);
                     ApplyDynamicChoiceRules(snapshot, choice, owner, roster);
                 }
@@ -300,7 +300,7 @@ namespace Pakuri.InGame
             for (var i = 0; i < choice.Nodes.Length; i++)
             {
                 var node = choice.Nodes[i];
-                if (node == null || !string.Equals(node.TargetSkillId, snapshot.SkillId, StringComparison.OrdinalIgnoreCase))
+                if (node == null || !string.Equals(node.TargetSkillName, snapshot.SkillName, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
@@ -441,21 +441,21 @@ namespace Pakuri.InGame
                 for (var i = 0; i < choice.Nodes.Length; i++)
                 {
                     if (choice.Nodes[i] != null
-                        && string.Equals(choice.Nodes[i].TargetSkillId, skill.SkillId, StringComparison.OrdinalIgnoreCase))
+                        && string.Equals(choice.Nodes[i].TargetSkillName, skill.SkillName, StringComparison.OrdinalIgnoreCase))
                     {
                         return true;
                     }
                 }
                 return false;
             }
-            var targetSkillId = string.IsNullOrWhiteSpace(choice.TargetSkillId)
-                ? choice.SkillId
-                : choice.TargetSkillId;
-            return string.Equals(targetSkillId, skill.SkillId, StringComparison.OrdinalIgnoreCase);
+            var targetSkillName = string.IsNullOrWhiteSpace(choice.TargetSkillName)
+                ? choice.SkillName
+                : choice.TargetSkillName;
+            return string.Equals(targetSkillName, skill.SkillName, StringComparison.OrdinalIgnoreCase);
         }
 
 	/// 각 노드의 의미를 선언 순서대로 실행 기준에 반영한다.
-	internal static void ApplyNodes(SkillExecutionState snapshot, IReadOnlyList<SkillNode> nodes, string targetSkillId = null)
+	internal static void ApplyNodes(SkillExecutionState snapshot, IReadOnlyList<SkillNode> nodes, string targetSkillName = null)
 	{
 
 		if (nodes == null || nodes.Count == 0)
@@ -466,9 +466,9 @@ namespace Pakuri.InGame
 		for (int i = 0; i < nodes.Count; i++)
 		{
 			if (nodes[i] == null
-				|| (!string.IsNullOrWhiteSpace(targetSkillId)
-					&& !string.IsNullOrWhiteSpace(nodes[i].TargetSkillId)
-					&& !string.Equals(nodes[i].TargetSkillId, targetSkillId, StringComparison.OrdinalIgnoreCase)))
+				|| (!string.IsNullOrWhiteSpace(targetSkillName)
+					&& !string.IsNullOrWhiteSpace(nodes[i].TargetSkillName)
+					&& !string.Equals(nodes[i].TargetSkillName, targetSkillName, StringComparison.OrdinalIgnoreCase)))
 			{
 				continue;
 			}
@@ -698,24 +698,24 @@ namespace Pakuri.InGame
 			snapshot.StatusStacksSet = Mathf.Max(0, action.Count);
 			break;
 		case SkillActionOpKind.StatusMaxStacksBonus:
-			if (!string.IsNullOrWhiteSpace(action.ReferenceId) && action.Count != 0)
+			if (!string.IsNullOrWhiteSpace(action.ReferenceName) && action.Count != 0)
 			{
-				snapshot.statusMaxStacksBonuses.TryGetValue(action.ReferenceId, out var value3);
-				snapshot.statusMaxStacksBonuses[action.ReferenceId] = value3 + action.Count;
+				snapshot.statusMaxStacksBonuses.TryGetValue(action.ReferenceName, out var value3);
+				snapshot.statusMaxStacksBonuses[action.ReferenceName] = value3 + action.Count;
 			}
 			break;
 		case SkillActionOpKind.TargetStatusStackDamageRateBonus:
-			if (!string.IsNullOrWhiteSpace(action.ReferenceId) && !Mathf.Approximately(action.Amount, 0f))
+			if (!string.IsNullOrWhiteSpace(action.ReferenceName) && !Mathf.Approximately(action.Amount, 0f))
 			{
-				snapshot.targetStatusStackDamageRateBonuses.TryGetValue(action.ReferenceId, out var value2);
-				snapshot.targetStatusStackDamageRateBonuses[action.ReferenceId] = value2 + action.Amount;
+				snapshot.targetStatusStackDamageRateBonuses.TryGetValue(action.ReferenceName, out var value2);
+				snapshot.targetStatusStackDamageRateBonuses[action.ReferenceName] = value2 + action.Amount;
 			}
 			break;
 		case SkillActionOpKind.TriggerProcChanceBonus:
-			if (!string.IsNullOrWhiteSpace(action.ReferenceId) && !Mathf.Approximately(action.Amount, 0f))
+			if (!string.IsNullOrWhiteSpace(action.ReferenceName) && !Mathf.Approximately(action.Amount, 0f))
 			{
-				snapshot.triggerProcChanceBonuses.TryGetValue(action.ReferenceId, out var value);
-				snapshot.triggerProcChanceBonuses[action.ReferenceId] = value + action.Amount;
+				snapshot.triggerProcChanceBonuses.TryGetValue(action.ReferenceName, out var value);
+				snapshot.triggerProcChanceBonuses[action.ReferenceName] = value + action.Amount;
 			}
 			break;
 		case SkillActionOpKind.HitTargetCountBonus:
@@ -725,7 +725,7 @@ namespace Pakuri.InGame
 			snapshot.LineCastRepeatCountBonus += action.Count;
 			break;
 		case SkillActionOpKind.StatusActionSpeedBonus:
-			ApplyStatusActionSpeedBonus(snapshot, action.ReferenceId, action.Amount);
+			ApplyStatusActionSpeedBonus(snapshot, action.ReferenceName, action.Amount);
 			break;
 		case SkillActionOpKind.StatusAttackPowerBonus:
 			snapshot.HasStatusAttackPowerBonus = true;
@@ -756,7 +756,7 @@ namespace Pakuri.InGame
 			snapshot.StatusFlatElementResistReduction += action.Amount;
 			break;
 		case SkillActionOpKind.StatusDurationBonus:
-			ApplyStatusDurationBonus(snapshot, action.ReferenceId, action.Amount);
+			ApplyStatusDurationBonus(snapshot, action.ReferenceName, action.Amount);
 			break;
 		case SkillActionOpKind.StatusElementDamageTakenBonus:
 			snapshot.HasStatusElementDamageTakenBonus = true;
@@ -968,12 +968,12 @@ namespace Pakuri.InGame
 		/// 적중 수 기반 대기 환급 의미를 합친다.
 		internal static void ApplyHitCountCooldownRefundAction(SkillExecutionState snapshot, HitCountCooldownRefundActionOp action)
 	{
-		if (string.IsNullOrWhiteSpace(action.TargetSkillId))
+		if (string.IsNullOrWhiteSpace(action.TargetSkillName))
 		{
 			return;
 		}
 
-		snapshot.HitCountCooldownRefundTargetSkillId = action.TargetSkillId;
+		snapshot.HitCountCooldownRefundTargetSkillName = action.TargetSkillName;
 		snapshot.HitCountCooldownRefundMinTargets = action.MinimumTargets;
 		snapshot.HitCountCooldownRefundRatio = action.Ratio;
 	}
@@ -981,44 +981,44 @@ namespace Pakuri.InGame
 		/// 적중당 재장전 감소 의미를 합친다.
 		internal static void ApplyReloadReducePerHitAction(SkillExecutionState snapshot, ReloadReducePerHitActionOp action)
 	{
-		if (string.IsNullOrWhiteSpace(action.TargetSkillId))
+		if (string.IsNullOrWhiteSpace(action.TargetSkillName))
 		{
 			return;
 		}
 
-		snapshot.ReloadReduceTargetSkillId = action.TargetSkillId;
+		snapshot.ReloadReduceTargetSkillName = action.TargetSkillName;
 		snapshot.ReloadReduceSecondsPerHit += action.SecondsPerHit;
 	}
 
 		/// 상태의 행동 속도 보정을 실행값에 합친다.
-		internal static void ApplyStatusActionSpeedBonus(SkillExecutionState snapshot, string statusId, float bonus)
+		internal static void ApplyStatusActionSpeedBonus(SkillExecutionState snapshot, string statusName, float bonus)
 	{
 		snapshot.HasStatusActionSpeedBonus = true;
-		if (string.IsNullOrWhiteSpace(statusId))
+		if (string.IsNullOrWhiteSpace(statusName))
 		{
 			snapshot.StatusActionSpeedBonus += bonus;
 			return;
 		}
-		snapshot.StatusActionSpeedBonusStatusId = statusId;
+		snapshot.StatusActionSpeedBonusStatusName = statusName;
 		float total = bonus;
-		if (snapshot.statusActionSpeedBonuses.TryGetValue(statusId, out var value))
+		if (snapshot.statusActionSpeedBonuses.TryGetValue(statusName, out var value))
 		{
 			total += value;
 		}
-		snapshot.statusActionSpeedBonuses[statusId] = total;
+		snapshot.statusActionSpeedBonuses[statusName] = total;
 	}
 
 		/// 상태 지속시간 보정을 실행값에 합친다.
-		internal static void ApplyStatusDurationBonus(SkillExecutionState snapshot, string statusId, float bonus)
+		internal static void ApplyStatusDurationBonus(SkillExecutionState snapshot, string statusName, float bonus)
 	{
-		if (!string.IsNullOrWhiteSpace(statusId) && !Mathf.Approximately(bonus, 0f))
+		if (!string.IsNullOrWhiteSpace(statusName) && !Mathf.Approximately(bonus, 0f))
 		{
 			float total = bonus;
-			if (snapshot.statusDurationBonuses.TryGetValue(statusId, out var value))
+			if (snapshot.statusDurationBonuses.TryGetValue(statusName, out var value))
 			{
 				total += value;
 			}
-			snapshot.statusDurationBonuses[statusId] = total;
+			snapshot.statusDurationBonuses[statusName] = total;
 		}
 	}
 
@@ -1113,20 +1113,20 @@ namespace Pakuri.InGame
         internal static bool ResolveHitCountCooldownRefund(
             SkillExecutionState snapshot,
             int hitCount,
-            out string targetSkillId,
+            out string targetSkillName,
             out float secondsRatio)
         {
-            targetSkillId = null;
+            targetSkillName = null;
             secondsRatio = 0f;
             if (snapshot == null
                 || hitCount < snapshot.HitCountCooldownRefundMinTargets
-                || string.IsNullOrWhiteSpace(snapshot.HitCountCooldownRefundTargetSkillId)
+                || string.IsNullOrWhiteSpace(snapshot.HitCountCooldownRefundTargetSkillName)
                 || snapshot.HitCountCooldownRefundRatio <= 0f)
             {
                 return false;
             }
 
-            targetSkillId = snapshot.HitCountCooldownRefundTargetSkillId;
+            targetSkillName = snapshot.HitCountCooldownRefundTargetSkillName;
             secondsRatio = Mathf.Clamp01(snapshot.HitCountCooldownRefundRatio);
             return secondsRatio > 0f;
         }

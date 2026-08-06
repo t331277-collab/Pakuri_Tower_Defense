@@ -179,12 +179,12 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var skillId = !string.IsNullOrWhiteSpace(snapshot.PreparedSkillId)
-                ? snapshot.PreparedSkillId
-                : snapshot.SkillId;
-            var visualName = string.IsNullOrWhiteSpace(skillId)
+            var skillName = !string.IsNullOrWhiteSpace(snapshot.PreparedSkillName)
+                ? snapshot.PreparedSkillName
+                : snapshot.SkillName;
+            var visualName = string.IsNullOrWhiteSpace(skillName)
                 ? namePrefix
-                : namePrefix + "_" + skillId;
+                : namePrefix + "_" + skillName;
             var instance = effects.CreateEffect(new EffectCreateRequest(
                 snapshot.PreparedRuntimeVisual,
                 snapshot.PreparedSkillEffectPrefab,
@@ -213,7 +213,7 @@ namespace Pakuri.InGame
             combatManager.Effects.CreateEffect(new EffectCreateRequest(
                 status.SourceData.RuntimeVisual,
                 status.SourceData.StatusEffectPrefab,
-                "RuntimeStatusVisual_" + status.SourceSkillId,
+                "RuntimeStatusVisual_" + status.SourceSkillName,
                 targetEntry.Transform.position,
                 Quaternion.identity,
                 targetEntry.Transform,

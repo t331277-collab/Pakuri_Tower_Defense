@@ -130,7 +130,7 @@ namespace Pakuri.InGame
             var displayName = model.Identity != null ? model.Identity.DisplayName : null;
             if (string.IsNullOrWhiteSpace(displayName))
             {
-                displayName = model.Identity != null ? model.Identity.DefinitionId : string.Empty;
+                displayName = model.Identity != null ? model.Identity.DefinitionName : string.Empty;
             }
 
             var maxHealth = Mathf.Max(0f, model.Stats.MaxHealth);

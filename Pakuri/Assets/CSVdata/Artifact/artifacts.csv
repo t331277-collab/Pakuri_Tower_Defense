@@ -1,5 +1,5 @@
-"artifact_id","artifact_display_name","synergy_id","description_text","artifact_icon"
-"id","string","id","string","asset_path"
+"artifact_name","artifact_display_name","synergy_name","description_text","artifact_icon"
+"name","string","name","string","asset_path"
 "elemental-prism","원소 프리즘","spirit-contract","모든 아군이 보유한 스킬 속성에 따라 가장 많은 속성의 피해 +12%","Assets/Image/Artifact/spirit-contract_Icon/elemental-prism.png"
 "ember-crown","불씨 왕관","spirit-contract","화염 피해 +18%, 화염 노출 대상에게 추가 +10%","Assets/Image/Artifact/spirit-contract_Icon/ember-crown.png"
 "frost-lens","서리 렌즈","spirit-contract","얼음 피해 +18%, 추위/빙결 대상에게 추가 +10%","Assets/Image/Artifact/spirit-contract_Icon/frost-lens.png"

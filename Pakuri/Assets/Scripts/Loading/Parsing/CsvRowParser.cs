@@ -22,7 +22,7 @@ namespace Pakuri.Data
         /// MonsterRow에 해당하는 CSV 한 행을 표현한다.
         internal class MonsterRow
         {
-            public string Id;
+            public string Name;
             public string DisplayName;
             public string RoleSummary;
             public string ElementLabel;
@@ -48,23 +48,23 @@ namespace Pakuri.Data
 
         internal class ArtifactRow
         {
-            public string Id;
+            public string Name;
             public string DisplayName;
-            public string SynergyId;
+            public string SynergyName;
             public string DescriptionText;
             public string IconPath;
         }
 
         internal class ArtifactSynergyLevelRow
         {
-            public string Id;
+            public string Name;
             public int RequiredCount;
             public string DescriptionText;
         }
 
         internal class ArtifactSynergyRow
         {
-            public string Id;
+            public string Name;
             public string DisplayName;
             public string Summary;
             public string DescriptionText;
@@ -74,44 +74,44 @@ namespace Pakuri.Data
 
         internal class ArtifactEffectRow
         {
-            public string Id;
-            public string ArtifactId;
+            public string Name;
+            public string ArtifactName;
             public ArtifactEffectApplicationMode ApplicationMode;
             public ArtifactEffectRecipient Recipient;
             public ArtifactEffectRepeatRule RepeatRule;
             public ArtifactEffectSelectionRule SelectionRule;
-            public string RecipientMonsterId;
-            public string TargetSkillId;
-            public string OutcomeSkillId;
+            public string RecipientMonsterName;
+            public string TargetSkillName;
+            public string OutcomeSkillName;
         }
 
         internal class ArtifactSynergyEffectRow
         {
-            public string Id;
-            public string SynergyLevelId;
+            public string Name;
+            public string SynergyLevelName;
             public ArtifactEffectApplicationMode ApplicationMode;
             public ArtifactEffectRecipient Recipient;
-            public string RecipientMonsterId;
-            public string TargetSkillId;
-            public string OutcomeSkillId;
-            public string SpawnSummonId;
+            public string RecipientMonsterName;
+            public string TargetSkillName;
+            public string OutcomeSkillName;
+            public string SpawnSummonName;
         }
 
         /// RewardChoiceRow에 해당하는 CSV 한 행을 표현한다.
         internal class RewardChoiceRow
         {
-            public string Id;
-            public string MonsterId;
-            public string ActiveSkillId;
-            public string PassiveSkillId;
+            public string Name;
+            public string MonsterName;
+            public string ActiveSkillName;
+            public string PassiveSkillName;
             public int SortOrder;
         }
 
         /// SkillRow에 해당하는 CSV 한 행을 표현한다.
         internal class SkillRow
         {
-            public string Id;
-            public string MonsterId;
+            public string Name;
+            public string MonsterName;
             public PakuriCsvSkillKind SkillKind;
             public SkillSlot Slot;
             public string DisplayName;
@@ -156,7 +156,7 @@ namespace Pakuri.Data
             public string HitTargetCount;
             public bool UsePrefabHitbox;
             public string TargetSelection;
-            public string TargetSelectionStatusId;
+            public string TargetSelectionStatusName;
             public int TargetSelectionStatusMinStacks;
             public float CooldownSeconds;
             public float ActiveDurationSeconds;
@@ -170,14 +170,14 @@ namespace Pakuri.Data
             public float ProjectileSpeed;
             public int PierceCount;
             public bool CriticalAllowed;
-            public string DeploymentRequiredTargetStatusId;
+            public string DeploymentRequiredTargetStatusName;
             public int DeploymentRequiredTargetStatusMinStacks;
-            public string TargetStatusStackStatusId;
+            public string TargetStatusStackStatusName;
             public int TargetStatusStackMaxStacks;
             public float TargetStatusStackBaseDamage;
             public float TargetStatusStackAttackPowerCoefficient;
             public float TargetStatusStackSpellPowerCoefficient;
-            public string ConsumeTargetStatusId;
+            public string ConsumeTargetStatusName;
             public float ConsumeTargetStatusRatio;
             public int ConsumeTargetStatusStacks;
             public StatusPayloadRow Status = new StatusPayloadRow();
@@ -186,10 +186,10 @@ namespace Pakuri.Data
         /// SkillChoiceRow에 해당하는 CSV 한 행을 표현한다.
         internal class SkillChoiceRow
         {
-            public string Id;
-            public string MonsterId;
-            public string SkillId;
-            public string TargetSkillId;
+            public string Name;
+            public string MonsterName;
+            public string SkillName;
+            public string TargetSkillName;
             public SkillChoiceGroup ChoiceGroup;
             public int SortOrder;
             public string Title;
@@ -200,18 +200,18 @@ namespace Pakuri.Data
         /// SkillTriggerRow에 해당하는 CSV 한 행을 표현한다.
         internal class SkillTriggerRow
         {
-            public string Id;
-            public string MonsterId;
-            public string SourceSkillId;
+            public string Name;
+            public string MonsterName;
+            public string SourceSkillName;
             public SkillTriggerEvent TriggerEvent;
-            public string RequiresActiveChoiceId;
-            public string ExcludesActiveChoiceId;
-            public string RequiredSourceStatusId;
+            public string RequiresActiveChoiceName;
+            public string ExcludesActiveChoiceName;
+            public string RequiredSourceStatusName;
             public int RequiredSourceStatusMinStacks;
-            public string ConditionStatusId;
-            public string ConditionStatusSourceSkillId;
+            public string ConditionStatusName;
+            public string ConditionStatusSourceSkillName;
             public string TriggerAttribute;
-            public string EventSkillId;
+            public string EventSkillName;
             public string EventSkillRuntimeKinds;
             public float ProcChance = 1f;
             public float InternalCooldownSeconds;
@@ -228,7 +228,7 @@ namespace Pakuri.Data
         {
             return new MonsterRow
             {
-                Id = record.ReadRequiredString("id"),
+                Name = record.ReadRequiredString("Name"),
                 DisplayName = record.ReadRequiredString("display_name"),
                 RoleSummary = record.ReadString("role_summary"),
                 ElementLabel = record.ReadString("element_label"),
@@ -257,9 +257,9 @@ namespace Pakuri.Data
         {
             return new ArtifactRow
             {
-                Id = record.ReadRequiredString("artifact_id"),
+                Name = record.ReadRequiredString("artifact_name"),
                 DisplayName = record.ReadRequiredString("artifact_display_name"),
-                SynergyId = record.ReadRequiredString("synergy_id"),
+                SynergyName = record.ReadRequiredString("synergy_name"),
                 DescriptionText = record.ReadString("description_text"),
                 IconPath = record.ReadString("artifact_icon")
             };
@@ -273,7 +273,7 @@ namespace Pakuri.Data
                 var prefix = "level_" + (i + 1) + "_";
                 levels[i] = new ArtifactSynergyLevelRow
                 {
-                    Id = record.ReadRequiredString(prefix + "id"),
+                    Name = record.ReadRequiredString(prefix + "Name"),
                     RequiredCount = record.ReadInt(prefix + "required_count"),
                     DescriptionText = record.ReadString(prefix + "description_text")
                 };
@@ -281,7 +281,7 @@ namespace Pakuri.Data
 
             return new ArtifactSynergyRow
             {
-                Id = record.ReadRequiredString("synergy_id"),
+                Name = record.ReadRequiredString("synergy_name"),
                 DisplayName = record.ReadRequiredString("synergy_display_name"),
                 Summary = record.ReadString("summary"),
                 DescriptionText = record.ReadString("description_text"),
@@ -294,15 +294,15 @@ namespace Pakuri.Data
         {
             return new ArtifactEffectRow
             {
-                Id = record.ReadRequiredString("effect_id"),
-                ArtifactId = record.ReadRequiredString("artifact_id"),
+                Name = record.ReadRequiredString("effect_name"),
+                ArtifactName = record.ReadRequiredString("artifact_name"),
                 ApplicationMode = record.ReadEnum<ArtifactEffectApplicationMode>("application_mode"),
                 Recipient = record.ReadEnum<ArtifactEffectRecipient>("recipient_scope"),
                 RepeatRule = record.ReadEnum<ArtifactEffectRepeatRule>("repeat_rule"),
                 SelectionRule = record.ReadEnum<ArtifactEffectSelectionRule>("selection_rule"),
-                RecipientMonsterId = record.ReadString("recipient_monster_id"),
-                TargetSkillId = record.ReadString("target_skill_id"),
-                OutcomeSkillId = record.ReadString("outcome_skill_id")
+                RecipientMonsterName = record.ReadString("recipient_monster_name"),
+                TargetSkillName = record.ReadString("target_skill_name"),
+                OutcomeSkillName = record.ReadString("outcome_skill_name")
             };
         }
 
@@ -310,14 +310,14 @@ namespace Pakuri.Data
         {
             return new ArtifactSynergyEffectRow
             {
-                Id = record.ReadRequiredString("effect_id"),
-                SynergyLevelId = record.ReadRequiredString("synergy_level_id"),
+                Name = record.ReadRequiredString("effect_name"),
+                SynergyLevelName = record.ReadRequiredString("synergy_level_name"),
                 ApplicationMode = record.ReadEnum<ArtifactEffectApplicationMode>("application_mode"),
                 Recipient = record.ReadEnum<ArtifactEffectRecipient>("recipient_scope"),
-                RecipientMonsterId = record.ReadString("recipient_monster_id"),
-                TargetSkillId = record.ReadString("target_skill_id"),
-                OutcomeSkillId = record.ReadString("outcome_skill_id"),
-                SpawnSummonId = record.ReadString("spawn_monster_id")
+                RecipientMonsterName = record.ReadString("recipient_monster_name"),
+                TargetSkillName = record.ReadString("target_skill_name"),
+                OutcomeSkillName = record.ReadString("outcome_skill_name"),
+                SpawnSummonName = record.ReadString("spawn_monster_name")
             };
         }
 
@@ -325,10 +325,10 @@ namespace Pakuri.Data
         {
             return new RewardChoiceRow
             {
-                Id = record.ReadRequiredString("choice_id"),
-                MonsterId = record.ReadRequiredString("monster_id"),
-                ActiveSkillId = record.ReadString("active_skill_id"),
-                PassiveSkillId = record.ReadString("passive_skill_id"),
+                Name = record.ReadRequiredString("choice_name"),
+                MonsterName = record.ReadRequiredString("monster_name"),
+                ActiveSkillName = record.ReadString("active_skill_name"),
+                PassiveSkillName = record.ReadString("passive_skill_name"),
                 SortOrder = record.ReadInt("sort_order")
             };
         }
@@ -339,10 +339,10 @@ namespace Pakuri.Data
             string ownerIdOverride = null)
         {
             var slot = record.ReadEnum<SkillSlot>("slot");
-            var monsterId = ownerIdOverride;
-            if (string.IsNullOrWhiteSpace(monsterId))
+            var monsterName = ownerIdOverride;
+            if (string.IsNullOrWhiteSpace(monsterName))
             {
-                monsterId = record.ReadRequiredString("monster_id");
+                monsterName = record.ReadRequiredString("monster_name");
             }
 
             var runtimeKind = SkillRuntimeKind.Passive;
@@ -353,8 +353,8 @@ namespace Pakuri.Data
 
             return new SkillRow
             {
-                Id = record.ReadRequiredString("skill_id"),
-                MonsterId = monsterId,
+                Name = record.ReadRequiredString("skill_name"),
+                MonsterName = monsterName,
                 SkillKind = skillKind,
                 Slot = slot,
                 DisplayName = record.ReadRequiredString("display_name"),
@@ -399,7 +399,7 @@ namespace Pakuri.Data
                 HitTargetCount = ReadOptionalStringIfColumnExists(record, "hit_target_count"),
                 UsePrefabHitbox = ReadOptionalBoolIfColumnExists(record, "use_prefab_hitbox"),
                 TargetSelection = ReadOptionalStringIfColumnExists(record, "target_selection"),
-                TargetSelectionStatusId = ReadOptionalStringIfColumnExists(record, "target_selection_status_id"),
+                TargetSelectionStatusName = ReadOptionalStringIfColumnExists(record, "target_selection_status_name"),
                 TargetSelectionStatusMinStacks = ReadOptionalIntIfColumnExists(record, "target_selection_status_min_stacks"),
                 CooldownSeconds = ReadOptionalFloatIfColumnExists(record, "cooldown_seconds"),
                 ActiveDurationSeconds = ReadOptionalFloatIfColumnExists(record, "active_duration_seconds"),
@@ -413,14 +413,14 @@ namespace Pakuri.Data
                 ProjectileSpeed = ReadOptionalFloatIfColumnExists(record, "projectile_speed"),
                 PierceCount = ReadOptionalIntIfColumnExists(record, "pierce_count"),
                 CriticalAllowed = ReadOptionalBoolIfColumnExists(record, "critical_allowed"),
-                DeploymentRequiredTargetStatusId = ReadOptionalStringIfColumnExists(record, "deployment_required_target_status_id"),
+                DeploymentRequiredTargetStatusName = ReadOptionalStringIfColumnExists(record, "deployment_required_target_status_name"),
                 DeploymentRequiredTargetStatusMinStacks = ReadOptionalIntIfColumnExists(record, "deployment_required_target_status_min_stacks"),
-                TargetStatusStackStatusId = ReadOptionalStringIfColumnExists(record, "target_status_stack_status_id"),
+                TargetStatusStackStatusName = ReadOptionalStringIfColumnExists(record, "target_status_stack_status_name"),
                 TargetStatusStackMaxStacks = ReadOptionalIntIfColumnExists(record, "target_status_stack_max_stacks"),
                 TargetStatusStackBaseDamage = ReadOptionalFloatIfColumnExists(record, "target_status_stack_base_damage"),
                 TargetStatusStackAttackPowerCoefficient = ReadOptionalFloatIfColumnExists(record, "target_status_stack_attack_power_coefficient"),
                 TargetStatusStackSpellPowerCoefficient = ReadOptionalFloatIfColumnExists(record, "target_status_stack_spell_power_coefficient"),
-                ConsumeTargetStatusId = ReadOptionalStringIfColumnExists(record, "consume_target_status_id"),
+                ConsumeTargetStatusName = ReadOptionalStringIfColumnExists(record, "consume_target_status_name"),
                 ConsumeTargetStatusRatio = ReadOptionalFloatIfColumnExists(record, "consume_target_status_ratio"),
                 ConsumeTargetStatusStacks = ReadOptionalIntIfColumnExists(record, "consume_target_status_stacks"),
                 Status = ReadStatusPayload(record, false, true)
@@ -433,10 +433,10 @@ namespace Pakuri.Data
         {
             return new SkillChoiceRow
             {
-                Id = record.ReadRequiredString("choice_id"),
-                MonsterId = record.ReadRequiredString("monster_id"),
-                SkillId = record.ReadRequiredString("skill_id"),
-                TargetSkillId = ReadOptionalStringIfColumnExists(record, "target_skill_id"),
+                Name = record.ReadRequiredString("choice_name"),
+                MonsterName = record.ReadRequiredString("monster_name"),
+                SkillName = record.ReadRequiredString("skill_name"),
+                TargetSkillName = ReadOptionalStringIfColumnExists(record, "target_skill_name"),
                 ChoiceGroup = implicitChoiceGroup
                     ?? record.ReadEnum<SkillChoiceGroup>("choice_group"),
                 SortOrder = record.ReadInt("sort_order"),
@@ -450,18 +450,18 @@ namespace Pakuri.Data
         {
             var row = new SkillTriggerRow
             {
-                Id = record.ReadRequiredString("trigger_id"),
-                MonsterId = record.ReadRequiredString("monster_id"),
-                SourceSkillId = record.ReadRequiredString("source_skill_id"),
+                Name = record.ReadRequiredString("trigger_name"),
+                MonsterName = record.ReadRequiredString("monster_name"),
+                SourceSkillName = record.ReadRequiredString("source_skill_name"),
                 TriggerEvent = record.ReadEnum<SkillTriggerEvent>("trigger_event"),
-                RequiresActiveChoiceId = ReadOptionalStringIfColumnExists(record, "requires_active_choice_id"),
-                ExcludesActiveChoiceId = ReadOptionalStringIfColumnExists(record, "excludes_active_choice_id"),
-                RequiredSourceStatusId = ReadOptionalStringIfColumnExists(record, "required_source_status_id"),
+                RequiresActiveChoiceName = ReadOptionalStringIfColumnExists(record, "requires_active_choice_name"),
+                ExcludesActiveChoiceName = ReadOptionalStringIfColumnExists(record, "excludes_active_choice_name"),
+                RequiredSourceStatusName = ReadOptionalStringIfColumnExists(record, "required_source_status_name"),
                 RequiredSourceStatusMinStacks = ReadOptionalIntIfColumnExists(record, "required_source_status_min_stacks"),
-                ConditionStatusId = ReadOptionalStringIfColumnExists(record, "condition_status_id"),
-                ConditionStatusSourceSkillId = ReadOptionalStringIfColumnExists(record, "condition_status_source_skill_id"),
+                ConditionStatusName = ReadOptionalStringIfColumnExists(record, "condition_status_name"),
+                ConditionStatusSourceSkillName = ReadOptionalStringIfColumnExists(record, "condition_status_source_skill_name"),
                 TriggerAttribute = ReadOptionalStringIfColumnExists(record, "trigger_attribute"),
-                EventSkillId = ReadOptionalStringIfColumnExists(record, "event_skill_id"),
+                EventSkillName = ReadOptionalStringIfColumnExists(record, "event_skill_name"),
                 EventSkillRuntimeKinds = ReadOptionalStringIfColumnExists(record, "event_skill_runtime_kinds"),
                 SortOrder = record.ReadInt("sort_order"),
                 RepeatCount = ReadOptionalIntIfColumnExists(record, "repeat_count"),
@@ -588,8 +588,8 @@ namespace Pakuri.Data
         /// EnemyRow에 해당하는 CSV 한 행을 표현한다.
         internal class EnemyRow
         {
-            public string Id;
-            public string StageId;
+            public string Name;
+            public string StageName;
             public int SortOrder;
             public string DisplayName;
             public DamageAttribute Attribute;
@@ -605,9 +605,9 @@ namespace Pakuri.Data
             public float IceDefense;
             public float DarknessDefense;
             public float HolyDefense;
-            public string SkillSlotAId;
-            public string SkillSlotBId;
-            public string PassiveId;
+            public string SkillSlotAName;
+            public string SkillSlotBName;
+            public string PassiveName;
             public float NexusDamage;
             public string ImagePath;
         }
@@ -645,10 +645,10 @@ namespace Pakuri.Data
         /// EnemyTriggerRow에 해당하는 CSV 한 행을 표현한다.
         internal class EnemyTriggerRow
         {
-            public string Id;
-            public string SourceSkillId;
+            public string Name;
+            public string SourceSkillName;
             public SkillTriggerEvent TriggerEvent;
-            public string TriggeredSkillId;
+            public string TriggeredSkillName;
             public int SortOrder;
             public bool Enabled;
         }
@@ -657,8 +657,8 @@ namespace Pakuri.Data
         {
             return new EnemyRow
             {
-                Id = record.ReadRequiredString("enemy_id"),
-                StageId = record.ReadRequiredString("stage_id"),
+                Name = record.ReadRequiredString("enemy_name"),
+                StageName = record.ReadRequiredString("stage_name"),
                 SortOrder = record.ReadInt("sort_order"),
                 DisplayName = record.ReadRequiredString("display_name"),
                 Attribute = record.ReadEnum<DamageAttribute>("attribute"),
@@ -674,9 +674,9 @@ namespace Pakuri.Data
                 IceDefense = record.ReadFloat("def_ice"),
                 DarknessDefense = record.ReadFloat("def_darkness"),
                 HolyDefense = record.ReadFloat("def_holy"),
-                SkillSlotAId = record.ReadRequiredString("skill_slot_a_id"),
-                SkillSlotBId = record.ReadRequiredString("skill_slot_b_id"),
-                PassiveId = record.ReadRequiredString("passive_id"),
+                SkillSlotAName = record.ReadRequiredString("skill_slot_a_name"),
+                SkillSlotBName = record.ReadRequiredString("skill_slot_b_name"),
+                PassiveName = record.ReadRequiredString("passive_name"),
                 NexusDamage = record.ReadFloat("nexus_damage"),
                 ImagePath = ReadOptionalStringIfColumnExists(record, "Image")
             };
@@ -721,7 +721,7 @@ namespace Pakuri.Data
                 || row.Skill.RuntimeKind == SkillRuntimeKind.Passive)
             {
                 throw new CsvFatalException(
-                    $"CSV table '{tableName}' contains passive skill '{row.Skill.Id}'. Enemy passive rows must be authored in 'skills_passive.csv'.");
+                    $"CSV table '{tableName}' contains passive skill '{row.Skill.Name}'. Enemy passive rows must be authored in 'skills_passive.csv'.");
             }
 
             return row;
@@ -735,8 +735,8 @@ namespace Pakuri.Data
             {
                 Skill = new SkillRow
                 {
-                    Id = record.ReadRequiredString("skill_id"),
-                    MonsterId = "enemy-shared",
+                    Name = record.ReadRequiredString("skill_name"),
+                    MonsterName = "enemy-shared",
                     SkillKind = PakuriCsvSkillKind.Passive,
                     Slot = SkillSlot.F,
                     DisplayName = record.ReadRequiredString("display_name"),
@@ -755,10 +755,10 @@ namespace Pakuri.Data
         {
             return new EnemyTriggerRow
             {
-                Id = record.ReadRequiredString("trigger_id"),
-                SourceSkillId = record.ReadRequiredString("source_skill_id"),
+                Name = record.ReadRequiredString("trigger_name"),
+                SourceSkillName = record.ReadRequiredString("source_skill_name"),
                 TriggerEvent = record.ReadEnum<SkillTriggerEvent>("trigger_event"),
-                TriggeredSkillId = record.ReadRequiredString("triggered_skill_id"),
+                TriggeredSkillName = record.ReadRequiredString("triggered_skill_name"),
                 SortOrder = record.ReadInt("sort_order"),
                 Enabled = record.ReadBool("enabled")
             };

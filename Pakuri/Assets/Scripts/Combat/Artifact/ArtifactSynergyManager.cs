@@ -38,14 +38,14 @@ namespace Pakuri.InGame
             {
                 var owner = session.PartyMembers[ownerIndex];
                 for (var artifactIndex = 0;
-                    artifactIndex < owner.Artifacts.OwnedArtifactIds.Count;
+                    artifactIndex < owner.Artifacts.OwnedArtifactNames.Count;
                     artifactIndex++)
                 {
-                    var artifactId = owner.Artifacts.OwnedArtifactIds[artifactIndex];
-                    var artifact = catalog.GetData<ArtifactDefinition>(artifactId)
+                    var artifactName = owner.Artifacts.OwnedArtifactNames[artifactIndex];
+                    var artifact = catalog.GetData<ArtifactDefinition>(artifactName)
                         ?? throw new InvalidOperationException(
-                            $"Artifact data '{artifactId}' is required before preparing a Stage.");
-                    Synergies.Add(artifact.SynergyId);
+                            $"Artifact data '{artifactName}' is required before preparing a Stage.");
+                    Synergies.Add(artifact.SynergyName);
                 }
             }
 
@@ -57,13 +57,13 @@ namespace Pakuri.InGame
             {
                 var owner = session.PartyMembers[ownerIndex];
                 for (var artifactIndex = 0;
-                    artifactIndex < owner.Artifacts.OwnedArtifactIds.Count;
+                    artifactIndex < owner.Artifacts.OwnedArtifactNames.Count;
                     artifactIndex++)
                 {
-                    var artifactId = owner.Artifacts.OwnedArtifactIds[artifactIndex];
-                    var artifact = catalog.GetData<ArtifactDefinition>(artifactId)
+                    var artifactName = owner.Artifacts.OwnedArtifactNames[artifactIndex];
+                    var artifact = catalog.GetData<ArtifactDefinition>(artifactName)
                         ?? throw new InvalidOperationException(
-                            $"Artifact data '{artifactId}' is required before preparing a Stage.");
+                            $"Artifact data '{artifactName}' is required before preparing a Stage.");
 
                     DistributeEffects(
                         session,
@@ -96,7 +96,7 @@ namespace Pakuri.InGame
 
             SummonDefinition summon = null;
             var learnedSkills = new List<SkillDefinition>();
-            var learnedSkillIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var learnedSkillNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var pair in Synergies.Counts)
             {
@@ -132,7 +132,7 @@ namespace Pakuri.InGame
                         if (effect.ApplicationMode == ArtifactEffectApplicationMode.GrantSkill
                             && effect.Recipient == ArtifactEffectRecipient.Summon
                             && effect.OutcomeSkill != null
-                            && learnedSkillIds.Add(effect.OutcomeSkill.SkillId))
+                            && learnedSkillNames.Add(effect.OutcomeSkill.SkillName))
                         {
                             learnedSkills.Add(effect.OutcomeSkill);
                         }
@@ -179,7 +179,7 @@ namespace Pakuri.InGame
                     representativeAttributeCount);
                 if (effect.Recipient == ArtifactEffectRecipient.Stage)
                 {
-                    AddEffect(owner, effect.EffectId, repeatCount);
+                    AddEffect(owner, effect.EffectName, repeatCount);
                     continue;
                 }
 
@@ -191,11 +191,11 @@ namespace Pakuri.InGame
                     if (effect.Recipient == ArtifactEffectRecipient.AllAllies
                         || (effect.Recipient == ArtifactEffectRecipient.SpecificMonster
                             && string.Equals(
-                                member.MonsterId,
-                                effect.RecipientMonsterId,
+                                member.MonsterName,
+                                effect.RecipientMonsterName,
                                 StringComparison.OrdinalIgnoreCase)))
                     {
-                        AddEffect(member, effect.EffectId, repeatCount);
+                        AddEffect(member, effect.EffectName, repeatCount);
                     }
                 }
             }
@@ -208,7 +208,7 @@ namespace Pakuri.InGame
         {
             if (effect.RepeatRule == ArtifactEffectRepeatRule.SynergyArtifactCount)
             {
-                return Synergies.GetCount(artifact.SynergyId);
+                return Synergies.GetCount(artifact.SynergyName);
             }
 
             return effect.RepeatRule == ArtifactEffectRepeatRule.DistinctRepresentativeAttributeCount
@@ -218,12 +218,12 @@ namespace Pakuri.InGame
 
         private static void AddEffect(
             RunSession.RunMonsterState member,
-            string effectId,
+            string effectName,
             int repeatCount)
         {
             for (var i = 0; i < repeatCount; i++)
             {
-                member.Artifacts.AddActiveEffect(effectId);
+                member.Artifacts.AddActiveEffect(effectName);
             }
         }
 
@@ -417,8 +417,8 @@ namespace Pakuri.InGame
             SkillSlot slot,
             out SkillDefinition skill)
         {
-            skill = catalog.GetActiveSkill(member.MonsterId, slot);
-            return skill != null && member.Skills.HasActiveSkill(skill.SkillId);
+            skill = catalog.GetActiveSkill(member.MonsterName, slot);
+            return skill != null && member.Skills.HasActiveSkill(skill.SkillName);
         }
     }
 }

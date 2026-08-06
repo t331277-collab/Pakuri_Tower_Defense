@@ -223,14 +223,14 @@ namespace Pakuri.InGame
                 return null;
             }
 
-            var unitId = model.Identity.UnitId;
+            var unitName = model.Identity.UnitName;
             for (var i = 0; i < entries.Count; i++)
             {
                 var entry = entries[i];
                 if (entry != null
                     && entry.Model != null
                     && entry.Model.Identity != null
-                    && entry.Model.Identity.UnitId == unitId)
+                    && entry.Model.Identity.UnitName == unitName)
                 {
                     return entry;
                 }

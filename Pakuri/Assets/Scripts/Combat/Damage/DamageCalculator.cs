@@ -44,7 +44,7 @@ namespace Pakuri.Combat
                 attackRule.Source,
                 target,
                 attribute,
-                attackRule.SourceSkillId);
+                attackRule.SourceSkillName);
             if (attackRule.Source != null)
             {
                 finalDamageBonus += attackRule.Source.SkillState.PassiveOutgoingDamageBonus(attribute); // 공격자가 학습한 DamageUp 패시브의 피해 보정
@@ -54,7 +54,7 @@ namespace Pakuri.Combat
                 target,
                 attackRule.Source,
                 attribute,
-                attackRule.SourceSkillId);
+                attackRule.SourceSkillName);
             finalDamageBonus += target.SkillState.PassiveIncomingDamageBonus(); // 대상이 학습한 IncomingDamageDown 패시브의 받는 피해 감소
 
             damage *= Mathf.Max(0f, 1f + finalDamageBonus);

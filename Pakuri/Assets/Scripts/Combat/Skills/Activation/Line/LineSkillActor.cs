@@ -33,7 +33,7 @@ namespace Pakuri.InGame
         private SkillExecutionState runtime;
         private SkillExecutionState executionData;
         private UnitCombatState sourceModel;
-        private string sourceSkillId;
+        private string sourceSkillName;
         private bool criticalAllowed;
         private float critChanceBonus;
         private float critDamageBonus;
@@ -61,7 +61,7 @@ namespace Pakuri.InGame
             SkillExecutionState sourceRuntime,
             SkillExecutionState snapshot,
             UnitCombatState source,
-            string skillId,
+            string skillName,
             bool allowCritical,
             float criticalChanceBonus,
             float criticalDamageBonus)
@@ -86,7 +86,7 @@ namespace Pakuri.InGame
             runtime = sourceRuntime;
             executionData = snapshot;
             sourceModel = source;
-            sourceSkillId = skillId;
+            sourceSkillName = skillName;
             criticalAllowed = allowCritical;
             critChanceBonus = criticalChanceBonus;
             critDamageBonus = criticalDamageBonus;
@@ -122,7 +122,7 @@ namespace Pakuri.InGame
 
                 var hitPosition = (Vector2)target.Transform.position;
                 var finalDamageMultiplier = SkillExecutionRules.ResolveHitDamageMultiplier(executionData, target.Model);
-                var damageResult = combatManager.ApplyDamage(target.Model, damage, attribute, sourceModel, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, false, false, null, finalDamageMultiplier, isTrigger: executionData != null && executionData.IsTrigger);
+                var damageResult = combatManager.ApplyDamage(target.Model, damage, attribute, sourceModel, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillName, false, false, null, finalDamageMultiplier, isTrigger: executionData != null && executionData.IsTrigger);
                 TryApplyKnockback(target, direction, knockbackDistance);
                 if (!damageResult.IsDead)
                 {
@@ -135,7 +135,7 @@ namespace Pakuri.InGame
                     executionData,
                     casterEntry,
                     sourceModel,
-                    sourceSkillId,
+                    sourceSkillName,
                     target,
                     hitPosition,
                     damage);

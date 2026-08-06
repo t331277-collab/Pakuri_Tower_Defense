@@ -23,8 +23,8 @@ namespace Pakuri.Data
     internal sealed class SkillNodeBuildData
     {
         public string OwnerKind;
-        public string TargetSkillId;
-        public string HandlerId;
+        public string TargetSkillName;
+        public string HandlerName;
         public bool EnabledByDefault;
         public SkillNodeParamBuildData[] Params = Array.Empty<SkillNodeParamBuildData>();
         public GameObject ResolvedPrefab;
@@ -47,7 +47,7 @@ namespace Pakuri.Data
 			SkillNode skillExecutionNode = MapSkillNode(source[i]);
 			if (skillExecutionNode != null)
 			{
-				skillExecutionNode.TargetSkillId = source[i].TargetSkillId ?? string.Empty;
+				skillExecutionNode.TargetSkillName = source[i].TargetSkillName ?? string.Empty;
 				list.Add(skillExecutionNode);
 			}
 		}
@@ -74,7 +74,7 @@ namespace Pakuri.Data
 		if (outcomeCount > 1)
 		{
 			throw new InvalidOperationException(
-				"Reaction has more than one runtime outcome: " + reaction.ReactionId);
+				"Reaction has more than one runtime outcome: " + reaction.ReactionName);
 		}
 
 		var targeting = BuildTriggerTargeting(state);
@@ -94,7 +94,7 @@ namespace Pakuri.Data
 				continue;
 			}
 
-			var handler = node.HandlerId ?? string.Empty;
+			var handler = node.HandlerName ?? string.Empty;
 			if (string.Equals(handler, "EffectDamage", StringComparison.OrdinalIgnoreCase)
 				|| string.Equals(handler, "ApplyDamage", StringComparison.OrdinalIgnoreCase))
 			{
@@ -123,24 +123,24 @@ namespace Pakuri.Data
 			}
 			if (string.Equals(handler, "ExecuteSkill", StringComparison.OrdinalIgnoreCase))
 			{
-				var targetSkillId = GetParam(node, "skill_id");
+				var targetSkillName = GetParam(node, "skill_name");
 				reaction.DamageMultiplier = Mathf.Max(
 					0f,
 					GetFloatParam(node, "damage_multiplier", 1f));
 				reaction.PublishSkillLifecycleEvents = true;
 				reaction.Effect = new SkillCastEffect
 				{
-					EffectId = reaction.ReactionId,
+					EffectName = reaction.ReactionName,
 					DamageMultiplier = reaction.DamageMultiplier
 				};
 				reaction.Effect.ResolvedDefinition = FindSkillDefinition(
 					activeSkills,
 					passiveSkills,
-					targetSkillId);
+					targetSkillName);
 				if (reaction.Effect.ResolvedDefinition == null)
 				{
 					throw new InvalidOperationException(
-						"Triggered skill is not registered: " + targetSkillId);
+						"Triggered skill is not registered: " + targetSkillName);
 				}
 				return;
 			}
@@ -149,10 +149,10 @@ namespace Pakuri.Data
 				reaction.DelaySeconds += Mathf.Max(
 					0f,
 					GetFloatParam(node, "delay_seconds", 0f));
-				var targetSkillId = GetParam(node, "source_skill_id");
+				var targetSkillName = GetParam(node, "source_skill_name");
 				reaction.Effect = new SkillCastEffect
 				{
-					EffectId = reaction.ReactionId,
+					EffectName = reaction.ReactionName,
 					IsRecast = true,
 					DurationSeconds = Mathf.Max(0f, GetFloatParam(node, "duration_seconds", 0f)),
 					RadiusMultiplier = Mathf.Max(0f, GetFloatParam(node, "radius_multiplier", 1f)),
@@ -162,11 +162,11 @@ namespace Pakuri.Data
 				reaction.Effect.ResolvedDefinition = FindSkillDefinition(
 					activeSkills,
 					passiveSkills,
-					targetSkillId);
+					targetSkillName);
 				if (!(reaction.Effect.ResolvedDefinition is ZoneSkillDefinition))
 				{
 					throw new InvalidOperationException(
-						"Recast zone is not registered: " + targetSkillId);
+						"Recast zone is not registered: " + targetSkillName);
 				}
 				return;
 			}
@@ -178,7 +178,7 @@ namespace Pakuri.Data
 					Kind = string.Equals(handler, "RefundCooldown", StringComparison.OrdinalIgnoreCase)
 						? SkillReactionCommandKind.RefundCooldown
 						: SkillReactionCommandKind.ReduceReload,
-					TargetId = GetParam(node, "skill_id"),
+					TargetName = GetParam(node, "skill_name"),
 					Ratio = Mathf.Clamp01(GetFloatParam(node, "ratio", 0f)),
 					Targeting = targeting,
 					LockToEventTarget = reaction.LockToEventTarget,
@@ -193,7 +193,7 @@ namespace Pakuri.Data
 				{
 					Kind = SkillReactionCommandKind.ExtendStatusDuration,
 					StatusKind = StatusValueParser.ParseStatusKind(
-						GetParam(node, "status_id")),
+						GetParam(node, "status_name")),
 					DurationSeconds = state.DurationSeconds,
 					Targeting = targeting,
 					LockToEventTarget = reaction.LockToEventTarget,
@@ -218,7 +218,7 @@ namespace Pakuri.Data
 				continue;
 			}
 
-			var handler = node.HandlerId ?? string.Empty;
+			var handler = node.HandlerName ?? string.Empty;
 			if (IsTriggerOutcomeHandler(handler))
 			{
 				outcomeCount++;
@@ -257,7 +257,7 @@ namespace Pakuri.Data
 			if (string.Equals(handler, "AttachStatusPayload", StringComparison.OrdinalIgnoreCase))
 			{
 				state.StatusKind = StatusValueParser.ParseStatusKind(
-					GetParam(node, "status_id"));
+					GetParam(node, "status_name"));
 				state.StatusChance = Mathf.Clamp01(
 					GetFloatParam(node, "status_chance", 1f));
 				state.StatusStacks = Mathf.Max(
@@ -279,7 +279,7 @@ namespace Pakuri.Data
 			if (string.Equals(handler, "ConditionStatus", StringComparison.OrdinalIgnoreCase))
 			{
 				if (StatusValueParser.TryParseStatusKind(
-					GetParam(node, "status_id"),
+					GetParam(node, "status_name"),
 					out var selectionStatusKind))
 				{
 					state.SelectionStatusKind = selectionStatusKind;
@@ -325,8 +325,8 @@ namespace Pakuri.Data
 		var state = BuildReactionOutcomeState(nodes, out _);
 		var reaction = new SkillReaction
 		{
-			ReactionId = row.Id,
-			SourceSkillId = row.SourceSkillId
+			ReactionName = row.Name,
+			SourceSkillName = row.SourceSkillName
 		};
 		BuildReactionOutcome(
 			reaction,
@@ -342,7 +342,7 @@ namespace Pakuri.Data
 		{
 			effect = new SkillCastEffect
 			{
-				EffectId = row.Id,
+				EffectName = row.Name,
 				Command = reaction.Command
 			};
 		}
@@ -358,8 +358,8 @@ namespace Pakuri.Data
 			effect.DelaySeconds = Mathf.Max(0f, row.TriggerDelaySeconds);
 			effect.UseSourcePreparedAim = effect.ResolvedDefinition != null
 				&& string.Equals(
-					effect.ResolvedDefinition.SkillId,
-					row.SourceSkillId,
+					effect.ResolvedDefinition.SkillName,
+					row.SourceSkillName,
 					StringComparison.OrdinalIgnoreCase);
 			effect.UseSourcePreparedCenter = effect.ResolvedDefinition is SingleSkillDefinition
 				&& state.CenterMode
@@ -369,7 +369,7 @@ namespace Pakuri.Data
 		return effect != null
 			? SkillNode.FromOperation(
 				new SkillCastEffectOp(effect),
-				row.SourceSkillId)
+				row.SourceSkillName)
 			: null;
 	}
 
@@ -382,7 +382,7 @@ namespace Pakuri.Data
 		var status = GetStatusRuntimeData(
 			StatusEffectKind.PassiveBuff,
 			statusDefinitions);
-		status.SourceSkillId = row.Id;
+		status.SourceSkillName = row.Name;
 		status.Duration = state.DurationSeconds > 0f
 			? state.DurationSeconds
 			: status.Duration;
@@ -397,7 +397,7 @@ namespace Pakuri.Data
 				continue;
 			}
 
-			var handler = node.HandlerId ?? string.Empty;
+			var handler = node.HandlerName ?? string.Empty;
 			if (string.Equals(handler, "StatusModifier", StringComparison.OrdinalIgnoreCase))
 			{
 				var scope = GetParam(node, "status_target_scope");
@@ -415,7 +415,7 @@ namespace Pakuri.Data
 			{
 				status.ConditionalTargetStatusGroups =
 					StatusValueParser.ParseConditionStatusExpression(
-						GetParam(node, "status_id"));
+						GetParam(node, "status_name"));
 				var minimumStacks = Mathf.Max(1, GetIntParam(node, "min_stacks", 1));
 				for (var groupIndex = 0;
 					groupIndex < status.ConditionalTargetStatusGroups.Length;
@@ -432,8 +432,8 @@ namespace Pakuri.Data
 							minimumStacks);
 					}
 				}
-				status.ConditionalTargetStatusSourceSkillIds =
-					StatusValueParser.ParseIdList(GetParam(node, "source_skill_id"));
+				status.ConditionalTargetStatusSourceSkillNames =
+					StatusValueParser.ParseIdList(GetParam(node, "source_skill_name"));
 				status.ConditionalTargetSide = GetEnumParam(
 					node,
 					"target_side",
@@ -461,8 +461,8 @@ namespace Pakuri.Data
 					};
 				}
 				status.ConditionalTargetStatusGroups = groups;
-				status.ConditionalTargetStatusSourceSkillIds =
-					StatusValueParser.ParseIdList(GetParam(node, "source_skill_id"));
+				status.ConditionalTargetStatusSourceSkillNames =
+					StatusValueParser.ParseIdList(GetParam(node, "source_skill_name"));
 				status.ConditionalTargetSide = GetEnumParam(
 					node,
 					"target_side",
@@ -476,7 +476,7 @@ namespace Pakuri.Data
 			else if (string.Equals(handler, "RequiredSourceStatus", StringComparison.OrdinalIgnoreCase))
 			{
 				status.ConditionalSourceStatusKind =
-					StatusValueParser.ParseStatusKind(GetParam(node, "status_id"));
+					StatusValueParser.ParseStatusKind(GetParam(node, "status_name"));
 			}
 		}
 
@@ -491,12 +491,12 @@ namespace Pakuri.Data
 
 		return new SkillCastEffect
 		{
-			EffectId = row.Id,
+			EffectName = row.Name,
 			DelaySeconds = Mathf.Max(0f, row.TriggerDelaySeconds),
 			ResolvedDefinition = new BuffSkillDefinition
 			{
-				SkillId = row.Id,
-				SkillName = row.Id,
+				SkillName = row.Name,
+				DisplayName = row.Name,
 				RuntimeKind = SkillRuntimeKind.Buff,
 				ImplementationState = SkillImplementationState.RuntimeImplemented,
 				Targeting = targeting,
@@ -518,15 +518,15 @@ namespace Pakuri.Data
 
 	private static bool HasHandler(
 		SkillNodeBuildData[] nodes,
-		string handlerId)
+		string handlerName)
 	{
 		for (var i = 0; nodes != null && i < nodes.Length; i++)
 		{
 			if (nodes[i] != null
 				&& nodes[i].EnabledByDefault
 				&& string.Equals(
-					nodes[i].HandlerId,
-					handlerId,
+					nodes[i].HandlerName,
+					handlerName,
 					StringComparison.OrdinalIgnoreCase))
 			{
 				return true;
@@ -571,7 +571,7 @@ namespace Pakuri.Data
 		targeting.CoverAll = area.CoverAll;
 		var damage = new SkillDamageSpec
 			{
-				SkillId = reaction.SourceSkillId,
+				SkillName = reaction.SourceSkillName,
 				Element = GetEnumParam(
 					node,
 					"attribute",
@@ -585,11 +585,11 @@ namespace Pakuri.Data
 			};
 		reaction.Effect = new SkillCastEffect
 		{
-			EffectId = reaction.ReactionId,
+			EffectName = reaction.ReactionName,
 			ResolvedDefinition = new SingleSkillDefinition
 			{
-				SkillId = reaction.ReactionId,
-				SkillName = reaction.ReactionId,
+				SkillName = reaction.ReactionName,
+				DisplayName = reaction.ReactionName,
 				RuntimeKind = SkillRuntimeKind.SingleAttack,
 				ImplementationState = SkillImplementationState.RuntimeImplemented,
 				Element = damage.Element,
@@ -628,15 +628,15 @@ namespace Pakuri.Data
 	{
 		var kind = state.HasStatusPayload
 			? state.StatusKind
-			: StatusValueParser.ParseStatusKind(GetParam(node, "status_id"));
+			: StatusValueParser.ParseStatusKind(GetParam(node, "status_name"));
 		var status = CreateReactionStatus(kind, reaction, state, statusDefinitions);
 		reaction.Effect = new SkillCastEffect
 		{
-			EffectId = reaction.ReactionId,
+			EffectName = reaction.ReactionName,
 			ResolvedDefinition = new BuffSkillDefinition
 			{
-				SkillId = reaction.ReactionId,
-				SkillName = reaction.ReactionId,
+				SkillName = reaction.ReactionName,
+				DisplayName = reaction.ReactionName,
 				RuntimeKind = SkillRuntimeKind.Buff,
 				ImplementationState = SkillImplementationState.RuntimeImplemented,
 				Element = DamageAttribute.Physical,
@@ -672,11 +672,11 @@ namespace Pakuri.Data
 			statusDefinitions);
 		reaction.Effect = new SkillCastEffect
 		{
-			EffectId = reaction.ReactionId,
+			EffectName = reaction.ReactionName,
 			ResolvedDefinition = new BuffSkillDefinition
 			{
-				SkillId = reaction.ReactionId,
-				SkillName = reaction.ReactionId,
+				SkillName = reaction.ReactionName,
+				DisplayName = reaction.ReactionName,
 				RuntimeKind = SkillRuntimeKind.Buff,
 				ImplementationState = SkillImplementationState.RuntimeImplemented,
 				Element = DamageAttribute.Physical,
@@ -703,7 +703,7 @@ namespace Pakuri.Data
 		StatusEffectDefinition[] statusDefinitions)
 	{
 		var status = GetStatusRuntimeData(kind, statusDefinitions);
-		status.SourceSkillId = reaction.ReactionId;
+		status.SourceSkillName = reaction.ReactionName;
 		if (state.HasStatusPayload)
 		{
 			status.BaseStackAmount = state.StatusStacks;
@@ -762,7 +762,7 @@ namespace Pakuri.Data
 
 	private static SkillDefinition FindSkill(
 		SkillDefinition[] skills,
-		string skillId)
+		string skillName)
 	{
 		if (skills != null)
 		{
@@ -770,8 +770,8 @@ namespace Pakuri.Data
 			{
 				if (skills[i] != null
 					&& string.Equals(
-						skills[i].SkillId,
-						skillId,
+						skills[i].SkillName,
+						skillName,
 						StringComparison.OrdinalIgnoreCase))
 				{
 					return skills[i];
@@ -779,7 +779,7 @@ namespace Pakuri.Data
 			}
 		}
 		throw new InvalidOperationException(
-			"Triggered skill is not registered: " + skillId);
+			"Triggered skill is not registered: " + skillName);
 	}
 
 	private static void ApplyTriggeredStatusMutations(
@@ -888,7 +888,7 @@ namespace Pakuri.Data
 			TriggerStatusMutationKind kind,
 			float amount,
 			DamageAttribute attribute,
-			string referenceId = "",
+			string referenceName = "",
 			DamageAttribute secondaryAttribute = DamageAttribute.Physical,
 			StatusEffectKind[] conditionalStatusKinds = null,
 			SkillRuntimeKindCondition[] incomingRuntimeKinds = null,
@@ -897,7 +897,7 @@ namespace Pakuri.Data
 			Kind = kind;
 			Amount = amount;
 			Attribute = attribute;
-			ReferenceId = referenceId ?? string.Empty;
+			ReferenceName = referenceName ?? string.Empty;
 			SecondaryAttribute = secondaryAttribute;
 			ConditionalStatusKinds = conditionalStatusKinds ?? Array.Empty<StatusEffectKind>();
 			IncomingRuntimeKinds = incomingRuntimeKinds ?? Array.Empty<SkillRuntimeKindCondition>();
@@ -907,7 +907,7 @@ namespace Pakuri.Data
 		internal TriggerStatusMutationKind Kind { get; }
 		internal float Amount { get; }
 		internal DamageAttribute Attribute { get; }
-		internal string ReferenceId { get; }
+		internal string ReferenceName { get; }
 		internal DamageAttribute SecondaryAttribute { get; }
 		internal StatusEffectKind[] ConditionalStatusKinds { get; }
 		internal SkillRuntimeKindCondition[] IncomingRuntimeKinds { get; }
@@ -945,14 +945,14 @@ namespace Pakuri.Data
 			new List<TriggerStatusMutation>();
 	}
 
-	internal static bool CanProcessNode(string ownerKind, string handlerId)
+	internal static bool CanProcessNode(string ownerKind, string handlerName)
 	{
 		if (string.Equals(ownerKind, "Skill", StringComparison.OrdinalIgnoreCase)
-			&& IsSingleBaseFieldHandler(handlerId))
+			&& IsSingleBaseFieldHandler(handlerName))
 		{
 			return true;
 		}
-		return IsRuntimeNodeHandler(handlerId);
+		return IsRuntimeNodeHandler(handlerName);
 	}
 
 	private static SkillNode MapSkillNode(SkillNodeBuildData node)
@@ -961,7 +961,7 @@ namespace Pakuri.Data
 		{
 			return null;
 		}
-		string text = node.HandlerId;
+		string text = node.HandlerName;
 		if (text == null)
 		{
 			text = string.Empty;
@@ -989,7 +989,7 @@ namespace Pakuri.Data
 		if (string.Equals(text, "RequiredSourceStatus", StringComparison.OrdinalIgnoreCase))
 		{
 			return SkillNode.FromOperation(new SourceStatusConditionOp(
-				StatusValueParser.ParseStatusKind(GetParam(node, "status_id")),
+				StatusValueParser.ParseStatusKind(GetParam(node, "status_name")),
 				Mathf.Max(1, GetIntParam(node, "min_stacks", 1))));
 		}
 		if (string.Equals(text, "TargetHealthRatioThresholdBonus", StringComparison.OrdinalIgnoreCase))
@@ -1026,8 +1026,8 @@ namespace Pakuri.Data
 		}
 		if (string.Equals(text, "CountStatusDamageMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
-			string statusId = GetParam(node, "status_id");
-			StatusEffectKind statusKind = StatusValueParser.ParseStatusKind(statusId);
+			string statusName = GetParam(node, "status_name");
+			StatusEffectKind statusKind = StatusValueParser.ParseStatusKind(statusName);
 			return SkillNode.FromOperation(new CountStatusDamageActionOp(
 				GetEnumParam(node, "target_side", SkillMultiEffectTargetSide.AllAllies),
 				statusKind,
@@ -1050,8 +1050,8 @@ namespace Pakuri.Data
 		}
 		if (string.Equals(text, "ConditionalDamageMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
-			string statusId = GetParam(node, "status_id");
-			StatusEffectKind statusKind = StatusValueParser.ParseStatusKind(statusId);
+			string statusName = GetParam(node, "status_name");
+			StatusEffectKind statusKind = StatusValueParser.ParseStatusKind(statusName);
 			return SkillNode.FromOperation(new ConditionalDamageActionOp(
 				GetFloatParam(node, "multiplier", 1f),
 				statusKind,
@@ -1059,15 +1059,15 @@ namespace Pakuri.Data
 		}
 		if (string.Equals(text, "StatusConditionalDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
 		{
-			string sourceStatusId = GetParam(node, "source_status_id");
-			StatusEffectKind sourceStatusKind = StatusValueParser.ParseStatusKind(sourceStatusId);
+			string sourceStatusName = GetParam(node, "source_status_name");
+			StatusEffectKind sourceStatusKind = StatusValueParser.ParseStatusKind(sourceStatusName);
 			return SkillNode.FromOperation(new StatusConditionalDamageTakenActionOp(
 				GetFloatParam(node, "bonus", 0f),
 				sourceStatusKind));
 		}
 		if (string.Equals(text, "TargetStatusCritBonus", StringComparison.OrdinalIgnoreCase))
 		{
-			StatusEffectKind statusKind = StatusValueParser.ParseStatusKind(GetParam(node, "status_id"));
+			StatusEffectKind statusKind = StatusValueParser.ParseStatusKind(GetParam(node, "status_name"));
 			return SkillNode.FromOperation(new ConditionalCritChanceActionOp(
 				GetFloatParam(node, "crit_chance_bonus", 0f),
 				statusKind,
@@ -1094,8 +1094,8 @@ namespace Pakuri.Data
 		}
 		if (string.Equals(text, "ThresholdApplyStatus", StringComparison.OrdinalIgnoreCase))
 		{
-			StatusEffectKind sourceStatus = StatusValueParser.ParseStatusKind(GetParam(node, "source_status_id"));
-			StatusEffectKind appliedStatus = StatusValueParser.ParseStatusKind(GetParam(node, "apply_status_id"));
+			StatusEffectKind sourceStatus = StatusValueParser.ParseStatusKind(GetParam(node, "source_status_name"));
+			StatusEffectKind appliedStatus = StatusValueParser.ParseStatusKind(GetParam(node, "apply_status_name"));
 			return SkillNode.FromOperation(new ThresholdStatusActionOp(
 				sourceStatus,
 				GetIntParam(node, "min_stacks", 0),
@@ -1115,7 +1115,7 @@ namespace Pakuri.Data
 		}
 		if (string.Equals(text, "RedistributeConsumedStatus", StringComparison.OrdinalIgnoreCase))
 		{
-			StatusEffectKind statusKind = StatusValueParser.ParseStatusKind(GetParam(node, "status_id"));
+			StatusEffectKind statusKind = StatusValueParser.ParseStatusKind(GetParam(node, "status_name"));
 			return SkillNode.FromOperation(new RedistributeConsumedStatusActionOp(
 				GetFloatParam(node, "ratio", 0f),
 				statusKind,
@@ -1161,376 +1161,376 @@ namespace Pakuri.Data
 		if (string.Equals(text, "HitCountCooldownRefund", StringComparison.OrdinalIgnoreCase))
 		{
 			return SkillNode.FromOperation(new HitCountCooldownRefundActionOp(
-				GetParam(node, "target_skill_id"),
+				GetParam(node, "target_skill_name"),
 				GetIntParam(node, "min_targets", 0),
 				GetFloatParam(node, "ratio", 0f)));
 		}
 		if (string.Equals(text, "ReloadReducePerHit", StringComparison.OrdinalIgnoreCase))
 		{
 			return SkillNode.FromOperation(new ReloadReducePerHitActionOp(
-				GetParam(node, "target_skill_id"),
+				GetParam(node, "target_skill_name"),
 				GetFloatParam(node, "seconds_per_hit", 0f)));
 		}
 		var skillActionOp = MapSkillActionOp(node, text);
 		return SkillNode.FromOperation(skillActionOp);
 	}
 
-	private static bool IsSingleBaseFieldHandler(string handlerId)
+	private static bool IsSingleBaseFieldHandler(string handlerName)
 	{
-		if (string.Equals(handlerId, "StatusFilteredDeployment", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusFilteredDeployment", StringComparison.OrdinalIgnoreCase))
 		{
 			return true;
 		}
-		return string.Equals(handlerId, "TargetStatusStackDamage", StringComparison.OrdinalIgnoreCase);
+		return string.Equals(handlerName, "TargetStatusStackDamage", StringComparison.OrdinalIgnoreCase);
 	}
 
-	private static bool IsRuntimeNodeHandler(string handlerId)
+	private static bool IsRuntimeNodeHandler(string handlerName)
 	{
-		if (string.Equals(handlerId, "EffectDamage", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "ApplyDamage", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "ApplyShield", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "StatusModifier", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "ApplyStatus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "AttachStatusPayload", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "EffectExtendStatusDuration", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "ExtendStatusDuration", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "EffectTarget", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "SelectTargets", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "EffectLifetime", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "SetDuration", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "ConditionStatus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "ConditionAnyStatus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "ConditionStatusExpression", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "ConditionSkillAttribute", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "ConditionHealthRatioMax", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "ConditionHitCountMin", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "EffectVisual", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "RuntimeEffectVisual", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "ShowVisual", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "RecastZone", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "ExecuteSkill", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "RefundCooldown", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "ReduceReload", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "EffectDamage", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ApplyDamage", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ApplyShield", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "StatusModifier", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ApplyStatus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "AttachStatusPayload", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "EffectExtendStatusDuration", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ExtendStatusDuration", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "EffectTarget", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "SelectTargets", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "EffectLifetime", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "SetDuration", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ConditionStatus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ConditionAnyStatus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ConditionStatusExpression", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ConditionSkillAttribute", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ConditionHealthRatioMax", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ConditionHitCountMin", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "EffectVisual", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "RuntimeEffectVisual", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ShowVisual", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "RecastZone", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ExecuteSkill", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "RefundCooldown", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ReduceReload", StringComparison.OrdinalIgnoreCase))
 		{
 			return true;
 		}
-		if (string.Equals(handlerId, "StatusMoveSpeedBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "StatusSpellPowerBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "StatusCriticalDamageBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "StatusElementResistReduction", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "StatusConditionalStatusChanceBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "StatusRuntimeKindFilter", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "StatusOutgoingAdditionalDamage", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusMoveSpeedBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "StatusSpellPowerBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "StatusCriticalDamageBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "StatusElementResistReduction", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "StatusConditionalStatusChanceBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "StatusRuntimeKindFilter", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "StatusOutgoingAdditionalDamage", StringComparison.OrdinalIgnoreCase))
 		{
 			return true;
 		}
-		if (string.Equals(handlerId, "TargetHealthRatioCondition", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "TargetHealthRatioThresholdBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "ExecuteDamageMultiplier", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "TargetPredicateDamageMultiplier", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "BossDamageMultiplier", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "ExecuteCritChanceBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "CooldownReset", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "CooldownResetOnKill", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "CooldownRefund", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "CooldownRefundBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "TargetHealthRatioCondition", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "TargetHealthRatioThresholdBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ExecuteDamageMultiplier", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "TargetPredicateDamageMultiplier", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "BossDamageMultiplier", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ExecuteCritChanceBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "CooldownReset", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "CooldownResetOnKill", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "CooldownRefund", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "CooldownRefundBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return true;
 		}
-		if (string.Equals(handlerId, "DamageMultiplier", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "ShieldAmountMultiplier", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "CountStatusDamageMultiplier", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "CooldownMultiplier", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "MagazineBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "ReloadTimeMultiplier", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "PierceBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "RadiusMultiplier", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "RadiusBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "DurationBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "DurationMultiplier", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "DamageDelayMultiplier", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "AdditionalProjectileBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "ShotIntervalMultiplier", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "ConsecutiveHitDamageBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "BranchDamage", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "StatusStackAmountBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "StatusStackAmountSet", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "StatusMaxStacksBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "ConditionalDamageMultiplier", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "TargetStatusStackDamageRateBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "TriggerProcChanceBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "HitTargetCountBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "LineCastRepeatCountBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "DamageMultiplier", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ShieldAmountMultiplier", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "CountStatusDamageMultiplier", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "CooldownMultiplier", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "MagazineBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ReloadTimeMultiplier", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "PierceBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "RadiusMultiplier", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "RadiusBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "DurationBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "DurationMultiplier", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "DamageDelayMultiplier", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "AdditionalProjectileBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ShotIntervalMultiplier", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ConsecutiveHitDamageBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "BranchDamage", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "StatusStackAmountBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "StatusStackAmountSet", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "StatusMaxStacksBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ConditionalDamageMultiplier", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "TargetStatusStackDamageRateBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "TriggerProcChanceBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "HitTargetCountBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "LineCastRepeatCountBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return true;
 		}
-		if (string.Equals(handlerId, "StatusActionSpeedBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "StatusAttackPowerBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "StatusAilmentResistanceBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "StatusDamageBonusRate", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "StatusShieldReceivedBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "StatusCriticalChanceBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "StatusDamageTakenBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "StatusFlatElementResistReduction", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "StatusDurationBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "StatusConditionalDamageTakenBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "StatusElementDamageTakenBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "StatusCriticalDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusActionSpeedBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "StatusAttackPowerBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "StatusAilmentResistanceBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "StatusDamageBonusRate", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "StatusShieldReceivedBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "StatusCriticalChanceBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "StatusDamageTakenBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "StatusFlatElementResistReduction", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "StatusDurationBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "StatusConditionalDamageTakenBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "StatusElementDamageTakenBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "StatusCriticalDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return true;
 		}
-		if (string.Equals(handlerId, "BurstDamageRule", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "FollowUpProjectile", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "ThresholdApplyStatus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "TargetStatusStackDamageMultiplier", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "ConsumeTargetStatusRatioOverride", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "BurstStatusStacksBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "RepeatPerTarget", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "PullToCenter", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "TargetStatusCritBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "RedistributeConsumedStatus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "AdditionalDamage", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "BeamWidthBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "CoreAdditionalDamage", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "CoreDamageMultiplier", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "CritChanceBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "CritDamageBonus", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "EveryNthHitChainDamage", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "HitCountCooldownRefund", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "KnockbackDistanceMultiplier", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "ReloadReducePerHit", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerId, "RequiredSourceStatus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "BurstDamageRule", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "FollowUpProjectile", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ThresholdApplyStatus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "TargetStatusStackDamageMultiplier", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ConsumeTargetStatusRatioOverride", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "BurstStatusStacksBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "RepeatPerTarget", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "PullToCenter", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "TargetStatusCritBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "RedistributeConsumedStatus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "AdditionalDamage", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "BeamWidthBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "CoreAdditionalDamage", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "CoreDamageMultiplier", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "CritChanceBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "CritDamageBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "EveryNthHitChainDamage", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "HitCountCooldownRefund", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "KnockbackDistanceMultiplier", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ReloadReducePerHit", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "RequiredSourceStatus", StringComparison.OrdinalIgnoreCase))
 		{
 			return true;
 		}
 		return false;
 	}
 
-	private static SkillActionOp MapSkillActionOp(SkillNodeBuildData node, string handlerId)
+	private static SkillActionOp MapSkillActionOp(SkillNodeBuildData node, string handlerName)
 	{
-		if (string.Equals(handlerId, "DamageMultiplier", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "DamageMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.DamageMultiplier, GetFloatParam(node, "multiplier", 1f));
 		}
-		if (string.Equals(handlerId, "ShieldAmountMultiplier", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "ShieldAmountMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.ShieldAmountMultiplier, GetFloatParam(node, "multiplier", 1f));
 		}
-		if (string.Equals(handlerId, "CooldownMultiplier", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "CooldownMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.CooldownMultiplier, GetFloatParam(node, "multiplier", 1f));
 		}
-		if (string.Equals(handlerId, "MagazineBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "MagazineBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.MagazineBonus, GetIntParam(node, "bonus", 0));
 		}
-		if (string.Equals(handlerId, "ReloadTimeMultiplier", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "ReloadTimeMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.ReloadTimeMultiplier, GetFloatParam(node, "multiplier", 1f));
 		}
-		if (string.Equals(handlerId, "PierceBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "PierceBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.PierceBonus, GetIntParam(node, "bonus", 0));
 		}
-		if (string.Equals(handlerId, "RadiusMultiplier", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "RadiusMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.RadiusMultiplier, GetFloatParam(node, "multiplier", 1f));
 		}
-		if (string.Equals(handlerId, "RadiusBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "RadiusBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.RadiusBonus, GetFloatParam(node, "bonus", 0f));
 		}
-		if (string.Equals(handlerId, "DurationBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "DurationBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.DurationBonus, GetFloatParam(node, "bonus_seconds", 0f));
 		}
-		if (string.Equals(handlerId, "DurationMultiplier", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "DurationMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.DurationMultiplier, GetFloatParam(node, "multiplier", 1f));
 		}
-		if (string.Equals(handlerId, "DamageDelayMultiplier", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "DamageDelayMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.DamageDelayMultiplier, GetFloatParam(node, "multiplier", 1f));
 		}
-		if (string.Equals(handlerId, "AdditionalProjectileBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "AdditionalProjectileBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.AdditionalProjectileBonus, GetIntParam(node, "bonus", 0));
 		}
-		if (string.Equals(handlerId, "ShotIntervalMultiplier", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "ShotIntervalMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.ShotIntervalMultiplier, GetFloatParam(node, "multiplier", 1f));
 		}
-		if (string.Equals(handlerId, "StatusStackAmountBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusStackAmountBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.StatusStackAmountBonus, GetIntParam(node, "bonus", 0));
 		}
-		if (string.Equals(handlerId, "StatusStackAmountSet", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusStackAmountSet", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.StatusStackAmountSet, GetIntParam(node, "value", 0));
 		}
-		if (string.Equals(handlerId, "StatusMaxStacksBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusMaxStacksBonus", StringComparison.OrdinalIgnoreCase))
 		{
-			return new SkillActionOp(SkillActionOpKind.StatusMaxStacksBonus, GetParam(node, "status_id"), GetIntParam(node, "bonus", 0));
+			return new SkillActionOp(SkillActionOpKind.StatusMaxStacksBonus, GetParam(node, "status_name"), GetIntParam(node, "bonus", 0));
 		}
-		if (string.Equals(handlerId, "TargetStatusStackDamageRateBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "TargetStatusStackDamageRateBonus", StringComparison.OrdinalIgnoreCase))
 		{
-			return new SkillActionOp(SkillActionOpKind.TargetStatusStackDamageRateBonus, GetParam(node, "status_id"), GetFloatParam(node, "bonus_rate_per_stack", 0f));
+			return new SkillActionOp(SkillActionOpKind.TargetStatusStackDamageRateBonus, GetParam(node, "status_name"), GetFloatParam(node, "bonus_rate_per_stack", 0f));
 		}
-		if (string.Equals(handlerId, "TriggerProcChanceBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "TriggerProcChanceBonus", StringComparison.OrdinalIgnoreCase))
 		{
-			return new SkillActionOp(SkillActionOpKind.TriggerProcChanceBonus, GetParam(node, "trigger_id"), GetFloatParam(node, "bonus", 0f));
+			return new SkillActionOp(SkillActionOpKind.TriggerProcChanceBonus, GetParam(node, "trigger_name"), GetFloatParam(node, "bonus", 0f));
 		}
-		if (string.Equals(handlerId, "HitTargetCountBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "HitTargetCountBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.HitTargetCountBonus, GetIntParam(node, "bonus", 0));
 		}
-		if (string.Equals(handlerId, "LineCastRepeatCountBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "LineCastRepeatCountBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.LineCastRepeatCountBonus, GetIntParam(node, "bonus", 0));
 		}
-		if (string.Equals(handlerId, "StatusActionSpeedBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusActionSpeedBonus", StringComparison.OrdinalIgnoreCase))
 		{
-			return new SkillActionOp(SkillActionOpKind.StatusActionSpeedBonus, GetParam(node, "status_id"), GetFloatParam(node, "bonus", 0f));
+			return new SkillActionOp(SkillActionOpKind.StatusActionSpeedBonus, GetParam(node, "status_name"), GetFloatParam(node, "bonus", 0f));
 		}
-		if (string.Equals(handlerId, "StatusAttackPowerBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusAttackPowerBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.StatusAttackPowerBonus, GetFloatParam(node, "bonus", 0f));
 		}
-		if (string.Equals(handlerId, "StatusAilmentResistanceBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusAilmentResistanceBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.StatusAilmentResistanceBonus, GetFloatParam(node, "bonus", 0f));
 		}
-		if (string.Equals(handlerId, "StatusDamageBonusRate", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusDamageBonusRate", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.StatusDamageBonusRate, GetFloatParam(node, "bonus", 0f));
 		}
-		if (string.Equals(handlerId, "StatusShieldReceivedBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusShieldReceivedBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.StatusShieldReceivedBonus, GetFloatParam(node, "bonus", 0f));
 		}
-		if (string.Equals(handlerId, "StatusCriticalChanceBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusCriticalChanceBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.StatusCriticalChanceBonus, GetFloatParam(node, "bonus", 0f));
 		}
-		if (string.Equals(handlerId, "StatusDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.StatusDamageTakenBonus, GetFloatParam(node, "bonus", 0f));
 		}
-		if (string.Equals(handlerId, "StatusFlatElementResistReduction", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusFlatElementResistReduction", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.StatusFlatElementResistReduction, GetFloatParam(node, "bonus", 0f));
 		}
-		if (string.Equals(handlerId, "StatusDurationBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusDurationBonus", StringComparison.OrdinalIgnoreCase))
 		{
-			return new SkillActionOp(SkillActionOpKind.StatusDurationBonus, GetParam(node, "status_id"), GetFloatParam(node, "bonus_seconds", 0f));
+			return new SkillActionOp(SkillActionOpKind.StatusDurationBonus, GetParam(node, "status_name"), GetFloatParam(node, "bonus_seconds", 0f));
 		}
-		if (string.Equals(handlerId, "StatusElementDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusElementDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.StatusElementDamageTakenBonus, GetFloatParam(node, "bonus", 0f));
 		}
-		if (string.Equals(handlerId, "StatusCriticalDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusCriticalDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.StatusCriticalDamageTakenBonus, GetFloatParam(node, "bonus", 0f));
 		}
-		if (string.Equals(handlerId, "CritChanceBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "CritChanceBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.CritChanceBonus, GetFloatParam(node, "bonus", 0f));
 		}
-		if (string.Equals(handlerId, "CritDamageBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "CritDamageBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.CritDamageBonus, GetFloatParam(node, "bonus", 0f));
 		}
-		if (string.Equals(handlerId, "BeamWidthBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "BeamWidthBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.BeamWidthBonus, GetFloatParam(node, "bonus", 0f));
 		}
-		if (string.Equals(handlerId, "KnockbackDistanceMultiplier", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "KnockbackDistanceMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.KnockbackDistanceMultiplier, GetFloatParam(node, "multiplier", 1f));
 		}
-		if (string.Equals(handlerId, "TargetStatusStackDamageMultiplier", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "TargetStatusStackDamageMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.TargetStatusStackDamageMultiplier, GetFloatParam(node, "multiplier", 1f));
 		}
-		if (string.Equals(handlerId, "ConsumeTargetStatusRatioOverride", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "ConsumeTargetStatusRatioOverride", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.ConsumeTargetStatusRatioOverride, GetFloatParam(node, "ratio", 0f));
 		}
-		throw new InvalidOperationException("Unsupported skill node handler: " + handlerId);
+		throw new InvalidOperationException("Unsupported skill node handler: " + handlerName);
 	}
 
 	private static bool TryMapStatusMutation(
 		SkillNodeBuildData node,
-		string handlerId,
+		string handlerName,
 		out TriggerStatusMutation operation)
 	{
 		var amount = GetFloatParam(node, "bonus", 0f);
 		var attribute = GetEnumParam(node, "attribute", DamageAttribute.Physical);
-		if (string.Equals(handlerId, "StatusActionSpeedBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusActionSpeedBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			operation = new TriggerStatusMutation(
 				TriggerStatusMutationKind.ActionSpeedBonus,
 				amount,
 				attribute,
-				GetParam(node, "status_id"));
+				GetParam(node, "status_name"));
 			return true;
 		}
-		if (string.Equals(handlerId, "StatusMoveSpeedBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusMoveSpeedBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			operation = new TriggerStatusMutation(TriggerStatusMutationKind.MoveSpeedBonus, amount, attribute);
 			return true;
 		}
-		if (string.Equals(handlerId, "StatusAttackPowerBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusAttackPowerBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			operation = new TriggerStatusMutation(TriggerStatusMutationKind.AttackPowerBonus, amount, attribute);
 			return true;
 		}
-		if (string.Equals(handlerId, "StatusSpellPowerBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusSpellPowerBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			operation = new TriggerStatusMutation(TriggerStatusMutationKind.SpellPowerBonus, amount, attribute);
 			return true;
 		}
-		if (string.Equals(handlerId, "StatusDamageBonusRate", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusDamageBonusRate", StringComparison.OrdinalIgnoreCase))
 		{
 			operation = new TriggerStatusMutation(TriggerStatusMutationKind.DamageBonusRate, amount, attribute);
 			return true;
 		}
-		if (string.Equals(handlerId, "StatusShieldReceivedBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusShieldReceivedBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			operation = new TriggerStatusMutation(TriggerStatusMutationKind.ShieldReceivedBonus, amount, attribute);
 			return true;
 		}
-		if (string.Equals(handlerId, "StatusCriticalChanceBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusCriticalChanceBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			operation = new TriggerStatusMutation(TriggerStatusMutationKind.CriticalChanceBonus, amount, attribute);
 			return true;
 		}
-		if (string.Equals(handlerId, "StatusCriticalDamageBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusCriticalDamageBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			operation = new TriggerStatusMutation(TriggerStatusMutationKind.CriticalDamageBonus, amount, attribute);
 			return true;
 		}
-		if (string.Equals(handlerId, "StatusDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			operation = new TriggerStatusMutation(TriggerStatusMutationKind.DamageTakenBonus, amount, attribute);
 			return true;
 		}
-		if (string.Equals(handlerId, "StatusElementResistReduction", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusElementResistReduction", StringComparison.OrdinalIgnoreCase))
 		{
 			operation = new TriggerStatusMutation(TriggerStatusMutationKind.ElementResistReduction, amount, attribute);
 			return true;
 		}
-		if (string.Equals(handlerId, "StatusFlatElementResistReduction", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusFlatElementResistReduction", StringComparison.OrdinalIgnoreCase))
 		{
 			operation = new TriggerStatusMutation(TriggerStatusMutationKind.FlatElementResistReduction, amount, attribute);
 			return true;
 		}
-		if (string.Equals(handlerId, "StatusElementDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusElementDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			operation = new TriggerStatusMutation(TriggerStatusMutationKind.ElementDamageTakenBonus, amount, attribute);
 			return true;
 		}
-		if (string.Equals(handlerId, "StatusConditionalStatusChanceBonus", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusConditionalStatusChanceBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			operation = new TriggerStatusMutation(
 				TriggerStatusMutationKind.ConditionalStatusChanceBonus,
@@ -1539,7 +1539,7 @@ namespace Pakuri.Data
 				conditionalStatusKinds: StatusValueParser.ParseStatusKinds(GetParam(node, "status_ids")));
 			return true;
 		}
-		if (string.Equals(handlerId, "StatusRuntimeKindFilter", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusRuntimeKindFilter", StringComparison.OrdinalIgnoreCase))
 		{
 			operation = new TriggerStatusMutation(
 				TriggerStatusMutationKind.RuntimeKindFilter,
@@ -1551,7 +1551,7 @@ namespace Pakuri.Data
 					GetParam(node, "outgoing_skill_runtime_kinds")));
 			return true;
 		}
-		if (string.Equals(handlerId, "StatusOutgoingAdditionalDamage", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(handlerName, "StatusOutgoingAdditionalDamage", StringComparison.OrdinalIgnoreCase))
 		{
 			operation = new TriggerStatusMutation(
 				TriggerStatusMutationKind.OutgoingAdditionalDamage,

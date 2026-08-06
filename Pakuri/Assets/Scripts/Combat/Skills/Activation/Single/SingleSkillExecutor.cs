@@ -216,7 +216,7 @@ internal sealed class SingleSkillExecutor : MonoBehaviour
 
 		SkillTrigger.PublishLifecycleEvent(
 			SkillTriggerEvent.OnDeploymentCast,
-			new SkillExecutionContext(context.Caster, context.SourceSkillId, null, center, 0f, 0, snapshot, context));
+			new SkillExecutionContext(context.Caster, context.SourceSkillName, null, center, 0f, 0, snapshot, context));
 	}
 
 	/// 예약된 반복 배치가 없으면 실행 오브젝트를 즉시 정리한다.

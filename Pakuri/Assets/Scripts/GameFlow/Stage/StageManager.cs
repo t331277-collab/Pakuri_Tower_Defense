@@ -1,4 +1,4 @@
-﻿/*
+/*
  * 역할: Stage 및 Wave 진행.
  * 책임: Stage 시작·적 Wave 예약·전투 종료 감지·보상 지급·Run 진행을 처리한다.
  */
@@ -18,7 +18,7 @@ namespace Pakuri.InGame
         private const float DefaultClearCheckInterval = 0.25f;
 
         private readonly List<StageEncounterDefinition> activeEncounterRows = new List<StageEncounterDefinition>();
-        private readonly List<string> pendingPrisonerEnemyIds = new List<string>();
+        private readonly List<string> pendingPrisonerEnemyNames = new List<string>();
         private readonly List<string> prisonerCandidatePool = new List<string>();
         private readonly ArtifactSynergyManager artifactSynergyManager = new ArtifactSynergyManager();
 
@@ -44,7 +44,7 @@ namespace Pakuri.InGame
         public StageState State { get; private set; } = StageState.NotStarted;
         public int CurrentStage => activeSession != null ? activeSession.StageIndex : 1;
         public int CurrentDay => activeSession != null ? activeSession.DayIndex : 1;
-        public IReadOnlyList<string> PendingPrisonerEnemyIds => pendingPrisonerEnemyIds;
+        public IReadOnlyList<string> PendingPrisonerEnemyNames => pendingPrisonerEnemyNames;
         public int PendingGoldReward { get; private set; }
         public int PendingDarkTraceReward { get; private set; }
         public int PendingPrisonerCount { get; private set; }
@@ -98,7 +98,7 @@ namespace Pakuri.InGame
         /// 보상을 정리하고 RunSession을 다음 Day로 넘긴 뒤 파티를 복구
         public void ContinueToNextDay()
         {
-            pendingPrisonerEnemyIds.Clear();
+            pendingPrisonerEnemyNames.Clear();
             PendingGoldReward = 0;
             PendingDarkTraceReward = 0;
             PendingPrisonerCount = 0;
@@ -175,8 +175,8 @@ namespace Pakuri.InGame
             combatManager.BeginPlayerCombat();
 
             currentDay = stageDefinition.FindDay(activeSession.StageIndex, activeSession.DayIndex);
-            currentReward = stageDefinition.FindReward(currentDay.RewardRuleId);
-            stageDefinition.FindEncounterRows(currentDay.EncounterId, activeEncounterRows);
+            currentReward = stageDefinition.FindReward(currentDay.RewardRuleName);
+            stageDefinition.FindEncounterRows(currentDay.EncounterName, activeEncounterRows);
 
             SelectBossRows();
             State = StageState.Spawning;
@@ -192,7 +192,7 @@ namespace Pakuri.InGame
 
         private void BeginRunSession()
         {
-            var monster = GameDataLoader.CurrentCatalog.GetData<MonsterDefinition>(StartContext.SelectedMonsterId);
+            var monster = GameDataLoader.CurrentCatalog.GetData<MonsterDefinition>(StartContext.SelectedMonsterName);
             activeSession = RunSession.Begin(monster);
             StartContext.Clear();
         }
@@ -213,8 +213,8 @@ namespace Pakuri.InGame
                     var healthMultiplier = isBoss
                         ? UnityEngine.Random.Range(row.BossHealthMultiplierMin, row.BossHealthMultiplierMax)
                         : 1f;
-                    unitSpawnManager.SpawnEnemyById(
-                        row.EnemyId,
+                    unitSpawnManager.SpawnEnemyByName(
+                        row.EnemyName,
                         spawnIndex,
                         row.SpawnX,
                         row.SpawnYMin,
@@ -242,7 +242,7 @@ namespace Pakuri.InGame
         /// 전투 결과를 바탕으로 골드·Dark Trace·포로 보상을 준비한다.
         private void PrepareReward()
         {
-            pendingPrisonerEnemyIds.Clear();
+            pendingPrisonerEnemyNames.Clear();
             PendingGoldReward = currentReward.Gold;
             PendingDarkTraceReward = currentReward.DarkTrace;
             PendingPrisonerCount = currentReward.RollPrisonerCount();
@@ -260,7 +260,7 @@ namespace Pakuri.InGame
                 var row = activeEncounterRows[i];
                 if (row.GuaranteedPrisoner || row.SelectedAsBoss)
                 {
-                    AddPrisoner(row.EnemyId);
+                    AddPrisoner(row.EnemyName);
                 }
             }
         }
@@ -275,13 +275,13 @@ namespace Pakuri.InGame
                 var row = activeEncounterRows[i];
                 for (var count = 0; count < row.Count; count++)
                 {
-                    prisonerCandidatePool.Add(row.EnemyId);
+                    prisonerCandidatePool.Add(row.EnemyName);
                 }
             }
 
-            for (var i = 0; i < pendingPrisonerEnemyIds.Count; i++)
+            for (var i = 0; i < pendingPrisonerEnemyNames.Count; i++)
             {
-                RemoveOnePrisonerCandidate(pendingPrisonerEnemyIds[i]);
+                RemoveOnePrisonerCandidate(pendingPrisonerEnemyNames[i]);
             }
         }
 
@@ -292,7 +292,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            while (pendingPrisonerEnemyIds.Count < PendingPrisonerCount && prisonerCandidatePool.Count > 0)
+            while (pendingPrisonerEnemyNames.Count < PendingPrisonerCount && prisonerCandidatePool.Count > 0)
             {
                 var poolIndex = UnityEngine.Random.Range(0, prisonerCandidatePool.Count);
                 AddPrisoner(prisonerCandidatePool[poolIndex]);
@@ -300,26 +300,26 @@ namespace Pakuri.InGame
             }
         }
 
-        private void AddPrisoner(string enemyId)
+        private void AddPrisoner(string enemyName)
         {
-            if (string.IsNullOrWhiteSpace(enemyId))
+            if (string.IsNullOrWhiteSpace(enemyName))
             {
                 return;
             }
 
-            pendingPrisonerEnemyIds.Add(enemyId);
+            pendingPrisonerEnemyNames.Add(enemyName);
         }
 
-        private void RemoveOnePrisonerCandidate(string enemyId)
+        private void RemoveOnePrisonerCandidate(string enemyName)
         {
-            if (string.IsNullOrWhiteSpace(enemyId))
+            if (string.IsNullOrWhiteSpace(enemyName))
             {
                 return;
             }
 
             for (var i = 0; i < prisonerCandidatePool.Count; i++)
             {
-                if (string.Equals(prisonerCandidatePool[i], enemyId, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(prisonerCandidatePool[i], enemyName, StringComparison.OrdinalIgnoreCase))
                 {
                     prisonerCandidatePool.RemoveAt(i);
                     return;
@@ -446,16 +446,16 @@ namespace Pakuri.InGame
     /// StartContext 처리에 필요한 불변 실행 문맥을 전달한다.
     public static class StartContext
     {
-        public static string SelectedMonsterId { get; private set; }
+        public static string SelectedMonsterName { get; private set; }
 
-        public static void Prepare(string selectedMonsterId)
+        public static void Prepare(string selectedMonsterName)
         {
-            SelectedMonsterId = string.IsNullOrWhiteSpace(selectedMonsterId) ? string.Empty : selectedMonsterId;
+            SelectedMonsterName = string.IsNullOrWhiteSpace(selectedMonsterName) ? string.Empty : selectedMonsterName;
         }
 
         public static void Clear()
         {
-            SelectedMonsterId = string.Empty;
+            SelectedMonsterName = string.Empty;
         }
     }
 

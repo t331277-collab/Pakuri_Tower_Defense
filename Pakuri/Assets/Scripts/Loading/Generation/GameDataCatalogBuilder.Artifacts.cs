@@ -22,13 +22,13 @@ namespace Pakuri.Data
             var rows = FilterAndSort(
                 model.Summons.Values,
                 _ => true,
-                (left, right) => string.Compare(left.Id, right.Id, StringComparison.OrdinalIgnoreCase));
+                (left, right) => string.Compare(left.Name, right.Name, StringComparison.OrdinalIgnoreCase));
             var definitions = new SummonDefinition[rows.Count];
             for (var i = 0; i < rows.Count; i++)
             {
                 var row = rows[i];
                 var definition = ScriptableObject.CreateInstance<SummonDefinition>();
-                definition.SummonId = row.Id;
+                definition.SummonName = row.Name;
                 definition.DisplayName = row.DisplayName;
                 definition.RoleSummary = row.RoleSummary;
                 definition.ElementLabel = row.ElementLabel;
@@ -56,14 +56,14 @@ namespace Pakuri.Data
                 };
                 definition.ActiveSkills = BuildActiveSkills(
                     model,
-                    row.Id,
+                    row.Name,
                     statusDefinitions,
                     model.SummonSkills.Values);
                 var reactions = BuildSkillReactions(
                     model,
                     trigger => string.Equals(
-                        trigger.MonsterId,
-                        row.Id,
+                        trigger.MonsterName,
+                        row.Name,
                         StringComparison.OrdinalIgnoreCase),
                     definition.ActiveSkills,
                     statusDefinitions);
@@ -113,32 +113,32 @@ namespace Pakuri.Data
             var rows = FilterAndSort(
                 model.ArtifactEffects.Values,
                 _ => true,
-                (left, right) => string.Compare(left.Id, right.Id, StringComparison.OrdinalIgnoreCase));
+                (left, right) => string.Compare(left.Name, right.Name, StringComparison.OrdinalIgnoreCase));
             var definitions = new ArtifactEffectDefinition[rows.Count];
             for (var i = 0; i < rows.Count; i++)
             {
                 var row = rows[i];
                 definitions[i] = new ArtifactEffectDefinition
                 {
-                    EffectId = row.Id,
-                    ArtifactId = row.ArtifactId,
+                    EffectName = row.Name,
+                    ArtifactName = row.ArtifactName,
                     ApplicationMode = row.ApplicationMode,
                     Recipient = row.Recipient,
                     RepeatRule = row.RepeatRule,
                     SelectionRule = row.SelectionRule,
-                    RecipientMonsterId = row.RecipientMonsterId,
-                    TargetSkill = ResolveSkill(skills, row.TargetSkillId),
-                    OutcomeSkill = ResolveSkill(skills, row.OutcomeSkillId),
+                    RecipientMonsterName = row.RecipientMonsterName,
+                    TargetSkill = ResolveSkill(skills, row.TargetSkillName),
+                    OutcomeSkill = ResolveSkill(skills, row.OutcomeSkillName),
                     Nodes = MapSkillNodes(BuildSkillNodes(
                         model,
                         SkillNodeOwnerKind.Effect,
-                        row.Id,
-                        row.TargetSkillId)),
+                        row.Name,
+                        row.TargetSkillName)),
                     Reactions = BuildSkillReactions(
                         model,
                         trigger => string.Equals(
-                            trigger.SourceSkillId,
-                            row.Id,
+                            trigger.SourceSkillName,
+                            row.Name,
                             StringComparison.OrdinalIgnoreCase),
                         allSkills,
                         statusDefinitions)
@@ -156,27 +156,27 @@ namespace Pakuri.Data
             var summonLookup = new Dictionary<string, SummonDefinition>(StringComparer.OrdinalIgnoreCase);
             for (var i = 0; i < summons.Length; i++)
             {
-                summonLookup[summons[i].SummonId] = summons[i];
+                summonLookup[summons[i].SummonName] = summons[i];
             }
 
             var rows = FilterAndSort(
                 model.ArtifactSynergyEffects.Values,
                 _ => true,
-                (left, right) => string.Compare(left.Id, right.Id, StringComparison.OrdinalIgnoreCase));
+                (left, right) => string.Compare(left.Name, right.Name, StringComparison.OrdinalIgnoreCase));
             var definitions = new ArtifactSynergyEffectDefinition[rows.Count];
             for (var i = 0; i < rows.Count; i++)
             {
                 var row = rows[i];
                 definitions[i] = new ArtifactSynergyEffectDefinition
                 {
-                    EffectId = row.Id,
-                    SynergyLevelId = row.SynergyLevelId,
+                    EffectName = row.Name,
+                    SynergyLevelName = row.SynergyLevelName,
                     ApplicationMode = row.ApplicationMode,
                     Recipient = row.Recipient,
-                    RecipientMonsterId = row.RecipientMonsterId,
-                    TargetSkill = ResolveSkill(skills, row.TargetSkillId),
-                    OutcomeSkill = ResolveSkill(skills, row.OutcomeSkillId),
-                    SpawnSummon = ResolveSummon(summonLookup, row.SpawnSummonId)
+                    RecipientMonsterName = row.RecipientMonsterName,
+                    TargetSkill = ResolveSkill(skills, row.TargetSkillName),
+                    OutcomeSkill = ResolveSkill(skills, row.OutcomeSkillName),
+                    SpawnSummon = ResolveSummon(summonLookup, row.SpawnSummonName)
                 };
             }
 
@@ -190,21 +190,21 @@ namespace Pakuri.Data
             var rows = FilterAndSort(
                 model.Artifacts.Values,
                 _ => true,
-                (left, right) => string.Compare(left.Id, right.Id, StringComparison.OrdinalIgnoreCase));
+                (left, right) => string.Compare(left.Name, right.Name, StringComparison.OrdinalIgnoreCase));
             var definitions = new ArtifactDefinition[rows.Count];
             for (var i = 0; i < rows.Count; i++)
             {
                 var row = rows[i];
                 definitions[i] = new ArtifactDefinition
                 {
-                    ArtifactId = row.Id,
+                    ArtifactName = row.Name,
                     DisplayName = row.DisplayName,
-                    SynergyId = row.SynergyId,
+                    SynergyName = row.SynergyName,
                     Description = row.DescriptionText,
                     Icon = LoadSprite(row.IconPath),
                     Effects = Array.FindAll(
                         effects,
-                        effect => string.Equals(effect.ArtifactId, row.Id, StringComparison.OrdinalIgnoreCase))
+                        effect => string.Equals(effect.ArtifactName, row.Name, StringComparison.OrdinalIgnoreCase))
                 };
             }
 
@@ -218,7 +218,7 @@ namespace Pakuri.Data
             var rows = FilterAndSort(
                 model.ArtifactSynergies.Values,
                 _ => true,
-                (left, right) => string.Compare(left.Id, right.Id, StringComparison.OrdinalIgnoreCase));
+                (left, right) => string.Compare(left.Name, right.Name, StringComparison.OrdinalIgnoreCase));
             var definitions = new ArtifactSynergyDefinition[rows.Count];
             for (var i = 0; i < rows.Count; i++)
             {
@@ -229,18 +229,18 @@ namespace Pakuri.Data
                     var level = row.Levels[levelIndex];
                     levels[levelIndex] = new ArtifactSynergyLevelDefinition
                     {
-                        LevelId = level.Id,
+                        LevelName = level.Name,
                         RequiredCount = level.RequiredCount,
                         Description = level.DescriptionText,
                         Effects = Array.FindAll(
                             effects,
-                            effect => string.Equals(effect.SynergyLevelId, level.Id, StringComparison.OrdinalIgnoreCase))
+                            effect => string.Equals(effect.SynergyLevelName, level.Name, StringComparison.OrdinalIgnoreCase))
                     };
                 }
 
                 definitions[i] = new ArtifactSynergyDefinition
                 {
-                    SynergyId = row.Id,
+                    SynergyName = row.Name,
                     DisplayName = row.DisplayName,
                     Summary = row.Summary,
                     Description = row.DescriptionText,
@@ -258,27 +258,27 @@ namespace Pakuri.Data
         {
             for (var i = 0; skills != null && i < skills.Length; i++)
             {
-                if (skills[i] != null && !string.IsNullOrWhiteSpace(skills[i].SkillId))
+                if (skills[i] != null && !string.IsNullOrWhiteSpace(skills[i].SkillName))
                 {
-                    lookup[skills[i].SkillId] = skills[i];
+                    lookup[skills[i].SkillName] = skills[i];
                 }
             }
         }
 
         private static SkillDefinition ResolveSkill(
             Dictionary<string, SkillDefinition> lookup,
-            string skillId)
+            string skillName)
         {
-            return !string.IsNullOrWhiteSpace(skillId) && lookup.TryGetValue(skillId, out var skill)
+            return !string.IsNullOrWhiteSpace(skillName) && lookup.TryGetValue(skillName, out var skill)
                 ? skill
                 : null;
         }
 
         private static SummonDefinition ResolveSummon(
             Dictionary<string, SummonDefinition> lookup,
-            string summonId)
+            string summonName)
         {
-            return !string.IsNullOrWhiteSpace(summonId) && lookup.TryGetValue(summonId, out var summon)
+            return !string.IsNullOrWhiteSpace(summonName) && lookup.TryGetValue(summonName, out var summon)
                 ? summon
                 : null;
         }

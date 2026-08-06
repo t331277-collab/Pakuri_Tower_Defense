@@ -108,7 +108,7 @@ namespace Pakuri.InGame
     {
         public SkillTargetSide TargetSide = SkillTargetSide.Enemy; // 효과를 적용할 진영
         public SkillTargetSelection Selection = SkillTargetSelection.Nearest;
-        public string SelectionStatusId;
+        public string SelectionStatusName;
         public StatusEffectKind SelectionStatusKind;
         public int SelectionStatusMinStacks;
         public bool HasSelectionSkillAttribute;
@@ -124,7 +124,7 @@ namespace Pakuri.InGame
     [Serializable]
     public class SkillDamageSpec
     {
-        public string SkillId;
+        public string SkillName;
         public DamageAttribute Element;
         public float BaseDamage;
         public float AttackPowerCoefficient;
@@ -164,8 +164,8 @@ namespace Pakuri.InGame
     public class SkillDefinition
     {
         [Header("Identity")]
-        public string SkillId;
         public string SkillName;
+        public string DisplayName;
         public SkillSlot Slot;
         public SkillRuntimeKind RuntimeKind;
         public SkillImplementationState ImplementationState = SkillImplementationState.DataOnly;

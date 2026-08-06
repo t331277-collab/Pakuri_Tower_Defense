@@ -84,10 +84,10 @@ namespace Pakuri.InGame
                 ? status.RuntimeDurationSeconds
                 : status.Status.Duration;
             duration = Mathf.Max(0f, duration);
-            var statusId = status.Status.StatusTag;
-            if (!string.IsNullOrWhiteSpace(statusId))
+            var statusName = status.Status.StatusTag;
+            if (!string.IsNullOrWhiteSpace(statusName))
             {
-                duration += AppliedStatusDurationBonus(source, statusId);
+                duration += AppliedStatusDurationBonus(source, statusName);
                 duration = Mathf.Max(0f, duration);
             }
 
@@ -270,16 +270,16 @@ namespace Pakuri.InGame
                     : 0f);
         }
 
-        public static float OutgoingDamageBonus(UnitCombatState source, DamageAttribute attribute, string sourceSkillId = null)
+        public static float OutgoingDamageBonus(UnitCombatState source, DamageAttribute attribute, string sourceSkillName = null)
         {
-            return OutgoingDamageBonus(source, null, attribute, sourceSkillId);
+            return OutgoingDamageBonus(source, null, attribute, sourceSkillName);
         }
 
         public static float OutgoingDamageBonus(
             UnitCombatState source,
             UnitCombatState target,
             DamageAttribute attribute,
-            string sourceSkillId = null)
+            string sourceSkillName = null)
         {
             return SumStacked(source, data =>
             {
@@ -287,7 +287,7 @@ namespace Pakuri.InGame
                     && MeetsConditionalEffectTarget(source, target, data)
                     && StatusConditionRules.MatchesSkillRuntimeKinds(
                         data.ConditionalOutgoingSkillRuntimeKindValues,
-                        sourceSkillId))
+                        sourceSkillName))
                 {
                     return data.Modifiers.DamageBonusRate;
                 }
@@ -335,11 +335,11 @@ namespace Pakuri.InGame
             return results;
         }
 
-        public static float IncomingDamageBonus(UnitCombatState target, UnitCombatState source, DamageAttribute attribute, string sourceSkillId = null)
+        public static float IncomingDamageBonus(UnitCombatState target, UnitCombatState source, DamageAttribute attribute, string sourceSkillName = null)
         {
             return SumStacked(target, data =>
             {
-                var runtimeKindMatches = StatusConditionRules.MatchesSkillRuntimeKinds(data.ConditionalIncomingSkillRuntimeKindValues, sourceSkillId);
+                var runtimeKindMatches = StatusConditionRules.MatchesSkillRuntimeKinds(data.ConditionalIncomingSkillRuntimeKindValues, sourceSkillName);
                 var bonus = 0f;
                 if (runtimeKindMatches)
                 {
@@ -448,9 +448,9 @@ namespace Pakuri.InGame
             });
         }
 
-        public static float AppliedStatusDurationBonus(UnitCombatState source, string statusId)
+        public static float AppliedStatusDurationBonus(UnitCombatState source, string statusName)
         {
-            if (string.IsNullOrWhiteSpace(statusId))
+            if (string.IsNullOrWhiteSpace(statusName))
             {
                 return 0f;
             }
@@ -458,8 +458,8 @@ namespace Pakuri.InGame
             return SumStacked(source, data =>
             {
                 if (string.Equals(
-                    data.AppliedStatusDurationBonusStatusId,
-                    statusId,
+                    data.AppliedStatusDurationBonusStatusName,
+                    statusName,
                     StringComparison.OrdinalIgnoreCase))
                 {
                     return data.AppliedStatusDurationBonus;
@@ -605,7 +605,7 @@ namespace Pakuri.InGame
                 && !StatusConditionRules.MatchesConditionStatus(
                     target,
                     data.ConditionalTargetStatusGroups,
-                    data.ConditionalTargetStatusSourceSkillIds))
+                    data.ConditionalTargetStatusSourceSkillNames))
             {
                 return false;
             }
@@ -662,7 +662,7 @@ namespace Pakuri.InGame
         public static bool MatchesConditionStatus(
             UnitCombatState target,
             StatusConditionGroup[] groups,
-            string[] requiredSourceSkillIds)
+            string[] requiredSourceSkillNames)
         {
             if (groups == null || groups.Length == 0)
             {
@@ -695,7 +695,7 @@ namespace Pakuri.InGame
                     }
 
                     if (stacks < requirement.MinStacks
-                        || !MatchesRequiredSourceSkill(target, requirement.Kind, requiredSourceSkillIds))
+                        || !MatchesRequiredSourceSkill(target, requirement.Kind, requiredSourceSkillNames))
                     {
                         matchesGroup = false;
                         break;
@@ -757,21 +757,21 @@ namespace Pakuri.InGame
 
         public static bool MatchesSkillRuntimeKinds(
             SkillRuntimeKindCondition[] conditions,
-            string sourceSkillId)
+            string sourceSkillName)
         {
             if (conditions == null || conditions.Length == 0)
             {
                 return true;
             }
 
-            if (string.IsNullOrWhiteSpace(sourceSkillId))
+            if (string.IsNullOrWhiteSpace(sourceSkillName))
             {
                 return false;
             }
 
             var catalog = GameDataLoader.CurrentCatalog;
             if (catalog == null
-                || !catalog.TryGetData(sourceSkillId, out SkillDefinition skill)
+                || !catalog.TryGetData(sourceSkillName, out SkillDefinition skill)
                 || skill == null)
             {
                 return false;
@@ -797,9 +797,9 @@ namespace Pakuri.InGame
         private static bool MatchesRequiredSourceSkill(
             UnitCombatState target,
             StatusEffectKind kind,
-            string[] requiredSourceSkillIds)
+            string[] requiredSourceSkillNames)
         {
-            if (requiredSourceSkillIds == null || requiredSourceSkillIds.Length == 0)
+            if (requiredSourceSkillNames == null || requiredSourceSkillNames.Length == 0)
             {
                 return true;
             }
@@ -818,11 +818,11 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                for (var idIndex = 0; idIndex < requiredSourceSkillIds.Length; idIndex++)
+                for (var idIndex = 0; idIndex < requiredSourceSkillNames.Length; idIndex++)
                 {
                     if (string.Equals(
-                        requiredSourceSkillIds[idIndex],
-                        status.SourceSkillId,
+                        requiredSourceSkillNames[idIndex],
+                        status.SourceSkillName,
                         StringComparison.OrdinalIgnoreCase))
                     {
                         return true;

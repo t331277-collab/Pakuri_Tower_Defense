@@ -8,22 +8,22 @@ namespace Pakuri.InGame
     {
         private readonly Color originalColor;
 
-        public RewardButtonView(Button button, TMP_Text summary, TMP_Text what, string prisonerId)
+        public RewardButtonView(Button button, TMP_Text summary, TMP_Text what, string prisonerName)
         {
             Button = button;
             Summary = summary;
             What = what;
-            PrisonerId = prisonerId;
+            PrisonerName = prisonerName;
             originalColor = button != null && button.image != null ? button.image.color : Color.white;
         }
 
         public Button Button { get; }
         public TMP_Text Summary { get; }
         public TMP_Text What { get; }
-        public string PrisonerId { get; private set; }
+        public string PrisonerName { get; private set; }
         public bool Consumed { get; private set; }
 
-        public void SetDisplay(string summary, string what, string prisonerId)
+        public void SetDisplay(string summary, string what, string prisonerName)
         {
             if (Summary != null)
             {
@@ -35,13 +35,13 @@ namespace Pakuri.InGame
                 What.text = what;
             }
 
-            PrisonerId = prisonerId;
+            PrisonerName = prisonerName;
         }
 
         public void Reset()
         {
             Consumed = false;
-            PrisonerId = string.Empty;
+            PrisonerName = string.Empty;
             if (Summary != null)
             {
                 Summary.text = string.Empty;

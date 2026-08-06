@@ -43,6 +43,94 @@ CSV assignment complete and statically verified. Unity TextAsset reimport/runtim
 
 - 2026-08-06: Code Builder inspected the CSV and all `*_Icon` descendants, then assigned 49 existing artifact PNG paths and left `resonance-compass` blank.
 
+## Task: 2026-08-06 String Key Name Migration
+
+### Task title
+
+Rename string-backed ID key names to `_name`/`Name` across active CSV schemas, C# scripts, and serialized scene field references.
+
+### Goals
+
+- Rename active `Assets/CSVdata` schema tokens from `_id`/`id` to `_name`/`name` without converting values to numeric IDs.
+- Rename corresponding C# string key identifiers and lookup method names from `Id`/`id` to `Name`/`name`.
+- Keep display-name semantics distinct where an existing `SkillName` field collided with the renamed skill key; use `DisplayName` for the existing display field.
+- Synchronize the active `InGameScene` serialized spawn field keys with the renamed C# fields.
+
+### Constraints
+
+- Change names only; do not convert string key values or CSV data values to integers.
+- Preserve existing user-owned Artifact/Skill CSV changes and leave historical `Assets/Legacy` content untouched.
+- Do not rename files or add a compatibility schema layer.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and statically/build verified; Unity TextAsset reimport and Play Mode remain user-owned.
+
+### Next Actions
+
+- Reimport/sync the changed CSV TextAssets in Unity and run the existing CSV validation/catalog synchronization if runtime confirmation is required.
+- Verify scene spawn references and skill display text in Play Mode after Unity serialization refresh.
+
+### Evidence
+
+- The inspected migration scope contained 52 CSV files with 324 old schema tokens and 99 C# files, of which 70 contained 2,866 old key-token matches; all 52 CSV files and those 70 C# files were updated.
+- Post-change searches report `OLD_CSV_MATCHES=0`, `OLD_CS_MATCHES=0` across `Pakuri/Assets/CSVdata` and `Pakuri/Assets/Scripts`; active `InGameScene.unity` reports `OLD_SCENE_SERIALIZED_MATCHES=0`.
+- PowerShell `Import-Csv` validation read 52 files and 2,358 rows with `CSV_BAD=0`; `git diff --check` reports 0 lines.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore -v:q` completed with 0 errors and the existing 2 Unity assembly-reference warnings.
+- `SkillDefinition` retains the renamed key as `SkillName` and moves the pre-existing display field to `DisplayName`, preventing the compiler-confirmed duplicate-member collision.
+
+### History
+
+- 2026-08-06: Code Builder inspected CSV type rows, parser string reads, all active C# string key declarations/callers, and the active scene serialization keys before editing.
+- 2026-08-06: Code Builder mechanically renamed active CSV/C# string key names, synchronized `monsterName`/`enemyName`/`summonName` scene fields, corrected the `SkillName`/`DisplayName` semantic collision, and passed the final C# build.
+
+## Task: 2026-08-06 Unity Console Compile Error Repair
+
+### Task title
+
+Repair the 96 Unity Console compile errors caused by stale ID API references in the editor runtime tests.
+
+### Goals
+
+- Remove stale `SkillId`/`MonsterId`/`FindBySkillId` and related API references from the editor test source.
+- Preserve production runtime logic and change only test identifiers/reflection names to the already-implemented `Name` API.
+- Verify Unity recompilation and the editor project build produce no compile errors.
+
+### Constraints
+
+- Modify only `Assets/Tests/Editor/SkillCatalogRuntimeTests.cs` for this error group.
+- Do not restore obsolete ID aliases or change production behavior.
+- Keep existing test values, assertions, and execution flow unchanged.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile verified. Unity Console currently reports zero errors after recompile; Play Mode remains user-owned.
+
+### Next Actions
+
+- If full EditMode green status is required, separately review the three existing data/trigger baseline assertion failures; they are outside this compile-error repair.
+
+### Evidence
+
+- Unity `read_console` initially returned exactly 96 errors, all from `Assets/Tests/Editor/SkillCatalogRuntimeTests.cs`, reporting missing renamed members such as `SkillId`, `MonsterId`, `FindBySkillId`, `ReactionId`, `EffectId`, and `ActiveArtifactEffectIds`.
+- The test file contained 117 old ID-token matches; only those identifiers, local names, and the `PreparedSkillId` reflection string were renamed. Post-change search reports `OLD_TEST_ID_TOKENS=0`.
+- `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore -v:q` completed with 0 errors and the existing 2 Unity assembly-reference warnings.
+- Unity script refresh/recompile completed; after clearing the Console, `read_console` returned `total=0` error entries.
+- EditMode run completed 25 tests; the three reported failures are the known resonance-compass icon expectation and two existing trigger baseline assertions, not compile errors from this repair.
+- `git diff --check` reports 0 lines; the test diff is identifier-only (103 replacements).
+
+### History
+
+- 2026-08-06: Code Builder traced all 96 Console errors to the single editor test file, renamed its stale API references, refreshed Unity scripts, passed the Editor C# build, and confirmed zero Console errors after clearing/rechecking.
+
 ## Task: 2026-08-06 Skill ID and Artifact CSV Ownership Split
 
 ### Task title

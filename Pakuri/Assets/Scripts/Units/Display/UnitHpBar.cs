@@ -56,7 +56,7 @@ namespace Pakuri.InGame
             var displayName = model.Identity.DisplayName;
             if (string.IsNullOrWhiteSpace(displayName))
             {
-                displayName = model.Identity.DefinitionId;
+                displayName = model.Identity.DefinitionName;
             }
 
             displayName = AppendStatusDisplay(displayName, model.Statuses.ActiveStatuses);

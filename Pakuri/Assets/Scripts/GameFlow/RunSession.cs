@@ -24,15 +24,15 @@ namespace Pakuri.InGame
         [Serializable]
         public class RunMonsterState
         {
-            public string MonsterId;
+            public string MonsterName;
             public readonly UnitSkills Skills = new UnitSkills();
             public readonly ArtifactState Artifacts = new ArtifactState();
-            public readonly List<string> ChosenRewardIds = new List<string>();
+            public readonly List<string> ChosenRewardNames = new List<string>();
         }
 
         private readonly List<RunMonsterState> partyMembers = new List<RunMonsterState>();
 
-        public string SelectedMonsterId => partyMembers.Count > 0 ? partyMembers[0].MonsterId : string.Empty;
+        public string SelectedMonsterName => partyMembers.Count > 0 ? partyMembers[0].MonsterName : string.Empty;
         public IReadOnlyList<RunMonsterState> PartyMembers => partyMembers;
         public int StageIndex = 1;
         public int DayIndex = 1;
@@ -48,7 +48,7 @@ namespace Pakuri.InGame
             return session;
         }
 
-        private static string ResolveDefaultActiveSkillId(MonsterDefinition monster)
+        private static string ResolveDefaultActiveSkillName(MonsterDefinition monster)
         {
             if (monster == null || monster.ActiveSkills == null)
             {
@@ -61,9 +61,9 @@ namespace Pakuri.InGame
                 if (skill != null
                     && skill.Slot == SkillSlot.A
                     && skill.IsDefaultLearned
-                    && !string.IsNullOrWhiteSpace(skill.SkillId))
+                    && !string.IsNullOrWhiteSpace(skill.SkillName))
                 {
-                    return skill.SkillId;
+                    return skill.SkillName;
                 }
             }
 
@@ -73,34 +73,34 @@ namespace Pakuri.InGame
         /// Offering에서 선택한 보상과 연결 스킬을 해당 파티원의 Run 상태에 기록한다.
         public void RecordOfferingChoice(
             RunMonsterState member,
-            string rewardId,
-            string linkedChoiceId,
-            string activeSkillId,
-            string passiveSkillId)
+            string rewardName,
+            string linkedChoiceName,
+            string activeSkillName,
+            string passiveSkillName)
         {
             if (member == null)
             {
                 return;
             }
 
-            if (!string.IsNullOrWhiteSpace(rewardId) && !member.ChosenRewardIds.Contains(rewardId))
+            if (!string.IsNullOrWhiteSpace(rewardName) && !member.ChosenRewardNames.Contains(rewardName))
             {
-                member.ChosenRewardIds.Add(rewardId);
+                member.ChosenRewardNames.Add(rewardName);
             }
 
-            if (!string.IsNullOrWhiteSpace(linkedChoiceId) && !member.Skills.HasChoice(linkedChoiceId))
+            if (!string.IsNullOrWhiteSpace(linkedChoiceName) && !member.Skills.HasChoice(linkedChoiceName))
             {
-                member.Skills.AddChoice(linkedChoiceId);
+                member.Skills.AddChoice(linkedChoiceName);
             }
 
-            if (!string.IsNullOrWhiteSpace(activeSkillId) && !member.Skills.HasActiveSkill(activeSkillId))
+            if (!string.IsNullOrWhiteSpace(activeSkillName) && !member.Skills.HasActiveSkill(activeSkillName))
             {
-                member.Skills.AddActiveSkill(activeSkillId);
+                member.Skills.AddActiveSkill(activeSkillName);
             }
 
-            if (!string.IsNullOrWhiteSpace(passiveSkillId) && !member.Skills.HasPassiveSkill(passiveSkillId))
+            if (!string.IsNullOrWhiteSpace(passiveSkillName) && !member.Skills.HasPassiveSkill(passiveSkillName))
             {
-                member.Skills.AddPassiveSkill(passiveSkillId);
+                member.Skills.AddPassiveSkill(passiveSkillName);
             }
         }
 
@@ -113,19 +113,19 @@ namespace Pakuri.InGame
             if (member == null
                 || monster == null
                 || skill == null
-                || string.IsNullOrWhiteSpace(skill.SkillId)
-                || member.Skills.HasActiveSkill(skill.SkillId))
+                || string.IsNullOrWhiteSpace(skill.SkillName)
+                || member.Skills.HasActiveSkill(skill.SkillName))
             {
                 return false;
             }
 
-            var defaultActiveSkillId = ResolveDefaultActiveSkillId(monster);
+            var defaultActiveSkillName = ResolveDefaultActiveSkillName(monster);
             var additionalCount = 0;
-            foreach (var learnedActiveSkillId in member.Skills.LearnedActiveSkillIds)
+            foreach (var learnedActiveSkillName in member.Skills.LearnedActiveSkillNames)
             {
                 if (!string.Equals(
-                    learnedActiveSkillId,
-                    defaultActiveSkillId,
+                    learnedActiveSkillName,
+                    defaultActiveSkillName,
                     StringComparison.OrdinalIgnoreCase))
                 {
                     additionalCount++;
@@ -144,9 +144,9 @@ namespace Pakuri.InGame
             if (member == null
                 || monster == null
                 || passive == null
-                || string.IsNullOrWhiteSpace(passive.SkillId)
-                || member.Skills.HasPassiveSkill(passive.SkillId)
-                || member.Skills.LearnedPassiveSkillIds.Count >= MaxPassiveSkillCount)
+                || string.IsNullOrWhiteSpace(passive.SkillName)
+                || member.Skills.HasPassiveSkill(passive.SkillName)
+                || member.Skills.LearnedPassiveSkillNames.Count >= MaxPassiveSkillCount)
             {
                 return false;
             }
@@ -166,7 +166,7 @@ namespace Pakuri.InGame
                 var active = monster.ActiveSkills[i];
                 if (active != null
                     && active.Slot == passive.RequiredActiveSlot
-                    && member.Skills.HasActiveSkill(active.SkillId))
+                    && member.Skills.HasActiveSkill(active.SkillName))
                 {
                     return true;
                 }
@@ -186,65 +186,65 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            if (member.ChosenRewardIds.Contains(reward.RewardId)
-                || member.Skills.HasChoice(choice.ChoiceId))
+            if (member.ChosenRewardNames.Contains(reward.RewardName)
+                || member.Skills.HasChoice(choice.ChoiceName))
             {
                 return false;
             }
 
-            if (!string.IsNullOrWhiteSpace(reward.ActiveSkillId)
-                && !member.Skills.HasActiveSkill(reward.ActiveSkillId))
+            if (!string.IsNullOrWhiteSpace(reward.ActiveSkillName)
+                && !member.Skills.HasActiveSkill(reward.ActiveSkillName))
             {
                 return false;
             }
 
-            if (!string.IsNullOrWhiteSpace(reward.PassiveSkillId)
-                && !member.Skills.HasPassiveSkill(reward.PassiveSkillId))
+            if (!string.IsNullOrWhiteSpace(reward.PassiveSkillName)
+                && !member.Skills.HasPassiveSkill(reward.PassiveSkillName))
             {
                 return false;
             }
 
-            var sourceSkillId = reward.ActiveSkillId;
-            if (string.IsNullOrWhiteSpace(sourceSkillId))
+            var sourceSkillName = reward.ActiveSkillName;
+            if (string.IsNullOrWhiteSpace(sourceSkillName))
             {
-                sourceSkillId = reward.PassiveSkillId;
+                sourceSkillName = reward.PassiveSkillName;
             }
 
-            return CanChooseSkillChoice(member, sourceSkillId, choice);
+            return CanChooseSkillChoice(member, sourceSkillName, choice);
         }
 
         public bool CanChooseSkillChoice(
             RunMonsterState member,
-            string sourceSkillId,
+            string sourceSkillName,
             SkillChoice choice)
         {
-            if (member == null || choice == null || string.IsNullOrWhiteSpace(choice.ChoiceId))
+            if (member == null || choice == null || string.IsNullOrWhiteSpace(choice.ChoiceName))
             {
                 return false;
             }
 
-            if (member.Skills.HasChoice(choice.ChoiceId))
+            if (member.Skills.HasChoice(choice.ChoiceName))
             {
                 return false;
             }
 
-            var targetSkillId = ResolveChoiceTargetSkillId(choice, sourceSkillId);
+            var targetSkillName = ResolveChoiceTargetSkillName(choice, sourceSkillName);
 
             if (choice.ChoiceGroup == SkillChoiceGroup.ActiveEnhancement)
             {
-                return CountChosenChoices(member, targetSkillId, SkillChoiceGroup.ActiveEnhancement)
+                return CountChosenChoices(member, targetSkillName, SkillChoiceGroup.ActiveEnhancement)
                     < MaxActiveEnhancementCount;
             }
             if (choice.ChoiceGroup == SkillChoiceGroup.ActiveMaster)
             {
-                return CountChosenChoices(member, targetSkillId, SkillChoiceGroup.ActiveEnhancement)
+                return CountChosenChoices(member, targetSkillName, SkillChoiceGroup.ActiveEnhancement)
                         >= MaxActiveEnhancementCount
-                    && CountChosenChoices(member, targetSkillId, SkillChoiceGroup.ActiveMaster)
+                    && CountChosenChoices(member, targetSkillName, SkillChoiceGroup.ActiveMaster)
                         < MaxActiveMasterCount;
             }
             if (choice.ChoiceGroup == SkillChoiceGroup.PassiveEnhancement)
             {
-                return CountChosenChoices(member, targetSkillId, SkillChoiceGroup.PassiveEnhancement)
+                return CountChosenChoices(member, targetSkillName, SkillChoiceGroup.PassiveEnhancement)
                     < MaxPassiveEnhancementCount;
             }
 
@@ -263,7 +263,7 @@ namespace Pakuri.InGame
             for (var i = 0; i < partyMembers.Count; i++)
             {
                 var member = partyMembers[i];
-                if (member != null && member.Artifacts.OwnedArtifactIds.Count < ArtifactState.MaxOwnedArtifactCount)
+                if (member != null && member.Artifacts.OwnedArtifactNames.Count < ArtifactState.MaxOwnedArtifactCount)
                 {
                     return true;
                 }
@@ -272,19 +272,19 @@ namespace Pakuri.InGame
             return false;
         }
 
-        public bool HasArtifact(string artifactId)
+        public bool HasArtifact(string artifactName)
         {
-            if (string.IsNullOrWhiteSpace(artifactId))
+            if (string.IsNullOrWhiteSpace(artifactName))
             {
                 return false;
             }
 
             for (var i = 0; i < partyMembers.Count; i++)
             {
-                var ownedIds = partyMembers[i].Artifacts.OwnedArtifactIds;
-                for (var j = 0; j < ownedIds.Count; j++)
+                var ownedNames = partyMembers[i].Artifacts.OwnedArtifactNames;
+                for (var j = 0; j < ownedNames.Count; j++)
                 {
-                    if (string.Equals(ownedIds[j], artifactId, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(ownedNames[j], artifactName, StringComparison.OrdinalIgnoreCase))
                     {
                         return true;
                     }
@@ -294,18 +294,18 @@ namespace Pakuri.InGame
             return false;
         }
 
-        public bool CanAcquireArtifact(RunMonsterState member, string artifactId)
+        public bool CanAcquireArtifact(RunMonsterState member, string artifactName)
         {
             return member != null
                 && partyMembers.Contains(member)
-                && !HasArtifact(artifactId)
-                && member.Artifacts.CanAdd(artifactId);
+                && !HasArtifact(artifactName)
+                && member.Artifacts.CanAdd(artifactName);
         }
 
-        public bool TryAcquireArtifact(RunMonsterState member, string artifactId)
+        public bool TryAcquireArtifact(RunMonsterState member, string artifactName)
         {
-            return CanAcquireArtifact(member, artifactId)
-                && member.Artifacts.TryAdd(artifactId);
+            return CanAcquireArtifact(member, artifactName)
+                && member.Artifacts.TryAdd(artifactName);
         }
 
         /// 아직 파티에 없는 몬스터를 다음 슬롯에 추가한다.
@@ -315,9 +315,9 @@ namespace Pakuri.InGame
         {
             slotIndex = -1;
             if (monster == null
-                || string.IsNullOrWhiteSpace(monster.MonsterId)
+                || string.IsNullOrWhiteSpace(monster.MonsterName)
                 || partyMembers.Count >= MaxPartyMonsterCount
-                || GetPartyMemberState(monster.MonsterId) != null)
+                || GetPartyMemberState(monster.MonsterName) != null)
             {
                 return false;
             }
@@ -331,22 +331,22 @@ namespace Pakuri.InGame
         {
             var state = new RunMonsterState
             {
-                MonsterId = monster.MonsterId
+                MonsterName = monster.MonsterName
             };
 
-            var defaultActiveSkillId = ResolveDefaultActiveSkillId(monster);
-            if (!string.IsNullOrWhiteSpace(defaultActiveSkillId))
+            var defaultActiveSkillName = ResolveDefaultActiveSkillName(monster);
+            if (!string.IsNullOrWhiteSpace(defaultActiveSkillName))
             {
-                state.Skills.AddActiveSkill(defaultActiveSkillId);
+                state.Skills.AddActiveSkill(defaultActiveSkillName);
             }
 
             partyMembers.Add(state);
             return state;
         }
 
-        public RunMonsterState GetPartyMemberState(string monsterId)
+        public RunMonsterState GetPartyMemberState(string monsterName)
         {
-            if (string.IsNullOrWhiteSpace(monsterId))
+            if (string.IsNullOrWhiteSpace(monsterName))
             {
                 return null;
             }
@@ -354,7 +354,7 @@ namespace Pakuri.InGame
             for (var i = 0; i < partyMembers.Count; i++)
             {
                 var member = partyMembers[i];
-                if (member != null && string.Equals(member.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase))
+                if (member != null && string.Equals(member.MonsterName, monsterName, StringComparison.OrdinalIgnoreCase))
                 {
                     return member;
                 }
@@ -365,26 +365,26 @@ namespace Pakuri.InGame
 
         private static int CountChosenChoices(
             RunMonsterState member,
-            string skillId,
+            string skillName,
             SkillChoiceGroup group)
         {
-            if (member == null || string.IsNullOrWhiteSpace(skillId))
+            if (member == null || string.IsNullOrWhiteSpace(skillName))
             {
                 return 0;
             }
 
             var count = 0;
-            var choiceIds = group == SkillChoiceGroup.ActiveMaster
-                ? member.Skills.ChosenMasterSkillIds
-                : member.Skills.ChosenEnhancementIds;
-            foreach (var choiceId in choiceIds)
+            var choiceNames = group == SkillChoiceGroup.ActiveMaster
+                ? member.Skills.ChosenMasterSkillNames
+                : member.Skills.ChosenEnhancementNames;
+            foreach (var choiceName in choiceNames)
             {
-                if (GameDataLoader.CurrentCatalog.TryGetData(choiceId, out SkillChoice choice)
+                if (GameDataLoader.CurrentCatalog.TryGetData(choiceName, out SkillChoice choice)
                     && choice != null
                     && choice.ChoiceGroup == group
                     && string.Equals(
-                        ResolveChoiceTargetSkillId(choice, string.Empty),
-                        skillId,
+                        ResolveChoiceTargetSkillName(choice, string.Empty),
+                        skillName,
                         StringComparison.OrdinalIgnoreCase))
                 {
                     count++;
@@ -394,26 +394,26 @@ namespace Pakuri.InGame
             return count;
         }
 
-        private static string ResolveChoiceTargetSkillId(
+        private static string ResolveChoiceTargetSkillName(
             SkillChoice choice,
-            string fallbackSkillId)
+            string fallbackSkillName)
         {
             if (choice == null)
             {
-                return fallbackSkillId;
+                return fallbackSkillName;
             }
 
-            if (!string.IsNullOrWhiteSpace(choice.SkillId))
+            if (!string.IsNullOrWhiteSpace(choice.SkillName))
             {
-                return choice.SkillId;
+                return choice.SkillName;
             }
 
-            if (!string.IsNullOrWhiteSpace(choice.TargetSkillId))
+            if (!string.IsNullOrWhiteSpace(choice.TargetSkillName))
             {
-                return choice.TargetSkillId;
+                return choice.TargetSkillName;
             }
 
-            return fallbackSkillId;
+            return fallbackSkillName;
         }
 
     }

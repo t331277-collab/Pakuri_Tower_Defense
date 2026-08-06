@@ -44,21 +44,21 @@ namespace Pakuri.Data
             var monsters = new List<MonsterDefinition>();
             foreach (var entry in SortCatalogEntries(model.CatalogMonsters))
             {
-                var sourceMonster = model.Monsters[entry.RefId];
+                var sourceMonster = model.Monsters[entry.RefName];
                 var monster = ScriptableObject.CreateInstance<MonsterDefinition>();
-                monster.MonsterId = sourceMonster.Id;
+                monster.MonsterName = sourceMonster.Name;
                 monster.DisplayName = sourceMonster.DisplayName;
                 monster.RoleSummary = sourceMonster.RoleSummary;
                 monster.ElementLabel = sourceMonster.ElementLabel;
                 monster.PrimaryAttribute = sourceMonster.PrimaryAttribute;
                 monster.ActiveSkillName = ResolveMonsterSkillDisplayName(
                     model,
-                    sourceMonster.Id,
+                    sourceMonster.Name,
                     PakuriCsvSkillKind.Active,
                     SkillSlot.A);
                 monster.PassiveSkillName = ResolveMonsterSkillDisplayName(
                     model,
-                    sourceMonster.Id,
+                    sourceMonster.Name,
                     PakuriCsvSkillKind.Passive,
                     SkillSlot.F);
                 monster.MonsterIconImage = LoadSprite(sourceMonster.MonsterIconImagePath);
@@ -82,15 +82,15 @@ namespace Pakuri.Data
                     Darkness = sourceMonster.DarknessDefense,
                     Holy = sourceMonster.HolyDefense
                 };
-                monster.InitialRewardChoices = BuildRewardChoices(model, sourceMonster.Id);
+                monster.InitialRewardChoices = BuildRewardChoices(model, sourceMonster.Name);
                 monster.ActiveSkills = BuildActiveSkills(
                     model,
-                    sourceMonster.Id,
+                    sourceMonster.Name,
                     catalog.StatusEffects);
                 monster.PassiveSkills = BuildPassiveSkills(model, monster);
                 var reactions = BuildSkillReactions(
                     model,
-                    sourceMonster.Id,
+                    sourceMonster.Name,
                     monster.ActiveSkills,
                     catalog.StatusEffects);
                 AttachSkillReactions(
@@ -99,7 +99,7 @@ namespace Pakuri.Data
                     reactions);
                 AttachNormalCastEffects(
                     model,
-                    sourceMonster.Id,
+                    sourceMonster.Name,
                     monster.ActiveSkills,
                     monster.PassiveSkills,
                     catalog.StatusEffects);
@@ -117,7 +117,7 @@ namespace Pakuri.Data
 
         private string ResolveMonsterSkillDisplayName(
             SourceModel model,
-            string monsterId,
+            string monsterName,
             PakuriCsvSkillKind skillKind,
             SkillSlot slot)
         {
@@ -127,7 +127,7 @@ namespace Pakuri.Data
                 {
                     if (skill.SkillKind == skillKind
                         && skill.Slot == slot
-                        && string.Equals(skill.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase))
+                        && string.Equals(skill.MonsterName, monsterName, StringComparison.OrdinalIgnoreCase))
                     {
                         return skill.DisplayName;
                     }
@@ -135,18 +135,18 @@ namespace Pakuri.Data
             }
 
             throw new CsvFatalException(
-                $"Monster '{monsterId}' has no '{skillKind}' skill in slot '{slot}'.");
+                $"Monster '{monsterName}' has no '{skillKind}' skill in slot '{slot}'.");
         }
 
         private EnemyDefinition[] BuildEnemies(
             SourceModel model,
-            string stageId,
+            string stageName,
             StatusEffectDefinition[] statusDefinitions)
         {
             var enemies = new List<EnemyDefinition>();
             var sourceEnemies = FilterAndSort(
                 model.Enemies.Values,
-                row => string.Equals(row.StageId, stageId, StringComparison.OrdinalIgnoreCase),
+                row => string.Equals(row.StageName, stageName, StringComparison.OrdinalIgnoreCase),
                 (left, right) =>
                 {
                     var orderCompare = left.SortOrder.CompareTo(right.SortOrder);
@@ -155,13 +155,13 @@ namespace Pakuri.Data
                         return orderCompare;
                     }
 
-                    return string.Compare(left.Id, right.Id, StringComparison.OrdinalIgnoreCase);
+                    return string.Compare(left.Name, right.Name, StringComparison.OrdinalIgnoreCase);
                 });
             for (var i = 0; i < sourceEnemies.Count; i++)
             {
                 var sourceEnemy = sourceEnemies[i];
                 var enemy = ScriptableObject.CreateInstance<EnemyDefinition>();
-                enemy.EnemyId = sourceEnemy.Id;
+                enemy.EnemyName = sourceEnemy.Name;
                 enemy.DisplayName = sourceEnemy.DisplayName;
                 enemy.Image = LoadSprite(sourceEnemy.ImagePath);
                 enemy.Attribute = sourceEnemy.Attribute;
@@ -185,11 +185,11 @@ namespace Pakuri.Data
                 };
                 enemy.ActiveSkills = BuildEnemyAssignedActiveSkills(
                     model,
-                    sourceEnemy.Id,
+                    sourceEnemy.Name,
                     statusDefinitions);
                 var reactions = BuildEnemyAssignedSkillReactions(
                     model,
-                    sourceEnemy.Id,
+                    sourceEnemy.Name,
                     enemy.ActiveSkills,
                     statusDefinitions);
                 AttachSkillReactions(
@@ -198,7 +198,7 @@ namespace Pakuri.Data
                     reactions);
                 enemy.PassiveSkill = BuildEnemyPassiveDefinition(
                     model,
-                    sourceEnemy.PassiveId,
+                    sourceEnemy.PassiveName,
                     reactions);
                 enemy.NexusDamage = sourceEnemy.NexusDamage;
                 enemies.Add(enemy);
@@ -209,12 +209,12 @@ namespace Pakuri.Data
 
         private PassiveSkillDefinition BuildEnemyPassiveDefinition(
             SourceModel model,
-            string passiveId,
+            string passiveName,
             SkillReaction[] reactions)
         {
             if (model == null
-                || string.IsNullOrWhiteSpace(passiveId)
-                || !model.EnemyBaseSkills.TryGetValue(passiveId, out var source)
+                || string.IsNullOrWhiteSpace(passiveName)
+                || !model.EnemyBaseSkills.TryGetValue(passiveName, out var source)
                 || source == null
                 || source.Skill == null)
             {
@@ -223,8 +223,8 @@ namespace Pakuri.Data
 
             return new PassiveSkillDefinition
             {
-                SkillId = source.Skill.Id,
-                SkillName = source.Skill.DisplayName,
+                SkillName = source.Skill.Name,
+                DisplayName = source.Skill.DisplayName,
                 Slot = SkillSlot.F,
                 RuntimeKind = SkillRuntimeKind.Passive,
                 ImplementationState = source.Skill.ImplementationState,
@@ -237,18 +237,18 @@ namespace Pakuri.Data
                 Nodes = AppendReactionNodes(
                     Array.Empty<SkillNode>(),
                     reactions,
-                    source.Skill.Id)
+                    source.Skill.Name)
             };
         }
 
         private SkillDefinition[] BuildEnemyAssignedActiveSkills(
             SourceModel model,
-            string enemyId,
+            string enemyName,
             StatusEffectDefinition[] statusDefinitions)
         {
             if (model == null
-                || string.IsNullOrWhiteSpace(enemyId)
-                || !model.Enemies.TryGetValue(enemyId, out var enemyRow))
+                || string.IsNullOrWhiteSpace(enemyName)
+                || !model.Enemies.TryGetValue(enemyName, out var enemyRow))
             {
                 return Array.Empty<SkillDefinition>();
             }
@@ -256,15 +256,15 @@ namespace Pakuri.Data
             var definitions = new List<SkillDefinition>(2);
             TryAddEnemyAssignedSkillDefinition(
                 model,
-                enemyId,
-                enemyRow.SkillSlotAId,
+                enemyName,
+                enemyRow.SkillSlotAName,
                 SkillSlot.A,
                 statusDefinitions,
                 definitions);
             TryAddEnemyAssignedSkillDefinition(
                 model,
-                enemyId,
-                enemyRow.SkillSlotBId,
+                enemyName,
+                enemyRow.SkillSlotBName,
                 SkillSlot.B,
                 statusDefinitions,
                 definitions);
@@ -274,16 +274,16 @@ namespace Pakuri.Data
 
         private void TryAddEnemyAssignedSkillDefinition(
             SourceModel model,
-            string ownerId,
-            string skillId,
+            string ownerName,
+            string skillName,
             SkillSlot runtimeSlot,
             StatusEffectDefinition[] statusDefinitions,
             List<SkillDefinition> definitions)
         {
             if (model == null
                 || definitions == null
-                || string.IsNullOrWhiteSpace(skillId)
-                || !model.EnemyBaseSkills.TryGetValue(skillId, out var source)
+                || string.IsNullOrWhiteSpace(skillName)
+                || !model.EnemyBaseSkills.TryGetValue(skillName, out var source)
                 || source == null
                 || source.Skill == null)
             {
@@ -291,7 +291,7 @@ namespace Pakuri.Data
             }
 
             definitions.Add(BuildActiveDefinition(
-                ownerId,
+                ownerName,
                 BuildEnemyAssignedSkillDefinition(source, runtimeSlot),
                 statusDefinitions));
         }
@@ -301,7 +301,7 @@ namespace Pakuri.Data
             var row = source.Skill;
             var definition = new ActiveSkillBuildData
             {
-                SkillId = row.Id,
+                SkillName = row.Name,
                 DisplayName = row.DisplayName,
                 Slot = runtimeSlot,
                 RuntimeKind = row.RuntimeKind,
@@ -410,28 +410,28 @@ namespace Pakuri.Data
 
         private SkillReaction[] BuildEnemyAssignedSkillReactions(
             SourceModel model,
-            string enemyId,
+            string enemyName,
             SkillDefinition[] activeSkills,
             StatusEffectDefinition[] statusDefinitions)
         {
             if (model == null
-                || string.IsNullOrWhiteSpace(enemyId)
-                || !model.Enemies.TryGetValue(enemyId, out var enemyRow))
+                || string.IsNullOrWhiteSpace(enemyName)
+                || !model.Enemies.TryGetValue(enemyName, out var enemyRow))
             {
                 return Array.Empty<SkillReaction>();
             }
 
-            var assignedSkillIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            var assignedSkillNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
-                enemyRow.SkillSlotAId,
-                enemyRow.SkillSlotBId
+                enemyRow.SkillSlotAName,
+                enemyRow.SkillSlotBName
             };
 
             var rows = FilterAndSort(
                 model.EnemyTriggers.Values,
-                trigger => trigger.Enabled && assignedSkillIds.Contains(trigger.SourceSkillId),
+                trigger => trigger.Enabled && assignedSkillNames.Contains(trigger.SourceSkillName),
                 (left, right) => left.SortOrder.CompareTo(right.SortOrder));
-            var definitions = new List<SkillReaction>(rows.Count + assignedSkillIds.Count);
+            var definitions = new List<SkillReaction>(rows.Count + assignedSkillNames.Count);
             for (var i = 0; i < rows.Count; i++)
             {
                 var row = rows[i];
@@ -440,15 +440,15 @@ namespace Pakuri.Data
                     new SkillNodeBuildData
                     {
                         OwnerKind = SkillNodeOwnerKind.Trigger.ToString(),
-                        TargetSkillId = row.SourceSkillId,
-                        HandlerId = "ExecuteSkill",
+                        TargetSkillName = row.SourceSkillName,
+                        HandlerName = "ExecuteSkill",
                         EnabledByDefault = true,
                         Params = new[]
                         {
                             new SkillNodeParamBuildData
                             {
-                                ParamKey = "skill_id",
-                                Value = row.TriggeredSkillId
+                                ParamKey = "skill_name",
+                                Value = row.TriggeredSkillName
                             },
                             new SkillNodeParamBuildData
                             {
@@ -460,8 +460,8 @@ namespace Pakuri.Data
                 };
                 var definition = new SkillReaction
                 {
-                    ReactionId = row.Id,
-                    SourceSkillId = row.SourceSkillId,
+                    ReactionName = row.Name,
+                    SourceSkillName = row.SourceSkillName,
                     Event = row.TriggerEvent,
                     SortOrder = row.SortOrder,
                     ProcChance = 1f,
@@ -475,9 +475,9 @@ namespace Pakuri.Data
                 definitions.Add(definition);
             }
 
-            foreach (var skillId in assignedSkillIds)
+            foreach (var skillName in assignedSkillNames)
             {
-                if (!model.EnemyBaseSkills.TryGetValue(skillId, out var source)
+                if (!model.EnemyBaseSkills.TryGetValue(skillName, out var source)
                     || source == null
                     || source.Skill == null
                     || !string.Equals(
@@ -488,7 +488,7 @@ namespace Pakuri.Data
                     continue;
                 }
 
-                var chainTrigger = BuildEnemyChainReaction(enemyId, source, activeSkills);
+                var chainTrigger = BuildEnemyChainReaction(enemyName, source, activeSkills);
                 if (chainTrigger != null)
                 {
                     definitions.Add(chainTrigger);
@@ -500,7 +500,7 @@ namespace Pakuri.Data
 
         /// 연쇄 공격의 후속타를 공용 Trigger와 Single 스킬로 구성한다.
         private static SkillReaction BuildEnemyChainReaction(
-            string enemyId,
+            string enemyName,
             EnemyBaseSkillRow source,
             SkillDefinition[] activeSkills)
         {
@@ -509,8 +509,8 @@ namespace Pakuri.Data
             {
                 if (activeSkills[i] is SingleSkillDefinition single
                     && string.Equals(
-                        single.SkillId,
-                        source.Skill.Id,
+                        single.SkillName,
+                        source.Skill.Name,
                         StringComparison.OrdinalIgnoreCase))
                 {
                     sourceSkill = single;
@@ -527,11 +527,11 @@ namespace Pakuri.Data
                 : source.EffectRadius;
             var followUp = new SkillCastEffect
             {
-                EffectId = source.Skill.Id,
+                EffectName = source.Skill.Name,
                 ResolvedDefinition = new SingleSkillDefinition
                 {
-                    SkillId = source.Skill.Id,
-                    SkillName = source.Skill.Id,
+                    SkillName = source.Skill.Name,
+                    DisplayName = source.Skill.Name,
                     RuntimeKind = SkillRuntimeKind.SingleAttack,
                     ImplementationState = SkillImplementationState.RuntimeImplemented,
                     SkillEffectPrefab = sourceSkill.SkillEffectPrefab,
@@ -558,8 +558,8 @@ namespace Pakuri.Data
 
             return new SkillReaction
             {
-                ReactionId = source.Skill.Id + "__chain_on_hit",
-                SourceSkillId = source.Skill.Id,
+                ReactionName = source.Skill.Name + "__chain_on_hit",
+                SourceSkillName = source.Skill.Name,
                 Event = SkillTriggerEvent.OnHit,
                 ProcChance = 1f,
                 DelaySeconds = Mathf.Max(0f, source.ChainDelaySeconds),
@@ -577,10 +577,10 @@ namespace Pakuri.Data
             var statuses = new List<StatusEffectDefinition>();
             foreach (var row in model.StatusEffects.Values)
             {
-                var kind = StatusValueParser.ParseStatusKind(row.Id);
+                var kind = StatusValueParser.ParseStatusKind(row.Name);
                 var definition = new StatusEffectDefinition
                 {
-                    StatusEffectId = row.Id,
+                    StatusEffectName = row.Name,
                     StatusEffectLabel = row.Label,
                     Kind = kind,
                     Classification = row.Classification,
@@ -606,7 +606,7 @@ namespace Pakuri.Data
                 statuses.Add(definition);
             }
 
-            statuses.Sort((left, right) => string.Compare(left.StatusEffectId, right.StatusEffectId, StringComparison.OrdinalIgnoreCase));
+            statuses.Sort((left, right) => string.Compare(left.StatusEffectName, right.StatusEffectName, StringComparison.OrdinalIgnoreCase));
             return statuses.ToArray();
         }
 
@@ -616,7 +616,7 @@ namespace Pakuri.Data
             {
                 Definition = definition,
                 Kind = definition.Kind,
-                StatusTag = definition.Id,
+                StatusTag = definition.Name,
                 StatusName = definition.StatusEffectLabel,
                 Duration = definition.DefaultDurationSeconds,
                 MaxStacks = definition.MaxStacks,
@@ -680,11 +680,11 @@ namespace Pakuri.Data
             throw new KeyNotFoundException($"Status definition '{kind}' is not registered.");
         }
 
-        private MonsterDefinition.RewardChoiceDefinition[] BuildRewardChoices(SourceModel model, string monsterId)
+        private MonsterDefinition.RewardChoiceDefinition[] BuildRewardChoices(SourceModel model, string monsterName)
         {
             var rewards = FilterAndSort(
                 model.RewardChoices.Values,
-                reward => string.Equals(reward.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase),
+                reward => string.Equals(reward.MonsterName, monsterName, StringComparison.OrdinalIgnoreCase),
                 (left, right) => left.SortOrder.CompareTo(right.SortOrder));
 
             var definitions = new MonsterDefinition.RewardChoiceDefinition[rewards.Count];
@@ -693,9 +693,9 @@ namespace Pakuri.Data
                 var reward = rewards[i];
                 definitions[i] = new MonsterDefinition.RewardChoiceDefinition
                 {
-                    RewardId = reward.Id,
-                    ActiveSkillId = reward.ActiveSkillId,
-                    PassiveSkillId = reward.PassiveSkillId
+                    RewardName = reward.Name,
+                    ActiveSkillName = reward.ActiveSkillName,
+                    PassiveSkillName = reward.PassiveSkillName
                 };
             }
 
@@ -704,14 +704,14 @@ namespace Pakuri.Data
 
         private SkillDefinition[] BuildActiveSkills(
             SourceModel model,
-            string monsterId,
+            string monsterName,
             StatusEffectDefinition[] statusDefinitions,
             IEnumerable<SkillRow> sourceRows = null)
         {
             var skills = FilterAndSort(
                 sourceRows ?? model.Skills.Values,
                 skill => skill.SkillKind == PakuriCsvSkillKind.Active
-                    && string.Equals(skill.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase),
+                    && string.Equals(skill.MonsterName, monsterName, StringComparison.OrdinalIgnoreCase),
                 (left, right) => left.Slot.CompareTo(right.Slot));
 
             var definitions = new SkillDefinition[skills.Count];
@@ -720,7 +720,7 @@ namespace Pakuri.Data
                 var skill = skills[i];
                 var definition = new ActiveSkillBuildData
                 {
-                    SkillId = skill.Id,
+                    SkillName = skill.Name,
                     DisplayName = skill.DisplayName,
                     Slot = skill.Slot,
                     RuntimeKind = skill.RuntimeKind,
@@ -749,7 +749,7 @@ namespace Pakuri.Data
                     HitTargetCount = skill.HitTargetCount,
                     UsePrefabHitbox = skill.UsePrefabHitbox,
                     TargetSelection = skill.TargetSelection,
-                    TargetSelectionStatusId = skill.TargetSelectionStatusId,
+                    TargetSelectionStatusName = skill.TargetSelectionStatusName,
                     TargetSelectionStatusMinStacks = skill.TargetSelectionStatusMinStacks,
                     CooldownSeconds = skill.CooldownSeconds,
                     ActiveDurationSeconds = skill.ActiveDurationSeconds,
@@ -763,25 +763,25 @@ namespace Pakuri.Data
                     ProjectileSpeed = skill.ProjectileSpeed,
                     PierceCount = skill.PierceCount,
                     CriticalAllowed = skill.CriticalAllowed,
-                    DeploymentRequiredTargetStatusId = skill.DeploymentRequiredTargetStatusId,
+                    DeploymentRequiredTargetStatusName = skill.DeploymentRequiredTargetStatusName,
                     DeploymentRequiredTargetStatusMinStacks = skill.DeploymentRequiredTargetStatusMinStacks,
-                    TargetStatusStackStatusId = skill.TargetStatusStackStatusId,
+                    TargetStatusStackStatusName = skill.TargetStatusStackStatusName,
                     TargetStatusStackMaxStacks = skill.TargetStatusStackMaxStacks,
                     TargetStatusStackBaseDamage = skill.TargetStatusStackBaseDamage,
                     TargetStatusStackAttackPowerCoefficient = skill.TargetStatusStackAttackPowerCoefficient,
                     TargetStatusStackSpellPowerCoefficient = skill.TargetStatusStackSpellPowerCoefficient,
-                    ConsumeTargetStatusId = skill.ConsumeTargetStatusId,
+                    ConsumeTargetStatusName = skill.ConsumeTargetStatusName,
                     ConsumeTargetStatusRatio = skill.ConsumeTargetStatusRatio,
                     ConsumeTargetStatusStacks = skill.ConsumeTargetStatusStacks,
                     Summary = skill.Summary,
-                    EnhancementChoices = BuildSkillChoices(model, skill.Id, SkillChoiceGroup.ActiveEnhancement),
-                    MasterSkillChoices = BuildSkillChoices(model, skill.Id, SkillChoiceGroup.ActiveMaster),
-                    Nodes = BuildSkillNodes(model, SkillNodeOwnerKind.Skill, skill.Id, skill.Id)
+                    EnhancementChoices = BuildSkillChoices(model, skill.Name, SkillChoiceGroup.ActiveEnhancement),
+                    MasterSkillChoices = BuildSkillChoices(model, skill.Name, SkillChoiceGroup.ActiveMaster),
+                    Nodes = BuildSkillNodes(model, SkillNodeOwnerKind.Skill, skill.Name, skill.Name)
                 };
 
                 ApplyStatusPayload(definition, skill.Status);
                 definitions[i] = BuildActiveDefinition(
-                    monsterId,
+                    monsterName,
                     definition,
                     statusDefinitions);
             }
@@ -789,13 +789,13 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        private Dictionary<string, string> BuildSkillNodeParamValueLookup(SourceModel model, string nodeId)
+        private Dictionary<string, string> BuildSkillNodeParamValueLookup(SourceModel model, string nodeName)
         {
             var parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             for (var i = 0; i < model.SkillNodeParams.Count; i++)
             {
                 var param = model.SkillNodeParams[i];
-                if (param != null && string.Equals(param.NodeId, nodeId, StringComparison.OrdinalIgnoreCase))
+                if (param != null && string.Equals(param.NodeName, nodeName, StringComparison.OrdinalIgnoreCase))
                 {
                     parameters[param.ParamKey] = param.Value;
                 }
@@ -836,15 +836,15 @@ namespace Pakuri.Data
 
         private SkillReaction[] BuildSkillReactions(
             SourceModel model,
-            string monsterId,
+            string monsterName,
             SkillDefinition[] activeSkills,
             StatusEffectDefinition[] statusDefinitions)
         {
             return BuildSkillReactions(
                 model,
                 trigger => string.Equals(
-                    trigger.MonsterId,
-                    monsterId,
+                    trigger.MonsterName,
+                    monsterName,
                     StringComparison.OrdinalIgnoreCase),
                 activeSkills,
                 statusDefinitions);
@@ -868,23 +868,23 @@ namespace Pakuri.Data
                 var normalizedNodes = BuildSkillNodes(
                     model,
                     GetPassiveTriggerOwnerKind(model, trigger),
-                    trigger.Id,
-                    trigger.SourceSkillId);
+                    trigger.Name,
+                    trigger.SourceSkillName);
                 definitions[i] = new SkillReaction
                 {
-                    ReactionId = trigger.Id,
-                    SourceSkillId = trigger.SourceSkillId,
+                    ReactionName = trigger.Name,
+                    SourceSkillName = trigger.SourceSkillName,
                     Event = trigger.TriggerEvent,
-                    RequiredActiveChoiceIds = StatusValueParser.ParseIdList(trigger.RequiresActiveChoiceId),
-                    ExcludedActiveChoiceIds = StatusValueParser.ParseIdList(trigger.ExcludesActiveChoiceId),
-                    RequiredSourceStatusKind = string.IsNullOrWhiteSpace(trigger.RequiredSourceStatusId)
+                    RequiredActiveChoiceNames = StatusValueParser.ParseIdList(trigger.RequiresActiveChoiceName),
+                    ExcludedActiveChoiceNames = StatusValueParser.ParseIdList(trigger.ExcludesActiveChoiceName),
+                    RequiredSourceStatusKind = string.IsNullOrWhiteSpace(trigger.RequiredSourceStatusName)
                         ? StatusEffectKind.None
-                        : StatusValueParser.ParseStatusKind(trigger.RequiredSourceStatusId),
+                        : StatusValueParser.ParseStatusKind(trigger.RequiredSourceStatusName),
                     RequiredSourceStatusMinStacks = trigger.RequiredSourceStatusMinStacks,
-                    ConditionStatuses = StatusValueParser.ParseConditionStatusExpression(trigger.ConditionStatusId),
-                    ConditionStatusSourceSkillIds = StatusValueParser.ParseIdList(trigger.ConditionStatusSourceSkillId),
+                    ConditionStatuses = StatusValueParser.ParseConditionStatusExpression(trigger.ConditionStatusName),
+                    ConditionStatusSourceSkillNames = StatusValueParser.ParseIdList(trigger.ConditionStatusSourceSkillName),
                     TriggerAttributes = StatusValueParser.ParseDamageAttributes(trigger.TriggerAttribute),
-                    EventSkillIds = StatusValueParser.ParseIdList(trigger.EventSkillId),
+                    EventSkillNames = StatusValueParser.ParseIdList(trigger.EventSkillName),
                     EventSkillRuntimeKindValues = StatusValueParser.ParseSkillRuntimeKindConditions(
                         trigger.EventSkillRuntimeKinds),
                     ProcChance = trigger.ProcChance,
@@ -922,7 +922,7 @@ namespace Pakuri.Data
             return trigger != null
                 && (trigger.TriggerEvent == SkillTriggerEvent.OnCast
                     || (trigger.TriggerEvent == SkillTriggerEvent.OnSkillCast
-                        && string.IsNullOrWhiteSpace(trigger.EventSkillId)));
+                        && string.IsNullOrWhiteSpace(trigger.EventSkillName)));
         }
 
         private static SkillNodeOwnerKind GetPassiveTriggerOwnerKind(
@@ -930,12 +930,12 @@ namespace Pakuri.Data
             SkillTriggerRow trigger)
         {
             if (trigger != null
-                && string.IsNullOrWhiteSpace(trigger.RequiresActiveChoiceId)
-                && model.Skills.TryGetValue(trigger.SourceSkillId, out var sourceSkill)
+                && string.IsNullOrWhiteSpace(trigger.RequiresActiveChoiceName)
+                && model.Skills.TryGetValue(trigger.SourceSkillName, out var sourceSkill)
                 && sourceSkill.SkillKind == PakuriCsvSkillKind.Passive
                 && model.SkillNodes.Values.Any(node =>
                     node.OwnerKind == SkillNodeOwnerKind.Base
-                    && string.Equals(node.OwnerId, trigger.Id, StringComparison.OrdinalIgnoreCase)))
+                    && string.Equals(node.OwnerName, trigger.Name, StringComparison.OrdinalIgnoreCase)))
             {
                 return SkillNodeOwnerKind.Base;
             }
@@ -945,7 +945,7 @@ namespace Pakuri.Data
 
         private void AttachNormalCastEffects(
             SourceModel model,
-            string monsterId,
+            string monsterName,
             SkillDefinition[] activeSkills,
             PassiveSkillDefinition[] passiveSkills,
             StatusEffectDefinition[] statusDefinitions)
@@ -953,8 +953,8 @@ namespace Pakuri.Data
             var rows = FilterAndSort(
                 model.SkillTriggers.Values,
                 trigger => string.Equals(
-                        trigger.MonsterId,
-                        monsterId,
+                        trigger.MonsterName,
+                        monsterName,
                         StringComparison.OrdinalIgnoreCase)
                     && IsNormalCastEffect(trigger),
                 (left, right) => left.SortOrder.CompareTo(right.SortOrder));
@@ -963,11 +963,11 @@ namespace Pakuri.Data
             {
                 var row = rows[i];
                 if (string.Equals(
-                        row.Id,
+                        row.Name,
                         "eve-h-trait-3",
                         StringComparison.OrdinalIgnoreCase)
                     || string.Equals(
-                        row.Id,
+                        row.Name,
                         "ariel-a-master-2",
                         StringComparison.OrdinalIgnoreCase))
                 {
@@ -977,8 +977,8 @@ namespace Pakuri.Data
                 var nodes = BuildSkillNodes(
                     model,
                     GetPassiveTriggerOwnerKind(model, row),
-                    row.Id,
-                    row.SourceSkillId);
+                    row.Name,
+                    row.SourceSkillName);
                 var effectNode = BuildNormalCastEffectNode(
                     row,
                     nodes,
@@ -993,25 +993,25 @@ namespace Pakuri.Data
                 var source = FindSkillDefinition(
                     activeSkills,
                     passiveSkills,
-                    row.SourceSkillId);
+                    row.SourceSkillName);
                 if (source == null)
                 {
                     throw new InvalidOperationException(
-                        "Normal cast effect source is not registered: " + row.SourceSkillId);
+                        "Normal cast effect source is not registered: " + row.SourceSkillName);
                 }
 
-                if (string.IsNullOrWhiteSpace(row.RequiresActiveChoiceId))
+                if (string.IsNullOrWhiteSpace(row.RequiresActiveChoiceName))
                 {
                     source.Nodes = AppendNode(source.Nodes, effectNode);
                     continue;
                 }
 
-                var choice = FindSkillChoice(source, row.RequiresActiveChoiceId);
+                var choice = FindSkillChoice(source, row.RequiresActiveChoiceName);
                 if (choice == null)
                 {
                     throw new InvalidOperationException(
                         "Normal cast effect choice is not registered: "
-                        + row.RequiresActiveChoiceId);
+                        + row.RequiresActiveChoiceName);
                 }
                 choice.Nodes = AppendNode(choice.Nodes, effectNode);
             }
@@ -1020,7 +1020,7 @@ namespace Pakuri.Data
         private static SkillDefinition FindSkillDefinition(
             SkillDefinition[] activeSkills,
             PassiveSkillDefinition[] passiveSkills,
-            string skillId)
+            string skillName)
         {
             if (activeSkills != null)
             {
@@ -1028,8 +1028,8 @@ namespace Pakuri.Data
                 {
                     if (activeSkills[i] != null
                         && string.Equals(
-                            activeSkills[i].SkillId,
-                            skillId,
+                            activeSkills[i].SkillName,
+                            skillName,
                             StringComparison.OrdinalIgnoreCase))
                     {
                         return activeSkills[i];
@@ -1042,8 +1042,8 @@ namespace Pakuri.Data
                 {
                     if (passiveSkills[i] != null
                         && string.Equals(
-                            passiveSkills[i].SkillId,
-                            skillId,
+                            passiveSkills[i].SkillName,
+                            skillName,
                             StringComparison.OrdinalIgnoreCase))
                     {
                         return passiveSkills[i];
@@ -1055,10 +1055,10 @@ namespace Pakuri.Data
 
         private static SkillChoice FindSkillChoice(
             SkillDefinition skill,
-            string choiceId)
+            string choiceName)
         {
-            var choice = FindSkillChoice(skill?.EnhancementChoices, choiceId)
-                ?? FindSkillChoice(skill?.MasterChoices, choiceId);
+            var choice = FindSkillChoice(skill?.EnhancementChoices, choiceName)
+                ?? FindSkillChoice(skill?.MasterChoices, choiceName);
             if (choice != null)
             {
                 return choice;
@@ -1068,7 +1068,7 @@ namespace Pakuri.Data
 
         private static SkillChoice FindSkillChoice(
             SkillChoice[] choices,
-            string choiceId)
+            string choiceName)
         {
             if (choices == null)
             {
@@ -1078,8 +1078,8 @@ namespace Pakuri.Data
             {
                 if (choices[i] != null
                     && string.Equals(
-                        choices[i].ChoiceId,
-                        choiceId,
+                        choices[i].ChoiceName,
+                        choiceName,
                         StringComparison.OrdinalIgnoreCase))
                 {
                     return choices[i];
@@ -1113,7 +1113,7 @@ namespace Pakuri.Data
                     skills[i].Nodes = AppendReactionNodes(
                         skills[i].Nodes,
                         reactions,
-                        skills[i].SkillId);
+                        skills[i].SkillName);
                 }
             }
             for (var i = 0; passives != null && i < passives.Length; i++)
@@ -1123,7 +1123,7 @@ namespace Pakuri.Data
                     passives[i].Nodes = AppendReactionNodes(
                         passives[i].Nodes,
                         reactions,
-                        passives[i].SkillId);
+                        passives[i].SkillName);
                 }
             }
         }
@@ -1131,22 +1131,22 @@ namespace Pakuri.Data
         private static SkillNode[] AppendReactionNodes(
             SkillNode[] nodes,
             SkillReaction[] reactions,
-            string sourceSkillId)
+            string sourceSkillName)
         {
             var result = nodes ?? Array.Empty<SkillNode>();
             for (var i = 0; reactions != null && i < reactions.Length; i++)
             {
                 if (reactions[i] != null
                     && string.Equals(
-                        reactions[i].SourceSkillId,
-                        sourceSkillId,
+                        reactions[i].SourceSkillName,
+                        sourceSkillName,
                         StringComparison.OrdinalIgnoreCase))
                 {
                     result = AppendNode(
                         result,
                         SkillNode.FromOperation(
                             new SkillReactionOp(reactions[i]),
-                            sourceSkillId));
+                            sourceSkillName));
                 }
             }
             return result;
@@ -1156,11 +1156,11 @@ namespace Pakuri.Data
             SourceModel model,
             MonsterDefinition monster)
         {
-            var monsterId = monster.MonsterId;
+            var monsterName = monster.MonsterName;
             var skills = FilterAndSort(
                 model.Skills.Values,
                 skill => skill.SkillKind == PakuriCsvSkillKind.Passive
-                    && string.Equals(skill.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase),
+                    && string.Equals(skill.MonsterName, monsterName, StringComparison.OrdinalIgnoreCase),
                 (left, right) => left.Slot.CompareTo(right.Slot));
 
             var definitions = new PassiveSkillDefinition[skills.Count];
@@ -1169,7 +1169,7 @@ namespace Pakuri.Data
                 var skill = skills[i];
                 var definition = new PassiveSkillBuildData
                 {
-                    PassiveId = skill.Id,
+                    PassiveName = skill.Name,
                     DisplayName = skill.DisplayName,
                     Slot = skill.Slot,
                     RequiredActiveSlot = skill.RequiredActiveSlot,
@@ -1178,9 +1178,9 @@ namespace Pakuri.Data
                     SkillIcon = LoadSprite(skill.SkillIconPath),
                     DescriptionText = skill.DescriptionText,
                     Summary = skill.Summary,
-                    EnhancementChoices = BuildSkillChoices(model, skill.Id, SkillChoiceGroup.PassiveEnhancement),
-                    BaseNodes = BuildPassiveBaseNodes(model, skill.Id),
-                    Nodes = BuildSkillNodes(model, SkillNodeOwnerKind.Passive, skill.Id, skill.Id)
+                    EnhancementChoices = BuildSkillChoices(model, skill.Name, SkillChoiceGroup.PassiveEnhancement),
+                    BaseNodes = BuildPassiveBaseNodes(model, skill.Name),
+                    Nodes = BuildSkillNodes(model, SkillNodeOwnerKind.Passive, skill.Name, skill.Name)
                 };
                 definitions[i] = BuildPassiveDefinition(monster, definition);
             }
@@ -1190,16 +1190,16 @@ namespace Pakuri.Data
 
         private SkillNodeBuildData[] BuildPassiveBaseNodes(
             SourceModel model,
-            string passiveSkillId)
+            string passiveSkillName)
         {
             var result = new List<SkillNodeBuildData>();
             var triggers = FilterAndSort(
                 model.SkillTriggers.Values,
                 trigger => string.Equals(
-                        trigger.SourceSkillId,
-                        passiveSkillId,
+                        trigger.SourceSkillName,
+                        passiveSkillName,
                         StringComparison.OrdinalIgnoreCase)
-                    && string.IsNullOrWhiteSpace(trigger.RequiresActiveChoiceId)
+                    && string.IsNullOrWhiteSpace(trigger.RequiresActiveChoiceName)
                     && GetPassiveTriggerOwnerKind(model, trigger) == SkillNodeOwnerKind.Base,
                 (left, right) => left.SortOrder.CompareTo(right.SortOrder));
 
@@ -1208,12 +1208,12 @@ namespace Pakuri.Data
                 var graphRows = model.SkillNodes.Values
                     .Where(node => node.OwnerKind == SkillNodeOwnerKind.Base
                         && string.Equals(
-                            node.OwnerId,
-                            triggers[i].Id,
+                            node.OwnerName,
+                            triggers[i].Name,
                         StringComparison.OrdinalIgnoreCase))
                     .ToArray();
                 if (graphRows.Length == 0
-                    || graphRows.Any(node => !IsPassiveBaseSnapshotNode(node.HandlerId)))
+                    || graphRows.Any(node => !IsPassiveBaseSnapshotNode(node.HandlerName)))
                 {
                     continue;
                 }
@@ -1221,48 +1221,48 @@ namespace Pakuri.Data
                 result.AddRange(BuildSkillNodes(
                     model,
                     SkillNodeOwnerKind.Base,
-                    triggers[i].Id,
-                    triggers[i].SourceSkillId));
+                    triggers[i].Name,
+                    triggers[i].SourceSkillName));
             }
 
             return result.ToArray();
         }
 
-        private static bool IsPassiveBaseSnapshotNode(string handlerId)
+        private static bool IsPassiveBaseSnapshotNode(string handlerName)
         {
-            return string.Equals(handlerId, "DurationMultiplier", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(handlerId, "ShotIntervalMultiplier", StringComparison.OrdinalIgnoreCase);
+            return string.Equals(handlerName, "DurationMultiplier", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerName, "ShotIntervalMultiplier", StringComparison.OrdinalIgnoreCase);
         }
 
-        private SkillChoiceBuildData[] BuildSkillChoices(SourceModel model, string skillId, SkillChoiceGroup choiceGroup)
+        private SkillChoiceBuildData[] BuildSkillChoices(SourceModel model, string skillName, SkillChoiceGroup choiceGroup)
         {
             var choices = FilterAndSort(
                 model.SkillChoices.Values,
                 choice => choice.ChoiceGroup == choiceGroup
-                    && string.Equals(choice.SkillId, skillId, StringComparison.OrdinalIgnoreCase),
+                    && string.Equals(choice.SkillName, skillName, StringComparison.OrdinalIgnoreCase),
                 (left, right) => left.SortOrder.CompareTo(right.SortOrder));
 
             var definitions = new SkillChoiceBuildData[choices.Count];
             for (var i = 0; i < choices.Count; i++)
             {
                 var choice = choices[i];
-                var targetSkillId = choice.TargetSkillId;
-                if (string.IsNullOrWhiteSpace(targetSkillId))
+                var targetSkillName = choice.TargetSkillName;
+                if (string.IsNullOrWhiteSpace(targetSkillName))
                 {
-                    targetSkillId = choice.SkillId;
+                    targetSkillName = choice.SkillName;
                 }
                 var normalizedNodes = BuildSkillNodes(
                     model,
                     SkillNodeOwnerKind.Choice,
-                    choice.Id,
-                    targetSkillId);
+                    choice.Name,
+                    targetSkillName);
 
                 definitions[i] = new SkillChoiceBuildData
                 {
-                    ChoiceId = choice.Id,
-                    MonsterId = choice.MonsterId,
-                    SkillId = choice.SkillId,
-                    TargetSkillId = targetSkillId,
+                    ChoiceName = choice.Name,
+                    MonsterName = choice.MonsterName,
+                    SkillName = choice.SkillName,
+                    TargetSkillName = targetSkillName,
                     ChoiceGroup = choice.ChoiceGroup,
                     Title = choice.Title,
                     SkillIcon = LoadSprite(choice.SkillIconPath),
@@ -1280,10 +1280,10 @@ namespace Pakuri.Data
 
         private string GetChoiceNodeParam(
             SkillNodeBuildData[] nodes,
-            string handlerId,
+            string handlerName,
             string paramKey)
         {
-            if (nodes == null || string.IsNullOrWhiteSpace(handlerId) || string.IsNullOrWhiteSpace(paramKey))
+            if (nodes == null || string.IsNullOrWhiteSpace(handlerName) || string.IsNullOrWhiteSpace(paramKey))
             {
                 return string.Empty;
             }
@@ -1293,7 +1293,7 @@ namespace Pakuri.Data
                 var node = nodes[nodeIndex];
                 if (node == null
                     || !node.EnabledByDefault
-                    || !string.Equals(node.HandlerId, handlerId, StringComparison.OrdinalIgnoreCase)
+                    || !string.Equals(node.HandlerName, handlerName, StringComparison.OrdinalIgnoreCase)
                     || node.Params == null)
                 {
                     continue;
@@ -1321,13 +1321,13 @@ namespace Pakuri.Data
         private SkillNodeBuildData[] BuildSkillNodes(
             SourceModel model,
             SkillNodeOwnerKind ownerKind,
-            string ownerId,
-            string defaultTargetSkillId)
+            string ownerName,
+            string defaultTargetSkillName)
         {
             var nodes = FilterAndSort(
                 model.SkillNodes.Values,
                 node => node.OwnerKind == ownerKind
-                    && string.Equals(node.OwnerId, ownerId, StringComparison.OrdinalIgnoreCase),
+                    && string.Equals(node.OwnerName, ownerName, StringComparison.OrdinalIgnoreCase),
                 (left, right) => left.SortOrder.CompareTo(right.SortOrder));
 
             if (nodes.Count == 0)
@@ -1339,31 +1339,31 @@ namespace Pakuri.Data
             for (var i = 0; i < nodes.Count; i++)
             {
                 var node = nodes[i];
-                var targetSkillId = node.TargetSkillId;
-                if (string.IsNullOrWhiteSpace(targetSkillId))
+                var targetSkillName = node.TargetSkillName;
+                if (string.IsNullOrWhiteSpace(targetSkillName))
                 {
-                    targetSkillId = defaultTargetSkillId;
+                    targetSkillName = defaultTargetSkillName;
                 }
 
                 var definition = new SkillNodeBuildData
                 {
                     OwnerKind = node.OwnerKind.ToString(),
-                    TargetSkillId = targetSkillId,
-                    HandlerId = node.HandlerId,
+                    TargetSkillName = targetSkillName,
+                    HandlerName = node.HandlerName,
                     EnabledByDefault = node.EnabledByDefault,
-                    Params = BuildSkillNodeParams(model, node.Id)
+                    Params = BuildSkillNodeParams(model, node.Name)
                 };
 
-                if (string.Equals(node.HandlerId, "EffectVisual", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(node.HandlerName, "EffectVisual", StringComparison.OrdinalIgnoreCase))
                 {
-                    var parameters = BuildSkillNodeParamValueLookup(model, node.Id);
+                    var parameters = BuildSkillNodeParamValueLookup(model, node.Name);
                     definition.ResolvedPrefab = LoadPrefab(
                         GetSkillNodeStringParam(parameters, "skill_effect_prefab_path"));
                 }
-                else if (string.Equals(node.HandlerId, "RuntimeEffectVisual", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(node.HandlerId, "ShowVisual", StringComparison.OrdinalIgnoreCase))
+                else if (string.Equals(node.HandlerName, "RuntimeEffectVisual", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(node.HandlerName, "ShowVisual", StringComparison.OrdinalIgnoreCase))
                 {
-                    var parameters = BuildSkillNodeParamValueLookup(model, node.Id);
+                    var parameters = BuildSkillNodeParamValueLookup(model, node.Name);
                     definition.ResolvedRuntimeVisual = BuildRuntimeVisual(
                         GetSkillNodeStringParam(parameters, "runtime_visual_sprite_path"),
                         GetSkillNodeStringParam(parameters, "runtime_visual_animator_controller_path"),
@@ -1382,11 +1382,11 @@ namespace Pakuri.Data
             return definitions;
         }
 
-        private SkillNodeParamBuildData[] BuildSkillNodeParams(SourceModel model, string nodeId)
+        private SkillNodeParamBuildData[] BuildSkillNodeParams(SourceModel model, string nodeName)
         {
             var nodeParams = FilterAndSort(
                 model.SkillNodeParams,
-                param => string.Equals(param.NodeId, nodeId, StringComparison.OrdinalIgnoreCase),
+                param => string.Equals(param.NodeName, nodeName, StringComparison.OrdinalIgnoreCase),
                 (left, right) => string.Compare(left.ParamKey, right.ParamKey, StringComparison.OrdinalIgnoreCase));
 
             if (nodeParams.Count == 0)
@@ -1433,7 +1433,7 @@ namespace Pakuri.Data
                 return;
             }
 
-            definition.StatusEffectId = payload.StatusEffectId;
+            definition.StatusEffectName = payload.StatusEffectName;
             definition.StatusChance = payload.StatusChance;
             definition.StatusEffectLabel = payload.StatusEffectLabel;
             definition.StatusEffectPrefab = LoadPrefab(payload.StatusEffectPrefabPath);

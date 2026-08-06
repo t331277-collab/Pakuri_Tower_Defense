@@ -51,17 +51,17 @@ namespace Pakuri.InGame
             }
 
             var order = 0;
-            var prisoners = manager.PendingPrisonerEnemyIds;
+            var prisoners = manager.PendingPrisonerEnemyNames;
             for (var i = 0; i < prisoners.Count; i++)
             {
-                var prisonerId = prisoners[i];
+                var prisonerName = prisoners[i];
                 var view = ActivateRewardSlot(order++);
                 if (view == null)
                 {
                     break;
                 }
 
-                view.SetDisplay("포로", uiManager.ResolvePrisonerDisplayName(prisonerId), prisonerId);
+                view.SetDisplay("포로", uiManager.ResolvePrisonerDisplayName(prisonerName), prisonerName);
                 BindButton(view.Button, () => OpenPrisonPanel(view));
             }
 

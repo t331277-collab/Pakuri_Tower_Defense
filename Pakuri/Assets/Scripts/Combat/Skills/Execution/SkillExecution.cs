@@ -36,7 +36,7 @@ namespace Pakuri.InGame
             runtime.ProjectileLaunchCount = 0;
             runtime.SkillHitCount = 0;
             runtime.ActiveExecutionData = null;
-            runtime.consecutiveHitTargetUnitId = string.Empty;
+            runtime.consecutiveHitTargetUnitName = string.Empty;
             runtime.consecutiveHitRepeatCount = 0;
         }
 
@@ -84,15 +84,15 @@ namespace Pakuri.InGame
                 return -1;
             }
 
-            var unitId = target.Identity != null ? target.Identity.UnitId : string.Empty;
-            if (string.IsNullOrWhiteSpace(unitId))
+            var unitName = target.Identity != null ? target.Identity.UnitName : string.Empty;
+            if (string.IsNullOrWhiteSpace(unitName))
             {
-                runtime.consecutiveHitTargetUnitId = string.Empty;
+                runtime.consecutiveHitTargetUnitName = string.Empty;
                 runtime.consecutiveHitRepeatCount = 0;
                 return 0;
             }
 
-            if (string.Equals(runtime.consecutiveHitTargetUnitId, unitId, StringComparison.Ordinal))
+            if (string.Equals(runtime.consecutiveHitTargetUnitName, unitName, StringComparison.Ordinal))
             {
                 runtime.consecutiveHitRepeatCount = Math.Min(
                     runtime.consecutiveHitRepeatCount + 1,
@@ -100,7 +100,7 @@ namespace Pakuri.InGame
             }
             else
             {
-                runtime.consecutiveHitTargetUnitId = unitId;
+                runtime.consecutiveHitTargetUnitName = unitName;
                 runtime.consecutiveHitRepeatCount = 0;
             }
 
@@ -488,7 +488,7 @@ namespace Pakuri.InGame
             float rawDamageOverride,
             int recastGeneration,
             float damageMultiplier,
-            string sourceSkillId,
+            string sourceSkillName,
             bool lockToEventTarget,
             bool publishSkillLifecycleEvents,
             bool beginCast,
@@ -532,7 +532,7 @@ namespace Pakuri.InGame
                 hasTargetPoint,
                 targetPoint,
                 beginCast,
-                sourceSkillId,
+                sourceSkillName,
                 eventTarget,
                 lockToEventTarget,
                 publishSkillLifecycleEvents,
@@ -552,7 +552,7 @@ namespace Pakuri.InGame
             Vector2 manualTargetPoint,
             bool beginCast,
             float damageMultiplier,
-            string triggerSourceSkillId)
+            string triggerSourceSkillName)
         {
             if (runtime == null || entry == null)
             {
@@ -582,7 +582,7 @@ namespace Pakuri.InGame
                 hasManualTargetPoint,
                 manualTargetPoint,
                 beginCast,
-                triggerSourceSkillId);
+                triggerSourceSkillName);
         }
 
         /// 대상과 계열 입력을 확정한 뒤 성공한 시전만 상태와 사건에 반영한다.
@@ -598,7 +598,7 @@ namespace Pakuri.InGame
             bool hasManualTargetPoint,
             Vector2 manualTargetPoint,
             bool beginCast,
-            string triggerSourceSkillId,
+            string triggerSourceSkillName,
             UnitCombatState eventTarget = null,
             bool lockToEventTarget = false,
             bool publishSkillLifecycleEvents = true,
@@ -623,9 +623,9 @@ namespace Pakuri.InGame
                 lockToEventTarget: lockToEventTarget,
                 publishSkillLifecycleEvents: publishSkillLifecycleEvents,
                 applyDamageMultiplierToShield: publishSkillLifecycleEvents,
-                sourceSkillId: publishSkillLifecycleEvents
+                sourceSkillName: publishSkillLifecycleEvents
                     ? null
-                    : triggerSourceSkillId,
+                    : triggerSourceSkillName,
                 eventTarget: eventTarget);
             context.IsTrigger = snapshot.IsTrigger;
             if (lockToEventTarget
@@ -643,9 +643,9 @@ namespace Pakuri.InGame
                 return false;
             }
             if (!publishSkillLifecycleEvents
-                && !string.IsNullOrWhiteSpace(triggerSourceSkillId))
+                && !string.IsNullOrWhiteSpace(triggerSourceSkillName))
             {
-                snapshot.PreparedSkillId = triggerSourceSkillId;
+                snapshot.PreparedSkillName = triggerSourceSkillName;
             }
             var lifecycleCenter = hasManualTargetPoint
                 ? manualTargetPoint
@@ -658,7 +658,7 @@ namespace Pakuri.InGame
                     SkillTriggerEvent.BuildExecutionData,
                     new SkillExecutionContext(
                         entry.Model,
-                        definition.SkillId,
+                        definition.SkillName,
                         eventTarget,
                         lifecycleCenter,
                         0f,
@@ -691,7 +691,7 @@ namespace Pakuri.InGame
                         SkillTriggerEvent.OnCast,
                         new SkillExecutionContext(
                             entry.Model,
-                            definition.SkillId,
+                            definition.SkillName,
                             eventTarget,
                             lifecycleCenter,
                             0f,
@@ -704,7 +704,7 @@ namespace Pakuri.InGame
                         entry,
                         runtime,
                         context,
-                        triggerSourceSkillId);
+                        triggerSourceSkillName);
                 }
             }
 
@@ -743,7 +743,7 @@ namespace Pakuri.InGame
                     ownerEntry,
                     runtime,
                     publishSkillLifecycleEvents: false,
-                    sourceSkillId: runtime.SkillId);
+                    sourceSkillName: runtime.SkillName);
                 ExecuteCastEffects(context, snapshot, enemyTargetsOnly);
             }
         }
@@ -759,7 +759,7 @@ namespace Pakuri.InGame
             Vector2 targetPoint,
             bool hasTargetPoint,
             int recastGeneration,
-            string sourceSkillId,
+            string sourceSkillName,
             bool lockToEventTarget,
             float damageMultiplier,
             bool hasRawDamageOverride,
@@ -801,7 +801,7 @@ namespace Pakuri.InGame
                     recastGeneration: recastGeneration,
                     lockToEventTarget: lockToEventTarget,
                     publishSkillLifecycleEvents: publishSkillLifecycleEvents,
-                    sourceSkillId: sourceSkillId);
+                    sourceSkillName: sourceSkillName);
                 var recastSnapshot = effect.InheritSnapshot
                     ? sourceSnapshot
                     : SkillExecutionRules.CreateDefinitionSnapshot(zone);
@@ -853,7 +853,7 @@ namespace Pakuri.InGame
                 hasTargetPoint,
                 targetPoint,
                 false,
-                sourceSkillId,
+                sourceSkillName,
                 eventTarget,
                 lockToEventTarget,
                 publishSkillLifecycleEvents,
@@ -934,7 +934,7 @@ namespace Pakuri.InGame
                     0f,
                     0f,
                     DamageAttribute.Physical,
-                    context.SourceSkillId,
+                    context.SourceSkillName,
                     context.Caster,
                     recastGeneration: context.RecastGeneration);
                 return ApplyReactionCommand(
@@ -977,7 +977,7 @@ namespace Pakuri.InGame
                 targetPoint,
                 hasTargetPoint,
                 context.RecastGeneration,
-                effect.EffectId,
+                effect.EffectName,
                 false,
                 effect.DamageMultiplier,
                 hasRawDamageOverride,
@@ -993,7 +993,7 @@ namespace Pakuri.InGame
             CombatUnitEntry entry,
             SkillExecutionState runtime,
             SkillExecutionContext context,
-            string triggerSourceSkillId = null)
+            string triggerSourceSkillName = null)
         {
             if (context == null || context.IsTrigger)
             {
@@ -1013,9 +1013,9 @@ namespace Pakuri.InGame
                 combatManager,
                 roster,
                 entry.Model,
-                runtime.Data.SkillId,
+                runtime.Data.SkillName,
                 center,
-                triggerSourceSkillId);
+                triggerSourceSkillName);
         }
 
         /// 확정된 실행값을 물리적 형태에 맞는 실행기로 보낸다.
@@ -1067,7 +1067,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            snapshot.PreparedSkillId = definition.SkillId;
+            snapshot.PreparedSkillName = definition.SkillName;
             switch (definition.RuntimeKind)
             {
                 case SkillRuntimeKind.MagazineProjectile:
@@ -1484,7 +1484,7 @@ namespace Pakuri.InGame
         {
             var primaryCenter = SkillTargeting.AreaCenter(context, skill.Targeting, skill.Area);
             var usesStatusFilteredDeployments =
-                !string.IsNullOrWhiteSpace(skill.DeploymentRequiredTargetStatusId);
+                !string.IsNullOrWhiteSpace(skill.DeploymentRequiredTargetStatusName);
             var usesResolvedDeployments = skill.UseMultiDeployment || usesStatusFilteredDeployments;
             var coverAll = (skill.Area != null && skill.Area.CoverAll)
                 || (skill.Targeting != null && skill.Targeting.CoverAll);
@@ -1561,7 +1561,7 @@ namespace Pakuri.InGame
             snapshot.PreparedTargetStatusStackDamage =
                 DamageCalculator.CalculateRawDamage(context.Caster, skill.TargetStatusStackDamage);
             snapshot.PreparedTargetStatusStackDamageRateBonus =
-                snapshot.TargetStatusStackDamageRateBonus(skill.TargetStatusStackStatusId);
+                snapshot.TargetStatusStackDamageRateBonus(skill.TargetStatusStackStatusName);
             snapshot.PreparedConsumeTargetStatusKind = skill.ConsumeTargetStatusKind;
             snapshot.PreparedConsumeTargetStatusRatio = snapshot.HasConsumeTargetStatusRatioOverride
                 ? snapshot.ConsumeTargetStatusRatioOverride
@@ -1746,13 +1746,13 @@ namespace Pakuri.InGame
                 || !SkillExecutionRules.ResolveHitCountCooldownRefund(
                     snapshot,
                     hitCount,
-                    out var targetSkillId,
+                    out var targetSkillName,
                     out var secondsRatio))
             {
                 return;
             }
 
-            var targetRuntime = sourceRuntime.Owner.SkillState.FindBySkillId(targetSkillId);
+            var targetRuntime = sourceRuntime.Owner.SkillState.FindBySkillName(targetSkillName);
             if (targetRuntime != null)
             {
                 ReduceCooldownRemaining(
@@ -1865,7 +1865,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var sourceRuntime = source.SkillState.FindBySkillId(trigger.SourceSkillId);
+            var sourceRuntime = source.SkillState.FindBySkillName(trigger.SourceSkillName);
             var targetPoint = triggerContext.EventCenter;
             if (trigger.CenterMode == SkillTriggerCenterMode.Caster && sourceEntry.Transform != null)
             {
@@ -1893,7 +1893,7 @@ namespace Pakuri.InGame
                         targetPoint,
                         true,
                         triggerContext.RecastGeneration,
-                        trigger.SourceSkillId,
+                        trigger.SourceSkillName,
                         trigger.LockToEventTarget,
                         trigger.DamageMultiplier,
                         trigger.DamageValueSource != SkillTriggerDamageValueSource.Fixed,
@@ -1961,9 +1961,9 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                var runtimes = string.IsNullOrWhiteSpace(command.TargetId)
+                var runtimes = string.IsNullOrWhiteSpace(command.TargetName)
                     ? target.SkillState.ActiveSkills
-                    : target.SkillState.FindBySkillId(command.TargetId) is SkillExecutionState matchedRuntime
+                    : target.SkillState.FindBySkillName(command.TargetName) is SkillExecutionState matchedRuntime
                         ? new[] { matchedRuntime }
                         : Array.Empty<SkillExecutionState>();
                 for (var runtimeIndex = 0; runtimeIndex < runtimes.Count; runtimeIndex++)

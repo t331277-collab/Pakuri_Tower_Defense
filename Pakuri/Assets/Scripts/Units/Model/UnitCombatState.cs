@@ -28,8 +28,8 @@ namespace Pakuri.InGame
     [Serializable]
     public class UnitIdentity
     {
-        public string UnitId;
-        public string DefinitionId;
+        public string UnitName;
+        public string DefinitionName;
         public string DisplayName;
         public UnitSide Side;
         public UnitRole Role;
