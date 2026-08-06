@@ -434,6 +434,10 @@ namespace Pakuri.Data
 				}
 				status.ConditionalTargetStatusSourceSkillIds =
 					StatusValueParser.ParseIdList(GetParam(node, "source_skill_id"));
+				status.ConditionalTargetSide = GetEnumParam(
+					node,
+					"target_side",
+					SkillTargetSide.Self);
 			}
 			else if (string.Equals(handler, "ConditionAnyStatus", StringComparison.OrdinalIgnoreCase))
 			{
@@ -459,6 +463,10 @@ namespace Pakuri.Data
 				status.ConditionalTargetStatusGroups = groups;
 				status.ConditionalTargetStatusSourceSkillIds =
 					StatusValueParser.ParseIdList(GetParam(node, "source_skill_id"));
+				status.ConditionalTargetSide = GetEnumParam(
+					node,
+					"target_side",
+					SkillTargetSide.Self);
 			}
 			else if (string.Equals(handler, "ConditionHealthRatioMax", StringComparison.OrdinalIgnoreCase))
 			{

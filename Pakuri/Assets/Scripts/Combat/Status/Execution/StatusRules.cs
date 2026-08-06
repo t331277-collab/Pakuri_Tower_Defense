@@ -199,14 +199,20 @@ namespace Pakuri.InGame
                 MinimumActionMultiplier,
                 1f + SumStacked(
                     model,
-                    data => MeetsConditionalSourceStatus(model, data)
+                    data => MeetsConditionalEffectTarget(model, model, data)
                         ? data.Modifiers.ActionSpeedBonus
                         : 0f));
         }
 
         public static float MoveSpeedMultiplier(UnitCombatState model)
         {
-            return Mathf.Max(0f, 1f + SumStacked(model, data => data.MoveSpeedBonus));
+            return Mathf.Max(
+                0f,
+                1f + SumStacked(
+                    model,
+                    data => MeetsConditionalEffectTarget(model, model, data)
+                        ? data.MoveSpeedBonus
+                        : 0f));
         }
 
         public static float AttackPowerMultiplier(UnitCombatState model)
@@ -215,19 +221,31 @@ namespace Pakuri.InGame
                 0f,
                 1f + SumStacked(
                     model,
-                    data => MeetsConditionalSourceStatus(model, data)
+                    data => MeetsConditionalEffectTarget(model, model, data)
                         ? data.Modifiers.AttackPowerBonus
                         : 0f));
         }
 
         public static float SpellPowerMultiplier(UnitCombatState model)
         {
-            return Mathf.Max(0f, 1f + SumStacked(model, data => data.Modifiers.SpellPowerBonus));
+            return Mathf.Max(
+                0f,
+                1f + SumStacked(
+                    model,
+                    data => MeetsConditionalEffectTarget(model, model, data)
+                        ? data.Modifiers.SpellPowerBonus
+                        : 0f));
         }
 
         public static float ShieldReceivedMultiplier(UnitCombatState model)
         {
-            return Mathf.Max(0f, 1f + SumStacked(model, data => data.Modifiers.ShieldReceivedBonus));
+            return Mathf.Max(
+                0f,
+                1f + SumStacked(
+                    model,
+                    data => MeetsConditionalEffectTarget(model, model, data)
+                        ? data.Modifiers.ShieldReceivedBonus
+                        : 0f));
         }
 
         public static float CriticalChanceBonus(
@@ -236,7 +254,7 @@ namespace Pakuri.InGame
         {
             return SumStacked(
                 model,
-                data => MeetsConditionalEffectTarget(target, data)
+                data => MeetsConditionalEffectTarget(model, target, data)
                     ? data.Modifiers.CritChanceBonusRate
                     : 0f);
         }
@@ -247,7 +265,7 @@ namespace Pakuri.InGame
         {
             return SumStacked(
                 model,
-                data => MeetsConditionalEffectTarget(target, data)
+                data => MeetsConditionalEffectTarget(model, target, data)
                     ? data.Modifiers.CritDamageBonusRate
                     : 0f);
         }
@@ -266,7 +284,7 @@ namespace Pakuri.InGame
             return SumStacked(source, data =>
             {
                 if (MatchesAttribute(data, attribute)
-                    && MeetsConditionalEffectTarget(target, data)
+                    && MeetsConditionalEffectTarget(source, target, data)
                     && StatusConditionRules.MatchesSkillRuntimeKinds(
                         data.ConditionalOutgoingSkillRuntimeKindValues,
                         sourceSkillId))
@@ -301,6 +319,7 @@ namespace Pakuri.InGame
 
                 var data = RuntimeData(runtime);
                 if (data == null
+                    || !MeetsConditionalSourceStatus(runtime.SourceUnit, data)
                     || data.OutgoingAdditionalDamageMultiplier <= 0f
                     || data.OutgoingAdditionalDamageTriggerAttribute != triggerAttribute)
                 {
@@ -335,7 +354,7 @@ namespace Pakuri.InGame
                 {
                     bonus += data.ConditionalDamageTakenBonus;
                 }
-                if (!MeetsConditionalEffectTarget(target, data))
+                if (!MeetsConditionalEffectTarget(target, target, data))
                 {
                     bonus = 0f;
                 }
@@ -362,11 +381,13 @@ namespace Pakuri.InGame
                 }
 
                 var data = RuntimeData(status);
-                if (data == null || !MatchesAttribute(data, attribute))
+                if (data == null
+                    || !MeetsConditionalSourceStatus(status.SourceUnit, data)
+                    || !MatchesAttribute(data, attribute))
                 {
                     continue;
                 }
-                if (!MeetsConditionalEffectTarget(target, data))
+                if (!MeetsConditionalEffectTarget(target, target, data))
                 {
                     continue;
                 }
@@ -387,7 +408,7 @@ namespace Pakuri.InGame
             {
                 if (MatchesAttribute(data, attribute))
                 {
-                    return MeetsConditionalEffectTarget(target, data)
+                    return MeetsConditionalEffectTarget(target, target, data)
                         ? data.FlatElementResistReduction
                         : 0f;
                 }
@@ -398,12 +419,20 @@ namespace Pakuri.InGame
 
         public static float CriticalDamageTakenBonus(UnitCombatState target)
         {
-            return SumStacked(target, data => data.CriticalDamageTakenBonus);
+            return SumStacked(
+                target,
+                data => MeetsConditionalEffectTarget(target, target, data)
+                    ? data.CriticalDamageTakenBonus
+                    : 0f);
         }
 
         public static float AilmentResistanceBonus(UnitCombatState target)
         {
-            return Mathf.Clamp01(SumStacked(target, data => data.AilmentResistanceBonus));
+            return Mathf.Clamp01(SumStacked(
+                target,
+                data => MeetsConditionalEffectTarget(target, target, data)
+                    ? data.AilmentResistanceBonus
+                    : 0f));
         }
 
         public static float ConditionalStatusChanceBonus(UnitCombatState source, UnitCombatState target)
@@ -492,7 +521,8 @@ namespace Pakuri.InGame
                 }
 
                 var data = RuntimeData(runtime);
-                if (data == null)
+                if (data == null
+                    || !MeetsConditionalSourceStatus(runtime.SourceUnit, data))
                 {
                     continue;
                 }
@@ -548,13 +578,17 @@ namespace Pakuri.InGame
         }
 
         private static bool MeetsConditionalEffectTarget(
-            UnitCombatState target,
+            UnitCombatState carrier,
+            UnitCombatState effectTarget,
             StatusRuntimeData data)
         {
             if (data == null)
             {
                 return false;
             }
+            var target = data.ConditionalTargetSide == SkillTargetSide.Enemy
+                ? effectTarget
+                : carrier;
             if (data.ConditionalTargetHealthRatioMax > 0f)
             {
                 if (target?.Resources == null

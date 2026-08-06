@@ -2330,19 +2330,18 @@ Code Builder.
 
 ### Status
 
-Phase 2 implemented and compiled. Passive lifetime conversion pending Phase 3.
+Phase 3 implemented and compiled. Focused regression coverage pending Phase 4.
 
 ### Next Actions
 
-- Phase 3: replace obsolete 0.5-second passive `StatusModifier` lifetimes with the Stage-permanent contract and correct conditional modifier evaluation where required.
 - Phase 4: add focused regression coverage, run final static/build checks, and finalize all three routed boards.
 
 ### Evidence
 
 - `StageManager.ContinueToNextDay` calls `ResetCombatState`, which clears player statuses and shields through `MonsterDayRecovery.ResetTransient`.
 - Existing player models remain registered, so `SpawnSelectedPlayerUnit` and `RestorePlayerPartyFromSession` skip registration and do not call `NotifyPlayerUnitRegistered` on later Days.
-- `NotifyPlayerUnitRegistered` currently owns `RefreshPassiveEffects` and `DispatchCombatStartOnce`, coupling roster entry to Stage start.
-- `StageManager.RunCurrentDayFlow` prepares artifact effects after `SpawnSelectedPlayerUnit`, so player `CombatStart` can run before artifact reactions exist.
+- Before Phase 2, `NotifyPlayerUnitRegistered` owned `RefreshPassiveEffects` and `DispatchCombatStartOnce`, coupling roster entry to Stage start.
+- Before Phase 2, `StageManager.RunCurrentDayFlow` prepared artifact effects after player registration, so player `CombatStart` could run before artifact reactions existed.
 - Authoring inventory found 58 passive `OnCast` `StatusModifier` effects with `SetDuration(0.5)`: 25 target `AllAllies`, 33 target `Enemy`, 11 are unconditional, and 47 carry conditions.
 - `GameDataCatalogBuilder.Nodes` treats duration values of at least 9999 as `Permanent`; `MonsterDayRecovery.ResetTransient` still clears those statuses at the next Stage boundary.
 - The existing 12-second `eve-f` shield and 9999-duration `ariel-g` shield are separate `ApplyShield` effects and are not part of the 58 status-modifier rows.
@@ -2350,9 +2349,15 @@ Phase 2 implemented and compiled. Passive lifetime conversion pending Phase 3.
 - `InGameCombatManager.BeginPlayerCombat` iterates the registered non-Nexus player roster, refreshes passives, and dispatches `CombatStart` once through the existing per-Stage dispatch set.
 - `StageManager.RunCurrentDayFlow` calls `BeginPlayerCombat` after `ArtifactSynergyManager.PrepareStage` and before encounter lookup/spawning.
 - `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` and the corresponding Editor project build both completed with 0 errors; only the existing 2 assembly-reference warnings remain.
+- All verified passive `StatusModifier` `SetDuration(0.5)` rows were changed to 9999: exact CSV diff is 58 additions and 58 deletions, with zero remaining 0.5 rows.
+- The `eve-f@effect1` `ApplyShield` duration remains 12 seconds; no shield, damage, heal, or recast duration was changed.
+- `StatusRuntimeData` now retains `ConditionStatus.target_side`; calculations use the status carrier for ally-side conditions and the combat target for enemy-side conditions.
+- `StatusRuntimeInstance` retains the source unit reference, so `RequiredSourceStatus` checks the original caster instead of each aura recipient.
+- Phase 3 runtime and Editor builds completed with 0 errors and the existing 2 assembly-reference warnings.
 
 ### History
 
 - 2026-08-06: User approved Code Builder implementation, required the design to be recorded in Markdown, prohibited a 0.5-second periodic refresh system, requested deletion of obsolete code, and required one Git commit per Phase.
 - 2026-08-06: Code Builder completed the current-code, caller, CSV, status-expiry, artifact-order, and test-gap inventory without modifying runtime code.
 - 2026-08-06: Phase 2 separated player registration from the per-Stage player effect boundary and compiled both runtime and Editor assemblies.
+- 2026-08-06: Phase 3 converted the 58 Stage-long passive modifiers to the existing permanent sentinel and repaired dynamic ally/enemy/source condition evaluation without adding a timer.

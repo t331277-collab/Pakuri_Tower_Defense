@@ -428,6 +428,7 @@ namespace Pakuri.InGame
 
         public StatusRuntimeData SourceData { get; private set; }
         public string SourceSkillId { get; private set; }
+        public UnitCombatState SourceUnit { get; private set; }
         public string SourceUnitId { get; private set; }
         public string SourceDefinitionId { get; private set; }
         public StatusTargetScope TargetScope { get; private set; } = StatusTargetScope.Unspecified;
@@ -458,6 +459,7 @@ namespace Pakuri.InGame
 
         public void SetSourceUnit(UnitCombatState source)
         {
+            SourceUnit = source;
             SourceUnitId = string.Empty;
             SourceDefinitionId = string.Empty;
             if (source == null || source.Identity == null)

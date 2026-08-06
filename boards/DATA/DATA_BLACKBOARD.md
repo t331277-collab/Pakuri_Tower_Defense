@@ -1532,11 +1532,10 @@ Code Builder.
 
 ### Status
 
-Phase 1 inventory complete; data implementation pending Phase 3.
+Phase 3 data implementation complete and compiled. Regression assertion pending Phase 4.
 
 ### Next Actions
 
-- Convert the verified 58 `StatusModifier` `SetDuration(0.5)` rows to 9999 only after the Stage-start and conditional runtime contracts are ready.
 - Add a catalog regression assertion that no passive `OnCast` `StatusModifier` retains the obsolete 0.5 lifetime.
 
 ### Evidence
@@ -1545,8 +1544,12 @@ Phase 1 inventory complete; data implementation pending Phase 3.
 - All 58 currently use `SetDuration(0.5)`.
 - `GameDataCatalogBuilder.Nodes.BuildNormalStatusModifierEffect` maps durations of at least 9999 to `StatusRuntimeData.Permanent=true`.
 - `StatusRuntimeInstance.Tick` does not decrement permanent statuses, while `MonsterDayRecovery.ResetTransient` clears the complete status collection between Stages.
+- The passive graph CSV diff contains exactly 58 `0.5` removals and 58 `9999` additions; parsed verification reports `PASSIVE_0_5=0`.
+- Parsed verification reports one unchanged `eve-f@effect1` `SetDuration(12)` row.
+- No schema, node ID, node order, target, condition, or non-duration value changed in the passive graph.
 
 ### History
 
 - 2026-08-06: User selected explicit authored durations for timed effects and the existing Stage-permanent contract for Stage-long passive effects.
 - 2026-08-06: Code Builder recorded the exact affected-row inventory before changing CSV data.
+- 2026-08-06: Phase 3 replaced only the 58 verified Stage-long passive modifier durations with 9999 and retained explicit timed effects.
