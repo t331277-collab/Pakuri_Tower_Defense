@@ -260,7 +260,6 @@ namespace Pakuri.Data
 			}
 			case SkillNodeOwnerKind.Base:
 				if (!model.SkillTriggers.TryGetValue(node.OwnerId, out var baseTrigger)
-					|| baseTrigger.TriggerEvent != SkillTriggerEvent.OnCast
 					|| !string.IsNullOrWhiteSpace(baseTrigger.RequiresActiveChoiceId)
 					|| !model.Skills.TryGetValue(baseTrigger.SourceSkillId, out var baseSkill)
 					|| baseSkill.SkillKind != PakuriCsvSkillKind.Passive)

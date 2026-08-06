@@ -30,22 +30,22 @@ Code Builder.
 
 ### Status
 
-Implementation complete in source and authoring data; Unity catalog/EditMode verification remains unavailable because Unity MCP reports zero connected instances.
+Implementation complete in source and authoring data; Unity catalog sync/validation and the focused EditMode runtime test passed. Play Mode OfferingPanel -> next Stage verification remains user-owned.
 
 ### Next Actions
 
-- Reimport the changed CSV TextAssets in Unity and run `PassiveStageModifiersPreserveLifetimeAndDynamicConditions` plus the new passive-choice/Base-ID assertions.
-- User verifies OfferingPanel acquisition and next-Stage passive application in Play Mode.
+- User verifies OfferingPanel acquisition and next-Stage passive application in Play Mode, specifically Eve-F's 12-second shield.
 
 ### Evidence
 
 - `skill_choices_passive.csv` now has 75 data rows, seven columns, no `choice_group`, and every passive skill has exactly three inferred `PassiveEnhancement` choices.
 - `CsvRowParser.ParseSkillChoiceRow` accepts an implicit group; `CsvSourceLoader` supplies `PassiveEnhancement` only for the passive choice file.
-- `SkillGraphParser` and `CsvDataValidator` accept/validate `owner_kind=Base`; `GameDataCatalogBuilder` routes blank-choice passive `OnCast` effects through Base graph owners.
-- Passive Base trigger/graph IDs now use `*-base-effect-N`; trait auxiliary IDs use `*-trait-N-effect-N`. 30 Base trigger groups map to 142 Base graph rows with zero missing owners, duplicate node orders, or order gaps.
+- `SkillGraphParser` and `CsvDataValidator` accept/validate `owner_kind=Base`; `GameDataCatalogBuilder` routes blank-choice passive Base triggers through Base graph owners.
+- Passive Base trigger/graph IDs now use `*-base-effect-N`; trait auxiliary IDs use `*-trait-N-effect-N`. 144 Base graph rows have zero missing trigger/source joins; the two direct snapshot Base groups (`sein-i`, `vega-h`) are retained in `PassiveSkillDefinition.BaseNodes` and applied when execution data is built.
+- Remaining five passive-file `@effect` groups are active-skill reaction owners (`rin-e`, `sein-c`, `sein-d`, `sein-e` sources), so they were intentionally not renamed as passive Base/Trait IDs.
 - Original trigger non-ID fields and graph non-owner fields compare equal after ID normalization; `SetDuration=9999` and Eve-F shield `SetDuration=12` remain unchanged.
 - `dotnet build Pakuri/Pakuri.sln --no-restore -v:q` passed with 0 errors and the existing two assembly-reference warnings.
-- Unity MCP resource `mcpforunity://instances` returned `instance_count=0`; no Unity EditMode or Play Mode result is claimed.
+- Unity `Pakuri/Sync CSV Runtime Catalog Assets` and `Pakuri/Validate CSV Source Data` completed without catalog errors; focused EditMode `PassiveStageModifiersPreserveLifetimeAndDynamicConditions` passed 1/1, including the direct `0.8` shot interval and `1.2` duration snapshots.
 
 ### History
 
@@ -53,6 +53,7 @@ Implementation complete in source and authoring data; Unity catalog/EditMode ver
 - 2026-08-06: Phase 1 contract committed as `91c4ebd`.
 - 2026-08-06: Phase 2 removed the two inert Base choice rows and `choice_group`, added passive-file group inference, committed as `fb3cce6`.
 - 2026-08-06: Phase 3 added Base owner routing, migrated passive Base/Trait IDs, removed the obsolete `PassiveBase` runtime path, updated tests, and committed as `73b4d91`.
+- 2026-08-06: Unity validation exposed two orphaned former `Choice` graph owners (`sein-i`, `vega-h`); they were migrated to explicit Base owners with separate Base triggers, and direct Base snapshot nodes were wired through the passive Definition/execution path. Focused EditMode test passed 1/1.
 
 ## Task: 2026-08-05 Spirit King Skill Runtime Data
 

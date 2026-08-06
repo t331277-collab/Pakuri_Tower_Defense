@@ -29,6 +29,7 @@ namespace Pakuri.InGame
     {
         public SkillSlot RequiredActiveSlot;
         public bool IsAvailableWithoutActiveRequirement;
+        public SkillNode[] BaseNodes = System.Array.Empty<SkillNode>();
 
         [Header("Unit Modifier")]
         public PassiveModifierKind ModifierKind;

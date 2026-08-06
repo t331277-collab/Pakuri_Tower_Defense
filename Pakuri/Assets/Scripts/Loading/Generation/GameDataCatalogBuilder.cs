@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using Pakuri.Combat;
 using Pakuri.InGame;
 using UnityEngine;
@@ -866,7 +867,7 @@ namespace Pakuri.Data
                 var trigger = triggers[i];
                 var normalizedNodes = BuildSkillNodes(
                     model,
-                    SkillNodeOwnerKind.Trigger,
+                    GetPassiveTriggerOwnerKind(model, trigger),
                     trigger.Id,
                     trigger.SourceSkillId);
                 definitions[i] = new SkillReaction
@@ -924,15 +925,17 @@ namespace Pakuri.Data
                         && string.IsNullOrWhiteSpace(trigger.EventSkillId)));
         }
 
-        private static SkillNodeOwnerKind GetNormalCastOwnerKind(
+        private static SkillNodeOwnerKind GetPassiveTriggerOwnerKind(
             SourceModel model,
             SkillTriggerRow trigger)
         {
             if (trigger != null
-                && trigger.TriggerEvent == SkillTriggerEvent.OnCast
                 && string.IsNullOrWhiteSpace(trigger.RequiresActiveChoiceId)
                 && model.Skills.TryGetValue(trigger.SourceSkillId, out var sourceSkill)
-                && sourceSkill.SkillKind == PakuriCsvSkillKind.Passive)
+                && sourceSkill.SkillKind == PakuriCsvSkillKind.Passive
+                && model.SkillNodes.Values.Any(node =>
+                    node.OwnerKind == SkillNodeOwnerKind.Base
+                    && string.Equals(node.OwnerId, trigger.Id, StringComparison.OrdinalIgnoreCase)))
             {
                 return SkillNodeOwnerKind.Base;
             }
@@ -973,7 +976,7 @@ namespace Pakuri.Data
 
                 var nodes = BuildSkillNodes(
                     model,
-                    GetNormalCastOwnerKind(model, row),
+                    GetPassiveTriggerOwnerKind(model, row),
                     row.Id,
                     row.SourceSkillId);
                 var effectNode = BuildNormalCastEffectNode(
@@ -1176,12 +1179,59 @@ namespace Pakuri.Data
                     DescriptionText = skill.DescriptionText,
                     Summary = skill.Summary,
                     EnhancementChoices = BuildSkillChoices(model, skill.Id, SkillChoiceGroup.PassiveEnhancement),
+                    BaseNodes = BuildPassiveBaseNodes(model, skill.Id),
                     Nodes = BuildSkillNodes(model, SkillNodeOwnerKind.Passive, skill.Id, skill.Id)
                 };
                 definitions[i] = BuildPassiveDefinition(monster, definition);
             }
 
             return definitions;
+        }
+
+        private SkillNodeBuildData[] BuildPassiveBaseNodes(
+            SourceModel model,
+            string passiveSkillId)
+        {
+            var result = new List<SkillNodeBuildData>();
+            var triggers = FilterAndSort(
+                model.SkillTriggers.Values,
+                trigger => string.Equals(
+                        trigger.SourceSkillId,
+                        passiveSkillId,
+                        StringComparison.OrdinalIgnoreCase)
+                    && string.IsNullOrWhiteSpace(trigger.RequiresActiveChoiceId)
+                    && GetPassiveTriggerOwnerKind(model, trigger) == SkillNodeOwnerKind.Base,
+                (left, right) => left.SortOrder.CompareTo(right.SortOrder));
+
+            for (var i = 0; i < triggers.Count; i++)
+            {
+                var graphRows = model.SkillNodes.Values
+                    .Where(node => node.OwnerKind == SkillNodeOwnerKind.Base
+                        && string.Equals(
+                            node.OwnerId,
+                            triggers[i].Id,
+                        StringComparison.OrdinalIgnoreCase))
+                    .ToArray();
+                if (graphRows.Length == 0
+                    || graphRows.Any(node => !IsPassiveBaseSnapshotNode(node.HandlerId)))
+                {
+                    continue;
+                }
+
+                result.AddRange(BuildSkillNodes(
+                    model,
+                    SkillNodeOwnerKind.Base,
+                    triggers[i].Id,
+                    triggers[i].SourceSkillId));
+            }
+
+            return result.ToArray();
+        }
+
+        private static bool IsPassiveBaseSnapshotNode(string handlerId)
+        {
+            return string.Equals(handlerId, "DurationMultiplier", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "ShotIntervalMultiplier", StringComparison.OrdinalIgnoreCase);
         }
 
         private SkillChoiceBuildData[] BuildSkillChoices(SourceModel model, string skillId, SkillChoiceGroup choiceGroup)

@@ -63,6 +63,16 @@ namespace Pakuri.InGame
                 return snapshot;
             }
 
+            foreach (var passiveId in owner.Skills.LearnedPassiveSkillIds)
+            {
+                var passiveRuntime = owner.SkillState.FindBySkillId(passiveId);
+                if (passiveRuntime?.Data is PassiveSkillDefinition passive
+                    && passive.BaseNodes != null)
+                {
+                    ApplyNodes(snapshot, passive.BaseNodes, skill.SkillId);
+                }
+            }
+
             ApplyChoices(snapshot, owner.Skills.ChosenEnhancementIds, skill, owner, roster);
             ApplyChoices(snapshot, owner.Skills.ChosenMasterSkillIds, skill, owner, roster);
             ApplyArtifactModifiers(snapshot, owner, skill);

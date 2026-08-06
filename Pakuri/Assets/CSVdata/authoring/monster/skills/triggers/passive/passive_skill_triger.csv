@@ -137,3 +137,5 @@
 "resonance-compass-darkness","resonance-compass","resonance-compass-effect","OnOutgoingDamage","","","","","","","Darkness","","","0.08","0","0.3","0","owner","113","1","0","false"
 "resonance-compass-holy","resonance-compass","resonance-compass-effect","OnOutgoingDamage","","","","","","","Holy","","","0.08","0","0.3","0","owner","114","1","0","false"
 "spirit-king-dimensional-rift-on-expire","spirit-king","spirit-king-dimensional-rift","OnExpire","","",,"","","","","","","1","0","0","0","owner","120","1","0","false"
+"vega-h-base-effect-2","vega","vega-h","OnCast","","",,"","","","","","","1","","","","","1","1","",""
+"sein-i-base-effect-1","sein","sein-i","OnCast","","",,"","","","","","","1","","","","","1","1","",""

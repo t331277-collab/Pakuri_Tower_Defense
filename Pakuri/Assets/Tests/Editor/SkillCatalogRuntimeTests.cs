@@ -983,6 +983,36 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(
             StatusCombatRules.ActionSpeedMultiplier(ally),
             Is.EqualTo(1.12f).Within(0.0001f));
+
+        var seinOwner = new UnitCombatState();
+        var seinBase = catalog.GetData<PassiveSkillDefinition>("sein-i");
+        var seinTarget = catalog.GetData<SkillDefinition>("sein-d");
+        seinOwner.Skills.AddPassiveSkill(seinBase.SkillId);
+        seinOwner.Skills.AddActiveSkill(seinTarget.SkillId);
+        seinOwner.SkillState.RebuildLearnedSkillState(
+            seinOwner,
+            new[] { seinTarget },
+            new[] { seinBase });
+        var seinSnapshot = seinOwner.SkillState.CreateExecutionData(
+            seinOwner,
+            seinOwner.SkillState.FindBySkillId(seinTarget.SkillId),
+            null);
+        Assert.That(seinSnapshot.ShotIntervalMultiplier, Is.EqualTo(0.8f).Within(0.0001f));
+
+        var vegaOwner = new UnitCombatState();
+        var vegaBase = catalog.GetData<PassiveSkillDefinition>("vega-h");
+        var vegaTarget = catalog.GetData<SkillDefinition>("vega-c");
+        vegaOwner.Skills.AddPassiveSkill(vegaBase.SkillId);
+        vegaOwner.Skills.AddActiveSkill(vegaTarget.SkillId);
+        vegaOwner.SkillState.RebuildLearnedSkillState(
+            vegaOwner,
+            new[] { vegaTarget },
+            new[] { vegaBase });
+        var vegaSnapshot = vegaOwner.SkillState.CreateExecutionData(
+            vegaOwner,
+            vegaOwner.SkillState.FindBySkillId(vegaTarget.SkillId),
+            null);
+        Assert.That(vegaSnapshot.DurationMultiplier, Is.EqualTo(1.2f).Within(0.0001f));
     }
 
     [Test]
