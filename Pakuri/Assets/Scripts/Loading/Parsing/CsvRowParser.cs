@@ -427,7 +427,9 @@ namespace Pakuri.Data
             };
         }
 
-        internal static SkillChoiceRow ParseSkillChoiceRow(CsvRecord record)
+        internal static SkillChoiceRow ParseSkillChoiceRow(
+            CsvRecord record,
+            SkillChoiceGroup? implicitChoiceGroup = null)
         {
             return new SkillChoiceRow
             {
@@ -435,7 +437,8 @@ namespace Pakuri.Data
                 MonsterId = record.ReadRequiredString("monster_id"),
                 SkillId = record.ReadRequiredString("skill_id"),
                 TargetSkillId = ReadOptionalStringIfColumnExists(record, "target_skill_id"),
-                ChoiceGroup = record.ReadEnum<SkillChoiceGroup>("choice_group"),
+                ChoiceGroup = implicitChoiceGroup
+                    ?? record.ReadEnum<SkillChoiceGroup>("choice_group"),
                 SortOrder = record.ReadInt("sort_order"),
                 Title = record.ReadRequiredString("title"),
                 DescriptionText = ReadOptionalStringIfColumnExists(record, "description_text"),

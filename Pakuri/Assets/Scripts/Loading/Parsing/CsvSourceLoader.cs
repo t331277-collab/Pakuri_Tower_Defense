@@ -190,6 +190,7 @@ namespace Pakuri.Data
             LoadSkillChoiceRows(
                 model,
                 sourceCatalog.MonsterSkillChoicesPassiveFiles,
+                SkillChoiceGroup.PassiveEnhancement,
                 SkillRuntimeKind.Passive);
 
             for (var assetIndex = 0; assetIndex < sourceCatalog.MonsterSkillGraphNodeFiles.Length; assetIndex++)
@@ -298,14 +299,47 @@ namespace Pakuri.Data
 
         internal static void LoadSkillChoiceRows(
             SourceModel model,
+            TextAsset[] choiceAssets,
+            SkillChoiceGroup implicitChoiceGroup,
+            params SkillRuntimeKind[] allowedOwnerRuntimeKinds)
+        {
+            for (var assetIndex = 0; assetIndex < choiceAssets.Length; assetIndex++)
+            {
+                var choiceAsset = choiceAssets[assetIndex];
+                LoadSkillChoiceRows(
+                    model,
+                    choiceAsset,
+                    GetTextAssetCsvTableName(choiceAsset),
+                    implicitChoiceGroup,
+                    allowedOwnerRuntimeKinds);
+            }
+        }
+
+        internal static void LoadSkillChoiceRows(
+            SourceModel model,
             TextAsset choiceAsset,
             string tableName,
+            params SkillRuntimeKind[] allowedOwnerRuntimeKinds)
+        {
+            LoadSkillChoiceRows(
+                model,
+                choiceAsset,
+                tableName,
+                null,
+                allowedOwnerRuntimeKinds);
+        }
+
+        internal static void LoadSkillChoiceRows(
+            SourceModel model,
+            TextAsset choiceAsset,
+            string tableName,
+            SkillChoiceGroup? implicitChoiceGroup,
             params SkillRuntimeKind[] allowedOwnerRuntimeKinds)
         {
             var choiceTable = CsvTable.Load(choiceAsset, tableName);
             foreach (var record in choiceTable.Records)
             {
-                var row = ParseSkillChoiceRow(record);
+                var row = ParseSkillChoiceRow(record, implicitChoiceGroup);
                 if (!model.Skills.TryGetValue(row.SkillId, out var ownerSkill))
                 {
                     throw new CsvFatalException(
