@@ -222,6 +222,7 @@ namespace Pakuri.Data
             public int RepeatCount = 1;
             public float RepeatIntervalSeconds;
             public bool RequireEventExecute;
+            public bool RequireEventCritical;
         }
 
         internal static MonsterRow ParseMonsterRow(CsvRecord record)
@@ -469,7 +470,8 @@ namespace Pakuri.Data
                 TriggerDelaySeconds = ReadOptionalFloatIfColumnExists(record, "trigger_delay_seconds"),
                 TriggerEveryCount = ReadOptionalIntIfColumnExists(record, "trigger_every_count"),
                 EventSourceScope = ReadOptionalStringIfColumnExists(record, "event_source_scope"),
-                RequireEventExecute = ReadOptionalBoolIfColumnExists(record, "require_event_execute")
+                RequireEventExecute = ReadOptionalBoolIfColumnExists(record, "require_event_execute"),
+                RequireEventCritical = ReadOptionalBoolIfColumnExists(record, "require_event_critical")
             };
 
             if (TryReadFloatIfColumnExists(record, "proc_chance", out var procChance))

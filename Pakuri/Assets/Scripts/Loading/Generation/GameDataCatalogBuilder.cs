@@ -895,7 +895,8 @@ namespace Pakuri.Data
                     DelaySeconds = trigger.TriggerDelaySeconds,
                     EveryCount = trigger.TriggerEveryCount,
                     EventSourceScope = StatusValueParser.ParseEventSourceScope(trigger.EventSourceScope),
-                    RequireEventExecute = trigger.RequireEventExecute
+                    RequireEventExecute = trigger.RequireEventExecute,
+                    RequireEventCritical = trigger.RequireEventCritical
                 };
                 BuildReactionOutcome(
                     definitions[i],

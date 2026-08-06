@@ -613,7 +613,7 @@ internal static class SkillTrigger
 	/// 발생원 반응의 모든 게이트를 통과했는지 확인한다.
 	private static bool ShouldRunSourceOwnedTrigger(SkillReaction trigger, UnitCombatState source, string sourceSkillName, SkillTriggerEvent triggerEvent, TriggerExecutionContext triggerContext)
 	{
-		if (trigger != null && trigger.Event == triggerEvent && string.Equals(trigger.SourceSkillName, sourceSkillName, StringComparison.OrdinalIgnoreCase) && MatchesEventSkillName(trigger.EventSkillNames, triggerContext.EventSourceSkillName) && StatusConditionRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKindValues, triggerContext.EventSourceSkillName) && (!trigger.RequireEventExecute || triggerContext.EventWasExecute) && HasAllChoices(source, trigger.RequiredActiveChoiceNames) && !HasAnyChoice(source, trigger.ExcludedActiveChoiceNames))
+		if (trigger != null && trigger.Event == triggerEvent && string.Equals(trigger.SourceSkillName, sourceSkillName, StringComparison.OrdinalIgnoreCase) && MatchesEventSkillName(trigger.EventSkillNames, triggerContext.EventSourceSkillName) && StatusConditionRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKindValues, triggerContext.EventSourceSkillName) && (!trigger.RequireEventExecute || triggerContext.EventWasExecute) && (!trigger.RequireEventCritical || triggerContext.EventWasCritical) && HasAllChoices(source, trigger.RequiredActiveChoiceNames) && !HasAnyChoice(source, trigger.ExcludedActiveChoiceNames))
 		{
 			return MeetsSourceStatusRequirement(source, trigger.RequiredSourceStatusKind, trigger.RequiredSourceStatusMinStacks);
 		}
@@ -623,7 +623,7 @@ internal static class SkillTrigger
 	/// 지속 반응의 모든 게이트를 통과했는지 확인한다.
 	private static bool ShouldRunPassiveOwnerTrigger(SkillReaction trigger, UnitCombatState owner, SkillTriggerEvent triggerEvent, TriggerExecutionContext triggerContext)
 	{
-		if (trigger == null || owner == null || owner.Skills == null || trigger.Event != triggerEvent || string.IsNullOrWhiteSpace(trigger.SourceSkillName) || !owner.Skills.HasPassiveSkill(trigger.SourceSkillName) || !MatchesEventSkillName(trigger.EventSkillNames, triggerContext.EventSourceSkillName) || !StatusConditionRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKindValues, triggerContext.EventSourceSkillName) || (trigger.RequireEventExecute && !triggerContext.EventWasExecute) || !HasAllChoices(owner, trigger.RequiredActiveChoiceNames) || HasAnyChoice(owner, trigger.ExcludedActiveChoiceNames) || !MeetsSourceStatusRequirement(owner, trigger.RequiredSourceStatusKind, trigger.RequiredSourceStatusMinStacks))
+		if (trigger == null || owner == null || owner.Skills == null || trigger.Event != triggerEvent || string.IsNullOrWhiteSpace(trigger.SourceSkillName) || !owner.Skills.HasPassiveSkill(trigger.SourceSkillName) || !MatchesEventSkillName(trigger.EventSkillNames, triggerContext.EventSourceSkillName) || !StatusConditionRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKindValues, triggerContext.EventSourceSkillName) || (trigger.RequireEventExecute && !triggerContext.EventWasExecute) || (trigger.RequireEventCritical && !triggerContext.EventWasCritical) || !HasAllChoices(owner, trigger.RequiredActiveChoiceNames) || HasAnyChoice(owner, trigger.ExcludedActiveChoiceNames) || !MeetsSourceStatusRequirement(owner, trigger.RequiredSourceStatusKind, trigger.RequiredSourceStatusMinStacks))
 		{
 			return false;
 		}
@@ -656,6 +656,7 @@ internal static class SkillTrigger
 				trigger.EventSkillRuntimeKindValues,
 				triggerContext.EventSourceSkillName)
 			&& (!trigger.RequireEventExecute || triggerContext.EventWasExecute)
+			&& (!trigger.RequireEventCritical || triggerContext.EventWasCritical)
 			&& MeetsSourceStatusRequirement(
 				owner,
 				trigger.RequiredSourceStatusKind,

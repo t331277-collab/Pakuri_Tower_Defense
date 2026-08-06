@@ -175,6 +175,7 @@ namespace Pakuri.InGame
         public int RepeatCount = 1;
         public float RepeatIntervalSeconds;
         public bool RequireEventExecute;
+        public bool RequireEventCritical;
         public SkillCastEffect Effect;
         public SkillReactionCommand Command;
         public float DamageMultiplier = 1f;
