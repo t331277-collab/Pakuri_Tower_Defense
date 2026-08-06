@@ -214,12 +214,29 @@ namespace Pakuri.InGame
             // 보호막·HP를 차감하고 피해 결과를 만든다.
             var depletedShields = new List<StatusRuntimeInstance>();
             var absorbedShields = new List<ShieldAbsorptionRecord>();
-            var attackRule = new AttackRule(source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillName, suppressOutgoingDamageTriggers, sourceHitWasExecute, damageMeterSourceName, Mathf.Max(0f, damageMultiplier), Mathf.Max(0f, finalDamageModifier), Mathf.Max(0f, criticalFinalDamageModifier), isTrigger);
+            var fateCoinBonus = source != null
+                && !isTrigger
+                && criticalAllowed
+                && source.Artifacts != null
+                && source.Artifacts.HasActiveEffect("coin-of-fate-effect")
+                ? source.Artifacts.FateCoinCritChanceBonus
+                : 0f;
+            var attackRule = new AttackRule(source, criticalAllowed, critChanceBonus + fateCoinBonus, critDamageBonus, sourceSkillName, suppressOutgoingDamageTriggers, sourceHitWasExecute, damageMeterSourceName, Mathf.Max(0f, damageMultiplier), Mathf.Max(0f, finalDamageModifier), Mathf.Max(0f, criticalFinalDamageModifier), isTrigger);
             var result = ApplyDamageToResources(target, baseDamage, attribute, attackRule, depletedShields, absorbedShields);
 
             if (!result.Changed)
             {
                 return result;
+            }
+
+            if (source != null
+                && !isTrigger
+                && criticalAllowed
+                && baseDamage > 0f
+                && source.Artifacts != null
+                && source.Artifacts.HasActiveEffect("coin-of-fate-effect"))
+            {
+                source.Artifacts.AdvanceFateCoin(result.IsCritical);
             }
 
             // 보호막을 모두 없애면 연결된 시각 효과를 삭제한다.

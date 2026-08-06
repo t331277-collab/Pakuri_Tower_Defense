@@ -254,14 +254,17 @@ namespace Pakuri.InGame
                     SkillExecutionRules.ResolveHitDamageMultiplier(
                         executionData,
                         target.Model);
+                var resolvedCritChance = critChanceBonus;
+                var resolvedCritDamage = critDamageBonus;
+                SkillExecutionRules.ResolveHitCritModifiers(executionData, target.Model, manager.Units, ref resolvedCritChance, ref resolvedCritDamage);
                 var result = manager.ApplyDamage(
                     target.Model,
                     resolvedDamage,
                     damageAttribute,
                     source,
                     criticalAllowed,
-                    critChanceBonus,
-                    critDamageBonus,
+                    resolvedCritChance,
+                    resolvedCritDamage,
                     sourceSkillName,
                     false,
                     false,

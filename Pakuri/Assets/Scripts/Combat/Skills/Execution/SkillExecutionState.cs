@@ -34,6 +34,8 @@ public class SkillExecutionState
 
 	internal readonly List<ConditionalCritChanceActionOp> conditionalCritChanceActions = new List<ConditionalCritChanceActionOp>();
 
+	internal readonly List<ConditionalCritActionOp> conditionalCritActions = new List<ConditionalCritActionOp>();
+
 	internal readonly List<BurstDamageActionOp> burstDamageActions = new List<BurstDamageActionOp>();
 
 	internal readonly List<BurstStatusActionOp> burstStatusActions = new List<BurstStatusActionOp>();
@@ -125,6 +127,8 @@ public class SkillExecutionState
 	public float CritChanceBonus { get; internal set; }
 
 	public float CritDamageBonus { get; internal set; }
+
+	public float MagazineLastProjectileCritDamageBonus { get; internal set; }
 
 	public float FinalDamageModifier { get; internal set; }
 
@@ -421,6 +425,8 @@ public class SkillExecutionState
 	internal IReadOnlyList<ConditionalStatusGroupDamageActionOp> ConditionalStatusGroupDamageActions => conditionalStatusGroupDamageActions;
 
 	internal IReadOnlyList<ConditionalCritChanceActionOp> ConditionalCritChanceActions => conditionalCritChanceActions;
+
+	internal IReadOnlyList<ConditionalCritActionOp> ConditionalCritActions => conditionalCritActions;
 
 	internal IReadOnlyList<BurstDamageActionOp> BurstDamageActions => burstDamageActions;
 

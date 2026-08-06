@@ -89,6 +89,41 @@ namespace Pakuri.InGame
         public StatusStackCondition Condition { get; }
     }
 
+    public enum ConditionalCritConditionKind
+    {
+        TargetHealthRatioAtMost,
+        TargetIsBoss,
+        TargetHighestCurrentHealth,
+        TargetHasStatus,
+        SkillRuntimeKind
+    }
+
+    public readonly struct ConditionalCritActionOp
+    {
+        public ConditionalCritActionOp(
+            ConditionalCritConditionKind conditionKind,
+            float chanceBonus,
+            float damageBonus,
+            float threshold,
+            StatusEffectKind statusKind,
+            SkillRuntimeKind[] runtimeKinds)
+        {
+            ConditionKind = conditionKind;
+            ChanceBonus = chanceBonus;
+            DamageBonus = damageBonus;
+            Threshold = threshold;
+            StatusKind = statusKind;
+            RuntimeKinds = runtimeKinds ?? System.Array.Empty<SkillRuntimeKind>();
+        }
+
+        public ConditionalCritConditionKind ConditionKind { get; }
+        public float ChanceBonus { get; }
+        public float DamageBonus { get; }
+        public float Threshold { get; }
+        public StatusEffectKind StatusKind { get; }
+        public SkillRuntimeKind[] RuntimeKinds { get; }
+    }
+
     /// 시전자 상태가 대상의 받는 피해를 바꾸는 규칙을 나타낸다.
     public readonly struct StatusConditionalDamageTakenActionOp
     {

@@ -673,11 +673,17 @@ namespace Pakuri.InGame
 				ApplyConditionalDamageAction(snapshot, conditionalDamageAction.Value);
 			}
 
-			ConditionalCritChanceActionOp? conditionalCritAction = nodes[i].GetOperation<ConditionalCritChanceActionOp>();
-			if (conditionalCritAction.HasValue)
-			{
-				ApplyConditionalCritChanceAction(snapshot, conditionalCritAction.Value);
-			}
+		ConditionalCritChanceActionOp? conditionalCritAction = nodes[i].GetOperation<ConditionalCritChanceActionOp>();
+		if (conditionalCritAction.HasValue)
+		{
+			ApplyConditionalCritChanceAction(snapshot, conditionalCritAction.Value);
+		}
+
+		ConditionalCritActionOp? conditionalCritAction2 = nodes[i].GetOperation<ConditionalCritActionOp>();
+		if (conditionalCritAction2.HasValue)
+		{
+			snapshot.conditionalCritActions.Add(conditionalCritAction2.Value);
+		}
 
 			BurstDamageActionOp? burstDamageAction = nodes[i].GetOperation<BurstDamageActionOp>();
 			if (burstDamageAction.HasValue)
@@ -894,6 +900,11 @@ namespace Pakuri.InGame
 			snapshot.CritDamageBonus = (1f + snapshot.CritDamageBonus)
 				* Mathf.Max(0f, 1f + action.Amount)
 				- 1f;
+			break;
+		case SkillActionOpKind.MagazineLastProjectileCritDamageBonus:
+			snapshot.MagazineLastProjectileCritDamageBonus = CombineCritDamageBonus(
+				snapshot.MagazineLastProjectileCritDamageBonus,
+				action.Amount);
 			break;
 		case SkillActionOpKind.FinalDamageModifier:
 			snapshot.FinalDamageModifier *= PositiveOrDefault(action.Amount, 1f);
@@ -1426,6 +1437,39 @@ namespace Pakuri.InGame
                 : ConditionalCritChanceBonus(snapshot, target);
         }
 
+        internal static void ResolveHitCritModifiers(
+            SkillExecutionState snapshot,
+            UnitCombatState target,
+            UnitSpawnManager roster,
+            ref float critChanceBonus,
+            ref float critDamageBonus)
+        {
+            if (snapshot == null || target == null)
+            {
+                return;
+            }
+
+            critChanceBonus += ConditionalCritChanceBonus(snapshot, target);
+            var actions = snapshot.ConditionalCritActions;
+            var runtimeKind = snapshot.Data != null ? snapshot.Data.RuntimeKind : default;
+            for (var i = 0; i < actions.Count; i++)
+            {
+                var action = actions[i];
+                if (!MatchesConditionalCritAction(action, target, roster, runtimeKind))
+                {
+                    continue;
+                }
+
+                critChanceBonus += action.ChanceBonus;
+                critDamageBonus = CombineCritDamageBonus(critDamageBonus, action.DamageBonus);
+            }
+        }
+
+        internal static float CombineCritDamageBonus(float currentBonus, float addedBonus)
+        {
+            return (1f + currentBonus) * Mathf.Max(0f, 1f + addedBonus) - 1f;
+        }
+
         /// 처치 결과가 허용하는 대기 회복을 계산한다.
         internal static void ResolveKillRecovery(
             SkillExecutionState snapshot,
@@ -1576,6 +1620,53 @@ namespace Pakuri.InGame
             }
 
             return bonus;
+        }
+
+        private static bool MatchesConditionalCritAction(
+            ConditionalCritActionOp action,
+            UnitCombatState target,
+            UnitSpawnManager roster,
+            SkillRuntimeKind runtimeKind)
+        {
+            switch (action.ConditionKind)
+            {
+                case ConditionalCritConditionKind.TargetHealthRatioAtMost:
+                    return target.Stats != null
+                        && target.Stats.MaxHealth > 0f
+                        && target.Resources != null
+                        && target.Resources.CurrentHealth / target.Stats.MaxHealth <= action.Threshold;
+                case ConditionalCritConditionKind.TargetIsBoss:
+                    return target.IsBoss;
+                case ConditionalCritConditionKind.TargetHighestCurrentHealth:
+                    if (roster == null || roster.Enemies == null || target.Resources == null)
+                    {
+                        return false;
+                    }
+                    var currentHealth = target.Resources.CurrentHealth;
+                    for (var i = 0; i < roster.Enemies.Count; i++)
+                    {
+                        var entry = roster.Enemies[i];
+                        if (entry != null && entry.IsAlive && entry.Model != null && entry.Model.Resources != null
+                            && entry.Model.Resources.CurrentHealth > currentHealth + 0.0001f)
+                        {
+                            return false;
+                        }
+                    }
+                    return true;
+                case ConditionalCritConditionKind.TargetHasStatus:
+                    return HasRequiredStacks(target, new StatusStackCondition(action.StatusKind, 1));
+                case ConditionalCritConditionKind.SkillRuntimeKind:
+                    for (var i = 0; i < action.RuntimeKinds.Length; i++)
+                    {
+                        if (action.RuntimeKinds[i] == runtimeKind)
+                        {
+                            return true;
+                        }
+                    }
+                    return false;
+                default:
+                    return false;
+            }
         }
 
         /// 폭발 조건이 제공하는 피해 배율을 계산한다.

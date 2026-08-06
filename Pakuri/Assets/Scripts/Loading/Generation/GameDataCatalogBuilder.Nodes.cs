@@ -1068,10 +1068,60 @@ namespace Pakuri.Data
 		if (string.Equals(text, "TargetStatusCritBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			StatusEffectKind statusKind = StatusValueParser.ParseStatusKind(GetParam(node, "status_name"));
-			return SkillNode.FromOperation(new ConditionalCritChanceActionOp(
+			return SkillNode.FromOperation(new ConditionalCritActionOp(
+				ConditionalCritConditionKind.TargetHasStatus,
 				GetFloatParam(node, "crit_chance_bonus", 0f),
+				GetFloatParam(node, "crit_damage_bonus", 0f),
+				0f,
 				statusKind,
-				GetIntParam(node, "min_stacks", 0)));
+				Array.Empty<SkillRuntimeKind>()));
+		}
+		if (string.Equals(text, "TargetHealthRatioCritBonus", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new ConditionalCritActionOp(
+				ConditionalCritConditionKind.TargetHealthRatioAtMost,
+				GetFloatParam(node, "crit_chance_bonus", 0f),
+				GetFloatParam(node, "crit_damage_bonus", 0f),
+				GetFloatParam(node, "threshold", 0f),
+				StatusEffectKind.None,
+				Array.Empty<SkillRuntimeKind>()));
+		}
+		if (string.Equals(text, "TargetBossCritBonus", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new ConditionalCritActionOp(
+				ConditionalCritConditionKind.TargetIsBoss,
+				GetFloatParam(node, "crit_chance_bonus", 0f),
+				GetFloatParam(node, "crit_damage_bonus", 0f),
+				0f,
+				StatusEffectKind.None,
+				Array.Empty<SkillRuntimeKind>()));
+		}
+		if (string.Equals(text, "TargetHighestHealthCritBonus", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new ConditionalCritActionOp(
+				ConditionalCritConditionKind.TargetHighestCurrentHealth,
+				GetFloatParam(node, "crit_chance_bonus", 0f),
+				GetFloatParam(node, "crit_damage_bonus", 0f),
+				0f,
+				StatusEffectKind.None,
+				Array.Empty<SkillRuntimeKind>()));
+		}
+		if (string.Equals(text, "SkillRuntimeKindCritBonus", StringComparison.OrdinalIgnoreCase))
+		{
+			var conditions = StatusValueParser.ParseSkillRuntimeKindConditions(
+				GetParam(node, "skill_runtime_kinds"));
+			var runtimeKinds = new SkillRuntimeKind[conditions.Length];
+			for (var i = 0; i < conditions.Length; i++)
+			{
+				runtimeKinds[i] = conditions[i].Kind;
+			}
+			return SkillNode.FromOperation(new ConditionalCritActionOp(
+				ConditionalCritConditionKind.SkillRuntimeKind,
+				GetFloatParam(node, "crit_chance_bonus", 0f),
+				GetFloatParam(node, "crit_damage_bonus", 0f),
+				0f,
+				StatusEffectKind.None,
+				runtimeKinds));
 		}
 		if (string.Equals(text, "BurstDamageRule", StringComparison.OrdinalIgnoreCase))
 		{
@@ -1288,6 +1338,10 @@ namespace Pakuri.Data
 			|| string.Equals(handlerName, "RepeatPerTarget", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "PullToCenter", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "TargetStatusCritBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "TargetHealthRatioCritBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "TargetBossCritBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "TargetHighestHealthCritBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "SkillRuntimeKindCritBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "RedistributeConsumedStatus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "AdditionalDamage", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "BeamWidthBonus", StringComparison.OrdinalIgnoreCase)
@@ -1295,6 +1349,7 @@ namespace Pakuri.Data
 			|| string.Equals(handlerName, "CoreDamageMultiplier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "CritChanceBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "CritDamageBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "MagazineLastProjectileCritDamageBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "FinalDamageModifier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "CriticalFinalDamageModifier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "EveryNthHitChainDamage", StringComparison.OrdinalIgnoreCase)
@@ -1441,6 +1496,10 @@ namespace Pakuri.Data
 		if (string.Equals(handlerName, "CritDamageBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.CritDamageBonus, GetFloatParam(node, "bonus", 0f));
+		}
+		if (string.Equals(handlerName, "MagazineLastProjectileCritDamageBonus", StringComparison.OrdinalIgnoreCase))
+		{
+			return new SkillActionOp(SkillActionOpKind.MagazineLastProjectileCritDamageBonus, GetFloatParam(node, "bonus", 0f));
 		}
 		if (string.Equals(handlerName, "FinalDamageModifier", StringComparison.OrdinalIgnoreCase))
 		{
