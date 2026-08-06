@@ -7,11 +7,10 @@ using UnityEngine.UI;
 
 namespace Pakuri.InGame
 {
-    /// 보스 보상의 정령계약 유물 후보를 준비하고 선택 결과를 획득 대상 UI로 전달한다.
+    /// 보스 보상의 정령계약·처형관 유물 후보를 준비하고 선택 결과를 획득 대상 UI로 전달한다.
     public sealed class ArtifactUI : MonoBehaviour
     {
         private const int MaxArtifactChoices = 3;
-        private const string RewardSynergyName = "spirit-contract";
 
         private readonly List<ArtifactDefinition> choices = new List<ArtifactDefinition>();
         private ArtifactButtonView[] buttonViews = new ArtifactButtonView[MaxArtifactChoices];
@@ -40,7 +39,8 @@ namespace Pakuri.InGame
             {
                 var artifact = artifacts[i];
                 if (artifact != null
-                    && string.Equals(artifact.SynergyName, RewardSynergyName, StringComparison.OrdinalIgnoreCase)
+                    && (string.Equals(artifact.SynergyName, "spirit-contract", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(artifact.SynergyName, "executioner", StringComparison.OrdinalIgnoreCase))
                     && !session.HasArtifact(artifact.ArtifactName))
                 {
                     choices.Add(artifact);
