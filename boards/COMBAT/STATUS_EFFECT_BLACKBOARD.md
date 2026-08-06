@@ -31,19 +31,18 @@ Code Builder.
 
 ### Status
 
-구현 진행 중. Phase 0 설계 정정 완료.
+Phase 0~3 구현 완료. Core/Editor 빌드는 통과했고 Unity 런타임 검증은 기존 Unity 인스턴스 점유로 보류됐다.
 
 ### Next Actions
 
-- 치명타 결과 전달, `FinalDamageModifier`, 조건부 hit resolver를 구현한다.
-- 마지막 탄창 투사체 치명타 피해 보정을 구현한다.
-- 모든 공격 Actor가 중앙 `ApplyDamage` 경로에서 같은 조건을 받는지 집중 테스트한다.
+- Unity Play Mode에서 조건부 치명타, 후치명타 최종 피해, 마지막 탄창 투사체 효과를 확인한다.
+- Unity 인스턴스가 비워지면 CSV runtime catalog validation을 재시도한다.
 
 ### Evidence
 
-- `DamageCalculator.CalculateFinalDamage`는 현재 치명타 여부를 반환하지 않고 치명타 뒤 바로 반올림한다.
-- `AttackRule.FinalDamageMultiplier`는 현재 치명타 전 주는 피해 배율로 사용된다.
-- `InGameResourceChangeResult`와 `TriggerExecutionContext`에는 치명타 결과가 없다.
+- `DamageCalculator.CalculateFinalDamage`는 치명타 결과를 반환하고 후치명타 Final/CriticalFinal 배율을 적용한다.
+- `AttackRule`은 선치명타 `DamageMultiplier`와 후치명타 `FinalDamageModifier`를 분리한다.
+- `InGameResourceChangeResult`, `TriggerExecutionContext`, `SkillTrigger`에 치명타 결과가 전달된다.
 - `UnitCombatState.IsBoss`가 존재한다.
 - `PreparedMagazineLastProjectile`가 `MagazineRemaining == 1`에서 확정되어 `ProjectileSkillActor.isMagazineLastProjectile`까지 전달된다.
 - `ArtifactSynergyManager`가 모든 아군의 `ActiveArtifactEffectNames`를 Stage마다 재구성하며, `BuildArtifacts`는 같은 `artifact_name`의 여러 Effect를 수집한다. 이번 유리 심장·별빛 숫돌 계약에는 상호보유 조건이 필요하지 않다.
@@ -55,6 +54,7 @@ Code Builder.
 - 2026-08-06: Designer가 재사용 가능 경로와 신규 치명타/적중 공통 계약을 분리했다.
 - 2026-08-07: 처형관 전용 Code Builder 인계 설계를 `Pakuri/reference/4.run/executioner-artifact-synergy-implementation-design.md`로 분리해 기록했다.
 - 2026-08-07: 사용자가 백은 바늘을 마지막 탄창 투사체 효과로 축소하고 유리 심장·별빛 숫돌을 각각 단일 치명타 보정 `+0.20`으로 확정했다. Designer가 신규 타격 순번·상호보유 조건·치명타 저항/관통 설계를 폐기하고 기존 투사체 flag와 치명타 Node 재사용으로 설계를 갱신했다.
+- 2026-08-07: Code Builder가 Phase 1~3 런타임을 커밋하고 Core/Editor 빌드 오류 0개를 확인했다.
 
 ## Task: 2026-08-06 Final Damage Modifier Design
 

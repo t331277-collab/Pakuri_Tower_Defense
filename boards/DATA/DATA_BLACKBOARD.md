@@ -26,28 +26,30 @@ Code Builder.
 
 ### Status
 
-구현 진행 중. Phase 0 설계 정정 완료; 실행 Node/Trigger 행은 아직 없다.
+Phase 0~4 구현 완료. Node/Trigger CSV 행과 공통 parser/runtime 매핑이 반영됐다. Unity 카탈로그 런타임 검증은 기존 Unity 인스턴스 점유로 보류됐다.
 
 ### Next Actions
 
-- 시너지 Definition의 Node/Reaction Generation을 추가한다.
-- `MagazineLastProjectileCritDamageBonus` Node 계약을 추가한다.
-- 공통 Node 정의가 구현된 뒤 처형관 graph/trigger 행과 검증 테스트를 작성한다.
+- Unity 인스턴스가 비워지면 CSV runtime catalog validation을 재실행한다.
+- Unity Play Mode에서 처형관 보상 후보와 Stage 시작 Effect를 확인한다.
 
 ### Evidence
 
 - `artifacts.csv`에는 처형관 유물 10개와 실제 icon 경로가 있다.
 - `artifact_synergies.csv`에는 처형관 2/4/6/8 설명과 synergy icon 경로가 있다.
 - `artifact_effects.csv`에는 10개 Effect 헤더, `artifact_synergy_effects.csv`에는 네 단계 Effect 헤더가 있다.
-- `skill_graph_nodes_artifact.csv`에는 처형관 Effect Node가 없다.
-- `ArtifactSynergyEffectDefinition`과 `BuildArtifactSynergyEffects`는 현재 Node/Reaction을 만들지 않는다.
-- 기존 Node 정의에는 `CritChanceBonus`, `CritDamageBonus`가 있고, 마지막 탄창 투사체 전용 치명타 피해 Node만 없다.
+- `skill_graph_nodes_artifact.csv`에는 처형관 4단계와 10개 유물 Effect Node가 반영됐다.
+- `ArtifactSynergyEffectDefinition`과 `BuildArtifactSynergyEffects`는 typed Node/Reaction을 생성한다.
+- `skill_node_definitions.csv`와 params에 조건부 치명타, 마지막 투사체, 후치명타 최종 피해 Node 계약이 반영됐다.
+- `artifact_skill_triger.csv`는 `require_event_critical` 필드를 포함하며 sharp chalice의 실제 치명타 반응을 제한한다.
+- `artifacts.csv`에서 유리 심장과 별빛 숫돌은 각각 단일 `+20%` 설명으로 정정됐다.
 
 ### History
 
 - 2026-08-06: Designer가 처형관 데이터의 존재 여부와 실제 runtime 연결 여부를 분리해 감사했다.
 - 2026-08-07: 처형관 Effect ID, 공통 graph/trigger 계약과 CSV 검증 기준을 새 전용 구현 설계 문서에 기록했다.
 - 2026-08-07: 별빛 숫돌은 치명타 확률 단일 `+0.20`, 유리 심장은 치명타 피해 단일 `+0.20`으로 확정했다. 백은 바늘은 기존 마지막 탄창 투사체 flag를 소비하도록 설계를 축소했다.
+- 2026-08-07: Code Builder가 Phase 4 CSV Node/Trigger 데이터와 parser 연결을 커밋했고 필드 수 정합성·빌드를 통과시켰다.
 
 ## Task: 2026-08-06 Final Damage Modifier Node Contract
 

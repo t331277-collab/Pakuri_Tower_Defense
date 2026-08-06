@@ -34,27 +34,28 @@ Code Builder.
 
 ### Status
 
-구현 진행 중. Phase 0 설계 정정 완료.
+Phase 0~5 구현 완료. Unity Play Mode와 Unity 런타임 카탈로그 검증은 기존 Unity 인스턴스 점유 해제 후 재시도한다.
 
 ### Next Actions
 
-- `ArtifactUI`의 단일 정령계약 필터를 두 활성 시너지 후보로 확장한다.
-- `ArtifactSynergyManager`가 활성 시너지의 파티 Effect도 `ActiveArtifactEffectNames`에 배포하도록 구현한다.
-- 유리 심장·별빛 숫돌의 단일 Effect Node가 다음 Stage 재구성에서 중복 없이 적용되는지 확인한다.
+- Unity Play Mode에서 정령계약·처형관 보상 후보와 다음 Stage 재적용을 확인한다.
+- Unity 인스턴스가 비워지면 CSV runtime catalog validation을 재시도한다.
 
 ### Evidence
 
 - `RunSession.TryAcquireArtifact`와 `ArtifactState`는 기존 보유/중복/용량 계약을 제공한다.
-- `ArtifactSynergyManager.PrepareStage`는 개별 유물 Effect를 배포하지만 활성 시너지 Effect는 소환/스킬 해금만 처리한다.
+- `ArtifactSynergyManager.PrepareStage`는 개별 유물과 활성 시너지 SkillModifier/PassiveTrigger Effect를 함께 배포한다.
 - `StageManager.RunCurrentDayFlow`는 파티 복원 뒤 `PrepareStage`, `BeginPlayerCombat`, 적 생성 순으로 실행한다.
-- `ArtifactUI.RewardSynergyName`은 현재 `spirit-contract`로 고정돼 있다.
+- `ArtifactUI.PrepareChoices`는 `spirit-contract`와 `executioner`만 후보로 허용한다.
 - `ArtifactState.ClearActiveEffects`가 다음 Stage마다 활성 Effect를 비우고 재배포한다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal`은 오류 0개, 기존 참조 충돌 경고 2개로 완료했다.
 
 ### History
 
 - 2026-08-06: Designer가 처형관 획득과 Stage 적용을 기존 정령계약 경로에 합치는 최소 변경안을 기록했다.
 - 2026-08-07: 처형관 전용 구현 설계 문서에 획득, Stage 재배포, Phase와 수용 기준을 확정했다.
 - 2026-08-07: 유리 심장·별빛 숫돌의 상호보유 추가효과 설계를 제거하고 각각 단일 `+0.20` 치명타 보정으로 정정했다.
+- 2026-08-07: Code Builder가 처형관 활성 Effect 배포, 최종 피해/조건부 치명타 경로, 보상 후보 확장과 Phase별 커밋을 완료했다.
 
 ## Task: 2026-08-05 Spirit Contract Synergy and Spirit King Runtime
 
