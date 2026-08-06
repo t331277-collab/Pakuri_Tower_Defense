@@ -4,6 +4,52 @@
 
 The pre-cleanup file, including completed and superseded data tasks, is preserved at `boards/ARCHIVE/ACTIVE_BOARD_SNAPSHOT_2026-07-28/DATA/DATA_BLACKBOARD.md`.
 
+## Task: 2026-08-06 Passive Base/Trait Table Normalization
+
+### Task title
+
+Make passive Base and trait authoring ownership explicit without changing runtime behavior.
+
+### Goals
+
+- Keep `skills_passive.csv` as the passive Base identity/description table.
+- Keep only the 25 x 3 trait rows in `skill_choices_passive.csv`; remove the two inert `PassiveBase` rows and its redundant `choice_group` column.
+- Use `owner_kind=Base` for passive Base graph groups and replace passive `@effect` owner IDs with explicit Base/Trait effect IDs.
+- Preserve Stage-permanent `SetDuration=9999` and explicit timed durations such as Eve-F's 12 seconds.
+
+### Constraints
+
+- Preserve generated runtime effects, trigger ordering, conditions, target selection, and Stage lifetime values.
+- Do not rename active-skill `@effect` IDs outside the passive ownership migration.
+- Multi-effect passive groups require an effect suffix; a single `{slot}-base` ID cannot represent Eve-J's seven independent Base graphs.
+- Keep CSV files UTF-8 and update every exact trigger/graph/reference ID together.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation in progress; Phase 1 contract recorded, Stage-permanent values verified as `9999`.
+
+### Next Actions
+
+- Remove passive `PassiveBase`/`choice_group` authoring and infer `PassiveEnhancement` in the passive loader.
+- Add Base owner-kind validation/generation routing and migrate passive Base/Trait IDs.
+- Run focused catalog/runtime tests and static CSV/reference validation.
+
+### Evidence
+
+- `skill_choices_passive.csv` currently has 77 data rows: 75 `PassiveEnhancement` rows covering all 25 passive skills exactly three times, plus two `PassiveBase` rows at lines 57 and 79.
+- `CsvRowParser.ParseSkillChoiceRow` currently requires `choice_group`; `CsvSourceLoader` loads passive choices separately from other choice families.
+- `SkillGraphParser` currently accepts `Skill`, `Choice`, `Passive`, `Effect`, and `Trigger`; no active graph row uses `Passive` owner kind.
+- Passive Base graph groups include 30 blank-choice trigger effects across 17 passives; Eve-J has seven groups with repeated node orders, proving a single `{slot}-base` ID would collide.
+- Passive graph `SetDuration` values are currently `9999` for Stage-long modifiers; Eve-F's shield remains `12` seconds.
+
+### History
+
+- 2026-08-06: Designer approved table-intuitive separation; Builder began implementation with Stage-permanent `9999` retained.
+
 ## Task: 2026-08-05 Spirit King Skill Runtime Data
 
 ### Task title
