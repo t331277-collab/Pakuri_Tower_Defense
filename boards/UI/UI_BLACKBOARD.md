@@ -8,6 +8,56 @@ The previous UI and RunScene UI boards are preserved under `boards/ARCHIVE/ACTIV
 
 For new UI work, inspect the exact current scripts, scenes, prefabs, UXML, USS, or assets first, then add a required-field task block here only when persistent state is needed.
 
+## Task: 2026-08-06 Multi-Synergy Artifact HUD Design
+
+### Task title
+
+공통 `Artifact_Container`를 시너지 종류별로 재사용하고 추가 종류를 아래로 93.3만큼 복제 배치한다.
+
+### Goals
+
+- 정령계약 한 종류 고정을 제거한다.
+- 보유 유물을 `SynergyName`별로 집계해 각 시너지 icon/count/2·4·6·8 상태를 표시한다.
+- 첫 종류는 원본, 이후 종류는 마지막 슬롯 아래에 복제한다.
+
+### Constraints
+
+- 원본과 복제본은 캐시하고 Refresh마다 파괴/재생성하지 않는다.
+- 각 다음 슬롯의 `localPosition.y`는 원본에서 `-93.3 * index`로 계산한다.
+- 현재 계층에 없는 개별 유물 효과 설명 UI가 존재한다고 가정하지 않는다.
+- Designer 단계에서는 Scene과 UI 코드를 수정하지 않는다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+씬 계층과 코드 감사, 구현 완료. 개별 유물 설명 표시 범위는 기존 설계대로 HUD 범위에서 제외한다.
+
+### Next Actions
+
+- `InGameInfoUI`의 단일 필드를 슬롯 목록으로 바꾸고 원본을 복제 원형으로 사용한다.
+- 정령계약+처형관 동시 보유 시 두 번째 슬롯의 Y 오프셋과 단계 색을 Play Mode에서 확인한다.
+
+### Evidence
+
+- `InGameInfoUI.DisplayedSynergyName`은 현재 `spirit-contract`로 고정돼 있다.
+- 활성 씬 `HUD/Artifact_Container` 루트는 `Transform`이며 자식은 `Artifact`, `Image`다.
+- `Image` 아래에는 `Icon`, `Cur`, `Lv2`, `Lv4`, `Lv6`, `Lv8`이 있지만 개별 유물 이름/설명용 Text 목록은 없다.
+- 현재 씬 원본 위치와 코드 경로를 직접 검사했으며 추가 슬롯 배치는 `localPosition` 기준으로 설계했다.
+- `InGameInfoUI`는 보유 순서대로 `ArtifactDefinition.SynergyName`을 그룹화하고, 첫 시너지는 원본 컨테이너에 표시한다.
+- 이후 시너지는 마지막 컨테이너를 `Instantiate`한 뒤 이전 컨테이너의 `localPosition.y - 93.3f`로 배치하고 목록에 캐시한다.
+- `ArtifactUI.PrepareChoices`는 현재 구현 대상인 `spirit-contract`와 `executioner`만 보상 후보로 허용한다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal`은 오류 0개, 기존 참조 충돌 경고 2개로 완료했다.
+
+### History
+
+- 2026-08-06: 사용자가 시너지 종류마다 공통 Artifact_Container를 복제하고 Y를 93.3씩 낮추도록 요청했다.
+- 2026-08-06: Designer가 현재 씬에서 가능한 표시 범위와 추가 UI가 필요한 범위를 분리했다.
+- 2026-08-07: 같은 시너지는 한 컨테이너에 누적하고 다른 시너지는 마지막 컨테이너 복제 후 Y `-93.3`으로 배치하는 규칙을 전용 구현 설계 문서에 기록했다.
+- 2026-08-07: Code Builder가 다중 시너지 보상 후보와 HUD 컨테이너 캐시/복제 배치를 구현하고 정적 빌드를 통과시켰다.
+
 ## Task: 2026-08-05 Spirit Contract Artifact HUD Display
 
 ### Task title

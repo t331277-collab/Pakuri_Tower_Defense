@@ -7202,7 +7202,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &244908309
 Transform:
   m_ObjectHideFlags: 0
@@ -38617,9 +38617,6 @@ MonoBehaviour:
     prefab: {fileID: 4596420534878418281, guid: d827bb1e48cabef4abeed838d6bb8e05, type: 3}
   - monsterName: vega
     prefab: {fileID: 4596420534878418281, guid: a1e586738d1b9b64a97d0caba4cd449c, type: 3}
-  summonPrefabBindings:
-  - summonName: spirit-king
-    prefab: {fileID: 3842231094034295746, guid: 22fa35ab86fc0754fa50c8086e14d1b0, type: 3}
   enemyPrefabBindings:
   - enemyName: stage1-swordsman
     prefab: {fileID: 6219452113495756200, guid: f2892daa44e860e49b1ea2b17f8682dc, type: 3}
@@ -38653,6 +38650,9 @@ MonoBehaviour:
     prefab: {fileID: 2901641940831284134, guid: 4ca246702baa4fd45b4921ba449d94a9, type: 3}
   - enemyName: stage2-arsen
     prefab: {fileID: 7149419201978181015, guid: 352837e4f845dc54ab09d08e639b5f66, type: 3}
+  summonPrefabBindings:
+  - summonName: spirit-king
+    prefab: {fileID: 3842231094034295746, guid: 22fa35ab86fc0754fa50c8086e14d1b0, type: 3}
 --- !u!114 &1427799831
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -217,24 +217,20 @@ namespace Pakuri.InGame
 
         public static float AttackPowerMultiplier(UnitCombatState model)
         {
-            return Mathf.Max(
-                0f,
-                1f + SumStacked(
-                    model,
-                    data => MeetsConditionalEffectTarget(model, model, data)
-                        ? data.Modifiers.AttackPowerBonus
-                        : 0f));
+            return MultiplyStacked(
+                model,
+                data => MeetsConditionalEffectTarget(model, model, data)
+                    ? data.Modifiers.AttackPowerBonus
+                    : 0f);
         }
 
         public static float SpellPowerMultiplier(UnitCombatState model)
         {
-            return Mathf.Max(
-                0f,
-                1f + SumStacked(
-                    model,
-                    data => MeetsConditionalEffectTarget(model, model, data)
-                        ? data.Modifiers.SpellPowerBonus
-                        : 0f));
+            return MultiplyStacked(
+                model,
+                data => MeetsConditionalEffectTarget(model, model, data)
+                    ? data.Modifiers.SpellPowerBonus
+                    : 0f);
         }
 
         public static float ShieldReceivedMultiplier(UnitCombatState model)
@@ -259,29 +255,29 @@ namespace Pakuri.InGame
                     : 0f);
         }
 
-        public static float CriticalDamageBonus(
+        public static float CriticalDamageMultiplier(
             UnitCombatState model,
             UnitCombatState target = null)
         {
-            return SumStacked(
+            return MultiplyStacked(
                 model,
                 data => MeetsConditionalEffectTarget(model, target, data)
                     ? data.Modifiers.CritDamageBonusRate
                     : 0f);
         }
 
-        public static float OutgoingDamageBonus(UnitCombatState source, DamageAttribute attribute, string sourceSkillName = null)
+        public static float OutgoingDamageMultiplier(UnitCombatState source, DamageAttribute attribute, string sourceSkillName = null)
         {
-            return OutgoingDamageBonus(source, null, attribute, sourceSkillName);
+            return OutgoingDamageMultiplier(source, null, attribute, sourceSkillName);
         }
 
-        public static float OutgoingDamageBonus(
+        public static float OutgoingDamageMultiplier(
             UnitCombatState source,
             UnitCombatState target,
             DamageAttribute attribute,
             string sourceSkillName = null)
         {
-            return SumStacked(source, data =>
+            return MultiplyStacked(source, data =>
             {
                 if (MatchesAttribute(data, attribute)
                     && MeetsConditionalEffectTarget(source, target, data)
@@ -335,9 +331,9 @@ namespace Pakuri.InGame
             return results;
         }
 
-        public static float IncomingDamageBonus(UnitCombatState target, UnitCombatState source, DamageAttribute attribute, string sourceSkillName = null)
+        public static float IncomingDamageMultiplier(UnitCombatState target, UnitCombatState source, DamageAttribute attribute, string sourceSkillName = null)
         {
-            return SumStacked(target, data =>
+            return MultiplyStacked(target, data =>
             {
                 var runtimeKindMatches = StatusConditionRules.MatchesSkillRuntimeKinds(data.ConditionalIncomingSkillRuntimeKindValues, sourceSkillName);
                 var bonus = 0f;
@@ -417,9 +413,9 @@ namespace Pakuri.InGame
             }));
         }
 
-        public static float CriticalDamageTakenBonus(UnitCombatState target)
+        public static float CriticalDamageTakenMultiplier(UnitCombatState target)
         {
-            return SumStacked(
+            return MultiplyStacked(
                 target,
                 data => MeetsConditionalEffectTarget(target, target, data)
                     ? data.CriticalDamageTakenBonus
@@ -531,6 +527,40 @@ namespace Pakuri.InGame
             }
 
             return total;
+        }
+
+        private static float MultiplyStacked(UnitCombatState model, System.Func<StatusRuntimeData, float> selector)
+        {
+            IReadOnlyList<StatusRuntimeInstance> statuses = null;
+            if (model != null && model.Statuses != null)
+            {
+                statuses = model.Statuses.ActiveStatuses;
+            }
+            if (statuses == null)
+            {
+                return 1f;
+            }
+
+            var multiplier = 1f;
+            for (var i = 0; i < statuses.Count; i++)
+            {
+                var runtime = statuses[i];
+                if (runtime == null || runtime.Stacks <= 0)
+                {
+                    continue;
+                }
+
+                var data = RuntimeData(runtime);
+                if (data == null
+                    || !MeetsConditionalSourceStatus(runtime.SourceUnit, data))
+                {
+                    continue;
+                }
+
+                multiplier *= Mathf.Max(0f, 1f + selector(data) * runtime.Stacks);
+            }
+
+            return multiplier;
         }
 
         private static StatusRuntimeData RuntimeData(StatusRuntimeInstance runtime)

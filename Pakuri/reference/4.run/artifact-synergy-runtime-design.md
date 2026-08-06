@@ -1,5 +1,88 @@
 # 유물·시너지 추가 효과 구현 설계
 
+> 처형관 전용 최신 구현 인계서는 `executioner-artifact-synergy-implementation-design.md`다. 처형관 범위에서 이 문서의 기존 설명과 충돌하면 전용 문서와 실제 코드가 우선한다.
+
+## 0. 2026-08-06 처형관 구현 설계 갱신
+
+이 절은 현재 코드 재검사 결과를 기준으로 하며, 아래의 과거 Phase 설명과 충돌하면 이 절과 실제 코드가 우선한다.
+
+### 0.1 결론
+
+- 유물 획득, 파티 전체 시너지 집계, 개별 유물 Effect의 Stage 배포, `ArtifactState.ActiveArtifactEffectNames`, 기존 Node/Trigger 실행 경로는 재사용한다.
+- 처형관은 현재 구조를 **수정 없이** 구현할 수 없다.
+- 현재 `ArtifactUI`와 `InGameInfoUI`는 각각 `spirit-contract` 한 종류를 상수로 고정한다.
+- 현재 `ArtifactSynergyEffectDefinition`에는 `Nodes`와 `Reactions`가 없고, `BuildArtifactSynergyEffects`도 그래프를 생성하지 않는다.
+- 현재 `ArtifactSynergyManager.ActivateStageEffects`는 활성 시너지의 `SpawnUnit`과 소환물 `GrantSkill`만 처리한다. `SkillModifier`와 `PassiveTrigger`를 파티원에게 배포하지 않는다.
+- 처형관 10개 유물과 네 단계 Effect 헤더는 CSV에 있으나 `skill_graph_nodes_artifact.csv`에는 처형관 실행 Node가 없다.
+- 치명타 발생 결과, 조건부 치명타 피해, 치명타 후 최종 피해, 스킬 실행 종류, 타격 순번, 치명타 저항 관통은 현재 공통 피해 계약에 모두 존재하지 않으므로 필요한 최소 공통 로직을 먼저 추가한다.
+
+### 0.2 Stage 적용 경로
+
+```text
+RunSession 보유 유물
+  -> ArtifactSynergyManager.PrepareStage
+  -> 개별 유물 Effect + 활성 시너지 단계 Effect를 파티원 ActiveArtifactEffectNames에 배포
+  -> StageManager.BeginPlayerCombat
+  -> 스킬 snapshot / 적중 판정 / Trigger가 같은 활성 Effect 목록을 소비
+```
+
+- `PrepareStage`의 기존 유물 집계와 Stage 시작 순서를 유지한다.
+- 시너지 `SkillModifier`와 `PassiveTrigger` 배포는 `spawnManager` 유무와 분리한다. 소환 전용 `SpawnUnit`/`GrantSkill`만 기존 소환 활성화 경로에 남긴다.
+- `ArtifactSynergyEffectDefinition`에 `SkillNode[] Nodes`, `SkillReaction[] Reactions`를 추가하고 기존 `SkillNodeOwnerKind.Effect`와 Trigger source ID 경로로 생성한다.
+- `SkillExecutionRules`와 `SkillTrigger`는 활성 Effect ID가 `ArtifactEffectDefinition`인지 `ArtifactSynergyEffectDefinition`인지 조회해 같은 Node/Reaction 실행 경로로 보낸다. 새 시너지 전용 계산기를 만들지 않는다.
+
+### 0.3 치명타·최종 피해 공통 계약
+
+- 기존 선치명타 `AttackRule.FinalDamageMultiplier`는 실제 의미에 맞게 `DamageMultiplier`로 이름을 바꾼다.
+- `SkillExecutionState`와 `AttackRule`에 후치명타 `FinalDamageModifier`를 별도 배율로 추가한다.
+- `DamageCalculator`는 방어/주는 피해/받는 피해/치명타 계산 뒤 `FinalDamageModifier`를 곱하고 마지막 한 번만 반올림한다.
+- 처형관 4단계 중 4유물 효과는 치명타일 때만 적용되므로 `CriticalFinalDamageModifier`를 별도 적중 값으로 전달하고 실제 치명타가 발생한 경우에만 `FinalDamageModifier`와 함께 곱한다.
+- `DamageCalculator.CalculateFinalDamage`는 기존 float 반환 호환 overload를 유지하고, 전투 Manager가 쓰는 overload에서 `out bool isCritical`을 제공한다.
+- `InGameResourceChangeResult`와 `TriggerExecutionContext`가 `IsCritical`/`EventWasCritical`을 보관한다. 이 값은 날 선 성배와 운명의 동전이 재사용한다.
+- DamageCalculator는 전달받은 배율과 치명타 조건만 계산한다. 최고 체력, 보스, 대상 체력, 스킬 종류, 타격 순번 판정은 공통 적중 resolver가 `AttackRule` 생성 전에 확정한다.
+
+### 0.4 처형관 효과 매핑
+
+| 효과 | 기존 재사용 | 신규 공통 계약 |
+|---|---|---|
+| 2시너지: 치명타 확률 +8% | `CritChanceBonus(.08)` | 대상 체력 35% 이하 조건부 `CritChanceBonus(.08)` |
+| 4시너지: 치명타 피해 +35% | `CritDamageBonus(.35)` | 치명타 발생 시 `CriticalFinalDamageModifier(1.08)` |
+| 6시너지 | 없음 | 대상 체력 35% 이하 조건부 `CritDamageBonus(.60)` |
+| 8시너지 | `UnitCombatState.IsBoss` | 보스 조건 `CritChanceBonus(.15)`과 `CritDamageBonus(.80)` |
+| 유리 심장 | `CritDamageBonus(.30)` | 없음 |
+| 예언자의 눈 | 기존 `HighestHealth`의 현재 HP 비교 규칙 | 실제 적중 대상이 생존 적 중 최고 현재 HP인지 판정하는 hit predicate |
+| 처형 반지 | 없음 | 대상 체력 35% 이하 조건부 `CritDamageBonus(.50)` |
+| 날 선 성배 | `ExtendStatusDuration(HolyExposure, 1)` | `EventWasCritical`과 Holy 속성 Trigger 조건 |
+| 붉은 조준경 | `SkillRuntimeKind` | `MagazineProjectile`/`CooldownProjectile` 조건 Node |
+| 금 간 왕관 | `UnitCombatState.IsBoss` | 보스 조건 `CritChanceBonus(.10)`과 `CritDamageBonus(.25)` |
+| 사형 명부 | 기존 대상 상태 치명타 보너스 | 표식 status ID를 `name-mark;sein-a-hit-mark`로 명시 |
+| 백은 바늘 | 없음 | 한 실행의 `HitSequenceIndex/HitSequenceCount`와 마지막 타격 조건 |
+| 별빛 숫돌 | 없음 | 대상 치명타 저항과 공격자 치명타 저항 관통. +10은 0.10으로 저작 |
+| 운명의 동전 | Stage 단위 Artifact 상태 | 비치명타 누적, 다음 일반 공격 치명타 확률 +.05/회, 최대 .25, 치명타 시 초기화 |
+
+`IsBoss`는 현재 StageManager가 중간보스와 보스 encounter에 모두 전달하므로 처형관의 “중간보스/보스” 조건에 재사용한다.
+
+백은 바늘의 “마지막 타격”은 같은 스킬 실행이 계획한 타격 수가 2 이상일 때의 마지막 순번으로 정의한다. 다중 대상 한 번 적중은 다단히트로 세지 않는다. 운명의 동전은 일반 피해 사건만 세고 `AttackRule.IsTrigger` 후속 피해는 제외한다. 두 규칙은 구현 전 사용자 확정이 필요하다.
+
+### 0.5 획득과 HUD
+
+- `PrisonPanelUI`, `RunSession.CanAcquireArtifact`, `TryAcquireArtifact`, 유닛당 3개 제한은 그대로 재사용한다.
+- `ArtifactUI.PrepareChoices`의 단일 `RewardSynergyName` 필터는 정령계약과 처형관 두 활성 시너지를 허용하도록 바꾼다. 아직 효과가 구현되지 않은 선택받은자/파수꾼/포격대 유물은 후보에 넣지 않는다.
+- HUD의 `DisplayedSynergyName` 단일 고정을 제거하고 보유 유물을 `ArtifactDefinition.SynergyName`별로 집계한다.
+- 씬의 `HUD/Artifact_Container` 원본을 첫 표시 슬롯 겸 복제 원형으로 쓴다. 다른 시너지 종류가 추가될 때만 같은 부모 아래 복제하고, 슬롯 `i`의 `localPosition.y`는 원본보다 `93.3 * i`만큼 낮춘다.
+- 원본과 복제본은 목록에 캐시하고 필요한 수만 활성화한다. 매 Refresh마다 파괴/재생성하지 않는다.
+- 각 슬롯은 기존 자식 `Image/Icon`, `Cur`, `Lv2`, `Lv4`, `Lv6`, `Lv8`을 그대로 바인딩하고 시너지 icon, 보유 개수, 2/4/6/8 활성 색을 표시한다.
+- 현재 `Artifact_Container`에는 개별 유물 이름이나 효과 설명용 Text/목록 자식이 없다. 따라서 기존 계층을 수정하지 않는 범위에서 가능한 표시는 시너지별 icon/count/단계뿐이다. 개별 유물 효과 문구까지 HUD에 표시하려면 별도 UI 계층 설계가 필요하다.
+
+### 0.6 구현 Phase
+
+1. Effect Definition/Generation: 시너지 Node·Reaction 생성과 공통 활성 Effect 조회.
+2. Stage 배포/획득: 활성 시너지 Effect 배포와 보상 후보를 정령계약+처형관으로 확장.
+3. 치명타 공통 계약: `FinalDamageModifier`, 치명타 결과 전달, 조건부 hit resolver, 치명타 저항/관통.
+4. 처형관 데이터: 네 단계와 유물 10개의 Node/Trigger 작성.
+5. HUD: 시너지별 `Artifact_Container` 재사용/복제와 `-93.3` 배치.
+6. 검증: 0/1/2/4/6/8개 단계, 다음 Stage 재배포, 모든 공격 Actor, 치명타/비치명타, 저체력/보스/표식/최고 HP/마지막 타격, 두 시너지 동시 HUD를 집중 테스트한다.
+
 ## 1. 문서 상태
 
 - 역할: Designer / Code Builder

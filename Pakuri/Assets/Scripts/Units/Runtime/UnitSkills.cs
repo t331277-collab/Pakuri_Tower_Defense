@@ -247,16 +247,16 @@ namespace Pakuri.InGame
         public IReadOnlyList<SkillExecutionState> PassiveSkills => passiveSkills;
         public int Count => activeSkills.Count + passiveSkills.Count;
 
-        /// 학습한 지속 효과를 합산해 속성별 추가 피해율을 구한다.
-        public float PassiveOutgoingDamageBonus(DamageAttribute attribute)
+        /// 학습한 지속 효과를 곱연산해 속성별 피해 배율을 구한다.
+        public float PassiveOutgoingDamageMultiplier(DamageAttribute attribute)
         {
-            return PassiveMultiplier(PassiveModifierKind.DamageUp, attribute, false) - 1f;
+            return PassiveMultiplier(PassiveModifierKind.DamageUp, attribute, false);
         }
 
-        /// 학습한 DefenseUp 패시브의 증가율을 합산해 속성별 방어 배율을 구한다.
+        /// 학습한 DefenseUp 패시브를 곱연산해 속성별 방어 배율을 구한다.
         public float PassiveDefenseMultiplier(DamageAttribute attribute)
         {
-            return 1f + PassiveDefenseBonus(attribute);
+            return PassiveMultiplier(PassiveModifierKind.DefenseUp, attribute, false);
         }
 
         /// 학습한 지속 효과에서 치명타 확률 보너스를 합산한다.
@@ -265,10 +265,10 @@ namespace Pakuri.InGame
             return PassiveBonus(PassiveModifierKind.CritChanceUp);
         }
 
-        /// 학습한 지속 효과에서 치명타 피해 보너스를 합산한다.
-        public float PassiveCriticalDamageBonus()
+        /// 학습한 지속 효과를 곱연산해 치명타 피해 배율을 구한다.
+        public float PassiveCriticalDamageMultiplier()
         {
-            return PassiveBonus(PassiveModifierKind.CritDamageUp);
+            return PassiveMultiplier(PassiveModifierKind.CritDamageUp, DamageAttribute.Physical, false);
         }
 
         /// 학습한 지속 효과를 합성해 회복량 배율을 구한다.
@@ -277,10 +277,10 @@ namespace Pakuri.InGame
             return PassiveMultiplier(PassiveModifierKind.HealingUp, DamageAttribute.Physical, false);
         }
 
-        /// 학습한 피해 감소 효과를 합성해 받는 피해 보정률을 구한다.
-        public float PassiveIncomingDamageBonus()
+        /// 학습한 피해 감소 효과를 합성해 받는 피해 배율을 구한다.
+        public float PassiveIncomingDamageMultiplier()
         {
-            return PassiveMultiplier(PassiveModifierKind.IncomingDamageDown, DamageAttribute.Physical, true) - 1f;
+            return PassiveMultiplier(PassiveModifierKind.IncomingDamageDown, DamageAttribute.Physical, true);
         }
 
         /// 기본 정의에 지속 효과와 선택 효과를 반영한 이번 시전값을 만든다.
@@ -488,25 +488,6 @@ namespace Pakuri.InGame
             }
 
             return multiplier;
-        }
-
-        private float PassiveDefenseBonus(DamageAttribute attribute)
-        {
-            var bonus = 0f;
-            for (var i = 0; i < passiveSkills.Count; i++)
-            {
-                var passive = passiveSkills[i].Data as PassiveSkillDefinition;
-                if (passive == null
-                    || passive.ModifierKind != PassiveModifierKind.DefenseUp
-                    || (passive.HasModifierAttribute && passive.ModifierAttribute != attribute))
-                {
-                    continue;
-                }
-
-                bonus += Mathf.Max(0f, passive.ModifierValue);
-            }
-
-            return bonus;
         }
 
         /// 한 스킬의 강화·마스터·지속 선택지에서 식별자가 같은 항목을 찾는다.

@@ -105,6 +105,18 @@ namespace Pakuri.InGame
 
         public bool IsNexus => Identity.Role == UnitRole.Nexus;
 
+        /// 피해 계수에 사용할 공격력을 0 이상으로 반환한다.
+        public float GetAttackPower()
+        {
+            return Mathf.Max(0f, Stats != null ? Stats.AttackPower : 0f);
+        }
+
+        /// 피해 계수에 사용할 주문력을 0 이상으로 반환한다.
+        public float GetSpellPower()
+        {
+            return Mathf.Max(0f, Stats != null ? Stats.SpellPower : 0f);
+        }
+
         /// TotalShield를 반환한다.
         public float GetTotalShield()
         {

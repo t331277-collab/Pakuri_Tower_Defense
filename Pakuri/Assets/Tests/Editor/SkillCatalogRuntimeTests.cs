@@ -51,6 +51,14 @@ public sealed class SkillCatalogRuntimeTests
         scale.Invoke(data, new object[] { 0.45f });
 
         Assert.That(data.DamageMultiplier, Is.EqualTo(0.5625f).Within(0.0001f));
+
+        var copyWithMultiplier = typeof(SkillExecutionState).GetMethod(
+            "CopyWithDamageMultiplier",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+
+        Assert.That(copyWithMultiplier, Is.Not.Null);
+        var copy = (SkillExecutionState)copyWithMultiplier.Invoke(data, new object[] { 0.5f });
+        Assert.That(copy.DamageMultiplier, Is.EqualTo(0.28125f).Within(0.0001f));
     }
 
     [Test]
@@ -219,8 +227,8 @@ public sealed class SkillCatalogRuntimeTests
             Assert.That(model.SkillState.FindBySkillName(active.SkillName).Data, Is.SameAs(active));
             Assert.That(model.SkillState.FindBySkillName(passive.SkillName).Data, Is.SameAs(passive));
             Assert.That(
-                model.SkillState.PassiveOutgoingDamageBonus(DamageAttribute.Physical),
-                Is.EqualTo(0.1f).Within(0.0001f));
+                model.SkillState.PassiveOutgoingDamageMultiplier(DamageAttribute.Physical),
+                Is.EqualTo(1.1f).Within(0.0001f));
         }
         finally
         {
@@ -253,13 +261,76 @@ public sealed class SkillCatalogRuntimeTests
             Array.Empty<SkillDefinition>(),
             passives);
 
-        Assert.That(owner.SkillState.PassiveOutgoingDamageBonus(DamageAttribute.Fire), Is.EqualTo(0.1f).Within(0.0001f));
-        Assert.That(owner.SkillState.PassiveOutgoingDamageBonus(DamageAttribute.Ice), Is.Zero.Within(0.0001f));
-        Assert.That(owner.SkillState.PassiveDefenseMultiplier(DamageAttribute.Holy), Is.EqualTo(1.3f).Within(0.0001f));
+        Assert.That(owner.SkillState.PassiveOutgoingDamageMultiplier(DamageAttribute.Fire), Is.EqualTo(1.1f).Within(0.0001f));
+        Assert.That(owner.SkillState.PassiveOutgoingDamageMultiplier(DamageAttribute.Ice), Is.EqualTo(1f).Within(0.0001f));
+        Assert.That(owner.SkillState.PassiveDefenseMultiplier(DamageAttribute.Holy), Is.EqualTo(1.32f).Within(0.0001f));
         Assert.That(owner.SkillState.PassiveCriticalChanceBonus(), Is.EqualTo(0.08f).Within(0.0001f));
-        Assert.That(owner.SkillState.PassiveCriticalDamageBonus(), Is.EqualTo(0.2f).Within(0.0001f));
+        Assert.That(owner.SkillState.PassiveCriticalDamageMultiplier(), Is.EqualTo(1.2f).Within(0.0001f));
         Assert.That(owner.SkillState.PassiveHealingMultiplier(), Is.EqualTo(1.15f).Within(0.0001f));
-        Assert.That(owner.SkillState.PassiveIncomingDamageBonus(), Is.EqualTo(-0.12f).Within(0.0001f));
+        Assert.That(owner.SkillState.PassiveIncomingDamageMultiplier(), Is.EqualTo(0.88f).Within(0.0001f));
+    }
+
+    [Test]
+    /// 최종 피해가 방어력, 주는 피해, 받는 피해 배율을 분리해 곱하는지 확인한다.
+    public void DamageFormulaMultipliesResolvedGroups()
+    {
+        var source = new UnitCombatState();
+        var target = new UnitCombatState();
+        source.Stats.AttackPower = -10f;
+        source.Stats.SpellPower = -20f;
+        target.Defenses.Lightning = 40f;
+
+        source.Statuses.Apply(DamageStatus(StatusEffectKind.Shock, 0.10f, DamageAttribute.Lightning), 1, 0f, permanent: true);
+        source.Statuses.Apply(DamageStatus(StatusEffectKind.Blessing, 0.10f, DamageAttribute.Lightning), 1, 0f, permanent: true);
+        target.Statuses.Apply(new StatusRuntimeData
+        {
+            Kind = StatusEffectKind.FireResistDown,
+            HasElementModifierTarget = true,
+            ElementModifierTarget = DamageAttribute.Lightning,
+            ElementResistReduction = 0.10f,
+            FlatElementResistReduction = 5f
+        }, 1, 0f, permanent: true);
+        target.Statuses.Apply(IncomingDamageStatus(StatusEffectKind.Vulnerable, 0.20f), 1, 0f, permanent: true);
+        target.Statuses.Apply(IncomingDamageStatus(StatusEffectKind.ActionSpeedUp, -0.15f), 1, 0f, permanent: true);
+
+        var rawDamage = DamageCalculator.CalculateRawDamage(
+            source,
+            new SkillDamageSpec
+            {
+                BaseDamage = 100f,
+                AttackPowerCoefficient = 1f,
+                SpellPowerCoefficient = 1f
+            });
+        var attackRule = new AttackRule(source, false, 0f, 0f, "test-skill", false, false, null, 1.15f);
+        var finalDamage = DamageCalculator.CalculateFinalDamage(target, rawDamage, DamageAttribute.Lightning, attackRule);
+        var expected = Mathf.Round(100f * (100f / 131f) * 1.15f * 1.10f * 1.10f * 1.20f * 0.85f);
+
+        Assert.That(rawDamage, Is.EqualTo(100f));
+        Assert.That(finalDamage, Is.EqualTo(expected));
+    }
+
+    [Test]
+    /// 치명타 확률은 합산 후 보정하고 치명타 피해는 배율로 합성하는지 확인한다.
+    public void CriticalRulesClampChanceAndMultiplyDamage()
+    {
+        var source = new UnitCombatState();
+        var target = new UnitCombatState();
+        source.Stats.CriticalChance = -0.5f;
+        source.Stats.CriticalDamage = 1.5f;
+        source.Statuses.Apply(CriticalDamageStatus(StatusEffectKind.Blessing, 0.30f), 1, 0f, permanent: true);
+        source.Statuses.Apply(CriticalDamageStatus(StatusEffectKind.ActionSpeedUp, 0.20f), 1, 0f, permanent: true);
+        target.Statuses.Apply(new StatusRuntimeData
+        {
+            Kind = StatusEffectKind.Vulnerable,
+            CriticalDamageTakenBonus = 0.10f
+        }, 1, 0f, permanent: true);
+
+        var attackRule = new AttackRule(source, true, 0f, 0.25f, "test-skill", false, false, null, 1f);
+
+        Assert.That(DamageCalculator.ResolveCriticalChance(target, attackRule), Is.Zero);
+        Assert.That(
+            DamageCalculator.ResolveCriticalDamageMultiplier(target, attackRule),
+            Is.EqualTo(1.5f * 1.30f * 1.20f * 1.25f * 1.10f).Within(0.0001f));
     }
 
     [Test]
@@ -663,7 +734,7 @@ public sealed class SkillCatalogRuntimeTests
             model.SkillState.FindBySkillName("ariel-a"),
             null);
 
-        Assert.That(snapshot.DamageMultiplier, Is.EqualTo(1.38f).Within(0.0001f));
+        Assert.That(snapshot.DamageMultiplier, Is.EqualTo(1.12f * 1.18f * 1.08f).Within(0.0001f));
     }
 
     [Test]
@@ -1295,6 +1366,38 @@ public sealed class SkillCatalogRuntimeTests
         typeof(GameDataLoader).GetField("failed", flags)?.SetValue(null, false);
         GameDataLoader.EnsureInitialized();
         return GameDataLoader.CurrentCatalog;
+    }
+
+    private static StatusRuntimeData DamageStatus(
+        StatusEffectKind kind,
+        float bonus,
+        DamageAttribute attribute)
+    {
+        return new StatusRuntimeData
+        {
+            Kind = kind,
+            HasElementModifierTarget = true,
+            ElementModifierTarget = attribute,
+            Modifiers = new BuffModifierSpec { DamageBonusRate = bonus }
+        };
+    }
+
+    private static StatusRuntimeData IncomingDamageStatus(StatusEffectKind kind, float bonus)
+    {
+        return new StatusRuntimeData
+        {
+            Kind = kind,
+            DamageTakenBonus = bonus
+        };
+    }
+
+    private static StatusRuntimeData CriticalDamageStatus(StatusEffectKind kind, float bonus)
+    {
+        return new StatusRuntimeData
+        {
+            Kind = kind,
+            Modifiers = new BuffModifierSpec { CritDamageBonusRate = bonus }
+        };
     }
 
     /// 지속 스킬 검증용 정의를 만든다.
