@@ -8,6 +8,54 @@ The previous Run, reward, and save/load boards are preserved under `boards/ARCHI
 
 For new Run work, inspect the exact current code and data first, then add a required-field task block here only when persistent state is needed.
 
+## Task: 2026-08-06 Executioner Acquisition And Stage Distribution Design
+
+### Task title
+
+정령계약 획득·시너지 집계 경로를 재사용해 처형관 유물과 활성 단계 Effect를 Stage 전체에 배포한다.
+
+### Goals
+
+- 기존 유물 소유/중복/유닛당 3개 규칙을 유지한다.
+- 정령계약과 처형관을 보상 후보로 제공한다.
+- Stage 시작마다 활성 처형관 시너지 Effect를 파티원에게 한 번 재배포한다.
+- 유리 심장과 별빛 숫돌은 짝 보유 조건 없이 각 보유 Effect의 단일 `+0.20` 치명타 보정을 Stage 전체에 적용한다.
+
+### Constraints
+
+- 아직 구현되지 않은 다른 시너지 유물은 보상 후보에 노출하지 않는다.
+- `SpawnUnit`/`GrantSkill`과 파티 `SkillModifier`/`PassiveTrigger` 배포를 분리한다.
+- 다음 Stage에서 활성 Effect 목록을 비우고 재구성해 중복 누적을 막는다.
+- Designer 단계에서는 런타임 코드를 수정하지 않는다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+구현 진행 중. Phase 0 설계 정정 완료.
+
+### Next Actions
+
+- `ArtifactUI`의 단일 정령계약 필터를 두 활성 시너지 후보로 확장한다.
+- `ArtifactSynergyManager`가 활성 시너지의 파티 Effect도 `ActiveArtifactEffectNames`에 배포하도록 구현한다.
+- 유리 심장·별빛 숫돌의 단일 Effect Node가 다음 Stage 재구성에서 중복 없이 적용되는지 확인한다.
+
+### Evidence
+
+- `RunSession.TryAcquireArtifact`와 `ArtifactState`는 기존 보유/중복/용량 계약을 제공한다.
+- `ArtifactSynergyManager.PrepareStage`는 개별 유물 Effect를 배포하지만 활성 시너지 Effect는 소환/스킬 해금만 처리한다.
+- `StageManager.RunCurrentDayFlow`는 파티 복원 뒤 `PrepareStage`, `BeginPlayerCombat`, 적 생성 순으로 실행한다.
+- `ArtifactUI.RewardSynergyName`은 현재 `spirit-contract`로 고정돼 있다.
+- `ArtifactState.ClearActiveEffects`가 다음 Stage마다 활성 Effect를 비우고 재배포한다.
+
+### History
+
+- 2026-08-06: Designer가 처형관 획득과 Stage 적용을 기존 정령계약 경로에 합치는 최소 변경안을 기록했다.
+- 2026-08-07: 처형관 전용 구현 설계 문서에 획득, Stage 재배포, Phase와 수용 기준을 확정했다.
+- 2026-08-07: 유리 심장·별빛 숫돌의 상호보유 추가효과 설계를 제거하고 각각 단일 `+0.20` 치명타 보정으로 정정했다.
+
 ## Task: 2026-08-05 Spirit Contract Synergy and Spirit King Runtime
 
 ### Task title

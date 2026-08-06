@@ -4,6 +4,169 @@
 
 The pre-cleanup file, including all completed July tasks, is preserved at `boards/ARCHIVE/ACTIVE_BOARD_SNAPSHOT_2026-07-28/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
 
+## Task: 2026-08-06 Executioner Critical And Final-Damage Runtime Design
+
+### Task title
+
+처형관 유물·시너지가 공통 피해 경로에서 조건부 치명타와 후치명타 최종 피해를 적용하도록 설계한다.
+
+### Goals
+
+- 처형관의 일반 치명타 확률/피해 보정은 기존 Node를 재사용한다.
+- 저체력, 보스, 최고 HP, 표식, 스킬 종류 조건을 공통 적중 판정으로 처리한다.
+- 백은 바늘은 신규 타격 순번 없이 기존 마지막 탄창 투사체 판정을 재사용한다.
+- 유리 심장은 모든 아군 치명타 피해 `+0.20`, 별빛 숫돌은 모든 아군 치명타 확률 `+0.20`의 단일 효과로 적용한다.
+- 치명타 결과를 후치명타 최종 피해와 Trigger에 전달한다.
+
+### Constraints
+
+- `DamageCalculator`는 전달된 값 계산만 담당한다.
+- 기존 선치명타 스킬 배율과 신규 후치명타 `FinalDamageModifier`를 분리한다.
+- 시너지 Manager가 직접 피해나 치명타 공식을 계산하지 않는다.
+- Designer 단계에서는 C#/CSV/Scene을 수정하지 않는다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+구현 진행 중. Phase 0 설계 정정 완료.
+
+### Next Actions
+
+- 치명타 결과 전달, `FinalDamageModifier`, 조건부 hit resolver를 구현한다.
+- 마지막 탄창 투사체 치명타 피해 보정을 구현한다.
+- 모든 공격 Actor가 중앙 `ApplyDamage` 경로에서 같은 조건을 받는지 집중 테스트한다.
+
+### Evidence
+
+- `DamageCalculator.CalculateFinalDamage`는 현재 치명타 여부를 반환하지 않고 치명타 뒤 바로 반올림한다.
+- `AttackRule.FinalDamageMultiplier`는 현재 치명타 전 주는 피해 배율로 사용된다.
+- `InGameResourceChangeResult`와 `TriggerExecutionContext`에는 치명타 결과가 없다.
+- `UnitCombatState.IsBoss`가 존재한다.
+- `PreparedMagazineLastProjectile`가 `MagazineRemaining == 1`에서 확정되어 `ProjectileSkillActor.isMagazineLastProjectile`까지 전달된다.
+- `ArtifactSynergyManager`가 모든 아군의 `ActiveArtifactEffectNames`를 Stage마다 재구성하며, `BuildArtifacts`는 같은 `artifact_name`의 여러 Effect를 수집한다. 이번 유리 심장·별빛 숫돌 계약에는 상호보유 조건이 필요하지 않다.
+- 처형관별 매핑과 공통 계약은 `Pakuri/reference/4.run/artifact-synergy-runtime-design.md` 0절에 기록했다.
+
+### History
+
+- 2026-08-06: 사용자가 처형관 시너지와 유물 10개를 정령계약 구조에 추가하고 최종 피해를 사용하도록 설계를 요청했다.
+- 2026-08-06: Designer가 재사용 가능 경로와 신규 치명타/적중 공통 계약을 분리했다.
+- 2026-08-07: 처형관 전용 Code Builder 인계 설계를 `Pakuri/reference/4.run/executioner-artifact-synergy-implementation-design.md`로 분리해 기록했다.
+- 2026-08-07: 사용자가 백은 바늘을 마지막 탄창 투사체 효과로 축소하고 유리 심장·별빛 숫돌을 각각 단일 치명타 보정 `+0.20`으로 확정했다. Designer가 신규 타격 순번·상호보유 조건·치명타 저항/관통 설계를 폐기하고 기존 투사체 flag와 치명타 Node 재사용으로 설계를 갱신했다.
+
+## Task: 2026-08-06 Final Damage Modifier Design
+
+### Task title
+
+스킬 스냅샷의 `FinalDamageModifier`를 치명타 계산 뒤, 최종 반올림과 자원 적용 전에 곱하는 별도 피해 축으로 추가한다.
+
+### Goals
+
+- 기존 스킬 위력 계열 `DamageMultiplier`와 신규 최종 피해 `FinalDamageModifier`를 분리한다.
+- `FinalDamageModifier`는 치명타 발생 여부와 관계없이 치명타 판정·배율 처리 뒤 마지막 피해 배율로 적용한다.
+- 스킬 스냅샷과 직접 `ApplyDamage` 호출 모두 같은 최종 피해 계약을 사용한다.
+
+### Constraints
+
+- `FinalDamageModifier`는 기본값 `1f`인 배율이다. CSV의 최종 피해 +15%는 `1.15`로 기록한다.
+- 여러 최종 피해 보정은 합산하지 않고 서로 곱한다.
+- 최종 피해 배율은 보호막·HP 차감 전에 적용되지만 보호막량·회복량에는 적용하지 않는다.
+- 스냅샷이 직접 만든 주 피해, 분기 피해, 스킬 내부 추가 피해에는 같은 스냅샷 값을 전달한다.
+- 상태 기반 후속 피해처럼 별도 `ApplyDamage` 사건은 자체 값이 없으면 기본값 `1f`를 사용한다.
+- 중간 반올림은 추가하지 않고 기존 최종 `Mathf.Round` 한 번만 유지한다.
+- Designer 단계에서는 코드와 CSV를 수정하지 않는다.
+
+### Role Owner
+
+Designer.
+
+### Status
+
+Design ready. 구현되지 않았으며 Code Builder 전환 지시를 기다린다.
+
+### Next Actions
+
+- `SkillExecutionState`에 `FinalDamageModifier = 1f`를 추가하고 Node 적용 시 곱한다.
+- 현재 치명타 전에 적용되는 `AttackRule.FinalDamageMultiplier`와 관련 지역 변수·인자를 `DamageMultiplier`로 이름을 바로잡는다.
+- `AttackRule`과 `InGameCombatManager.ApplyDamage`에 별도 `FinalDamageModifier`를 전달한다.
+- `DamageCalculator.CalculateFinalDamage`에서 치명타 처리 뒤 `damage *= Mathf.Max(0f, attackRule.FinalDamageModifier)`를 실행하고 그 뒤 기존 최종 반올림을 수행한다.
+- Line, Projectile, Single, Zone의 스냅샷 기반 피해 호출에 두 배율을 각각 전달한다.
+- 계산 순서와 CSV 스냅샷 반영을 집중 EditMode 테스트로 검증한다.
+
+### Evidence
+
+- 저장소 C#/CSV 검색에서 `FinalDamageModifier`는 0건이므로 현재 계약은 존재하지 않는다.
+- `SkillExecutionState.DamageMultiplier`는 기본값 `1f`이고 `SkillExecutionRules.ResolveHitDamageMultiplier`가 대상 조건 배율과 합성한다.
+- 현재 `AttackRule.FinalDamageMultiplier`는 `DamageCalculator.CalculateFinalDamage`에서 방어 적용 뒤 주는 피해 상태·패시브와 합쳐지며 치명타 처리 전에 곱해진다. 따라서 현재 이름은 신규 최종 피해 의미와 일치하지 않는다.
+- `DamageCalculator.CalculateFinalDamage`는 치명타 처리 후 바로 `Mathf.Round(Mathf.Max(0f, damage))`를 반환하므로 신규 최종 피해의 정확한 삽입점은 두 코드 사이이다.
+- `InGameCombatManager.ApplyDamageToResources`는 계산기가 반환한 피해로 상태 보호막, 직접 보호막, HP 순서로 차감한다.
+- 현재 `InGameCombatManager.ApplyDamage` 호출은 14곳이며 스냅샷 기반 주 피해는 Line, Projectile, Single, Zone Actor에서 전달된다.
+
+### History
+
+- 2026-08-06: 사용자가 `FinalDamageModifier`를 치명타 보정 이후 마지막으로 적용되는 최종 피해 배율로 정의했다.
+- 2026-08-06: Designer가 현재 선치명타 `FinalDamageMultiplier`와 신규 후치명타 `FinalDamageModifier`를 분리하는 구현 경계를 확정했다.
+
+## Task: 2026-08-06 Multiplicative Damage Formula Alignment
+
+### Task title
+
+기존 피해 실행 경로 안에서 공격력·주문력 하한, 방어력 계산 순서, 주는 피해·받는 피해·치명타 피해의 곱연산 규칙을 통일한다.
+
+### Goals
+
+- `UnitCombatState`가 피해 계산에 넘기는 공격력과 주문력을 0 이상으로 보정한다.
+- 최종 방어력을 기본값 → 패시브 배율 → 상태 저항 배율 → 고정 감소 순으로 계산한다.
+- 스킬 실행, 패시브, 상태이상의 주는 피해·받는 피해·치명타 피해를 각 효과별 배율로 합성한다.
+- 정령의 비약처럼 한 유물 안에서 기본값과 보유 개수 보너스를 합산하는 식은 `1 + 기본 보너스 + 개수 보너스`로 보존한다.
+
+### Constraints
+
+- 새 CSV 컬럼, 새 스탯 계층, 새 계산 서비스는 추가하지 않는다.
+- `DamageCalculator`는 전달받은 값의 계산만 담당하고 HP·보호막 변경 책임은 추가하지 않는다.
+- 치명타 확률은 기존 합산 후 `0..1` 보정을 유지한다.
+- 최종 피해 계산 뒤 기존 보호막 흡수 순서를 유지한다.
+- 이번 작업은 사용자 지시에 따라 Git 커밋을 만들지 않는다.
+- Unity Play Mode 검증은 사용자 소유다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation complete. 정적 검사, Runtime/Editor 빌드와 집중 Unity EditMode 검증을 완료했다. Play Mode 검증은 사용자 소유다.
+
+### Next Actions
+
+- Unity Play Mode에서 실제 스킬·버프·속성 피해·받는 피해·치명타 조합의 전투 표시값을 확인한다.
+- 정령 계약 유물 4개일 때 정령의 비약 내부 배율이 `1 + 0.10 + 0.02 * 4 = 1.18`인지 확인한다.
+
+### Evidence
+
+- `UnitCombatState.GetAttackPower`와 `GetSpellPower`가 `Mathf.Max(0f, ...)`로 피해 계수 입력을 보정하며 `DamageCalculator.CalculateRawDamage`가 두 메서드를 사용한다.
+- `DamageCalculator.CalculateFinalDamage`가 방어력에 패시브 배율, 상태 저항 배율, 고정 저항 감소를 순서대로 반영한 뒤 방어 공식을 적용한다.
+- `SkillExecutionState`, `SkillExecutionRules`, `UnitSkills`, `StatusCombatRules`의 피해·공격력·주문력·치명타 피해 합성이 배율 곱연산으로 변경됐다.
+- `AttackRule.FinalDamageMultiplier`는 스킬 스냅샷 배율을 보너스로 재변환하지 않고 그대로 전달한다.
+- `SkillExecutionRules.ApplyArtifactModifiers`는 같은 유물의 직접 피해 보너스와 반복 개수 보너스만 내부 합산하고, 서로 다른 유물 배율은 곱한다. 집중 테스트의 정령의 비약 4개 결과는 `1.18`, 다른 두 유물과의 합성 결과는 `1.12 * 1.18 * 1.08`이다.
+- `DamageFormulaMultipliesResolvedGroups`, `CriticalRulesClampChanceAndMultiplyDamage`, `ReactionDamageMultiplierScalesExistingSkillModifier`를 포함한 집중 Unity EditMode 테스트가 6/6 통과했다.
+- 전체 Unity EditMode 실행은 27개 중 24개 통과, 기존 별도 기준 불일치 3개 실패였다: `ArtifactAndSummonCatalogBuildsResolvedDefinitions`, `TriggerNodesGenerateFinalRuntimeOutcomes`, `TriggerSemanticClassificationBaselineIsStable`. 이번 피해 계산 변경 대상과 무관한 아이콘 및 Trigger 기준 assertion이다.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false -v:minimal`과 Editor 프로젝트 빌드는 오류 0개로 완료했다. 기존 `System.Net.Http`, `System.IO.Compression` 참조 충돌 경고 2개만 남는다.
+- 이전 `PassiveOutgoingDamageBonus`, `PassiveIncomingDamageBonus`, `PassiveCriticalDamageBonus`, `FinalDamageBonus` 참조는 0건이며 `DamageMultiplier +=` 검색에 남은 1건은 별도 후속 피해 사양인 `OutgoingAdditionalDamageMultiplier` 누적이다.
+- `git diff --check`가 통과했다.
+- 사용자 요청에 따라 `CalculateRawDamage`, `CalculateFinalDamage`, `ResolveCriticalChance`, `ResolveCriticalDamageMultiplier` 네 계산 메서드는 모두 `public static`이다.
+- 공개된 계산 메서드를 검증하는 Editor 테스트는 reflection 보조 메서드를 삭제하고 직접 호출한다.
+- 공개 전환 후 Runtime/Editor 빌드는 오류 0개, 기존 참조 충돌 경고 2개로 완료됐고 집중 Unity EditMode 테스트는 2/2 통과했다.
+
+### History
+
+- 2026-08-06: 사용자가 두 전투 문서와 기존 코드 책임을 기준으로 대규모 구조 변경 없이 피해 계산식을 구현하도록 요청했다.
+- 2026-08-06: Code Builder가 기존 스냅샷, 패시브, 상태, `AttackRule`, `DamageCalculator` 경로를 재사용해 곱연산 규칙을 구현하고 회귀 테스트를 추가했다.
+- 2026-08-06: 마지막 반복/투사체 복제 경로인 `CopyWithDamageMultiplier`도 곱연산으로 통일하고 집중 테스트 6/6을 재확인했다.
+- 2026-08-06: 사용자 지시에 따라 `DamageCalculator`의 모든 계산 메서드를 공개하고 관련 테스트를 직접 호출 방식으로 단순화했다.
+
 ## Task: 2026-08-03 Remove Unused RemovePassiveStatus
 
 ### Task title

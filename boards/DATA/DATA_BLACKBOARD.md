@@ -1,5 +1,98 @@
 # DATA_BLACKBOARD
 
+## Task: 2026-08-06 Executioner Artifact And Synergy Effect Data Design
+
+### Task title
+
+처형관 유물 10개와 2/4/6/8 시너지 Effect 헤더를 실제 Node/Trigger 데이터에 연결한다.
+
+### Goals
+
+- 기존 Artifact graph/trigger CSV를 재사용한다.
+- 시너지 Effect도 개별 유물 Effect와 같은 typed Node/Reaction을 보유한다.
+- 모든 수치는 CSV가 소유한다.
+- 유리 심장·별빛 숫돌은 기존 Effect ID에 각각 단일 `+0.20` 치명타 보정 Node를 기록한다.
+
+### Constraints
+
+- 새 유물 전용 Node/Trigger CSV를 만들지 않는다.
+- 이미 존재하는 처형관 Effect ID와 icon 경로를 유지한다.
+- 존재하지 않는 Node/Trigger 계약을 현재 구현된 것처럼 기록하지 않는다.
+- Designer 단계에서는 CSV를 수정하지 않는다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+구현 진행 중. Phase 0 설계 정정 완료; 실행 Node/Trigger 행은 아직 없다.
+
+### Next Actions
+
+- 시너지 Definition의 Node/Reaction Generation을 추가한다.
+- `MagazineLastProjectileCritDamageBonus` Node 계약을 추가한다.
+- 공통 Node 정의가 구현된 뒤 처형관 graph/trigger 행과 검증 테스트를 작성한다.
+
+### Evidence
+
+- `artifacts.csv`에는 처형관 유물 10개와 실제 icon 경로가 있다.
+- `artifact_synergies.csv`에는 처형관 2/4/6/8 설명과 synergy icon 경로가 있다.
+- `artifact_effects.csv`에는 10개 Effect 헤더, `artifact_synergy_effects.csv`에는 네 단계 Effect 헤더가 있다.
+- `skill_graph_nodes_artifact.csv`에는 처형관 Effect Node가 없다.
+- `ArtifactSynergyEffectDefinition`과 `BuildArtifactSynergyEffects`는 현재 Node/Reaction을 만들지 않는다.
+- 기존 Node 정의에는 `CritChanceBonus`, `CritDamageBonus`가 있고, 마지막 탄창 투사체 전용 치명타 피해 Node만 없다.
+
+### History
+
+- 2026-08-06: Designer가 처형관 데이터의 존재 여부와 실제 runtime 연결 여부를 분리해 감사했다.
+- 2026-08-07: 처형관 Effect ID, 공통 graph/trigger 계약과 CSV 검증 기준을 새 전용 구현 설계 문서에 기록했다.
+- 2026-08-07: 별빛 숫돌은 치명타 확률 단일 `+0.20`, 유리 심장은 치명타 피해 단일 `+0.20`으로 확정했다. 백은 바늘은 기존 마지막 탄창 투사체 flag를 소비하도록 설계를 축소했다.
+
+## Task: 2026-08-06 Final Damage Modifier Node Contract
+
+### Task title
+
+스킬 Graph CSV에서 후치명타 최종 피해 배율을 작성할 `FinalDamageModifier` Node 계약을 추가한다.
+
+### Goals
+
+- `FinalDamageModifier` Node가 스킬 실행 스냅샷의 동명 배율에 반영되게 한다.
+- 기존 `DamageMultiplier` Node와 데이터 의미를 명확히 분리한다.
+
+### Constraints
+
+- 새 Base 스킬 CSV 열은 추가하지 않는다. 기존 수치 보정 방식처럼 공통 Graph Node 정의를 사용한다.
+- `skill_node_definitions.csv`에는 `FinalDamageModifier / FinalDamageModifier / DamageModifier`를 추가한다.
+- `skill_node_definition_params.csv`에는 필수 float 매개변수 `multiplier` 하나를 추가한다.
+- 값은 보너스율이 아니라 배율이다: +15%는 `1.15`, -15%는 `0.85`, 무효는 `1`이다.
+- 실제 스킬 Graph 행은 별도 스킬 지정 없이는 추가하거나 기존 `DamageMultiplier`에서 자동 변환하지 않는다.
+
+### Role Owner
+
+Designer.
+
+### Status
+
+Design ready. Node 정의와 런타임 매핑은 아직 존재하지 않는다.
+
+### Next Actions
+
+- Code Builder가 두 Node 정의 CSV와 `SkillActionOpKind`, `GameDataCatalogBuilder.Nodes`, `SkillExecutionRules`를 함께 변경한다.
+- CSV 구조 검사, 런타임 카탈로그 빌드와 스냅샷 배율 테스트를 수행한다.
+
+### Evidence
+
+- 현재 Node 정의에는 `DamageMultiplier`와 필수 float `multiplier` 매개변수가 있지만 `FinalDamageModifier`는 없다.
+- 현재 Base active-skill CSV 여섯 종류에는 일반 `DamageMultiplier` 열도 없으며 수치 보정은 Graph Node로 작성된다.
+- `GameDataCatalogBuilder.Nodes.MapSkillActionOp`가 문자열 Handler를 `SkillActionOpKind`로 바꾸고 `SkillExecutionRules.ApplyNodeAction`이 스냅샷에 반영한다.
+- Monster Graph와 Artifact Graph에는 기존 `DamageMultiplier` 작성 사례가 있으므로 신규 의미도 공통 Node 계약으로 추가하는 것이 현재 데이터 구조와 일치한다.
+
+### History
+
+- 2026-08-06: 사용자가 CSV에서도 `FinalDamageModifier`를 최종 피해 의미로 사용할 것을 요청했다.
+- 2026-08-06: Designer가 Base CSV 열 확장 없이 공통 Graph Node 계약으로 설계했다.
+
 ## Task: 2026-08-06 Artifact Icon Asset-Path Assignment
 
 ### Task title
