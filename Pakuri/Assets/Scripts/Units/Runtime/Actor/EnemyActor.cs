@@ -22,9 +22,9 @@ namespace Pakuri.InGame
             RefreshDisplay();
         }
 
-        public void ShowDamage(float damageAmount)
+        public void ShowDamage(float damageAmount, bool isCritical)
         {
-            display.ShowDamage(damageAmount);
+            display.ShowDamage(damageAmount, isCritical);
         }
 
         internal void SetWorldHpBarVisible(bool visible)

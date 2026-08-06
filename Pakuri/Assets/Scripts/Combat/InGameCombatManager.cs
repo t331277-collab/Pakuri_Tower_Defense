@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
@@ -167,6 +168,81 @@ namespace Pakuri.InGame
                 RefreshPassiveEffects(model);
                 DispatchCombatStartOnce(model);
             }
+
+            LogPlayerCriticalStats();
+        }
+
+        // 삭제 대상: 치명타 수치 검증이 끝나면 임시 Stage 시작 로그와 함께 제거한다.
+        private void LogPlayerCriticalStats()
+        {
+            var players = Units.Players;
+            for (var i = 0; i < players.Count; i++)
+            {
+                var model = players[i]?.Model;
+                if (model == null || model.IsNexus)
+                {
+                    continue;
+                }
+
+                var unitName = model.Identity?.DefinitionName ?? "unknown";
+                var summaries = new List<string>();
+                var activeSkills = model.SkillState?.ActiveSkills;
+                if (activeSkills != null)
+                {
+                    for (var skillIndex = 0; skillIndex < activeSkills.Count; skillIndex++)
+                    {
+                        var runtime = activeSkills[skillIndex];
+                        if (runtime?.Data == null)
+                        {
+                            continue;
+                        }
+
+                        var snapshot = SkillExecutionRules.BuildExecutionData(model, runtime, Units);
+                        var attackRule = new AttackRule(
+                            source: model,
+                            criticalAllowed: true,
+                            critChanceBonus: snapshot.CritChanceBonus,
+                            critDamageBonus: snapshot.CritDamageBonus,
+                            sourceSkillName: runtime.Data.SkillName,
+                            suppressOutgoingDamageTriggers: true,
+                            sourceHitWasExecute: false,
+                            damageMeterSourceName: null,
+                            damageMultiplier: 1f,
+                            finalDamageModifier: snapshot.FinalDamageModifier,
+                            criticalFinalDamageModifier: snapshot.CriticalFinalDamageModifier);
+                        var finalChance = DamageCalculator.ResolveCriticalChance(null, attackRule);
+                        var finalDamage = DamageCalculator.ResolveCriticalDamageMultiplier(null, attackRule)
+                            * Mathf.Max(0f, attackRule.FinalDamageModifier)
+                            * Mathf.Max(0f, attackRule.CriticalFinalDamageModifier);
+                        summaries.Add(
+                            $"{runtime.Data.SkillName}: chance={(finalChance * 100f).ToString("F2", CultureInfo.InvariantCulture)}%, damage=x{finalDamage.ToString("F3", CultureInfo.InvariantCulture)}");
+                    }
+                }
+
+                if (summaries.Count == 0)
+                {
+                    var attackRule = new AttackRule(
+                        source: model,
+                        criticalAllowed: true,
+                        critChanceBonus: 0f,
+                        critDamageBonus: 0f,
+                        sourceSkillName: null,
+                        suppressOutgoingDamageTriggers: true,
+                        sourceHitWasExecute: false,
+                        damageMeterSourceName: null,
+                        damageMultiplier: 1f);
+                    var finalChance = DamageCalculator.ResolveCriticalChance(null, attackRule);
+                    var finalDamage = DamageCalculator.ResolveCriticalDamageMultiplier(null, attackRule)
+                        * Mathf.Max(0f, attackRule.FinalDamageModifier)
+                        * Mathf.Max(0f, attackRule.CriticalFinalDamageModifier);
+                    summaries.Add(
+                        $"base: chance={(finalChance * 100f).ToString("F2", CultureInfo.InvariantCulture)}%, damage=x{finalDamage.ToString("F3", CultureInfo.InvariantCulture)}");
+                }
+
+                Debug.Log(
+                    $"[삭제대상][FinalCritStats] StageStart TargetIndependent Unit={unitName} "
+                    + string.Join("; ", summaries));
+            }
         }
 
         /// 현재 학습한 passive 목록을 갱신한다.
@@ -252,7 +328,7 @@ namespace Pakuri.InGame
             DamageApplied?.Invoke(attackRule, result);
             var damagedEntry = Units.Find(result.Target);
             damagedEntry.RefreshDisplay();
-            damagedEntry.ShowDamage(result.AppliedDamage, result.IsDead);
+            damagedEntry.ShowDamage(result.AppliedDamage, result.IsDead, result.IsCritical);
             // 일반 피해만 보호막·상태·피해·처치 후속반응을 발행한다.
             if (!attackRule.IsTrigger)
             {

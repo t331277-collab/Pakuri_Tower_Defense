@@ -1,5 +1,170 @@
 # DATA_BLACKBOARD
 
+## Task: 2026-08-07 Chosen One Artifact Data Design
+
+### Task title
+
+기존 선택받은자 Effect 헤더에 실행 Node·Trigger를 연결하고 신규 공통 Node 인자를 정의한다.
+
+### Goals
+
+- 선택받은자 시너지 네 단계와 개별 유물 10종을 기존 Artifact graph/trigger CSV에 저작한다.
+- 이름 없는 명부 설명을 `이름표식 1스택당 최종선고 위력 +6%`로 정정한다.
+- 스택 비례 위력, 사건 스킬 실행, 상태 행동속도 배율, 조건부 최종 데미지 Node 계약을 추가한다.
+
+### Constraints
+
+- 새 선택받은자 전용 graph/trigger CSV를 만들지 않는다.
+- 기존 Effect ID와 `SpecificMonster` 수신자 계약을 유지한다.
+- CSV UTF-8, 열 수, 외래 키와 Node 인자 검증을 통과해야 한다.
+- Designer 단계에서는 CSV를 수정하지 않는다.
+
+### Role Owner
+
+Designer.
+
+### Status
+
+데이터 구현 설계 완료. Code Builder 구현 대기.
+
+### Next Actions
+
+- Code Builder가 공통 Node 정의 뒤 Artifact graph/trigger 행을 작성한다.
+- chosen-one 시너지 icon asset이 준비되면 실제 경로만 기록한다.
+
+### Evidence
+
+- `artifact_effects.csv` 33~44행에 선택받은자 개별 Effect 헤더가 있다.
+- `artifact_synergy_effects.csv` 12~15행에 시너지 Effect 헤더가 있다.
+- 현재 Artifact graph/trigger CSV에는 해당 Effect 실행 행이 없다.
+- 기존 `TargetStatusStackDamageRateBonus`는 이름 없는 명부의 확정 위력 계약과 다르다.
+- `GameDataCatalogBuilder.Artifacts`는 이미 개별·시너지 Effect의 Node와 Reaction을 생성한다.
+
+### History
+
+- 2026-08-07: 사용자가 선택받은자 설계 MD와 수정 대상 목록 작성을 요청했다.
+- 2026-08-07: Designer가 데이터 계약과 이름 없는 명부 위력 공식을 기록했다.
+
+## Task: 2026-08-07 MainMenu Monster Standing Text Contract
+
+### Task title
+
+MainMenu 몬스터 선택이 기존 `display_name`·`role_summary` 계약을 사용하도록 연결한다.
+
+### Goals
+
+- CSV를 중복 파싱하지 않고 Runtime catalog의 `MonsterDefinition`을 사용한다.
+- 선택 몬스터 표시 이름과 역할 설명을 UI 텍스트에 전달한다.
+
+### Constraints
+
+- `monsters.csv`와 CSV 스키마는 수정하지 않는다.
+- 사용자 Play Mode 확인은 사용자 소유다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+구현 완료. CSV 값 검증·Unity MCP 스크립트 검증·솔루션 빌드를 통과했다.
+
+### Next Actions
+
+- Unity Play Mode에서 실제 텍스트 전환을 확인한다.
+
+### Evidence
+
+- `monsters.csv` 헤더에 `display_name`, `role_summary`가 있고 5개 행 값이 비어 있지 않다.
+- 기존 `CsvRowParser`·`GameDataCatalogBuilder`가 두 값을 `MonsterDefinition`에 보존한다.
+- `MainMenuUIManager`가 `GetMonster(...).DisplayName`·`RoleSummary`를 각각 Name·Desc에 할당한다.
+
+### History
+
+- 2026-08-07: Code Builder가 기존 Data contract를 MainMenu Standing 텍스트 표시와 연결했다.
+
+## Task: 2026-08-07 MainMenu Monster Standing Image Contract
+
+### Task title
+
+MainMenu 몬스터 선택이 `monsters.csv`의 기존 `Image` 계약을 사용하도록 연결한다.
+
+### Goals
+
+- CSV를 중복 파싱하지 않고 기존 Runtime catalog의 `MonsterDefinition.Image`를 사용한다.
+- 5개 플레이 가능 몬스터 Image 경로와 파일 존재를 검증한다.
+
+### Constraints
+
+- `monsters.csv` 및 CSV 스키마는 수정하지 않는다.
+- 사용자 Play Mode 확인은 사용자 소유다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+구현 완료. CSV·에셋 정적 검증과 솔루션 빌드를 통과했다.
+
+### Next Actions
+
+- Unity Play Mode에서 실제 Sprite 전환을 확인한다.
+
+### Evidence
+
+- `CsvRowParser`가 `Image`를 읽고 `GameDataCatalogBuilder`가 `LoadSprite`로 `MonsterDefinition.Image`를 만든다.
+- `monsters.csv`의 ariel/eve/rin/sein/vega 5행 Image 경로가 각각 실제 PNG로 확인됐다.
+- `MainMenuUIManager`는 `GameDataLoader.CurrentCatalog.GetMonster(...).Image`를 사용한다.
+
+### History
+
+- 2026-08-07: Code Builder가 기존 Image CSV 계약을 MainMenu Standing 표시와 연결했다.
+
+## Task: 2026-08-07 Artifact Owner Recipient Data Contract
+
+### Task title
+
+`artifact_effects.csv.recipient_scope`에 보유자 전용 `Owner` 계약을 추가한다.
+
+### Goals
+
+- 표시 문구가 아닌 typed CSV 값으로 유물 수신 범위를 결정한다.
+- 정령계약·처형관의 구현된 Effect를 `AllAllies`와 `Owner`로 명확히 분리한다.
+
+### Constraints
+
+- CSV 열을 추가하지 않는다.
+- `artifact_synergy_effects.csv`와 기존 Node/Trigger 수치는 변경하지 않는다.
+- 미구현 Chosen One, Sentinel, Artillery Node/Trigger는 작성하지 않는다.
+
+### Role Owner
+
+Designer handoff, Code Builder implementation.
+
+### Status
+
+구현 완료. CSV 구조·Runtime catalog·집중 Unity EditMode 검증을 통과했다.
+
+### Next Actions
+
+- Play Mode에서 CSV 범위와 실제 유물 효과 주체를 확인한다.
+
+### Evidence
+
+- 현재 정령계약·처형관 Effect 대부분이 설명 범위와 무관하게 `AllAllies`로 작성돼 있다.
+- `spirit-elixir-contract-count-effect`와 `elemental-codex-effect`는 Owner 전환 뒤에도 repeat rule을 사용한다.
+- 확정 행 목록은 `Pakuri/reference/4.run/artifact-owner-recipient-implementation-handoff.md`에 기록했다.
+- `artifact_effects.csv`는 63행, 9열 정합성을 유지하며 Owner 23행, AllAllies 27행, SpecificMonster 12행이다.
+- Unity Runtime catalog가 50 artifacts, 6 synergies, 1 summon을 로드했고 Owner 배포 집중 검증이 3/3 통과했다.
+- `CsvDataValidator`가 repeat rule에 AllAllies 또는 Owner를 허용한다.
+
+### History
+
+- 2026-08-07: 사용자가 모든 아군으로 명시되지 않은 구현 유물을 보유자 전용으로 분리하는 Handoff를 요청했다.
+- 2026-08-07: Designer가 새 열 없이 enum 값과 기존 배포 경로를 재사용하는 데이터 계약을 확정했다.
+- 2026-08-07: Code Builder가 구현된 정령계약·처형관 Effect의 recipient_scope와 repeat validator를 갱신했다.
+
 ## Task: 2026-08-06 Executioner Artifact And Synergy Effect Data Design
 
 ### Task title
@@ -26,11 +191,11 @@ Code Builder.
 
 ### Status
 
-Phase 0~4 구현 완료. Node/Trigger CSV 행과 공통 parser/runtime 매핑이 반영됐다. Unity 카탈로그 런타임 검증은 기존 Unity 인스턴스 점유로 보류됐다.
+Phase 0~4 구현 완료. Node/Trigger CSV 행과 공통 parser/runtime 매핑이 반영됐다. 정적 CSV·빌드는 통과했고 Unity 카탈로그 런타임 검증은 MCP 인스턴스 0개로 보류됐다.
 
 ### Next Actions
 
-- Unity 인스턴스가 비워지면 CSV runtime catalog validation을 재실행한다.
+- Unity MCP 인스턴스가 연결되면 CSV runtime catalog validation을 재실행한다.
 - Unity Play Mode에서 처형관 보상 후보와 Stage 시작 Effect를 확인한다.
 
 ### Evidence

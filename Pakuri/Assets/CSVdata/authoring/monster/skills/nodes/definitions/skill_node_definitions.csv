@@ -91,6 +91,7 @@
 "TargetBossCritBonus","TargetBossCritBonus","CritModifier","",""
 "TargetHighestHealthCritBonus","TargetHighestHealthCritBonus","CritModifier","",""
 "SkillRuntimeKindCritBonus","SkillRuntimeKindCritBonus","CritModifier","",""
+"FateCoinCritChanceProgression","FateCoinCritChanceProgression","CritModifier","",""
 "MagazineLastProjectileCritDamageBonus","MagazineLastProjectileCritDamageBonus","CritModifier","",""
 "FinalDamageModifier","FinalDamageModifier","CritModifier","",""
 "CriticalFinalDamageModifier","CriticalFinalDamageModifier","CritModifier","",""

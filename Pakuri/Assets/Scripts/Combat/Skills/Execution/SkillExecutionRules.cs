@@ -76,7 +76,49 @@ namespace Pakuri.InGame
             ApplyChoices(snapshot, owner.Skills.ChosenEnhancementNames, skill, owner, roster);
             ApplyChoices(snapshot, owner.Skills.ChosenMasterSkillNames, skill, owner, roster);
             ApplyArtifactModifiers(snapshot, owner, skill);
+            ApplySkillRuntimeCritModifiers(snapshot);
             return snapshot;
+        }
+
+        /// 스킬 종류 조건은 대상마다 다시 계산하지 않고 실행 snapshot에 한 번 반영한다.
+        private static void ApplySkillRuntimeCritModifiers(SkillExecutionState snapshot)
+        {
+            if (snapshot?.Data == null)
+            {
+                return;
+            }
+
+            var runtimeKind = snapshot.Data.RuntimeKind;
+            var actions = snapshot.ConditionalCritActions;
+            for (var i = 0; i < actions.Count; i++)
+            {
+                var action = actions[i];
+                if (action.ConditionKind != ConditionalCritConditionKind.SkillRuntimeKind
+                    || !MatchesSkillRuntimeKind(action, runtimeKind))
+                {
+                    continue;
+                }
+
+                snapshot.CritChanceBonus += action.ChanceBonus;
+                snapshot.CritDamageBonus = CombineCritDamageBonus(
+                    snapshot.CritDamageBonus,
+                    action.DamageBonus);
+            }
+        }
+
+        private static bool MatchesSkillRuntimeKind(
+            ConditionalCritActionOp action,
+            SkillRuntimeKind runtimeKind)
+        {
+            for (var i = 0; i < action.RuntimeKinds.Length; i++)
+            {
+                if (action.RuntimeKinds[i] == runtimeKind)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static void ApplyArtifactModifiers(
@@ -1451,11 +1493,11 @@ namespace Pakuri.InGame
 
             critChanceBonus += ConditionalCritChanceBonus(snapshot, target);
             var actions = snapshot.ConditionalCritActions;
-            var runtimeKind = snapshot.Data != null ? snapshot.Data.RuntimeKind : default;
             for (var i = 0; i < actions.Count; i++)
             {
                 var action = actions[i];
-                if (!MatchesConditionalCritAction(action, target, roster, runtimeKind))
+                if (action.ConditionKind == ConditionalCritConditionKind.SkillRuntimeKind
+                    || !MatchesConditionalCritAction(action, target, roster))
                 {
                     continue;
                 }
@@ -1625,8 +1667,7 @@ namespace Pakuri.InGame
         private static bool MatchesConditionalCritAction(
             ConditionalCritActionOp action,
             UnitCombatState target,
-            UnitSpawnManager roster,
-            SkillRuntimeKind runtimeKind)
+            UnitSpawnManager roster)
         {
             switch (action.ConditionKind)
             {
@@ -1655,15 +1696,6 @@ namespace Pakuri.InGame
                     return true;
                 case ConditionalCritConditionKind.TargetHasStatus:
                     return HasRequiredStacks(target, new StatusStackCondition(action.StatusKind, 1));
-                case ConditionalCritConditionKind.SkillRuntimeKind:
-                    for (var i = 0; i < action.RuntimeKinds.Length; i++)
-                    {
-                        if (action.RuntimeKinds[i] == runtimeKind)
-                        {
-                            return true;
-                        }
-                    }
-                    return false;
                 default:
                     return false;
             }

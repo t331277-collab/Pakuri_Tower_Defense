@@ -16,6 +16,8 @@ namespace Pakuri.InGame
         private readonly List<string> ownedArtifactNames = new List<string>();
         private readonly List<string> activeArtifactEffectNames = new List<string>();
         private float fateCoinCritChanceBonus;
+        private float fateCoinCritChanceIncrement;
+        private float fateCoinCritChanceMaxBonus;
 
         public IReadOnlyList<string> OwnedArtifactNames => ownedArtifactNames;
         public IReadOnlyList<string> ActiveArtifactEffectNames => activeArtifactEffectNames;
@@ -49,6 +51,8 @@ namespace Pakuri.InGame
         {
             activeArtifactEffectNames.Clear();
             fateCoinCritChanceBonus = 0f;
+            fateCoinCritChanceIncrement = 0f;
+            fateCoinCritChanceMaxBonus = 0f;
         }
 
         internal bool HasActiveEffect(string effectName)
@@ -61,7 +65,17 @@ namespace Pakuri.InGame
         {
             fateCoinCritChanceBonus = wasCritical
                 ? 0f
-                : Math.Min(0.25f, fateCoinCritChanceBonus + 0.05f);
+                : Math.Min(
+                    fateCoinCritChanceMaxBonus,
+                    fateCoinCritChanceBonus + fateCoinCritChanceIncrement);
+        }
+
+        internal void ConfigureFateCoin(
+            float increment,
+            float maxBonus)
+        {
+            fateCoinCritChanceIncrement = Math.Max(0f, increment);
+            fateCoinCritChanceMaxBonus = Math.Max(0f, maxBonus);
         }
 
         internal void AddActiveEffect(string effectName)

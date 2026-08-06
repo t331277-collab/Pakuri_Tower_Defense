@@ -1,8 +1,140 @@
 # STATUS_EFFECT_BLACKBOARD
 
+## Task: 2026-08-07 Chosen One Combat Runtime Design
+
+### Task title
+
+선택받은자 시너지의 대상별 위력·최종 데미지·Trigger·상태 스택 계약을 기존 전투 경로에 연결한다.
+
+### Goals
+
+- 이름 없는 명부를 `1 + 0.06 × name-mark 스택` 위력 배율로 적용한다.
+- 앙코르 사건 스킬 재실행과 피날레 보스 최종 데미지를 공통 적중 경계에서 처리한다.
+- 무투가의 호흡을 동일 출처 최대 5스택 행동속도 상태로 구현할 수 있게 한다.
+
+### Constraints
+
+- `DamageCalculator`는 전달값 계산 책임만 유지한다.
+- Single/Projectile/Line/Zone Actor에 유물 ID 분기를 넣지 않는다.
+- 기존 `OnSkillCast`, `OnOutgoingDamage`, 횟수 게이트를 재사용한다.
+- Designer 단계에서는 런타임 코드를 수정하지 않는다.
+
+### Role Owner
+
+Designer.
+
+### Status
+
+전투 구현 경계 설계 완료. Code Builder 구현 대기.
+
+### Next Actions
+
+- 공통 적중 resolver, `ExecuteEventSkill`, `SameSourceAddStacks` 순서로 구현한다.
+- 이름 없는 명부 0/1/5/10스택과 앙코르 재귀 방지를 집중 테스트한다.
+
+### Evidence
+
+- 기존 `TargetStatusStackDamageRateBonus`는 스택당 전체 스킬 위력 증가 계약이 아니다.
+- `ResolveHitCritModifiers`는 네 피해 Actor가 공유하는 대상별 적중 판정 경계다.
+- `DamageCalculator`는 치명타 뒤 `FinalDamageModifier`를 적용한다.
+- `SameSourceRefresh`는 입력 스택을 기존 스택에 더하지 않는다.
+- `SkillExecution.ResetCooldown`은 기존 쿨타임 초기화 API다.
+
+### History
+
+- 2026-08-07: 사용자가 이름 없는 명부를 스택당 최종선고 스킬 위력 `+6%`로 확정했다.
+- 2026-08-07: Designer가 선택받은자 전투 공통 계약과 전용 하이라이트 경계를 기록했다.
+
 ## Archived History
 
 The pre-cleanup file, including all completed July tasks, is preserved at `boards/ARCHIVE/ACTIVE_BOARD_SNAPSHOT_2026-07-28/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
+
+## Task: 2026-08-07 Artifact Owner Recipient Handoff
+
+### Task title
+
+모든 아군 유물과 보유자 전용 유물의 Stage 배포 범위를 분리한다.
+
+### Goals
+
+- 개별 유물 Effect에 명시적 `Owner` 수신 범위를 추가한다.
+- 기존 `ActiveArtifactEffectNames` 소비 경로를 그대로 재사용한다.
+- 강화·마스터의 유닛별 소유 경로를 변경하지 않는다.
+
+### Constraints
+
+- 신규 유물 시스템, manager, resolver를 만들지 않는다.
+- 피해·치명타·Trigger 계산식은 변경하지 않는다.
+- 현재 Node/Trigger가 존재하는 정령계약·처형관 20개만 마이그레이션한다.
+
+### Role Owner
+
+Designer handoff, Code Builder implementation.
+
+### Status
+
+구현 완료. Runtime/Editor 빌드와 집중 Unity EditMode 검증을 통과했다.
+
+### Next Actions
+
+- Play Mode에서 실제 보유자 전용 유물과 모든 아군 유물의 전투 결과를 확인한다.
+
+### Evidence
+
+- `ArtifactSynergyManager.DistributeEffects`는 유물 보유자 `owner`를 이미 인자로 받는다.
+- `SkillExecutionRules`, `SkillTrigger`, 운명의 동전 처리는 현재 실행 source의 `Artifacts`만 소비한다.
+- 구현 인계는 `Pakuri/reference/4.run/artifact-owner-recipient-implementation-handoff.md`에 기록했다.
+- `ArtifactEffectRecipient.Owner`가 추가됐고 `DistributeEffects`가 보유자에게만 Owner Effect를 배포한다.
+- 정령계약·처형관 Owner 행 23개와 기존 AllAllies 행이 CSV에서 분리됐다.
+- 집중 EditMode `PreparedArtifactModifierAppliesToSkillSnapshot`, `SpiritContractArtifactsResolvePartyStateAtStageStart`, `SpiritContractTriggerArtifactsBuildExistingRuntimeReactions`가 3/3 통과했다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal`은 오류 0개, 기존 참조 충돌 경고 2개로 완료했다.
+
+### History
+
+- 2026-08-07: 사용자가 `모든 아군`이 아닌 유물을 보유 유닛 전용으로 바꾸는 수정 대상과 구현 Handoff를 요청했다.
+- 2026-08-07: Designer가 정령계약·처형관의 확정 CSV 매핑과 최소 C# 분기를 기록했다.
+- 2026-08-07: Code Builder가 Owner enum·배포 분기·validator·CSV·회귀 검증을 구현했다.
+
+## Task: 2026-08-07 Critical Damage Popup Propagation
+
+### Task title
+
+계산 결과의 치명타 여부를 대상 유닛 피해 팝업까지 전달한다.
+
+### Goals
+
+- 기존 `ApplyDamage` 대상 표시 경로를 유지한다.
+- `DamageNumberPopup`이 `IsCritical`에 따라 치명타 색상을 선택하도록 한다.
+
+### Constraints
+
+- `DamageCalculator`의 계산과 치명타 판정은 변경하지 않는다.
+- `caster` 기반 UI 탐색, 새 이벤트/팝업 시스템은 추가하지 않는다.
+- 사용자 Play Mode 검증은 사용자 소유다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+구현 완료. Core/Editor 솔루션 빌드 및 대상 스크립트 diff 검사를 통과했다.
+
+### Next Actions
+
+- Play Mode에서 실제 치명타 결과와 팝업 색상을 확인한다.
+
+### Evidence
+
+- `InGameCombatManager.ApplyDamage`는 `result.IsCritical`을 `CombatUnitEntry.ShowDamage`에 전달한다.
+- `CombatUnitRegistry`의 대상 Actor 분기와 `UnitHpBar`의 대상 프리팹 `Damage` 연결을 유지했다.
+- `DamageNumberPopup`은 치명타 팝업의 `StartColor`를 빨간색으로 저장해 Fade 중에도 유지한다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal`은 오류 0개, 기존 참조 충돌 경고 2개로 완료했다.
+
+### History
+
+- 2026-08-07: 사용자가 대상 프리팹의 `Damage` 팝업을 치명타일 때 빨간색으로 표시하도록 요청했다.
+- 2026-08-07: Code Builder가 기존 대상 표시 경로에 `isCritical`을 전달하고 팝업 색상만 분기했다.
 
 ## Task: 2026-08-06 Executioner Critical And Final-Damage Runtime Design
 
@@ -31,12 +163,12 @@ Code Builder.
 
 ### Status
 
-Phase 0~3 구현 완료. Core/Editor 빌드는 통과했고 Unity 런타임 검증은 기존 Unity 인스턴스 점유로 보류됐다.
+Phase 0~3 구현과 삭제 대상 Stage 시작 로그를 완료했다. Core/Editor 빌드는 통과했고 Unity RuntimeCatalog/EditMode 검증은 MCP 인스턴스 0개로 보류됐다.
 
 ### Next Actions
 
 - Unity Play Mode에서 조건부 치명타, 후치명타 최종 피해, 마지막 탄창 투사체 효과를 확인한다.
-- Unity 인스턴스가 비워지면 CSV runtime catalog validation을 재시도한다.
+- Unity MCP 인스턴스가 연결되면 CSV runtime catalog와 집중 EditMode 검증을 재시도한다.
 
 ### Evidence
 
@@ -47,6 +179,7 @@ Phase 0~3 구현 완료. Core/Editor 빌드는 통과했고 Unity 런타임 검�
 - `PreparedMagazineLastProjectile`가 `MagazineRemaining == 1`에서 확정되어 `ProjectileSkillActor.isMagazineLastProjectile`까지 전달된다.
 - `ArtifactSynergyManager`가 모든 아군의 `ActiveArtifactEffectNames`를 Stage마다 재구성하며, `BuildArtifacts`는 같은 `artifact_name`의 여러 Effect를 수집한다. 이번 유리 심장·별빛 숫돌 계약에는 상호보유 조건이 필요하지 않다.
 - 처형관별 매핑과 공통 계약은 `Pakuri/reference/4.run/artifact-synergy-runtime-design.md` 0절에 기록했다.
+- `mcpforunity://instances`는 `instance_count=0`을 반환해 Unity RuntimeCatalog/EditMode 실행을 보류했다.
 
 ### History
 
@@ -55,6 +188,8 @@ Phase 0~3 구현 완료. Core/Editor 빌드는 통과했고 Unity 런타임 검�
 - 2026-08-07: 처형관 전용 Code Builder 인계 설계를 `Pakuri/reference/4.run/executioner-artifact-synergy-implementation-design.md`로 분리해 기록했다.
 - 2026-08-07: 사용자가 백은 바늘을 마지막 탄창 투사체 효과로 축소하고 유리 심장·별빛 숫돌을 각각 단일 치명타 보정 `+0.20`으로 확정했다. Designer가 신규 타격 순번·상호보유 조건·치명타 저항/관통 설계를 폐기하고 기존 투사체 flag와 치명타 Node 재사용으로 설계를 갱신했다.
 - 2026-08-07: Code Builder가 Phase 1~3 런타임을 커밋하고 Core/Editor 빌드 오류 0개를 확인했다.
+- 2026-08-07: 사용자가 `InGameCombatManager.cs`를 수정 대상에서 제외하도록 정정했다. 해당 파일과 종속 호출을 원복했으며, 현재 diff에는 지정된 치명타·유물·CSV 대상만 남겼다. 날짜별 치명타 로그는 허용 대상이 지정되지 않아 보류했다.
+- 2026-08-07: 사용자가 `InGameCombatManager.cs`에 삭제 대상 주석이 있는 Stage 시작 치명타 로그를 허용했다. `BeginPlayerCombat()` 경로에 연결하고 `StageManager.cs`는 수정하지 않았다.
 
 ## Task: 2026-08-06 Final Damage Modifier Design
 

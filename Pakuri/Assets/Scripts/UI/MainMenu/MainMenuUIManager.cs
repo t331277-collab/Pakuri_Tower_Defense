@@ -4,6 +4,8 @@
  */
 
 using Pakuri.InGame;
+using Pakuri.Data;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -16,6 +18,7 @@ public class MainMenuUIManager : MonoBehaviour
     private GameObject introPanel;
     private GameObject mainMenuPanel;
     private GameObject monsterSelectPanel;
+    private GameObject monsterStanding;
     private Button introGameStartButton;
     private Button runButton;
     private Button monsterSelectGameStartButton;
@@ -24,6 +27,9 @@ public class MainMenuUIManager : MonoBehaviour
     private Button seinButton;
     private Button vegaButton;
     private Button rinButton;
+    private Image monsterStandingImage;
+    private TextMeshProUGUI monsterNameText;
+    private TextMeshProUGUI monsterDescriptionText;
 
     private string selectedMonsterName;
 
@@ -55,10 +61,14 @@ public class MainMenuUIManager : MonoBehaviour
         introPanel = FindGameObject(canvas, "Intro", nameof(introPanel), ref valid);
         mainMenuPanel = FindGameObject(canvas, "MainMenuUI", nameof(mainMenuPanel), ref valid);
         monsterSelectPanel = FindGameObject(canvas, "MosterSelectUI", nameof(monsterSelectPanel), ref valid);
+        monsterStanding = FindGameObject(canvas, "MosterSelectUI/MonsterStanding", nameof(monsterStanding), ref valid);
 
         introGameStartButton = FindComponent<Button>(canvas, "Intro/GameStart", nameof(introGameStartButton), ref valid);
         runButton = FindComponent<Button>(canvas, "MainMenuUI/RunBtn", nameof(runButton), ref valid);
         monsterSelectGameStartButton = FindComponent<Button>(canvas, "MosterSelectUI/GameStart", nameof(monsterSelectGameStartButton), ref valid);
+        monsterStandingImage = FindComponent<Image>(canvas, "MosterSelectUI/MonsterStanding", nameof(monsterStandingImage), ref valid);
+        monsterNameText = FindComponent<TextMeshProUGUI>(canvas, "MosterSelectUI/MonsterStanding/Name", nameof(monsterNameText), ref valid);
+        monsterDescriptionText = FindComponent<TextMeshProUGUI>(canvas, "MosterSelectUI/MonsterStanding/Desc", nameof(monsterDescriptionText), ref valid);
         arielButton = FindComponent<Button>(canvas, "MosterSelectUI/Ariel", nameof(arielButton), ref valid);
         eveButton = FindComponent<Button>(canvas, "MosterSelectUI/Eve", nameof(eveButton), ref valid);
         seinButton = FindComponent<Button>(canvas, "MosterSelectUI/Sein", nameof(seinButton), ref valid);
@@ -176,9 +186,22 @@ public class MainMenuUIManager : MonoBehaviour
         SetOnlyActive(monsterSelectPanel);
     }
 
+    /// 선택한 몬스터의 Standing 정보와 출전 몬스터를 표시·저장한다.
     private void SelectMonster(string monsterName)
     {
         selectedMonsterName = monsterName;
+
+        var monster = GameDataLoader.CurrentCatalog?.GetMonster(monsterName);
+        if (monster == null || monster.Image == null)
+        {
+            Debug.LogError($"MainMenuUIManager cannot resolve standing image for monster '{monsterName}'.", this);
+            return;
+        }
+
+        monsterStandingImage.sprite = monster.Image;
+        monsterNameText.text = monster.DisplayName;
+        monsterDescriptionText.text = monster.RoleSummary;
+        monsterStanding.SetActive(true);
     }
 
     /// 선택한 몬스터를 StartContext에 저장하고 Run 씬을 연다.

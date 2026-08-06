@@ -1,5 +1,51 @@
 # RUN_BLACKBOARD
 
+## Task: 2026-08-07 Chosen One Artifact Synergy Design
+
+### Task title
+
+선택받은자 유물 최다 보유 파티원을 전투별 중심 캐리로 선정하고 2/4/6/8 효과를 적용한다.
+
+### Goals
+
+- `Recipient=ChosenOne` 수신자를 Stage 시작마다 결정한다.
+- 앙코르, 최종 데미지, 하이라이트, 피날레의 실행 경계를 확정한다.
+- 정상 ArtifactPanel과 기존 다중 시너지 HUD에 선택받은자를 연결한다.
+
+### Constraints
+
+- 기존 RunSession 유물 중복·용량 계약을 유지한다.
+- 동률은 파티 슬롯 순서로 결정한다.
+- 한 효과를 위해 전역 주기 Trigger 시스템을 만들지 않는다.
+- Designer 단계에서는 C#·CSV·Scene·Prefab을 수정하지 않는다.
+
+### Role Owner
+
+Designer.
+
+### Status
+
+구현 설계 문서 작성 완료. Code Builder 구현 대기.
+
+### Next Actions
+
+- Code Builder가 `Pakuri/reference/4.run/chosen-one-artifact-synergy-implementation-design.md`의 Phase 순서와 수정 대상 제한에 따라 구현한다.
+- 실제 chosen-one 시너지 icon asset을 사용자가 지정하거나 준비한다.
+
+### Evidence
+
+- `artifact_synergies.csv`와 두 Effect CSV에 chosen-one 단계·유물·Effect 헤더가 이미 있다.
+- `ArtifactSynergyManager.DistributeSynergyEffects`는 현재 `ChosenOne` 수신자를 처리하지 않는다.
+- `StageManager.RunCurrentDayFlow`는 파티 복원 뒤 `PrepareStage`, `BeginPlayerCombat`, 적 생성 순으로 실행한다.
+- `ArtifactUI.PrepareChoices`는 현재 정령계약·처형관만 후보로 허용한다.
+- `InGameInfoUI`는 이미 `SynergyName`별 컨테이너와 Y `-93.3` 배치를 구현한다.
+
+### History
+
+- 2026-08-07: 사용자가 선택받은자 시너지·유물 구현 설계와 수정 대상 기록을 요청했다.
+- 2026-08-07: 이름 없는 명부를 이름표식 1스택당 최종선고 스킬 위력 `+6%`로 확정했다.
+- 2026-08-07: Designer가 신규 구현 설계 문서와 RUN 인계 상태를 기록했다.
+
 ## Current State
 
 There is no active Run, reward, or save/load task block after the 2026-07-28 cleanup.
@@ -34,12 +80,12 @@ Code Builder.
 
 ### Status
 
-Phase 0~5 구현 완료. Unity Play Mode와 Unity 런타임 카탈로그 검증은 기존 Unity 인스턴스 점유 해제 후 재시도한다.
+Phase 0~5 구현 완료. Core/Editor 빌드와 정적 범위 검사는 통과했으며 Unity Play Mode와 RuntimeCatalog 검증은 MCP 인스턴스 0개로 보류한다.
 
 ### Next Actions
 
 - Unity Play Mode에서 정령계약·처형관 보상 후보와 다음 Stage 재적용을 확인한다.
-- Unity 인스턴스가 비워지면 CSV runtime catalog validation을 재시도한다.
+- Unity MCP 인스턴스가 연결되면 CSV runtime catalog validation을 재시도한다.
 
 ### Evidence
 

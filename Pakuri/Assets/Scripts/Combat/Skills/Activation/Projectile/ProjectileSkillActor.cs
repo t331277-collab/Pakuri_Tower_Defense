@@ -454,6 +454,8 @@ namespace Pakuri.InGame
                     false,
                     null,
                     HitDamageMultiplier(target.Model) * branchDamageMultiplier,
+                    finalDamageModifier: executionData != null ? executionData.FinalDamageModifier : 1f,
+                    criticalFinalDamageModifier: executionData != null ? executionData.CriticalFinalDamageModifier : 1f,
                     isTrigger: executionData != null && executionData.IsTrigger);
                 SpawnBranchDamageLine(hitPosition, targetPosition);
             }

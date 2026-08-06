@@ -285,7 +285,7 @@ clone.localPosition = previous.localPosition + new Vector3(0f, -93.3f, 0f);
 - `Assets/Scripts/Combat/Skills/Execution/SkillExecutionState.cs`
 - `Assets/Scripts/Combat/Skills/Definitions/Nodes/SkillNodeActions.cs`
 - `Assets/Scripts/Loading/Generation/GameDataCatalogBuilder.Nodes.cs`
-- `Assets/Scripts/Combat/InGameCombatManager.cs`
+- `Assets/Scripts/Combat/InGameCombatManager.cs` (검증용 임시 로그만 추가; 검증 완료 후 삭제)
 - `Assets/Scripts/Combat/Damage/DamageCalculator.cs`
 - 조건부 대상 치명타를 공통 적용할 Line/Projectile/Single/Zone Actor·Executor
 - 백은 바늘의 기존 마지막 탄창 투사체 값을 소비할 `Assets/Scripts/Combat/Skills/Activation/Projectile/ProjectileSkillActor.cs`

@@ -24,7 +24,8 @@ namespace Pakuri.Data
         SpecificMonster,
         Stage,
         Summon,
-        ChosenOne
+        ChosenOne,
+        Owner
     }
 
     public enum ArtifactEffectRepeatRule

@@ -88,11 +88,11 @@ namespace Pakuri.InGame
             }
         }
 
-        public void ShowDamage(float damageAmount)
+        public void ShowDamage(float damageAmount, bool isCritical)
         {
             if (damagePopup != null)
             {
-                damagePopup.Show(damageAmount);
+                damagePopup.Show(damageAmount, isCritical);
             }
         }
 

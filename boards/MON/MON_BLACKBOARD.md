@@ -8,6 +8,82 @@ The previous Ariel, Eve, Rin, Sein, and Vega boards are preserved under `boards/
 
 For new monster work, inspect the exact current code and data first, then add a required-field task block here only when persistent state is needed.
 
+## Task: 2026-08-07 MainMenu Monster Standing Text
+
+### Task title
+
+몬스터 정의의 표시 이름·역할 설명을 MainMenu Standing에 연결한다.
+
+### Goals
+
+- `display_name`을 `MonsterDefinition.DisplayName` 경로로 사용한다.
+- `role_summary`를 `MonsterDefinition.RoleSummary` 경로로 사용한다.
+
+### Constraints
+
+- 몬스터 CSV와 정의 모델을 변경하지 않는다.
+- 사용자 Play Mode 확인은 사용자 소유다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+구현 완료. 기존 정의·카탈로그 데이터를 재사용했다.
+
+### Next Actions
+
+- Play Mode에서 Ariel, Eve, Rin, Sein, Vega의 텍스트 전환을 확인한다.
+
+### Evidence
+
+- `monsters.csv`에 `display_name`, `role_summary` 열과 5개 몬스터 값이 존재한다.
+- `CsvRowParser`·`GameDataCatalogBuilder`가 해당 값을 `MonsterDefinition.DisplayName`·`RoleSummary`로 구성한다.
+- `MainMenuUIManager.SelectMonster`가 두 값을 TMP 텍스트에 할당한다.
+
+### History
+
+- 2026-08-07: Code Builder가 몬스터 표시 데이터의 MainMenu 텍스트 출력을 연결했다.
+
+## Task: 2026-08-07 MainMenu Monster Standing Selection
+
+### Task title
+
+플레이 가능 몬스터 선택 시 Standing 표시 데이터 연결.
+
+### Goals
+
+- `monsters.csv`의 `Image`를 기존 `MonsterDefinition.Image` 경로로 사용한다.
+- MainMenu 선택 결과가 해당 몬스터의 Standing Sprite를 표시하게 한다.
+
+### Constraints
+
+- 몬스터 CSV 값·런타임 카탈로그 구조는 변경하지 않는다.
+- 사용자 Play Mode 확인은 사용자 소유다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+구현 완료. 기존 몬스터 정의와 카탈로그 조회를 재사용했다.
+
+### Next Actions
+
+- Play Mode에서 Ariel, Eve, Rin, Sein, Vega 선택을 확인한다.
+
+### Evidence
+
+- `GameDataCatalogBuilder`가 `sourceMonster.ImagePath`를 `MonsterDefinition.Image`로 로드한다.
+- `monsters.csv` 5개 행의 Image 경로와 대상 PNG 파일이 모두 존재한다.
+- `MainMenuUIManager.SelectMonster`가 카탈로그 정의의 `Image`를 UI Image에 할당한다.
+
+### History
+
+- 2026-08-07: Code Builder가 기존 몬스터 Image 데이터 계약을 MainMenu Standing 표시에 연결했다.
+
 ## Task: 2026-08-05 Spirit King Temporary Allied Monster Design
 
 ### Task title

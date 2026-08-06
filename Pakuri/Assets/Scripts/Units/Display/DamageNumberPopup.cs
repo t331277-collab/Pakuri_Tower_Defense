@@ -47,7 +47,7 @@ namespace Pakuri.InGame
             enabled = false;
         }
 
-        public void Show(float damageAmount)
+        public void Show(float damageAmount, bool isCritical)
         {
             if (!initialized)
             {
@@ -60,7 +60,7 @@ namespace Pakuri.InGame
             }
 
             gameObject.SetActive(true);
-            SpawnPopup(damageAmount);
+            SpawnPopup(damageAmount, isCritical);
             enabled = true;
         }
 
@@ -108,7 +108,7 @@ namespace Pakuri.InGame
             }
         }
 
-        private void SpawnPopup(float damageAmount)
+        private void SpawnPopup(float damageAmount, bool isCritical)
         {
             damageText.text = string.Empty;
             var hiddenColor = startColor;
@@ -159,7 +159,7 @@ namespace Pakuri.InGame
             popupStart.y += stackOffset;
             text.transform.localPosition = popupStart;
             text.text = $"{Mathf.RoundToInt(Mathf.Max(0f, damageAmount))}(Damage)";
-            var visibleColor = startColor;
+            var visibleColor = isCritical ? Color.red : startColor;
             visibleColor.a = 1f;
             text.color = visibleColor;
 
@@ -167,7 +167,7 @@ namespace Pakuri.InGame
                 instance,
                 text,
                 popupStart,
-                startColor,
+                visibleColor,
                 Mathf.Max(0.01f, durationSeconds)));
         }
 

@@ -202,6 +202,8 @@
 "SkillRuntimeKindCritBonus","1","skill_runtime_kinds","string","true",""
 "SkillRuntimeKindCritBonus","2","crit_chance_bonus","float","false",""
 "SkillRuntimeKindCritBonus","3","crit_damage_bonus","float","false",""
+"FateCoinCritChanceProgression","1","increment","float","true",""
+"FateCoinCritChanceProgression","2","max_bonus","float","true",""
 "MagazineLastProjectileCritDamageBonus","1","bonus","float","true",""
 "FinalDamageModifier","1","multiplier","float","true",""
 "CriticalFinalDamageModifier","1","multiplier","float","true",""

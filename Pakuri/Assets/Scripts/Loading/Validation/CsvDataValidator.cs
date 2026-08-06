@@ -722,9 +722,10 @@ namespace Pakuri.Data
         {
             if (repeatRule != ArtifactEffectRepeatRule.None
                 && (applicationMode != ArtifactEffectApplicationMode.SkillModifier
-                    || recipient != ArtifactEffectRecipient.AllAllies))
+                    || (recipient != ArtifactEffectRecipient.AllAllies
+                        && recipient != ArtifactEffectRecipient.Owner)))
             {
-                errors.Add($"Artifact effect '{effectName}' repeat_rule requires SkillModifier and AllAllies.");
+                errors.Add($"Artifact effect '{effectName}' repeat_rule requires SkillModifier and AllAllies or Owner.");
             }
 
             if (selectionRule != ArtifactEffectSelectionRule.None

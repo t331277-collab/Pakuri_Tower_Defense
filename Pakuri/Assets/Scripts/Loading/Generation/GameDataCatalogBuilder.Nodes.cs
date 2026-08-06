@@ -1012,6 +1012,12 @@ namespace Pakuri.Data
 		{
 			return SkillNode.FromOperation(new CritModifierOp(GetFloatParam(node, "crit_chance_bonus", 0f)));
 		}
+		if (string.Equals(text, "FateCoinCritChanceProgression", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new FateCoinCritChanceProgressionOp(
+				GetFloatParam(node, "increment", 0f),
+				GetFloatParam(node, "max_bonus", 0f)));
+		}
 		if (string.Equals(text, "CooldownReset", StringComparison.OrdinalIgnoreCase) || string.Equals(text, "CooldownResetOnKill", StringComparison.OrdinalIgnoreCase))
 		{
 			return SkillNode.FromOperation(new KillActionOp(KillActionOpKind.CooldownReset, 0f, GetBoolParam(node, "requires_execute", defaultValue: false)));
@@ -1280,6 +1286,7 @@ namespace Pakuri.Data
 			|| string.Equals(handlerName, "TargetPredicateDamageMultiplier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "BossDamageMultiplier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "ExecuteCritChanceBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "FateCoinCritChanceProgression", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "CooldownReset", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "CooldownResetOnKill", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "CooldownRefund", StringComparison.OrdinalIgnoreCase)

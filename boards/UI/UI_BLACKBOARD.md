@@ -1,5 +1,47 @@
 # UI_BLACKBOARD
 
+## Task: 2026-08-07 Chosen One Acquisition And HUD Design
+
+### Task title
+
+선택받은자 유물을 정상 ArtifactPanel 후보에 추가하고 기존 다중 시너지 HUD를 재사용한다.
+
+### Goals
+
+- 정상 보상 후보에 `chosen-one`을 추가한다.
+- 기존 RunSession 중복·용량 제한과 최대 3개 후보를 유지한다.
+- 같은 시너지 누적, 다른 시너지 컨테이너 Y `-93.3` 배치를 재사용한다.
+
+### Constraints
+
+- `InGameInfoUI`의 이미 구현된 다중 시너지 로직은 수정하지 않는다.
+- 존재하지 않는 chosen-one 시너지 icon asset 경로를 임의로 작성하지 않는다.
+- Designer 단계에서는 UI 코드·Scene·Prefab을 수정하지 않는다.
+
+### Role Owner
+
+Designer.
+
+### Status
+
+획득·HUD 설계 완료. Code Builder 구현과 icon asset 결정 대기.
+
+### Next Actions
+
+- `ArtifactUI.PrepareChoices`의 허용 시너지에 `chosen-one`을 추가한다.
+- 사용자가 실제 chosen-one 시너지 icon asset을 제공하거나 기존 asset 사용을 지정한다.
+
+### Evidence
+
+- `ArtifactUI.PrepareChoices`는 현재 `spirit-contract`, `executioner`만 필터링한다.
+- `InGameInfoUI.RefreshArtifactDisplay`는 모든 보유 유물을 `SynergyName`별로 그룹화한다.
+- `InGameInfoUI.GetArtifactContainer`는 새 시너지 컨테이너를 이전 컨테이너보다 Y `93.3` 아래에 배치한다.
+- `artifact_synergies.csv`의 chosen-one icon 필드는 현재 비어 있다.
+
+### History
+
+- 2026-08-07: Designer가 선택받은자 획득 필터 변경과 HUD 무수정 재사용 경계를 기록했다.
+
 ## Current State
 
 The field-unit Registry ownership migration is implemented. UI consumers now query `UnitSpawnManager` instead of `InGameCombatManager.UnitRegistry`.
@@ -7,6 +49,169 @@ The field-unit Registry ownership migration is implemented. UI consumers now que
 The previous UI and RunScene UI boards are preserved under `boards/ARCHIVE/ACTIVE_BOARD_SNAPSHOT_2026-07-28/UI/`.
 
 For new UI work, inspect the exact current scripts, scenes, prefabs, UXML, USS, or assets first, then add a required-field task block here only when persistent state is needed.
+
+## Task: 2026-08-07 MainMenu GameStart Raycast Fix
+
+### Task title
+
+MainMenu `GameStart` 터치 영역의 Raycast 차단 해소.
+
+### Goals
+
+- `MosterSelectUI/GameStart` 배경 Image가 전체 버튼 영역을 받도록 한다.
+- 부모 배경과 선택 결과 텍스트가 버튼 입력을 가로채지 않도록 한다.
+
+### Constraints
+
+- `MainMenuScene.unity`의 Raycast 설정 네 개만 변경한다.
+- 계층, Transform, Button, 텍스트, 스크립트는 변경하지 않는다.
+- 사용자 Play Mode 확인은 사용자 소유다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+구현 완료. 네 컴포넌트의 정적 값 확인과 Unity 씬 검증을 통과했다.
+
+### Next Actions
+
+- 몬스터 선택 후 `GameStart` 버튼의 넓은 영역 터치를 Play Mode에서 확인한다.
+
+### Evidence
+
+- `MainMenuScene.unity:1176`의 Image `914212245` (`GameStart`)는 `m_RaycastTarget: 1`이다.
+- `MainMenuScene.unity:2719`의 Image `1780514919` (`MosterSelectUI` 부모)는 `m_RaycastTarget: 0`이다.
+- `MainMenuScene.unity:1525`의 TMP `1101350769` (`Name`)와 `MainMenuScene.unity:2575`의 TMP `1699277527` (`Desc`)는 모두 `m_RaycastTarget: 0`이다.
+- 네 ID를 YAML로 직접 검사한 출력은 각각 `1, 0, 0, 0`이었다.
+- Unity MCP `manage_scene(validate, Assets/Scenes/NewScene/MainMenuScene.unity)` 결과: `totalIssues: 0`, `missingScripts: 0`, `brokenPrefabs: 0`.
+
+### History
+
+- 2026-08-07: Code Builder가 부모 Image·Standing 텍스트의 입력 차단을 끄고 `GameStart` 배경 Image의 Raycast를 켰다.
+
+## Task: 2026-08-07 MainMenu Monster Standing Text
+
+### Task title
+
+몬스터 선택 시 `MonsterStanding/Name`·`Desc` 텍스트 표시.
+
+### Goals
+
+- 선택 몬스터의 `display_name`을 `Name`에 표시한다.
+- 선택 몬스터의 `role_summary`를 `Desc`에 표시한다.
+
+### Constraints
+
+- 기존 `MainMenuUIManager.SelectMonster`와 Runtime catalog를 재사용한다.
+- 사용자 Play Mode 확인은 사용자 소유다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+구현 완료. Unity MCP 스크립트 검증과 솔루션 빌드를 통과했다.
+
+### Next Actions
+
+- Play Mode에서 5개 몬스터 클릭 후 Name/Desc 전환을 확인한다.
+
+### Evidence
+
+- `MainMenuUIManager`가 `MosterSelectUI/MonsterStanding/Name`·`Desc`의 `TextMeshProUGUI`를 바인딩한다.
+- `SelectMonster`가 `MonsterDefinition.DisplayName`·`RoleSummary`를 각 `.text`에 할당한다.
+- Unity MCP hierarchy에서 두 오브젝트와 `TextMeshProUGUI` 컴포넌트를 확인했다.
+- Unity MCP `validate_script` 결과 diagnostics 0개, 콘솔 error/warning 0개.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:q` 완료: 오류 0개, 기존 참조 충돌 경고 2개.
+
+### History
+
+- 2026-08-07: Code Builder가 기존 몬스터 CSV 표시 데이터 계약을 MainMenu Standing 텍스트에 연결했다.
+
+## Task: 2026-08-07 MainMenu Monster Standing Selection
+
+### Task title
+
+MainMenuScene 몬스터 버튼 선택 시 `MonsterStanding` 표시.
+
+### Goals
+
+- Ariel, Eve, Rin, Sein, Vega 버튼 클릭 시 `MosterSelectUI/MonsterStanding`을 활성화한다.
+- 선택한 몬스터 정의의 `Image` Sprite를 `MonsterStanding` Image에 할당한다.
+
+### Constraints
+
+- 기존 `MainMenuUIManager` 버튼 바인딩과 `GameDataLoader` 카탈로그를 재사용한다.
+- 사용자 Play Mode 확인은 사용자 소유다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+구현 완료. 솔루션 빌드와 씬·CSV 정적 검증을 통과했다.
+
+### Next Actions
+
+- Play Mode에서 5개 버튼 클릭 후 Standing 표시와 이미지 전환을 확인한다.
+
+### Evidence
+
+- `MainMenuUIManager`가 `MosterSelectUI/MonsterStanding` GameObject/Image를 바인딩한다.
+- `SelectMonster`가 `GameDataLoader.CurrentCatalog.GetMonster(monsterName).Image`를 할당하고 `SetActive(true)`를 호출한다.
+- `MainMenuScene.unity`의 `MonsterStanding`은 존재하며 초기 `m_IsActive: 0`이다.
+- `monsters.csv` 5개 몬스터 행의 `Image` 경로가 실제 파일로 확인됐다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:q` 완료: 오류 0개, 기존 참조 충돌 경고 2개.
+
+### History
+
+- 2026-08-07: Code Builder가 기존 카탈로그·버튼 흐름에 Standing 이미지 표시를 연결했다.
+
+## Task: 2026-08-07 Critical Damage Popup Color
+
+### Task title
+
+대상 유닛 프리팹의 `Damage` 팝업을 치명타일 때 빨간색으로 표시한다.
+
+### Goals
+
+- 기존 대상 표시 경로를 재사용해 `IsCritical`만 `DamageNumberPopup`까지 전달한다.
+- 치명타 팝업은 상승·Fade 중에도 빨간색을 유지한다.
+
+### Constraints
+
+- `caster` 조회나 새 팝업 탐색 경로를 추가하지 않는다.
+- 피해 계산·치명타 판정·프리팹 계층은 변경하지 않는다.
+- 사용자 Play Mode 확인은 사용자 소유다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+구현 완료. Core/Editor 솔루션 빌드 및 diff 검사를 통과했다.
+
+### Next Actions
+
+- Play Mode에서 일반 피해는 기존 색상, 치명타 피해는 빨간색인지 확인한다.
+
+### Evidence
+
+- `InGameCombatManager.ApplyDamage`가 `result.Target`으로 대상 엔트리를 찾고 `result.IsCritical`을 `ShowDamage`에 전달한다.
+- `CombatUnitRegistry`, `MonsterActor`, `EnemyActor`, `UnitHpBar`가 같은 bool을 기존 `Damage` 팝업 소유 객체로 전달한다.
+- `DamageNumberPopup.SpawnPopup`이 치명타에 `Color.red`를 선택하고 `ActiveDamagePopup.StartColor`에도 저장해 Fade 색상 재설정을 방지한다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal`은 오류 0개, 기존 참조 충돌 경고 2개로 완료했다.
+- 대상 6개 스크립트의 `git diff --check`가 통과했다.
+
+### History
+
+- 2026-08-07: 사용자가 대상 프리팹의 `Damage` 표시만 치명타 시 빨간색으로 바꾸도록 구현을 요청했다.
+- 2026-08-07: Code Builder가 기존 대상 표시 경로에 `isCritical`을 전달하고 팝업 색상만 분기했다.
 
 ## Task: 2026-08-06 Multi-Synergy Artifact HUD Design
 

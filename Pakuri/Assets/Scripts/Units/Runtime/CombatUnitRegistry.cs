@@ -62,7 +62,7 @@ namespace Pakuri.InGame
             return candidate == HitboxRoot || candidate.IsChildOf(HitboxRoot);
         }
 
-        internal void ShowDamage(float damageAmount, bool isDead)
+        internal void ShowDamage(float damageAmount, bool isDead, bool isCritical)
         {
             if (damageAmount <= 0f)
             {
@@ -71,7 +71,7 @@ namespace Pakuri.InGame
 
             if (Actor is MonsterActor monster)
             {
-                monster.ShowDamage(damageAmount);
+                monster.ShowDamage(damageAmount, isCritical);
                 if (!isDead)
                 {
                     monster.TryPlayHitAnimation();
@@ -82,7 +82,7 @@ namespace Pakuri.InGame
 
             if (Actor is EnemyActor enemy)
             {
-                enemy.ShowDamage(damageAmount);
+                enemy.ShowDamage(damageAmount, isCritical);
             }
         }
 

@@ -129,7 +129,7 @@ namespace Pakuri.InGame
                                         effect.RecipientMonsterName,
                                         StringComparison.OrdinalIgnoreCase)))
                             {
-                                member.Artifacts.AddActiveEffect(effect.EffectName);
+                                AddEffect(member, effect.EffectName, 1, effect.Nodes);
                             }
                         }
                     }
@@ -227,9 +227,15 @@ namespace Pakuri.InGame
                     artifact,
                     effect,
                     representativeAttributeCount);
+                if (effect.Recipient == ArtifactEffectRecipient.Owner)
+                {
+                    AddEffect(owner, effect.EffectName, repeatCount, effect.Nodes);
+                    continue;
+                }
+
                 if (effect.Recipient == ArtifactEffectRecipient.Stage)
                 {
-                    AddEffect(owner, effect.EffectName, repeatCount);
+                    AddEffect(owner, effect.EffectName, repeatCount, effect.Nodes);
                     continue;
                 }
 
@@ -245,7 +251,7 @@ namespace Pakuri.InGame
                                 effect.RecipientMonsterName,
                                 StringComparison.OrdinalIgnoreCase)))
                     {
-                        AddEffect(member, effect.EffectName, repeatCount);
+                        AddEffect(member, effect.EffectName, repeatCount, effect.Nodes);
                     }
                 }
             }
@@ -269,11 +275,29 @@ namespace Pakuri.InGame
         private static void AddEffect(
             RunSession.RunMonsterState member,
             string effectName,
-            int repeatCount)
+            int repeatCount,
+            IReadOnlyList<SkillNode> nodes = null)
         {
             for (var i = 0; i < repeatCount; i++)
             {
                 member.Artifacts.AddActiveEffect(effectName);
+            }
+
+            if (nodes == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < nodes.Count; i++)
+            {
+                var progression = nodes[i]?.GetOperation<FateCoinCritChanceProgressionOp>();
+                if (progression.HasValue)
+                {
+                    member.Artifacts.ConfigureFateCoin(
+                        progression.Value.Increment,
+                        progression.Value.MaxBonus);
+                    return;
+                }
             }
         }
 

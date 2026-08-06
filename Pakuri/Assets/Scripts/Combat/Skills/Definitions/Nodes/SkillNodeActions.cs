@@ -39,6 +39,19 @@ namespace Pakuri.InGame
         public SkillCastEffect Effect { get; }
     }
 
+    /// 비치명타 후 증가하는 운명의 동전 치명타 확률 설정을 나타낸다.
+    public readonly struct FateCoinCritChanceProgressionOp
+    {
+        public FateCoinCritChanceProgressionOp(float increment, float maxBonus)
+        {
+            Increment = increment;
+            MaxBonus = maxBonus;
+        }
+
+        public float Increment { get; }
+        public float MaxBonus { get; }
+    }
+
     /// 처치가 대기시간에 미치는 변화를 구분한다.
     public enum KillActionOpKind
     {

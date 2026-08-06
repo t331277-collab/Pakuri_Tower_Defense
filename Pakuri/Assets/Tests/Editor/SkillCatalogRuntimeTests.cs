@@ -723,6 +723,15 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(
             eveState.Artifacts.ActiveArtifactEffectNames,
             Does.Contain("rift-gem-effect"));
+        Assert.That(
+            eveState.Artifacts.ActiveArtifactEffectNames,
+            Does.Contain("elemental-prism-holy-effect"));
+        Assert.That(
+            eveState.Artifacts.ActiveArtifactEffectNames,
+            Does.Not.Contain("spirit-elixir-contract-count-effect"));
+        Assert.That(
+            eveState.Artifacts.ActiveArtifactEffectNames,
+            Does.Not.Contain("elemental-codex-effect"));
 
         var model = new UnitCombatStateFactory().CreateSelectedMonster(ariel, arielState);
         model.SkillState.RebuildLearnedSkillState(
