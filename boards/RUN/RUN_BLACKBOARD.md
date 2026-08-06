@@ -765,11 +765,12 @@ Code Builder.
 
 ### Status
 
-Phase 3 lifetime and condition implementation complete and compiled. Regression coverage pending Phase 4; Play Mode verification remains user-owned.
+Implementation and focused EditMode verification complete. Play Mode Stage-transition verification remains user-owned.
 
 ### Next Actions
 
-- Phase 4 adds focused regression coverage and completes final static/build verification.
+- Acquire Eve-F through `OfferingPanel`, advance to the next Stage, and verify one Stage-start execution grants the 12-second Lightning-ally shield.
+- Verify later Stages clear prior permanent statuses and recreate them once without duplicate stacking.
 
 ### Evidence
 
@@ -783,6 +784,8 @@ Phase 3 lifetime and condition implementation complete and compiled. Regression 
 - Runtime and Editor `dotnet build --no-restore` checks completed with 0 errors and the existing 2 assembly-reference warnings.
 - The 58 Stage-long passive modifier rows now compile as permanent statuses and remain present until the existing next-Stage reset clears them.
 - Conditional statuses stay resident but contribute only while their authored ally, enemy, or source-unit condition is true; no 0.5-second timer or refresh loop exists.
+- The focused Unity EditMode regression passed 1/1 after asset refresh; Runtime and Editor builds both completed with 0 errors.
+- The full 25-test EditMode run retains two separate trigger-semantic failures; the new Stage passive lifetime/condition regression passes.
 
 ### History
 
@@ -790,3 +793,4 @@ Phase 3 lifetime and condition implementation complete and compiled. Regression 
 - 2026-08-06: Code Builder recorded the RUN-side ordering contract before implementation.
 - 2026-08-06: Phase 2 moved player passive and `CombatStart` execution from registration to the explicit per-Stage boundary.
 - 2026-08-06: Phase 3 established Stage-permanent passive modifier lifetime and dynamic condition evaluation without changing Stage reset behavior.
+- 2026-08-06: Phase 4 completed focused EditMode, CSV, diff, and build verification; OfferingPanel-to-next-Stage gameplay verification remains for the user.

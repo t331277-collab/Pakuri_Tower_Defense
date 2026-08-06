@@ -882,6 +882,98 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     [Test]
+    /// Stage 패시브 수명과 동적 대상·시전자 조건이 카탈로그와 계산 경로에 보존되는지 확인한다.
+    public void PassiveStageModifiersPreserveLifetimeAndDynamicConditions()
+    {
+        var catalog = ReloadGameDataCatalog();
+        var effects = new List<SkillCastEffect>();
+        foreach (var monster in catalog.Monsters)
+        {
+            foreach (var passive in monster.PassiveSkills)
+            {
+                CollectCastEffects(passive, effects);
+            }
+        }
+
+        var modifiers = effects
+            .Where(effect => effect.ResolvedDefinition is BuffSkillDefinition buff
+                && buff.EffectKind == BuffEffectKind.Status
+                && buff.AttachedStatus?.Status?.Kind == StatusEffectKind.PassiveBuff)
+            .ToArray();
+        StatusRuntimeData Modifier(string effectId) =>
+            ((BuffSkillDefinition)modifiers.Single(effect =>
+                effect.EffectId == effectId).ResolvedDefinition).AttachedStatus.Status;
+
+        Assert.That(modifiers, Has.Length.EqualTo(58));
+        Assert.That(modifiers.All(effect =>
+        {
+            var status = ((BuffSkillDefinition)effect.ResolvedDefinition)
+                .AttachedStatus.Status;
+            return status.Permanent && Mathf.Approximately(status.Duration, 9999f);
+        }), Is.True);
+
+        var eveShield = (BuffSkillDefinition)effects.Single(effect =>
+            effect.EffectId == "eve-f@effect1").ResolvedDefinition;
+        Assert.That(eveShield.ShieldDuration, Is.EqualTo(12f));
+
+        var shieldedAlly = new UnitCombatState();
+        shieldedAlly.Statuses.Apply(
+            Modifier("eve-f-trait-3"),
+            1,
+            9999f,
+            permanent: true);
+        Assert.That(StatusCombatRules.ActionSpeedMultiplier(shieldedAlly), Is.EqualTo(1f));
+        shieldedAlly.Resources.CurrentShield = 1f;
+        Assert.That(
+            StatusCombatRules.ActionSpeedMultiplier(shieldedAlly),
+            Is.EqualTo(1.12f).Within(0.0001f));
+
+        var attacker = new UnitCombatState();
+        var enemy = new UnitCombatState();
+        attacker.Statuses.Apply(
+            Modifier("vega-g-trait-3"),
+            1,
+            9999f,
+            permanent: true);
+        Assert.That(StatusCombatRules.CriticalChanceBonus(attacker, enemy), Is.Zero);
+        enemy.Statuses.Apply(
+            new StatusRuntimeData { Kind = StatusEffectKind.Silence },
+            1,
+            0f,
+            permanent: true);
+        enemy.Statuses.Apply(
+            new StatusRuntimeData { Kind = StatusEffectKind.NameMark },
+            1,
+            0f,
+            permanent: true);
+        Assert.That(
+            StatusCombatRules.CriticalChanceBonus(attacker, enemy),
+            Is.EqualTo(0.10f).Within(0.0001f));
+
+        var source = new UnitCombatState();
+        var ally = new UnitCombatState();
+        var aura = ally.Statuses.Apply(
+            Modifier("vega-h@effect1"),
+            1,
+            9999f,
+            permanent: true);
+        aura.SetSourceUnit(source);
+        Assert.That(StatusCombatRules.ActionSpeedMultiplier(ally), Is.EqualTo(1f));
+
+        source.Statuses.Apply(
+            new StatusRuntimeData
+            {
+                Kind = StatusEffectKind.SlaughterPermit
+            },
+            1,
+            0f,
+            permanent: true);
+        Assert.That(
+            StatusCombatRules.ActionSpeedMultiplier(ally),
+            Is.EqualTo(1.12f).Within(0.0001f));
+    }
+
+    [Test]
     /// 지속 사건 효과가 공통 실행 경로를 사용하는지 확인한다.
     public void PassiveEventEffectsAndStateCommandsUseSharedRuntimePaths()
     {
@@ -1009,7 +1101,6 @@ public sealed class SkillCatalogRuntimeTests
         }
     }
 
-    /// 시전 효과 목록을 테스트 입력으로 모은다.
     /// 시전 효과 목록을 테스트 입력으로 모은다.
     private static void CollectCastEffects(
         SkillDefinition skill,

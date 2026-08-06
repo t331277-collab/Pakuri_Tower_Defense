@@ -2330,11 +2330,12 @@ Code Builder.
 
 ### Status
 
-Phase 3 implemented and compiled. Focused regression coverage pending Phase 4.
+Implementation and focused EditMode verification complete. Gameplay Play Mode verification remains user-owned.
 
 ### Next Actions
 
-- Phase 4: add focused regression coverage, run final static/build checks, and finalize all three routed boards.
+- In Play Mode, acquire `eve-f` through `OfferingPanel`, continue to the next Stage, and verify Lightning-skill allies receive the 12-second shield.
+- Verify Ariel-F remains active for the Stage and conditional ally/enemy/source auras turn on and off with their authored conditions.
 
 ### Evidence
 
@@ -2354,6 +2355,9 @@ Phase 3 implemented and compiled. Focused regression coverage pending Phase 4.
 - `StatusRuntimeData` now retains `ConditionStatus.target_side`; calculations use the status carrier for ally-side conditions and the combat target for enemy-side conditions.
 - `StatusRuntimeInstance` retains the source unit reference, so `RequiredSourceStatus` checks the original caster instead of each aura recipient.
 - Phase 3 runtime and Editor builds completed with 0 errors and the existing 2 assembly-reference warnings.
+- `PassiveStageModifiersPreserveLifetimeAndDynamicConditions` passed 1/1 in Unity EditMode after the CSV TextAsset refresh. It verifies all 58 modifiers are permanent 9999 statuses, Eve-F remains 12 seconds, ally/enemy conditions are dynamic, and Vega-H reads the original source unit.
+- The full EditMode run discovered 25 tests; two separate assertions remain failing: `TriggerNodesGenerateFinalRuntimeOutcomes` and `TriggerSemanticClassificationBaselineIsStable`. Their reported mismatches concern incomplete trigger classification and Vega second-slash Silence payload, not the Stage passive lifetime assertions.
+- Final `git diff --check` and Runtime/Editor `dotnet build --no-restore` checks completed with 0 errors; the existing 2 assembly-reference warnings remain.
 
 ### History
 
@@ -2361,3 +2365,4 @@ Phase 3 implemented and compiled. Focused regression coverage pending Phase 4.
 - 2026-08-06: Code Builder completed the current-code, caller, CSV, status-expiry, artifact-order, and test-gap inventory without modifying runtime code.
 - 2026-08-06: Phase 2 separated player registration from the per-Stage player effect boundary and compiled both runtime and Editor assemblies.
 - 2026-08-06: Phase 3 converted the 58 Stage-long passive modifiers to the existing permanent sentinel and repaired dynamic ally/enemy/source condition evaluation without adding a timer.
+- 2026-08-06: Phase 4 added and passed the focused catalog/calculation regression test, recorded the two remaining full-suite failures, and completed static/build verification.

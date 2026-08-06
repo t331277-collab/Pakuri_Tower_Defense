@@ -1532,11 +1532,11 @@ Code Builder.
 
 ### Status
 
-Phase 3 data implementation complete and compiled. Regression assertion pending Phase 4.
+Implementation and focused EditMode verification complete; Unity Play Mode gameplay verification remains user-owned.
 
 ### Next Actions
 
-- Add a catalog regression assertion that no passive `OnCast` `StatusModifier` retains the obsolete 0.5 lifetime.
+- Reimport is complete in the connected Unity Editor; verify the Offering-to-next-Stage Eve-F flow in Play Mode.
 
 ### Evidence
 
@@ -1547,9 +1547,12 @@ Phase 3 data implementation complete and compiled. Regression assertion pending 
 - The passive graph CSV diff contains exactly 58 `0.5` removals and 58 `9999` additions; parsed verification reports `PASSIVE_0_5=0`.
 - Parsed verification reports one unchanged `eve-f@effect1` `SetDuration(12)` row.
 - No schema, node ID, node order, target, condition, or non-duration value changed in the passive graph.
+- `PassiveStageModifiersPreserveLifetimeAndDynamicConditions` loaded the refreshed runtime catalog and passed 1/1, asserting exactly 58 permanent 9999 passive modifiers and the unchanged 12-second Eve-F shield.
+- The full 25-test EditMode run still reports two separate trigger-semantic failures; neither failure assertion is the passive lifetime regression added here.
 
 ### History
 
 - 2026-08-06: User selected explicit authored durations for timed effects and the existing Stage-permanent contract for Stage-long passive effects.
 - 2026-08-06: Code Builder recorded the exact affected-row inventory before changing CSV data.
 - 2026-08-06: Phase 3 replaced only the 58 verified Stage-long passive modifier durations with 9999 and retained explicit timed effects.
+- 2026-08-06: Phase 4 refreshed the Unity CSV TextAsset, passed the focused lifetime regression, and recorded remaining suite failures without changing unrelated trigger data.
