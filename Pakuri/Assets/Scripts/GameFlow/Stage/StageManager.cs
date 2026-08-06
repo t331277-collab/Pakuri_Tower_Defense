@@ -172,6 +172,7 @@ namespace Pakuri.InGame
             artifactSynergyManager.PrepareStage(
                 activeSession,
                 spawnManager: unitSpawnManager);
+            combatManager.BeginPlayerCombat();
 
             currentDay = stageDefinition.FindDay(activeSession.StageIndex, activeSession.DayIndex);
             currentReward = stageDefinition.FindReward(currentDay.RewardRuleId);

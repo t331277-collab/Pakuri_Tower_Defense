@@ -141,9 +141,25 @@ namespace Pakuri.InGame
             {
                 playerCombatControl.ApplyAutoSkillModeToSelectedPlayer(Units);
             }
+        }
 
-            RefreshPassiveEffects(model);
-            DispatchCombatStartOnce(model);
+        /// 등록된 플레이어 전체의 Stage 시작 패시브와 사건을 한 번 실행한다.
+        internal void BeginPlayerCombat()
+        {
+            var players = Units.Players;
+            for (var i = 0; i < players.Count; i++)
+            {
+                var model = players[i]?.Model;
+                if (model == null
+                    || model.IsNexus
+                    || combatStartDispatchedUnits.Contains(model))
+                {
+                    continue;
+                }
+
+                RefreshPassiveEffects(model);
+                DispatchCombatStartOnce(model);
+            }
         }
 
         /// 현재 학습한 passive 목록을 갱신한다.

@@ -765,13 +765,12 @@ Code Builder.
 
 ### Status
 
-Phase 1 ordering design recorded; implementation pending Phase 2.
+Phase 2 ordering implementation complete and compiled. Play Mode verification remains user-owned.
 
 ### Next Actions
 
-- Add one shared player Stage-start entry point in `InGameCombatManager`.
-- Call it from `StageManager.RunCurrentDayFlow` after `ArtifactSynergyManager.PrepareStage` and before encounter spawning.
-- Remove player passive/`CombatStart` ownership from the registration notification once the new boundary is active.
+- Phase 3 converts passive 0.5-second status lifetimes to the Stage-permanent contract.
+- Phase 4 adds focused regression coverage and completes final static/build verification.
 
 ### Evidence
 
@@ -779,8 +778,13 @@ Phase 1 ordering design recorded; implementation pending Phase 2.
 - `RunCurrentDayFlow` currently calls `SpawnSelectedPlayerUnit`, registers Nexus, prepares artifact state, then starts enemy spawning.
 - `NotifyPlayerUnitRegistered` currently applies player passives and dispatches `CombatStart` during roster registration.
 - Existing players are not registered again on later Days, and artifact effects are prepared after initial player registration.
+- `NotifyPlayerUnitRegistered` now retains only registration-side auto-skill setup.
+- `InGameCombatManager.BeginPlayerCombat` applies registered non-Nexus player passives and dispatches `CombatStart` once per Stage.
+- `RunCurrentDayFlow` invokes that entry point immediately after artifact preparation and before encounter lookup/spawning.
+- Runtime and Editor `dotnet build --no-restore` checks completed with 0 errors and the existing 2 assembly-reference warnings.
 
 ### History
 
 - 2026-08-06: User approved a per-Stage effect boundary instead of periodic passive refresh or repeated player registration.
 - 2026-08-06: Code Builder recorded the RUN-side ordering contract before implementation.
+- 2026-08-06: Phase 2 moved player passive and `CombatStart` execution from registration to the explicit per-Stage boundary.

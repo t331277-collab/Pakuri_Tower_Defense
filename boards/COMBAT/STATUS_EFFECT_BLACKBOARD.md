@@ -2330,11 +2330,10 @@ Code Builder.
 
 ### Status
 
-Phase 1 design and inventory recorded. Implementation pending Phase 2.
+Phase 2 implemented and compiled. Passive lifetime conversion pending Phase 3.
 
 ### Next Actions
 
-- Phase 2: centralize player Stage-start passive and `CombatStart` execution after roster/artifact preparation.
 - Phase 3: replace obsolete 0.5-second passive `StatusModifier` lifetimes with the Stage-permanent contract and correct conditional modifier evaluation where required.
 - Phase 4: add focused regression coverage, run final static/build checks, and finalize all three routed boards.
 
@@ -2347,8 +2346,13 @@ Phase 1 design and inventory recorded. Implementation pending Phase 2.
 - Authoring inventory found 58 passive `OnCast` `StatusModifier` effects with `SetDuration(0.5)`: 25 target `AllAllies`, 33 target `Enemy`, 11 are unconditional, and 47 carry conditions.
 - `GameDataCatalogBuilder.Nodes` treats duration values of at least 9999 as `Permanent`; `MonsterDayRecovery.ResetTransient` still clears those statuses at the next Stage boundary.
 - The existing 12-second `eve-f` shield and 9999-duration `ariel-g` shield are separate `ApplyShield` effects and are not part of the 58 status-modifier rows.
+- `NotifyPlayerUnitRegistered` now performs registration-side auto-skill setup only; it no longer owns passive cast or `CombatStart` execution.
+- `InGameCombatManager.BeginPlayerCombat` iterates the registered non-Nexus player roster, refreshes passives, and dispatches `CombatStart` once through the existing per-Stage dispatch set.
+- `StageManager.RunCurrentDayFlow` calls `BeginPlayerCombat` after `ArtifactSynergyManager.PrepareStage` and before encounter lookup/spawning.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` and the corresponding Editor project build both completed with 0 errors; only the existing 2 assembly-reference warnings remain.
 
 ### History
 
 - 2026-08-06: User approved Code Builder implementation, required the design to be recorded in Markdown, prohibited a 0.5-second periodic refresh system, requested deletion of obsolete code, and required one Git commit per Phase.
 - 2026-08-06: Code Builder completed the current-code, caller, CSV, status-expiry, artifact-order, and test-gap inventory without modifying runtime code.
+- 2026-08-06: Phase 2 separated player registration from the per-Stage player effect boundary and compiled both runtime and Editor assemblies.
