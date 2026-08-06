@@ -24,7 +24,9 @@ namespace Pakuri.InGame
             bool suppressOutgoingDamageTriggers,
             bool sourceHitWasExecute,
             string damageMeterSourceName,
-            float finalDamageBonus,
+            float damageMultiplier,
+            float finalDamageModifier = 1f,
+            float criticalFinalDamageModifier = 1f,
             bool isTrigger = false)
         {
             Source = source;
@@ -35,7 +37,9 @@ namespace Pakuri.InGame
             SuppressOutgoingDamageTriggers = suppressOutgoingDamageTriggers;
             SourceHitWasExecute = sourceHitWasExecute;
             DamageMeterSourceName = damageMeterSourceName;
-            FinalDamageBonus = finalDamageBonus;
+            DamageMultiplier = damageMultiplier;
+            FinalDamageModifier = finalDamageModifier;
+            CriticalFinalDamageModifier = criticalFinalDamageModifier;
             IsTrigger = isTrigger;
         }
 
@@ -47,7 +51,10 @@ namespace Pakuri.InGame
         public bool SuppressOutgoingDamageTriggers { get; }
         public bool SourceHitWasExecute { get; }
         public string DamageMeterSourceName { get; }
-        public float FinalDamageBonus { get; }
+        public float DamageMultiplier { get; }
+        public float FinalDamageModifier { get; }
+        public float CriticalFinalDamageModifier { get; }
+        public float FinalDamageMultiplier => DamageMultiplier;
         internal bool IsTrigger { get; }
     }
 
@@ -199,14 +206,15 @@ namespace Pakuri.InGame
             bool suppressOutgoingDamageTriggers = false,
             bool sourceHitWasExecute = false,
             string damageMeterSourceName = null,
-            float finalDamageMultiplier = 1f,
+            float damageMultiplier = 1f,
+            float finalDamageModifier = 1f,
+            float criticalFinalDamageModifier = 1f,
             bool isTrigger = false)
         {
             // 보호막·HP를 차감하고 피해 결과를 만든다.
             var depletedShields = new List<StatusRuntimeInstance>();
             var absorbedShields = new List<ShieldAbsorptionRecord>();
-            var finalDamageBonus = Mathf.Max(0f, finalDamageMultiplier) - 1f;
-            var attackRule = new AttackRule(source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillName, suppressOutgoingDamageTriggers, sourceHitWasExecute, damageMeterSourceName, finalDamageBonus, isTrigger);
+            var attackRule = new AttackRule(source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillName, suppressOutgoingDamageTriggers, sourceHitWasExecute, damageMeterSourceName, Mathf.Max(0f, damageMultiplier), Mathf.Max(0f, finalDamageModifier), Mathf.Max(0f, criticalFinalDamageModifier), isTrigger);
             var result = ApplyDamageToResources(target, baseDamage, attribute, attackRule, depletedShields, absorbedShields);
 
             if (!result.Changed)
@@ -244,7 +252,8 @@ namespace Pakuri.InGame
                         attribute,
                         result.AppliedDamage,
                         attackRule.SourceHitWasExecute,
-                        baseDamage);
+                        baseDamage,
+                        result.IsCritical);
                 }
                 if (result.IsDead && attackRule.Source != null)
                 {
@@ -294,10 +303,11 @@ namespace Pakuri.InGame
             var currentHealth = beforeHealth;
             var currentShield = beforeShield;
             var finalDamage = 0f;
+            var isCritical = false;
 
             if (baseDamage > 0f)
             {
-                finalDamage = DamageCalculator.CalculateFinalDamage(target, baseDamage, attribute, attackRule);
+                finalDamage = DamageCalculator.CalculateFinalDamage(target, baseDamage, attribute, attackRule, out isCritical);
 
                 target.Statuses.RecordIncomingDamage(attribute, finalDamage);
 
@@ -321,7 +331,8 @@ namespace Pakuri.InGame
                 beforeShield,
                 currentShield,
                 finalDamage,
-                currentHealth <= 0f);
+                currentHealth <= 0f,
+                isCritical);
         }
 
         private static InGameResourceChangeResult HealResources(UnitCombatState target, float amount)
@@ -574,7 +585,8 @@ namespace Pakuri.InGame
             float previousShield,
             float currentShield,
             float appliedDamage,
-            bool isDead)
+            bool isDead,
+            bool isCritical = false)
         {
             Target = target;
             PreviousHealth = previousHealth;
@@ -583,6 +595,7 @@ namespace Pakuri.InGame
             CurrentShield = currentShield;
             AppliedDamage = appliedDamage;
             IsDead = isDead;
+            IsCritical = isCritical;
         }
 
         public UnitCombatState Target { get; }
@@ -592,6 +605,7 @@ namespace Pakuri.InGame
         public float CurrentShield { get; }
         public float AppliedDamage { get; }
         public bool IsDead { get; }
+        public bool IsCritical { get; }
         public bool Changed =>
             !Mathf.Approximately(PreviousHealth, CurrentHealth)
             || !Mathf.Approximately(PreviousShield, CurrentShield);

@@ -125,6 +125,8 @@ internal static class SkillTrigger
 
 		public bool EventWasExecute { get; }
 
+		public bool EventWasCritical { get; }
+
 		public string EventTriggerSourceSkillName { get; }
 
 		public int EventHitCount { get; }
@@ -132,7 +134,7 @@ internal static class SkillTrigger
 		public int RecastGeneration { get; }
 
 		/// 지연 실행 뒤에도 사건 당시의 판정 기준을 그대로 사용하게 한다.
-		public TriggerExecutionContext(UnitCombatState eventTarget, UnitCombatState attacker, Vector2 eventCenter, StatusRuntimeInstance status, float shieldAbsorbedAmount, float eventAppliedDamage, DamageAttribute eventAttribute, string eventSourceSkillName, UnitCombatState eventSource = null, bool eventWasExecute = false, string eventTriggerSourceSkillName = null, int eventHitCount = 0, int recastGeneration = 0)
+		public TriggerExecutionContext(UnitCombatState eventTarget, UnitCombatState attacker, Vector2 eventCenter, StatusRuntimeInstance status, float shieldAbsorbedAmount, float eventAppliedDamage, DamageAttribute eventAttribute, string eventSourceSkillName, UnitCombatState eventSource = null, bool eventWasExecute = false, string eventTriggerSourceSkillName = null, int eventHitCount = 0, int recastGeneration = 0, bool eventWasCritical = false)
 		{
 			EventTarget = eventTarget;
 			Attacker = attacker;
@@ -155,6 +157,7 @@ internal static class SkillTrigger
 			EventSourceSkillName = eventSourceSkillName;
 			EventSource = eventSource;
 			EventWasExecute = eventWasExecute;
+			EventWasCritical = eventWasCritical;
 			EventTriggerSourceSkillName = eventTriggerSourceSkillName;
 			EventHitCount = Mathf.Max(0, eventHitCount);
 			RecastGeneration = Mathf.Max(0, recastGeneration);
@@ -345,12 +348,12 @@ internal static class SkillTrigger
 	}
 
 	/// 외부 피해 사건을 반응 판정에 전달한다.
-	public static void ExecuteOutgoingDamage(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillName, UnitCombatState eventTarget, DamageAttribute attribute, float eventAppliedDamage, bool eventWasExecute, float sourceBaseDamage)
+	public static void ExecuteOutgoingDamage(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillName, UnitCombatState eventTarget, DamageAttribute attribute, float eventAppliedDamage, bool eventWasExecute, float sourceBaseDamage, bool eventWasCritical = false)
 	{
 		if (!(combatManager == null) && roster != null && source != null && eventAppliedDamage > 0f)
 		{
 			Vector2 eventCenter = ((eventTarget != null) ? UnitPosition(roster, eventTarget) : UnitPosition(roster, source));
-			TriggerExecutionContext triggerContext = new TriggerExecutionContext(eventTarget, null, eventCenter, null, 0f, eventAppliedDamage, attribute, sourceSkillName, source, eventWasExecute);
+			TriggerExecutionContext triggerContext = new TriggerExecutionContext(eventTarget, null, eventCenter, null, 0f, eventAppliedDamage, attribute, sourceSkillName, source, eventWasExecute, eventWasCritical: eventWasCritical);
 			ExecuteSourceOwnedTriggers(combatManager, roster, source, sourceSkillName, SkillTriggerEvent.OnOutgoingDamage, triggerContext);
 			ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnOutgoingDamage, triggerContext);
 			ApplyOutgoingAdditionalDamageStatuses(combatManager, eventTarget, source, sourceSkillName, attribute, sourceBaseDamage);

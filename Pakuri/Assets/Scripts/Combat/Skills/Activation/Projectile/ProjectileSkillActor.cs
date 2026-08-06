@@ -312,7 +312,7 @@ namespace Pakuri.InGame
             if (contactDamageEnabled)
             {
                 resolvedDamage = damage;
-                var damageResult = combatManager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, owner, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillName, false, false, null, HitDamageMultiplier(target.Model), isTrigger: executionData != null && executionData.IsTrigger);
+                var damageResult = combatManager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, owner, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillName, false, false, null, HitDamageMultiplier(target.Model), executionData != null ? executionData.FinalDamageModifier : 1f, executionData != null ? executionData.CriticalFinalDamageModifier : 1f, isTrigger: executionData != null && executionData.IsTrigger);
                 if (!damageResult.IsDead)
                 {
                     StatusCombatRules.ApplyStatus(combatManager, target.Model, statusOnHit, owner);

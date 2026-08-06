@@ -267,6 +267,8 @@ namespace Pakuri.InGame
                     false,
                     null,
                     finalDamageMultiplier,
+                    executionData != null ? executionData.FinalDamageModifier : 1f,
+                    executionData != null ? executionData.CriticalFinalDamageModifier : 1f,
                     isTrigger: executionData != null && executionData.IsTrigger);
                 if (!result.IsDead)
                 {

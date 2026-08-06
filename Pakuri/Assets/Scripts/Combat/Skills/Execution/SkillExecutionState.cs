@@ -126,6 +126,10 @@ public class SkillExecutionState
 
 	public float CritDamageBonus { get; internal set; }
 
+	public float FinalDamageModifier { get; internal set; }
+
+	public float CriticalFinalDamageModifier { get; internal set; }
+
 	public float ConsecutiveHitBonusRate { get; internal set; }
 
 	public float ConsecutiveHitMax { get; internal set; }
@@ -492,6 +496,8 @@ public class SkillExecutionState
 			SkillName = source.SkillName;
 		}
 		DamageMultiplier = 1f;
+		FinalDamageModifier = 1f;
+		CriticalFinalDamageModifier = 1f;
 		ShieldAmountMultiplier = 1f;
 		CooldownMultiplier = 1f;
 		RadiusMultiplier = 1f;
@@ -559,7 +565,7 @@ public class SkillExecutionState
 	/// 전투 중 추가 피해 배율을 현재 값에 반영한다.
 	internal void ApplyDynamicDamageMultiplier(float multiplier)
 	{
-		DamageMultiplier += PositiveOrDefault(multiplier, 1f) - 1f;
+		DamageMultiplier *= PositiveOrDefault(multiplier, 1f);
 	}
 
 	/// 외부 사건의 피해 배율을 현재 값에 곱한다.
@@ -579,7 +585,7 @@ public class SkillExecutionState
 	internal SkillExecutionState CopyWithDamageMultiplier(float multiplier)
 	{
 		var copy = (SkillExecutionState)MemberwiseClone();
-		copy.DamageMultiplier += Mathf.Max(0f, multiplier) - 1f;
+		copy.DamageMultiplier *= Mathf.Max(0f, multiplier);
 		return copy;
 	}
 

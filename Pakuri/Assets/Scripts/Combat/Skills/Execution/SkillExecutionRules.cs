@@ -895,6 +895,12 @@ namespace Pakuri.InGame
 				* Mathf.Max(0f, 1f + action.Amount)
 				- 1f;
 			break;
+		case SkillActionOpKind.FinalDamageModifier:
+			snapshot.FinalDamageModifier *= PositiveOrDefault(action.Amount, 1f);
+			break;
+		case SkillActionOpKind.CriticalFinalDamageModifier:
+			snapshot.CriticalFinalDamageModifier *= PositiveOrDefault(action.Amount, 1f);
+			break;
 		case SkillActionOpKind.BeamWidthBonus:
 			snapshot.BeamWidthBonus += action.Amount;
 			break;

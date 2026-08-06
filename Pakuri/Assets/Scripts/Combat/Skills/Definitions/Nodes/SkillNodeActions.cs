@@ -82,6 +82,8 @@ namespace Pakuri.InGame
         StatusCriticalDamageTakenBonus,
         CritChanceBonus,
         CritDamageBonus,
+        FinalDamageModifier,
+        CriticalFinalDamageModifier,
         BeamWidthBonus,
         KnockbackDistanceMultiplier,
         TargetStatusStackDamageMultiplier,

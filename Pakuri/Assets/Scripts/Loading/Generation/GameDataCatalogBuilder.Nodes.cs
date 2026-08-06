@@ -1295,6 +1295,8 @@ namespace Pakuri.Data
 			|| string.Equals(handlerName, "CoreDamageMultiplier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "CritChanceBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "CritDamageBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "FinalDamageModifier", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "CriticalFinalDamageModifier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "EveryNthHitChainDamage", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "HitCountCooldownRefund", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "KnockbackDistanceMultiplier", StringComparison.OrdinalIgnoreCase)
@@ -1439,6 +1441,14 @@ namespace Pakuri.Data
 		if (string.Equals(handlerName, "CritDamageBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.CritDamageBonus, GetFloatParam(node, "bonus", 0f));
+		}
+		if (string.Equals(handlerName, "FinalDamageModifier", StringComparison.OrdinalIgnoreCase))
+		{
+			return new SkillActionOp(SkillActionOpKind.FinalDamageModifier, GetFloatParam(node, "multiplier", 1f));
+		}
+		if (string.Equals(handlerName, "CriticalFinalDamageModifier", StringComparison.OrdinalIgnoreCase))
+		{
+			return new SkillActionOp(SkillActionOpKind.CriticalFinalDamageModifier, GetFloatParam(node, "multiplier", 1f));
 		}
 		if (string.Equals(handlerName, "BeamWidthBonus", StringComparison.OrdinalIgnoreCase))
 		{
