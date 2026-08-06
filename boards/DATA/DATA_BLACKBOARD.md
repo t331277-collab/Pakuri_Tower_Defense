@@ -30,25 +30,29 @@ Code Builder.
 
 ### Status
 
-Implementation in progress; Phase 1 contract recorded, Stage-permanent values verified as `9999`.
+Implementation complete in source and authoring data; Unity catalog/EditMode verification remains unavailable because Unity MCP reports zero connected instances.
 
 ### Next Actions
 
-- Remove passive `PassiveBase`/`choice_group` authoring and infer `PassiveEnhancement` in the passive loader.
-- Add Base owner-kind validation/generation routing and migrate passive Base/Trait IDs.
-- Run focused catalog/runtime tests and static CSV/reference validation.
+- Reimport the changed CSV TextAssets in Unity and run `PassiveStageModifiersPreserveLifetimeAndDynamicConditions` plus the new passive-choice/Base-ID assertions.
+- User verifies OfferingPanel acquisition and next-Stage passive application in Play Mode.
 
 ### Evidence
 
-- `skill_choices_passive.csv` currently has 77 data rows: 75 `PassiveEnhancement` rows covering all 25 passive skills exactly three times, plus two `PassiveBase` rows at lines 57 and 79.
-- `CsvRowParser.ParseSkillChoiceRow` currently requires `choice_group`; `CsvSourceLoader` loads passive choices separately from other choice families.
-- `SkillGraphParser` currently accepts `Skill`, `Choice`, `Passive`, `Effect`, and `Trigger`; no active graph row uses `Passive` owner kind.
-- Passive Base graph groups include 30 blank-choice trigger effects across 17 passives; Eve-J has seven groups with repeated node orders, proving a single `{slot}-base` ID would collide.
-- Passive graph `SetDuration` values are currently `9999` for Stage-long modifiers; Eve-F's shield remains `12` seconds.
+- `skill_choices_passive.csv` now has 75 data rows, seven columns, no `choice_group`, and every passive skill has exactly three inferred `PassiveEnhancement` choices.
+- `CsvRowParser.ParseSkillChoiceRow` accepts an implicit group; `CsvSourceLoader` supplies `PassiveEnhancement` only for the passive choice file.
+- `SkillGraphParser` and `CsvDataValidator` accept/validate `owner_kind=Base`; `GameDataCatalogBuilder` routes blank-choice passive `OnCast` effects through Base graph owners.
+- Passive Base trigger/graph IDs now use `*-base-effect-N`; trait auxiliary IDs use `*-trait-N-effect-N`. 30 Base trigger groups map to 142 Base graph rows with zero missing owners, duplicate node orders, or order gaps.
+- Original trigger non-ID fields and graph non-owner fields compare equal after ID normalization; `SetDuration=9999` and Eve-F shield `SetDuration=12` remain unchanged.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:q` passed with 0 errors and the existing two assembly-reference warnings.
+- Unity MCP resource `mcpforunity://instances` returned `instance_count=0`; no Unity EditMode or Play Mode result is claimed.
 
 ### History
 
 - 2026-08-06: Designer approved table-intuitive separation; Builder began implementation with Stage-permanent `9999` retained.
+- 2026-08-06: Phase 1 contract committed as `91c4ebd`.
+- 2026-08-06: Phase 2 removed the two inert Base choice rows and `choice_group`, added passive-file group inference, committed as `fb3cce6`.
+- 2026-08-06: Phase 3 added Base owner routing, migrated passive Base/Trait IDs, removed the obsolete `PassiveBase` runtime path, updated tests, and committed as `73b4d91`.
 
 ## Task: 2026-08-05 Spirit King Skill Runtime Data
 

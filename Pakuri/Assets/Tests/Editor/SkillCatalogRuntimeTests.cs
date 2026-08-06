@@ -895,6 +895,18 @@ public sealed class SkillCatalogRuntimeTests
             }
         }
 
+        var passiveChoices = catalog.Monsters
+            .SelectMany(monster => monster.PassiveSkills)
+            .SelectMany(passive => passive.EnhancementChoices)
+            .ToArray();
+        Assert.That(passiveChoices, Has.Length.EqualTo(75));
+        Assert.That(
+            passiveChoices.All(choice => choice.ChoiceGroup == SkillChoiceGroup.PassiveEnhancement),
+            Is.True);
+        Assert.That(
+            effects.Count(effect => effect.EffectId.Contains("-base-effect-")),
+            Is.EqualTo(30));
+
         var modifiers = effects
             .Where(effect => effect.ResolvedDefinition is BuffSkillDefinition buff
                 && buff.EffectKind == BuffEffectKind.Status
