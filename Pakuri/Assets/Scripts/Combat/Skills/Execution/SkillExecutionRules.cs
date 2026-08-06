@@ -727,6 +727,12 @@ namespace Pakuri.InGame
 			snapshot.conditionalCritActions.Add(conditionalCritAction2.Value);
 		}
 
+		ConditionalFinalDamageActionOp? conditionalFinalDamageAction = nodes[i].GetOperation<ConditionalFinalDamageActionOp>();
+		if (conditionalFinalDamageAction.HasValue)
+		{
+			snapshot.conditionalFinalDamageActions.Add(conditionalFinalDamageAction.Value);
+		}
+
 			BurstDamageActionOp? burstDamageAction = nodes[i].GetOperation<BurstDamageActionOp>();
 			if (burstDamageAction.HasValue)
 			{
@@ -880,6 +886,13 @@ namespace Pakuri.InGame
 				snapshot.targetStatusStackDamageRateBonuses[action.ReferenceName] = value2 + action.Amount;
 			}
 			break;
+		case SkillActionOpKind.TargetStatusStackDamageMultiplierBonus:
+			if (!string.IsNullOrWhiteSpace(action.ReferenceName) && !Mathf.Approximately(action.Amount, 0f))
+			{
+				snapshot.targetStatusStackDamageMultiplierBonuses.TryGetValue(action.ReferenceName, out var multiplierBonus);
+				snapshot.targetStatusStackDamageMultiplierBonuses[action.ReferenceName] = multiplierBonus + action.Amount;
+			}
+			break;
 		case SkillActionOpKind.TriggerProcChanceBonus:
 			if (!string.IsNullOrWhiteSpace(action.ReferenceName) && !Mathf.Approximately(action.Amount, 0f))
 			{
@@ -895,6 +908,15 @@ namespace Pakuri.InGame
 			break;
 		case SkillActionOpKind.StatusActionSpeedBonus:
 			ApplyStatusActionSpeedBonus(snapshot, action.ReferenceName, action.Amount);
+			break;
+		case SkillActionOpKind.StatusActionSpeedMultiplier:
+			if (!string.IsNullOrWhiteSpace(action.ReferenceName))
+			{
+				snapshot.statusActionSpeedMultipliers.TryGetValue(action.ReferenceName, out var speedMultiplier);
+				snapshot.statusActionSpeedMultipliers[action.ReferenceName] = speedMultiplier <= 0f
+					? PositiveOrDefault(action.Amount, 1f)
+					: speedMultiplier * PositiveOrDefault(action.Amount, 1f);
+			}
 			break;
 		case SkillActionOpKind.StatusAttackPowerBonus:
 			snapshot.HasStatusAttackPowerBonus = true;
@@ -1428,8 +1450,40 @@ namespace Pakuri.InGame
             {
                 return 1f;
             }
-            return Mathf.Max(0f, snapshot.DamageMultiplier)
+            var multiplier = Mathf.Max(0f, snapshot.DamageMultiplier)
                 * ConditionalDamageMultiplier(snapshot, target);
+            var stackMultipliers = snapshot.TargetStatusStackDamageMultiplierBonuses;
+            foreach (var pair in stackMultipliers)
+            {
+                if (StatusStacks(target, ParseStatusKind(pair.Key)) > 0)
+                {
+                    multiplier *= 1f + pair.Value * StatusStacks(target, ParseStatusKind(pair.Key));
+                }
+            }
+            return multiplier;
+        }
+
+        /// 치명타 보정 뒤 적용할 최종 피해 배율을 계산한다.
+        internal static float ResolveHitFinalDamageModifier(
+            SkillExecutionState snapshot,
+            UnitCombatState target,
+            UnitSpawnManager roster)
+        {
+            var multiplier = snapshot != null ? Mathf.Max(0f, snapshot.FinalDamageModifier) : 1f;
+            if (snapshot == null || target == null)
+            {
+                return multiplier;
+            }
+
+            var actions = snapshot.ConditionalFinalDamageActions;
+            for (var i = 0; i < actions.Count; i++)
+            {
+                if (MatchesConditionalCritCondition(actions[i].ConditionKind, target, roster))
+                {
+                    multiplier *= Mathf.Max(0f, actions[i].Multiplier);
+                }
+            }
+            return multiplier;
         }
 
         /// 연속 적중 횟수에 따른 피해 배율을 계산한다.
@@ -1699,6 +1753,21 @@ namespace Pakuri.InGame
                 default:
                     return false;
             }
+        }
+
+        private static bool MatchesConditionalCritCondition(
+            ConditionalCritConditionKind conditionKind,
+            UnitCombatState target,
+            UnitSpawnManager roster)
+        {
+            return conditionKind == ConditionalCritConditionKind.TargetIsBoss && target != null && target.IsBoss;
+        }
+
+        private static StatusEffectKind ParseStatusKind(string name)
+        {
+            return StatusValueParser.TryParseStatusKind(name, out var kind)
+                ? kind
+                : StatusEffectKind.None;
         }
 
         /// 폭발 조건이 제공하는 피해 배율을 계산한다.
@@ -2042,6 +2111,7 @@ namespace Pakuri.InGame
             }
 
             var actionSpeedBonus = snapshot.GetStatusActionSpeedBonus(statusData.StatusTag);
+            var actionSpeedMultiplier = snapshot.GetStatusActionSpeedMultiplier(statusData.StatusTag);
             var hasActionSpeedBonus = !Mathf.Approximately(actionSpeedBonus, 0f);
             var hasOverride = snapshot.HasStatusElementDamageTakenBonus
                 || snapshot.HasStatusCriticalDamageTakenBonus
@@ -2053,7 +2123,8 @@ namespace Pakuri.InGame
                 || snapshot.HasStatusFlatElementResistReduction
                 || snapshot.HasStatusConditionalDamageTakenBonus
                 || snapshot.HasStatusAttackPowerBonus
-                || hasActionSpeedBonus;
+                || hasActionSpeedBonus
+                || !Mathf.Approximately(actionSpeedMultiplier, 1f);
             if (!hasOverride)
             {
                 return statusData;
@@ -2109,6 +2180,11 @@ namespace Pakuri.InGame
             if (hasActionSpeedBonus)
             {
                 resolvedStatus.Modifiers.ActionSpeedBonus += actionSpeedBonus;
+            }
+            if (!Mathf.Approximately(actionSpeedMultiplier, 1f))
+            {
+                resolvedStatus.Modifiers.ActionSpeedBonus =
+                    (1f + resolvedStatus.Modifiers.ActionSpeedBonus) * actionSpeedMultiplier - 1f;
             }
 
             if (snapshot.HasStatusAttackPowerBonus)

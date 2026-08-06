@@ -1,5 +1,45 @@
 # UI_BLACKBOARD
 
+## Task: 2026-08-07 InGame PrisonPanel Portrait Raycast Fix
+
+### Task title
+
+`InGameScene` `UI/Reward/PrisonPanel` 슬롯 초상화 Image의 버튼 Raycast 차단 해소.
+
+### Goals
+
+- `1P~5P/Image`가 인접 슬롯 버튼 영역을 가로채지 않도록 한다.
+- 각 슬롯의 `Button` Image Raycast와 Button 동작은 유지한다.
+
+### Constraints
+
+- `InGameScene.unity`의 초상화 Image 다섯 개 `m_RaycastTarget`만 변경한다.
+- 부모 슬롯 Image, Button Image, 계층, Transform, `PrisonPanelUI.cs`는 변경하지 않는다.
+- 사용자 Play Mode 터치 확인은 사용자 소유다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+구현 완료. 다섯 Raycast 값, Button Raycast 보존, Unity 씬 검증을 확인했다.
+
+### Next Actions
+
+- Play Mode에서 PrisonPanel `1P~5P` 버튼 전체 폭 터치를 확인한다.
+
+### Evidence
+
+- `InGameScene.unity` Image component `448585073`, `1761676411`, `1232687343`, `754237406`, `1553833432` (`1P~5P/Image`)가 모두 `m_RaycastTarget: 0`이다.
+- 같은 씬의 Button Image component `989799795`, `412488209`, `2072310896`, `147856363`, `209847576`는 모두 `m_RaycastTarget: 1`로 유지됐다.
+- Unity MCP `manage_scene(validate, Assets/Scenes/NewScene/InGameScene.unity)` 결과: `totalIssues: 0`, `missingScripts: 0`, `brokenPrefabs: 0`.
+- `git diff --check -- Pakuri/Assets/Scenes/NewScene/InGameScene.unity` 오류 없음.
+
+### History
+
+- 2026-08-07: Code Builder가 인접 슬롯과 겹치는 초상화 Image 다섯 개의 Raycast만 비활성화했다.
+
 ## Task: 2026-08-07 Chosen One Acquisition And HUD Design
 
 ### Task title
@@ -24,23 +64,24 @@ Designer.
 
 ### Status
 
-획득·HUD 설계 완료. Code Builder 구현과 icon asset 결정 대기.
+획득 후보 구현 완료. 기존 HUD 재사용 확인. Code Reviewer 검증 통과.
 
 ### Next Actions
 
-- `ArtifactUI.PrepareChoices`의 허용 시너지에 `chosen-one`을 추가한다.
-- 사용자가 실제 chosen-one 시너지 icon asset을 제공하거나 기존 asset 사용을 지정한다.
+- Unity Play Mode에서 선택받은자 포함 최대 3개 후보와 시너지별 HUD 표시를 사용자 확인한다.
 
 ### Evidence
 
-- `ArtifactUI.PrepareChoices`는 현재 `spirit-contract`, `executioner`만 필터링한다.
+- `ArtifactUI.PrepareChoices`는 `spirit-contract`, `executioner`, `chosen-one`을 필터링한다.
 - `InGameInfoUI.RefreshArtifactDisplay`는 모든 보유 유물을 `SynergyName`별로 그룹화한다.
 - `InGameInfoUI.GetArtifactContainer`는 새 시너지 컨테이너를 이전 컨테이너보다 Y `93.3` 아래에 배치한다.
-- `artifact_synergies.csv`의 chosen-one icon 필드는 현재 비어 있다.
+- `artifact_synergies.csv`의 chosen-one icon은 `Assets/Image/UI/Artifact/ChatGPT Image 2026년 8월 7일 오전 03_43_52.png`로 기록되어 있고 해당 파일이 존재한다.
 
 ### History
 
 - 2026-08-07: Designer가 선택받은자 획득 필터 변경과 HUD 무수정 재사용 경계를 기록했다.
+- 2026-08-07: Code Builder가 ArtifactUI 후보 필터만 수정하고 InGameInfoUI의 누적·Y `-93.3` 로직을 재사용했다.
+- 2026-08-07: Code Reviewer가 UI 변경 범위와 기존 컨테이너 경계를 확인했다.
 
 ## Current State
 

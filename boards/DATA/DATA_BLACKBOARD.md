@@ -25,25 +25,28 @@ Designer.
 
 ### Status
 
-데이터 구현 설계 완료. Code Builder 구현 대기.
+데이터 구현 완료. Code Reviewer 정적 검증 통과. Unity 카탈로그 검증은 열린 Editor 잠금으로 대기.
 
 ### Next Actions
 
-- Code Builder가 공통 Node 정의 뒤 Artifact graph/trigger 행을 작성한다.
-- chosen-one 시너지 icon asset이 준비되면 실제 경로만 기록한다.
+- Unity Editor 잠금이 해제되면 `CsvCatalogEditor.ValidateSourceDataMenu`를 실행한다.
 
 ### Evidence
 
 - `artifact_effects.csv` 33~44행에 선택받은자 개별 Effect 헤더가 있다.
 - `artifact_synergy_effects.csv` 12~15행에 시너지 Effect 헤더가 있다.
-- 현재 Artifact graph/trigger CSV에는 해당 Effect 실행 행이 없다.
+- `skill_graph_nodes_artifact.csv`에 선택받은자 시너지 3개, 개별 유물 10종, 무투가 Trigger 그래프를 추가했다.
+- `artifact_skill_triger.csv`에 앙코르(`OnSkillCast`, `every_count=3`)와 무투가(`OnOutgoingDamage`, `Physical`)를 추가했다.
 - 기존 `TargetStatusStackDamageRateBonus`는 이름 없는 명부의 확정 위력 계약과 다르다.
 - `GameDataCatalogBuilder.Artifacts`는 이미 개별·시너지 Effect의 Node와 Reaction을 생성한다.
+- 정적 외래 키 검사 결과 graph 117행/trigger 14행의 소유자·효과 참조 오류 0개, node definition 누락/중복 0개다.
 
 ### History
 
 - 2026-08-07: 사용자가 선택받은자 설계 MD와 수정 대상 목록 작성을 요청했다.
 - 2026-08-07: Designer가 데이터 계약과 이름 없는 명부 위력 공식을 기록했다.
+- 2026-08-07: Code Builder가 신규 Node 계약, Artifact graph/trigger 행, 이름 없는 명부 문구를 반영했다.
+- 2026-08-07: Code Reviewer가 CSV 열 수·파라미터·외래 키 정적 검사를 통과시켰다.
 
 ## Task: 2026-08-07 MainMenu Monster Standing Text Contract
 

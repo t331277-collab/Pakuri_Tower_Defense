@@ -25,25 +25,31 @@ Designer.
 
 ### Status
 
-전투 구현 경계 설계 완료. Code Builder 구현 대기.
+전투 공통 런타임 구현 완료. Code Reviewer 수정요청 반영 및 최종 정적 검증 통과. Unity Play Mode 전투 검증 대기.
 
 ### Next Actions
 
-- 공통 적중 resolver, `ExecuteEventSkill`, `SameSourceAddStacks` 순서로 구현한다.
-- 이름 없는 명부 0/1/5/10스택과 앙코르 재귀 방지를 집중 테스트한다.
+- Unity Play Mode에서 이름표식 0/1/5/10스택, 앙코르 3회, 피날레 보스/비보스, 무투가 0~6회 적중을 확인한다.
 
 ### Evidence
 
 - 기존 `TargetStatusStackDamageRateBonus`는 스택당 전체 스킬 위력 증가 계약이 아니다.
 - `ResolveHitCritModifiers`는 네 피해 Actor가 공유하는 대상별 적중 판정 경계다.
 - `DamageCalculator`는 치명타 뒤 `FinalDamageModifier`를 적용한다.
-- `SameSourceRefresh`는 입력 스택을 기존 스택에 더하지 않는다.
-- `SkillExecution.ResetCooldown`은 기존 쿨타임 초기화 API다.
+- `SkillExecutionRules.ResolveHitDamageMultiplier`에 `1 + rate × target status stacks`를 추가했다.
+- `SkillExecutionRules.ResolveHitFinalDamageModifier`를 Single/Projectile/Line/Zone Actor가 호출해 치명타 이후 최종 배율을 전달한다.
+- `StatusMergePolicy.SameSourceAddStacks`와 `StatusState.Apply`가 동일 출처 상태를 최대 스택까지 합산한다.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore -v:minimal` 및 Editor 빌드가 오류 0개로 완료됐다.
 
 ### History
 
 - 2026-08-07: 사용자가 이름 없는 명부를 스택당 최종선고 스킬 위력 `+6%`로 확정했다.
 - 2026-08-07: Designer가 선택받은자 전투 공통 계약과 전용 하이라이트 경계를 기록했다.
+- 2026-08-07: Code Builder가 대상별 위력·최종 피해·이벤트 스킬 재실행·상태 스택 공통 경로를 구현했다.
+- 2026-08-07: Code Reviewer가 null/API/부작용과 빌드 결과를 확인했고 Unity Play Mode만 잔여 검증으로 남겼다.
+- 2026-08-07: Code Reviewer 수정요청에 따라 Encore 실행의 `sourceSkillName`을 이벤트 원본으로 교정하고 runtime/editor 빌드를 재확인했다.
+- 2026-08-07: Code Reviewer 수정요청에 따라 Single/Zone 추가·연쇄 적중도 대상별 피해·최종 피해 resolver를 거치고 Spawning 중 Highlight 시간을 누적하도록 교정했다.
+- 2026-08-07: 수정 후 runtime/editor 빌드 오류 0개와 정적 검사를 재확인했다.
 
 ## Archived History
 

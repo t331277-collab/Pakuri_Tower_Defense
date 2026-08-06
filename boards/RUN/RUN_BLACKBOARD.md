@@ -25,19 +25,20 @@ Designer.
 
 ### Status
 
-구현 설계 문서 작성 완료. Code Builder 구현 대기.
+Code Builder 구현 완료. Code Reviewer 수정요청 반영 및 최종 정적 검증 통과. Unity Play Mode 검증만 사용자 확인 대기.
 
 ### Next Actions
 
-- Code Builder가 `Pakuri/reference/4.run/chosen-one-artifact-synergy-implementation-design.md`의 Phase 순서와 수정 대상 제한에 따라 구현한다.
-- 실제 chosen-one 시너지 icon asset을 사용자가 지정하거나 준비한다.
+- 사용자가 Unity Play Mode에서 선택·앙코르·하이라이트·HUD를 확인한다.
 
 ### Evidence
 
 - `artifact_synergies.csv`와 두 Effect CSV에 chosen-one 단계·유물·Effect 헤더가 이미 있다.
-- `ArtifactSynergyManager.DistributeSynergyEffects`는 현재 `ChosenOne` 수신자를 처리하지 않는다.
-- `StageManager.RunCurrentDayFlow`는 파티 복원 뒤 `PrepareStage`, `BeginPlayerCombat`, 적 생성 순으로 실행한다.
-- `ArtifactUI.PrepareChoices`는 현재 정령계약·처형관만 후보로 허용한다.
+- `ArtifactSynergyManager.ResolveChosenOneOwner`가 파티 슬롯 순서 tie-break로 최다 보유자를 고르고 `ChosenOne` 효과를 한 명에게만 배포한다.
+- `StageManager.Update`가 Combat 상태에서 `ArtifactSynergyManager.TickStage`를 호출하고, 15초마다 가장 긴 양수 쿨타임을 `SkillExecution.ResetCooldown`으로 초기화한다.
+- `ArtifactUI.PrepareChoices`가 `chosen-one`을 기존 정령계약·처형관 후보에 추가한다.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore -v:minimal`: 오류 0개.
+- Unity CSV 검증은 동일 프로젝트가 이미 열린 상태라 batchmode가 `Multiple Unity instances cannot open the same project`로 중단됐다.
 - `InGameInfoUI`는 이미 `SynergyName`별 컨테이너와 Y `-93.3` 배치를 구현한다.
 
 ### History
@@ -45,6 +46,11 @@ Designer.
 - 2026-08-07: 사용자가 선택받은자 시너지·유물 구현 설계와 수정 대상 기록을 요청했다.
 - 2026-08-07: 이름 없는 명부를 이름표식 1스택당 최종선고 스킬 위력 `+6%`로 확정했다.
 - 2026-08-07: Designer가 신규 구현 설계 문서와 RUN 인계 상태를 기록했다.
+- 2026-08-07: Code Builder가 선택받은자 선정·ChosenOne 배포·Highlight tick·보상 후보 연결을 구현했다.
+- 2026-08-07: Code Reviewer가 변경 코드·CSV·빌드·정적 외래 키 검사를 확인했고 Play Mode만 잔여 검증으로 남겼다.
+- 2026-08-07: Code Reviewer가 Encore 후속 사건의 원본 스킬명 전달을 요청했고 Code Builder가 `EventSourceSkillName` 경계를 반영한 뒤 재빌드했다.
+- 2026-08-07: Code Reviewer가 추가·연쇄 적중의 대상별 최종 피해 resolver와 Spawning 중 Highlight tick을 요청했고 Code Builder가 반영 후 재빌드했다.
+- 2026-08-07: 수정 후 runtime/editor 빌드와 CSV 정적 검사를 재확인했다. Unity Play Mode만 사용자 확인 대기다.
 
 ## Current State
 

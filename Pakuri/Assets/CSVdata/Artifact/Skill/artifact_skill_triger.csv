@@ -12,3 +12,5 @@
 "resonance-compass-darkness","resonance-compass","resonance-compass-effect","OnOutgoingDamage","","","","","","","Darkness","","","0.08","0","0.3","0","owner","113","1","0","false","false"
 "resonance-compass-holy","resonance-compass","resonance-compass-effect","OnOutgoingDamage","","","","","","","Holy","","","0.08","0","0.3","0","owner","114","1","0","false","false"
 "sharp-chalice-holy-critical-exposure","sharp-chalice","sharp-chalice-effect","OnOutgoingDamage","","","","","","","Holy","","","1","0","0","0","owner","120","1","0","false","true"
+"chosen-one-encore-trigger","chosen-one","chosen-one-level-1-encore","OnSkillCast","","","","","","","","","MagazineProjectile;CooldownProjectile;LineAttack;AreaAttack;SingleAttack;Buff;Shield;Heal;Mark;Execute","1","0","0","3","owner","200","1","0","false","false"
+"martial-artists-breath-trigger","martial-artists-breath","martial-artists-breath-effect","OnOutgoingDamage","","","","","","","Physical","","","1","0","0","0","owner","210","1","0","false","false"

@@ -124,6 +124,21 @@ namespace Pakuri.InGame
         public SkillRuntimeKind[] RuntimeKinds { get; }
     }
 
+    /// 대상 조건을 만족할 때 치명타 이후 적용할 최종 피해 배율이다.
+    public readonly struct ConditionalFinalDamageActionOp
+    {
+        public ConditionalFinalDamageActionOp(
+            ConditionalCritConditionKind conditionKind,
+            float multiplier)
+        {
+            ConditionKind = conditionKind;
+            Multiplier = multiplier;
+        }
+
+        public ConditionalCritConditionKind ConditionKind { get; }
+        public float Multiplier { get; }
+    }
+
     /// 시전자 상태가 대상의 받는 피해를 바꾸는 규칙을 나타낸다.
     public readonly struct StatusConditionalDamageTakenActionOp
     {

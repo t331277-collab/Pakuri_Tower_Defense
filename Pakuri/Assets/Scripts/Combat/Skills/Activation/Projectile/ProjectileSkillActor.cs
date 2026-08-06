@@ -319,7 +319,7 @@ namespace Pakuri.InGame
                 {
                     resolvedCritDamage = SkillExecutionRules.CombineCritDamageBonus(resolvedCritDamage, executionData.MagazineLastProjectileCritDamageBonus);
                 }
-                var damageResult = combatManager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, owner, criticalAllowed, resolvedCritChance, resolvedCritDamage, sourceSkillName, false, false, null, HitDamageMultiplier(target.Model), executionData != null ? executionData.FinalDamageModifier : 1f, executionData != null ? executionData.CriticalFinalDamageModifier : 1f, isTrigger: executionData != null && executionData.IsTrigger);
+                var damageResult = combatManager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, owner, criticalAllowed, resolvedCritChance, resolvedCritDamage, sourceSkillName, false, false, null, HitDamageMultiplier(target.Model), SkillExecutionRules.ResolveHitFinalDamageModifier(executionData, target.Model, combatManager.Units), executionData != null ? executionData.CriticalFinalDamageModifier : 1f, isTrigger: executionData != null && executionData.IsTrigger);
                 if (!damageResult.IsDead)
                 {
                     StatusCombatRules.ApplyStatus(combatManager, target.Model, statusOnHit, owner);
@@ -454,7 +454,7 @@ namespace Pakuri.InGame
                     false,
                     null,
                     HitDamageMultiplier(target.Model) * branchDamageMultiplier,
-                    finalDamageModifier: executionData != null ? executionData.FinalDamageModifier : 1f,
+                    finalDamageModifier: SkillExecutionRules.ResolveHitFinalDamageModifier(executionData, target.Model, combatManager.Units),
                     criticalFinalDamageModifier: executionData != null ? executionData.CriticalFinalDamageModifier : 1f,
                     isTrigger: executionData != null && executionData.IsTrigger);
                 SpawnBranchDamageLine(hitPosition, targetPosition);

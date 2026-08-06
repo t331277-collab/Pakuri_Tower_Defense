@@ -22,7 +22,7 @@
 "coin-of-fate","운명의 동전","executioner","치명타가 발생하지 않은 다음 공격의 치명타 확률 +5%, 최대 25%","Assets/Image/Artifact/executioner_Icon/coin-of-fate.png"
 "quantum-computation","양자 연산","chosen-one","이브의 번개 피해 +50%","Assets/Image/Artifact/chosen-one_Icon/quantum-computation.png"
 "absolute-zero-circuit","절대영점 회로","chosen-one","이브의 얼음 피해 +35%, 빙결 대상에게 추가 +25%","Assets/Image/Artifact/chosen-one_Icon/absolute-zero-circuit.png"
-"nameless-ledger","이름 없는 명부","chosen-one","베가의 이름표식 1스택당 최종선고 피해 +6%","Assets/Image/Artifact/chosen-one_Icon/nameless-ledger.png"
+"nameless-ledger","이름 없는 명부","chosen-one","베가의 이름표식 1스택당 최종선고 위력 +6%","Assets/Image/Artifact/chosen-one_Icon/nameless-ledger.png"
 "black-execution-platform","검은 처형대","chosen-one","베가의 검은 명부 개방 범위 피해 +45%","Assets/Image/Artifact/chosen-one_Icon/black-execution-platform.png"
 "convection-arrowhead","대류 화살촉","chosen-one","세인의 열풍 화살과 작열 난사 피해 +40%","Assets/Image/Artifact/chosen-one_Icon/convection-arrowhead.png"
 "dooms-ember","종말의 잔불","chosen-one","세인의 종말의 사선 쿨타임 -25%, 위력 +25%","Assets/Image/Artifact/chosen-one_Icon/dooms-ember.png"

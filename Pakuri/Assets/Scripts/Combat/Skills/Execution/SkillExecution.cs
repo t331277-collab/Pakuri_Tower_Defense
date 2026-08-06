@@ -1882,24 +1882,66 @@ namespace Pakuri.InGame
 
             if (trigger.Effect != null)
             {
+                var effect = trigger.Effect;
+                var executionEntry = sourceEntry;
+                if (effect.UseEventSourceSkill)
+                {
+                    var eventSource = triggerContext.EventSource ?? source;
+                    sourceRuntime = eventSource?.SkillState?.FindBySkillName(triggerContext.EventSourceSkillName);
+                    executionEntry = eventSource != null ? roster.Find(eventSource) ?? sourceEntry : sourceEntry;
+                    if (sourceRuntime == null)
+                    {
+                        return false;
+                    }
+
+                    effect = new SkillCastEffect
+                    {
+                        EffectName = effect.EffectName,
+                        DamageMultiplier = effect.DamageMultiplier,
+                        ResolvedDefinition = sourceRuntime.Data,
+                        UseSourcePreparedAim = effect.UseSourcePreparedAim,
+                        UseSourcePreparedCenter = effect.UseSourcePreparedCenter,
+                        OnHitStatusOverride = effect.OnHitStatusOverride,
+                        Command = effect.Command,
+                        IsRecast = effect.IsRecast,
+                        RadiusMultiplier = effect.RadiusMultiplier,
+                        DurationSeconds = effect.DurationSeconds,
+                        InheritSnapshot = effect.InheritSnapshot,
+                        MaxGeneration = effect.MaxGeneration
+                    };
+                }
+                else if (sourceRuntime == null && effect.ResolvedDefinition != null)
+                {
+                    sourceRuntime = new SkillExecutionState(source, effect.ResolvedDefinition);
+                }
+
+                var executionSkillName = effect.UseEventSourceSkill
+                    ? triggerContext.EventSourceSkillName
+                    : trigger.SourceSkillName;
+
                 return sourceRuntime != null
                     && combatManager.SkillExecution.TryExecuteResolvedEffect(
-                        sourceEntry,
+                        executionEntry,
                         sourceRuntime,
                         roster,
                         combatManager,
-                        trigger.Effect,
+                        effect,
                         triggerContext.EventTarget,
                         targetPoint,
                         true,
                         triggerContext.RecastGeneration,
-                        trigger.SourceSkillName,
+                        executionSkillName,
                         trigger.LockToEventTarget,
                         trigger.DamageMultiplier,
                         trigger.DamageValueSource != SkillTriggerDamageValueSource.Fixed,
                         resolvedRawDamage,
                         publishSkillLifecycleEvents: trigger.PublishSkillLifecycleEvents,
                         isTrigger: trigger.IsTrigger);
+            }
+
+            if (sourceRuntime == null && trigger.Command != null)
+            {
+                sourceRuntime = new SkillExecutionState(source, null);
             }
 
             return trigger.Command != null

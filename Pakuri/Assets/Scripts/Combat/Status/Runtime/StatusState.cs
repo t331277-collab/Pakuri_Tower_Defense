@@ -70,7 +70,7 @@ namespace Pakuri.InGame
             }
 
             status.SetSourceMetadata(statusData);
-            if (mergedExisting)
+            if (mergedExisting && statusData.MergePolicy != StatusMergePolicy.SameSourceAddStacks)
             {
                 status.RefreshStacks(stacks, resolvedMaxStacks);
             }

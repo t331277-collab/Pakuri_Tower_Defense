@@ -252,6 +252,9 @@ namespace Pakuri.Data
                 case "same_source_refresh":
                     policy = StatusMergePolicy.SameSourceRefresh;
                     return true;
+                case "same_source_add_stacks":
+                    policy = StatusMergePolicy.SameSourceAddStacks;
+                    return true;
                 case "always_stack":
                     policy = StatusMergePolicy.AlwaysStack;
                     return true;

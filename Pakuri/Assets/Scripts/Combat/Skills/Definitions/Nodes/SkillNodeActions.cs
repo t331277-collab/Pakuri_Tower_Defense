@@ -25,6 +25,7 @@ namespace Pakuri.InGame
         public float DurationSeconds;
         public bool InheritSnapshot = true;
         public int MaxGeneration = 1;
+        public bool UseEventSourceSkill;
     }
 
     /// 후속 스킬 결과를 노드에서 해석할 값으로 전달한다.
@@ -101,6 +102,8 @@ namespace Pakuri.InGame
         BeamWidthBonus,
         KnockbackDistanceMultiplier,
         TargetStatusStackDamageMultiplier,
+        TargetStatusStackDamageMultiplierBonus,
+        StatusActionSpeedMultiplier,
         ConsumeTargetStatusRatioOverride
     }
 

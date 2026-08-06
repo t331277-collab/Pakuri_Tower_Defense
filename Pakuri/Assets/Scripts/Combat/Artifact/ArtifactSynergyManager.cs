@@ -16,6 +16,10 @@ namespace Pakuri.InGame
     {
         public SynergyState Synergies { get; } = new SynergyState();
 
+        private string chosenOneOwnerName = string.Empty;
+        private float highlightElapsed;
+        private bool highlightEnabled;
+
         public void PrepareStage(
             RunSession session,
             GameDataCatalog catalog = null,
@@ -28,6 +32,9 @@ namespace Pakuri.InGame
 
             catalog ??= GameDataLoader.CurrentCatalog;
             Synergies.Clear();
+            chosenOneOwnerName = string.Empty;
+            highlightElapsed = 0f;
+            highlightEnabled = false;
 
             for (var i = 0; i < session.PartyMembers.Count; i++)
             {
@@ -49,7 +56,10 @@ namespace Pakuri.InGame
                 }
             }
 
+            chosenOneOwnerName = ResolveChosenOneOwner(session, catalog);
             DistributeSynergyEffects(session, catalog);
+            highlightEnabled = Synergies.GetCount("chosen-one") >= 6
+                && !string.IsNullOrWhiteSpace(chosenOneOwnerName);
 
             var dominantAttribute = ResolvePartyDominantAttribute(session, catalog);
             var representativeAttributeCount =
@@ -89,6 +99,80 @@ namespace Pakuri.InGame
             }
         }
 
+        /// 선택받은자 유물을 가장 많이 가진 파티원을 전투 시작 기준으로 고정한다.
+        private static string ResolveChosenOneOwner(RunSession session, GameDataCatalog catalog)
+        {
+            if (session == null || catalog == null || session.PartyMembers.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var bestName = string.Empty;
+            var bestCount = 0;
+            for (var memberIndex = 0; memberIndex < session.PartyMembers.Count; memberIndex++)
+            {
+                var member = session.PartyMembers[memberIndex];
+                var count = 0;
+                for (var artifactIndex = 0; artifactIndex < member.Artifacts.OwnedArtifactNames.Count; artifactIndex++)
+                {
+                    var artifact = catalog.GetData<ArtifactDefinition>(member.Artifacts.OwnedArtifactNames[artifactIndex]);
+                    if (artifact != null && string.Equals(artifact.SynergyName, "chosen-one", StringComparison.OrdinalIgnoreCase))
+                    {
+                        count++;
+                    }
+                }
+
+                if (count > bestCount)
+                {
+                    bestCount = count;
+                    bestName = member.MonsterName;
+                }
+            }
+            return bestCount > 0 ? bestName : string.Empty;
+        }
+
+        /// Highlight 단계의 15초 쿨타임 초기화를 전투 시간에 맞춰 처리한다.
+        public void TickStage(float deltaTime, StageState state, UnitSpawnManager spawnManager)
+        {
+            if (!highlightEnabled
+                || (state != StageState.Spawning && state != StageState.Combat)
+                || spawnManager == null
+                || deltaTime <= 0f)
+            {
+                return;
+            }
+
+            highlightElapsed += deltaTime;
+            if (highlightElapsed < 15f)
+            {
+                return;
+            }
+            highlightElapsed -= 15f;
+
+            for (var i = 0; i < spawnManager.Players.Count; i++)
+            {
+                var entry = spawnManager.Players[i];
+                var model = entry?.Model;
+                if (model?.Identity == null
+                    || !string.Equals(model.Identity.DefinitionName, chosenOneOwnerName, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                SkillExecutionState longest = null;
+                for (var skillIndex = 0; skillIndex < model.SkillState.ActiveSkills.Count; skillIndex++)
+                {
+                    var skill = model.SkillState.ActiveSkills[skillIndex];
+                    if (skill != null && skill.CooldownRemaining > (longest?.CooldownRemaining ?? 0f))
+                    {
+                        longest = skill;
+                    }
+                }
+                SkillExecution.ResetCooldown(longest);
+                return;
+            }
+        }
+
         private void DistributeSynergyEffects(
             RunSession session,
             GameDataCatalog catalog)
@@ -123,6 +207,8 @@ namespace Pakuri.InGame
                         {
                             var member = session.PartyMembers[memberIndex];
                             if (effect.Recipient == ArtifactEffectRecipient.AllAllies
+                                || (effect.Recipient == ArtifactEffectRecipient.ChosenOne
+                                    && string.Equals(member.MonsterName, chosenOneOwnerName, StringComparison.OrdinalIgnoreCase))
                                 || (effect.Recipient == ArtifactEffectRecipient.SpecificMonster
                                     && string.Equals(
                                         member.MonsterName,

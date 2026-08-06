@@ -89,6 +89,8 @@ public partial class SingleSkillActor
 
 		public float FinalDamageMultiplier { get; }
 
+		public float ConditionalFinalDamageMultiplier { get; }
+
 		public float CritChanceBonus { get; }
 
 		public float CritDamageBonus { get; }
@@ -98,10 +100,11 @@ public partial class SingleSkillActor
 		public int PendingConsumedStacks { get; }
 
 		/// 피해 적용과 상태 소비가 같은 판정 결과를 사용하게 한다.
-		public TargetDamageResolution(float damage, float finalDamageMultiplier, float critChanceBonus, float critDamageBonus, bool isExecute, int pendingConsumedStacks)
+		public TargetDamageResolution(float damage, float finalDamageMultiplier, float conditionalFinalDamageMultiplier, float critChanceBonus, float critDamageBonus, bool isExecute, int pendingConsumedStacks)
 		{
 			Damage = damage;
 			FinalDamageMultiplier = finalDamageMultiplier;
+			ConditionalFinalDamageMultiplier = conditionalFinalDamageMultiplier;
 			CritChanceBonus = critChanceBonus;
 			CritDamageBonus = critDamageBonus;
 			IsExecute = isExecute;
@@ -214,7 +217,7 @@ public partial class SingleSkillActor
 				Vector2 hitPosition = ((unitEntry.Transform != null) ? ((Vector2)unitEntry.Transform.position) : Vector2.zero);
 				bool isCoreHit = coreCollisionTargets.Contains(unitEntry);
                 TargetDamageResolution damageResolution = TargetDamage(snapshot, damage, unitEntry.Model, unitRoster, critChanceBonus, critDamageBonus, isCoreHit);
-                InGameResourceChangeResult result2 = manager.ApplyDamage(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, damageResolution.CritDamageBonus, sourceSkillName, false, damageResolution.IsExecute, null, damageResolution.FinalDamageMultiplier, snapshot.FinalDamageModifier, snapshot.CriticalFinalDamageModifier, isTrigger: snapshot.IsTrigger);
+                InGameResourceChangeResult result2 = manager.ApplyDamage(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, damageResolution.CritDamageBonus, sourceSkillName, false, damageResolution.IsExecute, null, damageResolution.FinalDamageMultiplier, damageResolution.ConditionalFinalDamageMultiplier, snapshot.CriticalFinalDamageModifier, isTrigger: snapshot.IsTrigger);
 				int consumedStacks = ConsumePendingTargetStatusStacks(manager, unitEntry.Model, snapshot, damageResolution);
 				SkillExecution.HandleSingleKillRecovery(sourceRuntime, snapshot, result2, damageResolution.IsExecute);
 				TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry, result2, consumedStacks);
@@ -252,7 +255,7 @@ public partial class SingleSkillActor
 			CombatUnitEntry unitEntry = list[i];
 			Vector2 hitPosition = ((unitEntry.Transform != null) ? ((Vector2)unitEntry.Transform.position) : center);
             TargetDamageResolution damageResolution = TargetDamage(snapshot, damage, unitEntry.Model, unitRoster, critChanceBonus, critDamageBonus, isCoreHit: false);
-            InGameResourceChangeResult result2 = manager.ApplyDamage(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, damageResolution.CritDamageBonus, sourceSkillName, false, damageResolution.IsExecute, null, damageResolution.FinalDamageMultiplier, snapshot.FinalDamageModifier, snapshot.CriticalFinalDamageModifier, isTrigger: snapshot.IsTrigger);
+            InGameResourceChangeResult result2 = manager.ApplyDamage(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, damageResolution.CritDamageBonus, sourceSkillName, false, damageResolution.IsExecute, null, damageResolution.FinalDamageMultiplier, damageResolution.ConditionalFinalDamageMultiplier, snapshot.CriticalFinalDamageModifier, isTrigger: snapshot.IsTrigger);
 			int consumedStacks = ConsumePendingTargetStatusStacks(manager, unitEntry.Model, snapshot, damageResolution);
 			SkillExecution.HandleSingleKillRecovery(sourceRuntime, snapshot, result2, damageResolution.IsExecute);
 			TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry, result2, consumedStacks);
@@ -290,7 +293,7 @@ public partial class SingleSkillActor
 			}
 			Vector2 hitPosition = ((unitEntry.Transform != null) ? ((Vector2)unitEntry.Transform.position) : center);
             TargetDamageResolution damageResolution = TargetDamage(snapshot, damage, unitEntry.Model, unitRoster, critChanceBonus, critDamageBonus, isCoreHit: false);
-            InGameResourceChangeResult result = manager.ApplyDamage(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, damageResolution.CritDamageBonus, sourceSkillName, false, damageResolution.IsExecute, null, damageResolution.FinalDamageMultiplier, snapshot.FinalDamageModifier, snapshot.CriticalFinalDamageModifier, isTrigger: snapshot.IsTrigger);
+            InGameResourceChangeResult result = manager.ApplyDamage(unitEntry.Model, damageResolution.Damage, attribute, source, criticalAllowed, damageResolution.CritChanceBonus, damageResolution.CritDamageBonus, sourceSkillName, false, damageResolution.IsExecute, null, damageResolution.FinalDamageMultiplier, damageResolution.ConditionalFinalDamageMultiplier, snapshot.CriticalFinalDamageModifier, isTrigger: snapshot.IsTrigger);
 			int consumedStacks = ConsumePendingTargetStatusStacks(manager, unitEntry.Model, snapshot, damageResolution);
 			SkillExecution.HandleSingleKillRecovery(sourceRuntime, snapshot, result, damageResolution.IsExecute);
 			TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry, result, consumedStacks);
@@ -313,7 +316,7 @@ public partial class SingleSkillActor
 			{
 				Vector2 hitPosition2 = ((unitEntry2.Transform != null) ? ((Vector2)unitEntry2.Transform.position) : center);
                 TargetDamageResolution damageResolution2 = TargetDamage(snapshot, damage, unitEntry2.Model, unitRoster, critChanceBonus, critDamageBonus, isCoreHit: false);
-                InGameResourceChangeResult result3 = manager.ApplyDamage(unitEntry2.Model, damageResolution2.Damage, attribute, source, criticalAllowed, damageResolution2.CritChanceBonus, damageResolution2.CritDamageBonus, sourceSkillName, false, damageResolution2.IsExecute, null, damageResolution2.FinalDamageMultiplier, snapshot.FinalDamageModifier, snapshot.CriticalFinalDamageModifier, isTrigger: snapshot.IsTrigger);
+                InGameResourceChangeResult result3 = manager.ApplyDamage(unitEntry2.Model, damageResolution2.Damage, attribute, source, criticalAllowed, damageResolution2.CritChanceBonus, damageResolution2.CritDamageBonus, sourceSkillName, false, damageResolution2.IsExecute, null, damageResolution2.FinalDamageMultiplier, damageResolution2.ConditionalFinalDamageMultiplier, snapshot.CriticalFinalDamageModifier, isTrigger: snapshot.IsTrigger);
 				int consumedStacks2 = ConsumePendingTargetStatusStacks(manager, unitEntry2.Model, snapshot, damageResolution2);
 				SkillExecution.HandleSingleKillRecovery(sourceRuntime, snapshot, result3, damageResolution2.IsExecute);
 				TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry2, result3, consumedStacks2);
@@ -385,7 +388,8 @@ public partial class SingleSkillActor
 			true,
 			false,
 			null,
-			1f,
+			damageMultiplier: SkillExecutionRules.ResolveHitDamageMultiplier(snapshot, target.Model),
+			finalDamageModifier: SkillExecutionRules.ResolveHitFinalDamageModifier(snapshot, target.Model, manager.Units),
 			isTrigger: snapshot.IsTrigger);
 	}
 
@@ -444,7 +448,8 @@ public partial class SingleSkillActor
 			ref num2,
 			ref critChanceBonus,
 			out flag);
-		return new TargetDamageResolution(Mathf.Max(0f, num), Mathf.Max(0f, num2), critChanceBonus, critDamageBonus, flag, pendingConsumedStacks);
+		var finalDamageMultiplier = SkillExecutionRules.ResolveHitFinalDamageModifier(snapshot, target, roster);
+		return new TargetDamageResolution(Mathf.Max(0f, num), Mathf.Max(0f, num2), finalDamageMultiplier, critChanceBonus, critDamageBonus, flag, pendingConsumedStacks);
 	}
 
 	/// 적중 직후 대상 상태를 소비한다.

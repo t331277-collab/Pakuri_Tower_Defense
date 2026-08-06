@@ -144,6 +144,20 @@ namespace Pakuri.Data
 				}
 				return;
 			}
+			if (string.Equals(handler, "ExecuteEventSkill", StringComparison.OrdinalIgnoreCase))
+			{
+				reaction.DamageMultiplier = Mathf.Max(
+					0f,
+					GetFloatParam(node, "damage_multiplier", 1f));
+				reaction.PublishSkillLifecycleEvents = false;
+				reaction.Effect = new SkillCastEffect
+				{
+					EffectName = reaction.ReactionName,
+					DamageMultiplier = reaction.DamageMultiplier,
+					UseEventSourceSkill = true
+				};
+				return;
+			}
 			if (string.Equals(handler, "RecastZone", StringComparison.OrdinalIgnoreCase))
 			{
 				reaction.DelaySeconds += Mathf.Max(
@@ -386,8 +400,18 @@ namespace Pakuri.Data
 		status.Duration = state.DurationSeconds > 0f
 			? state.DurationSeconds
 			: status.Duration;
-		status.Permanent = status.Duration <= 0f || status.Duration >= 9999f;
-		ApplyTriggeredStatusMutations(status, state.StatusMutations);
+	status.Permanent = status.Duration <= 0f || status.Duration >= 9999f;
+	if (state.HasStatusPayload)
+	{
+		status.BaseStackAmount = Mathf.Max(1, state.StatusStacks);
+		status.MaxStacks = Mathf.Max(1, state.StatusMaxStacks);
+		if (state.StatusDurationSeconds > 0f)
+		{
+			status.Duration = state.StatusDurationSeconds;
+			status.Permanent = state.StatusDurationSeconds >= 9999f;
+		}
+	}
+	ApplyTriggeredStatusMutations(status, state.StatusMutations);
 
 		for (var i = 0; i < nodes.Length; i++)
 		{
@@ -507,8 +531,11 @@ namespace Pakuri.Data
 				{
 					Status = status,
 					Chance = 1f,
-					Stacks = 1,
-					RefreshDuration = true
+					Stacks = state.HasStatusPayload ? state.StatusStacks : 1,
+					RuntimeDurationSeconds = state.HasStatusPayload ? state.StatusDurationSeconds : status.Duration,
+					RuntimeMaxStacks = state.HasStatusPayload ? state.StatusMaxStacks : status.MaxStacks,
+					RuntimePermanent = status.Permanent,
+					RefreshDuration = state.HasStatusPayload ? state.RefreshDuration : true
 				},
 				SkillEffectPrefab = status.StatusEffectPrefab,
 				RuntimeVisual = status.RuntimeVisual
@@ -542,6 +569,7 @@ namespace Pakuri.Data
 			|| string.Equals(handler, "ApplyStatus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handler, "ApplyShield", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handler, "ExecuteSkill", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handler, "ExecuteEventSkill", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handler, "RecastZone", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handler, "RefundCooldown", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handler, "ReduceReload", StringComparison.OrdinalIgnoreCase)
@@ -1004,6 +1032,13 @@ namespace Pakuri.Data
 		{
 			return SkillNode.FromOperation(new DamageModifierOp(DamageModifierOpKind.BossMultiplier, GetFloatParam(node, "multiplier", 1f)));
 		}
+		if (string.Equals(text, "TargetPredicateFinalDamageModifier", StringComparison.OrdinalIgnoreCase)
+			&& string.Equals(GetParam(node, "predicate"), "is_boss", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new ConditionalFinalDamageActionOp(
+				ConditionalCritConditionKind.TargetIsBoss,
+				GetFloatParam(node, "multiplier", 1f)));
+		}
 		if (string.Equals(text, "BossDamageMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
 			return SkillNode.FromOperation(new DamageModifierOp(DamageModifierOpKind.BossMultiplier, GetFloatParam(node, "multiplier", 1f)));
@@ -1265,6 +1300,7 @@ namespace Pakuri.Data
 			|| string.Equals(handlerName, "ShowVisual", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "RecastZone", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "ExecuteSkill", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ExecuteEventSkill", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "RefundCooldown", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "ReduceReload", StringComparison.OrdinalIgnoreCase))
 		{
@@ -1284,6 +1320,7 @@ namespace Pakuri.Data
 			|| string.Equals(handlerName, "TargetHealthRatioThresholdBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "ExecuteDamageMultiplier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "TargetPredicateDamageMultiplier", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "TargetPredicateFinalDamageModifier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "BossDamageMultiplier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "ExecuteCritChanceBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "FateCoinCritChanceProgression", StringComparison.OrdinalIgnoreCase)
@@ -1315,6 +1352,7 @@ namespace Pakuri.Data
 			|| string.Equals(handlerName, "StatusMaxStacksBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "ConditionalDamageMultiplier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "TargetStatusStackDamageRateBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "TargetStatusStackDamageMultiplierBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "TriggerProcChanceBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "HitTargetCountBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "LineCastRepeatCountBonus", StringComparison.OrdinalIgnoreCase))
@@ -1322,6 +1360,7 @@ namespace Pakuri.Data
 			return true;
 		}
 		if (string.Equals(handlerName, "StatusActionSpeedBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "StatusActionSpeedMultiplier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "StatusAttackPowerBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "StatusAilmentResistanceBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "StatusDamageBonusRate", StringComparison.OrdinalIgnoreCase)
@@ -1440,6 +1479,10 @@ namespace Pakuri.Data
 		{
 			return new SkillActionOp(SkillActionOpKind.TargetStatusStackDamageRateBonus, GetParam(node, "status_name"), GetFloatParam(node, "bonus_rate_per_stack", 0f));
 		}
+		if (string.Equals(handlerName, "TargetStatusStackDamageMultiplierBonus", StringComparison.OrdinalIgnoreCase))
+		{
+			return new SkillActionOp(SkillActionOpKind.TargetStatusStackDamageMultiplierBonus, GetParam(node, "status_name"), GetFloatParam(node, "bonus_rate_per_stack", 0f));
+		}
 		if (string.Equals(handlerName, "TriggerProcChanceBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.TriggerProcChanceBonus, GetParam(node, "trigger_name"), GetFloatParam(node, "bonus", 0f));
@@ -1455,6 +1498,10 @@ namespace Pakuri.Data
 		if (string.Equals(handlerName, "StatusActionSpeedBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.StatusActionSpeedBonus, GetParam(node, "status_name"), GetFloatParam(node, "bonus", 0f));
+		}
+		if (string.Equals(handlerName, "StatusActionSpeedMultiplier", StringComparison.OrdinalIgnoreCase))
+		{
+			return new SkillActionOp(SkillActionOpKind.StatusActionSpeedMultiplier, GetParam(node, "status_name"), GetFloatParam(node, "multiplier", 1f));
 		}
 		if (string.Equals(handlerName, "StatusAttackPowerBonus", StringComparison.OrdinalIgnoreCase))
 		{

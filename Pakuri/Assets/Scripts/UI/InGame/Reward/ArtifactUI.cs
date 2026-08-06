@@ -40,7 +40,8 @@ namespace Pakuri.InGame
                 var artifact = artifacts[i];
                 if (artifact != null
                     && (string.Equals(artifact.SynergyName, "spirit-contract", StringComparison.OrdinalIgnoreCase)
-                        || string.Equals(artifact.SynergyName, "executioner", StringComparison.OrdinalIgnoreCase))
+                        || string.Equals(artifact.SynergyName, "executioner", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(artifact.SynergyName, "chosen-one", StringComparison.OrdinalIgnoreCase))
                     && !session.HasArtifact(artifact.ArtifactName))
                 {
                     choices.Add(artifact);

@@ -270,7 +270,7 @@ namespace Pakuri.InGame
                     false,
                     null,
                     finalDamageMultiplier,
-                    executionData != null ? executionData.FinalDamageModifier : 1f,
+                    SkillExecutionRules.ResolveHitFinalDamageModifier(executionData, target.Model, manager.Units),
                     executionData != null ? executionData.CriticalFinalDamageModifier : 1f,
                     isTrigger: executionData != null && executionData.IsTrigger);
                 if (!result.IsDead)
@@ -404,7 +404,12 @@ namespace Pakuri.InGame
                         true,
                         false,
                         null,
-                        skillData.OnHitAdditionalDamageMultiplier,
+                        damageMultiplier: skillData.OnHitAdditionalDamageMultiplier
+                            * SkillExecutionRules.ResolveHitDamageMultiplier(skillData, hitTarget.Model),
+                        finalDamageModifier: SkillExecutionRules.ResolveHitFinalDamageModifier(
+                            skillData,
+                            hitTarget.Model,
+                            manager.Units),
                         isTrigger: skillData.IsTrigger);
                 }
 
@@ -441,7 +446,12 @@ namespace Pakuri.InGame
                                 true,
                                 false,
                                 null,
-                                skillData.OnHitChainDamageMultiplier,
+                                damageMultiplier: skillData.OnHitChainDamageMultiplier
+                                    * SkillExecutionRules.ResolveHitDamageMultiplier(skillData, chainTarget.Model),
+                                finalDamageModifier: SkillExecutionRules.ResolveHitFinalDamageModifier(
+                                    skillData,
+                                    chainTarget.Model,
+                                    manager.Units),
                                 isTrigger: skillData.IsTrigger);
                         }
                     }

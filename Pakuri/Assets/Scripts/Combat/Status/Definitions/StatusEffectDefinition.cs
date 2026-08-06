@@ -23,6 +23,7 @@ namespace Pakuri.Data
         Unspecified,
         SameSourceTakeHighest,
         SameSourceRefresh,
+        SameSourceAddStacks,
         AlwaysStack
     }
 

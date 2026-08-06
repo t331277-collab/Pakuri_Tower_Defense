@@ -79,6 +79,12 @@ namespace Pakuri.InGame
             combatManager.UnitDefeated -= OnUnitDefeated;
         }
 
+        /// 전투 중 선택받은자 Highlight 쿨타임 초기화를 진행한다.
+        private void Update()
+        {
+            artifactSynergyManager.TickStage(Time.deltaTime, State, unitSpawnManager);
+        }
+
         /// 현재 Stage와 Day의 전투 흐름을 시작한다.
         public void StartCurrentDay()
         {

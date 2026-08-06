@@ -25,6 +25,9 @@ public class SkillExecutionState
 	internal readonly Dictionary<string, int> statusMaxStacksBonuses = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
 	internal readonly Dictionary<string, float> targetStatusStackDamageRateBonuses = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
+	internal readonly Dictionary<string, float> targetStatusStackDamageMultiplierBonuses = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
+
+	internal readonly Dictionary<string, float> statusActionSpeedMultipliers = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
 
 	internal readonly Dictionary<string, float> triggerProcChanceBonuses = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
 
@@ -35,6 +38,8 @@ public class SkillExecutionState
 	internal readonly List<ConditionalCritChanceActionOp> conditionalCritChanceActions = new List<ConditionalCritChanceActionOp>();
 
 	internal readonly List<ConditionalCritActionOp> conditionalCritActions = new List<ConditionalCritActionOp>();
+
+	internal readonly List<ConditionalFinalDamageActionOp> conditionalFinalDamageActions = new List<ConditionalFinalDamageActionOp>();
 
 	internal readonly List<BurstDamageActionOp> burstDamageActions = new List<BurstDamageActionOp>();
 
@@ -147,6 +152,8 @@ public class SkillExecutionState
 	public string StatusActionSpeedBonusStatusName { get; internal set; }
 
 	public float StatusActionSpeedBonus { get; internal set; }
+
+	public float StatusActionSpeedMultiplier { get; internal set; } = 1f;
 
 	public bool HasStatusAttackPowerBonus { get; internal set; }
 
@@ -428,6 +435,10 @@ public class SkillExecutionState
 
 	internal IReadOnlyList<ConditionalCritActionOp> ConditionalCritActions => conditionalCritActions;
 
+	internal IReadOnlyList<ConditionalFinalDamageActionOp> ConditionalFinalDamageActions => conditionalFinalDamageActions;
+
+	internal IReadOnlyDictionary<string, float> TargetStatusStackDamageMultiplierBonuses => targetStatusStackDamageMultiplierBonuses;
+
 	internal IReadOnlyList<BurstDamageActionOp> BurstDamageActions => burstDamageActions;
 
 	internal IReadOnlyList<BurstStatusActionOp> BurstStatusActions => burstStatusActions;
@@ -665,6 +676,28 @@ public class SkillExecutionState
 			return 0f;
 		}
 		return value;
+	}
+
+	/// 대상 상태 중첩당 전체 스킬 피해 배율 보정량을 읽는다.
+	public float TargetStatusStackDamageMultiplierBonus(string statusName)
+	{
+		if (string.IsNullOrWhiteSpace(statusName)
+			|| !targetStatusStackDamageMultiplierBonuses.TryGetValue(statusName, out var value))
+		{
+			return 0f;
+		}
+		return value;
+	}
+
+	/// 상태 효과의 행동속도 곱연산 보정을 읽는다.
+	public float GetStatusActionSpeedMultiplier(string statusName)
+	{
+		if (!string.IsNullOrWhiteSpace(statusName)
+			&& statusActionSpeedMultipliers.TryGetValue(statusName, out var value))
+		{
+			return StatusActionSpeedMultiplier * value;
+		}
+		return StatusActionSpeedMultiplier;
 	}
 
 	/// 반응 발동 확률 보정량을 읽는다.

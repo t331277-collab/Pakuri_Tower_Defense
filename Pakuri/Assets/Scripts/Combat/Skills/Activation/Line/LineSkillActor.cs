@@ -125,7 +125,7 @@ namespace Pakuri.InGame
                 var resolvedCritChance = critChanceBonus;
                 var resolvedCritDamage = critDamageBonus;
                 SkillExecutionRules.ResolveHitCritModifiers(executionData, target.Model, combatManager.Units, ref resolvedCritChance, ref resolvedCritDamage);
-                var damageResult = combatManager.ApplyDamage(target.Model, damage, attribute, sourceModel, criticalAllowed, resolvedCritChance, resolvedCritDamage, sourceSkillName, false, false, null, damageMultiplier, executionData != null ? executionData.FinalDamageModifier : 1f, executionData != null ? executionData.CriticalFinalDamageModifier : 1f, isTrigger: executionData != null && executionData.IsTrigger);
+                var damageResult = combatManager.ApplyDamage(target.Model, damage, attribute, sourceModel, criticalAllowed, resolvedCritChance, resolvedCritDamage, sourceSkillName, false, false, null, damageMultiplier, SkillExecutionRules.ResolveHitFinalDamageModifier(executionData, target.Model, combatManager.Units), executionData != null ? executionData.CriticalFinalDamageModifier : 1f, isTrigger: executionData != null && executionData.IsTrigger);
                 TryApplyKnockback(target, direction, knockbackDistance);
                 if (!damageResult.IsDead)
                 {
