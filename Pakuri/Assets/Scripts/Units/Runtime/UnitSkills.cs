@@ -524,12 +524,6 @@ namespace Pakuri.InGame
                 return choice;
             }
 
-            var passive = skill as PassiveSkillDefinition;
-            if (passive != null)
-            {
-                return FindChoice(passive.BaseModifierChoices, choiceId);
-            }
-
             return null;
         }
 

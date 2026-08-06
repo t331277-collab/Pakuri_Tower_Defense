@@ -378,7 +378,6 @@ namespace Pakuri.Data
                 }
 
                 passiveSkills[passive.SkillId] = passive;
-                RegisterSkillChoices(passive.BaseModifierChoices);
                 RegisterSkillChoices(passive.EnhancementChoices);
             }
         }

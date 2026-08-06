@@ -123,7 +123,6 @@ internal sealed class PassiveSkillBuildData
 	public Sprite SkillIcon;
 	public string DescriptionText;
 	public string Summary;
-	public SkillChoiceBuildData[] BaseModifierChoices = Array.Empty<SkillChoiceBuildData>();
 	public SkillChoiceBuildData[] EnhancementChoices = Array.Empty<SkillChoiceBuildData>();
 	public SkillNodeBuildData[] Nodes = Array.Empty<SkillNodeBuildData>();
 }
@@ -176,7 +175,6 @@ internal sealed partial class GameDataCatalogBuilder
 		passiveSkillExecutionDefinition.Description = source.DescriptionText;
 		passiveSkillExecutionDefinition.Summary = source.Summary;
 		passiveSkillExecutionDefinition.Icon = source.SkillIcon;
-		passiveSkillExecutionDefinition.BaseModifierChoices = BuildChoices(source.BaseModifierChoices);
 		passiveSkillExecutionDefinition.EnhancementChoices = BuildChoices(source.EnhancementChoices);
 		passiveSkillExecutionDefinition.MasterChoices = Array.Empty<SkillChoice>();
 		passiveSkillExecutionDefinition.Nodes = MapSkillNodes(source.Nodes);

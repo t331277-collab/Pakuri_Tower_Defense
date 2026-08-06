@@ -924,6 +924,22 @@ namespace Pakuri.Data
                         && string.IsNullOrWhiteSpace(trigger.EventSkillId)));
         }
 
+        private static SkillNodeOwnerKind GetNormalCastOwnerKind(
+            SourceModel model,
+            SkillTriggerRow trigger)
+        {
+            if (trigger != null
+                && trigger.TriggerEvent == SkillTriggerEvent.OnCast
+                && string.IsNullOrWhiteSpace(trigger.RequiresActiveChoiceId)
+                && model.Skills.TryGetValue(trigger.SourceSkillId, out var sourceSkill)
+                && sourceSkill.SkillKind == PakuriCsvSkillKind.Passive)
+            {
+                return SkillNodeOwnerKind.Base;
+            }
+
+            return SkillNodeOwnerKind.Trigger;
+        }
+
         private void AttachNormalCastEffects(
             SourceModel model,
             string monsterId,
@@ -957,7 +973,7 @@ namespace Pakuri.Data
 
                 var nodes = BuildSkillNodes(
                     model,
-                    SkillNodeOwnerKind.Trigger,
+                    GetNormalCastOwnerKind(model, row),
                     row.Id,
                     row.SourceSkillId);
                 var effectNode = BuildNormalCastEffectNode(
@@ -1044,9 +1060,7 @@ namespace Pakuri.Data
             {
                 return choice;
             }
-            return skill is PassiveSkillDefinition passive
-                ? FindSkillChoice(passive.BaseModifierChoices, choiceId)
-                : null;
+            return null;
         }
 
         private static SkillChoice FindSkillChoice(
@@ -1161,7 +1175,6 @@ namespace Pakuri.Data
                     SkillIcon = LoadSprite(skill.SkillIconPath),
                     DescriptionText = skill.DescriptionText,
                     Summary = skill.Summary,
-                    BaseModifierChoices = BuildSkillChoices(model, skill.Id, SkillChoiceGroup.PassiveBase),
                     EnhancementChoices = BuildSkillChoices(model, skill.Id, SkillChoiceGroup.PassiveEnhancement),
                     Nodes = BuildSkillNodes(model, SkillNodeOwnerKind.Passive, skill.Id, skill.Id)
                 };

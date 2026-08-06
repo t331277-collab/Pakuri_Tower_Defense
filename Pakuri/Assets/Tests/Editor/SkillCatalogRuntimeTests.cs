@@ -913,7 +913,7 @@ public sealed class SkillCatalogRuntimeTests
         }), Is.True);
 
         var eveShield = (BuffSkillDefinition)effects.Single(effect =>
-            effect.EffectId == "eve-f@effect1").ResolvedDefinition;
+            effect.EffectId == "eve-f-base-effect-1").ResolvedDefinition;
         Assert.That(eveShield.ShieldDuration, Is.EqualTo(12f));
 
         var shieldedAlly = new UnitCombatState();
@@ -953,7 +953,7 @@ public sealed class SkillCatalogRuntimeTests
         var source = new UnitCombatState();
         var ally = new UnitCombatState();
         var aura = ally.Statuses.Apply(
-            Modifier("vega-h@effect1"),
+            Modifier("vega-h-base-effect-1"),
             1,
             9999f,
             permanent: true);
@@ -1113,10 +1113,6 @@ public sealed class SkillCatalogRuntimeTests
         effects.AddRange(SkillExecutionRules.CreateDefinitionSnapshot(skill).CastEffects);
         CollectCastEffects(skill.EnhancementChoices, effects);
         CollectCastEffects(skill.MasterChoices, effects);
-        if (skill is PassiveSkillDefinition passive)
-        {
-            CollectCastEffects(passive.BaseModifierChoices, effects);
-        }
     }
 
     private static void CollectCastEffects(

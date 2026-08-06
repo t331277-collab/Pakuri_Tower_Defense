@@ -200,15 +200,13 @@ namespace Pakuri.Data
                 }
 
                 if (skill.SkillKind == PakuriCsvSkillKind.Active
-                    && (choice.ChoiceGroup == SkillChoiceGroup.PassiveEnhancement
-                        || choice.ChoiceGroup == SkillChoiceGroup.PassiveBase))
+                    && choice.ChoiceGroup == SkillChoiceGroup.PassiveEnhancement)
                 {
                     errors.Add($"Skill choice '{choice.Id}' uses passive-only choice group on active skill '{choice.SkillId}'.");
                 }
 
                 if (skill.SkillKind == PakuriCsvSkillKind.Passive
-                    && choice.ChoiceGroup != SkillChoiceGroup.PassiveEnhancement
-                    && choice.ChoiceGroup != SkillChoiceGroup.PassiveBase)
+                    && choice.ChoiceGroup != SkillChoiceGroup.PassiveEnhancement)
                 {
                     errors.Add($"Skill choice '{choice.Id}' uses active choice group on passive skill '{choice.SkillId}'.");
                 }
@@ -924,7 +922,8 @@ namespace Pakuri.Data
             {
                 var graph = model.SkillGraphNodes[i];
                 if (graph != null
-                    && graph.OwnerKind == SkillNodeOwnerKind.Trigger
+                    && (graph.OwnerKind == SkillNodeOwnerKind.Trigger
+                        || graph.OwnerKind == SkillNodeOwnerKind.Base)
                     && string.Equals(graph.OwnerId, triggerId, StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
@@ -1233,7 +1232,8 @@ namespace Pakuri.Data
             {
                 if (node == null
                     || !node.EnabledByDefault
-                    || node.OwnerKind != SkillNodeOwnerKind.Trigger
+                    || (node.OwnerKind != SkillNodeOwnerKind.Trigger
+                        && node.OwnerKind != SkillNodeOwnerKind.Base)
                     || !GameDataCatalogBuilder.IsTriggerOutcomeHandler(node.HandlerId))
                 {
                     continue;

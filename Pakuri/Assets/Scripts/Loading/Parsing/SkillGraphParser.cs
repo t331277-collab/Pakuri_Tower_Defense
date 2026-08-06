@@ -22,6 +22,7 @@ namespace Pakuri.Data
 			Skill,
 			Choice,
 			Passive,
+			Base,
 			Effect,
 			Trigger
 		}
@@ -257,6 +258,16 @@ namespace Pakuri.Data
 				}
 				break;
 			}
+			case SkillNodeOwnerKind.Base:
+				if (!model.SkillTriggers.TryGetValue(node.OwnerId, out var baseTrigger)
+					|| baseTrigger.TriggerEvent != SkillTriggerEvent.OnCast
+					|| !string.IsNullOrWhiteSpace(baseTrigger.RequiresActiveChoiceId)
+					|| !model.Skills.TryGetValue(baseTrigger.SourceSkillId, out var baseSkill)
+					|| baseSkill.SkillKind != PakuriCsvSkillKind.Passive)
+				{
+					errors.Add("Skill node '" + node.Id + "' references unknown passive Base owner '" + node.OwnerId + "'.");
+				}
+				break;
 			case SkillNodeOwnerKind.Choice:
 				if (!model.SkillChoices.ContainsKey(node.OwnerId))
 				{
@@ -600,6 +611,20 @@ namespace Pakuri.Data
 					text = graph.TargetSkillId;
 					break;
 				}
+				break;
+			}
+			case SkillNodeOwnerKind.Base:
+			{
+				if (!model.SkillTriggers.TryGetValue(text2, out var baseTrigger))
+				{
+					errors.Add("Skill graph '" + BuildSkillGraphKey(graph) + "' references unknown Base owner '" + text2 + "'.");
+					return graph.TargetSkillId;
+				}
+				if (!string.Equals(baseTrigger.MonsterId, graph.MonsterId, StringComparison.OrdinalIgnoreCase))
+				{
+					errors.Add("Skill graph Base owner '" + text2 + "' belongs to '" + baseTrigger.MonsterId + "', not '" + graph.MonsterId + "'.");
+				}
+				text = baseTrigger.SourceSkillId;
 				break;
 			}
 			case SkillNodeOwnerKind.Effect:

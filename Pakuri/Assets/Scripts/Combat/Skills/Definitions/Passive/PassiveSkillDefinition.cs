@@ -36,8 +36,5 @@ namespace Pakuri.InGame
         public bool HasModifierAttribute;
         public DamageAttribute ModifierAttribute;
         public float ModifierValue;
-
-        [Header("Choices")]
-        public SkillChoice[] BaseModifierChoices = Array.Empty<SkillChoice>();
     }
 }

@@ -63,7 +63,6 @@ namespace Pakuri.InGame
                 return snapshot;
             }
 
-            ApplyPassiveBaseModifiers(snapshot, owner, skill);
             ApplyChoices(snapshot, owner.Skills.ChosenEnhancementIds, skill, owner, roster);
             ApplyChoices(snapshot, owner.Skills.ChosenMasterSkillIds, skill, owner, roster);
             ApplyArtifactModifiers(snapshot, owner, skill);
@@ -251,36 +250,6 @@ namespace Pakuri.InGame
         }
 
         /// 지속 강화의 공통 보정을 실행값에 합친다.
-        private static void ApplyPassiveBaseModifiers(
-            SkillExecutionState snapshot,
-            UnitCombatState owner,
-            SkillDefinition skill)
-        {
-            if (snapshot == null || owner?.Skills == null || skill == null)
-            {
-                return;
-            }
-
-            foreach (var passiveId in owner.Skills.LearnedPassiveSkillIds)
-            {
-                var passiveRuntime = owner.SkillState.FindBySkillId(passiveId);
-                var passive = passiveRuntime?.Data as PassiveSkillDefinition;
-                if (passive == null || passive.BaseModifierChoices == null)
-                {
-                    continue;
-                }
-
-                for (var i = 0; i < passive.BaseModifierChoices.Length; i++)
-                {
-                    var choice = passive.BaseModifierChoices[i];
-                    if (AppliesToSkill(choice, skill))
-                    {
-                        ApplyChoice(snapshot, choice);
-                    }
-                }
-            }
-        }
-
         /// 선택된 강화 목록을 실행값에 반영한다.
         private static void ApplyChoices(
             SkillExecutionState snapshot,

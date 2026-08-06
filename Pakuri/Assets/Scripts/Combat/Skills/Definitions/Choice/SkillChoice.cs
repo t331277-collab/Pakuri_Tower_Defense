@@ -14,8 +14,7 @@ namespace Pakuri.Data
     {
         ActiveEnhancement,
         ActiveMaster,
-        PassiveEnhancement,
-        PassiveBase
+        PassiveEnhancement
     }
 }
 
