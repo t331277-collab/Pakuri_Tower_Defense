@@ -3,7 +3,6 @@
  * 책임: 활성 조건과 유닛 능력치 변화, 다른 스킬에 줄 기본 보정을 제공한다.
  */
 
-using System;
 using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
