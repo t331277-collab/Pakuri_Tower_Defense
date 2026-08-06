@@ -2299,3 +2299,56 @@ Completed and statically verified; Unity Editor auto-sync/reimport remains user-
 
 - 2026-08-03: User reported the Unity auto-sync failure at `CsvParser.cs:122` for `monsters.csv`.
 - 2026-08-03: Code Builder aligned the three mismatched type rows without changing CSV parser code or data values.
+
+## Task: 2026-08-06 Stage Passive Lifetime And Combat-Start Unification
+
+### Task title
+
+Separate player registration from per-Stage passive and `CombatStart` execution, then remove the obsolete 0.5-second passive-status lifetime convention.
+
+### Goals
+
+- Register each runtime unit only when it enters the roster.
+- After the complete player roster and Stage artifact effects are ready, execute player passive cast effects and `CombatStart` once for that Stage.
+- Keep explicitly timed effects, including the 12-second `eve-f` shield, at their authored durations.
+- Treat passive `StatusModifier` effects described as Stage-long effects as Stage-permanent statuses, cleared only by the existing Stage reset.
+- Delete registration-owned or 0.5-second refresh assumptions that lose their responsibility.
+
+### Constraints
+
+- Do not add a periodic passive refresh timer.
+- Do not periodically reapply shields, heals, damage, or other one-shot cast effects.
+- Reuse `RefreshPassiveEffects`, `DispatchCombatStartOnce`, existing status `Permanent` handling, and `MonsterDayRecovery.ResetTransient`.
+- Preserve enemy registration-owned `CombatStart` and enemy-target passive refresh for newly spawned enemies.
+- Keep runtime registration, Stage start, passive execution, and status lifetime as separate responsibilities.
+- Unity Play Mode gameplay verification remains user-owned.
+- Complete and verify each implementation Phase before creating its Git commit.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Phase 1 design and inventory recorded. Implementation pending Phase 2.
+
+### Next Actions
+
+- Phase 2: centralize player Stage-start passive and `CombatStart` execution after roster/artifact preparation.
+- Phase 3: replace obsolete 0.5-second passive `StatusModifier` lifetimes with the Stage-permanent contract and correct conditional modifier evaluation where required.
+- Phase 4: add focused regression coverage, run final static/build checks, and finalize all three routed boards.
+
+### Evidence
+
+- `StageManager.ContinueToNextDay` calls `ResetCombatState`, which clears player statuses and shields through `MonsterDayRecovery.ResetTransient`.
+- Existing player models remain registered, so `SpawnSelectedPlayerUnit` and `RestorePlayerPartyFromSession` skip registration and do not call `NotifyPlayerUnitRegistered` on later Days.
+- `NotifyPlayerUnitRegistered` currently owns `RefreshPassiveEffects` and `DispatchCombatStartOnce`, coupling roster entry to Stage start.
+- `StageManager.RunCurrentDayFlow` prepares artifact effects after `SpawnSelectedPlayerUnit`, so player `CombatStart` can run before artifact reactions exist.
+- Authoring inventory found 58 passive `OnCast` `StatusModifier` effects with `SetDuration(0.5)`: 25 target `AllAllies`, 33 target `Enemy`, 11 are unconditional, and 47 carry conditions.
+- `GameDataCatalogBuilder.Nodes` treats duration values of at least 9999 as `Permanent`; `MonsterDayRecovery.ResetTransient` still clears those statuses at the next Stage boundary.
+- The existing 12-second `eve-f` shield and 9999-duration `ariel-g` shield are separate `ApplyShield` effects and are not part of the 58 status-modifier rows.
+
+### History
+
+- 2026-08-06: User approved Code Builder implementation, required the design to be recorded in Markdown, prohibited a 0.5-second periodic refresh system, requested deletion of obsolete code, and required one Git commit per Phase.
+- 2026-08-06: Code Builder completed the current-code, caller, CSV, status-expiry, artifact-order, and test-gap inventory without modifying runtime code.

@@ -739,3 +739,48 @@ Implemented, serialized, and compiled. Play Mode verification remains user-owned
 ### History
 
 - 2026-08-03: Code Builder added `StageEndPanelUI`, moved end-button ownership to Inspector references, consumed the Loading Stage catalog, removed the Nexus health workaround, and made Nexus registration idempotent.
+
+## Task: 2026-08-06 Player Stage-Start Ordering
+
+### Task title
+
+Run player passive and `CombatStart` effects after the full roster and artifact state are ready for each Stage.
+
+### Goals
+
+- Keep unit registration independent from Stage-start effect execution.
+- Execute player Stage-start effects once after roster restoration and artifact preparation and before enemy spawning.
+- Reapply Stage-permanent passives after the existing Stage reset without retaining previous-Stage status instances.
+
+### Constraints
+
+- Preserve Stage progression, player health restoration, Nexus persistence, enemy spawning, and reward flow.
+- Do not respawn or re-register existing player units only to trigger effects.
+- Preserve dynamically added roster entries and the existing enemy registration path.
+- Do not run player Stage-start effects after the first enemy has spawned.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Phase 1 ordering design recorded; implementation pending Phase 2.
+
+### Next Actions
+
+- Add one shared player Stage-start entry point in `InGameCombatManager`.
+- Call it from `StageManager.RunCurrentDayFlow` after `ArtifactSynergyManager.PrepareStage` and before encounter spawning.
+- Remove player passive/`CombatStart` ownership from the registration notification once the new boundary is active.
+
+### Evidence
+
+- `ContinueToNextDay` resets combat before advancing and restoring the party.
+- `RunCurrentDayFlow` currently calls `SpawnSelectedPlayerUnit`, registers Nexus, prepares artifact state, then starts enemy spawning.
+- `NotifyPlayerUnitRegistered` currently applies player passives and dispatches `CombatStart` during roster registration.
+- Existing players are not registered again on later Days, and artifact effects are prepared after initial player registration.
+
+### History
+
+- 2026-08-06: User approved a per-Stage effect boundary instead of periodic passive refresh or repeated player registration.
+- 2026-08-06: Code Builder recorded the RUN-side ordering contract before implementation.

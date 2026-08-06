@@ -1506,3 +1506,47 @@ Completed and statically verified; Unity Editor auto-sync/reimport remains pendi
 
 - 2026-08-03: The reported Unity error identified a type-row count mismatch at `CsvParser.cs:122`.
 - 2026-08-03: Code Builder repaired the three current authoring CSV type rows without changing data values or parser code.
+
+## Task: 2026-08-06 Passive StatusModifier Stage Lifetime Contract
+
+### Task title
+
+Replace the obsolete 0.5-second passive `StatusModifier` authoring convention with the existing Stage-permanent duration contract.
+
+### Goals
+
+- Preserve explicit effect durations such as the 12-second `eve-f` shield.
+- Author Stage-long passive modifiers with the existing 9999 permanent sentinel.
+- Keep conditional passive modifiers present for the Stage while runtime calculations decide whether their condition currently applies.
+
+### Constraints
+
+- Change only passive `OnCast` `StatusModifier` duration rows proven by the trigger/graph join.
+- Do not change `ApplyShield`, damage, heal, recast, or other explicitly timed effects.
+- Keep CSV UTF-8 and preserve row/column shape, IDs, node order, values, targets, and conditions.
+- Do not add a periodic refresh interval or a new schema column.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Phase 1 inventory complete; data implementation pending Phase 3.
+
+### Next Actions
+
+- Convert the verified 58 `StatusModifier` `SetDuration(0.5)` rows to 9999 only after the Stage-start and conditional runtime contracts are ready.
+- Add a catalog regression assertion that no passive `OnCast` `StatusModifier` retains the obsolete 0.5 lifetime.
+
+### Evidence
+
+- Trigger/graph join found 58 passive `OnCast` `StatusModifier` effects: 25 `AllAllies`, 33 `Enemy`, 11 unconditional, and 47 conditional.
+- All 58 currently use `SetDuration(0.5)`.
+- `GameDataCatalogBuilder.Nodes.BuildNormalStatusModifierEffect` maps durations of at least 9999 to `StatusRuntimeData.Permanent=true`.
+- `StatusRuntimeInstance.Tick` does not decrement permanent statuses, while `MonsterDayRecovery.ResetTransient` clears the complete status collection between Stages.
+
+### History
+
+- 2026-08-06: User selected explicit authored durations for timed effects and the existing Stage-permanent contract for Stage-long passive effects.
+- 2026-08-06: Code Builder recorded the exact affected-row inventory before changing CSV data.
