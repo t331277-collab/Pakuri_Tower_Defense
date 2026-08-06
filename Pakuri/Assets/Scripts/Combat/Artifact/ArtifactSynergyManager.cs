@@ -49,6 +49,8 @@ namespace Pakuri.InGame
                 }
             }
 
+            DistributeSynergyEffects(session, catalog);
+
             var dominantAttribute = ResolvePartyDominantAttribute(session, catalog);
             var representativeAttributeCount =
                 CountDistinctRepresentativeAttributes(session, catalog);
@@ -84,6 +86,54 @@ namespace Pakuri.InGame
             if (spawnManager != null)
             {
                 ActivateStageEffects(session, catalog, spawnManager);
+            }
+        }
+
+        private void DistributeSynergyEffects(
+            RunSession session,
+            GameDataCatalog catalog)
+        {
+            foreach (var pair in Synergies.Counts)
+            {
+                var synergy = catalog.GetData<ArtifactSynergyDefinition>(pair.Key);
+                if (synergy == null)
+                {
+                    continue;
+                }
+
+                for (var levelIndex = 0; levelIndex < synergy.Levels.Length; levelIndex++)
+                {
+                    var level = synergy.Levels[levelIndex];
+                    if (level == null || level.RequiredCount > pair.Value)
+                    {
+                        continue;
+                    }
+
+                    for (var effectIndex = 0; effectIndex < level.Effects.Length; effectIndex++)
+                    {
+                        var effect = level.Effects[effectIndex];
+                        if (effect == null
+                            || (effect.ApplicationMode != ArtifactEffectApplicationMode.SkillModifier
+                                && effect.ApplicationMode != ArtifactEffectApplicationMode.PassiveTrigger))
+                        {
+                            continue;
+                        }
+
+                        for (var memberIndex = 0; memberIndex < session.PartyMembers.Count; memberIndex++)
+                        {
+                            var member = session.PartyMembers[memberIndex];
+                            if (effect.Recipient == ArtifactEffectRecipient.AllAllies
+                                || (effect.Recipient == ArtifactEffectRecipient.SpecificMonster
+                                    && string.Equals(
+                                        member.MonsterName,
+                                        effect.RecipientMonsterName,
+                                        StringComparison.OrdinalIgnoreCase)))
+                            {
+                                member.Artifacts.AddActiveEffect(effect.EffectName);
+                            }
+                        }
+                    }
+                }
             }
         }
 

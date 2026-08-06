@@ -680,15 +680,23 @@ namespace Pakuri.Data
 			return model.SummonSkills.TryGetValue(skillName ?? string.Empty, out skill);
 		}
 
-		internal static bool IsArtifactEffectOwner(
-			CsvSourceModel.SourceModel model,
-			string effectName,
-			string artifactName)
+	internal static bool IsArtifactEffectOwner(
+		CsvSourceModel.SourceModel model,
+		string effectName,
+		string artifactName)
+	{
+		if (model == null)
 		{
-			return model != null
-				&& model.ArtifactEffects.TryGetValue(effectName ?? string.Empty, out var effect)
-				&& string.Equals(effect.ArtifactName, artifactName, StringComparison.OrdinalIgnoreCase);
+			return false;
 		}
+
+		if (model.ArtifactEffects.TryGetValue(effectName ?? string.Empty, out var effect))
+		{
+			return string.Equals(effect.ArtifactName, artifactName, StringComparison.OrdinalIgnoreCase);
+		}
+
+		return model.ArtifactSynergyEffects.ContainsKey(effectName ?? string.Empty);
+	}
 
 		internal static void ValidateSkillGraphAllowedValue(string graphNodeKey, SkillNodeTypeParamRow param, string value, List<string> errors)
 		{

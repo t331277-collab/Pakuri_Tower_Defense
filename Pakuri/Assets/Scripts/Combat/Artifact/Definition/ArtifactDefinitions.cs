@@ -67,6 +67,8 @@ namespace Pakuri.Data
         public SkillDefinition TargetSkill;
         public SkillDefinition OutcomeSkill;
         public SummonDefinition SpawnSummon;
+        public SkillNode[] Nodes = Array.Empty<SkillNode>();
+        public SkillReaction[] Reactions = Array.Empty<SkillReaction>();
     }
 
     [Serializable]

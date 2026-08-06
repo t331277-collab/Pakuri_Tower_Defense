@@ -93,7 +93,11 @@ namespace Pakuri.Data
             }
 
             catalog.ArtifactEffects = BuildArtifactEffects(model, skills, statusDefinitions);
-            catalog.ArtifactSynergyEffects = BuildArtifactSynergyEffects(model, skills, catalog.Summons);
+            catalog.ArtifactSynergyEffects = BuildArtifactSynergyEffects(
+                model,
+                skills,
+                catalog.Summons,
+                statusDefinitions);
             catalog.Artifacts = BuildArtifacts(model, catalog.ArtifactEffects);
             catalog.ArtifactSynergies = BuildArtifactSynergies(model, catalog.ArtifactSynergyEffects);
             var levels = new List<ArtifactSynergyLevelDefinition>();
@@ -151,8 +155,10 @@ namespace Pakuri.Data
         private ArtifactSynergyEffectDefinition[] BuildArtifactSynergyEffects(
             SourceModel model,
             Dictionary<string, SkillDefinition> skills,
-            SummonDefinition[] summons)
+            SummonDefinition[] summons,
+            StatusEffectDefinition[] statusDefinitions)
         {
+            var allSkills = new List<SkillDefinition>(skills.Values).ToArray();
             var summonLookup = new Dictionary<string, SummonDefinition>(StringComparer.OrdinalIgnoreCase);
             for (var i = 0; i < summons.Length; i++)
             {
@@ -176,7 +182,20 @@ namespace Pakuri.Data
                     RecipientMonsterName = row.RecipientMonsterName,
                     TargetSkill = ResolveSkill(skills, row.TargetSkillName),
                     OutcomeSkill = ResolveSkill(skills, row.OutcomeSkillName),
-                    SpawnSummon = ResolveSummon(summonLookup, row.SpawnSummonName)
+                    SpawnSummon = ResolveSummon(summonLookup, row.SpawnSummonName),
+                    Nodes = MapSkillNodes(BuildSkillNodes(
+                        model,
+                        SkillNodeOwnerKind.Effect,
+                        row.Name,
+                        row.TargetSkillName)),
+                    Reactions = BuildSkillReactions(
+                        model,
+                        trigger => string.Equals(
+                            trigger.SourceSkillName,
+                            row.Name,
+                            StringComparison.OrdinalIgnoreCase),
+                        allSkills,
+                        statusDefinitions)
                 };
             }
 

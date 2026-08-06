@@ -543,31 +543,66 @@ internal static class SkillTrigger
 
 		for (var effectIndex = 0; effectIndex < effectNames.Count; effectIndex++)
 		{
-			if (!GameDataLoader.CurrentCatalog.TryGetData(
+			if (GameDataLoader.CurrentCatalog.TryGetData(
 					effectNames[effectIndex],
 					out ArtifactEffectDefinition effect)
-				|| effect == null
-				|| effect.ApplicationMode != ArtifactEffectApplicationMode.PassiveTrigger)
+				&& effect != null
+				&& effect.ApplicationMode == ArtifactEffectApplicationMode.PassiveTrigger)
 			{
+				ExecuteArtifactReactions(
+					combatManager,
+					roster,
+					ownerEntry,
+					owner,
+					triggerEvent,
+					triggerContext,
+					effect.Reactions);
+
 				continue;
 			}
 
-			for (var triggerIndex = 0; triggerIndex < effect.Reactions.Length; triggerIndex++)
+			if (GameDataLoader.CurrentCatalog.TryGetData(
+					effectNames[effectIndex],
+					out ArtifactSynergyEffectDefinition synergyEffect)
+				&& synergyEffect != null
+				&& synergyEffect.ApplicationMode == ArtifactEffectApplicationMode.PassiveTrigger)
 			{
-				var trigger = effect.Reactions[triggerIndex];
-				if (ShouldRunArtifactOwnerTrigger(trigger, owner, triggerEvent, triggerContext)
-					&& PassesCountGate(combatManager, owner, trigger)
-					&& PassesProcGate(combatManager, owner, trigger))
-				{
-					SkillExecution.ScheduleReaction(
-						combatManager,
-						roster,
-						ownerEntry,
-						owner,
-						trigger,
-						triggerContext,
-						ResolveTriggeredDamage(trigger, triggerContext));
-				}
+				ExecuteArtifactReactions(
+					combatManager,
+					roster,
+					ownerEntry,
+					owner,
+					triggerEvent,
+					triggerContext,
+					synergyEffect.Reactions);
+			}
+		}
+	}
+
+	private static void ExecuteArtifactReactions(
+		InGameCombatManager combatManager,
+		UnitSpawnManager roster,
+		CombatUnitEntry ownerEntry,
+		UnitCombatState owner,
+		SkillTriggerEvent triggerEvent,
+		TriggerExecutionContext triggerContext,
+		IReadOnlyList<SkillReaction> reactions)
+	{
+		for (var triggerIndex = 0; reactions != null && triggerIndex < reactions.Count; triggerIndex++)
+		{
+			var trigger = reactions[triggerIndex];
+			if (ShouldRunArtifactOwnerTrigger(trigger, owner, triggerEvent, triggerContext)
+				&& PassesCountGate(combatManager, owner, trigger)
+				&& PassesProcGate(combatManager, owner, trigger))
+			{
+				SkillExecution.ScheduleReaction(
+					combatManager,
+					roster,
+					ownerEntry,
+					owner,
+					trigger,
+					triggerContext,
+					ResolveTriggeredDamage(trigger, triggerContext));
 			}
 		}
 	}

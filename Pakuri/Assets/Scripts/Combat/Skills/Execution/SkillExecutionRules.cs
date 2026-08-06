@@ -90,25 +90,146 @@ namespace Pakuri.InGame
                 return;
             }
 
+            var repeatedBonuses = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
+            var aggregatedRepeatEffects = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             for (var i = 0; i < effectNames.Count; i++)
             {
-                if (!GameDataLoader.CurrentCatalog.TryGetData(
-                        effectNames[i],
-                        out ArtifactEffectDefinition effect)
+                if (!TryGetArtifactSkillModifier(effectNames[i], owner, skill, out var effect)
+                    || effect.RepeatRule == ArtifactEffectRepeatRule.None
+                    || aggregatedRepeatEffects.Contains(effect.EffectName)
+                    || !TryGetDirectDamageBonus(effect.Nodes, skill.SkillName, out var bonus))
+                {
+                    continue;
+                }
+
+                var repeatCount = CountEffect(effectNames, effect.EffectName);
+                repeatedBonuses.TryGetValue(effect.ArtifactName, out var currentBonus);
+                repeatedBonuses[effect.ArtifactName] = currentBonus + bonus * repeatCount;
+                aggregatedRepeatEffects.Add(effect.EffectName);
+            }
+
+            var combinedArtifacts = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (var i = 0; i < effectNames.Count; i++)
+            {
+                if (!TryGetArtifactSkillModifier(effectNames[i], owner, skill, out var effect)
+                    || aggregatedRepeatEffects.Contains(effect.EffectName))
+                {
+                    continue;
+                }
+
+                if (repeatedBonuses.TryGetValue(effect.ArtifactName, out var repeatedBonus)
+                    && !combinedArtifacts.Contains(effect.ArtifactName)
+                    && TryGetDirectDamageBonus(effect.Nodes, skill.SkillName, out var directBonus))
+                {
+                    snapshot.ApplyDynamicDamageMultiplier(1f + directBonus + repeatedBonus);
+                    combinedArtifacts.Add(effect.ArtifactName);
+                    continue;
+                }
+
+                ApplyNodes(snapshot, effect.Nodes, skill.SkillName);
+            }
+
+            foreach (var pair in repeatedBonuses)
+            {
+                if (!combinedArtifacts.Contains(pair.Key))
+                {
+                    snapshot.ApplyDynamicDamageMultiplier(1f + pair.Value);
+                }
+            }
+
+            ApplyArtifactSynergyModifiers(snapshot, owner, skill);
+        }
+
+        private static void ApplyArtifactSynergyModifiers(
+            SkillExecutionState snapshot,
+            UnitCombatState owner,
+            SkillDefinition skill)
+        {
+            var effectNames = owner?.Artifacts?.ActiveArtifactEffectNames;
+            var catalog = GameDataLoader.CurrentCatalog;
+            if (snapshot == null || skill == null || effectNames == null || catalog == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < effectNames.Count; i++)
+            {
+                if (!catalog.TryGetData(effectNames[i], out ArtifactSynergyEffectDefinition effect)
                     || effect == null
                     || effect.ApplicationMode != ArtifactEffectApplicationMode.SkillModifier
                     || (effect.TargetSkill != null
                         && !string.Equals(
                             effect.TargetSkill.SkillName,
                             skill.SkillName,
-                            StringComparison.OrdinalIgnoreCase))
-                    || !ArtifactConditionsMatch(effect.Nodes, owner, skill))
+                            StringComparison.OrdinalIgnoreCase)))
                 {
                     continue;
                 }
 
                 ApplyNodes(snapshot, effect.Nodes, skill.SkillName);
             }
+        }
+
+        private static bool TryGetArtifactSkillModifier(
+            string effectName,
+            UnitCombatState owner,
+            SkillDefinition skill,
+            out ArtifactEffectDefinition effect)
+        {
+            return GameDataLoader.CurrentCatalog.TryGetData(effectName, out effect)
+                && effect != null
+                && effect.ApplicationMode == ArtifactEffectApplicationMode.SkillModifier
+                && (effect.TargetSkill == null
+                    || string.Equals(
+                        effect.TargetSkill.SkillName,
+                        skill.SkillName,
+                        StringComparison.OrdinalIgnoreCase))
+                && ArtifactConditionsMatch(effect.Nodes, owner, skill);
+        }
+
+        private static bool TryGetDirectDamageBonus(
+            IReadOnlyList<SkillNode> nodes,
+            string targetSkillName,
+            out float bonus)
+        {
+            bonus = 0f;
+            var found = false;
+            for (var i = 0; nodes != null && i < nodes.Count; i++)
+            {
+                var node = nodes[i];
+                if (node == null
+                    || (!string.IsNullOrWhiteSpace(targetSkillName)
+                        && !string.IsNullOrWhiteSpace(node.TargetSkillName)
+                        && !string.Equals(node.TargetSkillName, targetSkillName, StringComparison.OrdinalIgnoreCase)))
+                {
+                    continue;
+                }
+
+                var action = node.GetOperation<SkillActionOp>();
+                if (!action.HasValue || action.Value.Kind != SkillActionOpKind.DamageMultiplier)
+                {
+                    return false;
+                }
+
+                bonus += PositiveOrDefault(action.Value.Amount, 1f) - 1f;
+                found = true;
+            }
+
+            return found;
+        }
+
+        private static int CountEffect(IReadOnlyList<string> effectNames, string effectName)
+        {
+            var count = 0;
+            for (var i = 0; i < effectNames.Count; i++)
+            {
+                if (string.Equals(effectNames[i], effectName, StringComparison.OrdinalIgnoreCase))
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         private static bool ArtifactConditionsMatch(
@@ -652,7 +773,7 @@ namespace Pakuri.InGame
 		switch (action.Kind)
 		{
 		case SkillActionOpKind.DamageMultiplier:
-			snapshot.DamageMultiplier += PositiveOrDefault(action.Amount, 1f) - 1f;
+			snapshot.DamageMultiplier *= PositiveOrDefault(action.Amount, 1f);
 			break;
 		case SkillActionOpKind.ShieldAmountMultiplier:
 			snapshot.ShieldAmountMultiplier *= PositiveOrDefault(action.Amount, 1f);
@@ -770,7 +891,9 @@ namespace Pakuri.InGame
 			snapshot.CritChanceBonus += action.Amount;
 			break;
 		case SkillActionOpKind.CritDamageBonus:
-			snapshot.CritDamageBonus += action.Amount;
+			snapshot.CritDamageBonus = (1f + snapshot.CritDamageBonus)
+				* Mathf.Max(0f, 1f + action.Amount)
+				- 1f;
 			break;
 		case SkillActionOpKind.BeamWidthBonus:
 			snapshot.BeamWidthBonus += action.Amount;
