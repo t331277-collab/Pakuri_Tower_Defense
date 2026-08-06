@@ -154,6 +154,18 @@ namespace Pakuri.Data
             sourceCatalog.ArtifactSynergyEffects = LoadTextAssetOrThrow(
                 $"{ArtifactEffectCsvAssetRoot}/{ArtifactSynergyEffectsFileName}",
                 "Create artifact_synergy_effects.csv under Assets/CSVdata/Artifact/Effect before validation.");
+            sourceCatalog.ArtifactSkillGraphNodeFiles = new[]
+            {
+                LoadTextAssetOrThrow(
+                    $"{ArtifactSkillCsvAssetRoot}/{ArtifactSkillGraphNodeFileName}",
+                    "Create skill_graph_nodes_artifact.csv under Assets/CSVdata/Artifact/Skill before validation.")
+            };
+            sourceCatalog.ArtifactSkillTriggerFiles = new[]
+            {
+                LoadTextAssetOrThrow(
+                    $"{ArtifactSkillCsvAssetRoot}/{ArtifactSkillTriggerFileName}",
+                    "Create artifact_skill_triger.csv under Assets/CSVdata/Artifact/Skill before validation.")
+            };
             sourceCatalog.SummonUnits = LoadImportedSourceTextAssetOrThrow(SummonUnitsFileName);
             sourceCatalog.SummonSkills = LoadImportedSourceTextAssetOrThrow(SummonSkillsFileName);
             sourceCatalog.StageDay = LoadTextAssetOrThrow(

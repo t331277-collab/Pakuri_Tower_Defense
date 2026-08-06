@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 59c5cb45739d8874fa957cf507865e11
+guid: f560de3937472944f910263579c6d342
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 3998598744161501789
-    second: image-Photoroom 3_0
+      213: 1828114156616270874
+    second: prophets-eye_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -46,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: image-Photoroom 3_0
+      name: prophets-eye_0
       rect:
         serializedVersion: 2
-        x: 50
-        y: 25
-        width: 529
-        height: 469
+        x: 0
+        y: 0
+        width: 236
+        height: 230
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: d52c1115f50ed7730800000000000000
-      internalID: 3998598744161501789
+      spriteID: a14c9f1c324ce5910800000000000000
+      internalID: 1828114156616270874
       vertices: []
       indices: 
       edges: []
@@ -138,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      image-Photoroom 3_0: 3998598744161501789
+      prophets-eye_0: 1828114156616270874
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

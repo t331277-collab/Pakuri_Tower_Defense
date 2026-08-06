@@ -67,6 +67,8 @@ namespace Pakuri.Data
         public TextAsset ArtifactSynergies;
         public TextAsset ArtifactEffects;
         public TextAsset ArtifactSynergyEffects;
+        public TextAsset[] ArtifactSkillGraphNodeFiles;
+        public TextAsset[] ArtifactSkillTriggerFiles;
         public TextAsset SummonUnits;
         public TextAsset SummonSkills;
 

@@ -71,6 +71,10 @@ MonoBehaviour:
   ArtifactSynergies: {fileID: 4900000, guid: 38ed08401ce9a1d4aa36d0b1cf22cdf4, type: 3}
   ArtifactEffects: {fileID: 4900000, guid: 5225d62983ac0ac45bc8c182d5f93d07, type: 3}
   ArtifactSynergyEffects: {fileID: 4900000, guid: ae9770349806623488b8380b6f7ce908, type: 3}
+  ArtifactSkillGraphNodeFiles:
+  - {fileID: 4900000, guid: 3b8462f094c569e4fbccdd82c459039b, type: 3}
+  ArtifactSkillTriggerFiles:
+  - {fileID: 4900000, guid: 3d325288538b4e34197189e0bda451ba, type: 3}
   SummonUnits: {fileID: 4900000, guid: 1938b06c2ef2c5445850dc194a4e9517, type: 3}
   SummonSkills: {fileID: 4900000, guid: 4d95bfb70cdaf56438a12e6f4fe2b068, type: 3}
   StageDay: {fileID: 4900000, guid: 1f0de32c2b7b4d2da2e4b9340af2db31, type: 3}
@@ -139,24 +143,106 @@ MonoBehaviour:
     Asset: {fileID: 21300000, guid: 2845dd6426a0c6e43b392b9ab0261e00, type: 3}
   - AssetPath: Assets/Enemy/Stage2/Skill/lightning-scout_1.png
     Asset: {fileID: 21300000, guid: e1173e38ff670294d8d9d329e64f1c4b, type: 3}
-  - AssetPath: Assets/Image/Artifact/black-candlestick.png
-    Asset: {fileID: -255096247958025973, guid: 6a159b3226e98ef458fed7c26393bbb3, type: 3}
-  - AssetPath: Assets/Image/Artifact/elemental-codex.png
-    Asset: {fileID: -1431642928969493108, guid: 2c48cfed133ae334b94596d4e04c7271, type: 3}
-  - AssetPath: Assets/Image/Artifact/elemental-prism.png
-    Asset: {fileID: -4910088520043721169, guid: e10a3c94f4f653d4d977599190369175, type: 3}
-  - AssetPath: Assets/Image/Artifact/ember-crown.png
-    Asset: {fileID: -6873091199347037475, guid: 163a91c32dde8a448a49d57501672a7a, type: 3}
-  - AssetPath: Assets/Image/Artifact/frost-lens.png
-    Asset: {fileID: 3998598744161501789, guid: 59c5cb45739d8874fa957cf507865e11, type: 3}
-  - AssetPath: Assets/Image/Artifact/radiant-chalice.png
-    Asset: {fileID: 8870717685057007049, guid: 827d3603137067d45866a0b2fd2c82af, type: 3}
-  - AssetPath: Assets/Image/Artifact/rift-gem.png
-    Asset: {fileID: -7542516645456917032, guid: 59fb01ed2a13aa94da08e6ffa15fd8cf, type: 3}
-  - AssetPath: Assets/Image/Artifact/spirit-elixir.png
-    Asset: {fileID: -6752735068335856051, guid: 68d9d90c58aca164ebf919c711faa8e1, type: 3}
-  - AssetPath: Assets/Image/Artifact/storm-capacitor.png
-    Asset: {fileID: -3652683395867460764, guid: b62c24379c5ab1f4fbbadeaf3e50eb4f, type: 3}
+  - AssetPath: Assets/Image/Artifact/artillery_Icon/blue-cross.png
+    Asset: {fileID: 21300000, guid: 8d7c4f8da2b04964a982eeeca164809c, type: 3}
+  - AssetPath: Assets/Image/Artifact/artillery_Icon/faded-gate.png
+    Asset: {fileID: 21300000, guid: e6b71c9e1b339c5429bd77e76d633d08, type: 3}
+  - AssetPath: Assets/Image/Artifact/artillery_Icon/guardians-censer.png
+    Asset: {fileID: 21300000, guid: 2f778c9de4ec7fb4d87acbdbda5eb1d2, type: 3}
+  - AssetPath: Assets/Image/Artifact/artillery_Icon/pilgrims-cloak.png
+    Asset: {fileID: 21300000, guid: 61f4f91731c49794eb8c067d2da88fb3, type: 3}
+  - AssetPath: Assets/Image/Artifact/artillery_Icon/prayer-stone.png
+    Asset: {fileID: 21300000, guid: 5844f18c48c6c4243be58c8ac817013b, type: 3}
+  - AssetPath: Assets/Image/Artifact/artillery_Icon/pure-white-shield.png
+    Asset: {fileID: 21300000, guid: 0747e028c4f1a89479be277d235ac53f, type: 3}
+  - AssetPath: Assets/Image/Artifact/artillery_Icon/reflection-mirror.png
+    Asset: {fileID: 21300000, guid: f137ae16e744b5845983e0114793ca8d, type: 3}
+  - AssetPath: Assets/Image/Artifact/artillery_Icon/sanctuary-fragment.png
+    Asset: {fileID: 21300000, guid: 629372cdd0b879f46a3e9aa52fd344b7, type: 3}
+  - AssetPath: Assets/Image/Artifact/artillery_Icon/sentinels-bell.png
+    Asset: {fileID: 21300000, guid: a1527a6bc29396a4ebf59194cf6d516a, type: 3}
+  - AssetPath: Assets/Image/Artifact/artillery_Icon/unbreakable-promise.png
+    Asset: {fileID: 21300000, guid: c0d9fe97470525942b42a930b561d4e9, type: 3}
+  - AssetPath: Assets/Image/Artifact/chosen-one_Icon/absolute-zero-circuit.png
+    Asset: {fileID: 21300000, guid: 7f36934df72a31546b95e5a4e1cfb39d, type: 3}
+  - AssetPath: Assets/Image/Artifact/chosen-one_Icon/archangel-sigil.png
+    Asset: {fileID: 21300000, guid: e147ebd160e935a4ca1bafe2603e9e46, type: 3}
+  - AssetPath: Assets/Image/Artifact/chosen-one_Icon/black-execution-platform.png
+    Asset: {fileID: 21300000, guid: d5eb3965bac22e14987c8edc53f041f7, type: 3}
+  - AssetPath: Assets/Image/Artifact/chosen-one_Icon/convection-arrowhead.png
+    Asset: {fileID: 21300000, guid: e3a896b182f245345b40c84b04a8d876, type: 3}
+  - AssetPath: Assets/Image/Artifact/chosen-one_Icon/dooms-ember.png
+    Asset: {fileID: 21300000, guid: b9ee824778b2f9f4f85b6cc8ff038f35, type: 3}
+  - AssetPath: Assets/Image/Artifact/chosen-one_Icon/hymn-baton.png
+    Asset: {fileID: 21300000, guid: 04491d9de8fb7644982837af6c19e756, type: 3}
+  - AssetPath: Assets/Image/Artifact/chosen-one_Icon/martial-artists-breath.png
+    Asset: {fileID: 21300000, guid: a09ba306429816f4fb1b38b6d100a8a1, type: 3}
+  - AssetPath: Assets/Image/Artifact/chosen-one_Icon/nameless-ledger.png
+    Asset: {fileID: 21300000, guid: 248cc7f16d4564e48903ed06800d224d, type: 3}
+  - AssetPath: Assets/Image/Artifact/chosen-one_Icon/quantum-computation.png
+    Asset: {fileID: 21300000, guid: 20ef60e64002aff43aab83d1a2320abc, type: 3}
+  - AssetPath: Assets/Image/Artifact/chosen-one_Icon/shattering-glove'.png
+    Asset: {fileID: 21300000, guid: 796eb70aa81384f4d982453a485dcd95, type: 3}
+  - AssetPath: Assets/Image/Artifact/executioner_Icon/coin-of-fate.png
+    Asset: {fileID: 21300000, guid: 5970015db640e924c9352bc04afbb7d2, type: 3}
+  - AssetPath: Assets/Image/Artifact/executioner_Icon/cracked-crown.png
+    Asset: {fileID: 21300000, guid: 986f03ca11a68f348960069aa2cc126d, type: 3}
+  - AssetPath: Assets/Image/Artifact/executioner_Icon/execution-ledger.png
+    Asset: {fileID: 21300000, guid: ca047993f6bc7c44cacc904e493a91bd, type: 3}
+  - AssetPath: Assets/Image/Artifact/executioner_Icon/execution-ring.png
+    Asset: {fileID: 21300000, guid: 5aaae62f7c01d0248b04107a3ccb8d22, type: 3}
+  - AssetPath: Assets/Image/Artifact/executioner_Icon/glass-heart.png
+    Asset: {fileID: 21300000, guid: c24d0b97b7fd07048be9d8ecea248d4d, type: 3}
+  - AssetPath: Assets/Image/Artifact/executioner_Icon/prophets-eye.png
+    Asset: {fileID: 21300000, guid: f560de3937472944f910263579c6d342, type: 3}
+  - AssetPath: Assets/Image/Artifact/executioner_Icon/red-scope.png
+    Asset: {fileID: 21300000, guid: ad1683a45772b3740a679c08a5f7a381, type: 3}
+  - AssetPath: Assets/Image/Artifact/executioner_Icon/sharp-chalice.png
+    Asset: {fileID: 21300000, guid: 20efbe7eee62fd440a79ea6679c79d7a, type: 3}
+  - AssetPath: Assets/Image/Artifact/executioner_Icon/silver-needle.png
+    Asset: {fileID: 21300000, guid: d719a74641f80ad42b9d5a6bda9d7ce2, type: 3}
+  - AssetPath: Assets/Image/Artifact/executioner_Icon/starlight-whetstone.png
+    Asset: {fileID: 21300000, guid: 51c0f58ddffe539419a133d7786c3dd4, type: 3}
+  - AssetPath: Assets/Image/Artifact/sentinel_Icon/barrage-blueprint.png
+    Asset: {fileID: 21300000, guid: c146df1797198b74f9d3c40fdec16b86, type: 3}
+  - AssetPath: Assets/Image/Artifact/sentinel_Icon/blessed-quiver.png
+    Asset: {fileID: 21300000, guid: 53c78b8de9823e948bbbf35d3c73caa6, type: 3}
+  - AssetPath: Assets/Image/Artifact/sentinel_Icon/double-barrel-core.png
+    Asset: {fileID: 21300000, guid: 4694508cff967b6408b0d8c944c33ef5, type: 3}
+  - AssetPath: Assets/Image/Artifact/sentinel_Icon/execution-round.png
+    Asset: {fileID: 21300000, guid: abe5feed90c4f8f48b7c3ee93c5556fc, type: 3}
+  - AssetPath: Assets/Image/Artifact/sentinel_Icon/infinite-shell.png
+    Asset: {fileID: 21300000, guid: dee49441f1c2fb24a917bd6238ec73a6, type: 3}
+  - AssetPath: Assets/Image/Artifact/sentinel_Icon/lightning-magazine.png
+    Asset: {fileID: 21300000, guid: 7a25d7347211753438bf9c9eccfc2811, type: 3}
+  - AssetPath: Assets/Image/Artifact/sentinel_Icon/overheated-chamber.png
+    Asset: {fileID: 21300000, guid: ec281be023828664da97ca758ffe79e1, type: 3}
+  - AssetPath: Assets/Image/Artifact/sentinel_Icon/piercing-feather.png
+    Asset: {fileID: 21300000, guid: 3917ed660e2892d46b3debf42e7ae31d, type: 3}
+  - AssetPath: Assets/Image/Artifact/sentinel_Icon/rapid-loader.png
+    Asset: {fileID: 21300000, guid: 1ff4902dc7656cc4fb4fe3737559b92d, type: 3}
+  - AssetPath: Assets/Image/Artifact/sentinel_Icon/revolving-chamber.png
+    Asset: {fileID: 21300000, guid: df405a90539ba944bbfb44f0ee344cdf, type: 3}
+  - AssetPath: Assets/Image/Artifact/spirit-contract_Icon/black-candlestick.png
+    Asset: {fileID: 21300000, guid: 6a159b3226e98ef458fed7c26393bbb3, type: 3}
+  - AssetPath: Assets/Image/Artifact/spirit-contract_Icon/elemental-codex.png
+    Asset: {fileID: 21300000, guid: 2c48cfed133ae334b94596d4e04c7271, type: 3}
+  - AssetPath: Assets/Image/Artifact/spirit-contract_Icon/elemental-prism.png
+    Asset: {fileID: 21300000, guid: e10a3c94f4f653d4d977599190369175, type: 3}
+  - AssetPath: Assets/Image/Artifact/spirit-contract_Icon/ember-crown.png
+    Asset: {fileID: 21300000, guid: 163a91c32dde8a448a49d57501672a7a, type: 3}
+  - AssetPath: Assets/Image/Artifact/spirit-contract_Icon/frost-lens.png
+    Asset: {fileID: 21300000, guid: 59c5cb45739d8874fa957cf507865e11, type: 3}
+  - AssetPath: Assets/Image/Artifact/spirit-contract_Icon/radiant-chalice.png
+    Asset: {fileID: 21300000, guid: 827d3603137067d45866a0b2fd2c82af, type: 3}
+  - AssetPath: Assets/Image/Artifact/spirit-contract_Icon/resonance-compass.png
+    Asset: {fileID: 21300000, guid: b62c24379c5ab1f4fbbadeaf3e50eb4f, type: 3}
+  - AssetPath: Assets/Image/Artifact/spirit-contract_Icon/rift-gem.png
+    Asset: {fileID: 21300000, guid: 59fb01ed2a13aa94da08e6ffa15fd8cf, type: 3}
+  - AssetPath: Assets/Image/Artifact/spirit-contract_Icon/spirit-elixir.png
+    Asset: {fileID: 21300000, guid: 68d9d90c58aca164ebf919c711faa8e1, type: 3}
+  - AssetPath: Assets/Image/Artifact/spirit-contract_Icon/storm-capacitor.png
+    Asset: {fileID: 21300000, guid: 3308ccb526f9af44eaa155dc5cd96170, type: 3}
   - AssetPath: Assets/Image/Monster/ariel/SkillEffect/1.png
     Asset: {fileID: 21300000, guid: 3476df253a7be994c9586a7baed1b9be, type: 3}
   - AssetPath: "Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\uB144 5\uC6D4

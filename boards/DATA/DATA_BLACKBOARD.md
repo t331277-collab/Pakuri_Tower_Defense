@@ -1,5 +1,95 @@
 # DATA_BLACKBOARD
 
+## Task: 2026-08-06 Artifact Icon Asset-Path Assignment
+
+### Task title
+
+Assign `artifacts.csv` `artifact_icon` paths from the inspected `*_Icon` asset folders.
+
+### Goals
+
+- Populate each artifact row whose `artifact_id` matches an inspected PNG filename.
+- Preserve the existing `artifact_icon`/`asset_path` schema and use project-relative `Assets/...` paths.
+- Leave artifacts without a name-matched image blank.
+
+### Constraints
+
+- Change only `Pakuri/Assets/CSVdata/Artifact/artifacts.csv` for this assignment.
+- Use actual on-disk paths; do not invent a path for `resonance-compass`.
+- Preserve existing user changes and the actual `shattering-glove'.png` filename.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+CSV assignment complete and statically verified. Unity TextAsset reimport/runtime catalog verification remains pending.
+
+### Next Actions
+
+- Reimport or sync the changed CSV in Unity and verify artifact Sprite resolution if runtime confirmation is required.
+- Author/rename a matching `resonance-compass` icon before filling its blank path.
+
+### Evidence
+
+- `Pakuri/Assets/Image/Artifact` contains 49 artifact-name-matched PNGs across the five inspected `*_Icon` folders plus one timestamp-named PNG with no matching `artifact_id`.
+- `artifacts.csv` contains 50 data rows; 49 `artifact_icon` paths are populated, `resonance-compass` remains blank, and all 49 populated paths exist on disk.
+- The actual folders contain `sentinel` artifact images under `artillery_Icon` and `artillery` artifact images under `sentinel_Icon`; CSV paths use those actual locations.
+- Static path check reports `MISSING_FILES=0`; duplicate populated paths are absent; `git diff --check -- Pakuri/Assets/CSVdata/Artifact/artifacts.csv` passed.
+- One basename mismatch is intentional and evidence-backed: artifact ID `shattering-glove` points to existing file `shattering-glove'.png` without renaming it.
+
+### History
+
+- 2026-08-06: Code Builder inspected the CSV and all `*_Icon` descendants, then assigned 49 existing artifact PNG paths and left `resonance-compass` blank.
+
+## Task: 2026-08-06 Skill ID and Artifact CSV Ownership Split
+
+### Task title
+
+Remove legacy `@effect` IDs and separate artifact graph/trigger authoring from monster skill CSVs.
+
+### Goals
+
+- Replace all legacy `@effectN` references with explicit `*-trigger-effect-N` IDs while preserving Base/Trait IDs.
+- Move artifact-owned graph and trigger rows out of monster passive files into `Assets/CSVdata/Artifact/Skill`.
+- Keep the existing combined `SourceModel` and runtime Definition behavior unchanged.
+
+### Constraints
+
+- Preserve every moved row and all non-ID values exactly.
+- Keep monster passive rows in their existing passive CSVs.
+- Do not change `SetDuration` values or gameplay logic.
+- Do not create a Git commit for this task.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implemented and locally verified; Play Mode remains user-owned.
+
+### Next Actions
+
+- User verifies artifact UI/runtime behavior after the new CSV source paths are imported.
+
+### Evidence
+
+- `@` search across current skill CSVs and `Artifact/Skill` returns 0 matches; all 43 legacy occurrences were normalized with paired graph/trigger/reference IDs.
+- `skill_graph_nodes_passive.csv` retains 454 monster rows; `Artifact/Skill/skill_graph_nodes_artifact.csv` contains the exact 75 artifact rows formerly embedded there.
+- `passive_skill_triger.csv` retains 128 monster/summon rows; `Artifact/Skill/artifact_skill_triger.csv` contains the exact 11 artifact trigger rows formerly embedded there.
+- Exact row comparison against `HEAD` reports `ARTIFACT_GRAPH_EXACT_DIFF=0` and `ARTIFACT_TRIGGER_EXACT_DIFF=0`.
+- Combined graph/trigger validation reports 937 graph rows, 172 trigger rows, zero duplicate trigger IDs, and zero missing Trigger/Base owners.
+- `CsvRuntimeCatalog`, `CsvCatalogEditor`, `CsvSourceLoader`, and `GameDataLoader` now load the two Artifact/Skill TextAsset arrays into the same source model path.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:q` passed with 0 errors and the existing 2 assembly-reference warnings.
+- Unity catalog sync/validation loaded 5 monsters, 8+8 enemies, 50 artifacts, 6 synergies, and 1 summon. Focused passive lifetime test passed 1/1; artifact trigger runtime test passed 1/1.
+- The combined artifact-definition test currently fails only because the user-owned `artifacts.csv` now assigns a `resonance-compass` icon while that existing test still expects null.
+
+### History
+
+- 2026-08-06: Code Builder normalized all legacy `@effectN` IDs, moved 75 artifact graph rows and 11 artifact trigger rows into `Artifact/Skill`, connected the new source arrays, and refreshed Unity catalogs without creating a commit.
+
 ## Archived History
 
 The pre-cleanup file, including completed and superseded data tasks, is preserved at `boards/ARCHIVE/ACTIVE_BOARD_SNAPSHOT_2026-07-28/DATA/DATA_BLACKBOARD.md`.
@@ -20,7 +110,7 @@ Make passive Base and trait authoring ownership explicit without changing runtim
 ### Constraints
 
 - Preserve generated runtime effects, trigger ordering, conditions, target selection, and Stage lifetime values.
-- Do not rename active-skill `@effect` IDs outside the passive ownership migration.
+- The initial passive migration preserved active-skill `@effect` IDs; the follow-up Skill ID split normalizes all remaining `@effect` IDs with their paired graph/trigger/reference rows.
 - Multi-effect passive groups require an effect suffix; a single `{slot}-base` ID cannot represent Eve-J's seven independent Base graphs.
 - Keep CSV files UTF-8 and update every exact trigger/graph/reference ID together.
 

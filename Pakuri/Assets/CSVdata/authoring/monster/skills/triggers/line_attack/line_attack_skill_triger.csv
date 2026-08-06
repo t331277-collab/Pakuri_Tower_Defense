@@ -2,7 +2,7 @@
 "id","string","string","enum:SkillTriggerEvent","string","string","string","int","string","string","string","string","string","float","float","float","int","string","int","int","float","bool"
 "vega-b-master1-second-slash","vega","vega-b","OnSkillCast","vega-b-master-1","",,"",,,,"","","1","0","0.4",,"owner","100","1",,
 "eve-b-master-2","eve","eve-b","OnHit","eve-b-master-2","",,"",,,,"","","1","","",,"","1","1",,
-"eve-b-master-2@effect2","eve","eve-b","OnHit","eve-b-master-2","",,"",,,,"","","1","","",,"","2","1",,
+"eve-b-master-2-trigger-effect-2","eve","eve-b","OnHit","eve-b-master-2","",,"",,,,"","","1","","",,"","2","1",,
 "rin-c-master-2","rin","rin-c","OnHit","rin-c-master-2","",,"",,,,"","","1","","",,"","1","1",,
 "vega-b-trait-5","vega","vega-b","OnHit","vega-b-trait-5","",,"",,,,"","","1","","",,"","1","1",,
 "sein-e-trait-3","sein","sein-e","OnHit","sein-e-trait-3","",,"",,,,"","","1","","",,"","1","1",,

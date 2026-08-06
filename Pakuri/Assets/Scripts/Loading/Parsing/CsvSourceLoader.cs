@@ -164,6 +164,18 @@ namespace Pakuri.Data
                 }
             }
 
+            for (var assetIndex = 0; assetIndex < sourceCatalog.ArtifactSkillTriggerFiles.Length; assetIndex++)
+            {
+                var skillTriggerTable = CsvTable.Load(
+                    sourceCatalog.ArtifactSkillTriggerFiles[assetIndex],
+                    GetTextAssetCsvTableName(sourceCatalog.ArtifactSkillTriggerFiles[assetIndex]));
+                foreach (var record in skillTriggerTable.Records)
+                {
+                    var row = ParseSkillTriggerRow(record);
+                    AddUnique(model.SkillTriggers, row.Id, row, record);
+                }
+            }
+
             LoadSkillChoiceRows(
                 model,
                 sourceCatalog.MonsterSkillChoicesProjectileFiles,
@@ -198,6 +210,17 @@ namespace Pakuri.Data
                 var graphNodeTable = CsvTable.Load(
                     sourceCatalog.MonsterSkillGraphNodeFiles[assetIndex],
                     GetTextAssetCsvTableName(sourceCatalog.MonsterSkillGraphNodeFiles[assetIndex]));
+                foreach (var record in graphNodeTable.Records)
+                {
+                    model.SkillGraphNodes.Add(ParseSkillGraphNodeRow(record));
+                }
+            }
+
+            for (var assetIndex = 0; assetIndex < sourceCatalog.ArtifactSkillGraphNodeFiles.Length; assetIndex++)
+            {
+                var graphNodeTable = CsvTable.Load(
+                    sourceCatalog.ArtifactSkillGraphNodeFiles[assetIndex],
+                    GetTextAssetCsvTableName(sourceCatalog.ArtifactSkillGraphNodeFiles[assetIndex]));
                 foreach (var record in graphNodeTable.Records)
                 {
                     model.SkillGraphNodes.Add(ParseSkillGraphNodeRow(record));

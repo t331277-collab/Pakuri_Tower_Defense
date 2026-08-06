@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 59fb01ed2a13aa94da08e6ffa15fd8cf
+guid: e147ebd160e935a4ca1bafe2603e9e46
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -7542516645456917032
-    second: image-Photoroom 7_0
+      213: 6950014922917839793
+    second: archangel-sigil_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -46,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: image-Photoroom 7_0
+      name: archangel-sigil_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 12
-        width: 523
-        height: 485
+        y: 0
+        width: 262
+        height: 223
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 8ddc11ba219935790800000000000000
-      internalID: -7542516645456917032
+      spriteID: 1b38e28efb9637060800000000000000
+      internalID: 6950014922917839793
       vertices: []
       indices: 
       edges: []
@@ -138,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      image-Photoroom 7_0: -7542516645456917032
+      archangel-sigil_0: 6950014922917839793
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

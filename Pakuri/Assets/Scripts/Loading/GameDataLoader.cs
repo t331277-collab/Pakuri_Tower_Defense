@@ -39,6 +39,7 @@ namespace Pakuri.Data
         internal const string AuthoringSummonSkillCsvAssetRoot = AuthoringSummonCsvAssetRoot + "/skill";
         internal const string ArtifactCsvAssetRoot = CsvDataAssetRoot + "/Artifact";
         internal const string ArtifactEffectCsvAssetRoot = ArtifactCsvAssetRoot + "/Effect";
+        internal const string ArtifactSkillCsvAssetRoot = ArtifactCsvAssetRoot + "/Skill";
         internal const string StageFlowCsvAssetRoot = CsvDataAssetRoot + "/stage_flow";
         internal const string RuntimeResourcesFolderAssetPath = "Assets/Resources/Pakuri/CSVRuntime";
         internal const string RuntimeCatalogAssetPath = RuntimeResourcesFolderAssetPath + "/CsvRuntimeCatalog.asset";
@@ -67,6 +68,8 @@ namespace Pakuri.Data
         internal const string ArtifactSynergiesFileName = "artifact_synergies.csv";
         internal const string ArtifactEffectsFileName = "artifact_effects.csv";
         internal const string ArtifactSynergyEffectsFileName = "artifact_synergy_effects.csv";
+        internal const string ArtifactSkillGraphNodeFileName = "skill_graph_nodes_artifact.csv";
+        internal const string ArtifactSkillTriggerFileName = "artifact_skill_triger.csv";
         internal const string SummonUnitsFileName = "summon_units.csv";
         internal const string SummonSkillsFileName = "summon_units_skill.csv";
 
@@ -281,6 +284,8 @@ namespace Pakuri.Data
             Require(sourceCatalog.ArtifactSynergies != null, ArtifactSynergiesFileName);
             Require(sourceCatalog.ArtifactEffects != null, ArtifactEffectsFileName);
             Require(sourceCatalog.ArtifactSynergyEffects != null, ArtifactSynergyEffectsFileName);
+            Require(sourceCatalog.ArtifactSkillGraphNodeFiles?.Length > 0, ArtifactSkillGraphNodeFileName);
+            Require(sourceCatalog.ArtifactSkillTriggerFiles?.Length > 0, ArtifactSkillTriggerFileName);
             Require(sourceCatalog.SummonUnits != null, SummonUnitsFileName);
             Require(sourceCatalog.SummonSkills != null, SummonSkillsFileName);
             Require(sourceCatalog.StageDay != null, StageFileNames.StageDay);
