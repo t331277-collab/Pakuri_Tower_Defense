@@ -54,10 +54,12 @@ namespace Pakuri.InGame
         internal static SkillExecutionState BuildExecutionData(
             UnitCombatState owner,
             SkillExecutionState runtime,
-            UnitSpawnManager roster)
+            UnitSpawnManager roster,
+            bool isTrigger = false)
         {
             var skill = runtime != null ? runtime.Data : null;
             var snapshot = CreateDefinitionSnapshot(skill);
+            snapshot.IsTrigger = isTrigger;
             if (skill == null || owner == null || owner.Skills == null)
             {
                 return snapshot;
@@ -136,7 +138,8 @@ namespace Pakuri.InGame
             var aggregatedRepeatEffects = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             for (var i = 0; i < effectNames.Count; i++)
             {
-                if (!TryGetArtifactSkillModifier(effectNames[i], owner, skill, out var effect)
+                if (!TryGetArtifactSkillModifier(
+                        effectNames[i], owner, skill, snapshot.IsTrigger, out var effect)
                     || effect.RepeatRule == ArtifactEffectRepeatRule.None
                     || aggregatedRepeatEffects.Contains(effect.EffectName)
                     || !TryGetDirectDamageBonus(effect.Nodes, skill.SkillName, out var bonus))
@@ -153,7 +156,8 @@ namespace Pakuri.InGame
             var combinedArtifacts = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             for (var i = 0; i < effectNames.Count; i++)
             {
-                if (!TryGetArtifactSkillModifier(effectNames[i], owner, skill, out var effect)
+                if (!TryGetArtifactSkillModifier(
+                        effectNames[i], owner, skill, snapshot.IsTrigger, out var effect)
                     || aggregatedRepeatEffects.Contains(effect.EffectName))
                 {
                     continue;
@@ -203,7 +207,12 @@ namespace Pakuri.InGame
                         && !string.Equals(
                             effect.TargetSkill.SkillName,
                             skill.SkillName,
-                            StringComparison.OrdinalIgnoreCase)))
+                            StringComparison.OrdinalIgnoreCase))
+                    || !ArtifactCombatRules.ConditionsMatch(
+                        effect.Nodes,
+                        owner,
+                        skill,
+                        snapshot.IsTrigger))
                 {
                     continue;
                 }
@@ -216,6 +225,7 @@ namespace Pakuri.InGame
             string effectName,
             UnitCombatState owner,
             SkillDefinition skill,
+            bool isTrigger,
             out ArtifactEffectDefinition effect)
         {
             return GameDataLoader.CurrentCatalog.TryGetData(effectName, out effect)
@@ -226,7 +236,11 @@ namespace Pakuri.InGame
                         effect.TargetSkill.SkillName,
                         skill.SkillName,
                         StringComparison.OrdinalIgnoreCase))
-                && ArtifactCombatRules.ConditionsMatch(effect.Nodes, owner, skill);
+                && ArtifactCombatRules.ConditionsMatch(
+                    effect.Nodes,
+                    owner,
+                    skill,
+                    isTrigger);
         }
 
         private static bool TryGetDirectDamageBonus(
@@ -670,10 +684,38 @@ namespace Pakuri.InGame
 				}
 			}
 
+			DamageAttributeOverrideOp? attributeOverride =
+				nodes[i].GetOperation<DamageAttributeOverrideOp>();
+			if (attributeOverride.HasValue)
+			{
+				snapshot.HasDamageAttributeOverride = true;
+				snapshot.DamageAttributeOverride = attributeOverride.Value.Attribute;
+			}
+
 			ConsecutiveHitActionOp? consecutiveHitAction = nodes[i].GetOperation<ConsecutiveHitActionOp>();
 			if (consecutiveHitAction.HasValue)
 			{
 				ApplyConsecutiveHitAction(snapshot, consecutiveHitAction.Value);
+			}
+
+			FirstMagazineProjectileFollowUpActionOp? firstFollowUp =
+				nodes[i].GetOperation<FirstMagazineProjectileFollowUpActionOp>();
+			if (firstFollowUp.HasValue)
+			{
+				snapshot.FollowUpProjectileCount += firstFollowUp.Value.Count;
+				snapshot.FollowUpProjectileDelaySeconds = firstFollowUp.Value.DelaySeconds;
+				snapshot.FollowUpProjectileDamageMultiplier = firstFollowUp.Value.DamageMultiplier;
+				snapshot.FollowUpProjectileFirstMagazineOnly = true;
+			}
+
+			ArrivalFragmentBurstActionOp? fragments =
+				nodes[i].GetOperation<ArrivalFragmentBurstActionOp>();
+			if (fragments.HasValue)
+			{
+				snapshot.ArrivalFragmentCount = fragments.Value.Count;
+				snapshot.ArrivalFragmentDelaySeconds = fragments.Value.DelaySeconds;
+				snapshot.ArrivalFragmentSearchRadius = fragments.Value.SearchRadius;
+				snapshot.ArrivalFragmentRawDamage = fragments.Value.RawDamage;
 			}
 
 			BranchDamageActionOp? branchDamageAction = nodes[i].GetOperation<BranchDamageActionOp>();
@@ -801,6 +843,17 @@ namespace Pakuri.InGame
 		{
 		case SkillActionOpKind.DamageMultiplier:
 			snapshot.DamageMultiplier *= PositiveOrDefault(action.Amount, 1f);
+			break;
+		case SkillActionOpKind.RawDamageOverride:
+			snapshot.SetRawDamageOverride(action.Amount);
+			break;
+		case SkillActionOpKind.RadiusMultiplierOverride:
+			snapshot.HasRadiusMultiplierOverride = true;
+			snapshot.RadiusMultiplierOverride = Mathf.Max(0f, action.Amount);
+			break;
+		case SkillActionOpKind.DamageDelayOverride:
+			snapshot.HasDamageDelayOverride = true;
+			snapshot.DamageDelayOverride = Mathf.Max(0f, action.Amount);
 			break;
 		case SkillActionOpKind.ShieldAmountMultiplier:
 			snapshot.ShieldAmountMultiplier *= PositiveOrDefault(action.Amount, 1f);
@@ -942,6 +995,10 @@ namespace Pakuri.InGame
 			snapshot.MagazineLastProjectileCritDamageBonus = CombineCritDamageBonus(
 				snapshot.MagazineLastProjectileCritDamageBonus,
 				action.Amount);
+			break;
+		case SkillActionOpKind.MagazineLastProjectileDamageMultiplier:
+			snapshot.MagazineLastProjectileDamageMultiplier *=
+				PositiveOrDefault(action.Amount, 1f);
 			break;
 		case SkillActionOpKind.FinalDamageModifier:
 			snapshot.FinalDamageModifier *= PositiveOrDefault(action.Amount, 1f);

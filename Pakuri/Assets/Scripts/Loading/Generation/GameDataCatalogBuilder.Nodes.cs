@@ -131,8 +131,22 @@ namespace Pakuri.Data
 				reaction.Effect = new SkillCastEffect
 				{
 					EffectName = reaction.ReactionName,
-					DamageMultiplier = reaction.DamageMultiplier
+					DamageMultiplier = reaction.DamageMultiplier,
+					UseEventSourceModifiers = GetBoolParam(
+						node,
+						"use_event_source_modifiers",
+						false),
+					HasTargetSelectionOverride = !string.IsNullOrWhiteSpace(
+						GetParam(node, "target_selection_override")),
+					TargetSelectionOverride = GetEnumParam(
+						node,
+						"target_selection_override",
+						SkillTargetSelection.Nearest)
 				};
+				reaction.CasterScope = GetEnumParam(
+					node,
+					"caster_scope",
+					SkillReactionCasterScope.Source);
 				reaction.Effect.ResolvedDefinition = FindSkillDefinition(
 					activeSkills,
 					passiveSkills,
@@ -1018,6 +1032,27 @@ namespace Pakuri.Data
 			return SkillNode.FromOperation(new SkillAttributeConditionOp(
 				GetEnumParam(node, "attribute", DamageAttribute.Physical)));
 		}
+		if (string.Equals(text, "ConditionSkillRuntimeKind", StringComparison.OrdinalIgnoreCase))
+		{
+			var conditions = StatusValueParser.ParseSkillRuntimeKindConditions(
+				GetParam(node, "skill_runtime_kinds"));
+			var runtimeKinds = new SkillRuntimeKind[conditions.Length];
+			for (var i = 0; i < conditions.Length; i++)
+			{
+				runtimeKinds[i] = conditions[i].Kind;
+			}
+			return SkillNode.FromOperation(new SkillRuntimeKindConditionOp(runtimeKinds));
+		}
+		if (string.Equals(text, "ConditionTriggerExecution", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new TriggerExecutionConditionOp(
+				GetBoolParam(node, "required", true)));
+		}
+		if (string.Equals(text, "DamageAttributeOverride", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new DamageAttributeOverrideOp(
+				GetEnumParam(node, "attribute", DamageAttribute.Physical)));
+		}
 		if (string.Equals(text, "ConditionAnyStatus", StringComparison.OrdinalIgnoreCase))
 		{
 			return SkillNode.FromOperation(new TargetStatusConditionOp(
@@ -1225,6 +1260,21 @@ namespace Pakuri.Data
 				GetFloatParam(node, "repeat_interval_seconds", 0f),
 				GetFloatParam(node, "repeat_damage_multiplier", 1f)));
 		}
+		if (string.Equals(text, "FirstMagazineProjectileFollowUp", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new FirstMagazineProjectileFollowUpActionOp(
+				GetIntParam(node, "count", 0),
+				GetFloatParam(node, "delay_seconds", 0f),
+				GetFloatParam(node, "damage_multiplier", 1f)));
+		}
+		if (string.Equals(text, "ArrivalFragmentBurst", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new ArrivalFragmentBurstActionOp(
+				GetIntParam(node, "count", 0),
+				GetFloatParam(node, "delay_seconds", 0f),
+				GetFloatParam(node, "search_radius", 0f),
+				GetFloatParam(node, "raw_damage", 0f)));
+		}
 		if (string.Equals(text, "PullToCenter", StringComparison.OrdinalIgnoreCase))
 		{
 			return SkillNode.FromOperation(new PullToCenterActionOp(
@@ -1319,6 +1369,8 @@ namespace Pakuri.Data
 			|| string.Equals(handlerName, "ConditionAnyStatus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "ConditionStatusExpression", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "ConditionSkillAttribute", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ConditionSkillRuntimeKind", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ConditionTriggerExecution", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "ConditionHealthRatioMax", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "ConditionHitCountMin", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "EffectVisual", StringComparison.OrdinalIgnoreCase)
@@ -1358,6 +1410,10 @@ namespace Pakuri.Data
 			return true;
 		}
 		if (string.Equals(handlerName, "DamageMultiplier", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "RawDamageOverride", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "DamageAttributeOverride", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "RadiusMultiplierOverride", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "DamageDelayOverride", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "DefenseModifier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "FinalDamageTakenMultiplier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "CooldownChargeSpeedBonus", StringComparison.OrdinalIgnoreCase)
@@ -1406,6 +1462,8 @@ namespace Pakuri.Data
 		}
 		if (string.Equals(handlerName, "BurstDamageRule", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "FollowUpProjectile", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "FirstMagazineProjectileFollowUp", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ArrivalFragmentBurst", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "ThresholdApplyStatus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "TargetStatusStackDamageMultiplier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "ConsumeTargetStatusRatioOverride", StringComparison.OrdinalIgnoreCase)
@@ -1425,6 +1483,7 @@ namespace Pakuri.Data
 			|| string.Equals(handlerName, "CritChanceBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "CritDamageBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "MagazineLastProjectileCritDamageBonus", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "MagazineLastProjectileDamageMultiplier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "FinalDamageModifier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "CriticalFinalDamageModifier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "EveryNthHitChainDamage", StringComparison.OrdinalIgnoreCase)
@@ -1508,6 +1567,18 @@ namespace Pakuri.Data
 		{
 			return new SkillActionOp(SkillActionOpKind.TargetStatusStackDamageRateBonus, GetParam(node, "status_name"), GetFloatParam(node, "bonus_rate_per_stack", 0f));
 		}
+		if (string.Equals(handlerName, "RawDamageOverride", StringComparison.OrdinalIgnoreCase))
+		{
+			return new SkillActionOp(SkillActionOpKind.RawDamageOverride, GetFloatParam(node, "damage", 0f));
+		}
+		if (string.Equals(handlerName, "RadiusMultiplierOverride", StringComparison.OrdinalIgnoreCase))
+		{
+			return new SkillActionOp(SkillActionOpKind.RadiusMultiplierOverride, GetFloatParam(node, "multiplier", 1f));
+		}
+		if (string.Equals(handlerName, "DamageDelayOverride", StringComparison.OrdinalIgnoreCase))
+		{
+			return new SkillActionOp(SkillActionOpKind.DamageDelayOverride, GetFloatParam(node, "seconds", 0f));
+		}
 		if (string.Equals(handlerName, "TargetStatusStackDamageMultiplierBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.TargetStatusStackDamageMultiplierBonus, GetParam(node, "status_name"), GetFloatParam(node, "bonus_rate_per_stack", 0f));
@@ -1583,6 +1654,10 @@ namespace Pakuri.Data
 		if (string.Equals(handlerName, "MagazineLastProjectileCritDamageBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.MagazineLastProjectileCritDamageBonus, GetFloatParam(node, "bonus", 0f));
+		}
+		if (string.Equals(handlerName, "MagazineLastProjectileDamageMultiplier", StringComparison.OrdinalIgnoreCase))
+		{
+			return new SkillActionOp(SkillActionOpKind.MagazineLastProjectileDamageMultiplier, GetFloatParam(node, "multiplier", 1f));
 		}
 		if (string.Equals(handlerName, "FinalDamageModifier", StringComparison.OrdinalIgnoreCase))
 		{

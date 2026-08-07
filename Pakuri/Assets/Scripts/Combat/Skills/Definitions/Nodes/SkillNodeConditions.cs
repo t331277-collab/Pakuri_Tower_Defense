@@ -52,6 +52,7 @@ namespace Pakuri.Data
         OnExpire,
         OnHitCount,
         OnMagazineLastProjectileHit,
+        OnReloadComplete,
         OnShieldExpire,
         OnShieldAbsorb,
         OnShieldBreak,
@@ -91,6 +92,13 @@ namespace Pakuri.Data
         Caster
     }
 
+    /// 반응 스킬을 실제로 소유하고 실행할 전투 유닛을 구분한다.
+    public enum SkillReactionCasterScope
+    {
+        Source,
+        Nexus
+    }
+
     /// 물리 효과 없이 바꿀 런타임 상태를 구분한다.
     public enum SkillReactionCommandKind
     {
@@ -102,6 +110,28 @@ namespace Pakuri.Data
 
 namespace Pakuri.InGame
 {
+    /// modifier가 허용할 스킬 런타임 종류를 제한한다.
+    public readonly struct SkillRuntimeKindConditionOp
+    {
+        public SkillRuntimeKindConditionOp(SkillRuntimeKind[] runtimeKinds)
+        {
+            RuntimeKinds = runtimeKinds ?? Array.Empty<SkillRuntimeKind>();
+        }
+
+        public SkillRuntimeKind[] RuntimeKinds { get; }
+    }
+
+    /// modifier를 일반 시전 또는 trigger 실행에만 제한한다.
+    public readonly struct TriggerExecutionConditionOp
+    {
+        public TriggerExecutionConditionOp(bool required)
+        {
+            Required = required;
+        }
+
+        public bool Required { get; }
+    }
+
     /// 유물 효과가 적용될 스킬 속성을 제한한다.
     public readonly struct SkillAttributeConditionOp
     {
@@ -189,6 +219,7 @@ namespace Pakuri.InGame
         public bool LockToEventTarget;
         public SkillTriggerCenterMode CenterMode;
         public bool PublishSkillLifecycleEvents;
+        public SkillReactionCasterScope CasterScope;
     }
 
     /// 사건 반응을 노드에서 해석할 값으로 전달한다.

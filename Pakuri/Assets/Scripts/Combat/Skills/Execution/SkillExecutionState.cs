@@ -67,11 +67,19 @@ public class SkillExecutionState
 
 	public float RawDamageOverride { get; internal set; }
 
+	public bool HasDamageAttributeOverride { get; internal set; }
+
+	public DamageAttribute DamageAttributeOverride { get; internal set; }
+
 	public float ShieldAmountMultiplier { get; internal set; }
 
 	public float CooldownMultiplier { get; internal set; }
 
 	public float RadiusMultiplier { get; internal set; }
+
+	public bool HasRadiusMultiplierOverride { get; internal set; }
+
+	public float RadiusMultiplierOverride { get; internal set; }
 
 	public float DurationMultiplier { get; internal set; }
 
@@ -91,6 +99,10 @@ public class SkillExecutionState
 
 	public float FollowUpProjectileDamageMultiplier { get; internal set; } = 1f;
 
+	public bool FollowUpProjectileFirstMagazineOnly { get; internal set; }
+
+	public float MagazineLastProjectileDamageMultiplier { get; internal set; } = 1f;
+
 	public float RadiusBonus { get; internal set; }
 
 	public float BeamWidthBonus { get; internal set; }
@@ -98,6 +110,18 @@ public class SkillExecutionState
 	public float KnockbackDistanceMultiplier { get; internal set; }
 
 	public float DamageDelayMultiplier { get; internal set; }
+
+	public bool HasDamageDelayOverride { get; internal set; }
+
+	public float DamageDelayOverride { get; internal set; }
+
+	public int ArrivalFragmentCount { get; internal set; }
+
+	public float ArrivalFragmentDelaySeconds { get; internal set; }
+
+	public float ArrivalFragmentSearchRadius { get; internal set; }
+
+	public float ArrivalFragmentRawDamage { get; internal set; }
 
 	public float DurationBonus { get; internal set; }
 
@@ -354,6 +378,8 @@ public class SkillExecutionState
 	internal float PreparedBurstDamageMultiplier { get; set; } = 1f;
 
 	internal bool PreparedMagazineLastProjectile { get; set; }
+
+	internal bool PreparedMagazineFirstProjectile { get; set; }
 
 	internal bool PreparedContactDamageEnabled { get; set; }
 

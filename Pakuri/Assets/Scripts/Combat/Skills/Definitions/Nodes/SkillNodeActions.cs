@@ -26,6 +26,9 @@ namespace Pakuri.InGame
         public bool InheritSnapshot = true;
         public int MaxGeneration = 1;
         public bool UseEventSourceSkill;
+        public bool UseEventSourceModifiers;
+        public bool HasTargetSelectionOverride;
+        public SkillTargetSelection TargetSelectionOverride;
     }
 
     /// 후속 스킬 결과를 노드에서 해석할 값으로 전달한다.
@@ -64,6 +67,9 @@ namespace Pakuri.InGame
     public enum SkillActionOpKind
     {
         DamageMultiplier,
+        RawDamageOverride,
+        RadiusMultiplierOverride,
+        DamageDelayOverride,
         ShieldAmountMultiplier,
         CooldownMultiplier,
         MagazineBonus,
@@ -97,6 +103,7 @@ namespace Pakuri.InGame
         CritChanceBonus,
         CritDamageBonus,
         MagazineLastProjectileCritDamageBonus,
+        MagazineLastProjectileDamageMultiplier,
         FinalDamageModifier,
         CriticalFinalDamageModifier,
         BeamWidthBonus,
@@ -105,6 +112,17 @@ namespace Pakuri.InGame
         TargetStatusStackDamageMultiplierBonus,
         StatusActionSpeedMultiplier,
         ConsumeTargetStatusRatioOverride
+    }
+
+    /// 실행 스킬의 피해 속성을 원본 정의와 다르게 지정한다.
+    public readonly struct DamageAttributeOverrideOp
+    {
+        public DamageAttributeOverrideOp(DamageAttribute attribute)
+        {
+            Attribute = attribute;
+        }
+
+        public DamageAttribute Attribute { get; }
     }
 
     /// 처치 뒤 적용할 대기시간 규칙을 나타낸다.
@@ -246,6 +264,45 @@ namespace Pakuri.InGame
         public int Count { get; }
         public float DelaySeconds { get; }
         public float DamageMultiplier { get; }
+    }
+
+    /// 탄창 첫 발에만 이어지는 추가 투사체 계획을 나타낸다.
+    public readonly struct FirstMagazineProjectileFollowUpActionOp
+    {
+        public FirstMagazineProjectileFollowUpActionOp(
+            int count,
+            float delaySeconds,
+            float damageMultiplier)
+        {
+            Count = count;
+            DelaySeconds = delaySeconds;
+            DamageMultiplier = damageMultiplier;
+        }
+
+        public int Count { get; }
+        public float DelaySeconds { get; }
+        public float DamageMultiplier { get; }
+    }
+
+    /// 투사체 도착 폭발 뒤 주변 임의 지점에서 반복할 폭발 계획이다.
+    public readonly struct ArrivalFragmentBurstActionOp
+    {
+        public ArrivalFragmentBurstActionOp(
+            int count,
+            float delaySeconds,
+            float searchRadius,
+            float rawDamage)
+        {
+            Count = count;
+            DelaySeconds = delaySeconds;
+            SearchRadius = searchRadius;
+            RawDamage = rawDamage;
+        }
+
+        public int Count { get; }
+        public float DelaySeconds { get; }
+        public float SearchRadius { get; }
+        public float RawDamage { get; }
     }
 
     /// 상태 중첩이 다른 상태로 이어지는 기준을 나타낸다.

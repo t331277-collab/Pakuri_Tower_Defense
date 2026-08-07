@@ -2,6 +2,7 @@
  * 역할: 활성 유물 Effect Node를 대상 전투 수치로 해석한다.
  */
 
+using System;
 using System.Collections.Generic;
 using Pakuri.Data;
 using UnityEngine;
@@ -104,7 +105,8 @@ namespace Pakuri.InGame
         internal static bool ConditionsMatch(
             IReadOnlyList<SkillNode> nodes,
             UnitCombatState owner,
-            SkillDefinition skill)
+            SkillDefinition skill,
+            bool isTrigger = false)
         {
             for (var i = 0; nodes != null && i < nodes.Count; i++)
             {
@@ -122,6 +124,21 @@ namespace Pakuri.InGame
                             ? owner.GetTotalShield() <= 0f
                             : owner.Statuses.GetStacks(status.Value.StatusKind)
                                 < status.Value.MinimumStacks)))
+                {
+                    return false;
+                }
+
+                var runtimeKinds = nodes[i]?.GetOperation<SkillRuntimeKindConditionOp>();
+                if (runtimeKinds.HasValue
+                    && (skill == null || Array.IndexOf(
+                        runtimeKinds.Value.RuntimeKinds,
+                        skill.RuntimeKind) < 0))
+                {
+                    return false;
+                }
+
+                var triggerExecution = nodes[i]?.GetOperation<TriggerExecutionConditionOp>();
+                if (triggerExecution.HasValue && triggerExecution.Value.Required != isTrigger)
                 {
                     return false;
                 }

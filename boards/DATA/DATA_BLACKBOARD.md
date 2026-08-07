@@ -1,5 +1,16 @@
 # DATA_BLACKBOARD
 
+## Task: 2026-08-07 Artillery Nexus Caster Data Handoff
+
+- Task title: 포격대 Nexus 발사자·유물 데이터 handoff
+- Goals: 포격대 시너지와 유물 CSV 계약에 Nexus caster, 0.1초 주 포격 착탄 지연, 레벨 8 주 포격만 2배, 원래 폭발·파편 피해 중첩, `MagazineRemaining == MaxMagazineSize` 첫 발 조건을 반영한다.
+- Constraints: 기존 `sein-c`를 복제하지 않고 Nexus가 학습한다. `artifact_effects.csv.recipient_scope`를 유물 대상 범위의 단일 원천으로 사용한다. 무한 탄피·관통 깃털만 `AllAllies`; 나머지는 `Owner`. fragment hit-exclusion 데이터는 만들지 않는다.
+- Role Owner: Code Builder
+- Status: Phase 1 데이터 scope와 공통 node/reaction 계약 구현·정적 빌드 완료. Phase 2 진행 예정.
+- Next Actions: 재장전 완료 event 1회 발행과 탄창 유물 runtime을 구현한다. 각 Phase 종료마다 Git 커밋한다.
+- Evidence: `artifact_effects.csv`에서 무한 탄피·관통 깃털만 `AllAllies`, 나머지 8종은 `Owner`; 포격대 Stage combat effect 3행은 `AllAllies`. `ConditionSkillRuntimeKind`, trigger-only modifier, raw damage/attribute/radius/delay override, first/last projectile, arrival fragment, Nexus caster 계약을 parser/runtime type에 추가. `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal` 오류 0, 기존 assembly-reference 경고 2.
+- History: 2026-08-07 포격대 handoff 작성. Nexus는 공통 `UnitCombatState`/`SkillState`를 가지지만 `CreateNexus()`가 active skill을 학습시키지 않는 것을 확인. 사용자 clarification으로 Nexus 발사, 0.1초 주 폭발, 파편 제외 2배, 피해 중첩 허용, full-magazine 첫 발 조건을 반영. 2026-08-07 Phase 1은 별도 포격 Manager 대신 기존 SkillModifier/ExecuteSkill 계약을 최소 확장했다.
+
 ## Task: 2026-08-07 Sentinel Artifact And Synergy Data Handoff
 
 ### Task title
