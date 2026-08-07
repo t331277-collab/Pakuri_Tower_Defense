@@ -125,6 +125,8 @@ public class SkillExecutionState
 
 	public float ArrivalFragmentRawDamage { get; internal set; }
 
+	public float ArrivalFragmentRadiusMultiplier { get; internal set; } = 1f;
+
 	public float DurationBonus { get; internal set; }
 
 	public float BranchChanceBonus { get; internal set; }

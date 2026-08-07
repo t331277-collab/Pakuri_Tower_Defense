@@ -585,7 +585,7 @@ namespace Pakuri.InGame
                 : null;
             if (arrivalSkill != null && sourceEntry != null && runtime != null)
             {
-                combatManager.SkillExecution.TryExecuteReaction(
+                var executed = combatManager.SkillExecution.TryExecuteReaction(
                     sourceEntry,
                     runtime,
                     runtime,
@@ -605,7 +605,21 @@ namespace Pakuri.InGame
                     beginCast: false,
                     onHitStatusOverride: executionData != null
                         ? executionData.PreparedStatus
-                        : statusOnHit);
+                        : statusOnHit,
+                    preparedSnapshot: executionData);
+                if (executed)
+                {
+                    SkillExecution.ScheduleArrivalFragments(
+                        combatManager,
+                        combatManager.Units,
+                        sourceEntry,
+                        runtime,
+                        executionData,
+                        arrivalSkill,
+                        arrivalCenter,
+                        arrivalEventTarget,
+                        sourceSkillName);
+                }
             }
 
             TryExecuteOnExpireEffects();

@@ -514,7 +514,8 @@ namespace Pakuri.InGame
             bool publishSkillLifecycleEvents,
             bool beginCast,
             StatusApplicationSpec onHitStatusOverride = null,
-            bool executeCastEffects = true)
+            bool executeCastEffects = true,
+            SkillExecutionState preparedSnapshot = null)
         {
             if (entry == null
                 || runtime == null
@@ -524,7 +525,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var snapshot = entry.Model.SkillState.CreateExecutionData(
+            var snapshot = preparedSnapshot ?? entry.Model.SkillState.CreateExecutionData(
                 entry.Model,
                 snapshotRuntime,
                 roster);
@@ -1444,9 +1445,15 @@ namespace Pakuri.InGame
             snapshot.PreparedDirections = directions;
             snapshot.PreparedBoundaries = boundaries;
             snapshot.PreparedDamage = DamageCalculator.CalculateRawDamage(context.Caster, skill.Damage);
-            snapshot.PreparedDamageAttribute = SkillExecutionRules.ResolveSkillAttribute(
-                context.Caster,
-                skill.Damage != null ? skill.Damage.Element : skill.Element);
+            if (snapshot.HasRawDamageOverride)
+            {
+                snapshot.PreparedDamage = snapshot.RawDamageOverride;
+            }
+            snapshot.PreparedDamageAttribute = snapshot.HasDamageAttributeOverride
+                ? snapshot.DamageAttributeOverride
+                : SkillExecutionRules.ResolveSkillAttribute(
+                    context.Caster,
+                    skill.Damage != null ? skill.Damage.Element : skill.Element);
             snapshot.PreparedStatus = status;
             snapshot.PreparedCriticalAllowed = skill.Damage != null && skill.Damage.CriticalAllowed;
             snapshot.PreparedProjectileSpeed = speed;
@@ -1498,9 +1505,11 @@ namespace Pakuri.InGame
             snapshot.PreparedBranchDamageMultipliers = branchDamageMultipliers;
             snapshot.PreparedBranchSearchRadii = branchSearchRadii;
             snapshot.PreparedContactDamageEnabled = skill.ContactDamageEnabled;
-            snapshot.PreparedArrivalDelay = Mathf.Max(
-                0f,
-                skill.ArrivalDelaySeconds * Mathf.Max(0f, snapshot.DamageDelayMultiplier));
+            snapshot.PreparedArrivalDelay = snapshot.HasDamageDelayOverride
+                ? snapshot.DamageDelayOverride
+                : Mathf.Max(
+                    0f,
+                    skill.ArrivalDelaySeconds * Mathf.Max(0f, snapshot.DamageDelayMultiplier));
             snapshot.PreparedArrivalSkill = skill.ArrivalSkill;
             return true;
         }
@@ -1563,15 +1572,19 @@ namespace Pakuri.InGame
             snapshot.PreparedBaseRadius = baseRadius;
             snapshot.PreparedRadius = SkillTargeting.Radius(
                 baseRadius,
-                snapshot.RadiusMultiplier,
+                snapshot.HasRadiusMultiplierOverride
+                    ? snapshot.RadiusMultiplierOverride
+                    : snapshot.RadiusMultiplier,
                 snapshot.RadiusBonus);
             snapshot.PreparedCoverAll = coverAll;
             snapshot.PreparedDamage = snapshot.HasRawDamageOverride
                 ? snapshot.RawDamageOverride
                 : DamageCalculator.CalculateRawDamage(context.Caster, skill.Damage);
-            snapshot.PreparedDamageAttribute = SkillExecutionRules.ResolveSkillAttribute(
-                context.Caster,
-                skill.Damage != null ? skill.Damage.Element : skill.Element);
+            snapshot.PreparedDamageAttribute = snapshot.HasDamageAttributeOverride
+                ? snapshot.DamageAttributeOverride
+                : SkillExecutionRules.ResolveSkillAttribute(
+                    context.Caster,
+                    skill.Damage != null ? skill.Damage.Element : skill.Element);
             snapshot.PreparedStatus = SkillExecutionRules.StatusSpec(skill.OnHitStatus, snapshot);
             snapshot.PreparedCriticalAllowed = skill.Damage != null && skill.Damage.CriticalAllowed;
             snapshot.PreparedHitTargetCount = skill.HitAllTargets || skill.HitTargetCount == int.MaxValue
@@ -1863,6 +1876,97 @@ namespace Pakuri.InGame
                 resolvedRawDamage);
         }
 
+        /// 도착 폭발 뒤 독립된 임의 위치에서 같은 SingleSkill 폭발을 반복한다.
+        internal static void ScheduleArrivalFragments(
+            InGameCombatManager combatManager,
+            UnitSpawnManager roster,
+            CombatUnitEntry sourceEntry,
+            SkillExecutionState runtime,
+            SkillExecutionState sourceSnapshot,
+            SingleSkillDefinition arrivalSkill,
+            Vector2 arrivalCenter,
+            UnitCombatState eventTarget,
+            string sourceSkillName)
+        {
+            if (combatManager == null
+                || roster == null
+                || sourceEntry == null
+                || runtime == null
+                || sourceSnapshot == null
+                || arrivalSkill == null
+                || sourceSnapshot.ArrivalFragmentCount <= 0)
+            {
+                return;
+            }
+
+            combatManager.StartCoroutine(RunArrivalFragments(
+                combatManager,
+                roster,
+                sourceEntry,
+                runtime,
+                sourceSnapshot,
+                arrivalSkill,
+                arrivalCenter,
+                eventTarget,
+                sourceSkillName));
+        }
+
+        private static IEnumerator RunArrivalFragments(
+            InGameCombatManager combatManager,
+            UnitSpawnManager roster,
+            CombatUnitEntry sourceEntry,
+            SkillExecutionState runtime,
+            SkillExecutionState sourceSnapshot,
+            SingleSkillDefinition arrivalSkill,
+            Vector2 arrivalCenter,
+            UnitCombatState eventTarget,
+            string sourceSkillName)
+        {
+            if (sourceSnapshot.ArrivalFragmentDelaySeconds > 0f)
+            {
+                yield return new WaitForSeconds(
+                    sourceSnapshot.ArrivalFragmentDelaySeconds);
+            }
+
+            for (var i = 0; i < sourceSnapshot.ArrivalFragmentCount; i++)
+            {
+                if (combatManager == null || roster == null || roster.EnemyCount <= 0)
+                {
+                    yield break;
+                }
+
+                var fragmentSnapshot = sourceSnapshot.CopyWithDamageMultiplier(1f);
+                fragmentSnapshot.SetRawDamageOverride(
+                    sourceSnapshot.ArrivalFragmentRawDamage);
+                fragmentSnapshot.HasRadiusMultiplierOverride = true;
+                fragmentSnapshot.RadiusMultiplierOverride =
+                    sourceSnapshot.ArrivalFragmentRadiusMultiplier;
+                fragmentSnapshot.ArrivalFragmentCount = 0;
+                var point = SkillTargeting.RandomPointAround(
+                    arrivalCenter,
+                    sourceSnapshot.ArrivalFragmentSearchRadius);
+                combatManager.SkillExecution.TryExecuteReaction(
+                    sourceEntry,
+                    runtime,
+                    runtime,
+                    arrivalSkill,
+                    roster,
+                    combatManager,
+                    eventTarget,
+                    point,
+                    hasTargetPoint: true,
+                    hasRawDamageOverride: false,
+                    rawDamageOverride: 0f,
+                    recastGeneration: 0,
+                    damageMultiplier: 1f,
+                    sourceSkillName: sourceSkillName,
+                    lockToEventTarget: false,
+                    publishSkillLifecycleEvents: false,
+                    beginCast: false,
+                    preparedSnapshot: fragmentSnapshot);
+            }
+        }
+
         /// 반응 한 회분의 실행을 시작한다.
         private static void RunScheduledReaction(
             InGameCombatManager combatManager,
@@ -1941,13 +2045,59 @@ namespace Pakuri.InGame
                         RadiusMultiplier = effect.RadiusMultiplier,
                         DurationSeconds = effect.DurationSeconds,
                         InheritSnapshot = effect.InheritSnapshot,
-                        MaxGeneration = effect.MaxGeneration
+                        MaxGeneration = effect.MaxGeneration,
+                        UseEventSourceModifiers = effect.UseEventSourceModifiers,
+                        HasTargetSelectionOverride = effect.HasTargetSelectionOverride,
+                        TargetSelectionOverride = effect.TargetSelectionOverride,
+                        HasRawDamageOverride = effect.HasRawDamageOverride,
+                        RawDamageOverride = effect.RawDamageOverride,
+                        HasDamageAttributeOverride = effect.HasDamageAttributeOverride,
+                        DamageAttributeOverride = effect.DamageAttributeOverride,
+                        HasDamageDelayOverride = effect.HasDamageDelayOverride,
+                        DamageDelayOverride = effect.DamageDelayOverride
                     };
+                }
+                else if (trigger.CasterScope == SkillReactionCasterScope.Nexus)
+                {
+                    executionEntry = FindNexusEntry(roster);
+                    sourceRuntime = executionEntry?.Model?.SkillState?
+                        .FindByDefinition(effect.ResolvedDefinition);
+                    if (executionEntry == null || sourceRuntime == null)
+                    {
+                        return false;
+                    }
                 }
                 else if (sourceRuntime == null && effect.ResolvedDefinition != null)
                 {
                     sourceRuntime = new SkillExecutionState(source, effect.ResolvedDefinition);
                 }
+
+                if (effect.HasTargetSelectionOverride)
+                {
+                    if (SkillTargeting.TargetList(
+                            executionEntry,
+                            roster,
+                            effect.ResolvedDefinition?.Targeting).Count == 0)
+                    {
+                        return false;
+                    }
+
+                    if (effect.TargetSelectionOverride == SkillTargetSelection.Densest)
+                    {
+                        targetPoint = SkillTargeting.DensestCenter(
+                            executionEntry,
+                            roster,
+                            effect.ResolvedDefinition.Targeting,
+                            null);
+                    }
+                }
+
+                var preparedSnapshot = effect.UseEventSourceModifiers
+                    ? SkillExecutionRules.BuildTriggeredSynergyExecutionData(
+                        triggerContext.EventSource ?? source,
+                        sourceRuntime,
+                        effect)
+                    : null;
 
                 var executionSkillName = effect.UseEventSourceSkill
                     ? triggerContext.EventSourceSkillName
@@ -1990,6 +2140,7 @@ namespace Pakuri.InGame
                         trigger.DamageMultiplier,
                         trigger.DamageValueSource != SkillTriggerDamageValueSource.Fixed,
                         resolvedRawDamage,
+                        sourceSnapshot: preparedSnapshot,
                         publishSkillLifecycleEvents: trigger.PublishSkillLifecycleEvents,
                         isTrigger: trigger.IsTrigger);
             }
@@ -2007,6 +2158,19 @@ namespace Pakuri.InGame
                     sourceRuntime,
                     trigger.Command,
                     triggerContext);
+        }
+
+        private static CombatUnitEntry FindNexusEntry(UnitSpawnManager roster)
+        {
+            var players = roster?.Players;
+            for (var i = 0; players != null && i < players.Count; i++)
+            {
+                if (players[i]?.Model?.IsNexus == true)
+                {
+                    return players[i];
+                }
+            }
+            return null;
         }
 
         private static IEnumerator RunAutomaticEncoreRecast(

@@ -6,10 +6,10 @@
 - Goals: reload completion을 trigger로 Nexus에 학습된 `sein-c` runtime을 실행한다. 발사 원점과 피해 귀속자는 Nexus, 주 포격 착탄 지연은 0.1초, 시너지 6 파편은 주 폭발 후 0.3초이며 원래 폭발·각 파편 피해는 중첩 가능하다.
 - Constraints: `CreateNexus()` 현재 active skill 없음·`AutoSkillEnabled=false`이므로 일반 자동 스킬 루프에 맡기지 않는다. `SkillTrigger`가 reload event source를 조건으로 유지하면서 `TryExecuteReaction()`의 entry/runtime을 Nexus로 선택해야 한다. fragment 공유 `HashSet`/hit-exclusion은 구현하지 않는다. 레벨 8은 파편 제외 주 포격의 기본 피해·범위 2배이며 레벨 4 `×1.15`를 누적하지 않는다.
 - Role Owner: Code Builder
-- Status: Phase 2 재장전 완료 lifecycle과 탄창별 one-shot 상태 구현·정적 빌드 완료.
-- Next Actions: `SkillReactionCasterScope.Nexus`를 실제 reaction entry/runtime 선택에 연결하고 Projectile arrival에서 fragment burst를 실행한다.
-- Evidence: Tick/ReduceReload/ReduceCooldown/ResetCooldown/즉시 복구가 `TryCompleteReload` 한 곳을 사용한다. 완료 flag는 `InGameCombatManager`가 한 번 소비해 `SkillTrigger.ExecuteReloadComplete`로 보낸다. full-magazine 첫 발 marker는 탄창 차감 전에 준비되고 마지막 탄환 일반 피해는 투사체 생성 전에 곱해진다.
-- History: 2026-08-07 Sein-C projectile/arrival 경로와 Nexus 등록 경로 확인. 사용자 clarification으로 support source를 reload 유닛에서 Nexus로 변경하고 fragment 대상 중복 제한을 제거. 2026-08-07 Phase 1 공통 데이터/runtime 계약을 추가했다. 2026-08-07 Phase 2 reload event와 overheat pending/armed one-shot을 구현했다.
+- Status: Phase 3 Nexus caster와 arrival fragment runtime 구현·정적 빌드 완료.
+- Next Actions: 열린 Unity Editor의 auto-reimport 뒤 catalog/EditMode 검증 및 Phase 4 속성 유물을 확인한다.
+- Evidence: `CreateNexus`는 전달받은 기존 `sein-c` definition을 학습하되 `AutoSkillEnabled=false`를 유지한다. reload reaction은 Densest 후보가 있을 때 Nexus entry/runtime을 선택한다. Projectile actor는 준비된 trigger snapshot을 기존 arrival SingleSkill에 그대로 전달하고, main 폭발 성공 뒤 0.3초에 반경 3 임의 지점 3개를 독립 실행한다. 공유 hit exclusion은 없다.
+- History: 2026-08-07 Sein-C projectile/arrival 경로와 Nexus 등록 경로 확인. 사용자 clarification으로 support source를 reload 유닛에서 Nexus로 변경하고 fragment 대상 중복 제한을 제거. 2026-08-07 Phase 1 공통 데이터/runtime 계약을 추가했다. 2026-08-07 Phase 2 reload event와 overheat pending/armed one-shot을 구현했다. 2026-08-07 Phase 3 existing Projectile→arrival SingleSkill 경로에 prepared snapshot과 fragment scheduling만 추가했다.
 
 ## Task: 2026-08-07 Sentinel Combat Runtime Handoff
 

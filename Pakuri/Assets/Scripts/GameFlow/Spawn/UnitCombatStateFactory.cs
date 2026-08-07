@@ -128,9 +128,11 @@ namespace Pakuri.InGame
             return model;
         }
 
-        public UnitCombatState CreateNexus(float maxHealth)
+        public UnitCombatState CreateNexus(
+            float maxHealth,
+            SkillDefinition learnedSkill = null)
         {
-            return new UnitCombatState
+            var model = new UnitCombatState
             {
                 Identity = new UnitIdentity
                 {
@@ -153,6 +155,15 @@ namespace Pakuri.InGame
                 AutoAttackEnabled = false,
                 AutoSkillEnabled = false
             };
+            if (learnedSkill != null)
+            {
+                model.Skills.AddActiveSkill(learnedSkill.SkillName);
+                model.SkillState.RebuildLearnedSkillState(
+                    model,
+                    new[] { learnedSkill },
+                    Array.Empty<PassiveSkillDefinition>());
+            }
+            return model;
         }
 
         private static UnitCombatState CreateMonster(

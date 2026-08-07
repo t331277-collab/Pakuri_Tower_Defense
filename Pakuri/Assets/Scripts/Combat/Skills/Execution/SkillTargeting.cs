@@ -480,7 +480,7 @@ namespace Pakuri.InGame
         }
 
         /// 현재 후보 중 가장 많은 대상을 포함하는 후보 위치를 고른다.
-        private static Vector2 DensestCenter(
+        internal static Vector2 DensestCenter(
             CombatUnitEntry caster,
             UnitSpawnManager roster,
             SkillTargetingSpec targeting,
@@ -536,6 +536,12 @@ namespace Pakuri.InGame
             return nearest != null && nearest.Transform != null
                 ? nearest.Transform.position
                 : origin;
+        }
+
+        /// 기준점 주변 원 안의 임의 위치를 만든다.
+        internal static Vector2 RandomPointAround(Vector2 center, float radius)
+        {
+            return center + UnityEngine.Random.insideUnitCircle * Mathf.Max(0f, radius);
         }
 
         /// 영역 전용 값이 있으면 공통 대상 범위보다 우선한다.

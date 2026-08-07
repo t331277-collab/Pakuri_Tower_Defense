@@ -29,6 +29,12 @@ namespace Pakuri.InGame
         public bool UseEventSourceModifiers;
         public bool HasTargetSelectionOverride;
         public SkillTargetSelection TargetSelectionOverride;
+        public bool HasRawDamageOverride;
+        public float RawDamageOverride;
+        public bool HasDamageAttributeOverride;
+        public DamageAttribute DamageAttributeOverride;
+        public bool HasDamageDelayOverride;
+        public float DamageDelayOverride;
     }
 
     /// 후속 스킬 결과를 노드에서 해석할 값으로 전달한다.

@@ -226,6 +226,35 @@ namespace Pakuri.InGame
             }
         }
 
+        /// trigger 결과에 기본 override를 먼저 넣고 활성 시너지 modifier만 누적한다.
+        internal static SkillExecutionState BuildTriggeredSynergyExecutionData(
+            UnitCombatState effectOwner,
+            SkillExecutionState runtime,
+            SkillCastEffect effect)
+        {
+            var snapshot = CreateDefinitionSnapshot(runtime?.Data);
+            snapshot.IsTrigger = true;
+            if (effect?.HasRawDamageOverride == true)
+            {
+                snapshot.SetRawDamageOverride(effect.RawDamageOverride);
+            }
+            if (effect?.HasDamageAttributeOverride == true)
+            {
+                snapshot.HasDamageAttributeOverride = true;
+                snapshot.DamageAttributeOverride = effect.DamageAttributeOverride;
+            }
+            if (effect?.HasDamageDelayOverride == true)
+            {
+                snapshot.HasDamageDelayOverride = true;
+                snapshot.DamageDelayOverride = Mathf.Max(0f, effect.DamageDelayOverride);
+            }
+            if (runtime?.Data != null)
+            {
+                ApplyArtifactSynergyModifiers(snapshot, effectOwner, runtime.Data);
+            }
+            return snapshot;
+        }
+
         private static bool TryGetArtifactSkillModifier(
             string effectName,
             UnitCombatState owner,
@@ -721,6 +750,9 @@ namespace Pakuri.InGame
 				snapshot.ArrivalFragmentDelaySeconds = fragments.Value.DelaySeconds;
 				snapshot.ArrivalFragmentSearchRadius = fragments.Value.SearchRadius;
 				snapshot.ArrivalFragmentRawDamage = fragments.Value.RawDamage;
+				snapshot.ArrivalFragmentRadiusMultiplier = snapshot.HasRadiusMultiplierOverride
+					? snapshot.RadiusMultiplierOverride
+					: snapshot.RadiusMultiplier;
 			}
 
 			BranchDamageActionOp? branchDamageAction = nodes[i].GetOperation<BranchDamageActionOp>();

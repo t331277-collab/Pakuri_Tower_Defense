@@ -275,3 +275,6 @@
 "ExecuteSkill","4","use_event_source_modifiers","bool","false",""
 "ExecuteSkill","5","target_selection_override","enum","false","Nearest;LowestHealth;HighestHealth;HighestStacks;ManualPosition;Owner;Farthest;Random;NearestOtherFromEventTarget;Densest;BattlefieldCenter"
 "ReloadCompleteDamageMultiplier","1","multiplier","float","true",""
+"ExecuteSkill","6","raw_damage_override","float","false",""
+"ExecuteSkill","7","damage_attribute_override","enum","false","Physical;Fire;Lightning;Ice;Darkness;Holy"
+"ExecuteSkill","8","damage_delay_override","float","false",""

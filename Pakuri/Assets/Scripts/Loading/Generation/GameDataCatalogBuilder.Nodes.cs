@@ -141,7 +141,23 @@ namespace Pakuri.Data
 					TargetSelectionOverride = GetEnumParam(
 						node,
 						"target_selection_override",
-						SkillTargetSelection.Nearest)
+						SkillTargetSelection.Nearest),
+					HasRawDamageOverride = !string.IsNullOrWhiteSpace(
+						GetParam(node, "raw_damage_override")),
+					RawDamageOverride = Mathf.Max(
+						0f,
+						GetFloatParam(node, "raw_damage_override", 0f)),
+					HasDamageAttributeOverride = !string.IsNullOrWhiteSpace(
+						GetParam(node, "damage_attribute_override")),
+					DamageAttributeOverride = GetEnumParam(
+						node,
+						"damage_attribute_override",
+						DamageAttribute.Physical),
+					HasDamageDelayOverride = !string.IsNullOrWhiteSpace(
+						GetParam(node, "damage_delay_override")),
+					DamageDelayOverride = Mathf.Max(
+						0f,
+						GetFloatParam(node, "damage_delay_override", 0f))
 				};
 				reaction.CasterScope = GetEnumParam(
 					node,

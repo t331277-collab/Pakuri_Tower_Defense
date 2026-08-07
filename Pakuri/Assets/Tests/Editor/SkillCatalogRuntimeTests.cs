@@ -49,6 +49,23 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     [Test]
+    public void NexusLearnsExistingSupportSkillWithoutAutoCasting()
+    {
+        var seinC = new ProjectileSkillDefinition
+        {
+            SkillName = "sein-c",
+            RuntimeKind = SkillRuntimeKind.CooldownProjectile
+        };
+
+        var nexus = new UnitCombatStateFactory().CreateNexus(100f, seinC);
+
+        Assert.That(nexus.IsNexus, Is.True);
+        Assert.That(nexus.AutoSkillEnabled, Is.False);
+        Assert.That(nexus.Skills.HasActiveSkill("sein-c"), Is.True);
+        Assert.That(nexus.SkillState.FindByDefinition(seinC), Is.Not.Null);
+    }
+
+    [Test]
     /// 선택 의미가 지정 스킬에만 반영되는지 확인한다.
     public void ChoiceNodesApplyOnlyToTheirTargetSkill()
     {

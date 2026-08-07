@@ -6,10 +6,10 @@
 - Goals: 포격대 시너지와 유물 CSV 계약에 Nexus caster, 0.1초 주 포격 착탄 지연, 레벨 8 주 포격만 2배, 원래 폭발·파편 피해 중첩, `MagazineRemaining == MaxMagazineSize` 첫 발 조건을 반영한다.
 - Constraints: 기존 `sein-c`를 복제하지 않고 Nexus가 학습한다. `artifact_effects.csv.recipient_scope`를 유물 대상 범위의 단일 원천으로 사용한다. 무한 탄피·관통 깃털만 `AllAllies`; 나머지는 `Owner`. fragment hit-exclusion 데이터는 만들지 않는다.
 - Role Owner: Code Builder
-- Status: Phase 2 재장전·탄창 유물 runtime과 데이터 구현·정적 빌드 완료. Phase 3 진행 예정.
-- Next Actions: Nexus가 Sein-C를 학습하게 하고 reload trigger에서 Nexus 발사·Densest·주 포격·파편을 실행한다.
-- Evidence: 포격대 누적 reload delta는 0.90/0.9111111111/0.9146341463/0.8666666667. 무한 탄피, 과열 약실, 쌍열 코어, 신속 장전기, 관통 깃털, 난사 도면, 처형 탄환, 회전 약실 graph가 typed node로 작성됐다. `MagazineReloadCompletesOnceAndArmsNextDamage` 회귀 검사를 추가했고 solution build 오류 0.
-- History: 2026-08-07 포격대 handoff 작성. Nexus는 공통 `UnitCombatState`/`SkillState`를 가지지만 `CreateNexus()`가 active skill을 학습시키지 않는 것을 확인. 사용자 clarification으로 Nexus 발사, 0.1초 주 폭발, 파편 제외 2배, 피해 중첩 허용, full-magazine 첫 발 조건을 반영. 2026-08-07 Phase 1은 별도 포격 Manager 대신 기존 SkillModifier/ExecuteSkill 계약을 최소 확장했다. 2026-08-07 Phase 2는 탄창 복구를 단일 helper로 모으고 8개 비속성 유물과 reload 시너지를 연결했다.
+- Status: Phase 3 Nexus 지원 포격·파편 데이터/runtime 구현 및 정적 검증 완료. Phase 4 진행 예정.
+- Next Actions: 축복 화살통·번개 탄창, reward allowlist, catalog 회귀 검사를 완성한다. 열린 Unity Editor에서 reimport/EditMode 검증한다.
+- Evidence: support trigger CSV는 `OnReloadComplete|MagazineProjectile|owner`; ExecuteSkill은 `sein-c|Nexus|true|Densest|60|Physical|0.1`. 단계 4는 raw 85/radius 1.15, 단계 6은 `3|0.3|3|30`, 단계 8은 main raw 120/radius 2. Solution build 오류 0. batch sync는 동일 프로젝트가 열린 Unity Editor 때문에 실행 거부됐다.
+- History: 2026-08-07 포격대 handoff 작성. Nexus는 공통 `UnitCombatState`/`SkillState`를 가지지만 `CreateNexus()`가 active skill을 학습시키지 않는 것을 확인. 사용자 clarification으로 Nexus 발사, 0.1초 주 폭발, 파편 제외 2배, 피해 중첩 허용, full-magazine 첫 발 조건을 반영. 2026-08-07 Phase 1은 별도 포격 Manager 대신 기존 SkillModifier/ExecuteSkill 계약을 최소 확장했다. 2026-08-07 Phase 2는 탄창 복구를 단일 helper로 모으고 8개 비속성 유물과 reload 시너지를 연결했다. 2026-08-07 Phase 3은 Nexus에 기존 Sein-C를 학습시키고 event-source synergy snapshot을 Nexus 실행에 전달했다.
 
 ## Task: 2026-08-07 Sentinel Artifact And Synergy Data Handoff
 

@@ -45,7 +45,9 @@ namespace Pakuri.InGame
                 }
             }
 
-            var model = unitStateFactory.CreateNexus(actor.MaxHealth);
+            var supportSkill = GameDataLoader.CurrentCatalog?
+                .GetData<SkillDefinition>("sein-c");
+            var model = unitStateFactory.CreateNexus(actor.MaxHealth, supportSkill);
             actor.Initialize(model);
             RegisterUnit(model, actor, actor.transform);
         }
