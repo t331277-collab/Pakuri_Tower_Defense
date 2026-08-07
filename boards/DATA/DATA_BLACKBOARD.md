@@ -27,12 +27,11 @@ Designer handoff, Code Builder implementation.
 
 ### Status
 
-데이터 Handoff 작성 완료. CSV·runtime 구현 대기.
+구현 완료. CSV graph/trigger runtime 생성과 파수꾼 데이터 집중 EditMode 검증 통과. 사용자 Play Mode 검증 대기.
 
 ### Next Actions
 
-- Code Builder가 Effect 헤더, 공통 Node 정의, Artifact graph/trigger 행을 작성한다.
-- CSV 열 수, 외래 키, enum, Node 인자와 runtime catalog를 검증한다.
+- Play Mode에서 파수꾼 보상 노출, 2/4/6/8 표시 수치와 개별 유물 설명·적용 대상을 확인한다.
 
 ### Evidence
 
@@ -41,11 +40,21 @@ Designer handoff, Code Builder implementation.
 - 현재 파수꾼 개별 Effect 10개는 모두 `AllAllies`다.
 - 기존 `Owner` enum, CSV parser, Stage 배포와 개별/시너지 Node/Reaction 생성 경로는 구현돼 있다.
 - 상세 데이터 매핑은 `Pakuri/reference/4.run/sentinel-artifact-synergy-implementation-design.md`에 기록했다.
+- `artifact_synergies.csv`는 총합 설명 5/10/15/20%와 고정 방어력 8/12/18/25를 사용하고 graph는 단계별 증가분 `0.05/8`, `0.05/4`, `0.05/6`, `0.05/7`을 사용한다.
+- `artifact_effects.csv`는 `unbreakable-promise-effect`만 `Owner`, 나머지 파수꾼 9개는 `AllAllies`다. 집중 테스트가 10개 Effect의 실제 `ArtifactEffectRecipient`를 확인했다.
+- `artifact_synergy_effects.csv`에 보호막 조건 최종 피해 Effect 1개를 추가해 총 28개가 됐다.
+- Artifact graph 39행과 trigger 9행을 기존 CSV에 추가했고 신규 전용 CSV는 만들지 않았다. CSV 열 수와 Effect 참조 정적 검사 오류는 0개다.
+- `ApplyShield.target_max_health_ratio`, `SelectTargets.radius`, `DefenseModifier`, `FinalDamageTakenMultiplier`, `CooldownChargeSpeedBonus`가 기존 Node 정의/인자 CSV와 builder에 연결됐다.
+- 순백 방패 12%/9999초, 순례자 망토 50%/10초, 반사 25/20/20%, 향로 +2초, 기도석 +12%가 runtime definition 집중 테스트를 통과했다.
+- `ArtifactUI.PrepareChoices` allowlist에 `sentinel`을 추가했고 변경 영향 보상 테스트가 통과했다.
+- Phase 커밋: `4bb9bc0` 데이터 계약, `456efc6` 전투 보정, `49d1e0b` 보호막 사건 런타임.
 
 ### History
 
 - 2026-08-07: 사용자가 파수꾼 시너지·유물 수치와 모든 아군/보유자 적용 규칙을 확정했다.
 - 2026-08-07: Designer가 누적 단계 증가분과 17개 Effect 데이터 계약을 작성했다.
+- 2026-08-07: Code Builder가 기존 Artifact CSV에 파수꾼 39개 graph Node와 9개 Trigger를 작성하고 공통 Node 스키마를 확장했다.
+- 2026-08-07: runtime catalog 동기화 메뉴 실행, Unity 오류 0개, 파수꾼 집중 EditMode 7/7을 확인했다.
 
 ## Task: 2026-08-07 Chosen One Synergy Effect Visual
 

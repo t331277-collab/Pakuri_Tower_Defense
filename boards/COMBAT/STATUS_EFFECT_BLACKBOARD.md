@@ -26,12 +26,12 @@ Designer handoff, Code Builder implementation.
 
 ### Status
 
-구현 Handoff 작성 완료. C#·CSV 구현 대기.
+구현 완료. 파수꾼 집중 EditMode 7/7, Runtime/Editor 빌드와 Unity 컴파일 오류 0개. 사용자 Play Mode 검증 대기.
 
 ### Next Actions
 
-- Code Builder가 `Pakuri/reference/4.run/sentinel-artifact-synergy-implementation-design.md` Phase 1부터 구현한다.
-- 방어·최종 피해·보호막 사건 집중 EditMode 검증 뒤 Runtime/Editor 빌드를 수행한다.
+- Play Mode에서 일반/보스 전투 시작, 실제 회복·보호막 수령, 보호막 파괴/자연 만료와 반사 피해 표시를 확인한다.
+- 범위 밖 기존 결함인 Vega-B Master 1 두 번째 참격의 `AttachStatusPayload(silence)` 미매핑은 별도 작업으로 처리한다.
 
 ### Evidence
 
@@ -41,11 +41,21 @@ Designer handoff, Code Builder implementation.
 - `InGameCombatManager`는 보호막별 실제 흡수량을 `ShieldAbsorptionRecord`에 기록하고 Trigger 피해의 후속 반응을 차단한다.
 - 현재 대상 측 최종 피해 감소, 보호막 파괴 전용, 지원 수령, 보스전 시작 사건은 존재하지 않는다.
 - 현재 보호막 사건 `EventSource`는 방어막 시전자라 수혜자 Artifact owner 판정에는 맞지 않으며, Handoff는 수혜자를 사건 owner로 교정한다.
+- `ArtifactCombatRules.Resolve`가 활성 Effect Node에서 방어 비율·고정 방어력, 보호막 조건 최종 피해 배율, 쿨타임 충전 보너스를 읽는다.
+- `DamageCalculator`는 방어 보정 뒤 공격 측 `FinalDamageModifier`와 대상 측 최종 피해 배율을 곱한다. 집중 테스트가 `1.15 × 0.90`과 일반 받는 피해 `0.80`의 별도 곱연산을 통과했다.
+- `UnitStatusCollection`은 서로 다른 `SourceSkillName`의 방어막을 별도 인스턴스로 유지하면서 `GetTotalShieldAmount`로 합산한다. 12/2초와 50/10초 보호막 회귀 테스트가 각 만료 시점의 50/0 합계를 확인했다.
+- `SkillTrigger`는 `OnShieldBreak`, `OnHealOrShieldReceived`, `BossCombatStart`를 기존 Artifact scheduler에 연결하고 보호막 사건 `EventSource`를 수혜자로 사용한다.
+- 반사 누산기는 같은 흡수 사건의 같은 원천 유닛만 합친다. Ariel-B Master 2 35%와 반사 거울 20%는 55% 한 그룹, 다른 원천 파수꾼 25%는 별도 그룹으로 집중 테스트를 통과했다.
+- Phase 커밋: `4bb9bc0` 데이터 계약, `456efc6` 전투 보정, `49d1e0b` 보호막 사건 런타임.
+- `dotnet build Assembly-CSharp.csproj --no-restore`와 `Assembly-CSharp-Editor.csproj --no-restore`는 오류 0개, 기존 Unity assembly 참조 충돌 경고 2개다.
+- Unity EditMode 집중 테스트 7/7 통과. 전체 `SkillCatalogRuntimeTests`는 30/32이며 남은 2건은 파수꾼 대상이 아닌 monster Trigger baseline 불일치다.
 
 ### History
 
 - 2026-08-07: 사용자가 파수꾼 2/4/6/8 시너지와 유물 10종 구현 Handoff를 요청했다.
 - 2026-08-07: Designer가 Ariel-B 재사용 경로, 최종 피해 곱연산, 신규 공통 Node/Trigger 경계를 확정했다.
+- 2026-08-07: Code Builder가 Phase 1~3을 각각 커밋하고 방어·최종 피해·쿨타임·보호막 수명·신규 사건·원천별 반사를 공통 경로에 구현했다.
+- 2026-08-07: 파수꾼 집중 EditMode 7/7과 Runtime/Editor 빌드 오류 0개를 확인했다. 전체 테스트의 기존 Vega silence payload 미매핑은 범위 밖으로 남겼다.
 
 ## Task: 2026-08-07 Chosen One Combat Runtime Design
 

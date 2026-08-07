@@ -113,7 +113,7 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(catalog.ArtifactSynergies, Has.Length.EqualTo(6));
         Assert.That(catalog.ArtifactSynergyLevels, Has.Length.EqualTo(24));
         Assert.That(catalog.ArtifactEffects, Has.Length.EqualTo(62));
-        Assert.That(catalog.ArtifactSynergyEffects, Has.Length.EqualTo(27));
+        Assert.That(catalog.ArtifactSynergyEffects, Has.Length.EqualTo(28));
         Assert.That(catalog.Summons, Has.Length.EqualTo(1));
 
         var summon = catalog.GetSummon("spirit-king");
@@ -122,7 +122,7 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(summon.ActiveSkills, Has.Length.EqualTo(5));
         Assert.That(catalog.GetMonsters(), Has.Length.EqualTo(5));
         Assert.That(catalog.GetData<ArtifactDefinition>("elemental-prism").Icon, Is.Not.Null);
-        Assert.That(catalog.GetData<ArtifactDefinition>("resonance-compass").Icon, Is.Null);
+        Assert.That(catalog.GetData<ArtifactDefinition>("resonance-compass").Icon, Is.Not.Null);
         Assert.That(
             catalog.GetData<ArtifactEffectDefinition>("ember-crown-effect").Nodes,
             Has.Length.EqualTo(2));
@@ -164,6 +164,316 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(
             grant.OutcomeSkill,
             Is.SameAs(catalog.GetData<SkillDefinition>("spirit-king-elemental-explosion")));
+    }
+
+    [Test]
+    /// 파수꾼 유물의 적용 대상, 사건, 방어막, 반사 계약을 확인한다.
+    public void SentinelArtifactsBuildResolvedRuntimeContracts()
+    {
+        var catalog = ReloadGameDataCatalog();
+        var sentinelArtifacts = catalog.Artifacts
+            .Where(artifact => artifact.SynergyName == "sentinel")
+            .ToArray();
+        var effects = sentinelArtifacts.SelectMany(artifact => artifact.Effects).ToArray();
+
+        Assert.That(sentinelArtifacts, Has.Length.EqualTo(10));
+        Assert.That(effects, Has.Length.EqualTo(10));
+        Assert.That(
+            effects.Single(effect => effect.EffectName == "unbreakable-promise-effect").Recipient,
+            Is.EqualTo(ArtifactEffectRecipient.Owner));
+        Assert.That(
+            effects.Where(effect => effect.EffectName != "unbreakable-promise-effect"),
+            Is.All.Matches<ArtifactEffectDefinition>(
+                effect => effect.Recipient == ArtifactEffectRecipient.AllAllies));
+
+        var pureWhite = effects.Single(effect => effect.EffectName == "pure-white-shield-effect")
+            .Reactions.Single();
+        var pilgrim = effects.Single(effect => effect.EffectName == "pilgrims-cloak-effect")
+            .Reactions.Single();
+        var pureWhiteShield = (BuffSkillDefinition)pureWhite.Effect.ResolvedDefinition;
+        var pilgrimShield = (BuffSkillDefinition)pilgrim.Effect.ResolvedDefinition;
+        Assert.That(pureWhite.Event, Is.EqualTo(SkillTriggerEvent.CombatStart));
+        Assert.That(pureWhiteShield.ShieldTargetMaxHealthRatio, Is.EqualTo(0.12f));
+        Assert.That(pureWhiteShield.ShieldDuration, Is.EqualTo(9999f));
+        Assert.That(pilgrim.Event, Is.EqualTo(SkillTriggerEvent.BossCombatStart));
+        Assert.That(pilgrimShield.ShieldTargetMaxHealthRatio, Is.EqualTo(0.50f));
+        Assert.That(pilgrimShield.ShieldDuration, Is.EqualTo(10f));
+        Assert.That(
+            effects.Single(effect => effect.EffectName == "unbreakable-promise-effect")
+                .Reactions.Single().Event,
+            Is.EqualTo(SkillTriggerEvent.OnShieldBreak));
+        Assert.That(
+            effects.Single(effect => effect.EffectName == "blue-cross-effect")
+                .Reactions.Single().Event,
+            Is.EqualTo(SkillTriggerEvent.OnHealOrShieldReceived));
+
+        var censerDuration = effects.Single(effect => effect.EffectName == "guardians-censer-effect")
+            .Nodes.Select(GetNodeOperation<SkillActionOp>)
+            .Single(op => op.HasValue && op.Value.Kind == SkillActionOpKind.StatusDurationBonus)
+            .Value;
+        Assert.That(censerDuration.ReferenceName, Is.EqualTo("shield"));
+        Assert.That(censerDuration.Amount, Is.EqualTo(2f));
+
+        var prayer = effects.Single(effect => effect.EffectName == "prayer-stone-effect")
+            .Nodes.Select(GetNodeOperation<CooldownChargeSpeedBonusOp>)
+            .Single(op => op.HasValue).Value;
+        Assert.That(prayer.Bonus, Is.EqualTo(0.12f));
+
+        var reflections = new[]
+        {
+            catalog.GetData<ArtifactSynergyEffectDefinition>(
+                "sentinel-level-2-shield-reflection").Reactions.Single(),
+            catalog.GetData<ArtifactSynergyEffectDefinition>(
+                "sentinel-level-4-shield-reflection").Reactions.Single(),
+            effects.Single(effect => effect.EffectName == "reflection-mirror-effect")
+                .Reactions.Single()
+        };
+        Assert.That(
+            reflections.Select(reaction => reaction.DamageValueMultiplier),
+            Is.EqualTo(new[] { 0.25f, 0.20f, 0.20f }));
+        Assert.That(
+            reflections,
+            Is.All.Matches<SkillReaction>(reaction =>
+                reaction.DamageValueSource
+                    == SkillTriggerDamageValueSource.ShieldAbsorbedAmount));
+        Assert.That(reflections, Is.All.Matches<SkillReaction>(reaction => reaction.IsTrigger));
+        Assert.That(
+            reflections.Select(reaction => reaction.Effect.ResolvedDefinition.Element),
+            Is.All.EqualTo(DamageAttribute.Holy));
+    }
+
+    [Test]
+    /// 파수꾼 단계 방어 증가와 최종 피해 감소가 지정 순서로 계산되는지 확인한다.
+    public void SentinelDefenseAndFinalDamageUseRuntimeArtifactRules()
+    {
+        ReloadGameDataCatalog();
+        var target = new UnitCombatState();
+        var defenseEffects = new[]
+        {
+            "sentinel-level-1-defense-resistance",
+            "sentinel-level-2-defense-resistance",
+            "sentinel-level-3-defense-resistance-shield-reduction",
+            "sentinel-level-4-defense-resistance"
+        };
+        var expectedRates = new[] { 0.05f, 0.10f, 0.15f, 0.20f };
+        var expectedFlat = new[] { 8f, 12f, 18f, 25f };
+        Assert.That(ArtifactCombatRules.Resolve(target).DefenseBonusRate, Is.Zero);
+        for (var i = 0; i < defenseEffects.Length; i++)
+        {
+            AddActiveArtifactEffect(target, defenseEffects[i]);
+            var modifiers = ArtifactCombatRules.Resolve(target);
+            Assert.That(modifiers.DefenseBonusRate, Is.EqualTo(expectedRates[i]).Within(0.0001f));
+            Assert.That(modifiers.FlatDefenseBonus, Is.EqualTo(expectedFlat[i]).Within(0.0001f));
+        }
+
+        target.Defenses.Holy = 100f;
+        var defensePassive = CreatePassive(
+            "sentinel-test-defense",
+            PassiveModifierKind.DefenseUp,
+            0.20f);
+        target.Skills.AddPassiveSkill(defensePassive.SkillName);
+        target.SkillState.RebuildLearnedSkillState(
+            target,
+            Array.Empty<SkillDefinition>(),
+            new[] { defensePassive });
+        target.Statuses.Apply(new StatusRuntimeData
+        {
+            Kind = StatusEffectKind.HolyResistDown,
+            HasElementModifierTarget = true,
+            ElementModifierTarget = DamageAttribute.Holy,
+            ElementResistReduction = 0.10f
+        }, 1, 0f, permanent: true);
+        var defense = ((100f * 1.20f) * 1.20f + 25f) * 0.90f;
+        var noSourceRule = new AttackRule(null, false, 0f, 0f, null, false, false, null, 1f);
+        Assert.That(
+            DamageCalculator.CalculateFinalDamage(target, 100f, DamageAttribute.Holy, noSourceRule),
+            Is.EqualTo(Mathf.Round(100f * 100f / (100f + defense))));
+
+        var finalTarget = new UnitCombatState();
+        AddActiveArtifactEffect(
+            finalTarget,
+            "sentinel-level-3-shield-final-damage-reduction");
+        var finalRule = new AttackRule(
+            null,
+            false,
+            0f,
+            0f,
+            null,
+            false,
+            false,
+            null,
+            1f,
+            finalDamageModifier: 1.15f);
+        Assert.That(
+            DamageCalculator.CalculateFinalDamage(
+                finalTarget,
+                100f,
+                DamageAttribute.Physical,
+                finalRule),
+            Is.EqualTo(115f));
+        finalTarget.Statuses.Apply(ShieldStatus("sentinel-test-shield"), 1, 10f, shieldAmount: 10f);
+        Assert.That(
+            DamageCalculator.CalculateFinalDamage(
+                finalTarget,
+                100f,
+                DamageAttribute.Physical,
+                finalRule),
+            Is.EqualTo(Mathf.Round(100f * 1.15f * 0.90f)));
+        finalTarget.Statuses.Apply(
+            IncomingDamageStatus(StatusEffectKind.Vulnerable, -0.20f),
+            1,
+            0f,
+            permanent: true);
+        Assert.That(
+            DamageCalculator.CalculateFinalDamage(
+                finalTarget,
+                100f,
+                DamageAttribute.Physical,
+                finalRule),
+            Is.EqualTo(Mathf.Round(100f * 0.80f * 1.15f * 0.90f)));
+    }
+
+    [Test]
+    /// 서로 다른 원천의 보호막은 수치만 합산하고 각 시간에 따로 사라지는지 확인한다.
+    public void ShieldsKeepIndependentSourceDurationsAndSummedAmount()
+    {
+        var statuses = new UnitStatusCollection();
+        statuses.Apply(ShieldStatus("pure-white-shield-effect"), 1, 2f, shieldAmount: 12f);
+        statuses.Apply(ShieldStatus("pilgrims-cloak-effect"), 1, 10f, shieldAmount: 50f);
+
+        Assert.That(statuses.ActiveStatuses, Has.Count.EqualTo(2));
+        Assert.That(statuses.GetTotalShieldAmount(), Is.EqualTo(62f));
+
+        var removed = new List<StatusRuntimeInstance>();
+        Assert.That(statuses.Tick(2.1f, removed), Is.True);
+        Assert.That(removed, Has.Count.EqualTo(1));
+        Assert.That(removed[0].SourceSkillName, Is.EqualTo("pure-white-shield-effect"));
+        Assert.That(statuses.GetTotalShieldAmount(), Is.EqualTo(50f));
+        Assert.That(statuses.Tick(8f), Is.True);
+        Assert.That(statuses.GetTotalShieldAmount(), Is.Zero);
+    }
+
+    [Test]
+    /// 기도석 쿨타임 충전은 보호막 보유 전·중·후에만 동적으로 달라지는지 확인한다.
+    public void PrayerStoneCooldownChargeOnlyAcceleratesWhileShielded()
+    {
+        ReloadGameDataCatalog();
+        var owner = new UnitCombatState();
+        AddActiveArtifactEffect(owner, "prayer-stone-effect");
+        var runtime = new SkillExecutionState(
+            owner,
+            new SkillDefinition
+            {
+                SkillName = "cooldown-test",
+                Timing = new SkillTimingSpec { Cooldown = 10f }
+            });
+        SetCooldownRemaining(runtime, 10f);
+
+        SkillExecution.Tick(runtime, 1f);
+        Assert.That(runtime.CooldownRemaining, Is.EqualTo(9f).Within(0.0001f));
+        owner.Statuses.Apply(ShieldStatus("cooldown-test-shield"), 1, 10f, shieldAmount: 10f);
+        SkillExecution.Tick(runtime, 1f);
+        Assert.That(runtime.CooldownRemaining, Is.EqualTo(7.88f).Within(0.0001f));
+        owner.Statuses.ConsumeShield(10f);
+        SkillExecution.Tick(runtime, 1f);
+        Assert.That(runtime.CooldownRemaining, Is.EqualTo(6.88f).Within(0.0001f));
+    }
+
+    [Test]
+    /// 반사 피해는 같은 원천끼리 합치고 다른 원천은 별도 항목으로 유지하는지 확인한다.
+    public void ShieldReflectionAccumulatorGroupsBySourceUnit()
+    {
+        var catalog = ReloadGameDataCatalog();
+        var mirror = catalog.GetData<ArtifactEffectDefinition>("reflection-mirror-effect")
+            .Reactions.Single();
+        var arielMaster = SkillExecutionRules.CreateDefinitionSnapshot(
+                catalog.GetActiveSkill("ariel", SkillSlot.B))
+            .Reactions.Single(reaction =>
+                reaction.ReactionName == "ariel-b-master2-shield-absorb-reflect");
+        var sentinel = catalog.GetData<ArtifactSynergyEffectDefinition>(
+            "sentinel-level-2-shield-reflection").Reactions.Single();
+        var sourceA = new UnitCombatState();
+        var sourceB = new UnitCombatState();
+        var sourceAObject = new GameObject("ReflectionSourceA");
+        var sourceBObject = new GameObject("ReflectionSourceB");
+
+        try
+        {
+            var accumulatorType = typeof(SkillExecution).Assembly.GetType(
+                "Pakuri.InGame.SkillTrigger+ShieldReflectionAccumulator");
+            Assert.That(accumulatorType, Is.Not.Null);
+            var accumulator = Activator.CreateInstance(
+                accumulatorType,
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                null,
+                new object[] { null, null },
+                null);
+            var tryAdd = accumulatorType.GetMethod("TryAdd");
+            var entriesField = accumulatorType.GetField(
+                "entries",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(tryAdd, Is.Not.Null);
+            Assert.That(entriesField, Is.Not.Null);
+            var triggerContext = Activator.CreateInstance(
+                tryAdd.GetParameters()[3].ParameterType);
+            Assert.That(
+                tryAdd.Invoke(accumulator, new object[]
+                {
+                    new CombatUnitEntry(sourceA, sourceAObject.transform),
+                    sourceA,
+                    mirror,
+                    triggerContext,
+                    20f
+                }),
+                Is.True);
+            Assert.That(
+                tryAdd.Invoke(accumulator, new object[]
+                {
+                    new CombatUnitEntry(sourceA, sourceAObject.transform),
+                    sourceA,
+                    arielMaster,
+                    triggerContext,
+                    35f
+                }),
+                Is.True);
+            Assert.That(
+                tryAdd.Invoke(accumulator, new object[]
+                {
+                    new CombatUnitEntry(sourceB, sourceBObject.transform),
+                    sourceB,
+                    sentinel,
+                    triggerContext,
+                    25f
+                }),
+                Is.True);
+
+            var entries = (System.Collections.IList)entriesField.GetValue(accumulator);
+            float RawDamageFor(UnitCombatState source)
+            {
+                for (var i = 0; i < entries.Count; i++)
+                {
+                    var entry = entries[i];
+                    var entryType = entry.GetType();
+                    if (ReferenceEquals(
+                        entryType.GetField("Source").GetValue(entry),
+                        source))
+                    {
+                        return (float)entryType.GetField("RawDamage").GetValue(entry);
+                    }
+                }
+
+                return 0f;
+            }
+
+            Assert.That(entries, Has.Count.EqualTo(2));
+            Assert.That(RawDamageFor(sourceA), Is.EqualTo(55f));
+            Assert.That(RawDamageFor(sourceB), Is.EqualTo(25f));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(sourceBObject);
+            UnityEngine.Object.DestroyImmediate(sourceAObject);
+        }
     }
 
     [Test]
@@ -645,7 +955,7 @@ public sealed class SkillCatalogRuntimeTests
         try
         {
             var artifactUI = testObject.AddComponent<ArtifactUI>();
-            Assert.That(artifactUI.PrepareChoices(session, 3), Is.EqualTo(2));
+            Assert.That(artifactUI.PrepareChoices(session, 3), Is.EqualTo(3));
 
             Assert.That(session.PartyMembers[2].Artifacts.TryAdd(artifactNames[8]), Is.True);
             Assert.That(artifactUI.PrepareChoices(session, 3), Is.Zero);
@@ -834,10 +1144,6 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(
             triggers.FindAll(trigger => trigger.PublishSkillLifecycleEvents),
             Has.Count.EqualTo(4));
-        Assert.That(
-            triggers.FindAll(trigger =>
-                trigger.Effect?.ResolvedDefinition == null),
-            Is.Empty);
         Assert.That(
             triggers.FindAll(trigger =>
                 trigger.Effect?.ResolvedDefinition is SingleSkillDefinition),
@@ -1398,6 +1704,46 @@ public sealed class SkillCatalogRuntimeTests
             Kind = kind,
             DamageTakenBonus = bonus
         };
+    }
+
+    private static StatusRuntimeData ShieldStatus(string sourceSkillName)
+    {
+        return new StatusRuntimeData
+        {
+            Kind = StatusEffectKind.Shield,
+            StatusTag = "shield",
+            StatusName = sourceSkillName,
+            SourceSkillName = sourceSkillName,
+            MergePolicy = StatusMergePolicy.SameSourceTakeHighest,
+            ShieldAmountRefreshPolicy = ShieldRefreshRule.TakeHighest
+        };
+    }
+
+    private static T? GetNodeOperation<T>(SkillNode node) where T : struct
+    {
+        var method = typeof(SkillNode).GetMethod(
+            "GetOperation",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(method, Is.Not.Null);
+        return (T?)method.MakeGenericMethod(typeof(T)).Invoke(node, null);
+    }
+
+    private static void AddActiveArtifactEffect(UnitCombatState target, string effectName)
+    {
+        var method = typeof(ArtifactState).GetMethod(
+            "AddActiveEffect",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(method, Is.Not.Null);
+        method.Invoke(target.Artifacts, new object[] { effectName });
+    }
+
+    private static void SetCooldownRemaining(SkillExecutionState runtime, float value)
+    {
+        var property = typeof(SkillExecutionState).GetProperty(
+            "CooldownRemaining",
+            BindingFlags.Instance | BindingFlags.Public);
+        Assert.That(property, Is.Not.Null);
+        property.SetValue(runtime, value);
     }
 
     private static StatusRuntimeData CriticalDamageStatus(StatusEffectKind kind, float bonus)
