@@ -226,7 +226,6 @@ namespace Pakuri.InGame
                     unitSpawnManager.SpawnEnemyByName(
                         row.EnemyName,
                         spawnIndex,
-                        row.SpawnX,
                         row.SpawnYMin,
                         row.SpawnYMax,
                         healthMultiplier,
@@ -341,19 +340,21 @@ namespace Pakuri.InGame
         private void SelectBossRows()
         {
             var normalBossCandidates = new List<StageEncounterDefinition>();
+            var allowRandomBossSelection = currentDay != null
+                && string.Equals(currentDay.CombatType, "Normal", StringComparison.OrdinalIgnoreCase);
 
             for (var i = 0; i < activeEncounterRows.Count; i++)
             {
                 var row = activeEncounterRows[i];
                 row.SelectedAsBoss = false;
 
-                if (row.IsGuaranteedBoss)
+                if (!row.IsBossCandidate)
                 {
                     row.SelectedAsBoss = true;
                     continue;
                 }
 
-                if (row.IsBossCandidate)
+                if (allowRandomBossSelection)
                 {
                     normalBossCandidates.Add(row);
                 }
@@ -374,13 +375,7 @@ namespace Pakuri.InGame
 
         private bool IsRunAssignedBoss(StageEncounterDefinition row)
         {
-            if (row.SelectedAsBoss)
-            {
-                return true;
-            }
-
-            var isMidbossCombat = activeSession.DayIndex == 5 || activeSession.DayIndex == 10;
-            return isMidbossCombat && (row.IsGuaranteedBoss || row.IsBossCandidate);
+            return row.SelectedAsBoss;
         }
 
         private bool IsOriginalBoss(StageEncounterDefinition row)

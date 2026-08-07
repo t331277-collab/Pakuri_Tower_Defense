@@ -1,5 +1,92 @@
 # RUN_BLACKBOARD
 
+## Task: 2026-08-08 Stage Encounter Spawn and Boss Flag Runtime Contract
+
+### Task title
+
+StageEncounter의 X 스폰 위치와 보스 판정 플래그를 코드 기준으로 단일화한다.
+
+### Goals
+
+- 적 X 위치는 CSV가 아니라 `UnitSpawnManager`의 Inspector `enemySpawnPoint`를 사용한다.
+- `is_boss_candidate=true`는 Normal 전투의 랜덤 보스 후보, `false`는 확정 보스로 해석한다.
+- Day5/Day10 고정 전투의 호위 몬스터는 후보 행으로 이관해 기존 일반 몬스터 동작을 보존한다.
+
+### Constraints
+
+- `StageEncounter.csv`의 기존 수량과 Y 범위는 유지한다.
+- authored boss의 `EnemyEncounterRole` 기반 원래 보스 판정과 run-assigned boss 체력 배율 분리를 유지한다.
+- Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+구현 및 정적 검증 완료. 사용자 Play Mode 확인 대기.
+
+### Next Actions
+
+- Unity에서 Stage1/Stage2 Day5·Day10 호위가 일반 적으로 남고, Day11 확정 보스와 Normal Day 후보가 의도대로 판정되는지 확인한다.
+
+### Evidence
+
+- `StageManager.SelectBossRows`는 `!row.IsBossCandidate`를 확정 보스로 선택하고 `CombatType == Normal`일 때만 후보 중 하나를 랜덤 선택한다.
+- `StageManager.IsRunAssignedBoss`는 `SelectedAsBoss`만 사용하며 authored boss는 기존 `IsOriginalBoss` 경로를 유지한다.
+- `StageManager`는 `SpawnEnemyByName`에 X 값을 전달하지 않고, `UnitSpawnManager`가 `enemySpawnPoint.position.x`를 사용한다.
+- Stage1/Stage2 CSV 정적 검사: Stage1은 35행/33개 데이터 행, Stage2는 32행/30개 데이터 행이며 양쪽 헤더·모든 데이터 행이 11열; Stage1 쉼표 빈 레코드 0개, 구 필드 참조 0.
+- `dotnet build Pakuri\\Pakuri.sln --no-restore -v:minimal` 오류 0, 기존 참조 충돌 경고 2개.
+
+### History
+
+- 2026-08-08: Code Builder가 StageEncounter CSV와 스폰·보스 런타임 계약을 단일화했다. Unity Play Mode 검증은 사용자 확인 대기다.
+- 2026-08-08: Stage1 CSV 끝의 쉼표만 있는 빈 레코드 4행을 삭제했다. 파서의 필수 `encounter_name` 오류 원인이 제거됐다.
+
+## Task: 2026-08-08 MainMenu-InGame Async Scene Loading
+
+### Task title
+
+MainMenu에서 InGameScene으로 이동할 때 동기 씬 로드로 발생하는 메인 스레드 정지를 비동기 로드로 전환한다.
+
+### Goals
+
+- `MainMenuUIManager`의 InGameScene 이동을 `SceneManager.LoadSceneAsync`로 전환한다.
+- GameStart 중복 클릭으로 중복 씬 로드가 시작되지 않게 한다.
+- 기존 `StartContext` 선택 몬스터 전달과 씬 경로를 유지한다.
+
+### Constraints
+
+- 이번 범위는 비동기 로드와 중복 클릭 방지다. 별도 로딩 화면·씬 분할·Addressables 도입은 제외한다.
+- MainMenu와 InGameScene의 계층·Inspector 참조·Stage 초기화 순서는 변경하지 않는다.
+- 사용자 Play Mode와 실제 체감 로딩 비교는 사용자 소유다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+구현 완료. 솔루션 빌드 오류 0; 기존 참조 충돌 경고 2개. Unity Editor 연결이 끊겨 Play Mode와 한 스크립트 MCP diagnostics는 대기 상태다.
+
+### Next Actions
+
+- Play Mode에서 GameStart 클릭 후 화면 정지 정도와 InGameScene 진입을 확인한다.
+- 기존 동기 로드 로그의 `Total Operation Time: 3086.623 ms`와 비교한다.
+- 최종 활성화 시 잔여 hitch가 있으면 별도 로딩 화면 또는 씬 분할을 검토한다.
+
+### Evidence
+
+- 기존 `MainMenuUIManager.cs:219`는 `SceneManager.LoadScene(NewRunScenePath)`를 호출했다.
+- 변경 후 `StartSelectedMonsterRun()`은 `isLoadingRunScene` 가드, GameStart `interactable=false`, `StartCoroutine(LoadRunSceneAsync())`를 사용한다.
+- `LoadRunSceneAsync()`는 기존 동일 경로로 `SceneManager.LoadSceneAsync(NewRunScenePath)`를 호출하고 완료까지 대기한다.
+- 기존 Editor.log의 MainMenu→InGame 실행 기록에서 InGameScene 로드가 Deserialize `2687.193 ms`, Integration `381.570 ms`, Total `3086.623 ms`였다.
+- `dotnet build Pakuri\\Pakuri.sln --no-restore -v:minimal`은 오류 0, 기존 참조 충돌 경고 2개로 완료했다.
+
+### History
+
+- 2026-08-08 Code Builder가 동기 씬 로드의 실제 3.09초 로그와 기존 코드 경로를 확인한 뒤 비동기 로드·중복 클릭 방지를 적용했다.
+
 ## Task: 2026-08-07 Chosen One Artifact Synergy Design
 
 ### Task title

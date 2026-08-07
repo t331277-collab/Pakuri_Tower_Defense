@@ -261,14 +261,13 @@ namespace Pakuri.InGame
         public GameObject SpawnEnemyByName(
             string enemyName,
             int spawnIndex,
-            float spawnX,
             float spawnYMin,
             float spawnYMax,
             float healthMultiplier,
             bool isBoss)
         {
             var prefab = ResolveEnemyPrefab(enemyName);
-            return SpawnEnemyUnit(prefab, enemyName, spawnIndex, spawnX, spawnYMin, spawnYMax, healthMultiplier, isBoss);
+            return SpawnEnemyUnit(prefab, enemyName, spawnIndex, spawnYMin, spawnYMax, healthMultiplier, isBoss);
         }
 
         /// RunSession에서 전달된 파티 정보를 사용해 스테이지를 넘어갈 때 플레이어 파티를 복구한다.
@@ -468,7 +467,6 @@ namespace Pakuri.InGame
             GameObject prefab,
             string enemyName,
             int spawnIndex,
-            float spawnX,
             float spawnYMin,
             float spawnYMax,
             float healthMultiplier,
@@ -478,7 +476,7 @@ namespace Pakuri.InGame
             ApplyEnemyHealthMultiplier(model, healthMultiplier);
 
             var spawnPosition = new Vector3(
-                spawnX,
+                enemySpawnPoint.position.x,
                 UnityEngine.Random.Range(spawnYMin, spawnYMax),
                 enemySpawnPoint.position.z);
             var spawnRotation = enemySpawnPoint.rotation;

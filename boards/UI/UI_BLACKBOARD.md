@@ -1,5 +1,16 @@
 # UI_BLACKBOARD
 
+## Task: 2026-08-08 Character Info Popup First-Click Fix
+
+- Task title: 비활성 `CharInfoPopUP` 최초 활성화 시 첫 클릭이 소모되는 문제 수정
+- Goals: `PrisonPanel`의 1~5P `MoreInfo`를 첫 클릭부터 팝업이 표시되도록 한다.
+- Constraints: 기존 슬롯 조회·팝업 데이터 표시·Close 바인딩은 유지한다. 씬 계층과 Raycast 설정은 변경하지 않는다. 사용자 Play Mode 검증은 사용자 소유다.
+- Role Owner: Code Builder.
+- Status: 구현 완료. 솔루션 빌드 및 MainMenu 스크립트 diagnostics 통과; Unity Editor 연결 복구 후 CharacterInfoPopup diagnostics 재확인 필요.
+- Next Actions: Play Mode에서 1~5P MoreInfo 첫 클릭, 팝업 Close, 재오픈을 확인한다.
+- Evidence: `CharacterInfoPopupUI`의 비활성 씬 오브젝트가 최초 `SetActive(true)` 시 `Awake()`를 실행하고, 기존 `Awake()`의 `Hide()`가 팝업을 즉시 비활성화하던 경로를 제거했다. `CharacterInfoPopupUI.cs`의 `Awake()`는 이제 `BindObject()`와 `BindStaticButtons()`만 수행한다. `dotnet build Pakuri\\Pakuri.sln --no-restore -v:minimal` 오류 0, 기존 참조 충돌 경고 2개; `git diff --check` 통과.
+- History: 2026-08-08 Code Builder가 MoreInfo 2회 클릭 현상을 `Awake()->Hide()` 재진입으로 확정하고 최소 수정했다.
+
 ## Task: 2026-08-07 Prison Character Info Popup
 
 - Task title: `PrisonPanel` MoreInfo → `Popup/CharInfoPopUP` 몬스터 정보 표시

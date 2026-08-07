@@ -1,5 +1,16 @@
 # DATA_BLACKBOARD
 
+## Task: 2026-08-08 Stage Encounter Schema Simplification
+
+- Task title: StageEncounter CSV에서 SpawnPoint·보스 플래그·메모 중복 필드 제거
+- Goals: `spawn_x`를 `UnitSpawnManager.enemySpawnPoint.position.x`로 대체하고, `notes`와 `is_guaranteed_boss`를 제거한다. `is_boss_candidate=true`는 일반 전투 후보, `false`는 확정 보스가 되도록 Stage1/Stage2 CSV와 런타임 계약을 일치시킨다.
+- Constraints: 기존 사용자 수량 변경값을 보존한다. Day5/Day10 호위 몬스터가 확정 보스로 바뀌지 않도록 해당 행은 `true`로 이관한다. 기존 StageDay·StageReward 계약과 authored boss `encounter_role` 분리는 유지한다. Play Mode 검증은 사용자 소유다.
+- Role Owner: Code Builder.
+- Status: 구현 및 정적 검증 완료. 사용자 Play Mode 확인 대기.
+- Next Actions: Unity에서 CSV 재import 후 Day5/Day10 호위, 일반 Day 후보, Day11 확정 보스 생성 결과를 확인한다.
+- Evidence: `StageDefinitionBuilder.cs`는 `spawn_y`, 단일 `is_boss_candidate`, 보스 배율, 포로 필드만 읽고, `StageDefinition.StageEncounterDefinition`에서도 제거 필드를 삭제했다. `UnitSpawnManager.SpawnEnemyUnit`은 `enemySpawnPoint.position.x`를 사용한다. Stage1은 `lines=35`, `data_rows=33`, `blank_comma_rows=0`, `widths=11`, Stage2는 `header=11`, `rows=30`, `widths=11` 정적 검사 통과; `spawn_x`, `is_guaranteed_boss`, StageEncounter `notes` 잔여 참조 0. `dotnet build Pakuri\\Pakuri.sln --no-restore -v:minimal` 오류 0, 기존 참조 충돌 경고 2개.
+- History: 2026-08-08 Code Builder는 StageEncounter 스키마를 14열에서 11열로 축소하고 보스 플래그를 단일화했다. 고정 전투에서는 후보 랜덤 선택을 막아 호위 행의 기존 일반 몬스터 동작을 보존했다. Stage1 끝의 쉼표만 있는 빈 레코드 4행을 삭제해 런타임 필수 `encounter_name` 오류를 제거했다.
+
 ## Task: 2026-08-07 Artifact Synergy Icon Catalog Reuse
 
 - Task title: 기존 파싱된 `artifact_synergies.csv.Icon_Image` 런타임 데이터 재사용

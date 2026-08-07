@@ -58,15 +58,12 @@ namespace Pakuri.Data
                     EnemyName = record.ReadRequiredString("enemy_name"),
                     Count = record.ReadInt("count"),
                     IntervalSeconds = record.ReadFloat("interval_sec"),
-                    SpawnX = record.ReadFloat("spawn_x"),
                     SpawnYMin = record.ReadFloat("spawn_y_min"),
                     SpawnYMax = record.ReadFloat("spawn_y_max"),
                     IsBossCandidate = record.ReadBool("is_boss_candidate"),
-                    IsGuaranteedBoss = record.ReadBool("is_guaranteed_boss"),
                     BossHealthMultiplierMin = record.ReadFloat("boss_health_multiplier_min"),
                     BossHealthMultiplierMax = record.ReadFloat("boss_health_multiplier_max"),
-                    GuaranteedPrisoner = record.ReadBool("guaranteed_prisoner"),
-                    Notes = record.ReadString("notes")
+                    GuaranteedPrisoner = record.ReadBool("guaranteed_prisoner")
                 });
             }
         }

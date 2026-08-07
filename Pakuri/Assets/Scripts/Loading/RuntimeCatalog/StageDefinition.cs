@@ -77,15 +77,12 @@ namespace Pakuri.Data
         public string EnemyName;
         public int Count;
         public float IntervalSeconds;
-        public float SpawnX;
         public float SpawnYMin;
         public float SpawnYMax;
         public bool IsBossCandidate;
-        public bool IsGuaranteedBoss;
         public float BossHealthMultiplierMin;
         public float BossHealthMultiplierMax;
         public bool GuaranteedPrisoner;
-        public string Notes;
         public bool SelectedAsBoss;
     }
 
