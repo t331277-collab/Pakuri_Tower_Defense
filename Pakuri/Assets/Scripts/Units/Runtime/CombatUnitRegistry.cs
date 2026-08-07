@@ -124,6 +124,11 @@ namespace Pakuri.InGame
                 return;
             }
 
+            if (Actor is EnemyActor)
+            {
+                return;
+            }
+
             Object.Destroy(Actor.gameObject, 0.95f);
         }
     }

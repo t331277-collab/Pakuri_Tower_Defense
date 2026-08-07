@@ -2,6 +2,7 @@
  * 역할: 전투 결과와 분리하여 효과 GameObject를 생성·부착·추적·제거·일괄 정리한다.
  */
 
+using System;
 using System.Collections.Generic;
 using Pakuri.Data;
 using UnityEngine;
@@ -14,6 +15,10 @@ namespace Pakuri.InGame
         [SerializeField] private Transform runtimeSkillRoot;
         private readonly Dictionary<StatusRuntimeInstance, GameObject> statusEffectVisuals = new Dictionary<StatusRuntimeInstance, GameObject>();
         private readonly HashSet<GameObject> targetAttachedEffects = new HashSet<GameObject>();
+        private readonly HashSet<GameObject> activeEffects = new HashSet<GameObject>();
+        private readonly List<StatusRuntimeInstance> staleStatuses = new List<StatusRuntimeInstance>();
+        private readonly Dictionary<GameObject, Vector3> prefabBaseScales = new Dictionary<GameObject, Vector3>();
+        private readonly RuntimeObjectPool<EffectPoolKey> effectPool = new RuntimeObjectPool<EffectPoolKey>();
 
         /// 이펙트를 넣을 오브젝트를 생성한다.
 
@@ -23,14 +28,14 @@ namespace Pakuri.InGame
         {
             if (request.Visual != null && request.Visual.HasVisual())
             {
-                var instance = CreateRuntimeObject(request.ObjectName, position, request.Rotation);
-                EffectVisualBuilder.Configure(instance, request.Visual, request.HitboxIsTrigger, request.IncludeHitbox);
-                return instance;
+                return CreateRuntimeObject(request.ObjectName, position, request.Rotation);
             }
 
             if (request.Prefab != null)
             {
-                return Instantiate(request.Prefab, position, request.Rotation, runtimeSkillRoot);
+                var instance = Instantiate(request.Prefab, position, request.Rotation, runtimeSkillRoot);
+                prefabBaseScales[instance] = instance.transform.localScale;
+                return instance;
             }
 
             if (request.CreateEmptyActor)
@@ -39,6 +44,52 @@ namespace Pakuri.InGame
             }
 
             return null;
+        }
+
+        private void PrepareObject(GameObject instance, EffectCreateRequest request)
+        {
+            instance.transform.SetParent(runtimeSkillRoot, false);
+            instance.transform.SetPositionAndRotation(request.Position, request.Rotation);
+
+            if (request.Prefab != null
+                && prefabBaseScales.TryGetValue(instance, out var baseScale))
+            {
+                instance.transform.localScale = baseScale;
+            }
+            else
+            {
+                instance.transform.localScale = Vector3.one;
+            }
+
+            ResetComponents(instance);
+
+            if (request.Visual != null && request.Visual.HasVisual())
+            {
+                EffectVisualBuilder.Configure(instance, request.Visual, request.HitboxIsTrigger, request.IncludeHitbox);
+            }
+        }
+
+        private static void ResetComponents(GameObject instance)
+        {
+            var colliders = instance.GetComponentsInChildren<Collider2D>(true);
+            for (var i = 0; i < colliders.Length; i++)
+            {
+                if (colliders[i] != null)
+                {
+                    colliders[i].enabled = true;
+                }
+            }
+
+            var animators = instance.GetComponentsInChildren<Animator>(true);
+            for (var i = 0; i < animators.Length; i++)
+            {
+                if (animators[i] != null)
+                {
+                    animators[i].enabled = true;
+                    animators[i].Rebind();
+                    animators[i].Update(0f);
+                }
+            }
         }
 
         /// 스킬 적용 대상의 자식으로 이펙트를 적용시켜 이펙트가 타겟에 붙는다.
@@ -76,13 +127,18 @@ namespace Pakuri.InGame
 
             if (instance == null)
             {
-                instance = CreateObject(request, request.Position);
+                var key = new EffectPoolKey(request);
+                instance = effectPool.Get(
+                    key,
+                    () => CreateObject(request, request.Position));
                 if (instance == null)
                 {
                     return null;
                 }
 
+                PrepareObject(instance, request);
                 created = true;
+                activeEffects.Add(instance);
 
                 if (request.PersistentStatus != null)
                 {
@@ -118,38 +174,116 @@ namespace Pakuri.InGame
                 statusEffectVisuals.Remove(status);
             }
 
+            if (instance != null)
+            {
+                staleStatuses.Clear();
+                foreach (var pair in statusEffectVisuals)
+                {
+                    if (pair.Value == instance)
+                    {
+                        staleStatuses.Add(pair.Key);
+                    }
+                }
+
+                for (var i = 0; i < staleStatuses.Count; i++)
+                {
+                    statusEffectVisuals.Remove(staleStatuses[i]);
+                }
+            }
+
             targetAttachedEffects.Remove(instance);
             if (instance == null)
             {
                 return;
             }
 
-            Destroy(instance);
+            activeEffects.Remove(instance);
+            instance.transform.SetParent(runtimeSkillRoot, false);
+            effectPool.Release(instance);
+        }
+
+        public void RemoveEffectsAttachedTo(Transform targetRoot)
+        {
+            if (targetRoot == null)
+            {
+                return;
+            }
+
+            var effects = new List<GameObject>();
+            foreach (var effect in activeEffects)
+            {
+                if (effect != null
+                    && (effect.transform == targetRoot || effect.transform.IsChildOf(targetRoot)))
+                {
+                    effects.Add(effect);
+                }
+            }
+
+            for (var i = 0; i < effects.Count; i++)
+            {
+                RemoveEffect(effects[i]);
+            }
         }
 
         public void ClearEffects()
         {
-            var attachedEffects = new List<GameObject>(targetAttachedEffects);
-            for (var i = 0; i < attachedEffects.Count; i++)
+            var effects = new List<GameObject>(activeEffects);
+            for (var i = 0; i < effects.Count; i++)
             {
-                var attachedEffect = attachedEffects[i];
-                if (attachedEffect != null)
-                {
-                    attachedEffect.SetActive(false);
-                }
-
-                RemoveEffect(attachedEffect);
+                RemoveEffect(effects[i]);
             }
 
+            activeEffects.Clear();
             targetAttachedEffects.Clear();
             statusEffectVisuals.Clear();
-            for (var i = runtimeSkillRoot.childCount - 1; i >= 0; i--)
+        }
+
+        private readonly struct EffectPoolKey : IEquatable<EffectPoolKey>
+        {
+            private readonly GameObject prefab;
+            private readonly RuntimeSkillVisualSpec visual;
+            private readonly string objectName;
+            private readonly bool hitboxIsTrigger;
+            private readonly bool includeHitbox;
+            private readonly bool createEmptyActor;
+
+            public EffectPoolKey(EffectCreateRequest request)
             {
-                var child = runtimeSkillRoot.GetChild(i).gameObject;
-                child.SetActive(false);
-                RemoveEffect(child);
+                prefab = request.Prefab;
+                visual = request.Visual;
+                objectName = request.ObjectName ?? string.Empty;
+                hitboxIsTrigger = request.HitboxIsTrigger;
+                includeHitbox = request.IncludeHitbox;
+                createEmptyActor = request.CreateEmptyActor;
             }
 
+            public bool Equals(EffectPoolKey other)
+            {
+                return ReferenceEquals(prefab, other.prefab)
+                    && ReferenceEquals(visual, other.visual)
+                    && string.Equals(objectName, other.objectName, StringComparison.Ordinal)
+                    && hitboxIsTrigger == other.hitboxIsTrigger
+                    && includeHitbox == other.includeHitbox
+                    && createEmptyActor == other.createEmptyActor;
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is EffectPoolKey other && Equals(other);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    var hash = prefab != null ? prefab.GetInstanceID() : 0;
+                    hash = (hash * 397) ^ (visual?.GetHashCode() ?? 0);
+                    hash = (hash * 397) ^ objectName.GetHashCode();
+                    hash = (hash * 397) ^ hitboxIsTrigger.GetHashCode();
+                    hash = (hash * 397) ^ includeHitbox.GetHashCode();
+                    return (hash * 397) ^ createEmptyActor.GetHashCode();
+                }
+            }
         }
     }
 }

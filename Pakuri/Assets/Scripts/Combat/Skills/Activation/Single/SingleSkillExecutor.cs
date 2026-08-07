@@ -44,7 +44,12 @@ internal sealed class SingleSkillExecutor : MonoBehaviour
 			return false;
 		}
 
-		var executor = instance.AddComponent<SingleSkillExecutor>();
+		var executor = instance.GetComponent<SingleSkillExecutor>();
+		if (executor == null)
+		{
+			executor = instance.AddComponent<SingleSkillExecutor>();
+		}
+
 		return executor.Initialize(context, snapshot);
 	}
 
@@ -54,6 +59,7 @@ internal sealed class SingleSkillExecutor : MonoBehaviour
 		SkillExecutionState snapshot)
 	{
 		effects = context.CombatManager.Effects;
+		pendingSchedules = 0;
 		var runtimeVisual = snapshot.PreparedRuntimeVisual;
 		var hasRuntimeVisual = runtimeVisual != null && runtimeVisual.HasVisual();
 		var prefab = hasRuntimeVisual ? null : snapshot.PreparedSkillEffectPrefab;

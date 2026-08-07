@@ -38,22 +38,50 @@ namespace Pakuri.InGame
 
             if (visual.Sprite != null)
             {
-                var renderer = instance.AddComponent<SpriteRenderer>();
+                var renderer = instance.GetComponent<SpriteRenderer>();
+                if (renderer == null)
+                {
+                    renderer = instance.AddComponent<SpriteRenderer>();
+                }
+
+                renderer.enabled = true;
                 renderer.sprite = visual.Sprite;
                 renderer.color = new Color(1f, 1f, 1f, Mathf.Clamp01(visual.Alpha));
                 renderer.sortingLayerName = SkillEffectSortingLayer;
                 renderer.sortingOrder = visual.SortingOrder;
             }
+            else
+            {
+                var renderer = instance.GetComponent<SpriteRenderer>();
+                if (renderer != null)
+                {
+                    renderer.enabled = false;
+                }
+            }
 
             if (visual.AnimatorController != null)
             {
-                var animator = instance.AddComponent<Animator>();
+                var animator = instance.GetComponent<Animator>();
+                if (animator == null)
+                {
+                    animator = instance.AddComponent<Animator>();
+                }
+
+                animator.enabled = true;
                 animator.runtimeAnimatorController = visual.AnimatorController;
             }
 
             if (includeHitbox && visual.Hitbox != null && visual.Hitbox.HasHitbox())
             {
                 ConfigureHitbox(instance, visual.Hitbox, hitboxIsTrigger);
+            }
+            else
+            {
+                var collider = instance.GetComponent<BoxCollider2D>();
+                if (collider != null)
+                {
+                    collider.enabled = false;
+                }
             }
         }
 
@@ -118,6 +146,7 @@ namespace Pakuri.InGame
                 width / Mathf.Max(0.0001f, Mathf.Abs(scale.y)));
             collider.offset = Vector2.zero;
             collider.isTrigger = true;
+            collider.enabled = true;
             return collider;
         }
 
@@ -156,7 +185,12 @@ namespace Pakuri.InGame
             {
                 name = "RuntimeBranchDamageLineMaterial"
             };
-            var line = instance.AddComponent<LineRenderer>();
+            var line = instance.GetComponent<LineRenderer>();
+            if (line == null)
+            {
+                line = instance.AddComponent<LineRenderer>();
+            }
+
             line.sharedMaterial = material;
             line.useWorldSpace = true;
             line.positionCount = 2;
@@ -177,8 +211,15 @@ namespace Pakuri.InGame
             RuntimeSkillHitboxSpec hitbox,
             bool hitboxIsTrigger)
         {
-            var collider = instance.AddComponent<BoxCollider2D>();
+            var collider = instance.GetComponent<BoxCollider2D>();
+            if (collider == null)
+            {
+                collider = instance.AddComponent<BoxCollider2D>();
+            }
+
+            collider.enabled = true;
             collider.size = hitbox.Size;
+            collider.offset = Vector2.zero;
             collider.isTrigger = hitboxIsTrigger;
         }
 

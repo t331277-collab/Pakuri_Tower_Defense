@@ -45,7 +45,13 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            return instance.AddComponent<ProjectileSkillExecutor>().Initialize(context, snapshot);
+            var executor = instance.GetComponent<ProjectileSkillExecutor>();
+            if (executor == null)
+            {
+                executor = instance.AddComponent<ProjectileSkillExecutor>();
+            }
+
+            return executor.Initialize(context, snapshot);
         }
 
         private bool Initialize(

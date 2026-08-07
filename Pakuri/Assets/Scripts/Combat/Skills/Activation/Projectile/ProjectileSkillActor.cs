@@ -662,6 +662,13 @@ namespace Pakuri.InGame
         private void CacheHitboxColliders()
         {
             hitboxColliders = GetComponentsInChildren<Collider2D>();
+            for (var i = 0; i < hitboxColliders.Length; i++)
+            {
+                if (hitboxColliders[i] != null)
+                {
+                    hitboxColliders[i].enabled = true;
+                }
+            }
         }
 
     }

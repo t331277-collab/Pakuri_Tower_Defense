@@ -46,7 +46,12 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var executor = instance.AddComponent<LineSkillExecutor>();
+            var executor = instance.GetComponent<LineSkillExecutor>();
+            if (executor == null)
+            {
+                executor = instance.AddComponent<LineSkillExecutor>();
+            }
+
             return executor.Initialize(context, snapshot);
         }
 

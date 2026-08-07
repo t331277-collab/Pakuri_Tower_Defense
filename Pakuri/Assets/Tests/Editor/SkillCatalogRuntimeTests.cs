@@ -11,6 +11,82 @@ using UnityEngine;
 public sealed class SkillCatalogRuntimeTests
 {
     [Test]
+    public void RuntimeVisualHitboxIsCreatedAndReused()
+    {
+        var managerObject = new GameObject("effect-manager-test");
+        var runtimeRoot = new GameObject("runtime-skill-root").transform;
+        runtimeRoot.SetParent(managerObject.transform);
+        var manager = managerObject.AddComponent<EffectManager>();
+        var runtimeRootField = typeof(EffectManager).GetField(
+            "runtimeSkillRoot",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(runtimeRootField, Is.Not.Null);
+        runtimeRootField.SetValue(manager, runtimeRoot);
+
+        var visual = new RuntimeSkillVisualSpec
+        {
+            Hitbox = new RuntimeSkillHitboxSpec
+            {
+                Size = new Vector2(1.5f, 0.75f)
+            }
+        };
+        var request = new EffectCreateRequest(
+            visual,
+            null,
+            "runtime-hitbox-test",
+            Vector3.zero,
+            Quaternion.identity,
+            null,
+            null,
+            true,
+            true,
+            false);
+
+        var first = manager.CreateEffect(request);
+        Assert.That(first.GetComponents<BoxCollider2D>(), Has.Length.EqualTo(1));
+        manager.RemoveEffect(first);
+
+        var second = manager.CreateEffect(request);
+        Assert.That(second, Is.SameAs(first));
+        Assert.That(second.GetComponents<BoxCollider2D>(), Has.Length.EqualTo(1));
+        Assert.That(second.GetComponent<BoxCollider2D>().enabled, Is.True);
+
+        manager.ClearEffects();
+        UnityEngine.Object.DestroyImmediate(managerObject);
+    }
+
+    [Test]
+    public void RuntimeObjectPoolReusesReleasedGameObject()
+    {
+        var pool = new RuntimeObjectPool<string>();
+        var root = new GameObject("runtime-pool-test-root");
+        var createCount = 0;
+
+        var first = pool.Get("damage", () =>
+        {
+            createCount++;
+            return new GameObject("pooled");
+        });
+        Assert.That(first, Is.Not.Null);
+        Assert.That(first.activeSelf, Is.True);
+        Assert.That(pool.Release(first), Is.True);
+        Assert.That(first.activeSelf, Is.False);
+
+        var second = pool.Get("damage", () =>
+        {
+            createCount++;
+            return new GameObject("pooled");
+        });
+
+        Assert.That(second, Is.SameAs(first));
+        Assert.That(createCount, Is.EqualTo(1));
+        Assert.That(pool.Release(second), Is.True);
+
+        pool.Clear();
+        UnityEngine.Object.DestroyImmediate(root);
+    }
+
+    [Test]
     public void MagazineReloadCompletesOnceAndArmsNextDamage()
     {
         var skill = new ProjectileSkillDefinition

@@ -26,10 +26,12 @@ namespace Pakuri.InGame
         private Vector3 startLocalPosition;
         private Color startColor = Color.white;
         private readonly List<ActiveDamagePopup> activePopups = new List<ActiveDamagePopup>();
+        private RuntimeObjectPool<GameObject> popupPool;
         private bool initialized;
 
         public void Initialize(TextMesh textMesh)
         {
+            ReleaseAllPopups();
             damageText = textMesh != null ? textMesh : GetComponent<TextMesh>();
             if (damageText == null)
             {
@@ -45,6 +47,11 @@ namespace Pakuri.InGame
             hiddenColor.a = 0f;
             damageText.color = hiddenColor;
             enabled = false;
+        }
+
+        private void OnDisable()
+        {
+            ReleaseAllPopups();
         }
 
         public void Show(float damageAmount, bool isCritical)
@@ -93,11 +100,7 @@ namespace Pakuri.InGame
 
                 if (popup.ElapsedSeconds >= popup.DurationSeconds)
                 {
-                    if (popup.Instance != null)
-                    {
-                        Destroy(popup.Instance);
-                    }
-
+                    ReleasePopup(popup);
                     activePopups.RemoveAt(i);
                 }
             }
@@ -128,29 +131,23 @@ namespace Pakuri.InGame
             while (activePopups.Count >= maxCount)
             {
                 var oldest = activePopups[0];
-                if (oldest != null && oldest.Instance != null)
-                {
-                    Destroy(oldest.Instance);
-                }
-
+                ReleasePopup(oldest);
                 activePopups.RemoveAt(0);
             }
 
-            var instance = Instantiate(damageText.gameObject, damageText.transform.parent);
-            instance.name = $"{damageText.gameObject.name}_Popup";
-            instance.SetActive(true);
-
-            var clonedController = instance.GetComponent<DamageNumberPopup>();
-            if (clonedController != null)
+            popupPool ??= new RuntimeObjectPool<GameObject>();
+            var instance = popupPool.Get(damageText.gameObject, CreatePopupInstance);
+            if (instance == null)
             {
-                clonedController.enabled = false;
-                Destroy(clonedController);
+                return;
             }
+
+            instance.name = $"{damageText.gameObject.name}_Popup";
 
             var text = instance.GetComponent<TextMesh>();
             if (text == null)
             {
-                Destroy(instance);
+                popupPool.Release(instance);
                 return;
             }
 
@@ -169,6 +166,43 @@ namespace Pakuri.InGame
                 popupStart,
                 visibleColor,
                 Mathf.Max(0.01f, durationSeconds)));
+        }
+
+        private GameObject CreatePopupInstance()
+        {
+            var instance = Instantiate(damageText.gameObject, damageText.transform.parent);
+            var clonedController = instance.GetComponent<DamageNumberPopup>();
+            if (clonedController != null)
+            {
+                clonedController.enabled = false;
+                Destroy(clonedController);
+            }
+
+            if (instance.GetComponent<TextMesh>() == null)
+            {
+                Destroy(instance);
+                return null;
+            }
+
+            return instance;
+        }
+
+        private void ReleaseAllPopups()
+        {
+            for (var i = activePopups.Count - 1; i >= 0; i--)
+            {
+                ReleasePopup(activePopups[i]);
+            }
+
+            activePopups.Clear();
+        }
+
+        private void ReleasePopup(ActiveDamagePopup popup)
+        {
+            if (popup != null && popup.Instance != null)
+            {
+                popupPool?.Release(popup.Instance);
+            }
         }
 
         /// 화면에 표시 중인 피해 팝업의 위치와 남은 표시 시간을 보관한다.

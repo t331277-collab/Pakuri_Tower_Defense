@@ -29,7 +29,7 @@ Designer for this handoff. Code Builder for implementation after explicit role a
 
 ## Status
 
-설계 완료. C# 구현은 시작하지 않았다.
+Phase 1~3 C# 구현과 Phase 2 runtime visual hitbox 회귀 수정 완료. 로컬 빌드·Unity EditMode 검증 통과, 사용자 Play Mode 재확인 대기. GitHub 커밋은 하지 않았다.
 
 ## Current inspected evidence
 
@@ -37,7 +37,7 @@ Designer for this handoff. Code Builder for implementation after explicit role a
 - `DamageNumberPopup`의 활성 상한 기본값은 `12`다.
 - `EffectManager.CreateObject`는 런타임 비주얼을 `new GameObject`, 프리팹을 `Instantiate`, 빈 실행 Actor를 `new GameObject`로 만든다.
 - `EffectManager.RemoveEffect`와 `ClearEffects`는 효과를 `Destroy`한다.
-- `EffectVisualBuilder.Configure`는 `SpriteRenderer`, `Animator`, `BoxCollider2D`를 매번 `AddComponent`한다. 재사용 전 `GetComponent` 기반 멱등 설정으로 바꿔야 한다.
+- 구현 전 `EffectVisualBuilder.Configure`는 `SpriteRenderer`, `Animator`, `BoxCollider2D`를 매번 `AddComponent`했다.
 - Projectile, Line, Single Executor는 빈 실행 오브젝트에 자신의 Executor를 매번 `AddComponent`한다.
 - `ProjectileSkillActor.Initialize`는 대부분의 런타임 필드를 초기화하지만 도착 지연에서 비활성화한 Collider를 다시 켜지 않는다.
 - `SingleSkillExecutor.pendingSchedules`는 현재 최초 생성 기본값에 의존한다. 재사용 시작 시 `0`으로 초기화해야 한다.
@@ -45,7 +45,7 @@ Designer for this handoff. Code Builder for implementation after explicit role a
 - `UnitSpawnManager.ApplyBossVisualScale`은 루트와 직계 UI 자식 Transform을 변경한다. 보스 인스턴스를 일반 적으로 재사용하기 전에 원본 Transform을 복원해야 한다.
 - Enemy Actor 프리팹은 16개다. 전부 `BoxCollider2D` 1개를 가지며 Stage2 프리팹 8개는 `Animator` 1개를 가진다. `Rigidbody2D`는 없다.
 - `EnemyActor.Initialize`는 새 `EnemyCombatState`와 새 `UnitHpBar`를 연결하므로 재사용 모델 바인딩 경계로 쓸 수 있다.
-- 관련 전용 풀링 테스트는 현재 없다. 기존 `Pakuri/Assets/Tests/Editor/SkillCatalogRuntimeTests.cs`에는 `UnitSpawnManager` 기반 테스트가 있다.
+- 구현 전 관련 전용 풀링 테스트는 없었다. 현재는 공용 풀과 runtime visual hitbox 재사용 검사가 있다.
 
 ## Core design
 
@@ -212,8 +212,7 @@ Phase gate:
 
 ## Next Actions
 
-- 사용자가 Code Builder 롤을 명시하면 Phase 1만 먼저 구현하고 검증한다.
-- Phase 1 통과 후 Phase 2, Phase 2 통과 후 Phase 3 순서로 진행한다.
+- 사용자가 Play Mode에서 `vega-a`와 다른 runtime visual 투사체를 실행해 MissingComponentException이 재발하지 않는지 확인한다.
 
 ## Evidence
 
@@ -236,9 +235,29 @@ Phase gate:
 - `Pakuri/Assets/Scripts/Units/Runtime/Actor/EnemyActor.cs`
 - `Pakuri/Assets/Scripts/Units/Runtime/Actor/MonsterActor.cs`
 - `Pakuri/ProjectSettings/ProjectVersion.txt`: Unity `6000.3.14f1`.
-- Source search: `NO_POOL_IMPLEMENTATION_FOUND`.
+- 구현 전 Source search: `NO_POOL_IMPLEMENTATION_FOUND`.
 - Prefab static inspection: Enemy Actor prefab 16개, 전부 BoxCollider2D 1개, Stage2 8개만 Animator 1개, Rigidbody2D 0개.
+- `Pakuri/Assets/Scripts/Units/Runtime/RuntimeObjectPool.cs`가 `Dictionary<TKey, Stack<GameObject>>` 기반 owner-local 풀과 active key 추적을 구현한다.
+- `DamageNumberPopup`은 표시 만료·상한 초과 시 `Release`하고 `OnDisable`에서 활성 Popup을 정리한다.
+- `EffectManager`는 prefab/visual/actor key별 풀, Transform·Animator·Collider reset, status/target 추적 정리와 target 하위 효과 일괄 회수를 구현한다.
+- `EffectVisualBuilder`와 Projectile/Line/Single 실행 경로는 재사용 시 기존 컴포넌트를 우선 사용하고, 새 컴포넌트는 최초 생성 때만 추가한다.
+- `UnitSpawnManager`는 적 prefab key 풀, 인스턴스별 원본 Transform 복원, 보스 1.6배 적용, Animator/Collider reset, 지연 회수를 구현한다. 플레이어·소환수 생성 경로는 유지했다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal`: 오류 0개, 기존 System.Net.Http/System.IO.Compression 참조 충돌 경고 2개.
+- Unity `validate_script` 대상 Phase 1~3 변경 스크립트 9개: 오류 없음.
+- Unity EditMode 전체 검사: 37개 중 37개 통과, 실패 0개. 풀 회수·재사용 검사도 통과.
+- `git diff --check`: 공백 오류 없음. 현재 작업 트리에는 구현 파일과 테스트 파일만 변경·추가되어 있으며 커밋은 수행하지 않았다.
+- Play Mode 스택은 `EffectVisualBuilder.ConfigureHitbox:215`의 `collider.enabled = true`에서 `MissingComponentException`을 기록했다.
+- 현재 `EffectVisualBuilder.cs:214`만 저장소 전체에서 `GetComponent<UnityEngine.Object>() ?? AddComponent` 패턴을 사용한다. 같은 파일의 `ConfigureLineHitbox`는 명시적 `if (collider == null)` 패턴을 사용한다.
+- Unity 6 `UnityEngine.Object` 문서는 detached object에 `??`를 지원하지 않는다고 명시한다. 따라서 `GetComponent` 결과가 Unity null로 판정되어도 C# `??`가 `AddComponent`를 실행하지 않고, 다음 `enabled` 접근이 실패할 수 있다.
+- 수정 전 Editor 테스트 검색 결과 `EffectVisualBuilder`, `ConfigureHitbox`, `CreateEffect`를 실행하는 검사는 없고 공용 풀 자체 검사만 존재했다.
+- `EffectVisualBuilder.ConfigureHitbox`는 Unity Object `??` 대신 명시적 `if (collider == null)` 검사를 사용한다.
+- `EffectManager.CreateObject`의 runtime visual 선행 Configure를 제거해 `PrepareObject`에서 한 번만 구성한다.
+- 신규 `RuntimeVisualHitboxIsCreatedAndReused` 검사는 `EffectManager` 생성→반환→동일 인스턴스 재사용과 BoxCollider2D 1개·활성 상태를 확인하고 1/1 통과했다.
+- Unity EditMode 전체 검사 38/38 통과, `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal` 오류 0개·기존 참조 경고 2개, 변경 스크립트 Unity 진단 오류 0개, `git diff --check` 통과.
 
 ## History
 
 - 2026-08-08: Designer가 현재 생성·제거·초기화 경로를 다시 검사하고 3단계 풀링 구현 순서와 단계별 gate를 기록했다.
+- 2026-08-08: Code Builder가 Phase 1 DamageNumberPopup, Phase 2 EffectManager 스킬 이펙트, Phase 3 적 유닛 순서로 구현하고 각 단계 gate를 통과시켰다. Play Mode 검증은 사용자에게 남겼다.
+- 2026-08-08: 사용자 Play Mode에서 `Projectile_vega-a` hitbox 생성 시 `MissingComponentException`이 확인됐다. Designer가 Unity Object `??` 사용과 runtime visual 이중 Configure를 원인·동반 문제로 확정하고 Code Builder 수정 항목을 기록했다.
+- 2026-08-08: Code Builder가 명시적 Unity null 검사, runtime visual 단일 Configure, 생성·재사용 회귀 검사를 반영하고 전체 EditMode 38개를 통과시켰다.

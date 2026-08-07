@@ -50,7 +50,6 @@ namespace Pakuri.InGame
             }
 
             BindStaticButtons();
-            Hide();
         }
 
         public void Open(UnitCombatState model)

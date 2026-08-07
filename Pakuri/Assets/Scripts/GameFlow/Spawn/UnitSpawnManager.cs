@@ -3,6 +3,7 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
@@ -14,9 +15,13 @@ namespace Pakuri.InGame
     public class UnitSpawnManager : MonoBehaviour
     {
         private const float BossVisualScale = 1.6f;
+        private const float EnemyDefeatReleaseDelay = 0.95f;
 
         private readonly UnitCombatStateFactory unitStateFactory = new UnitCombatStateFactory();
         private readonly CombatUnitRegistry unitRegistry = new CombatUnitRegistry();
+        private readonly RuntimeObjectPool<GameObject> enemyPool = new RuntimeObjectPool<GameObject>();
+        private readonly Dictionary<GameObject, EnemyTransformBaseline> enemyTransformBaselines =
+            new Dictionary<GameObject, EnemyTransformBaseline>();
 
         [SerializeField] private InGameCombatManager combatManager;
         [SerializeField] private Transform playerSpawnPoint;
@@ -82,6 +87,48 @@ namespace Pakuri.InGame
 
             public string SummonName => summonName;
             public GameObject Prefab => prefab;
+        }
+
+        private sealed class EnemyTransformBaseline
+        {
+            private readonly Vector3 rootScale;
+            private readonly Vector3[] childPositions;
+            private readonly Quaternion[] childRotations;
+            private readonly Vector3[] childScales;
+
+            private EnemyTransformBaseline(Transform root)
+            {
+                rootScale = root.localScale;
+                childPositions = new Vector3[root.childCount];
+                childRotations = new Quaternion[root.childCount];
+                childScales = new Vector3[root.childCount];
+
+                for (var i = 0; i < root.childCount; i++)
+                {
+                    var child = root.GetChild(i);
+                    childPositions[i] = child.localPosition;
+                    childRotations[i] = child.localRotation;
+                    childScales[i] = child.localScale;
+                }
+            }
+
+            public static EnemyTransformBaseline Capture(Transform root)
+            {
+                return new EnemyTransformBaseline(root);
+            }
+
+            public void Restore(Transform root)
+            {
+                root.localScale = rootScale;
+                var childCount = Mathf.Min(root.childCount, childPositions.Length);
+                for (var i = 0; i < childCount; i++)
+                {
+                    var child = root.GetChild(i);
+                    child.localPosition = childPositions[i];
+                    child.localRotation = childRotations[i];
+                    child.localScale = childScales[i];
+                }
+            }
         }
 
         internal GameObject SpawnTemporarySummon(
@@ -300,7 +347,7 @@ namespace Pakuri.InGame
             return unitRegistry.Unregister(model);
         }
 
-        /// 전투가 끝난 유닛을 Registry에서 제거하고 씬 오브젝트를 파괴한다.
+        /// 전투가 끝난 유닛을 Registry에서 제거하고 씬 오브젝트를 회수한다.
         internal bool DespawnUnit(UnitCombatState model)
         {
             var entry = Find(model);
@@ -310,7 +357,15 @@ namespace Pakuri.InGame
             }
 
             UnregisterUnit(model);
-            Destroy(entry.Actor.gameObject);
+            if (model.Identity != null && model.Identity.Side == UnitSide.Enemy)
+            {
+                ReleaseEnemy(GetUnitRoot(entry));
+            }
+            else
+            {
+                Destroy(entry.Actor.gameObject);
+            }
+
             return true;
         }
 
@@ -323,11 +378,17 @@ namespace Pakuri.InGame
                 return;
             }
 
+            var isEnemy = model.Identity != null && model.Identity.Side == UnitSide.Enemy;
+            var enemyRoot = isEnemy ? GetUnitRoot(entry) : null;
             UnregisterUnit(model);
             entry.HandleDefeat();
             if (model.Identity != null && model.Identity.Role == UnitRole.Summon)
             {
-                Destroy(entry.Actor.gameObject, 0.95f);
+                Destroy(entry.Actor.gameObject, EnemyDefeatReleaseDelay);
+            }
+            else if (isEnemy)
+            {
+                StartCoroutine(ReleaseEnemyAfterDelay(enemyRoot));
             }
         }
 
@@ -421,7 +482,24 @@ namespace Pakuri.InGame
                 UnityEngine.Random.Range(spawnYMin, spawnYMax),
                 enemySpawnPoint.position.z);
             var spawnRotation = enemySpawnPoint.rotation;
-            var spawnedUnit = Instantiate(prefab, spawnPosition, spawnRotation, runtimeEnemyRoot);
+            var spawnedUnit = enemyPool.Get(
+                prefab,
+                () => Instantiate(prefab, Vector3.zero, Quaternion.identity, runtimeEnemyRoot));
+            if (spawnedUnit == null)
+            {
+                return null;
+            }
+
+            spawnedUnit.transform.SetParent(runtimeEnemyRoot, false);
+            spawnedUnit.transform.SetPositionAndRotation(spawnPosition, spawnRotation);
+            if (!enemyTransformBaselines.TryGetValue(spawnedUnit, out var baseline))
+            {
+                baseline = EnemyTransformBaseline.Capture(spawnedUnit.transform);
+                enemyTransformBaselines[spawnedUnit] = baseline;
+            }
+
+            baseline.Restore(spawnedUnit.transform);
+            ResetEnemyComponents(spawnedUnit);
             spawnedUnit.name = $"{prefab.name}_Enemy_{spawnIndex}";
             if (isBoss)
             {
@@ -431,6 +509,57 @@ namespace Pakuri.InGame
             var actor = BindEnemyActor(spawnedUnit, model);
             RegisterEnemy(model, actor, spawnedUnit.transform);
             return spawnedUnit;
+        }
+
+        private IEnumerator ReleaseEnemyAfterDelay(GameObject enemyRoot)
+        {
+            yield return new WaitForSeconds(EnemyDefeatReleaseDelay);
+            ReleaseEnemy(enemyRoot);
+        }
+
+        private void ReleaseEnemy(GameObject enemyRoot)
+        {
+            if (enemyRoot == null)
+            {
+                return;
+            }
+
+            if (combatManager != null && combatManager.Effects != null)
+            {
+                combatManager.Effects.RemoveEffectsAttachedTo(enemyRoot.transform);
+            }
+
+            enemyPool.Release(enemyRoot);
+        }
+
+        private static GameObject GetUnitRoot(CombatUnitEntry entry)
+        {
+            return entry.HitboxRoot != null
+                ? entry.HitboxRoot.gameObject
+                : entry.Actor.gameObject;
+        }
+
+        private static void ResetEnemyComponents(GameObject instance)
+        {
+            var colliders = instance.GetComponentsInChildren<Collider2D>(true);
+            for (var i = 0; i < colliders.Length; i++)
+            {
+                if (colliders[i] != null)
+                {
+                    colliders[i].enabled = true;
+                }
+            }
+
+            var animators = instance.GetComponentsInChildren<Animator>(true);
+            for (var i = 0; i < animators.Length; i++)
+            {
+                if (animators[i] != null)
+                {
+                    animators[i].enabled = true;
+                    animators[i].Rebind();
+                    animators[i].Update(0f);
+                }
+            }
         }
 
         private EnemyCombatState CreateEnemyModel(string enemyName, int slotIndex, bool isBoss)

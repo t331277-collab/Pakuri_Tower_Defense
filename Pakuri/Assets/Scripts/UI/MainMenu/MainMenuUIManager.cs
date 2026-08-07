@@ -3,6 +3,7 @@
  * 책임: Menu 씬 참조와 Button을 연결하고 몬스터 선택 및 Run 시작을 처리한다.
  */
 
+using System.Collections;
 using Pakuri.InGame;
 using Pakuri.Data;
 using TMPro;
@@ -32,6 +33,7 @@ public class MainMenuUIManager : MonoBehaviour
     private TextMeshProUGUI monsterDescriptionText;
 
     private string selectedMonsterName;
+    private bool isLoadingRunScene;
 
     /// 컴포넌트가 첫 프레임을 처리하기 전에 런타임 초기화를 마친다.
     private void Start()
@@ -207,8 +209,13 @@ public class MainMenuUIManager : MonoBehaviour
     /// 선택한 몬스터를 StartContext에 저장하고 Run 씬을 연다.
     private void StartSelectedMonsterRun()
     {
+        if (isLoadingRunScene)
+        {
+            return;
+        }
+
         var monsterName = string.IsNullOrWhiteSpace(selectedMonsterName) ? DefaultMonsterName : selectedMonsterName;
-            StartContext.Prepare(monsterName);
+        StartContext.Prepare(monsterName);
 
         if (string.IsNullOrWhiteSpace(NewRunScenePath))
         {
@@ -216,7 +223,31 @@ public class MainMenuUIManager : MonoBehaviour
             return;
         }
 
-        SceneManager.LoadScene(NewRunScenePath);
+        isLoadingRunScene = true;
+        if (monsterSelectGameStartButton != null)
+        {
+            monsterSelectGameStartButton.interactable = false;
+        }
+
+        StartCoroutine(LoadRunSceneAsync());
+    }
+
+    private IEnumerator LoadRunSceneAsync()
+    {
+        var loadOperation = SceneManager.LoadSceneAsync(NewRunScenePath);
+        if (loadOperation == null)
+        {
+            isLoadingRunScene = false;
+            if (monsterSelectGameStartButton != null)
+            {
+                monsterSelectGameStartButton.interactable = true;
+            }
+
+            Debug.LogError("MainMenuUIManager failed to start asynchronous InGameScene loading.", this);
+            yield break;
+        }
+
+        yield return loadOperation;
     }
 
     private void SetOnlyActive(GameObject activePanel)

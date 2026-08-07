@@ -980,18 +980,23 @@ Designer. 구현은 명시적 Code Builder 요청 뒤 진행한다.
 
 ### Status
 
-구현 설계 문서 작성 완료. C# 구현 미시작.
+Code Builder Phase 1~3 구현 및 로컬 정적/EditMode 검증 완료. Unity Play Mode 검증은 사용자 확인 대기.
 
 ### Next Actions
 
-- Code Builder가 `boards/COMBAT/OBJECT_POOLING_IMPLEMENTATION_HANDOFF.md`의 Phase 1부터 구현한다.
+- Unity Play Mode에서 피해 숫자·스킬 이펙트·적 유닛의 실제 재사용과 보스↔일반 적 교차 재사용을 확인한다.
 
 ### Evidence
 
-- 현재 Source 검색에서 Object Pool 구현이 발견되지 않았다.
-- `DamageNumberPopup`, `EffectManager`, `UnitSpawnManager`가 각각 직접 생성·파괴한다.
+- 구현 전 Source 검색에서 Object Pool 구현이 발견되지 않았다.
+- 구현 전 `DamageNumberPopup`, `EffectManager`, `UnitSpawnManager`가 각각 직접 생성·파괴했다.
 - 상세 초기화 계약과 단계별 수용 기준은 `boards/COMBAT/OBJECT_POOLING_IMPLEMENTATION_HANDOFF.md`에 기록했다.
+- 현재 `RuntimeObjectPool<TKey>`는 `DamageNumberPopup`, `EffectManager`, `UnitSpawnManager`가 각각 소유하며 GameObject 저장·회수와 key 분리를 담당한다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal`은 오류 0개였고 기존 참조 충돌 경고 2개만 남았다.
+- Unity EditMode 전체 37개가 통과했고 `RuntimeObjectPoolReusesReleasedGameObject`도 통과했다.
+- Unity 변경 스크립트 진단 오류 0개, `git diff --check` 공백 오류 없음. 이 작업에서는 GitHub 커밋을 수행하지 않았다.
 
 ### History
 
 - 2026-08-08: Designer가 현재 코드와 16개 Enemy Actor prefab을 검사하고 3단계 구현 순서를 확정했다.
+- 2026-08-08: Code Builder가 handoff 순서대로 DamageNumberPopup → EffectManager 스킬 이펙트 → 적 유닛 풀링과 상태 초기화를 구현했다. Play Mode 검증은 사용자 확인 대기다.
