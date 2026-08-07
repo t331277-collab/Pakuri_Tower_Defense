@@ -46,7 +46,7 @@ namespace Pakuri.Combat
                 return 0f;
             }
 
-            var artifactModifiers = ArtifactCombatRules.Resolve(target);
+            var artifactModifiers = ArtifactCombat.Resolve(target);
             var defense = target.Defenses.Get(attribute);
             defense *= target.SkillState.PassiveDefenseMultiplier(attribute);
             defense *= Mathf.Max(0f, 1f + artifactModifiers.DefenseBonusRate);
@@ -75,7 +75,7 @@ namespace Pakuri.Combat
         {
             isCritical = false;
             var damage = rawDamage;
-            var artifactModifiers = ArtifactCombatRules.Resolve(target);
+            var artifactModifiers = ArtifactCombat.Resolve(target);
             var defense = CalculateFinalDefense(target, attribute);
             damage *= 100f / Mathf.Max(0.01f, 100f + defense);
 

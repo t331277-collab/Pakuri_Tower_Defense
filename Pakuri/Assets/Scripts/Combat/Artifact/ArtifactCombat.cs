@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
-    public static class ArtifactCombatRules
+    public static class ArtifactCombat
     {
         public readonly struct Modifiers
         {

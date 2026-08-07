@@ -13,7 +13,7 @@ namespace Pakuri.InGame
 {
 
     /// 영역이 유지되는 동안 주기적인 적중 결과를 전투에 반영한다.
-    public class ZoneSkillActor : MonoBehaviour
+    public class ZoneSkillObject : MonoBehaviour
     {
 
         private InGameCombatManager combatManager;

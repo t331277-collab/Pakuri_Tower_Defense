@@ -122,7 +122,7 @@ namespace Pakuri.InGame
             var actionDeltaTime = deltaTime
                 * StatusCombatRules.ActionSpeedMultiplier(runtime.Owner);
             var cooldownDeltaTime = actionDeltaTime
-                * ArtifactCombatRules.CooldownChargeMultiplier(runtime.Owner);
+                * ArtifactCombat.CooldownChargeMultiplier(runtime.Owner);
             runtime.CooldownRemaining = TickDown(runtime.CooldownRemaining, cooldownDeltaTime);
             runtime.CastRemaining = TickDown(runtime.CastRemaining, actionDeltaTime);
             runtime.ActiveDurationRemaining = TickDown(
@@ -1054,27 +1054,27 @@ namespace Pakuri.InGame
                 case SkillRuntimeKind.MagazineProjectile:
                 case SkillRuntimeKind.CooldownProjectile:
                     RequireDefinition<ProjectileSkillDefinition>(skillData);
-                    return ProjectileSkillExecutor.Execute(context, snapshot);
+                    return ProjectileSkillManager.Execute(context, snapshot);
                 case SkillRuntimeKind.LineAttack:
                     RequireDefinition<LineSkillDefinition>(skillData);
-                    return LineSkillExecutor.Execute(context, snapshot);
+                    return LineSkillManager.Execute(context, snapshot);
                 case SkillRuntimeKind.SingleAttack:
                 case SkillRuntimeKind.Mark:
                 case SkillRuntimeKind.Execute:
                     RequireDefinition<SingleSkillDefinition>(skillData);
-                    return SingleSkillExecutor.Execute(context, snapshot);
+                    return SingleSkillManager.Execute(context, snapshot);
                 case SkillRuntimeKind.AreaAttack:
                     if (skillData is SingleSkillDefinition)
                     {
-                        return SingleSkillExecutor.Execute(context, snapshot);
+                        return SingleSkillManager.Execute(context, snapshot);
                     }
                     RequireDefinition<ZoneSkillDefinition>(skillData);
-                    return ZoneSkillExecutor.Execute(context, snapshot);
+                        return ZoneSkillManager.Execute(context, snapshot);
                 case SkillRuntimeKind.Buff:
                 case SkillRuntimeKind.Shield:
                 case SkillRuntimeKind.Heal:
                     RequireDefinition<BuffSkillDefinition>(skillData);
-                    return BuffSkillExecutor.Execute(context, snapshot);
+                    return BuffSkillManager.Execute(context, snapshot);
                 default:
                     throw new InvalidOperationException(
                         "Unsupported skill runtime kind: " + skillData.RuntimeKind);
@@ -1166,7 +1166,7 @@ namespace Pakuri.InGame
                     effect.RadiusMultiplier,
                     effect.DurationSeconds,
                     center)
-                && ZoneSkillExecutor.Execute(context, snapshot);
+                && ZoneSkillManager.Execute(context, snapshot);
         }
 
         /// 직선형 공격의 위치와 피해 입력을 준비한다.

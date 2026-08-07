@@ -12,7 +12,7 @@ namespace Pakuri.InGame
 {
 
     /// 시전 계획을 투사체 오브젝트로 바꾸고 이동과 적중 판정을 넘긴다.
-    internal sealed class ProjectileSkillExecutor : MonoBehaviour
+    internal sealed class ProjectileSkillManager : MonoBehaviour
     {
         private EffectManager effects;
 
@@ -45,10 +45,10 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var executor = instance.GetComponent<ProjectileSkillExecutor>();
+            var executor = instance.GetComponent<ProjectileSkillManager>();
             if (executor == null)
             {
-                executor = instance.AddComponent<ProjectileSkillExecutor>();
+                executor = instance.AddComponent<ProjectileSkillManager>();
             }
 
             return executor.Initialize(context, snapshot);
@@ -180,10 +180,10 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var actor = instance.GetComponent<ProjectileSkillActor>();
+            var actor = instance.GetComponent<ProjectileSkillObject>();
             if (actor == null)
             {
-                actor = instance.AddComponent<ProjectileSkillActor>();
+                actor = instance.AddComponent<ProjectileSkillObject>();
             }
             actor.Initialize(
                 context.CombatManager,

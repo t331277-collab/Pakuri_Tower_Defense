@@ -8,7 +8,7 @@ namespace Pakuri.InGame
 {
 
     /// 적용된 지원 효과가 보이는 기간을 실제 효과 수명과 맞춘다.
-    public class BuffSkillActor : MonoBehaviour
+    public class BuffSkillObject : MonoBehaviour
     {
 
         private EffectManager effectManager;
@@ -41,13 +41,13 @@ namespace Pakuri.InGame
             manager.RemoveEffect(gameObject);
         }
 
-        /// BuffSkillActor 컴포넌트 부착
-        public static BuffSkillActor Attach(GameObject instance)
+        /// BuffSkillObject 컴포넌트 부착
+        public static BuffSkillObject Attach(GameObject instance)
         {
-            var actor = instance.GetComponent<BuffSkillActor>();
+            var actor = instance.GetComponent<BuffSkillObject>();
             if (actor == null)
             {
-                actor = instance.AddComponent<BuffSkillActor>();
+                actor = instance.AddComponent<BuffSkillObject>();
             }
 
             return actor;

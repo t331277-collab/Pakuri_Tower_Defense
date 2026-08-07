@@ -11,7 +11,7 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    public class LineSkillActor : MonoBehaviour
+    public class LineSkillObject : MonoBehaviour
     {
 
         private InGameCombatManager combatManager;
@@ -131,7 +131,7 @@ namespace Pakuri.InGame
                 {
                     StatusCombatRules.ApplyStatus(combatManager, target.Model, statusSpec, sourceModel);
                 }
-                ZoneSkillActor.PublishHitOutcome(
+                ZoneSkillObject.PublishHitOutcome(
                     combatManager,
                     roster,
                     runtime,

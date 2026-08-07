@@ -10,7 +10,7 @@ namespace Pakuri.InGame
 {
 
     /// 확정된 지원 효과를 실제 전투 변화와 시각 표현으로 연결한다.
-    internal static class BuffSkillExecutor
+    internal static class BuffSkillManager
     {
 
         /// 지원 효과의 스킬 종류에 맞는 적용 방식을 고른다.
@@ -203,7 +203,7 @@ namespace Pakuri.InGame
                 false));
             if (instance != null)
             {
-                BuffSkillActor.Attach(instance).InitializeTimed(effects, duration);
+                BuffSkillObject.Attach(instance).InitializeTimed(effects, duration);
                 casterVisualSpawned = snapshot.PreparedAttachVisualToCaster;
             }
         }

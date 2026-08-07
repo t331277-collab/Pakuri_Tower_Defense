@@ -13,7 +13,7 @@ namespace Pakuri.InGame
 {
 
     /// 발사된 투사체가 사라질 때까지 이동과 충돌 결과를 전투에 반영한다.
-    public class ProjectileSkillActor : MonoBehaviour
+    public class ProjectileSkillObject : MonoBehaviour
     {
 
         private readonly HashSet<string> hitUnitNames = new HashSet<string>();
@@ -326,7 +326,7 @@ namespace Pakuri.InGame
                 }
             }
 
-            ZoneSkillActor.PublishHitOutcome(
+            ZoneSkillObject.PublishHitOutcome(
                 combatManager,
                 combatManager != null ? combatManager.Units : null,
                 runtime,
@@ -517,10 +517,10 @@ namespace Pakuri.InGame
                 return;
             }
             Destroy(material, durationSeconds);
-            var lineActor = lineObject.GetComponent<ProjectileSkillActor>();
+            var lineActor = lineObject.GetComponent<ProjectileSkillObject>();
             if (lineActor == null)
             {
-                lineActor = lineObject.AddComponent<ProjectileSkillActor>();
+                lineActor = lineObject.AddComponent<ProjectileSkillObject>();
             }
 
             lineActor.InitializeVisualLifetime(combatManager.Effects, durationSeconds);

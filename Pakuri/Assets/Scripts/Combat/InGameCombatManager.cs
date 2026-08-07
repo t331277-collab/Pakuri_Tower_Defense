@@ -512,7 +512,7 @@ namespace Pakuri.InGame
             status.SetSourceUnit(source);
             target.SyncShield();
             Units.RefreshDisplay(target);
-            BuffSkillExecutor.ShowStatusEffectVisual(this, target, status);
+            BuffSkillManager.ShowStatusEffectVisual(this, target, status);
             return status;
         }
 
@@ -547,7 +547,7 @@ namespace Pakuri.InGame
             status.SetSourceUnit(source);
             target.SyncShield();
             Units.RefreshDisplay(target);
-            BuffSkillExecutor.ShowStatusEffectVisual(this, target, status);
+            BuffSkillManager.ShowStatusEffectVisual(this, target, status);
             if (target.GetTotalShield() > beforeShield)
             {
                 SkillTrigger.ExecuteHealOrShieldReceived(
@@ -590,7 +590,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                BuffSkillExecutor.ShowStatusEffectVisual(this, target, status);
+                BuffSkillManager.ShowStatusEffectVisual(this, target, status);
             }
 
             return true;

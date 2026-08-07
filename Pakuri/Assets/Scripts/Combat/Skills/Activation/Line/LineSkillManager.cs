@@ -13,7 +13,7 @@ namespace Pakuri.InGame
 {
 
     /// 시전 계획을 직선 공격 오브젝트로 바꾸고 적중 판정을 넘긴다.
-    internal sealed class LineSkillExecutor : MonoBehaviour
+    internal sealed class LineSkillManager : MonoBehaviour
     {
         private EffectManager effects;
 
@@ -46,10 +46,10 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var executor = instance.GetComponent<LineSkillExecutor>();
+            var executor = instance.GetComponent<LineSkillManager>();
             if (executor == null)
             {
-                executor = instance.AddComponent<LineSkillExecutor>();
+                executor = instance.AddComponent<LineSkillManager>();
             }
 
             return executor.Initialize(context, snapshot);
@@ -137,10 +137,10 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var actor = instance.GetComponent<LineSkillActor>();
+            var actor = instance.GetComponent<LineSkillObject>();
             if (actor == null)
             {
-                actor = instance.AddComponent<LineSkillActor>();
+                actor = instance.AddComponent<LineSkillObject>();
             }
             actor.Initialize(
                 context.CombatManager,

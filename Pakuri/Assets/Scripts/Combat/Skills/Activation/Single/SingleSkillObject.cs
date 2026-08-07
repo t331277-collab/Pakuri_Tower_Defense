@@ -13,7 +13,7 @@ namespace Pakuri.InGame
 {
 
     /// 단발성 효과가 맡은 작업과 표현이 모두 끝날 때까지 수명을 유지한다.
-    public partial class SingleSkillActor : MonoBehaviour
+    public partial class SingleSkillObject : MonoBehaviour
     {
 
         private EffectManager effectManager;
@@ -56,12 +56,12 @@ namespace Pakuri.InGame
         }
 
         /// 효과 객체에 실행 컴포넌트를 연결한다.
-        public static SingleSkillActor Attach(GameObject instance)
+        public static SingleSkillObject Attach(GameObject instance)
         {
-            var actor = instance.GetComponent<SingleSkillActor>();
+            var actor = instance.GetComponent<SingleSkillObject>();
             if (actor == null)
             {
-                actor = instance.AddComponent<SingleSkillActor>();
+                actor = instance.AddComponent<SingleSkillObject>();
             }
 
             return actor;
@@ -79,7 +79,7 @@ namespace Pakuri.InGame
     }
 
 /// 배치된 공격의 대상 판정과 전투 결과를 적용한다.
-public partial class SingleSkillActor
+public partial class SingleSkillObject
 {
 
 	/// 대상 상태를 반영한 피해 입력과 처형 결과를 고정한다.
@@ -153,7 +153,7 @@ public partial class SingleSkillActor
 						snapshot.RadiusBonus);
 				}
 				flag2 = ApplyPrefabHitbox(context.CombatManager, context.CasterEntry, context.Roster, snapshot.PreparedTargeting, gameObject, num, damage, attribute, statusSpec, context.Caster, context.SourceSkillName, skillRuntimeInstance, snapshot.PreparedCriticalAllowed, critChanceBonus, critDamageBonus, snapshot, context.EventTarget, context.LockToEventTarget);
-				SingleSkillActor.Attach(gameObject).InitializeAnimation(effects);
+				SingleSkillObject.Attach(gameObject).InitializeAnimation(effects);
 			}
 		}
 		if (!flag)
@@ -165,7 +165,7 @@ public partial class SingleSkillActor
 				var visualInstance = effects.CreateEffect(new EffectCreateRequest(runtimeVisual, prefab, "RuntimeSingleVisual", center, Quaternion.identity, null, null, false, true, false));
 				if (visualInstance != null)
 				{
-					SingleSkillActor.Attach(visualInstance).InitializeAnimation(effects);
+					SingleSkillObject.Attach(visualInstance).InitializeAnimation(effects);
 				}
 			}
 		}
@@ -226,7 +226,7 @@ public partial class SingleSkillActor
 					StatusCombatRules.ApplyStatus(manager, unitEntry.Model, statusSpec, source);
 				}
 				TryApplyCoreOnHitAdditionalDamage(manager, snapshot, source, sourceSkillName, unitEntry, damageResolution.Damage, isCoreHit);
-				ZoneSkillActor.PublishHitOutcome(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillName, unitEntry, hitPosition, damageResolution.Damage);
+				ZoneSkillObject.PublishHitOutcome(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillName, unitEntry, hitPosition, damageResolution.Damage);
 				result = true;
 				num++;
 				if (num >= maxTargets)
@@ -263,7 +263,7 @@ public partial class SingleSkillActor
 			{
 				StatusCombatRules.ApplyStatus(manager, unitEntry.Model, statusSpec, source);
 			}
-				ZoneSkillActor.PublishHitOutcome(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillName, unitEntry, hitPosition, damageResolution.Damage);
+				ZoneSkillObject.PublishHitOutcome(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillName, unitEntry, hitPosition, damageResolution.Damage);
 			result = true;
 			num++;
 			if (num >= maxTargets)
@@ -301,7 +301,7 @@ public partial class SingleSkillActor
 			{
 				StatusCombatRules.ApplyStatus(manager, unitEntry.Model, statusSpec, source);
 			}
-				ZoneSkillActor.PublishHitOutcome(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillName, unitEntry, hitPosition, damageResolution.Damage);
+				ZoneSkillObject.PublishHitOutcome(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillName, unitEntry, hitPosition, damageResolution.Damage);
 			TryApplyHitCountCooldownRefund(sourceRuntime, snapshot, 1);
 			TryExecuteOnHitCountEffects(manager, unitRoster, sourceEntry, sourceRuntime, snapshot, 1, center);
 			return true;
@@ -324,7 +324,7 @@ public partial class SingleSkillActor
 				{
 					StatusCombatRules.ApplyStatus(manager, unitEntry2.Model, statusSpec, source);
 				}
-				ZoneSkillActor.PublishHitOutcome(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillName, unitEntry2, hitPosition2, damageResolution2.Damage);
+					ZoneSkillObject.PublishHitOutcome(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillName, unitEntry2, hitPosition2, damageResolution2.Damage);
 				result2 = true;
 				num++;
 			}

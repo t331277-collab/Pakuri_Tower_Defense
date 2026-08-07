@@ -463,11 +463,11 @@ public sealed class SkillCatalogRuntimeTests
         };
         var expectedRates = new[] { 0.05f, 0.10f, 0.15f, 0.20f };
         var expectedFlat = new[] { 8f, 12f, 18f, 25f };
-        Assert.That(ArtifactCombatRules.Resolve(target).DefenseBonusRate, Is.Zero);
+        Assert.That(ArtifactCombat.Resolve(target).DefenseBonusRate, Is.Zero);
         for (var i = 0; i < defenseEffects.Length; i++)
         {
             AddActiveArtifactEffect(target, defenseEffects[i]);
-            var modifiers = ArtifactCombatRules.Resolve(target);
+            var modifiers = ArtifactCombat.Resolve(target);
             Assert.That(modifiers.DefenseBonusRate, Is.EqualTo(expectedRates[i]).Within(0.0001f));
             Assert.That(modifiers.FlatDefenseBonus, Is.EqualTo(expectedFlat[i]).Within(0.0001f));
         }

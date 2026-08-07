@@ -10,7 +10,7 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-internal sealed class SingleSkillExecutor : MonoBehaviour
+internal sealed class SingleSkillManager : MonoBehaviour
 {
 	private EffectManager effects;
 	private int pendingSchedules;
@@ -44,10 +44,10 @@ internal sealed class SingleSkillExecutor : MonoBehaviour
 			return false;
 		}
 
-		var executor = instance.GetComponent<SingleSkillExecutor>();
+	var executor = instance.GetComponent<SingleSkillManager>();
 		if (executor == null)
 		{
-			executor = instance.AddComponent<SingleSkillExecutor>();
+		executor = instance.AddComponent<SingleSkillManager>();
 		}
 
 		return executor.Initialize(context, snapshot);
@@ -67,7 +67,7 @@ internal sealed class SingleSkillExecutor : MonoBehaviour
 		for (var i = 0; i < snapshot.PreparedCenters.Count; i++)
 		{
 			var center = snapshot.PreparedCenters[i];
-			castCommitted |= SingleSkillActor.ExecuteAtCenter(
+			castCommitted |= SingleSkillObject.ExecuteAtCenter(
 				context,
 				snapshot,
 				center,
@@ -113,7 +113,7 @@ internal sealed class SingleSkillExecutor : MonoBehaviour
 			for (var i = 0; i < repeatCount; i++)
 			{
 				var repeatCenter = ResolveRepeatCenter(context, repeatedSnapshot, center, i);
-				SingleSkillActor.ExecuteAtCenter(
+				SingleSkillObject.ExecuteAtCenter(
 					context,
 					repeatedSnapshot,
 					repeatCenter,
@@ -162,7 +162,7 @@ internal sealed class SingleSkillExecutor : MonoBehaviour
 			}
 
 			var repeatCenter = ResolveRepeatCenter(context, snapshot, center, i);
-			SingleSkillActor.ExecuteAtCenter(
+			SingleSkillObject.ExecuteAtCenter(
 				context,
 				snapshot,
 				repeatCenter,

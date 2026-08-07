@@ -213,7 +213,7 @@ namespace Pakuri.InGame
                             effect.TargetSkill.SkillName,
                             skill.SkillName,
                             StringComparison.OrdinalIgnoreCase))
-                    || !ArtifactCombatRules.ConditionsMatch(
+                    || !ArtifactCombat.ConditionsMatch(
                         effect.Nodes,
                         owner,
                         skill,
@@ -270,7 +270,7 @@ namespace Pakuri.InGame
                         effect.TargetSkill.SkillName,
                         skill.SkillName,
                         StringComparison.OrdinalIgnoreCase))
-                && ArtifactCombatRules.ConditionsMatch(
+                && ArtifactCombat.ConditionsMatch(
                     effect.Nodes,
                     owner,
                     skill,
