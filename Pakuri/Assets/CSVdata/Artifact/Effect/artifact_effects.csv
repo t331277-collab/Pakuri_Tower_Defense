@@ -53,7 +53,7 @@
 "prayer-stone-effect","prayer-stone","SkillModifier","AllAllies","None","None","","",""
 "sentinels-bell-effect","sentinels-bell","PassiveTrigger","AllAllies","None","None","","",""
 "infinite-shell-effect","infinite-shell","SkillModifier","AllAllies","None","None","","",""
-"overheated-chamber-effect","overheated-chamber","PassiveTrigger","Owner","None","None","","",""
+"overheated-chamber-effect","overheated-chamber","SkillModifier","Owner","None","None","","",""
 "double-barrel-core-effect","double-barrel-core","SkillModifier","Owner","None","None","","",""
 "rapid-loader-effect","rapid-loader","SkillModifier","Owner","None","None","","",""
 "piercing-feather-effect","piercing-feather","SkillModifier","AllAllies","None","None","","",""

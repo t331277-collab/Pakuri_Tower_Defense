@@ -11,6 +11,44 @@ using UnityEngine;
 public sealed class SkillCatalogRuntimeTests
 {
     [Test]
+    public void MagazineReloadCompletesOnceAndArmsNextDamage()
+    {
+        var skill = new ProjectileSkillDefinition
+        {
+            SkillName = "reload-contract-test",
+            RuntimeKind = SkillRuntimeKind.MagazineProjectile,
+            MagazineCapacity = 1,
+            ReloadSeconds = 0.1f,
+            Nodes = new[]
+            {
+                SkillNode.FromOperation(new SkillActionOp(
+                    SkillActionOpKind.ReloadCompleteDamageMultiplier,
+                    1.25f))
+            }
+        };
+        var runtime = new SkillExecutionState(null, skill);
+        var snapshot = SkillExecutionRules.CreateDefinitionSnapshot(skill);
+
+        Assert.That(SkillExecution.TryBeginCast(runtime, snapshot), Is.True);
+        Assert.That(runtime.MagazineRemaining, Is.Zero);
+
+        SkillExecution.Tick(runtime, 0.1f);
+
+        var consume = typeof(SkillExecution).GetMethod(
+            "ConsumeReloadCompleteEvent",
+            BindingFlags.Static | BindingFlags.NonPublic);
+        var armed = typeof(SkillExecutionState).GetField(
+            "armedReloadDamageMultiplier",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(consume, Is.Not.Null);
+        Assert.That(armed, Is.Not.Null);
+        Assert.That(runtime.MagazineRemaining, Is.EqualTo(1));
+        Assert.That((bool)consume.Invoke(null, new object[] { runtime }), Is.True);
+        Assert.That((bool)consume.Invoke(null, new object[] { runtime }), Is.False);
+        Assert.That((float)armed.GetValue(runtime), Is.EqualTo(1.25f).Within(0.0001f));
+    }
+
+    [Test]
     /// 선택 의미가 지정 스킬에만 반영되는지 확인한다.
     public void ChoiceNodesApplyOnlyToTheirTargetSkill()
     {

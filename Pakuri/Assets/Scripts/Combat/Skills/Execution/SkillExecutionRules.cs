@@ -78,6 +78,11 @@ namespace Pakuri.InGame
             ApplyChoices(snapshot, owner.Skills.ChosenEnhancementNames, skill, owner, roster);
             ApplyChoices(snapshot, owner.Skills.ChosenMasterSkillNames, skill, owner, roster);
             ApplyArtifactModifiers(snapshot, owner, skill);
+            if (runtime.armedReloadDamageMultiplier > 1f)
+            {
+                snapshot.ApplyDynamicDamageMultiplier(
+                    runtime.armedReloadDamageMultiplier);
+            }
             ApplySkillRuntimeCritModifiers(snapshot);
             return snapshot;
         }
@@ -866,6 +871,10 @@ namespace Pakuri.InGame
 			break;
 		case SkillActionOpKind.ReloadTimeMultiplier:
 			snapshot.ReloadTimeMultiplier *= PositiveOrDefault(action.Amount, 1f);
+			break;
+		case SkillActionOpKind.ReloadCompleteDamageMultiplier:
+			snapshot.ReloadCompleteDamageMultiplier *=
+				PositiveOrDefault(action.Amount, 1f);
 			break;
 		case SkillActionOpKind.PierceBonus:
 			snapshot.PierceBonus += action.Count;

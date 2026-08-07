@@ -122,3 +122,4 @@
 "MagazineLastProjectileDamageMultiplier","MagazineLastProjectileDamageMultiplier","Action","",""
 "FirstMagazineProjectileFollowUp","FirstMagazineProjectileFollowUp","Action","",""
 "ArrivalFragmentBurst","ArrivalFragmentBurst","Action","",""
+"ReloadCompleteDamageMultiplier","ReloadCompleteDamageMultiplier","Action","",""

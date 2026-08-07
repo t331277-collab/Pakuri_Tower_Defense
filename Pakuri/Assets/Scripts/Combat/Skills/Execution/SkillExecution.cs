@@ -31,6 +31,10 @@ namespace Pakuri.InGame
             runtime.TickRemaining = 0f;
             runtime.ReloadRemaining = 0f;
             runtime.MagazineRemaining = runtime.MaxMagazineSize;
+            runtime.reloadCyclePending = false;
+            runtime.reloadCompleteEventPending = false;
+            runtime.pendingReloadDamageMultiplier = 1f;
+            runtime.armedReloadDamageMultiplier = 1f;
             ResetCooldown(runtime);
             runtime.queuedBurstShotsRemaining = 0;
             runtime.ProjectileLaunchCount = 0;
@@ -127,14 +131,7 @@ namespace Pakuri.InGame
             runtime.TickRemaining = TickDown(runtime.TickRemaining, actionDeltaTime);
             runtime.ReloadRemaining = TickDown(runtime.ReloadRemaining, deltaTime);
 
-            if (runtime.UsesMagazine
-                && runtime.MagazineRemaining <= 0
-                && runtime.ReloadRemaining <= 0f
-                && runtime.CooldownRemaining <= 0f
-                && !runtime.IsBursting)
-            {
-                runtime.MagazineRemaining = runtime.MaxMagazineSize;
-            }
+            TryCompleteReload(runtime);
         }
 
         /// 쿨다운과 탄창, 시전 간격(투사체)이 현재 스킬 사용 발동을 허용하는지 판정
@@ -199,9 +196,16 @@ namespace Pakuri.InGame
 
             if (runtime.UsesMagazine)
             {
+                var wasLastProjectile = runtime.MagazineRemaining == 1;
                 runtime.MagazineRemaining = Math.Max(
                     0,
                     runtime.MagazineRemaining - 1);
+                if (wasLastProjectile)
+                {
+                    runtime.pendingReloadDamageMultiplier = Mathf.Max(
+                        1f,
+                        snapshot?.ReloadCompleteDamageMultiplier ?? 1f);
+                }
             }
 
             var timing = runtime.Data.Timing;
@@ -220,6 +224,7 @@ namespace Pakuri.InGame
             }
 
             runtime.ActiveExecutionData = snapshot;
+            runtime.armedReloadDamageMultiplier = 1f;
             return true;
         }
 
@@ -268,14 +273,7 @@ namespace Pakuri.InGame
             runtime.ReloadRemaining = Mathf.Max(
                 0f,
                 runtime.ReloadRemaining - seconds);
-            if (runtime.ReloadRemaining <= 0f
-                && runtime.UsesMagazine
-                && runtime.MagazineRemaining <= 0
-                && runtime.CooldownRemaining <= 0f
-                && !runtime.IsBursting)
-            {
-                runtime.MagazineRemaining = runtime.MaxMagazineSize;
-            }
+            TryCompleteReload(runtime);
 
             return true;
         }
@@ -295,14 +293,7 @@ namespace Pakuri.InGame
             runtime.CooldownRemaining = Mathf.Max(
                 0f,
                 runtime.CooldownRemaining - seconds);
-            if (runtime.CooldownRemaining <= 0f
-                && runtime.UsesMagazine
-                && runtime.MagazineRemaining <= 0
-                && runtime.ReloadRemaining <= 0f
-                && !runtime.IsBursting)
-            {
-                runtime.MagazineRemaining = runtime.MaxMagazineSize;
-            }
+            TryCompleteReload(runtime);
 
             return true;
         }
@@ -316,13 +307,7 @@ namespace Pakuri.InGame
             }
 
             runtime.CooldownRemaining = 0f;
-            if (runtime.UsesMagazine
-                && runtime.MagazineRemaining <= 0
-                && runtime.ReloadRemaining <= 0f
-                && !runtime.IsBursting)
-            {
-                runtime.MagazineRemaining = runtime.MaxMagazineSize;
-            }
+            TryCompleteReload(runtime);
         }
 
         /// 남은 시간을 0 아래로 내려가지 않게 줄인다.
@@ -355,16 +340,50 @@ namespace Pakuri.InGame
             }
 
             runtime.CooldownRemaining = runtime.effectiveCooldownDuration;
+            runtime.reloadCyclePending = true;
             if (runtime.ReloadDuration > 0f)
             {
                 runtime.ReloadRemaining = runtime.ReloadDuration;
                 return;
             }
 
-            if (runtime.CooldownRemaining <= 0f)
+            TryCompleteReload(runtime);
+        }
+
+        /// 실제 탄창 복구와 reload lifecycle event 예약을 한 지점에서 수행한다.
+        private static bool TryCompleteReload(SkillExecutionState runtime)
+        {
+            if (runtime == null
+                || !runtime.reloadCyclePending
+                || !runtime.UsesMagazine
+                || runtime.MagazineRemaining > 0
+                || runtime.ReloadRemaining > 0f
+                || runtime.CooldownRemaining > 0f
+                || runtime.IsBursting)
             {
-                runtime.MagazineRemaining = runtime.MaxMagazineSize;
+                return false;
             }
+
+            runtime.MagazineRemaining = runtime.MaxMagazineSize;
+            runtime.reloadCyclePending = false;
+            runtime.reloadCompleteEventPending = true;
+            runtime.armedReloadDamageMultiplier = Mathf.Max(
+                1f,
+                runtime.pendingReloadDamageMultiplier);
+            runtime.pendingReloadDamageMultiplier = 1f;
+            return true;
+        }
+
+        /// reload 완료 사건을 정확히 한 번 소비한다.
+        internal static bool ConsumeReloadCompleteEvent(SkillExecutionState runtime)
+        {
+            if (runtime == null || !runtime.reloadCompleteEventPending)
+            {
+                return false;
+            }
+
+            runtime.reloadCompleteEventPending = false;
+            return true;
         }
         /// 자동 시전 가능한 스킬만 실행 흐름에 올린다.
         public void TryExecuteAutomaticSkills(
@@ -1441,10 +1460,15 @@ namespace Pakuri.InGame
             snapshot.PreparedMagazineLastProjectile = context.Runtime != null
                 && context.Runtime.UsesMagazine
                 && context.Runtime.MagazineRemaining == 1;
+            snapshot.PreparedMagazineFirstProjectile = context.Runtime != null
+                && context.Runtime.UsesMagazine
+                && context.Runtime.MagazineRemaining == context.Runtime.MaxMagazineSize;
             var followUpCount = snapshot.HasFollowUpProjectile
                 && skill.RuntimeVisual != null
                 && skill.RuntimeVisual.HasVisual()
                 && burstIndex >= burstCount
+                && (!snapshot.FollowUpProjectileFirstMagazineOnly
+                    || snapshot.PreparedMagazineFirstProjectile)
                     ? Math.Max(1, snapshot.FollowUpProjectileCount)
                     : 0;
             var plannedLaunchCount = projectileCount + followUpCount;

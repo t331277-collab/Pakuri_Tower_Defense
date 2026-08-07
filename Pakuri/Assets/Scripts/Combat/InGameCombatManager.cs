@@ -137,6 +137,19 @@ namespace Pakuri.InGame
                 if (entry != null && entry.Model != null)
                 {
                     entry.Model.SkillState.Tick(deltaTime);
+                    var skills = entry.Model.SkillState.ActiveSkills;
+                    for (var skillIndex = 0; skillIndex < skills.Count; skillIndex++)
+                    {
+                        var runtime = skills[skillIndex];
+                        if (SkillExecution.ConsumeReloadCompleteEvent(runtime))
+                        {
+                            SkillTrigger.ExecuteReloadComplete(
+                                this,
+                                Units,
+                                entry.Model,
+                                runtime.SkillName);
+                        }
+                    }
                 }
             }
         }

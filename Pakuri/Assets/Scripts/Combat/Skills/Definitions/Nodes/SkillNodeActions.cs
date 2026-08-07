@@ -74,6 +74,7 @@ namespace Pakuri.InGame
         CooldownMultiplier,
         MagazineBonus,
         ReloadTimeMultiplier,
+        ReloadCompleteDamageMultiplier,
         PierceBonus,
         RadiusMultiplier,
         RadiusBonus,

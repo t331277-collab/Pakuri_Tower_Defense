@@ -6,10 +6,10 @@
 - Goals: reload completion을 trigger로 Nexus에 학습된 `sein-c` runtime을 실행한다. 발사 원점과 피해 귀속자는 Nexus, 주 포격 착탄 지연은 0.1초, 시너지 6 파편은 주 폭발 후 0.3초이며 원래 폭발·각 파편 피해는 중첩 가능하다.
 - Constraints: `CreateNexus()` 현재 active skill 없음·`AutoSkillEnabled=false`이므로 일반 자동 스킬 루프에 맡기지 않는다. `SkillTrigger`가 reload event source를 조건으로 유지하면서 `TryExecuteReaction()`의 entry/runtime을 Nexus로 선택해야 한다. fragment 공유 `HashSet`/hit-exclusion은 구현하지 않는다. 레벨 8은 파편 제외 주 포격의 기본 피해·범위 2배이며 레벨 4 `×1.15`를 누적하지 않는다.
 - Role Owner: Code Builder
-- Status: Phase 1 공통 계약 구현·정적 빌드 완료. 재장전/탄창 runtime은 Phase 2 대기.
-- Next Actions: `SkillExecution`의 모든 탄창 복구 경로를 단일 완료 helper로 모아 `OnReloadComplete`를 정확히 1회 발행하고, 첫/마지막 탄환 유물을 연결한다.
-- Evidence: `SkillTriggerEvent.OnReloadComplete`, `SkillReactionCasterScope.Nexus`, trigger-only modifier 조건, first/last projectile 및 arrival fragment 실행 상태 계약이 존재한다. `SkillExecutionRules`는 artifact와 synergy 모두 runtime-kind/trigger 조건을 검사한다. solution build 오류 0.
-- History: 2026-08-07 Sein-C projectile/arrival 경로와 Nexus 등록 경로 확인. 사용자 clarification으로 support source를 reload 유닛에서 Nexus로 변경하고 fragment 대상 중복 제한을 제거. 2026-08-07 Phase 1 공통 데이터/runtime 계약을 추가했다.
+- Status: Phase 2 재장전 완료 lifecycle과 탄창별 one-shot 상태 구현·정적 빌드 완료.
+- Next Actions: `SkillReactionCasterScope.Nexus`를 실제 reaction entry/runtime 선택에 연결하고 Projectile arrival에서 fragment burst를 실행한다.
+- Evidence: Tick/ReduceReload/ReduceCooldown/ResetCooldown/즉시 복구가 `TryCompleteReload` 한 곳을 사용한다. 완료 flag는 `InGameCombatManager`가 한 번 소비해 `SkillTrigger.ExecuteReloadComplete`로 보낸다. full-magazine 첫 발 marker는 탄창 차감 전에 준비되고 마지막 탄환 일반 피해는 투사체 생성 전에 곱해진다.
+- History: 2026-08-07 Sein-C projectile/arrival 경로와 Nexus 등록 경로 확인. 사용자 clarification으로 support source를 reload 유닛에서 Nexus로 변경하고 fragment 대상 중복 제한을 제거. 2026-08-07 Phase 1 공통 데이터/runtime 계약을 추가했다. 2026-08-07 Phase 2 reload event와 overheat pending/armed one-shot을 구현했다.
 
 ## Task: 2026-08-07 Sentinel Combat Runtime Handoff
 

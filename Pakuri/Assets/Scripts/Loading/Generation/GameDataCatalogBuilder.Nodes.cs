@@ -1422,6 +1422,7 @@ namespace Pakuri.Data
 			|| string.Equals(handlerName, "CooldownMultiplier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "MagazineBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "ReloadTimeMultiplier", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "ReloadCompleteDamageMultiplier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "PierceBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "RadiusMultiplier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "RadiusBonus", StringComparison.OrdinalIgnoreCase)
@@ -1566,6 +1567,12 @@ namespace Pakuri.Data
 		if (string.Equals(handlerName, "TargetStatusStackDamageRateBonus", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.TargetStatusStackDamageRateBonus, GetParam(node, "status_name"), GetFloatParam(node, "bonus_rate_per_stack", 0f));
+		}
+		if (string.Equals(handlerName, "ReloadCompleteDamageMultiplier", StringComparison.OrdinalIgnoreCase))
+		{
+			return new SkillActionOp(
+				SkillActionOpKind.ReloadCompleteDamageMultiplier,
+				GetFloatParam(node, "multiplier", 1f));
 		}
 		if (string.Equals(handlerName, "RawDamageOverride", StringComparison.OrdinalIgnoreCase))
 		{

@@ -5,7 +5,7 @@
 - 작성일: 2026-08-07
 - 작성 롤: Designer
 - 구현 담당: Code Builder
-- 상태: Code Builder 구현 진행 중 — Phase 1 완료
+- 상태: Code Builder 구현 진행 중 — Phase 2 완료
 - 범위: 포격대 시너지 2/4/6/8단계와 포격대 유물 10종의 런타임·CSV 구현 방향
 - 이번 문서 작성에서는 C#·CSV·Prefab·Scene을 수정하지 않는다.
 - 이전 요청의 규칙에 따라 구현 Phase마다 GitHub 커밋한다. 이 설계 Phase에는 커밋하지 않는다.

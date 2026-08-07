@@ -274,3 +274,4 @@
 "ExecuteSkill","3","caster_scope","enum","false","Source;Nexus"
 "ExecuteSkill","4","use_event_source_modifiers","bool","false",""
 "ExecuteSkill","5","target_selection_override","enum","false","Nearest;LowestHealth;HighestHealth;HighestStacks;ManualPosition;Owner;Farthest;Random;NearestOtherFromEventTarget;Densest;BattlefieldCenter"
+"ReloadCompleteDamageMultiplier","1","multiplier","float","true",""

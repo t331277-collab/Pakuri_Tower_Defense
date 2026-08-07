@@ -763,6 +763,38 @@ internal static class SkillTrigger
 		}
 	}
 
+	/// 탄창 복구 완료 사건을 유물·시너지 반응에 전달한다.
+	public static void ExecuteReloadComplete(
+		InGameCombatManager combatManager,
+		UnitSpawnManager roster,
+		UnitCombatState source,
+		string sourceSkillName)
+	{
+		if (combatManager == null
+			|| roster == null
+			|| source == null
+			|| string.IsNullOrWhiteSpace(sourceSkillName))
+		{
+			return;
+		}
+
+		var context = new TriggerExecutionContext(
+			source,
+			source,
+			UnitPosition(roster, source),
+			null,
+			0f,
+			0f,
+			DamageAttribute.Physical,
+			sourceSkillName,
+			source);
+		ExecutePassiveOwnerTriggers(
+			combatManager,
+			roster,
+			SkillTriggerEvent.OnReloadComplete,
+			context);
+	}
+
 	private static void ExecuteArtifactOwnerTriggers(
 		InGameCombatManager combatManager,
 		UnitSpawnManager roster,

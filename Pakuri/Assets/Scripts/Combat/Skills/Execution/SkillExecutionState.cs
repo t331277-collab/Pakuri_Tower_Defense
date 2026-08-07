@@ -91,6 +91,8 @@ public class SkillExecutionState
 
 	public float ReloadTimeMultiplier { get; internal set; }
 
+	public float ReloadCompleteDamageMultiplier { get; internal set; } = 1f;
+
 	public float ShotIntervalMultiplier { get; internal set; }
 
 	public int FollowUpProjectileCount { get; internal set; }
@@ -593,6 +595,10 @@ public class SkillExecutionState
     internal float effectiveBurstInterval;
     internal float effectiveCooldownDuration;
     internal int queuedBurstShotsRemaining;
+    internal bool reloadCyclePending;
+    internal bool reloadCompleteEventPending;
+    internal float pendingReloadDamageMultiplier = 1f;
+    internal float armedReloadDamageMultiplier = 1f;
     internal string consecutiveHitTargetUnitName;
     internal int consecutiveHitRepeatCount;
 

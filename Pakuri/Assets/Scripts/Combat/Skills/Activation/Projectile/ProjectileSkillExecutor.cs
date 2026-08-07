@@ -62,7 +62,9 @@ namespace Pakuri.InGame
                     snapshot,
                     launchSnapshot,
                     snapshot.PreparedDirections[i],
-                    snapshot.PreparedDamage,
+                    snapshot.PreparedDamage * (snapshot.PreparedMagazineLastProjectile
+                        ? Mathf.Max(0f, snapshot.MagazineLastProjectileDamageMultiplier)
+                        : 1f),
                     snapshot.PreparedBoundaries[i],
                     snapshot.PreparedMagazineLastProjectile,
                     true,
@@ -72,7 +74,9 @@ namespace Pakuri.InGame
             if (snapshot.HasFollowUpProjectile
                 && snapshot.PreparedRuntimeVisual != null
                 && snapshot.PreparedRuntimeVisual.HasVisual()
-                && snapshot.PreparedBurstProjectileIndex >= snapshot.PreparedBurstProjectileCount)
+                && snapshot.PreparedBurstProjectileIndex >= snapshot.PreparedBurstProjectileCount
+                && (!snapshot.FollowUpProjectileFirstMagazineOnly
+                    || snapshot.PreparedMagazineFirstProjectile))
             {
                 StartCoroutine(ExecuteFollowUpProjectilesAfterDelay(context, snapshot));
             }
