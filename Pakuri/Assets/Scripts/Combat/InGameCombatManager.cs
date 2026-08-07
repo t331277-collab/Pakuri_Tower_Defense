@@ -152,7 +152,7 @@ namespace Pakuri.InGame
         }
 
         /// 등록된 플레이어 전체의 Stage 시작 패시브와 사건을 한 번 실행한다.
-        internal void BeginPlayerCombat()
+        internal void BeginPlayerCombat(bool isBossEncounter)
         {
             var players = Units.Players;
             for (var i = 0; i < players.Count; i++)
@@ -167,6 +167,10 @@ namespace Pakuri.InGame
 
                 RefreshPassiveEffects(model);
                 DispatchCombatStartOnce(model);
+                if (isBossEncounter)
+                {
+                    SkillTrigger.ExecuteBossCombatStart(this, Units, model);
+                }
             }
 
             LogPlayerCriticalStats();
@@ -333,6 +337,7 @@ namespace Pakuri.InGame
             if (!attackRule.IsTrigger)
             {
                 SkillTrigger.ExecuteShieldAbsorbs(this, Units, target, source, absorbedShields);
+                SkillTrigger.ExecuteShieldBreaks(this, Units, target, depletedShields);
                 SkillTrigger.ExecuteExpiredStatuses(this, Units, target, depletedShields);
                 if (!attackRule.SuppressOutgoingDamageTriggers)
                 {
@@ -367,7 +372,11 @@ namespace Pakuri.InGame
             return result;
         }
 
-        public InGameResourceChangeResult Heal(UnitCombatState target, float amount)
+        public InGameResourceChangeResult Heal(
+            UnitCombatState target,
+            float amount,
+            UnitCombatState source = null,
+            string sourceSkillName = null)
         {
 
             var result = HealResources(target, target.IsNexus ? 0f : amount);
@@ -377,6 +386,13 @@ namespace Pakuri.InGame
             }
 
             Units.Find(result.Target).RefreshDisplay();
+            SkillTrigger.ExecuteHealOrShieldReceived(
+                this,
+                Units,
+                target,
+                source,
+                sourceSkillName,
+                null);
             return result;
         }
 
@@ -504,6 +520,7 @@ namespace Pakuri.InGame
                 return null;
             }
 
+            var beforeShield = target.GetTotalShield();
             var adjustedShieldAmount = Mathf.Max(0f, shieldAmount) * StatusCombatRules.ShieldReceivedMultiplier(target);
             var status = target.Statuses.Apply(
                 statusData,
@@ -517,6 +534,16 @@ namespace Pakuri.InGame
             target.SyncShield();
             Units.RefreshDisplay(target);
             BuffSkillExecutor.ShowStatusEffectVisual(this, target, status);
+            if (target.GetTotalShield() > beforeShield)
+            {
+                SkillTrigger.ExecuteHealOrShieldReceived(
+                    this,
+                    Units,
+                    target,
+                    source,
+                    status.SourceSkillName,
+                    status);
+            }
             return status;
         }
 

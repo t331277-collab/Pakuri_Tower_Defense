@@ -89,7 +89,11 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            context.CombatManager.Heal(target.Model, snapshot.PreparedHealAmount);
+            context.CombatManager.Heal(
+                target.Model,
+                snapshot.PreparedHealAmount,
+                context.Caster,
+                snapshot.PreparedSkillName);
             var casterVisualSpawned = false;
             SpawnVisual(
                 context,
@@ -124,7 +128,8 @@ namespace Pakuri.InGame
                 context.CombatManager.ApplyShieldStatus(
                     target.Model,
                     snapshot.PreparedShieldStatusData,
-                    snapshot.PreparedShieldAmount,
+                    snapshot.PreparedShieldAmount
+                        + target.Model.Stats.MaxHealth * snapshot.PreparedShieldTargetMaxHealthRatio,
                     snapshot.PreparedDuration,
                     1,
                     0,

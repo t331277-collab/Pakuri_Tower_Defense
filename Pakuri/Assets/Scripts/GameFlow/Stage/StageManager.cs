@@ -179,13 +179,14 @@ namespace Pakuri.InGame
                 activeSession,
                 spawnManager: unitSpawnManager,
                 effectManager: combatManager.Effects);
-            combatManager.BeginPlayerCombat();
 
             currentDay = stageDefinition.FindDay(activeSession.StageIndex, activeSession.DayIndex);
             currentReward = stageDefinition.FindReward(currentDay.RewardRuleName);
             stageDefinition.FindEncounterRows(currentDay.EncounterName, activeEncounterRows);
 
             SelectBossRows();
+            combatManager.BeginPlayerCombat(
+                activeEncounterRows.Exists(row => row.Count > 0 && IsBossEncounter(row)));
             State = StageState.Spawning;
             yield return SpawnEncounterRows(activeEncounterRows);
 

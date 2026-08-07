@@ -1638,6 +1638,8 @@ namespace Pakuri.InGame
                 }
                 snapshot.PreparedShieldAmount =
                     shield * Mathf.Max(0f, snapshot.ShieldAmountMultiplier);
+                snapshot.PreparedShieldTargetMaxHealthRatio =
+                    Mathf.Max(0f, skill.ShieldTargetMaxHealthRatio);
                 var shieldDuration = skill.ShieldDuration > 0f
                     ? skill.ShieldDuration
                     : skill.ShieldStatus != null

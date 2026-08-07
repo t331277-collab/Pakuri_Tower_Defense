@@ -405,6 +405,8 @@ public class SkillExecutionState
 
 	internal float PreparedShieldAmount { get; set; }
 
+	internal float PreparedShieldTargetMaxHealthRatio { get; set; }
+
 	internal StatusRuntimeData PreparedShieldStatusData { get; set; }
 
 	internal bool PreparedAttachVisualToCaster { get; set; }

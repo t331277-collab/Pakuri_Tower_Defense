@@ -273,6 +273,122 @@ internal static class SkillTrigger
 				source));
 	}
 
+	/// 보스 전투 시작 사건을 소유자의 유물 반응에 전달한다.
+	public static void ExecuteBossCombatStart(
+		InGameCombatManager combatManager,
+		UnitSpawnManager roster,
+		UnitCombatState source)
+	{
+		if (combatManager == null || roster == null || source == null)
+		{
+			return;
+		}
+
+		ExecuteArtifactOwnerTriggers(
+			combatManager,
+			roster,
+			roster.Find(source),
+			source,
+			SkillTriggerEvent.BossCombatStart,
+			new TriggerExecutionContext(
+				source,
+				source,
+				UnitPosition(roster, source),
+				null,
+				0f,
+				0f,
+				DamageAttribute.Physical,
+				string.Empty,
+				source));
+	}
+
+	/// 같은 보호막 흡수 사건에서 같은 원천의 반사 피해를 한 번으로 합친다.
+	private sealed class ShieldReflectionAccumulator
+	{
+		private sealed class Entry
+		{
+			public CombatUnitEntry SourceEntry;
+			public UnitCombatState Source;
+			public SkillReaction Trigger;
+			public TriggerExecutionContext Context;
+			public float RawDamage;
+		}
+
+		private readonly InGameCombatManager combatManager;
+		private readonly UnitSpawnManager roster;
+		private readonly List<Entry> entries = new List<Entry>();
+
+		public ShieldReflectionAccumulator(
+			InGameCombatManager combatManager,
+			UnitSpawnManager roster)
+		{
+			this.combatManager = combatManager;
+			this.roster = roster;
+		}
+
+		public bool TryAdd(
+			CombatUnitEntry sourceEntry,
+			UnitCombatState source,
+			SkillReaction trigger,
+			TriggerExecutionContext context,
+			float rawDamage)
+		{
+			if (!IsImmediateHolyShieldReflection(trigger) || sourceEntry == null || source == null)
+			{
+				return false;
+			}
+
+			for (var i = 0; i < entries.Count; i++)
+			{
+				if (ReferenceEquals(entries[i].Source, source))
+				{
+					entries[i].RawDamage += rawDamage;
+					return true;
+				}
+			}
+
+			entries.Add(new Entry
+			{
+				SourceEntry = sourceEntry,
+				Source = source,
+				Trigger = trigger,
+				Context = context,
+				RawDamage = rawDamage
+			});
+			return true;
+		}
+
+		public void Flush()
+		{
+			for (var i = 0; i < entries.Count; i++)
+			{
+				var entry = entries[i];
+				SkillExecution.ScheduleReaction(
+					combatManager,
+					roster,
+					entry.SourceEntry,
+					entry.Source,
+					entry.Trigger,
+					entry.Context,
+					entry.RawDamage);
+			}
+		}
+
+		private static bool IsImmediateHolyShieldReflection(SkillReaction trigger)
+		{
+			return trigger != null
+				&& trigger.DamageValueSource == SkillTriggerDamageValueSource.ShieldAbsorbedAmount
+				&& trigger.Effect?.ResolvedDefinition is SingleSkillDefinition skill
+				&& skill.Element == DamageAttribute.Holy
+				&& skill.Targeting != null
+				&& skill.Targeting.TargetSide == SkillTargetSide.Enemy
+				&& skill.Targeting.Shape == SkillTargetShape.Single
+				&& trigger.LockToEventTarget
+				&& trigger.DelaySeconds <= 0f
+				&& trigger.RepeatCount <= 1;
+		}
+	}
+
 	/// 보호막 종료 사건을 반응 판정에 전달한다.
 	public static void ExecuteShieldExpire(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState shieldTarget, StatusRuntimeInstance shieldStatus)
 	{
@@ -281,9 +397,65 @@ internal static class SkillTrigger
 			UnitCombatState unitState = SourceModel(roster, shieldStatus.SourceUnitName, shieldStatus.SourceDefinitionName);
 			string text = ((!string.IsNullOrWhiteSpace(shieldStatus.SourceSkillName)) ? shieldStatus.SourceSkillName : string.Empty);
 			Vector2 eventCenter = UnitPosition(roster, shieldTarget);
-			TriggerExecutionContext triggerContext = new TriggerExecutionContext(shieldTarget, null, eventCenter, shieldStatus, 0f, 0f, DamageAttribute.Physical, text, unitState);
+			TriggerExecutionContext triggerContext = new TriggerExecutionContext(shieldTarget, null, eventCenter, shieldStatus, 0f, 0f, DamageAttribute.Physical, text, shieldTarget);
 			ExecuteSourceOwnedTriggers(combatManager, roster, unitState, text, SkillTriggerEvent.OnShieldExpire, triggerContext);
 			ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnShieldExpire, triggerContext);
+		}
+	}
+
+	/// 피해로 보호막이 소진된 사건을 반응 판정에 전달한다.
+	public static void ExecuteShieldBreak(
+		InGameCombatManager combatManager,
+		UnitSpawnManager roster,
+		UnitCombatState shieldTarget,
+		StatusRuntimeInstance shieldStatus)
+	{
+		if (shieldTarget == null || shieldStatus == null || !shieldStatus.IsShieldStatus)
+		{
+			return;
+		}
+
+		var source = SourceModel(
+			roster,
+			shieldStatus.SourceUnitName,
+			shieldStatus.SourceDefinitionName);
+		var sourceSkillName = !string.IsNullOrWhiteSpace(shieldStatus.SourceSkillName)
+			? shieldStatus.SourceSkillName
+			: string.Empty;
+		var triggerContext = new TriggerExecutionContext(
+			shieldTarget,
+			null,
+			UnitPosition(roster, shieldTarget),
+			shieldStatus,
+			0f,
+			0f,
+			DamageAttribute.Physical,
+			sourceSkillName,
+			shieldTarget);
+		ExecuteSourceOwnedTriggers(
+			combatManager,
+			roster,
+			source,
+			sourceSkillName,
+			SkillTriggerEvent.OnShieldBreak,
+			triggerContext);
+		ExecutePassiveOwnerTriggers(
+			combatManager,
+			roster,
+			SkillTriggerEvent.OnShieldBreak,
+			triggerContext);
+	}
+
+	/// 피해로 소진된 보호막 목록만 파괴 사건으로 발행한다.
+	public static void ExecuteShieldBreaks(
+		InGameCombatManager combatManager,
+		UnitSpawnManager roster,
+		UnitCombatState shieldTarget,
+		IReadOnlyList<StatusRuntimeInstance> depletedShields)
+	{
+		for (var i = 0; depletedShields != null && i < depletedShields.Count; i++)
+		{
+			ExecuteShieldBreak(combatManager, roster, shieldTarget, depletedShields[i]);
 		}
 	}
 
@@ -295,9 +467,11 @@ internal static class SkillTrigger
 			UnitCombatState unitState = SourceModel(roster, shieldStatus.SourceUnitName, shieldStatus.SourceDefinitionName);
 			string text = ((!string.IsNullOrWhiteSpace(shieldStatus.SourceSkillName)) ? shieldStatus.SourceSkillName : string.Empty);
 			Vector2 eventCenter = ((attacker != null) ? UnitPosition(roster, attacker) : UnitPosition(roster, shieldTarget));
-			TriggerExecutionContext triggerContext = new TriggerExecutionContext(attacker, attacker, eventCenter, shieldStatus, absorbedAmount, 0f, DamageAttribute.Physical, text, unitState);
-			ExecuteSourceOwnedTriggers(combatManager, roster, unitState, text, SkillTriggerEvent.OnShieldAbsorb, triggerContext);
-			ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnShieldAbsorb, triggerContext);
+			TriggerExecutionContext triggerContext = new TriggerExecutionContext(attacker, attacker, eventCenter, shieldStatus, absorbedAmount, 0f, DamageAttribute.Physical, text, shieldTarget);
+			var reflections = new ShieldReflectionAccumulator(combatManager, roster);
+			ExecuteSourceOwnedTriggers(combatManager, roster, unitState, text, SkillTriggerEvent.OnShieldAbsorb, triggerContext, reflections);
+			ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnShieldAbsorb, triggerContext, reflections);
+			reflections.Flush();
 		}
 	}
 
@@ -365,6 +539,36 @@ internal static class SkillTrigger
 		}
 	}
 
+	/// 실제 회복 또는 총 보호막 증가 사건을 수혜자의 지속 반응에 전달한다.
+	public static void ExecuteHealOrShieldReceived(
+		InGameCombatManager combatManager,
+		UnitSpawnManager roster,
+		UnitCombatState target,
+		UnitCombatState effectSource,
+		string sourceSkillName,
+		StatusRuntimeInstance status)
+	{
+		if (combatManager == null || roster == null || target == null)
+		{
+			return;
+		}
+
+		ExecutePassiveOwnerTriggers(
+			combatManager,
+			roster,
+			SkillTriggerEvent.OnHealOrShieldReceived,
+			new TriggerExecutionContext(
+				target,
+				effectSource,
+				UnitPosition(roster, target),
+				status,
+				0f,
+				0f,
+				DamageAttribute.Physical,
+				sourceSkillName,
+				target));
+	}
+
 	/// outgoing 피해 상태가 만든 추가 피해를 기존 피해 적용 경로에 전달한다.
 	private static void ApplyOutgoingAdditionalDamageStatuses(
 		InGameCombatManager combatManager,
@@ -428,7 +632,14 @@ internal static class SkillTrigger
 	}
 
 	/// 사건을 만든 스킬의 반응을 판정한다.
-	private static void ExecuteSourceOwnedTriggers(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillName, SkillTriggerEvent triggerEvent, TriggerExecutionContext triggerContext)
+	private static void ExecuteSourceOwnedTriggers(
+		InGameCombatManager combatManager,
+		UnitSpawnManager roster,
+		UnitCombatState source,
+		string sourceSkillName,
+		SkillTriggerEvent triggerEvent,
+		TriggerExecutionContext triggerContext,
+		ShieldReflectionAccumulator reflections = null)
 	{
 		if (combatManager == null || roster == null || source == null || string.IsNullOrWhiteSpace(sourceSkillName))
 		{
@@ -443,14 +654,20 @@ internal static class SkillTrigger
 		{
 			if (ShouldRunSourceOwnedTrigger(trigger, source, sourceSkillName, triggerEvent, triggerContext))
 			{
-                SkillExecution.ScheduleReaction(
+				var sourceEntry = roster.Find(source);
+				var rawDamage = ResolveTriggeredDamage(trigger, triggerContext);
+				if (reflections == null
+					|| !reflections.TryAdd(sourceEntry, source, trigger, triggerContext, rawDamage))
+				{
+					SkillExecution.ScheduleReaction(
 					combatManager,
 					roster,
-					roster.Find(source),
+					sourceEntry,
 					source,
 					trigger,
 					triggerContext,
-					ResolveTriggeredDamage(trigger, triggerContext));
+					rawDamage);
+				}
 			}
 		}
 	}
@@ -480,7 +697,12 @@ internal static class SkillTrigger
 	}
 
 	/// 소유자의 지속 반응을 판정한다.
-	private static void ExecutePassiveOwnerTriggers(InGameCombatManager combatManager, UnitSpawnManager roster, SkillTriggerEvent triggerEvent, TriggerExecutionContext triggerContext)
+	private static void ExecutePassiveOwnerTriggers(
+		InGameCombatManager combatManager,
+		UnitSpawnManager roster,
+		SkillTriggerEvent triggerEvent,
+		TriggerExecutionContext triggerContext,
+		ShieldReflectionAccumulator reflections = null)
 	{
 		if (combatManager == null || roster == null)
 		{
@@ -514,14 +736,19 @@ internal static class SkillTrigger
 						&& PassesCountGate(combatManager, unitState, trigger, triggerContext)
 						&& PassesProcGate(combatManager, unitState, trigger))
 					{
-                        SkillExecution.ScheduleReaction(
+						var rawDamage = ResolveTriggeredDamage(trigger, triggerContext);
+						if (reflections == null
+							|| !reflections.TryAdd(unitEntry, unitState, trigger, triggerContext, rawDamage))
+						{
+							SkillExecution.ScheduleReaction(
 							combatManager,
 							roster,
-						unitEntry,
-						unitState,
-						trigger,
-						triggerContext,
-						ResolveTriggeredDamage(trigger, triggerContext));
+							unitEntry,
+							unitState,
+							trigger,
+							triggerContext,
+							rawDamage);
+						}
 					}
 				}
 			}
@@ -531,7 +758,8 @@ internal static class SkillTrigger
 				unitEntry,
 				unitState,
 				triggerEvent,
-				triggerContext);
+				triggerContext,
+				reflections);
 		}
 	}
 
@@ -541,7 +769,8 @@ internal static class SkillTrigger
 		CombatUnitEntry ownerEntry,
 		UnitCombatState owner,
 		SkillTriggerEvent triggerEvent,
-		TriggerExecutionContext triggerContext)
+		TriggerExecutionContext triggerContext,
+		ShieldReflectionAccumulator reflections = null)
 	{
 		var effectNames = owner?.Artifacts?.ActiveArtifactEffectNames;
 		if (combatManager == null || roster == null || ownerEntry == null || effectNames == null)
@@ -564,7 +793,8 @@ internal static class SkillTrigger
 					owner,
 					triggerEvent,
 					triggerContext,
-					effect.Reactions);
+					effect.Reactions,
+					reflections);
 
 				continue;
 			}
@@ -582,7 +812,8 @@ internal static class SkillTrigger
 					owner,
 					triggerEvent,
 					triggerContext,
-					synergyEffect.Reactions);
+					synergyEffect.Reactions,
+					reflections);
 			}
 		}
 	}
@@ -594,7 +825,8 @@ internal static class SkillTrigger
 		UnitCombatState owner,
 		SkillTriggerEvent triggerEvent,
 		TriggerExecutionContext triggerContext,
-		IReadOnlyList<SkillReaction> reactions)
+		IReadOnlyList<SkillReaction> reactions,
+		ShieldReflectionAccumulator reflections)
 	{
 		for (var triggerIndex = 0; reactions != null && triggerIndex < reactions.Count; triggerIndex++)
 		{
@@ -603,14 +835,19 @@ internal static class SkillTrigger
 				&& PassesCountGate(combatManager, owner, trigger, triggerContext)
 				&& PassesProcGate(combatManager, owner, trigger))
 			{
-				SkillExecution.ScheduleReaction(
+				var rawDamage = ResolveTriggeredDamage(trigger, triggerContext);
+				if (reflections == null
+					|| !reflections.TryAdd(ownerEntry, owner, trigger, triggerContext, rawDamage))
+				{
+					SkillExecution.ScheduleReaction(
 					combatManager,
 					roster,
 					ownerEntry,
 					owner,
 					trigger,
 					triggerContext,
-					ResolveTriggeredDamage(trigger, triggerContext));
+					rawDamage);
+				}
 			}
 		}
 	}
