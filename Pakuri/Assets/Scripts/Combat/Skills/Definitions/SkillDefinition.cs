@@ -10,20 +10,6 @@ using UnityEngine;
 
 namespace Pakuri.Data
 {
-    /// 활성 스킬이 배치될 학습 위치를 구분한다.
-    public enum SkillSlot
-    {
-        A,
-        B,
-        C,
-        D,
-        E,
-        F,
-        G,
-        H,
-        I,
-        J
-    }
 
     /// 스킬 데이터와 실행 구현의 준비 상태를 구분한다.
     public enum SkillImplementationState
@@ -33,21 +19,6 @@ namespace Pakuri.Data
         RuntimeImplemented
     }
 
-    /// 스킬이 사용할 물리적 실행 방식을 구분한다.
-    public enum SkillRuntimeKind
-    {
-        MagazineProjectile,
-        CooldownProjectile,
-        LineAttack,
-        AreaAttack,
-        SingleAttack,
-        Buff,
-        Shield,
-        Heal,
-        Mark,
-        Execute,
-        Passive
-    }
 }
 
 namespace Pakuri.InGame
@@ -59,39 +30,8 @@ namespace Pakuri.InGame
         Intelligence
     }
 
-    /// 스킬이 영향을 줄 진영 관계를 구분한다.
-    public enum SkillTargetSide
-    {
-        Enemy,
-        Self,
-        Ally,
-        AllAllies
-    }
 
-    /// 후보 중 우선 대상을 고르는 방식을 구분한다.
-    public enum SkillTargetSelection
-    {
-        Nearest,
-        LowestHealth,
-        HighestHealth,
-        HighestStacks,
-        ManualPosition,
-        Owner,
-        Farthest,
-        Random,
-        NearestOtherFromEventTarget,
-        Densest,
-        BattlefieldCenter
-    }
 
-    /// 스킬이 대상을 포함할 공간 형태를 구분한다.
-    public enum SkillTargetShape
-    {
-        Single,
-        Line,
-        Circle, 
-        Battlefield // 전장 전체를 대상으로 하는 장판형 공격
-    }
 
     /// 시전과 지속 효과가 진행될 시간 기준을 설계한다.
     [Serializable]

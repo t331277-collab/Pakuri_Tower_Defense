@@ -1,5 +1,16 @@
 # UI_BLACKBOARD
 
+## Task: 2026-08-07 Prison Character Info Popup
+
+- Task title: `PrisonPanel` MoreInfo → `Popup/CharInfoPopUP` 몬스터 정보 표시
+- Goals: 1~5P의 MoreInfo 클릭으로 해당 슬롯의 실시간 몬스터 최대 HP·최종 공격력·주문력·치명타·방어/속성 저항·보유 유물과 display_name/icon을 표시하고 Close로 팝업을 닫는다. 원본 비교는 카탈로그 `BaseStats`·`Defenses`를 사용한다.
+- Constraints: 기존 CSV 파싱·런타임 카탈로그·UnitSpawnManager 슬롯 조회를 재사용한다. HP는 `UnitCombatState.Stats.MaxHealth`를 표시한다. 사용자 Play Mode 검증은 사용자 소유다.
+- Role Owner: Code Builder
+- Status: 구현·Unity 씬 검증·솔루션 빌드·EditMode 36/36 완료.
+- Next Actions: 사용자 Play Mode에서 1~5P MoreInfo, 수치 색상, 유물 아이콘, Close 동작을 확인한다.
+- Evidence: `PrisonPanelUI`가 1~5P `Image/MoreInfo` Button을 슬롯 인덱스에 연결하고 `UnitSpawnManager.FindPlayerMonsterBySlot`의 live Model을 `CharacterInfoPopupUI.Open`에 전달한다. `CharacterInfoPopupUI`가 `MonsterDefinition.DisplayName`·`MonsterIconImage`, `Stats.MaxHealth`, `DamageCalculator` 최종 수치, `ArtifactState.OwnedArtifactNames` 아이콘을 바인딩한다. `InGameScene`의 다섯 MoreInfo에 Button과 `Popup/CharInfoPopUP`에 `CharacterInfoPopupUI`가 저장됐다. Unity `manage_scene(validate)`는 `totalIssues: 0`, `missingScripts: 0`, `brokenPrefabs: 0`; 세 스크립트 diagnostics는 모두 0; EditMode `ffe7fa76218446abb176f210267c5dc4`는 36/36 통과; `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal`은 오류 0·기존 참조 경고 2다.
+- History: 2026-08-07 Code Builder가 실제 씬의 MoreInfo가 Image-only임을 확인한 뒤 Button을 추가했다. 최종 방어 계산 중복을 제거하고 팝업이 동일 계산 경로를 사용하도록 연결했다. 원본 대비 상승은 파란색, 하락은 빨간색, 동일은 authored 색을 유지한다.
+
 ## Task: 2026-08-07 ArtifactPanel Synergy Icon Binding
 
 - Task title: `ArtifactPanel/Choice1~3/Arti_Icon` 시너지 아이콘 바인딩

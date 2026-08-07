@@ -42,28 +42,6 @@ namespace Pakuri.Data
         NearestEnemy
     }
 
-    /// 스킬 반응을 검사할 전투 시점을 구분한다.
-    public enum SkillTriggerEvent
-    {
-        BuildExecutionData,
-        OnCast,
-        OnDeploymentCast,
-        OnHit,
-        OnExpire,
-        OnHitCount,
-        OnMagazineLastProjectileHit,
-        OnReloadComplete,
-        OnShieldExpire,
-        OnShieldAbsorb,
-        OnShieldBreak,
-        OnHealOrShieldReceived,
-        OnStatusExpire,
-        OnOutgoingDamage,
-        OnKill,
-        OnSkillCast,
-        CombatStart,
-        BossCombatStart
-    }
 
     /// 반응이 허용할 사건 발생원의 관계를 구분한다.
     public enum SkillTriggerEventSourceScope

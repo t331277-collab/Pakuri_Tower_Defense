@@ -9,13 +9,6 @@ using UnityEngine;
 
 namespace Pakuri.Data
 {
-    /// 선택이 어느 학습 단계에 속하는지 구분한다.
-    public enum SkillChoiceGroup
-    {
-        ActiveEnhancement,
-        ActiveMaster,
-        PassiveEnhancement
-    }
 }
 
 namespace Pakuri.InGame

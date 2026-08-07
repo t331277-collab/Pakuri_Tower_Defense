@@ -19,6 +19,8 @@ namespace Pakuri.InGame
         private OfferingUI offeringUI;
         private MenifestUI menifestUI;
         private InGameUIManager uiManager;
+        private UnitSpawnManager unitSpawnManager;
+        private CharacterInfoPopupUI characterInfoPopupUI;
 
         private readonly string[] prisonSlotMonsterNames = new string[PrisonPartySlotCount];
         private string pendingArtifactName;
@@ -44,6 +46,7 @@ namespace Pakuri.InGame
             {
                 var capturedIndex = i;
                 BindButton(prisonPartySlots[i]?.Button, () => ActivatePrisonPartySlot(capturedIndex));
+                BindButton(prisonPartySlots[i]?.MoreInfoButton, () => OpenCharacterInfo(capturedIndex));
             }
         }
 
@@ -55,6 +58,7 @@ namespace Pakuri.InGame
             }
 
             pendingArtifactName = string.Empty;
+            characterInfoPopupUI?.Hide();
             BindStaticButtons();
             UiObjectUtility.SetActive(prisonPanel, true);
             Refresh();
@@ -68,6 +72,7 @@ namespace Pakuri.InGame
             }
 
             pendingArtifactName = artifactName;
+            characterInfoPopupUI?.Hide();
             BindStaticButtons();
             UiObjectUtility.SetActive(prisonPanel, true);
             Refresh();
@@ -76,6 +81,7 @@ namespace Pakuri.InGame
         public void Hide()
         {
             UiObjectUtility.SetActive(prisonPanel, false);
+            characterInfoPopupUI?.Hide();
             pendingArtifactName = string.Empty;
         }
 
@@ -194,12 +200,20 @@ namespace Pakuri.InGame
             UiObjectUtility.SetActive(slot.ReinforcementLabel, !isArtifactAcquisition && isOccupied);
             UiObjectUtility.SetActive(slot.MenifestedLabel, !isArtifactAcquisition && isNextManifestSlot);
             UiObjectUtility.SetActive(slot.AcquisitionLabel, isArtifactAcquisition && isOccupied);
+            UiObjectUtility.SetActive(
+                slot.MoreInfoButton != null ? slot.MoreInfoButton.gameObject : null,
+                isOccupied && !isArtifactAcquisition);
 
             if (slot.Button != null)
             {
                 slot.Button.interactable = isArtifactAcquisition
                     ? canAcquireArtifact
                     : isOccupied || isNextManifestSlot;
+            }
+
+            if (slot.MoreInfoButton != null)
+            {
+                slot.MoreInfoButton.interactable = isOccupied && !isArtifactAcquisition;
             }
 
             if (!isOccupied)
@@ -221,6 +235,22 @@ namespace Pakuri.InGame
                 slot.Image.sprite = portrait;
                 slot.Image.color = portrait != null ? Color.white : new Color(0f, 0f, 0f, 0.3f);
             }
+        }
+
+        private void OpenCharacterInfo(int slotIndex)
+        {
+            if (characterInfoPopupUI == null || unitSpawnManager == null)
+            {
+                return;
+            }
+
+            var entry = unitSpawnManager.FindPlayerMonsterBySlot(slotIndex);
+            if (entry?.Model == null)
+            {
+                return;
+            }
+
+            characterInfoPopupUI.Open(entry.Model);
         }
 
         private void RefreshSelectedPrisoner()
@@ -302,6 +332,14 @@ namespace Pakuri.InGame
                 this,
                 nameof(uiManager),
                 ref valid);
+            unitSpawnManager = UiBindingUtility.BindSceneComponent<UnitSpawnManager>(
+                this,
+                nameof(unitSpawnManager),
+                ref valid);
+            characterInfoPopupUI = UiBindingUtility.BindSceneComponent<CharacterInfoPopupUI>(
+                this,
+                nameof(characterInfoPopupUI),
+                ref valid);
 
             if (prisonPartySlots == null || prisonPartySlots.Length != PrisonPartySlotCount)
             {
@@ -325,6 +363,7 @@ namespace Pakuri.InGame
             private Image image;
             private TMP_Text nameText;
             private Button button;
+            private Button moreInfoButton;
             private GameObject reinforcementLabel;
             private GameObject manifestedLabel;
             private GameObject acquisitionLabel;
@@ -364,6 +403,12 @@ namespace Pakuri.InGame
                     "Button",
                     $"prisonPartySlots[{slotIndex}].button",
                     ref valid);
+                moreInfoButton = UiBindingUtility.BindChild<Button>(
+                    owner,
+                    slotRoot,
+                    "Image/MoreInfo",
+                    $"prisonPartySlots[{slotIndex}].moreInfoButton",
+                    ref valid);
                 reinforcementLabel = UiBindingUtility.BindChildObject(
                     owner,
                     slotRoot,
@@ -387,6 +432,7 @@ namespace Pakuri.InGame
             public Image Image => image;
             public TMP_Text NameText => nameText;
             public Button Button => button;
+            public Button MoreInfoButton => moreInfoButton;
             public GameObject ReinforcementLabel => reinforcementLabel;
             public GameObject MenifestedLabel => manifestedLabel;
             public GameObject AcquisitionLabel => acquisitionLabel;

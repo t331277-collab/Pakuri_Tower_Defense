@@ -1,5 +1,16 @@
 # STATUS_EFFECT_BLACKBOARD
 
+## Task: 2026-08-07 Character Info Final Stat Resolver Reuse
+
+- Task title: 몬스터 정보 팝업의 최종 전투 수치가 실제 피해 계산과 같은 공용 경로를 사용하도록 연결
+- Goals: 공격력·주문력·치명타·속성별 최종 방어 수치를 UI에서 중복 계산하지 않고 `DamageCalculator`의 공용 계산을 사용한다.
+- Constraints: 기존 피해 계산 순서와 결과를 변경하지 않는다. 팝업에는 대상/스킬이 없는 전역 수치를 표시한다. CSV·전투 Effect 데이터는 변경하지 않는다.
+- Role Owner: Code Builder
+- Status: 구현·빌드·EditMode 검증 완료.
+- Next Actions: 사용자 Play Mode에서 실제 상태·유물 보정이 표시 수치와 일치하는지 확인한다.
+- Evidence: `DamageCalculator.CalculateRawDamage`가 `CalculateFinalAttackPower`·`CalculateFinalSpellPower`를 재사용한다. `CalculateFinalDefense`가 기존 defense 단계(패시브·artifact·상태 효과)를 추출해 전투와 `CharacterInfoPopupUI`가 공유한다. `CalculateFinalCriticalChance`·`CalculateFinalCriticalDamageMultiplier`는 대상 없는 팝업 표시용 전역 보정 경로다. Unity EditMode `ffe7fa76218446abb176f210267c5dc4`는 36/36 통과했고 Runtime/Editor diagnostics 및 솔루션 빌드 오류는 0이다.
+- History: 2026-08-07 Code Builder가 UI 요구사항에 맞춰 기존 DamageCalculator의 인라인 방어 계산을 공용 메서드로 추출하고, 기존 전투 호출자와 팝업을 동일 계산 경로에 연결했다.
+
 ## Task: 2026-08-07 Infinite Shell Fixed Runtime Refresh Gap
 
 - Task title: 무한 탄피 고정 탄창값 갱신 누락

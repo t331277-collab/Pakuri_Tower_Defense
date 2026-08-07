@@ -8,14 +8,6 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
-    /// 지원 효과가 전투 자원을 바꾸는 방식을 구분한다.
-    public enum BuffEffectKind
-    {
-        Status,
-        Heal,
-        Shield,
-        Charge
-    }
 
     /// 지원 효과의 대상과 종류별 수치를 설계한다.
     public class BuffSkillDefinition : SkillDefinition

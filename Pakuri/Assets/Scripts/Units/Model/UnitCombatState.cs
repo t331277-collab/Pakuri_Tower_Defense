@@ -11,19 +11,7 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    public enum UnitSide
-    {
-        Player,
-        Enemy
-    }
 
-    public enum UnitRole
-    {
-        Monster,
-        Enemy,
-        Nexus,
-        Summon
-    }
 
     [Serializable]
     public class UnitIdentity

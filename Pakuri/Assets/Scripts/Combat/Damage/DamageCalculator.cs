@@ -17,12 +17,43 @@ namespace Pakuri.Combat
             UnitCombatState caster,
             SkillDamageSpec damage)
         {
-            var attack = caster.GetAttackPower() * StatusCombatRules.AttackPowerMultiplier(caster);
-            var spell = caster.GetSpellPower() * StatusCombatRules.SpellPowerMultiplier(caster);
+            var attack = CalculateFinalAttackPower(caster);
+            var spell = CalculateFinalSpellPower(caster);
             var rawDamage = damage.BaseDamage
                 + attack * damage.AttackPowerCoefficient
                 + spell * damage.SpellPowerCoefficient;
             return Mathf.Max(0f, rawDamage);
+        }
+
+        public static float CalculateFinalAttackPower(UnitCombatState source)
+        {
+            return source == null
+                ? 0f
+                : source.GetAttackPower() * StatusCombatRules.AttackPowerMultiplier(source);
+        }
+
+        public static float CalculateFinalSpellPower(UnitCombatState source)
+        {
+            return source == null
+                ? 0f
+                : source.GetSpellPower() * StatusCombatRules.SpellPowerMultiplier(source);
+        }
+
+        public static float CalculateFinalDefense(UnitCombatState target, DamageAttribute attribute)
+        {
+            if (target == null || target.Defenses == null)
+            {
+                return 0f;
+            }
+
+            var artifactModifiers = ArtifactCombatRules.Resolve(target);
+            var defense = target.Defenses.Get(attribute);
+            defense *= target.SkillState.PassiveDefenseMultiplier(attribute);
+            defense *= Mathf.Max(0f, 1f + artifactModifiers.DefenseBonusRate);
+            defense += artifactModifiers.FlatDefenseBonus;
+            defense *= StatusCombatRules.ElementResistMultiplier(target, attribute);
+            defense -= StatusCombatRules.FlatElementResistReduction(target, attribute);
+            return defense;
         }
 
         /// Actor 로 부터 호출되어서 최종 데미지를 계산한다.
@@ -45,12 +76,7 @@ namespace Pakuri.Combat
             isCritical = false;
             var damage = rawDamage;
             var artifactModifiers = ArtifactCombatRules.Resolve(target);
-            var defense = target.Defenses.Get(attribute);    // 피해 속성에 대응하는 대상의 기본 방어력
-            defense *= target.SkillState.PassiveDefenseMultiplier(attribute);    // 학습한 DefenseUp 패시브의 방어력 증가 배율 적용
-            defense *= Mathf.Max(0f, 1f + artifactModifiers.DefenseBonusRate);
-            defense += artifactModifiers.FlatDefenseBonus;
-            defense *= StatusCombatRules.ElementResistMultiplier(target, attribute);  // 활성 상태 효과의 속성 저항 감소율을 순차 곱셈
-            defense -= StatusCombatRules.FlatElementResistReduction(target, attribute); // 퍼센트 증감 후 고정 속성 방어력 감소량 차감
+            var defense = CalculateFinalDefense(target, attribute);
             damage *= 100f / Mathf.Max(0.01f, 100f + defense);
 
             var outgoingDamageMultiplier = attackRule.DamageMultiplier; // 스킬에 붙는 피해 배율
@@ -100,11 +126,17 @@ namespace Pakuri.Combat
                 return 0f;
             }
 
-            var criticalChance = attackRule.Source.Stats.CriticalChance;
-            criticalChance += StatusCombatRules.CriticalChanceBonus(attackRule.Source, target);
-            criticalChance += attackRule.Source.SkillState.PassiveCriticalChanceBonus();
-            criticalChance += attackRule.CritChanceBonus;
-            return Mathf.Clamp01(criticalChance);
+            return ResolveCriticalChance(
+                attackRule.Source,
+                target,
+                attackRule.CritChanceBonus);
+        }
+
+        public static float CalculateFinalCriticalChance(UnitCombatState source)
+        {
+            return source == null
+                ? 0f
+                : ResolveCriticalChance(source, null, 0f);
         }
 
         public static float ResolveCriticalDamageMultiplier(UnitCombatState target, AttackRule attackRule)
@@ -114,10 +146,40 @@ namespace Pakuri.Combat
                 return 1f;
             }
 
-            var multiplier = Mathf.Max(0f, attackRule.Source.Stats.CriticalDamage);
-            multiplier *= StatusCombatRules.CriticalDamageMultiplier(attackRule.Source, target);
-            multiplier *= attackRule.Source.SkillState.PassiveCriticalDamageMultiplier();
-            multiplier *= Mathf.Max(0f, 1f + attackRule.CritDamageBonus);
+            return ResolveCriticalDamageMultiplier(
+                attackRule.Source,
+                target,
+                attackRule.CritDamageBonus);
+        }
+
+        public static float CalculateFinalCriticalDamageMultiplier(UnitCombatState source)
+        {
+            return source == null
+                ? 1f
+                : ResolveCriticalDamageMultiplier(source, null, 0f);
+        }
+
+        private static float ResolveCriticalChance(
+            UnitCombatState source,
+            UnitCombatState target,
+            float critChanceBonus)
+        {
+            var criticalChance = source.Stats.CriticalChance;
+            criticalChance += StatusCombatRules.CriticalChanceBonus(source, target);
+            criticalChance += source.SkillState.PassiveCriticalChanceBonus();
+            criticalChance += critChanceBonus;
+            return Mathf.Clamp01(criticalChance);
+        }
+
+        private static float ResolveCriticalDamageMultiplier(
+            UnitCombatState source,
+            UnitCombatState target,
+            float critDamageBonus)
+        {
+            var multiplier = Mathf.Max(0f, source.Stats.CriticalDamage);
+            multiplier *= StatusCombatRules.CriticalDamageMultiplier(source, target);
+            multiplier *= source.SkillState.PassiveCriticalDamageMultiplier();
+            multiplier *= Mathf.Max(0f, 1f + critDamageBonus);
             multiplier *= StatusCombatRules.CriticalDamageTakenMultiplier(target);
             return Mathf.Max(0f, multiplier);
         }

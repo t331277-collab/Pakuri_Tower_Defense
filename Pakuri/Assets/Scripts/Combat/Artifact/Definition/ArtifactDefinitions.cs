@@ -9,14 +9,6 @@ using UnityEngine;
 
 namespace Pakuri.Data
 {
-    public enum ArtifactEffectApplicationMode
-    {
-        SkillModifier,
-        PassiveTrigger,
-        ExecuteSkill,
-        GrantSkill,
-        SpawnUnit
-    }
 
     public enum ArtifactEffectRecipient
     {

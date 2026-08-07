@@ -11,21 +11,7 @@ using UnityEngine;
 namespace Pakuri.Data
 {
 
-    public enum StatusTargetScope
-    {
-        Unspecified,
-        AllAllies,
-        Self
-    }
 
-    public enum StatusMergePolicy
-    {
-        Unspecified,
-        SameSourceTakeHighest,
-        SameSourceRefresh,
-        SameSourceAddStacks,
-        AlwaysStack
-    }
 
     public enum ShieldRefreshRule
     {
@@ -93,29 +79,6 @@ namespace Pakuri.Data
         public bool Permanent => IsPermanent;
     }
 
-    public enum StatusEffectKind
-    {
-        None,
-        Shock,
-        Chill,
-        Freeze,
-        Slow,
-        Vulnerable,
-        FireResistDown,
-        FireExposure,
-        Shield,
-        Blessing,
-        HolyExposure,
-        HolyResistDown,
-        NameMark,
-        Silence,
-        SlaughterPermit,
-        ActionSpeedUp,
-        PassiveBuff,
-        SeinAHitMark,
-        SeinDHeatStack,
-        SeinDSuperheatedPresence
-    }
 
     [Serializable]
     public class StatusConditionRequirement

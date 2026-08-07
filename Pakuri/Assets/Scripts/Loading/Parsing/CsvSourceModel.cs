@@ -13,11 +13,6 @@ using static Pakuri.Data.SkillGraphParser;
 namespace Pakuri.Data
 {
 
-    internal enum PakuriCsvSkillKind
-    {
-        Active,
-        Passive
-    }
 
     internal static class CsvSourceModel
     {
