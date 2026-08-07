@@ -1,5 +1,16 @@
 # DATA_BLACKBOARD
 
+## Task: 2026-08-07 Artifact Synergy Icon Catalog Reuse
+
+- Task title: 기존 파싱된 `artifact_synergies.csv.Icon_Image` 런타임 데이터 재사용
+- Goals: Reward UI가 CSV의 `Icon_Image`를 새 파싱 없이 `ArtifactSynergyDefinition.Icon`으로 소비하도록 연결한다.
+- Constraints: `CsvRowParser`, `GameDataCatalogBuilder`, `ArtifactSynergyDefinition`의 기존 계약과 Sprite 로딩을 유지한다. CSV와 catalog schema는 변경하지 않는다.
+- Role Owner: Code Builder
+- Status: 구현 완료. 기존 catalog 파싱·Sprite 참조와 UI 소비 회귀 검증 통과.
+- Next Actions: 사용자 Play Mode에서 실제 Reward 카드 표시를 확인한다.
+- Evidence: `CsvRowParser.cs:273-299`가 `Icon_Image`를 `IconPath`로 읽고, `GameDataCatalogBuilder.Artifacts.cs:266`이 `LoadSprite(row.IconPath)`를 `ArtifactSynergyDefinition.Icon`에 넣는다. runtime catalog는 50 artifacts·6 synergies를 로드했고, 유물이 존재하는 5개 시너지의 Icon이 non-null임을 focused test `8093ef50...`가 확인했다. `tracker`는 CSV `Icon_Image`가 비어 있어 null로 유지된다.
+- History: 2026-08-07 Code Builder는 데이터 파이프라인 변경 대신 이미 생성된 시너지 정의 Sprite를 `ArtifactUI`가 사용하도록 범위를 제한했다. 전체 EditMode 36/36과 솔루션 빌드 오류 0개를 확인했다.
+
 ## Task: 2026-08-07 Infinite Shell Magazine Runtime Diagnosis
 
 - Task title: 무한 탄피 최대 탄창 미적용 진단

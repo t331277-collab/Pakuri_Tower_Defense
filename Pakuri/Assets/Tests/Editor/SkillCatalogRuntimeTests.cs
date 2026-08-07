@@ -331,6 +331,13 @@ public sealed class SkillCatalogRuntimeTests
             lightningStatus.AttachedStatus.Status.Kind,
             Is.EqualTo(StatusEffectKind.Shock));
 
+        Assert.That(
+            catalog.Artifacts
+                .Select(artifact => artifact.SynergyName)
+                .Distinct()
+                .Select(synergyName => catalog.GetData<ArtifactSynergyDefinition>(synergyName).Icon),
+            Is.All.Not.Null);
+
         var support = catalog.GetData<ArtifactSynergyEffectDefinition>(
             "artillery-level-1-support-bombardment").Reactions.Single();
         Assert.That(support.Event, Is.EqualTo(SkillTriggerEvent.OnReloadComplete));

@@ -127,6 +127,10 @@ namespace Pakuri.InGame
             view.Icon.sprite = artifact.Icon;
             view.Icon.enabled = artifact.Icon != null;
             view.Icon.gameObject.SetActive(artifact.Icon != null);
+            var synergyIcon = synergy != null ? synergy.Icon : null;
+            view.SynergyIcon.sprite = synergyIcon;
+            view.SynergyIcon.enabled = synergyIcon != null;
+            view.SynergyIcon.gameObject.SetActive(synergyIcon != null);
             if (view.PopUp != null)
             {
                 view.PopUp.SetActive(false);
@@ -169,6 +173,7 @@ namespace Pakuri.InGame
             public TMP_Text ArtifactName;
             public TMP_Text Description;
             public Image Icon;
+            public Image SynergyIcon;
             public GameObject PopUp;
 
             public void BindObject(Component owner, Transform root, string path, int index, ref bool valid)
@@ -186,6 +191,7 @@ namespace Pakuri.InGame
                 ArtifactName = UiBindingUtility.BindChild<TMP_Text>(owner, choiceRoot, "ArtifactName", $"buttonViews[{index}].ArtifactName", ref valid);
                 Description = UiBindingUtility.BindChild<TMP_Text>(owner, choiceRoot, "Desc", $"buttonViews[{index}].Description", ref valid);
                 Icon = UiBindingUtility.BindChild<Image>(owner, choiceRoot, "Icon", $"buttonViews[{index}].Icon", ref valid);
+                SynergyIcon = UiBindingUtility.BindChild<Image>(owner, choiceRoot, "Arti_Icon", $"buttonViews[{index}].SynergyIcon", ref valid);
                 var popUp = choiceRoot.Find("PopUP");
                 PopUp = popUp != null ? popUp.gameObject : null;
             }

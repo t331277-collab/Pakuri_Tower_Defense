@@ -1,5 +1,16 @@
 # UI_BLACKBOARD
 
+## Task: 2026-08-07 ArtifactPanel Synergy Icon Binding
+
+- Task title: `ArtifactPanel/Choice1~3/Arti_Icon` 시너지 아이콘 바인딩
+- Goals: 보상 카드의 `Summary`가 가리키는 시너지 정의의 `Icon_Image` Sprite를 각 `Arti_Icon`에 표시한다.
+- Constraints: 기존 유물 `Icon` 표시와 보상 후보 흐름을 유지하고, 새 CSV 파싱·중복 데이터·씬 직렬화 로직을 만들지 않는다.
+- Role Owner: Code Builder
+- Status: 구현 완료. Unity catalog·focused/full EditMode·스크립트 diagnostics 검증 통과.
+- Next Actions: 사용자 Play Mode에서 Choice1~3의 시너지별 아이콘 표시를 확인한다.
+- Evidence: `ArtifactUI.BindChoice`는 `ArtifactSynergyDefinition.Icon`을 `ArtifactButtonView.SynergyIcon`에 할당한다. Unity MCP에서 `InGameScene`의 `UI/Reward/ArtifactPanel/Choice1~3/Arti_Icon`이 모두 `Image`로 확인됐다. focused EditMode `3ca570ef...`는 초기 데이터 조건 오류를 발견했고, 범위를 수정한 `8093ef50...`는 1/1 통과했다. 전체 EditMode `d4d7906...`는 36/36 통과했고 `validate_script` diagnostics는 0개다. 솔루션 빌드는 오류 0개·기존 참조 경고 2개다.
+- History: 2026-08-07 Code Builder가 기존 `Icon_Image → CsvRowParser → GameDataCatalogBuilder → ArtifactSynergyDefinition.Icon` 경로와 기존 `Arti_Icon` scene child를 연결했다. `tracker`의 빈 `Icon_Image`는 임의 보충하지 않고 유물 보유 시너지 5종만 회귀 검사했다.
+
 ## Task: 2026-08-07 Artillery Artifact Reward Exposure
 
 - Task title: 포격대 유물 전투 보상 노출
