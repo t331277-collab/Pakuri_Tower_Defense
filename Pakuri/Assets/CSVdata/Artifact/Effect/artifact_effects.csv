@@ -59,6 +59,7 @@
 "piercing-feather-effect","piercing-feather","SkillModifier","AllAllies","None","None","","",""
 "barrage-blueprint-effect","barrage-blueprint","SkillModifier","Owner","None","None","","",""
 "blessed-quiver-effect","blessed-quiver","SkillModifier","Owner","None","None","","",""
+"blessed-quiver-fire-effect","blessed-quiver","SkillModifier","Owner","None","None","","",""
 "lightning-magazine-effect","lightning-magazine","PassiveTrigger","Owner","None","None","","",""
 "execution-round-effect","execution-round","SkillModifier","Owner","None","None","","",""
 "revolving-chamber-effect","revolving-chamber","SkillModifier","Owner","None","None","","",""

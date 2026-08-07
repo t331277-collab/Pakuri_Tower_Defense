@@ -5,7 +5,7 @@
 - 작성일: 2026-08-07
 - 작성 롤: Designer
 - 구현 담당: Code Builder
-- 상태: Code Builder 구현 진행 중 — Phase 3 완료
+- 상태: Code Builder 구현 완료 — Phase 1~4 정적 검증 완료, Code Reviewer 검토 예정
 - 범위: 포격대 시너지 2/4/6/8단계와 포격대 유물 10종의 런타임·CSV 구현 방향
 - 이번 문서 작성에서는 C#·CSV·Prefab·Scene을 수정하지 않는다.
 - 이전 요청의 규칙에 따라 구현 Phase마다 GitHub 커밋한다. 이 설계 Phase에는 커밋하지 않는다.
@@ -350,9 +350,9 @@ artillery-level-4-support-bombardment
 1. 기존 `sein-c`를 Nexus가 그대로 학습·사용한다. 별도 projectile/arrival 스킬 복제는 하지 않는다.
 2. 주 포격 착탄 지연은 0.1초, 시너지 6 파편 추가 지연은 0.3초로 분리한다.
 3. 쌍열 코어의 첫 번째 투사체는 `MagazineRemaining == MaxMagazineSize`일 때의 첫 발이다.
-4. 포격대 유물을 `ArtifactUI` 보상 후보에 즉시 포함하는 것은 별도 확인 대상이다. 현재 `ArtifactUI.PrepareChoices()` allowlist에는 포격대가 없다.
+4. 포격대 유물을 `ArtifactUI` 보상 후보에 포함한다. `ArtifactUI.PrepareChoices()` 기존 allowlist에 `artillery`를 추가한다.
 
-위 1~3은 사용자 답변으로 확정해 설계에 반영했다. 4번은 보상 UI 범위에만 해당하며 전투 런타임 구현을 막지 않는다.
+위 1~4는 사용자 구현 요청 범위와 실제 Phase 1~4 변경에 반영했다.
 
 ## 14. 근거 파일
 

@@ -167,7 +167,7 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(catalog.Artifacts, Has.Length.EqualTo(50));
         Assert.That(catalog.ArtifactSynergies, Has.Length.EqualTo(6));
         Assert.That(catalog.ArtifactSynergyLevels, Has.Length.EqualTo(24));
-        Assert.That(catalog.ArtifactEffects, Has.Length.EqualTo(62));
+        Assert.That(catalog.ArtifactEffects, Has.Length.EqualTo(63));
         Assert.That(catalog.ArtifactSynergyEffects, Has.Length.EqualTo(28));
         Assert.That(catalog.Summons, Has.Length.EqualTo(1));
 
@@ -295,6 +295,72 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(
             reflections.Select(reaction => reaction.Effect.ResolvedDefinition.Element),
             Is.All.EqualTo(DamageAttribute.Holy));
+    }
+
+    [Test]
+    public void ArtilleryArtifactsAndSupportSnapshotResolveFinalContracts()
+    {
+        var catalog = ReloadGameDataCatalog();
+        var artifacts = catalog.Artifacts
+            .Where(artifact => artifact.SynergyName == "artillery")
+            .ToArray();
+        var effects = artifacts.SelectMany(artifact => artifact.Effects).ToArray();
+
+        Assert.That(artifacts, Has.Length.EqualTo(10));
+        Assert.That(effects, Has.Length.EqualTo(11));
+        Assert.That(
+            effects.Where(effect => effect.Recipient == ArtifactEffectRecipient.AllAllies)
+                .Select(effect => effect.EffectName),
+            Is.EquivalentTo(new[] { "infinite-shell-effect", "piercing-feather-effect" }));
+        Assert.That(
+            effects.Where(effect => effect.Recipient != ArtifactEffectRecipient.AllAllies),
+            Is.All.Matches<ArtifactEffectDefinition>(
+                effect => effect.Recipient == ArtifactEffectRecipient.Owner));
+
+        var lightning = effects.Single(
+            effect => effect.EffectName == "lightning-magazine-effect").Reactions.Single();
+        Assert.That(lightning.Event, Is.EqualTo(SkillTriggerEvent.OnOutgoingDamage));
+        Assert.That(lightning.ProcChance, Is.EqualTo(0.20f));
+        Assert.That(lightning.TriggerAttributes, Is.EqualTo(new[] { DamageAttribute.Lightning }));
+        Assert.That(
+            lightning.EventSkillRuntimeKindValues.Single().Kind,
+            Is.EqualTo(SkillRuntimeKind.MagazineProjectile));
+        Assert.That(
+            lightning.Effect.OnHitStatusOverride.Status.Kind,
+            Is.EqualTo(StatusEffectKind.Shock));
+
+        var support = catalog.GetData<ArtifactSynergyEffectDefinition>(
+            "artillery-level-1-support-bombardment").Reactions.Single();
+        Assert.That(support.Event, Is.EqualTo(SkillTriggerEvent.OnReloadComplete));
+        Assert.That(support.CasterScope, Is.EqualTo(SkillReactionCasterScope.Nexus));
+        Assert.That(support.Effect.ResolvedDefinition.SkillName, Is.EqualTo("sein-c"));
+        Assert.That(support.Effect.TargetSelectionOverride, Is.EqualTo(SkillTargetSelection.Densest));
+        Assert.That(support.Effect.RawDamageOverride, Is.EqualTo(60f));
+        Assert.That(support.Effect.DamageAttributeOverride, Is.EqualTo(DamageAttribute.Physical));
+        Assert.That(support.Effect.DamageDelayOverride, Is.EqualTo(0.1f));
+
+        var owner = new UnitCombatState();
+        AddActiveArtifactEffect(owner, "artillery-level-2-support-bombardment");
+        AddActiveArtifactEffect(owner, "artillery-level-3-shrapnel");
+        AddActiveArtifactEffect(owner, "artillery-level-4-support-bombardment");
+        var runtime = new SkillExecutionState(owner, support.Effect.ResolvedDefinition);
+        var build = typeof(SkillExecutionRules).GetMethod(
+            "BuildTriggeredSynergyExecutionData",
+            BindingFlags.Static | BindingFlags.NonPublic);
+        Assert.That(build, Is.Not.Null);
+        var snapshot = (SkillExecutionState)build.Invoke(
+            null,
+            new object[] { owner, runtime, support.Effect });
+
+        Assert.That(snapshot.RawDamageOverride, Is.EqualTo(120f));
+        Assert.That(snapshot.DamageAttributeOverride, Is.EqualTo(DamageAttribute.Physical));
+        Assert.That(snapshot.DamageDelayOverride, Is.EqualTo(0.1f));
+        Assert.That(snapshot.RadiusMultiplierOverride, Is.EqualTo(2f));
+        Assert.That(snapshot.ArrivalFragmentCount, Is.EqualTo(3));
+        Assert.That(snapshot.ArrivalFragmentDelaySeconds, Is.EqualTo(0.3f));
+        Assert.That(snapshot.ArrivalFragmentSearchRadius, Is.EqualTo(3f));
+        Assert.That(snapshot.ArrivalFragmentRawDamage, Is.EqualTo(30f));
+        Assert.That(snapshot.ArrivalFragmentRadiusMultiplier, Is.EqualTo(1.15f));
     }
 
     [Test]

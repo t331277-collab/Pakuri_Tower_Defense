@@ -1,5 +1,16 @@
 # UI_BLACKBOARD
 
+## Task: 2026-08-07 Artillery Artifact Reward Exposure
+
+- Task title: 포격대 유물 전투 보상 노출
+- Goals: `ArtifactUI.PrepareChoices()`의 기존 시너지 allowlist에 포격대 유물을 포함한다.
+- Constraints: 기존 후보 수집·중복 제외 로직을 변경하지 않고 `artillery` 조건만 추가한다.
+- Role Owner: Code Builder
+- Status: 구현 및 솔루션 빌드 완료.
+- Next Actions: Code Reviewer 검토. 실제 reward 선택 노출은 사용자 Play Mode에서 확인한다.
+- Evidence: `Pakuri/Assets/Scripts/UI/InGame/Reward/ArtifactUI.cs` allowlist에 `artillery` 비교를 추가했다. `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal` 오류 0.
+- History: 2026-08-07 Phase 4에서 포격대 artifact reward 후보 노출을 추가했다.
+
 ## Task: 2026-08-07 InGame PrisonPanel Portrait Raycast Fix
 
 ### Task title

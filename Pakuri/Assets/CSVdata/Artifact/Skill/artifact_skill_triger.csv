@@ -24,3 +24,4 @@
 "reflection-mirror-trigger","reflection-mirror","reflection-mirror-effect","OnShieldAbsorb","","","","","","","","","","1","0","0","0","owner","360","1","0","false","false",""
 "sentinels-bell-trigger","sentinels-bell","sentinels-bell-effect","OnShieldExpire","","","","","","","","","","1","0","0","0","owner","370","1","0","false","false",""
 "artillery-support-bombardment-trigger","artillery","artillery-level-1-support-bombardment","OnReloadComplete","","","","","","","","","MagazineProjectile","1","0","0","0","owner","400","1","0","false","false",""
+"lightning-magazine-trigger","lightning-magazine","lightning-magazine-effect","OnOutgoingDamage","","","","","","","Lightning","","MagazineProjectile","0.20","0","0","0","owner","410","1","0","false","false",""
