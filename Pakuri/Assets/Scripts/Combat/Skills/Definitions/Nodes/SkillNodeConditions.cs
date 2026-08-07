@@ -54,11 +54,14 @@ namespace Pakuri.Data
         OnMagazineLastProjectileHit,
         OnShieldExpire,
         OnShieldAbsorb,
+        OnShieldBreak,
+        OnHealOrShieldReceived,
         OnStatusExpire,
         OnOutgoingDamage,
         OnKill,
         OnSkillCast,
-        CombatStart
+        CombatStart,
+        BossCombatStart
     }
 
     /// 반응이 허용할 사건 발생원의 관계를 구분한다.

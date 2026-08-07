@@ -62,7 +62,7 @@
 3. 방어·최종 피해·쿨타임 충전처럼 스킬 snapshot이 아닌 대상 전투 상태를 읽는 값만 공통 Artifact 전투 조회를 추가한다.
 4. 각 파티원에게 `AllAllies` Effect ID가 하나씩 배포되므로 Trigger 결과 대상은 다시 `AllAllies`로 잡지 않는다. 각 수신자가 자신의 사건에 `Self/Owner`로 반응한다.
 5. 반사 피해는 실제 보호막 흡수량을 원시 신성 피해로 사용하고 기존 피해 계산을 다시 통과한다.
-6. 반사 피해는 Trigger 피해이므로 다른 반사와 OnOutgoingDamage를 재귀 호출하지 않는다.
+6. 같은 원천 유닛의 반사율은 합산해 한 번의 Trigger 피해로 실행한다. 원천 유닛이 다르면 원천별로 각각 실행한다.
 7. Stage 초기화는 기존 `ClearActiveEffects`, 상태 초기화, `PrepareStage`, `BeginPlayerCombat` 순서를 유지한다.
 8. 보호막 사건의 Artifact owner는 방어막 시전자가 아니라 실제 방어막 수혜자다. Ariel의 source-owned 반응은 기존 `SourceModel` 인자를 계속 사용한다.
 
@@ -108,7 +108,7 @@ damage *= 100 / max(0.01, 100 + defense)
 | 4 | `sentinel-level-2-shield-reflection` | `OnShieldAbsorb`, `ShieldAbsorbedAmount × 0.25`, `Holy`, 사건 공격자 단일 대상 |
 | 8 | `sentinel-level-4-shield-reflection` | 추가 `ShieldAbsorbedAmount × 0.20`, `Holy`, 사건 공격자 단일 대상 |
 
-8시너지에서는 누적 배포된 25%와 추가 20%가 합쳐져 총 45%가 된다. 최소 구현은 두 Trigger 피해로 실행한다. 두 피해 모두 `IsTrigger=true`라 재반사되지 않는다. 단일 피해 숫자 45% 표시가 별도 요구되면 그때 반사 그룹 합성 계약을 추가한다.
+8시너지에서는 누적 배포된 25%와 추가 20%가 합쳐져 총 45%가 된다. Ariel-B Master 2, 반사 거울, 파수꾼 단계 반사는 `OnShieldAbsorb + ShieldAbsorbedAmount` 계약이 같은 경우 원천 유닛별로 반사율을 합산한 뒤 한 번의 Trigger 피해로 실행한다. 서로 다른 유닛이 원천이면 원천별 피해를 유지한다. Trigger 피해는 다시 반사를 발행하지 않는다.
 
 ### 5.3 6시너지 최종 피해 감소
 
@@ -362,15 +362,15 @@ TickRemaining -= actionDeltaTime
 ## 15. Edge Case
 
 1. 보호막이 여러 개면 흡수한 각 `ShieldAbsorptionRecord`마다 반사가 발생한다.
-2. 한 공격이 여러 보호막을 소비하면 각 보호막의 실제 흡수량 합만큼만 반사한다.
+2. 한 흡수 사건에서 같은 원천 유닛의 반사율은 합산한다. 서로 다른 원천 유닛의 반사는 원천별로 나눠 실행한다.
 3. Trigger 반사 피해는 다시 반사되지 않는다.
 4. 공격자가 null이면 반사 대상이 없으므로 피해를 실행하지 않는다.
 5. 대상이 공격 전에 보호막을 보유했다면 그 공격으로 보호막이 깨져도 6시너지 최종 피해 감소를 받는다.
 6. 시간 만료 보호막은 깨지지 않는 약속을 발동하지 않지만 파수꾼의 종은 발동한다.
 7. 실제 증가가 없는 회복/방어막 갱신은 푸른 십자가를 발동하지 않는다.
 8. 행동속도 버프는 기존 상태 merge/max stack 규칙을 사용해 무한 중첩하지 않는다.
-9. 순백 방패와 순례자 망토가 겹치면 기존 Shield merge policy가 권위다. 구현 시 두 Effect의 source skill name이 다르므로 별도 보호막 인스턴스로 존재하는지 catalog test로 확인한다.
-10. 8시너지의 반사 45%는 25%와 추가 20% 두 Trigger 결과다. 반올림 때문에 단일 45% 피해와 1 차이가 날 수 있으므로 테스트는 실제 두 호출 합을 기준으로 한다.
+9. 순백 방패, 순례자 망토와 다른 이름의 보호막은 수치만 총합으로 표시하고 각 `SourceSkillName`별 인스턴스와 남은 시간을 유지한다. 한 보호막 만료 시 해당 수치만 총합에서 빠진다.
+10. 8시너지 반사는 25%와 추가 20%를 피해 계산 전 합쳐 단일 45% 원시 피해로 계산한다.
 11. Nexus는 기존 `ApplyShieldStatus`의 `target.IsNexus` 차단을 유지해 `모든 아군` 대상에서 제외된다.
 12. Stage 전환 시 기존 상태·활성 Effect 초기화 뒤 다시 한 번만 적용한다.
 13. Ariel이 Eve에게 준 방어막을 Eve가 보유한 파수꾼 효과가 감지해야 한다. 반대로 Ariel만 가진 Owner 유물이 Eve의 수혜 사건에서 실행되면 안 된다.

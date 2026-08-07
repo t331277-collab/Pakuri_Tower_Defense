@@ -33,6 +33,7 @@ namespace Pakuri.InGame
         [Header("Shield")]
         public float ShieldBase;
         public float ShieldCoefficient;
+        public float ShieldTargetMaxHealthRatio;
         public StatSource ShieldStatSource;
         public float ShieldDuration;
         public StatusRuntimeData ShieldStatus;

@@ -17,6 +17,7 @@
 "sentinel-level-2-defense-resistance","sentinel-level-2","SkillModifier","AllAllies","","","",""
 "sentinel-level-2-shield-reflection","sentinel-level-2","PassiveTrigger","AllAllies","","","",""
 "sentinel-level-3-defense-resistance-shield-reduction","sentinel-level-3","SkillModifier","AllAllies","","","",""
+"sentinel-level-3-shield-final-damage-reduction","sentinel-level-3","SkillModifier","AllAllies","","","",""
 "sentinel-level-4-defense-resistance","sentinel-level-4","SkillModifier","AllAllies","","","",""
 "sentinel-level-4-shield-reflection","sentinel-level-4","PassiveTrigger","AllAllies","","","",""
 "artillery-level-1-reload-time","artillery-level-1","SkillModifier","AllAllies","","","",""

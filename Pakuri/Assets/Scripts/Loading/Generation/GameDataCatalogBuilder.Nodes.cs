@@ -258,6 +258,7 @@ namespace Pakuri.Data
 					SkillMultiEffectCenterMode.PrimarySkillCenter);
 				state.CoverAll = GetBoolParam(node, "cover_all", false);
 				state.MaxTargets = GetIntParam(node, "max_targets", 0);
+				state.Radius = Mathf.Max(0f, GetFloatParam(node, "radius", 0f));
 				continue;
 			}
 			if (string.Equals(handler, "EffectLifetime", StringComparison.OrdinalIgnoreCase)
@@ -716,6 +717,9 @@ namespace Pakuri.Data
 				EffectKind = BuffEffectKind.Shield,
 				ShieldBase = GetFloatParam(node, "base_damage", 0f),
 				ShieldCoefficient = GetFloatParam(node, "spell_power_coefficient", 0f),
+				ShieldTargetMaxHealthRatio = Mathf.Max(
+					0f,
+					GetFloatParam(node, "target_max_health_ratio", 0f)),
 				ShieldStatSource = StatSource.Intelligence,
 				ShieldDuration = status.Duration,
 				ShieldStatus = status
@@ -732,6 +736,10 @@ namespace Pakuri.Data
 	{
 		var status = GetStatusRuntimeData(kind, statusDefinitions);
 		status.SourceSkillName = reaction.ReactionName;
+		if (kind == StatusEffectKind.Shield || kind == StatusEffectKind.PassiveBuff)
+		{
+			status.MergePolicy = StatusMergePolicy.SameSourceTakeHighest;
+		}
 		if (state.HasStatusPayload)
 		{
 			status.BaseStackAmount = state.StatusStacks;
@@ -780,6 +788,7 @@ namespace Pakuri.Data
 					: SkillTargetShape.Circle,
 			CoverAll = state.CoverAll
 				|| state.TargetShape == SkillMultiEffectTargetShape.Battlefield,
+			Radius = state.Radius,
 			SelectionStatusKind = state.SelectionStatusKind,
 			SelectionStatusMinStacks = state.SelectionStatusMinStacks,
 			HasSelectionSkillAttribute = state.HasSelectionSkillAttribute,
@@ -955,6 +964,7 @@ namespace Pakuri.Data
 			SkillMultiEffectCenterMode.PrimarySkillCenter;
 		internal bool CoverAll;
 		internal int MaxTargets;
+		internal float Radius;
 		internal float DurationSeconds;
 		internal bool HasStatusPayload;
 		internal StatusEffectKind StatusKind;
@@ -1019,6 +1029,22 @@ namespace Pakuri.Data
 			return SkillNode.FromOperation(new SourceStatusConditionOp(
 				StatusValueParser.ParseStatusKind(GetParam(node, "status_name")),
 				Mathf.Max(1, GetIntParam(node, "min_stacks", 1))));
+		}
+		if (string.Equals(text, "DefenseModifier", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new DefenseModifierOp(
+				GetFloatParam(node, "bonus_rate", 0f),
+				GetFloatParam(node, "flat_bonus", 0f)));
+		}
+		if (string.Equals(text, "FinalDamageTakenMultiplier", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new FinalDamageTakenMultiplierOp(
+				Mathf.Max(0f, GetFloatParam(node, "multiplier", 1f))));
+		}
+		if (string.Equals(text, "CooldownChargeSpeedBonus", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromOperation(new CooldownChargeSpeedBonusOp(
+				GetFloatParam(node, "bonus", 0f)));
 		}
 		if (string.Equals(text, "TargetHealthRatioThresholdBonus", StringComparison.OrdinalIgnoreCase))
 		{
@@ -1332,6 +1358,9 @@ namespace Pakuri.Data
 			return true;
 		}
 		if (string.Equals(handlerName, "DamageMultiplier", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "DefenseModifier", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "FinalDamageTakenMultiplier", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(handlerName, "CooldownChargeSpeedBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "ShieldAmountMultiplier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "CountStatusDamageMultiplier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "CooldownMultiplier", StringComparison.OrdinalIgnoreCase)

@@ -154,4 +154,39 @@ namespace Pakuri.InGame
         public float Bonus { get; }
         public StatusEffectKind RequiredSourceStatus { get; }
     }
+
+    /// 유물 효과가 대상의 모든 방어력에 더할 비율과 고정값이다.
+    public readonly struct DefenseModifierOp
+    {
+        public DefenseModifierOp(float bonusRate, float flatBonus)
+        {
+            BonusRate = bonusRate;
+            FlatBonus = flatBonus;
+        }
+
+        public float BonusRate { get; }
+        public float FlatBonus { get; }
+    }
+
+    /// 대상이 받는 최종 피해 구간에 곱할 배율이다.
+    public readonly struct FinalDamageTakenMultiplierOp
+    {
+        public FinalDamageTakenMultiplierOp(float multiplier)
+        {
+            Multiplier = multiplier;
+        }
+
+        public float Multiplier { get; }
+    }
+
+    /// 쿨타임 충전 속도에 더할 보너스율이다.
+    public readonly struct CooldownChargeSpeedBonusOp
+    {
+        public CooldownChargeSpeedBonusOp(float bonus)
+        {
+            Bonus = bonus;
+        }
+
+        public float Bonus { get; }
+    }
 }
