@@ -19,6 +19,15 @@ namespace Pakuri.Combat
 
 namespace Pakuri.Data
 {
+    /// 적이 저작 데이터에서 맡은 고정 전투 역할을 구분한다.
+    public enum EnemyEncounterRole
+    {
+        Normal,
+        Day5Midboss,
+        Day10Midboss,
+        StageBoss
+    }
+
     /// 유물 효과가 적용할 런타임 기능을 구분한다.
     public enum ArtifactEffectApplicationMode
     {

@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 456773115461482625}
+  - component: {fileID: 3582387592085126374}
   m_Layer: 0
   m_Name: MonsterHpBar
   m_TagString: Untagged
@@ -34,6 +35,19 @@ Transform:
   - {fileID: 7215646555832192334}
   m_Father: {fileID: 1576479841076848536}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!210 &3582387592085126374
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1608270916843419188}
+  m_Enabled: 1
+  m_SortingLayerID: 1743593715
+  m_SortingLayer: 3
+  m_SortingOrder: 0
+  m_SortAtRoot: 1
+  m_Sort3DAs2D: 0
 --- !u!1 &3292185792058007014
 GameObject:
   m_ObjectHideFlags: 0
@@ -47,6 +61,7 @@ GameObject:
   - component: {fileID: 9174391527518882793}
   - component: {fileID: 5880152744044069766}
   - component: {fileID: 6704637599733736084}
+  - component: {fileID: 7976825954863814150}
   m_Layer: 0
   m_Name: stage2-ethan
   m_TagString: Untagged
@@ -212,6 +227,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c05d861bf6fd7644b8181d2145054c0a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.EnemyActor
+--- !u!210 &7976825954863814150
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3292185792058007014}
+  m_Enabled: 1
+  m_SortingLayerID: 1743593713
+  m_SortingLayer: 1
+  m_SortingOrder: 0
+  m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
 --- !u!1 &3412499570695380503
 GameObject:
   m_ObjectHideFlags: 0
@@ -314,6 +342,7 @@ GameObject:
   - component: {fileID: 6585391041333722020}
   - component: {fileID: 6428423946832604258}
   - component: {fileID: 4872629954061286828}
+  - component: {fileID: 7834425312336581183}
   m_Layer: 0
   m_Name: Damage
   m_TagString: Untagged
@@ -407,6 +436,19 @@ TextMesh:
   m_Color:
     serializedVersion: 2
     rgba: 4294967295
+--- !u!210 &7834425312336581183
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4140988531392134058}
+  m_Enabled: 1
+  m_SortingLayerID: 1743593715
+  m_SortingLayer: 3
+  m_SortingOrder: 0
+  m_SortAtRoot: 1
+  m_Sort3DAs2D: 0
 --- !u!1 &5235607408169117474
 GameObject:
   m_ObjectHideFlags: 0
@@ -509,6 +551,7 @@ GameObject:
   - component: {fileID: 4196218714632876142}
   - component: {fileID: 2634824579947268549}
   - component: {fileID: 4058423468065744704}
+  - component: {fileID: 2752055825283756597}
   m_Layer: 0
   m_Name: MonsterHpLabel
   m_TagString: Untagged
@@ -602,6 +645,19 @@ TextMesh:
   m_Color:
     serializedVersion: 2
     rgba: 4294967295
+--- !u!210 &2752055825283756597
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6667773933100305330}
+  m_Enabled: 1
+  m_SortingLayerID: 1743593715
+  m_SortingLayer: 3
+  m_SortingOrder: 0
+  m_SortAtRoot: 1
+  m_Sort3DAs2D: 0
 --- !u!1 &6990308554231816218
 GameObject:
   m_ObjectHideFlags: 0
@@ -704,6 +760,7 @@ GameObject:
   - component: {fileID: 5973433829353331600}
   - component: {fileID: 6677383281735038810}
   - component: {fileID: 1538421899634294577}
+  - component: {fileID: 8414301096101595306}
   m_Layer: 0
   m_Name: MonsterNameLabel
   m_TagString: Untagged
@@ -797,3 +854,16 @@ TextMesh:
   m_Color:
     serializedVersion: 2
     rgba: 4294967295
+--- !u!210 &8414301096101595306
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7507359626477286572}
+  m_Enabled: 1
+  m_SortingLayerID: 1743593715
+  m_SortingLayer: 3
+  m_SortingOrder: 0
+  m_SortAtRoot: 1
+  m_Sort3DAs2D: 0

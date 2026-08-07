@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 316284609236872924}
+  - component: {fileID: 7244122486448002180}
   m_Layer: 0
   m_Name: MonsterHpBar
   m_TagString: Untagged
@@ -34,6 +35,19 @@ Transform:
   - {fileID: 3185075960990113164}
   m_Father: {fileID: 1934814329545622276}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!210 &7244122486448002180
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 336314362444927986}
+  m_Enabled: 1
+  m_SortingLayerID: 1743593715
+  m_SortingLayer: 3
+  m_SortingOrder: 0
+  m_SortAtRoot: 1
+  m_Sort3DAs2D: 0
 --- !u!1 &3224405704784858142
 GameObject:
   m_ObjectHideFlags: 0
@@ -139,6 +153,7 @@ GameObject:
   - component: {fileID: 7741589634535284194}
   - component: {fileID: 900300000000001}
   - component: {fileID: 900300000000002}
+  - component: {fileID: 3214552704933312517}
   m_Layer: 0
   m_Name: Sein_Unit
   m_TagString: Untagged
@@ -320,6 +335,19 @@ MonoBehaviour:
   idleState: Anim_Sein_Idle
   deadState: Anim_Sein_Dead_1
   attackStateCount: 3
+--- !u!210 &3214552704933312517
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4596420534878418281}
+  m_Enabled: 1
+  m_SortingLayerID: 1743593713
+  m_SortingLayer: 1
+  m_SortingOrder: 0
+  m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
 --- !u!1 &4918997074273309262
 GameObject:
   m_ObjectHideFlags: 0
@@ -422,6 +450,7 @@ GameObject:
   - component: {fileID: 7672737300900311552}
   - component: {fileID: 4831461277967302513}
   - component: {fileID: 1282935033562143702}
+  - component: {fileID: 183606446676623828}
   m_Layer: 0
   m_Name: MonsterHpLabel
   m_TagString: Untagged
@@ -515,6 +544,19 @@ TextMesh:
   m_Color:
     serializedVersion: 2
     rgba: 4294967295
+--- !u!210 &183606446676623828
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6446968987367658675}
+  m_Enabled: 1
+  m_SortingLayerID: 1743593715
+  m_SortingLayer: 3
+  m_SortingOrder: 0
+  m_SortAtRoot: 1
+  m_Sort3DAs2D: 0
 --- !u!1 &7625088304601869858
 GameObject:
   m_ObjectHideFlags: 0
@@ -526,6 +568,7 @@ GameObject:
   - component: {fileID: 925434353260603758}
   - component: {fileID: 5059792734405848821}
   - component: {fileID: 2978210689893611338}
+  - component: {fileID: 7630103479711938724}
   m_Layer: 0
   m_Name: MonsterNameLabel
   m_TagString: Untagged
@@ -619,6 +662,19 @@ TextMesh:
   m_Color:
     serializedVersion: 2
     rgba: 4294967295
+--- !u!210 &7630103479711938724
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7625088304601869858}
+  m_Enabled: 1
+  m_SortingLayerID: 1743593715
+  m_SortingLayer: 3
+  m_SortingOrder: 0
+  m_SortAtRoot: 1
+  m_Sort3DAs2D: 0
 --- !u!1 &8585406314287876955
 GameObject:
   m_ObjectHideFlags: 0
@@ -721,6 +777,7 @@ GameObject:
   - component: {fileID: 3809660813915262210}
   - component: {fileID: 680813839628290881}
   - component: {fileID: 4340118255599777046}
+  - component: {fileID: 6393485612346003644}
   m_Layer: 0
   m_Name: Damage
   m_TagString: Untagged
@@ -814,3 +871,16 @@ TextMesh:
   m_Color:
     serializedVersion: 2
     rgba: 4294967295
+--- !u!210 &6393485612346003644
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8638689793615707693}
+  m_Enabled: 1
+  m_SortingLayerID: 1743593715
+  m_SortingLayer: 3
+  m_SortingOrder: 0
+  m_SortAtRoot: 1
+  m_Sort3DAs2D: 0

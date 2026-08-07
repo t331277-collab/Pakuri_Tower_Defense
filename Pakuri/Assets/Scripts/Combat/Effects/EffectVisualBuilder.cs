@@ -10,6 +10,7 @@ namespace Pakuri.InGame
 {
     static class EffectVisualBuilder
     {
+        private const string SkillEffectSortingLayer = "SkillEffect";
 
         /// 투사체, 광선 회전 적용
 
@@ -40,6 +41,7 @@ namespace Pakuri.InGame
                 var renderer = instance.AddComponent<SpriteRenderer>();
                 renderer.sprite = visual.Sprite;
                 renderer.color = new Color(1f, 1f, 1f, Mathf.Clamp01(visual.Alpha));
+                renderer.sortingLayerName = SkillEffectSortingLayer;
                 renderer.sortingOrder = visual.SortingOrder;
             }
 
@@ -163,6 +165,7 @@ namespace Pakuri.InGame
             line.startColor = new Color(0.1f, 0.65f, 1f, 1f);
             line.endColor = new Color(0.1f, 0.35f, 1f, 0.75f);
             line.numCapVertices = 2;
+            line.sortingLayerName = SkillEffectSortingLayer;
             line.sortingOrder = 100;
             line.SetPosition(0, new Vector3(origin.x, origin.y, 0f));
             line.SetPosition(1, new Vector3(target.x, target.y, 0f));

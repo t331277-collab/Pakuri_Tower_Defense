@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 7977525274578248989}
   - component: {fileID: 227966656456236292}
   - component: {fileID: 2054630744442429786}
+  - component: {fileID: 3889186023745411251}
   m_Layer: 0
   m_Name: Rin_D
   m_TagString: Untagged
@@ -161,3 +162,16 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 4.658527, y: 1.5578728}
   m_EdgeRadius: 0
+--- !u!210 &3889186023745411251
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4571567099965563202}
+  m_Enabled: 1
+  m_SortingLayerID: 1743593714
+  m_SortingLayer: 2
+  m_SortingOrder: 0
+  m_SortAtRoot: 0
+  m_Sort3DAs2D: 0

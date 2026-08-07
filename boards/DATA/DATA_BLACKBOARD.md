@@ -2193,3 +2193,45 @@ Implementation and focused EditMode verification complete; Unity Play Mode gamep
 - 2026-08-06: Code Builder recorded the exact affected-row inventory before changing CSV data.
 - 2026-08-06: Phase 3 replaced only the 58 verified Stage-long passive modifier durations with 9999 and retained explicit timed effects.
 - 2026-08-06: Phase 4 refreshed the Unity CSV TextAsset, passed the focused lifetime regression, and recorded remaining suite failures without changing unrelated trigger data.
+
+## Task: 2026-08-07 Enemy Encounter Role Runtime Mapping
+
+### Task title
+
+Carry existing enemy `encounter_role` CSV values into runtime definitions for boss classification.
+
+### Goals
+
+- Centralize `EnemyEncounterRole` in `Scripts/Combat/Damage/Enums.cs`.
+- Parse `encounter_role` from `authoring/enemy/enemies.csv`.
+- Preserve the role through `EnemyDefinition` and `GameDataCatalogBuilder`.
+
+### Constraints
+
+- Do not alter the existing enemy CSV row shape or add `is_boss`.
+- Treat `Normal` as the only non-authored-boss role.
+- Keep CSV UTF-8 and preserve all existing enemy values.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implemented and statically/Unity-validated; Play Mode verification remains user-owned.
+
+### Next Actions
+
+- Verify the six non-`Normal` roles through the live run flow in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/authoring/enemy/enemies.csv` already defines `encounter_role` and contains 16 rows with 6 non-`Normal` roles.
+- `CsvRowParser.ParseEnemyRow` now reads `EnemyEncounterRole`; `GameDataCatalogBuilder.BuildEnemies` copies it to `EnemyDefinition.EncounterRole`.
+- Static PowerShell validation returned `CSV_ROWS=16; AUTHORED_BOSSES=6` and accepted only `Normal`, `Day5Midboss`, `Day10Midboss`, and `StageBoss`.
+- Unity `Pakuri/Validate CSV Source Data` completed with the catalog containing 8 stage-one and 8 stage-two enemies.
+- All changed scripts validated with 0 errors; `dotnet build Pakuri\Pakuri.sln --no-restore -v:minimal` completed with 0 errors and the existing 2 reference-conflict warnings.
+
+### History
+
+- 2026-08-07: Code Builder mapped the existing enemy encounter-role schema into runtime data without changing CSV content.

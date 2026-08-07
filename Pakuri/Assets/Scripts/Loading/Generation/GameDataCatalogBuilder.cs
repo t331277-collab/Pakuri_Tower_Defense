@@ -163,6 +163,7 @@ namespace Pakuri.Data
                 var enemy = ScriptableObject.CreateInstance<EnemyDefinition>();
                 enemy.EnemyName = sourceEnemy.Name;
                 enemy.DisplayName = sourceEnemy.DisplayName;
+                enemy.EncounterRole = sourceEnemy.EncounterRole;
                 enemy.Image = LoadSprite(sourceEnemy.ImagePath);
                 enemy.Attribute = sourceEnemy.Attribute;
                 enemy.Stats = new UnitCombatStats

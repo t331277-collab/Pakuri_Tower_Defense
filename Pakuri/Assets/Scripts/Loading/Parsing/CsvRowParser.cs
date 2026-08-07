@@ -602,6 +602,7 @@ namespace Pakuri.Data
             public string StageName;
             public int SortOrder;
             public string DisplayName;
+            public EnemyEncounterRole EncounterRole;
             public DamageAttribute Attribute;
             public float MaxHealth;
             public float AttackPower;
@@ -671,6 +672,7 @@ namespace Pakuri.Data
                 StageName = record.ReadRequiredString("stage_name"),
                 SortOrder = record.ReadInt("sort_order"),
                 DisplayName = record.ReadRequiredString("display_name"),
+                EncounterRole = record.ReadEnum<EnemyEncounterRole>("encounter_role"),
                 Attribute = record.ReadEnum<DamageAttribute>("attribute"),
                 MaxHealth = record.ReadFloat("max_health"),
                 AttackPower = record.ReadFloat("attack_power"),

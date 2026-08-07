@@ -217,8 +217,10 @@ namespace Pakuri.InGame
                 for (var j = 0; j < count; j++)
                 {
 
-                    var isBoss = IsBossEncounter(row);
-                    var healthMultiplier = isBoss
+                    var isOriginalBoss = IsOriginalBoss(row);
+                    var isRunAssignedBoss = !isOriginalBoss && IsRunAssignedBoss(row);
+                    var isBoss = isOriginalBoss || isRunAssignedBoss;
+                    var healthMultiplier = isRunAssignedBoss
                         ? UnityEngine.Random.Range(row.BossHealthMultiplierMin, row.BossHealthMultiplierMax)
                         : 1f;
                     unitSpawnManager.SpawnEnemyByName(
@@ -367,6 +369,11 @@ namespace Pakuri.InGame
 
         private bool IsBossEncounter(StageEncounterDefinition row)
         {
+            return IsOriginalBoss(row) || IsRunAssignedBoss(row);
+        }
+
+        private bool IsRunAssignedBoss(StageEncounterDefinition row)
+        {
             if (row.SelectedAsBoss)
             {
                 return true;
@@ -374,6 +381,13 @@ namespace Pakuri.InGame
 
             var isMidbossCombat = activeSession.DayIndex == 5 || activeSession.DayIndex == 10;
             return isMidbossCombat && (row.IsGuaranteedBoss || row.IsBossCandidate);
+        }
+
+        private bool IsOriginalBoss(StageEncounterDefinition row)
+        {
+            var enemy = GameDataLoader.CurrentCatalog.GetData<EnemyDefinition>(row.EnemyName)
+                ?? throw new InvalidOperationException($"Enemy data '{row.EnemyName}' is required.");
+            return enemy.EncounterRole != EnemyEncounterRole.Normal;
         }
 
         private void EnsureNexusRegistered()

@@ -13,6 +13,8 @@ namespace Pakuri.InGame
 
     public class UnitSpawnManager : MonoBehaviour
     {
+        private const float BossVisualScale = 1.6f;
+
         private readonly UnitCombatStateFactory unitStateFactory = new UnitCombatStateFactory();
         private readonly CombatUnitRegistry unitRegistry = new CombatUnitRegistry();
 
@@ -421,6 +423,10 @@ namespace Pakuri.InGame
             var spawnRotation = enemySpawnPoint.rotation;
             var spawnedUnit = Instantiate(prefab, spawnPosition, spawnRotation, runtimeEnemyRoot);
             spawnedUnit.name = $"{prefab.name}_Enemy_{spawnIndex}";
+            if (isBoss)
+            {
+                ApplyBossVisualScale(spawnedUnit.transform);
+            }
 
             var actor = BindEnemyActor(spawnedUnit, model);
             RegisterEnemy(model, actor, spawnedUnit.transform);
@@ -546,6 +552,19 @@ namespace Pakuri.InGame
 
             model.Stats.MaxHealth *= healthMultiplier;
             model.Resources.CurrentHealth *= healthMultiplier;
+        }
+
+        private static void ApplyBossVisualScale(Transform unitRoot)
+        {
+            var inverseScale = 1f / BossVisualScale;
+            unitRoot.localScale *= BossVisualScale;
+
+            for (var i = 0; i < unitRoot.childCount; i++)
+            {
+                var child = unitRoot.GetChild(i);
+                child.localPosition *= inverseScale;
+                child.localScale *= inverseScale;
+            }
         }
 
         private Transform ResolveManifestSpawnPoint(int partySlotIndex)

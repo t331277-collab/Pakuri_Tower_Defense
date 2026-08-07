@@ -905,3 +905,93 @@ Implementation and focused EditMode verification complete. Play Mode Stage-trans
 - 2026-08-06: Phase 2 moved player passive and `CombatStart` execution from registration to the explicit per-Stage boundary.
 - 2026-08-06: Phase 3 established Stage-permanent passive modifier lifetime and dynamic condition evaluation without changing Stage reset behavior.
 - 2026-08-06: Phase 4 completed focused EditMode, CSV, diff, and build verification; OfferingPanel-to-next-Stage gameplay verification remains for the user.
+
+## Task: 2026-08-07 Boss Health and Visual Scale Separation
+
+### Task title
+
+Separate authored CSV bosses from run-assigned normal enemies and enlarge only boss sprite/hitbox visuals.
+
+### Goals
+
+- Treat `enemies.csv` rows with non-`Normal` `encounter_role` as authored bosses.
+- Treat only `Normal` enemies selected by `StageManager` as run-assigned bosses for boss health multiplication.
+- Keep `EnemyCombatState.IsBoss` true for both categories.
+- Scale boss sprite and root hitbox 1.3x while preserving direct-child UI size and position.
+
+### Constraints
+
+- Do not add a redundant `is_boss` CSV column; use the existing `encounter_role` field.
+- Do not multiply `BoxCollider2D.size` separately.
+- Preserve `Damage`, `MonsterHpBar`, `MonsterHpLabel`, and `MonsterNameLabel` world size and position.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Implementation complete and locally verified; Play Mode verification remains user-owned.
+
+### Next Actions
+
+- In Play Mode, verify authored Day5/Day10/Day11 bosses keep CSV base health while sprite/hitbox are 1.3x.
+- Verify a `Normal` run-selected boss receives its configured health multiplier and the same 1.3x visual/hitbox scale.
+- Verify boss UI remains unchanged in size and position.
+
+### Evidence
+
+- `enemies.csv` contains `encounter_role` with 16 rows: 10 `Normal` and 6 authored boss rows (`Day5Midboss`, `Day10Midboss`, `StageBoss`); no `is_boss` column exists.
+- `CsvRowParser.EnemyRow`, `EnemyDefinition`, and `GameDataCatalogBuilder` now carry `EnemyEncounterRole` into runtime data.
+- `StageManager` computes `isOriginalBoss`, `isRunAssignedBoss`, and final `isBoss` separately; health multiplier applies only to `isRunAssignedBoss`.
+- `UnitSpawnManager.ApplyBossVisualScale` multiplies the instantiated enemy root by `1.6` and inverse-scales each direct UI child; root `SpriteRenderer` and `BoxCollider2D` therefore scale with the root.
+- Static PowerShell check returned `CSV_ROWS=16; AUTHORED_BOSSES=6; ENEMY_PREFABS=16; ROOT_SPRITE_COLLIDER_SCALE_OK`.
+- Unity `validate_script` returned errors `0` for all six changed scripts; `dotnet build Pakuri\Pakuri.sln --no-restore -v:minimal` returned errors `0` with the existing 2 reference-conflict warnings.
+- Unity `Pakuri/Validate CSV Source Data` completed and logged the runtime catalog load with 8 stage-one and 8 stage-two enemies.
+
+### History
+
+- 2026-08-07: Code Builder connected existing `encounter_role` authoring data to runtime boss classification, separated health-multiplier eligibility, and added boss-only visual/hitbox scaling with UI compensation.
+- 2026-08-07: User changed boss sprite/hitbox scale from `1.3` to `1.6`; Code Builder updated the shared runtime scale constant and retained UI inverse compensation.
+
+## Task: 2026-08-08 Runtime Object Pooling Phased Design
+
+### Task title
+
+피해 숫자, 스킬 이펙트, 적 유닛 순서로 런타임 `GameObject` 풀링을 도입한다.
+
+### Goals
+
+- 하나의 공용 풀 클래스를 owner-local 방식으로 재사용한다.
+- `DamageNumberPopup -> EffectManager -> enemy units` 순서를 지킨다.
+- 보스와 일반 적 교차 재사용 시 Scale, UI, Collider, Animator, 모델 상태를 초기화한다.
+
+### Constraints
+
+- 플레이어 몬스터와 임시 소환수는 이번 범위에서 제외한다.
+- 각 Phase 검증 통과 전 다음 Phase를 시작하지 않는다.
+- Designer 단계에서는 C#을 수정하지 않는다.
+- Unity Play Mode 검증은 사용자 소유다.
+
+### Role Owner
+
+Designer. 구현은 명시적 Code Builder 요청 뒤 진행한다.
+
+### Status
+
+구현 설계 문서 작성 완료. C# 구현 미시작.
+
+### Next Actions
+
+- Code Builder가 `boards/COMBAT/OBJECT_POOLING_IMPLEMENTATION_HANDOFF.md`의 Phase 1부터 구현한다.
+
+### Evidence
+
+- 현재 Source 검색에서 Object Pool 구현이 발견되지 않았다.
+- `DamageNumberPopup`, `EffectManager`, `UnitSpawnManager`가 각각 직접 생성·파괴한다.
+- 상세 초기화 계약과 단계별 수용 기준은 `boards/COMBAT/OBJECT_POOLING_IMPLEMENTATION_HANDOFF.md`에 기록했다.
+
+### History
+
+- 2026-08-08: Designer가 현재 코드와 16개 Enemy Actor prefab을 검사하고 3단계 구현 순서를 확정했다.

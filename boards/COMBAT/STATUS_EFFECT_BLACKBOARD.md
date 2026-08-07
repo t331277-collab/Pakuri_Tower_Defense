@@ -2770,3 +2770,163 @@ Implementation and focused EditMode verification complete. Gameplay Play Mode ve
 - 2026-08-06: Phase 2 separated player registration from the per-Stage player effect boundary and compiled both runtime and Editor assemblies.
 - 2026-08-06: Phase 3 converted the 58 Stage-long passive modifiers to the existing permanent sentinel and repaired dynamic ally/enemy/source condition evaluation without adding a timer.
 - 2026-08-06: Phase 4 added and passed the focused catalog/calculation regression test, recorded the two remaining full-suite failures, and completed static/build verification.
+
+## Task: 2026-08-07 Isometric Unit And Skill Effect Sorting Handoff
+
+### Task title
+
+Apply editor-only isometric sorting to static monster, enemy, and skill prefabs; apply the SkillEffect sorting layer to runtime-created skill visuals in code.
+
+### Goals
+
+- Sort the five `Prefab/Monster` unit prefabs and sixteen `Prefab/Enemy` unit prefabs by their world Y anchor through Unity editor settings.
+- Keep the two existing static skill prefabs on a layer above units.
+- Put runtime-created `SpriteRenderer` and `LineRenderer` skill visuals on the same higher-priority layer while preserving their authored per-skill sorting orders.
+- Preserve existing child renderer relative orders and runtime visual data values.
+
+### Constraints
+
+- Designer does not modify C#, scenes, or prefabs; this block is a Code Builder handoff.
+- Do not add a runtime update loop or per-frame Y sorting script.
+- Do not change `runtime_visual_sorting_order` CSV values; values remain tie-breakers between skill visual types, while equal-order visuals use the custom transparency axis.
+- Existing `MonsterHpBar` is a child in all 21 unit prefabs; if a root `SortingGroup` is used, verify in Play Mode whether the effect layer covering the whole unit group is acceptable.
+- Unity Play Mode visual verification remains user-owned.
+
+### Role Owner
+
+Code Builder implementation; user Play Mode verification.
+
+### Status
+
+Implementation complete. Static checks and Core build passed; Unity Play Mode visual verification remains user-owned.
+
+### Next Actions
+
+- User Play Mode에서 낮은 world Y 유닛이 앞에 렌더링되는지 확인한다.
+- User Play Mode에서 정적/런타임 스킬 이펙트가 유닛보다 위에 표시되고, 동일 `SortingOrder` 스킬 인스턴스가 Y축 정렬되는지 확인한다.
+
+### Evidence
+
+- `Pakuri/ProjectSettings/GraphicsSettings.asset:41-42` currently has `m_TransparencySortMode: 0` and axis `{x: 0, y: 0, z: 1}`.
+- `Pakuri/ProjectSettings/TagManager.asset:40-43` currently contains only the `Default` sorting layer.
+- `Pakuri/Assets/Scripts/Combat/Effects/EffectVisualBuilder.cs:30-48` creates runtime `SpriteRenderer` components and assigns only `sortingOrder`; line effects at `:166` create a `LineRenderer` and set order 100 without a sorting layer.
+- `Pakuri/Assets/Scripts/Combat/Effects/EffectManager.cs:24-57` creates runtime visuals under `runtimeSkillRoot`, while prefab effects are instantiated without runtime sorting correction at `:33`.
+- `Prefab/Monster` contains `Ariel_Unit`, `Eve_Unit`, `Rin_Unit`, `Sein_Unit`, and `Vega_Unit`; `Prefab/Enemy` contains 16 Stage1/Stage2 prefabs; `Prefab/Skill` contains only `Rin/Rin_D.prefab` and `Rin/Rin_E.prefab`.
+- Current unit SpriteRenderers use sorting layer ID 0 and fixed relative orders including 0 and 34-37; `Vega_Unit.prefab:104` and every inspected unit family contain `MonsterHpBar` children.
+- `InGameScene.unity` uses an orthographic camera, and unit movement changes X/Y while keeping Z fixed, so world Y is the available isometric sort anchor.
+- `TagManager.asset` now contains `Default`, `Unit`, and `SkillEffect`; `GraphicsSettings.asset` now stores `m_TransparencySortMode: 3` and axis `{x: 0, y: 1, z: 0}`.
+- Unity-MCP `manage_prefabs` batch completed 22/22 after the initial Vega save; total verification found SortingGroup in all 21 monster/enemy prefabs and both skill prefabs.
+- `EffectVisualBuilder.Configure` assigns `SkillEffect` to generated `SpriteRenderer`; `CreateBranchDamageLine` assigns the same layer to generated `LineRenderer` and keeps order 100.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore -v:minimal` completed with 0 errors and the existing 2 MSB3277 reference warnings. Scoped `git diff --check` passed.
+
+### Edge cases
+
+- Different explicit sorting orders intentionally override Y ordering; same skill instances must use the same authored order to receive Y sorting.
+- Missing `SkillEffect` layer should be treated as a configuration error and checked before Play Mode.
+- If root grouping makes HP bars/name labels appear behind effects, split those UI children from the visual group in a separate follow-up; do not add a per-frame workaround.
+
+### Acceptance criteria
+
+- Two units at different world Y positions render with the lower-Y unit in front, including animation child sprites.
+- All static skill prefab pixels render above unit pixels.
+- Repeated runtime visuals from one skill sort by world Y when their `SortingOrder` is equal.
+- Runtime branch damage lines remain above other runtime effects at order 100 and use `SkillEffect`.
+- Static build and Unity console compilation show zero new errors; user confirms the result in Play Mode.
+
+### Verification expected from Code Builder
+
+- Verify all 23 listed prefab assets and both ProjectSettings changes exist after mutation.
+- Search runtime code to confirm both generated renderer types receive `SkillEffect` and no CSV sorting values changed.
+- Run `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore` and inspect Unity console after asset refresh.
+- Hand Play Mode visual checks back to the user; Designer does not claim them as completed.
+
+### History
+
+- 2026-08-07: Current default Designer role inspected the Unity settings, 23 static prefab assets, unit renderer orders, and runtime effect creation path, then prepared this minimal editor/runtime sorting handoff.
+- 2026-08-07: Code Builder added the runtime `SkillEffect` assignments, configured the custom Y transparency axis and two sorting layers, and saved SortingGroup settings to all 23 static prefabs. Play Mode remains user-owned.
+
+## Task: 2026-08-07 Unit UI Above Skill Effect Sorting
+
+### Task title
+
+Render unit `Damage`, `MonsterHpBar`, `MonsterHpLabel`, and `MonsterNameLabel` above the `SkillEffect` sorting layer.
+
+### Goals
+
+- Keep unit visuals in the existing `Unit` root SortingGroup.
+- Render the four unit UI branches above static and runtime skill effects.
+- Preserve the current prefab hierarchy and avoid runtime sorting code.
+
+### Constraints
+
+- The repository name is `MonsterHpLabel` (not `MonsterHPLabel`); all 21 inspected unit prefabs use the repository spelling.
+- UI branches must escape the parent `Unit` SortingGroup so their `UnitUI` layer can sort against `SkillEffect`.
+- Unity Play Mode visual verification remains user-owned.
+
+### Role Owner
+
+Code Builder implementation; user Play Mode verification.
+
+### Status
+
+Implementation complete. Static prefab and Unity hierarchy checks passed; Play Mode remains pending.
+
+### Next Actions
+
+- In Play Mode, verify damage text, HP bar, HP label, and name label remain visible above skill effects at overlapping positions.
+
+### Evidence
+
+- `TagManager.asset` now orders `Default`, `Unit`, `SkillEffect`, then `UnitUI`.
+- All 21 monster/enemy prefabs contain 105 SortingGroups: 21 root `Unit` groups and 84 UI groups (four per prefab), all UI groups use `m_SortingLayerID: 1743593715` and `m_SortAtRoot: 1`.
+- Unity-MCP hierarchy inspection of `Vega_Unit.prefab` shows `Damage`, `MonsterHpLabel`, `MonsterHpBar`, and `MonsterNameLabel` each have `UnityEngine.Rendering.SortingGroup`.
+- Unity’s SortingGroup reference states `sortAtRoot` ignores parent SortingGroups and sorts the group at the root level, which is the required boundary for `UnitUI` to outrank `SkillEffect`.
+- Unity editor state is idle and not compiling after asset refresh; the only console error is the existing MCP disposed-network-stream message, not a C# compiler diagnostic.
+
+### History
+
+- 2026-08-07: User requested the four unit UI branches render above skill effects. Code Builder added `UnitUI` and nested root-sorting groups to all 21 unit prefabs without adding runtime sorting logic.
+
+## Task: 2026-08-07 URP Renderer2D Transparency Y-Sort Correction
+
+### Task title
+
+Enable the actual URP `Renderer2D` custom-axis sorting that controls scene and runtime 2D rendering.
+
+### Goals
+
+- Make lower world-Y unit groups render in front of higher world-Y unit groups.
+- Preserve the existing `Unit`, `SkillEffect`, and `UnitUI` sorting-layer structure.
+- Avoid runtime per-frame sorting code.
+
+### Constraints
+
+- Change only the active `Renderer2D` asset setting required by the inspected render path.
+- Keep the existing `{x: 0, y: 1, z: 0}` axis.
+- Unity Play Mode visual verification remains user-owned.
+
+### Role Owner
+
+Code Builder implementation; user Play Mode verification.
+
+### Status
+
+Configuration fix implemented and reimported. Static checks and Unity editor refresh passed; Play Mode visual verification remains pending.
+
+### Next Actions
+
+- In the scene, place two same-layer units at different world Y values and confirm the lower-Y unit renders in front.
+- Confirm unit animation children remain grouped and the existing UI/effect layer priorities remain unchanged.
+
+### Evidence
+
+- `Pakuri/Assets/Settings/UniversalRP.asset:20` references `Pakuri/Assets/Settings/Renderer2D.asset`, and all six `QualitySettings` quality levels reference the same URP asset.
+- `Renderer2D.asset` had `m_TransparencySortMode: 0` (`Default`) while its axis was already `{x: 0, y: 1, z: 0}`; this caused orthographic Z-distance sorting and left same-Z units to tie.
+- `Renderer2D.asset:29` now has `m_TransparencySortMode: 3` (`CustomAxis`), and `:30` retains `{x: 0, y: 1, z: 0}`.
+- `UnitSpawnManager.SpawnEnemyUnit` uses `enemySpawnPoint.position.z` for spawned enemies, and inspected scene spawn points all have world Z `0`; this matches the observed placement-order tie when Renderer2D was `Default`.
+- Unity-MCP reimported `Assets/Settings/Renderer2D.asset` successfully. Editor state is idle, not compiling, not in Play Mode, and external asset changes are cleared; Unity Error console entries are `0`.
+- Scoped `git diff --check` passed. The only diff in this correction is the Renderer2D transparency mode value.
+
+### History
+
+- 2026-08-07: Code Builder traced the failure from `GraphicsSettings` through `QualitySettings` → `UniversalRP` → `Renderer2D`, confirmed the active 2D renderer still used Default sorting, changed the mode to Custom Axis, reimported the asset, and handed Play Mode verification to the user.

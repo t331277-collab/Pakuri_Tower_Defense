@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 5496188714200781978}
   - component: {fileID: 8967468477033922621}
   - component: {fileID: 843270751708194223}
+  - component: {fileID: 1733193406368441129}
   m_Layer: 0
   m_Name: Damage
   m_TagString: Untagged
@@ -104,6 +105,19 @@ TextMesh:
   m_Color:
     serializedVersion: 2
     rgba: 4294967295
+--- !u!210 &1733193406368441129
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 31681960476074560}
+  m_Enabled: 1
+  m_SortingLayerID: 1743593715
+  m_SortingLayer: 3
+  m_SortingOrder: 0
+  m_SortAtRoot: 1
+  m_Sort3DAs2D: 0
 --- !u!1 &954654445031805948
 GameObject:
   m_ObjectHideFlags: 0
@@ -204,6 +218,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1861018613554205273}
+  - component: {fileID: 4971819736620071638}
   m_Layer: 0
   m_Name: MonsterHpBar
   m_TagString: Untagged
@@ -229,6 +244,19 @@ Transform:
   - {fileID: 5548397773895320}
   m_Father: {fileID: 1863234535376599331}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!210 &4971819736620071638
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1142738163140588704}
+  m_Enabled: 1
+  m_SortingLayerID: 1743593715
+  m_SortingLayer: 3
+  m_SortingOrder: 0
+  m_SortAtRoot: 1
+  m_Sort3DAs2D: 0
 --- !u!1 &5009952761970891708
 GameObject:
   m_ObjectHideFlags: 0
@@ -333,6 +361,7 @@ GameObject:
   - component: {fileID: 3158778710853688696}
   - component: {fileID: 5959611513030662019}
   - component: {fileID: -2123300382256000718}
+  - component: {fileID: 2924245700205170234}
   m_Layer: 0
   m_Name: stage2-fire-dragon-slayer
   m_TagString: Untagged
@@ -498,6 +527,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c05d861bf6fd7644b8181d2145054c0a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.EnemyActor
+--- !u!210 &2924245700205170234
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5195311948756499146}
+  m_Enabled: 1
+  m_SortingLayerID: 1743593713
+  m_SortingLayer: 1
+  m_SortingOrder: 0
+  m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
 --- !u!1 &6428960289589527334
 GameObject:
   m_ObjectHideFlags: 0
@@ -509,6 +551,7 @@ GameObject:
   - component: {fileID: 1536522213445530267}
   - component: {fileID: 7656980446111448056}
   - component: {fileID: 3878376975656194372}
+  - component: {fileID: 5965970381364368195}
   m_Layer: 0
   m_Name: MonsterNameLabel
   m_TagString: Untagged
@@ -602,6 +645,19 @@ TextMesh:
   m_Color:
     serializedVersion: 2
     rgba: 4294967295
+--- !u!210 &5965970381364368195
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6428960289589527334}
+  m_Enabled: 1
+  m_SortingLayerID: 1743593715
+  m_SortingLayer: 3
+  m_SortingOrder: 0
+  m_SortAtRoot: 1
+  m_Sort3DAs2D: 0
 --- !u!1 &8381529983260566722
 GameObject:
   m_ObjectHideFlags: 0
@@ -704,6 +760,7 @@ GameObject:
   - component: {fileID: 3934332659050508417}
   - component: {fileID: 6108382350686534568}
   - component: {fileID: 2231953245069672064}
+  - component: {fileID: 5172098198450939167}
   m_Layer: 0
   m_Name: MonsterHpLabel
   m_TagString: Untagged
@@ -797,3 +854,16 @@ TextMesh:
   m_Color:
     serializedVersion: 2
     rgba: 4294967295
+--- !u!210 &5172098198450939167
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9164316408013360700}
+  m_Enabled: 1
+  m_SortingLayerID: 1743593715
+  m_SortingLayer: 3
+  m_SortingOrder: 0
+  m_SortAtRoot: 1
+  m_Sort3DAs2D: 0

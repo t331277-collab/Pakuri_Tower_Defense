@@ -41,3 +41,12 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Unit
+    uniqueID: 1743593713
+    locked: 0
+  - name: SkillEffect
+    uniqueID: 1743593714
+    locked: 0
+  - name: UnitUI
+    uniqueID: 1743593715
+    locked: 0
