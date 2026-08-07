@@ -124,6 +124,21 @@ namespace Pakuri.Data
 			if (string.Equals(handler, "ExecuteSkill", StringComparison.OrdinalIgnoreCase))
 			{
 				var targetSkillName = GetParam(node, "skill_name");
+				StatusApplicationSpec statusOverride = null;
+				if (state.HasStatusPayload)
+				{
+					statusOverride = new StatusApplicationSpec
+					{
+						Status = CreateReactionStatus(
+							state.StatusKind,
+							reaction,
+							state,
+							statusDefinitions),
+						Chance = state.StatusChance,
+						Stacks = state.StatusStacks,
+						RefreshDuration = state.RefreshDuration
+					};
+				}
 				reaction.DamageMultiplier = Mathf.Max(
 					0f,
 					GetFloatParam(node, "damage_multiplier", 1f));
@@ -132,6 +147,7 @@ namespace Pakuri.Data
 				{
 					EffectName = reaction.ReactionName,
 					DamageMultiplier = reaction.DamageMultiplier,
+					OnHitStatusOverride = statusOverride,
 					UseEventSourceModifiers = GetBoolParam(
 						node,
 						"use_event_source_modifiers",

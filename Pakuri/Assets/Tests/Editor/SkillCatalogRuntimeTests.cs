@@ -325,8 +325,10 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(
             lightning.EventSkillRuntimeKindValues.Single().Kind,
             Is.EqualTo(SkillRuntimeKind.MagazineProjectile));
+        var lightningStatus = lightning.Effect.ResolvedDefinition as BuffSkillDefinition;
+        Assert.That(lightningStatus, Is.Not.Null);
         Assert.That(
-            lightning.Effect.OnHitStatusOverride.Status.Kind,
+            lightningStatus.AttachedStatus.Status.Kind,
             Is.EqualTo(StatusEffectKind.Shock));
 
         var support = catalog.GetData<ArtifactSynergyEffectDefinition>(
@@ -1268,7 +1270,7 @@ public sealed class SkillCatalogRuntimeTests
         Assert.That(
             triggers.FindAll(trigger =>
                 trigger.Effect?.ResolvedDefinition is SingleSkillDefinition),
-            Has.Count.EqualTo(28));
+            Has.Count.EqualTo(24));
         Assert.That(
             triggers.FindAll(trigger =>
                 trigger.Effect?.ResolvedDefinition is BuffSkillDefinition
