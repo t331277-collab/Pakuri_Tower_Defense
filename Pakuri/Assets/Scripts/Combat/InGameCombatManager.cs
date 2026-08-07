@@ -178,6 +178,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
+                model.SkillState.RefreshLearnedRuntimeValues(model);
                 RefreshPassiveEffects(model);
                 DispatchCombatStartOnce(model);
                 if (isBossEncounter)

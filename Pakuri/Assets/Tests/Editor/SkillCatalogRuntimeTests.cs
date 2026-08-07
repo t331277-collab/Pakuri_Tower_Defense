@@ -1115,6 +1115,64 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     [Test]
+    /// Stage 유물 배포 뒤 고정 스킬값이 갱신되고 재호출해도 중복 누적되지 않는지 확인한다.
+    public void PreparedArtifactFixedValuesRefreshWithoutCompounding()
+    {
+        ReloadGameDataCatalog();
+        var magazineSkill = new SkillDefinition
+        {
+            SkillName = "artifact-fixed-magazine-test",
+            RuntimeKind = SkillRuntimeKind.MagazineProjectile,
+            MagazineCapacity = 8,
+            ReloadSeconds = 4.4f,
+            Timing = new SkillTimingSpec { TickInterval = 0.32f }
+        };
+        var doomsSkill = new SkillDefinition
+        {
+            SkillName = "sein-e",
+            RuntimeKind = SkillRuntimeKind.LineAttack,
+            Timing = new SkillTimingSpec { Cooldown = 16f }
+        };
+        var model = new UnitCombatState();
+        model.Skills.AddActiveSkill(magazineSkill.SkillName);
+        model.Skills.AddActiveSkill(doomsSkill.SkillName);
+        model.SkillState.RebuildLearnedSkillState(
+            model,
+            new[] { magazineSkill, doomsSkill },
+            Array.Empty<PassiveSkillDefinition>());
+
+        AddActiveArtifactEffect(model, "infinite-shell-effect");
+        AddActiveArtifactEffect(model, "rapid-loader-effect");
+        AddActiveArtifactEffect(model, "barrage-blueprint-effect");
+        AddActiveArtifactEffect(model, "dooms-ember-effect");
+        AddActiveArtifactEffect(model, "artillery-level-1-reload-time");
+
+        RefreshLearnedRuntimeValues(model);
+        var magazineRuntime = model.SkillState.FindBySkillName(magazineSkill.SkillName);
+        var doomsRuntime = model.SkillState.FindBySkillName(doomsSkill.SkillName);
+
+        Assert.That(magazineRuntime.MaxMagazineSize, Is.EqualTo(9));
+        Assert.That(magazineRuntime.MagazineRemaining, Is.EqualTo(9));
+        Assert.That(magazineRuntime.ReloadDuration, Is.EqualTo(4.4f * 0.82f * 0.90f).Within(0.0001f));
+        Assert.That(EffectiveTickInterval(magazineRuntime), Is.EqualTo(0.32f * 0.88f).Within(0.0001f));
+        Assert.That(doomsRuntime.EffectiveCooldownDuration, Is.EqualTo(16f * 0.75f).Within(0.0001f));
+        Assert.That(
+            model.SkillState.CreateExecutionData(model, magazineRuntime, null).DamageMultiplier,
+            Is.EqualTo(0.95f).Within(0.0001f));
+        Assert.That(
+            model.SkillState.CreateExecutionData(model, doomsRuntime, null).DamageMultiplier,
+            Is.EqualTo(1.25f).Within(0.0001f));
+
+        RefreshLearnedRuntimeValues(model);
+
+        Assert.That(magazineRuntime.MaxMagazineSize, Is.EqualTo(9));
+        Assert.That(magazineRuntime.MagazineRemaining, Is.EqualTo(9));
+        Assert.That(magazineRuntime.ReloadDuration, Is.EqualTo(4.4f * 0.82f * 0.90f).Within(0.0001f));
+        Assert.That(EffectiveTickInterval(magazineRuntime), Is.EqualTo(0.32f * 0.88f).Within(0.0001f));
+        Assert.That(doomsRuntime.EffectiveCooldownDuration, Is.EqualTo(16f * 0.75f).Within(0.0001f));
+    }
+
+    [Test]
     /// 대표 속성·정령계약 개수·서로 다른 대표 속성이 Stage 유물 효과에 반영되는지 확인한다.
     public void SpiritContractArtifactsResolvePartyStateAtStageStart()
     {
@@ -1858,6 +1916,24 @@ public sealed class SkillCatalogRuntimeTests
             BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.That(method, Is.Not.Null);
         method.Invoke(target.Artifacts, new object[] { effectName });
+    }
+
+    private static void RefreshLearnedRuntimeValues(UnitCombatState target)
+    {
+        var method = typeof(UnitSkills).GetMethod(
+            "RefreshLearnedRuntimeValues",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(method, Is.Not.Null);
+        method.Invoke(target.SkillState, new object[] { target });
+    }
+
+    private static float EffectiveTickInterval(SkillExecutionState runtime)
+    {
+        var field = typeof(SkillExecutionState).GetField(
+            "effectiveTickInterval",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(field, Is.Not.Null);
+        return (float)field.GetValue(runtime);
     }
 
     private static void SetCooldownRemaining(SkillExecutionState runtime, float value)

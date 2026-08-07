@@ -1,5 +1,16 @@
 # STATUS_EFFECT_BLACKBOARD
 
+## Task: 2026-08-07 Infinite Shell Fixed Runtime Refresh Gap
+
+- Task title: 무한 탄피 고정 탄창값 갱신 누락
+- Goals: 유물 효과 배포 이후 전투 스킬의 `effectiveMaxMagazineSize`가 갱신되는지 확인한다.
+- Constraints: 최대 탄창·재장전·발사 간격·쿨다운의 기존 `SkillExecutionRules.InitializeRuntimeValues` 소유권을 유지한다. Stage 중간 재계산과 전체 스킬 rebuild는 추가하지 않는다.
+- Role Owner: Code Builder
+- Status: Phase 1 구현·검증 완료. `BeginPlayerCombat`이 Stage당 한 번 고정 실행값을 갱신한다.
+- Next Actions: 사용자 Play Mode에서 실제 HUD 탄창, 재장전 완료 시점, 난사 간격, 세인 E 쿨다운을 확인한다.
+- Evidence: `UnitSkills.RefreshLearnedRuntimeValues`는 기본 정의부터 다시 계산하는 기존 초기화 경로를 재사용해 중복 곱을 만들지 않는다. `InGameCombatManager.BeginPlayerCombat`은 artifact prepare 이후 passive 실행 전에 refresh한다. Unity EditMode focused job `b54c470f2f1c40dbbcee72fb27e1d11d`는 1/1, 전체 job `d74736becb5344b28f963bfbf532977a`는 36/36 통과했다. 솔루션 빌드는 오류 0·기존 참조 경고 2다.
+- History: 2026-08-07 무한 탄피 제보에서 Stage 고정 런타임 재계산 누락을 확인하고, 영향을 받는 종말의 잔불·신속 장전기·난사 도면·포격대 재장전 감소까지 같은 refresh 경로로 수정했다.
+
 ## Task: 2026-08-07 Artillery Nexus Combat Runtime Handoff
 
 - Task title: 포격대 Nexus 지원 포격 런타임 handoff

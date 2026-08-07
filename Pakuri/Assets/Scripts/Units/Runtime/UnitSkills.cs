@@ -236,8 +236,7 @@ namespace Pakuri.InGame
                 }
             }
 
-            InitializeLearnedRuntimeValues(owner, activeSkills);
-            InitializeLearnedRuntimeValues(owner, passiveSkills);
+            RefreshLearnedRuntimeValues(owner);
         }
 
         private readonly List<SkillExecutionState> activeSkills = new List<SkillExecutionState>();
@@ -310,7 +309,14 @@ namespace Pakuri.InGame
             skills.Add(instance);
         }
 
-        /// 학습이 끝난 스킬의 고정 실행값을 한 번 계산한다.
+        /// 현재 활성 효과를 기준으로 학습한 스킬의 고정 실행값을 다시 계산한다.
+        internal void RefreshLearnedRuntimeValues(UnitCombatState owner)
+        {
+            InitializeLearnedRuntimeValues(owner, activeSkills);
+            InitializeLearnedRuntimeValues(owner, passiveSkills);
+        }
+
+        /// 학습이 끝난 스킬의 고정 실행값을 계산한다.
         private static void InitializeLearnedRuntimeValues(
             UnitCombatState owner,
             IReadOnlyList<SkillExecutionState> skills)

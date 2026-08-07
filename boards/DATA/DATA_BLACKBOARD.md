@@ -1,5 +1,16 @@
 # DATA_BLACKBOARD
 
+## Task: 2026-08-07 Infinite Shell Magazine Runtime Diagnosis
+
+- Task title: 무한 탄피 최대 탄창 미적용 진단
+- Goals: `infinite-shell-effect`의 데이터 작성, 아군 배포, 탄창 런타임 반영 순서를 실제 코드로 확인한다.
+- Constraints: CSV 수치·대상 범위는 변경하지 않는다. 기존 `InitializeRuntimeValues`를 재사용하고 전체 스킬 rebuild는 하지 않는다. 기존 사용자 변경 파일은 건드리지 않는다.
+- Role Owner: Code Builder
+- Status: Phase 1 구현·검증 완료. Stage 유물 배포 뒤 고정 런타임 값이 갱신된다.
+- Next Actions: 사용자 Play Mode에서 무한 탄피 탄창 표시와 실제 발사/재장전 주기를 확인한다.
+- Evidence: `UnitSkills.RefreshLearnedRuntimeValues`가 현재 active/passive 목록의 고정값을 기존 초기화 경로로 재계산한다. `InGameCombatManager.BeginPlayerCombat`이 passive와 CombatStart 전에 이를 호출한다. 새 EditMode 검사 `PreparedArtifactFixedValuesRefreshWithoutCompounding`은 무한 탄피, 신속 장전기, 난사 도면, 종말의 잔불, 포격대 2시너지 재장전 효과와 복합 유물 피해 배율 및 재호출 비누적을 검증해 1/1 통과했다. 전체 EditMode는 36/36 통과, `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal /p:UseSharedCompilation=false`는 오류 0·기존 참조 경고 2로 통과했다.
+- History: 2026-08-07 데이터→배포→런타임 캐시 순서 결함과 같은 경로의 4개 유물 피해 범위를 확인했다. Code Builder가 전체 rebuild 없이 Stage 시작의 현재 런타임 고정값만 갱신하도록 구현하고 회귀 검사를 완료했다.
+
 ## Task: 2026-08-07 Artillery Nexus Caster Data Handoff
 
 - Task title: 포격대 Nexus 발사자·유물 데이터 handoff
