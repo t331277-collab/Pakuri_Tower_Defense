@@ -704,6 +704,7 @@ namespace Pakuri.InGame
                         entry,
                         runtime,
                         context,
+                        snapshot,
                         triggerSourceSkillName);
                 }
             }
@@ -993,6 +994,7 @@ namespace Pakuri.InGame
             CombatUnitEntry entry,
             SkillExecutionState runtime,
             SkillExecutionContext context,
+            SkillExecutionState snapshot,
             string triggerSourceSkillName = null)
         {
             if (context == null || context.IsTrigger)
@@ -1015,7 +1017,8 @@ namespace Pakuri.InGame
                 entry.Model,
                 runtime.Data.SkillName,
                 center,
-                triggerSourceSkillName);
+                triggerSourceSkillName,
+                snapshot != null && snapshot.PreparedMagazineLastProjectile);
         }
 
         /// 확정된 실행값을 물리적 형태에 맞는 실행기로 보낸다.
@@ -1897,6 +1900,7 @@ namespace Pakuri.InGame
                     effect = new SkillCastEffect
                     {
                         EffectName = effect.EffectName,
+                        UseEventSourceSkill = true,
                         DamageMultiplier = effect.DamageMultiplier,
                         ResolvedDefinition = sourceRuntime.Data,
                         UseSourcePreparedAim = effect.UseSourcePreparedAim,
@@ -1919,6 +1923,27 @@ namespace Pakuri.InGame
                     ? triggerContext.EventSourceSkillName
                     : trigger.SourceSkillName;
 
+                if (effect.UseEventSourceSkill && sourceRuntime.UsesMagazine)
+                {
+                    var magazineShotCount = Mathf.Max(1, sourceRuntime.MaxMagazineSize);
+                    combatManager.StartCoroutine(
+                        RunAutomaticEncoreRecast(
+                            combatManager,
+                            roster,
+                            executionEntry,
+                            sourceRuntime,
+                            effect,
+                            triggerContext.EventTarget,
+                            triggerContext.RecastGeneration,
+                            executionSkillName,
+                            trigger.LockToEventTarget,
+                            trigger.DamageMultiplier,
+                            trigger.DamageValueSource != SkillTriggerDamageValueSource.Fixed,
+                            resolvedRawDamage,
+                            magazineShotCount));
+                    return true;
+                }
+
                 return sourceRuntime != null
                     && combatManager.SkillExecution.TryExecuteResolvedEffect(
                         executionEntry,
@@ -1928,7 +1953,7 @@ namespace Pakuri.InGame
                         effect,
                         triggerContext.EventTarget,
                         targetPoint,
-                        true,
+                        !effect.UseEventSourceSkill,
                         triggerContext.RecastGeneration,
                         executionSkillName,
                         trigger.LockToEventTarget,
@@ -1952,6 +1977,77 @@ namespace Pakuri.InGame
                     sourceRuntime,
                     trigger.Command,
                     triggerContext);
+        }
+
+        private static IEnumerator RunAutomaticEncoreRecast(
+            InGameCombatManager combatManager,
+            UnitSpawnManager roster,
+            CombatUnitEntry entry,
+            SkillExecutionState sourceRuntime,
+            SkillCastEffect effect,
+            UnitCombatState eventTarget,
+            int recastGeneration,
+            string sourceSkillName,
+            bool lockToEventTarget,
+            float damageMultiplier,
+            bool hasRawDamageOverride,
+            float rawDamageOverride,
+            int shotCount)
+        {
+            for (var shotIndex = 0; shotIndex < shotCount; shotIndex++)
+            {
+                if (combatManager == null
+                    || roster == null
+                    || entry == null
+                    || !entry.IsAlive
+                    || sourceRuntime == null)
+                {
+                    yield break;
+                }
+
+                Debug.Log(
+                    $"[ChosenOne][Encore] recast skill={sourceSkillName} "
+                    + $"shot={shotIndex + 1}/{shotCount} multiplier={damageMultiplier:0.00} "
+                    + "autoTarget=true");
+
+                var executed = combatManager.SkillExecution.TryExecuteResolvedEffect(
+                    entry,
+                    sourceRuntime,
+                    roster,
+                    combatManager,
+                    effect,
+                    eventTarget,
+                    Vector2.zero,
+                    false,
+                    recastGeneration,
+                    sourceSkillName,
+                    lockToEventTarget,
+                    damageMultiplier,
+                    hasRawDamageOverride,
+                    rawDamageOverride,
+                    publishSkillLifecycleEvents: false,
+                    isTrigger: true);
+                if (!executed)
+                {
+                    Debug.Log(
+                        $"[ChosenOne][Encore] recast stopped: skill={sourceSkillName} "
+                        + $"shot={shotIndex + 1}/{shotCount} execution failed.");
+                    yield break;
+                }
+
+                if (shotIndex + 1 < shotCount)
+                {
+                    var shotInterval = Mathf.Max(0f, sourceRuntime.effectiveTickInterval);
+                    if (shotInterval > 0f)
+                    {
+                        yield return new WaitForSeconds(shotInterval);
+                    }
+                    else
+                    {
+                        yield return null;
+                    }
+                }
+            }
         }
 
         /// 물리 효과가 아닌 반응 결과를 기존 상태 변경 경로로 전달한다.

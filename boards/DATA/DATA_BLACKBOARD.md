@@ -1,5 +1,99 @@
 # DATA_BLACKBOARD
 
+## Task: 2026-08-07 Sentinel Artifact And Synergy Data Handoff
+
+### Task title
+
+파수꾼 2/4/6/8 시너지와 개별 유물 10종을 기존 Artifact Effect graph/trigger CSV에 작성한다.
+
+### Goals
+
+- 파수꾼 시너지 설명을 방어 보너스 `5/10/15/20%`, 고정 방어력 `8/12/18/25`로 맞춘다.
+- 누적 단계 배포에서 총합이 중복되지 않도록 단계별 증가분을 Node로 기록한다.
+- `artifact_effects.csv.recipient_scope`를 사용자 문구에 맞게 확정한다.
+- 기존 Artifact graph/trigger와 공통 Node 정의 CSV를 재사용한다.
+
+### Constraints
+
+- `모든 아군`이 명시된 유물만 `AllAllies`, 나머지는 `Owner`다.
+- `unbreakable-promise-effect`만 `Owner`로 변경하고 나머지 파수꾼 9개는 `AllAllies`를 유지한다.
+- 새 파수꾼 전용 CSV를 만들지 않는다.
+- 수치를 C# Effect ID 분기로 하드코딩하지 않는다.
+- Designer 단계에서는 실행 CSV를 수정하지 않는다.
+
+### Role Owner
+
+Designer handoff, Code Builder implementation.
+
+### Status
+
+데이터 Handoff 작성 완료. CSV·runtime 구현 대기.
+
+### Next Actions
+
+- Code Builder가 Effect 헤더, 공통 Node 정의, Artifact graph/trigger 행을 작성한다.
+- CSV 열 수, 외래 키, enum, Node 인자와 runtime catalog를 검증한다.
+
+### Evidence
+
+- 파수꾼 Artifact/시너지 Effect 헤더는 존재하지만 `skill_graph_nodes_artifact.csv`와 `artifact_skill_triger.csv`에 파수꾼 실행 행은 없다.
+- 현재 `artifact_synergies.csv` 파수꾼 수치는 `15/25/40/60%`로 사용자 확정값과 다르다.
+- 현재 파수꾼 개별 Effect 10개는 모두 `AllAllies`다.
+- 기존 `Owner` enum, CSV parser, Stage 배포와 개별/시너지 Node/Reaction 생성 경로는 구현돼 있다.
+- 상세 데이터 매핑은 `Pakuri/reference/4.run/sentinel-artifact-synergy-implementation-design.md`에 기록했다.
+
+### History
+
+- 2026-08-07: 사용자가 파수꾼 시너지·유물 수치와 모든 아군/보유자 적용 규칙을 확정했다.
+- 2026-08-07: Designer가 누적 단계 증가분과 17개 Effect 데이터 계약을 작성했다.
+
+## Task: 2026-08-07 Chosen One Synergy Effect Visual
+
+### Task title
+
+선택받은자 유닛 위치에 CSV 지정 Sprite 시너지 이펙트를 표시한다.
+
+### Goals
+
+- `artifact_synergies.csv`에 시너지 이펙트 Sprite, Alpha, Layer 값을 저장한다.
+- `chosen-one` 선택 유닛의 Transform에 기존 `EffectManager` Sprite 이펙트를 부착한다.
+- `chosen-one` 시너지 보유 수량이 2 이상일 때만 해당 이펙트를 생성한다.
+
+### Constraints
+
+- 기존 `EffectManager.CreateEffect`와 `RuntimeSkillVisualSpec`을 재사용한다.
+- Alpha는 0~100 퍼센트, Layer는 Monster SpriteRenderer 최대 sorting order보다 높은 38을 사용한다.
+- 현재 단계에서는 Sprite만 표시하고 애니메이션·별도 이펙트 API는 추가하지 않는다.
+- 시너지 수량이 2 미만이면 선택 유닛이 있어도 이펙트를 생성하지 않는다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+구현 완료. CSV 열 정합성, Unity runtime catalog 동기화, Core/Editor 빌드를 확인했다. 실제 Play Mode 표시 확인은 사용자 소유다.
+
+### Next Actions
+
+- Play Mode에서 선택받은 자 유닛 위치의 `SpotLight` 표시·투명도·레이어를 확인한다.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/Artifact/artifact_synergies.csv`의 `chosen-one` 행은 `Assets/Image/Object/SpotLight.png`, Alpha `50`, Layer `38`이다.
+- quote-aware CSV 검증 결과 8개 행 모두 헤더와 동일한 20열이다.
+- `ArtifactSynergyManager`가 `UnitSpawnManager.Players`의 선택 유닛 Transform과 `combatManager.Effects`를 기존 `EffectManager.CreateEffect`에 전달한다.
+- `CreateChosenOneEffect`가 `Synergies.GetCount("chosen-one") < 2`를 먼저 차단한다.
+- `EffectVisualBuilder`가 SpriteRenderer 색상 Alpha와 sorting order를 `RuntimeSkillVisualSpec`에서 적용한다.
+- Unity 로그에 `GameDataLoader loaded runtime catalog ... 6 artifact synergies`가 기록됐고, `CsvRuntimeCatalog.asset`에 `Assets/Image/Object/SpotLight.png` 참조가 생성됐다.
+- Core/Editor `dotnet build --no-restore` 결과 오류 0개, 기존 Unity 참조 경고 2개다.
+
+### History
+
+- 2026-08-07: Code Builder가 선택받은자 시너지 Sprite/Alpha/Layer CSV 계약과 기존 EffectManager 부착 경로를 구현했다.
+- 2026-08-07: tracker 행의 19열 오류를 20열로 보정하고 Unity CSV 검증·runtime catalog 동기화를 통과시켰다.
+- 2026-08-07: Code Builder가 선택받은자 시너지 수량 2 미만의 이펙트 생성을 차단했다.
+
 ## Task: 2026-08-07 Chosen One Artifact Data Design
 
 ### Task title
@@ -25,7 +119,7 @@ Designer.
 
 ### Status
 
-데이터 구현 완료. Code Reviewer 정적 검증 통과. Unity 카탈로그 검증은 열린 Editor 잠금으로 대기.
+데이터 구현 완료. `absolute-zero-circuit-effect` 인자 순서 오류 수정 및 정적 검증 완료. Unity 카탈로그 검증은 열린 Editor 잠금으로 대기.
 
 ### Next Actions
 
@@ -40,6 +134,11 @@ Designer.
 - 기존 `TargetStatusStackDamageRateBonus`는 이름 없는 명부의 확정 위력 계약과 다르다.
 - `GameDataCatalogBuilder.Artifacts`는 이미 개별·시너지 Effect의 Node와 Reaction을 생성한다.
 - 정적 외래 키 검사 결과 graph 117행/trigger 14행의 소유자·효과 참조 오류 0개, node definition 누락/중복 0개다.
+- `ConditionalDamageMultiplier` 정의 순서가 `status_name,min_stacks,multiplier`임을 확인하고 행을 `freeze,1,1.25`로 수정했다.
+- Artifact graph numeric validation 결과 `artifact_graph_rows=117 invalid_numeric_params=0`이다.
+- `artifact_skill_triger.csv` 헤더와 타입 행은 `event_skill_slots` 열을 포함해 각각 24열이며, 앙코르 데이터는 `A;B;C;D;E`, `proc_chance=1`, `trigger_every_count=3`이다.
+- `CsvRowParser.SkillTriggerRow`, `StatusValueParser.ParseSkillSlots`, `GameDataCatalogBuilder`가 새 슬롯 필드를 `SkillReaction.EventSkillSlots`로 매핑하고 `CsvDataValidator`가 enum 값을 검증한다.
+- `GameDataCatalogBuilder.IsNormalCastEffect`는 event skill name이 비어도 runtime kind/slot 조건이 있으면 일반 OnSkillCast로 분류하지 않아 앙코르 반응을 생성한다.
 
 ### History
 
@@ -47,6 +146,10 @@ Designer.
 - 2026-08-07: Designer가 데이터 계약과 이름 없는 명부 위력 공식을 기록했다.
 - 2026-08-07: Code Builder가 신규 Node 계약, Artifact graph/trigger 행, 이름 없는 명부 문구를 반영했다.
 - 2026-08-07: Code Reviewer가 CSV 열 수·파라미터·외래 키 정적 검사를 통과시켰다.
+- 2026-08-07: Unity가 `min_stacks=1.25`를 보고한 원인은 `absolute-zero-circuit-effect` CSV 인자 순서 오류였고, Code Builder가 행을 교정한 뒤 runtime/editor 빌드 오류 0개를 확인했다.
+- 2026-08-07: Code Builder가 앙코르 Trigger에 `event_skill_slots` CSV 계약을 추가하고 parser/generator/validator 매핑을 구현했다.
+- 2026-08-07: 앙코르 행의 빈 `event_skill_name` 때문에 반응 생성에서 제외되던 필터를 수정했다.
+- 2026-08-07: 앙코르 슬롯 제한을 `A;B;C;D;E`로 확장하고 기존 탄창 마지막 발사 계약은 유지했다.
 
 ## Task: 2026-08-07 MainMenu Monster Standing Text Contract
 

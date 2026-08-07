@@ -20,6 +20,7 @@ This file is the small root index for current global state. Detailed work is rou
 - Code Reviewer execution requires explicit user permission.
 - Unity Play Mode gameplay verification remains user-owned.
 - The 2026-08-03 Boss HP display task is implemented: one active boss with the highest `Stats.MaxHealth` uses Canvas `BossHP`; lower-priority bosses keep prefab HP bars, and selection advances after defeat. Detailed state is recorded in `boards/MON/MON_BLACKBOARD.md` and `boards/UI/UI_BLACKBOARD.md`.
+- The 2026-08-07 Sentinel artifact/synergy implementation handoff is design-ready. It reuses Ariel-B shield absorb/expire triggers, adds only the missing common defense/final-damage/cooldown/support-event contracts, and records Owner versus AllAllies scope in `Pakuri/reference/4.run/sentinel-artifact-synergy-implementation-design.md`.
 
 ## Current Routes
 
@@ -29,3 +30,4 @@ This file is the small root index for current global state. Detailed work is rou
 - Trigger executor-reuse handoff: `boards/COMBAT/SKILL_TRIGGER_EXECUTOR_REUSE_HANDOFF.md`
 - Combat task state: `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`
 - Data task state: `boards/DATA/DATA_BLACKBOARD.md`
+- Sentinel artifact/synergy handoff: `Pakuri/reference/4.run/sentinel-artifact-synergy-implementation-design.md`

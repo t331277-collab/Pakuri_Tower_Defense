@@ -166,6 +166,7 @@ namespace Pakuri.InGame
         public string[] EventSkillNames = Array.Empty<string>();
         public SkillRuntimeKindCondition[] EventSkillRuntimeKindValues =
             Array.Empty<SkillRuntimeKindCondition>();
+        public SkillSlot[] EventSkillSlots = Array.Empty<SkillSlot>();
         public float ProcChance = 1f;
         public float InternalCooldownSeconds;
         public float DelaySeconds;

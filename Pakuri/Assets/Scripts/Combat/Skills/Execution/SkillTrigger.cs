@@ -45,14 +45,15 @@ internal static class SkillTrigger
 		}
 
 		/// 반응 누적 횟수가 실행 시점에 도달했는지 확인한다.
-		public bool ConsumeCount(string key, int triggerEveryCount)
+		public bool ConsumeCount(string key, int triggerEveryCount, out int currentCount)
 		{
 			if (triggerEveryCount <= 1)
 			{
+				currentCount = triggerEveryCount;
 				return true;
 			}
 
-			counts.TryGetValue(key, out int currentCount);
+			counts.TryGetValue(key, out currentCount);
 			currentCount++;
 			if (currentCount < triggerEveryCount)
 			{
@@ -61,6 +62,7 @@ internal static class SkillTrigger
 			}
 
 			counts[key] = 0;
+			currentCount = triggerEveryCount;
 			return true;
 		}
 	}
@@ -127,6 +129,8 @@ internal static class SkillTrigger
 
 		public bool EventWasCritical { get; }
 
+		public bool EventWasMagazineLastProjectile { get; }
+
 		public string EventTriggerSourceSkillName { get; }
 
 		public int EventHitCount { get; }
@@ -134,7 +138,7 @@ internal static class SkillTrigger
 		public int RecastGeneration { get; }
 
 		/// 지연 실행 뒤에도 사건 당시의 판정 기준을 그대로 사용하게 한다.
-		public TriggerExecutionContext(UnitCombatState eventTarget, UnitCombatState attacker, Vector2 eventCenter, StatusRuntimeInstance status, float shieldAbsorbedAmount, float eventAppliedDamage, DamageAttribute eventAttribute, string eventSourceSkillName, UnitCombatState eventSource = null, bool eventWasExecute = false, string eventTriggerSourceSkillName = null, int eventHitCount = 0, int recastGeneration = 0, bool eventWasCritical = false)
+		public TriggerExecutionContext(UnitCombatState eventTarget, UnitCombatState attacker, Vector2 eventCenter, StatusRuntimeInstance status, float shieldAbsorbedAmount, float eventAppliedDamage, DamageAttribute eventAttribute, string eventSourceSkillName, UnitCombatState eventSource = null, bool eventWasExecute = false, string eventTriggerSourceSkillName = null, int eventHitCount = 0, int recastGeneration = 0, bool eventWasCritical = false, bool eventWasMagazineLastProjectile = false)
 		{
 			EventTarget = eventTarget;
 			Attacker = attacker;
@@ -158,6 +162,7 @@ internal static class SkillTrigger
 			EventSource = eventSource;
 			EventWasExecute = eventWasExecute;
 			EventWasCritical = eventWasCritical;
+			EventWasMagazineLastProjectile = eventWasMagazineLastProjectile;
 			EventTriggerSourceSkillName = eventTriggerSourceSkillName;
 			EventHitCount = Mathf.Max(0, eventHitCount);
 			RecastGeneration = Mathf.Max(0, recastGeneration);
@@ -400,11 +405,11 @@ internal static class SkillTrigger
 	}
 
 	/// 스킬 시전 사건을 반응 판정에 전달한다.
-	public static void ExecuteSkillCast(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillName, Vector2 eventCenter, string eventTriggerSourceSkillName = null)
+	public static void ExecuteSkillCast(InGameCombatManager combatManager, UnitSpawnManager roster, UnitCombatState source, string sourceSkillName, Vector2 eventCenter, string eventTriggerSourceSkillName = null, bool eventWasMagazineLastProjectile = false)
 	{
 		if (!(combatManager == null) && roster != null && source != null)
 		{
-			TriggerExecutionContext triggerContext = new TriggerExecutionContext(source, source, eventCenter, null, 0f, 0f, DamageAttribute.Physical, sourceSkillName, source, eventWasExecute: false, eventTriggerSourceSkillName: eventTriggerSourceSkillName);
+			TriggerExecutionContext triggerContext = new TriggerExecutionContext(source, source, eventCenter, null, 0f, 0f, DamageAttribute.Physical, sourceSkillName, source, eventWasExecute: false, eventTriggerSourceSkillName: eventTriggerSourceSkillName, eventWasMagazineLastProjectile: eventWasMagazineLastProjectile);
 			ExecuteSourceOwnedTriggers(combatManager, roster, source, sourceSkillName, SkillTriggerEvent.OnSkillCast, triggerContext);
 			ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnSkillCast, triggerContext);
 		}
@@ -506,7 +511,7 @@ internal static class SkillTrigger
 				{
 					SkillReaction trigger = triggers[triggerIndex];
 					if (ShouldRunPassiveOwnerTrigger(trigger, unitState, triggerEvent, triggerContext)
-						&& PassesCountGate(combatManager, unitState, trigger)
+						&& PassesCountGate(combatManager, unitState, trigger, triggerContext)
 						&& PassesProcGate(combatManager, unitState, trigger))
 					{
                         SkillExecution.ScheduleReaction(
@@ -595,7 +600,7 @@ internal static class SkillTrigger
 		{
 			var trigger = reactions[triggerIndex];
 			if (ShouldRunArtifactOwnerTrigger(trigger, owner, triggerEvent, triggerContext)
-				&& PassesCountGate(combatManager, owner, trigger)
+				&& PassesCountGate(combatManager, owner, trigger, triggerContext)
 				&& PassesProcGate(combatManager, owner, trigger))
 			{
 				SkillExecution.ScheduleReaction(
@@ -613,7 +618,7 @@ internal static class SkillTrigger
 	/// 발생원 반응의 모든 게이트를 통과했는지 확인한다.
 	private static bool ShouldRunSourceOwnedTrigger(SkillReaction trigger, UnitCombatState source, string sourceSkillName, SkillTriggerEvent triggerEvent, TriggerExecutionContext triggerContext)
 	{
-		if (trigger != null && trigger.Event == triggerEvent && string.Equals(trigger.SourceSkillName, sourceSkillName, StringComparison.OrdinalIgnoreCase) && MatchesEventSkillName(trigger.EventSkillNames, triggerContext.EventSourceSkillName) && StatusConditionRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKindValues, triggerContext.EventSourceSkillName) && (!trigger.RequireEventExecute || triggerContext.EventWasExecute) && (!trigger.RequireEventCritical || triggerContext.EventWasCritical) && HasAllChoices(source, trigger.RequiredActiveChoiceNames) && !HasAnyChoice(source, trigger.ExcludedActiveChoiceNames))
+		if (trigger != null && trigger.Event == triggerEvent && string.Equals(trigger.SourceSkillName, sourceSkillName, StringComparison.OrdinalIgnoreCase) && MatchesEventSkillSlots(trigger.EventSkillSlots, triggerContext) && MatchesEventSkillName(trigger.EventSkillNames, triggerContext.EventSourceSkillName) && StatusConditionRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKindValues, triggerContext.EventSourceSkillName) && (!trigger.RequireEventExecute || triggerContext.EventWasExecute) && (!trigger.RequireEventCritical || triggerContext.EventWasCritical) && HasAllChoices(source, trigger.RequiredActiveChoiceNames) && !HasAnyChoice(source, trigger.ExcludedActiveChoiceNames))
 		{
 			return MeetsSourceStatusRequirement(source, trigger.RequiredSourceStatusKind, trigger.RequiredSourceStatusMinStacks);
 		}
@@ -623,7 +628,7 @@ internal static class SkillTrigger
 	/// 지속 반응의 모든 게이트를 통과했는지 확인한다.
 	private static bool ShouldRunPassiveOwnerTrigger(SkillReaction trigger, UnitCombatState owner, SkillTriggerEvent triggerEvent, TriggerExecutionContext triggerContext)
 	{
-		if (trigger == null || owner == null || owner.Skills == null || trigger.Event != triggerEvent || string.IsNullOrWhiteSpace(trigger.SourceSkillName) || !owner.Skills.HasPassiveSkill(trigger.SourceSkillName) || !MatchesEventSkillName(trigger.EventSkillNames, triggerContext.EventSourceSkillName) || !StatusConditionRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKindValues, triggerContext.EventSourceSkillName) || (trigger.RequireEventExecute && !triggerContext.EventWasExecute) || (trigger.RequireEventCritical && !triggerContext.EventWasCritical) || !HasAllChoices(owner, trigger.RequiredActiveChoiceNames) || HasAnyChoice(owner, trigger.ExcludedActiveChoiceNames) || !MeetsSourceStatusRequirement(owner, trigger.RequiredSourceStatusKind, trigger.RequiredSourceStatusMinStacks))
+		if (trigger == null || owner == null || owner.Skills == null || trigger.Event != triggerEvent || string.IsNullOrWhiteSpace(trigger.SourceSkillName) || !owner.Skills.HasPassiveSkill(trigger.SourceSkillName) || !MatchesEventSkillSlots(trigger.EventSkillSlots, triggerContext) || !MatchesEventSkillName(trigger.EventSkillNames, triggerContext.EventSourceSkillName) || !StatusConditionRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKindValues, triggerContext.EventSourceSkillName) || (trigger.RequireEventExecute && !triggerContext.EventWasExecute) || (trigger.RequireEventCritical && !triggerContext.EventWasCritical) || !HasAllChoices(owner, trigger.RequiredActiveChoiceNames) || HasAnyChoice(owner, trigger.ExcludedActiveChoiceNames) || !MeetsSourceStatusRequirement(owner, trigger.RequiredSourceStatusKind, trigger.RequiredSourceStatusMinStacks))
 		{
 			return false;
 		}
@@ -651,6 +656,7 @@ internal static class SkillTrigger
 		return trigger != null
 			&& owner != null
 			&& trigger.Event == triggerEvent
+			&& MatchesEventSkillSlots(trigger.EventSkillSlots, triggerContext)
 			&& MatchesEventSkillName(trigger.EventSkillNames, triggerContext.EventSourceSkillName)
 			&& StatusConditionRules.MatchesSkillRuntimeKinds(
 				trigger.EventSkillRuntimeKindValues,
@@ -776,15 +782,84 @@ internal static class SkillTrigger
 	}
 
 	/// 누적 횟수 게이트를 통과하는지 확인한다.
-	private static bool PassesCountGate(InGameCombatManager combatManager, UnitCombatState owner, SkillReaction trigger)
+	private static bool PassesCountGate(
+		InGameCombatManager combatManager,
+		UnitCombatState owner,
+		SkillReaction trigger,
+		TriggerExecutionContext triggerContext)
 	{
 		if (combatManager == null || owner == null || trigger == null)
 		{
 			return false;
 		}
-		return gateStates.GetOrCreateValue(combatManager).ConsumeCount(
+
+		var eventRuntime = triggerContext.EventSource?.SkillState?.FindBySkillName(
+			triggerContext.EventSourceSkillName);
+		if (trigger.Event == SkillTriggerEvent.OnSkillCast
+			&& trigger.EveryCount > 1
+			&& eventRuntime != null
+			&& eventRuntime.UsesMagazine
+			&& !triggerContext.EventWasMagazineLastProjectile)
+		{
+			if (IsChosenOneEncore(trigger))
+			{
+				Debug.Log(
+					$"[ChosenOne][Encore] count ignored: skill={triggerContext.EventSourceSkillName} "
+					+ "magazine projectile is not the last launch.");
+			}
+			return false;
+		}
+
+		var passed = gateStates.GetOrCreateValue(combatManager).ConsumeCount(
 			BuildPassiveTriggerCooldownKey(owner, trigger),
-			trigger.EveryCount);
+			trigger.EveryCount,
+			out var currentCount);
+		if (IsChosenOneEncore(trigger))
+		{
+			var displayCount = passed ? trigger.EveryCount : currentCount;
+			Debug.Log(
+				$"[ChosenOne][Encore] count={displayCount}/{Mathf.Max(1, trigger.EveryCount)} "
+				+ $"skill={triggerContext.EventSourceSkillName}"
+				+ (passed ? " -> recast queued." : string.Empty));
+		}
+
+		return passed;
+	}
+
+	private static bool MatchesEventSkillSlots(
+		SkillSlot[] slots,
+		TriggerExecutionContext triggerContext)
+	{
+		if (slots == null || slots.Length == 0)
+		{
+			return true;
+		}
+
+		var runtime = triggerContext.EventSource?.SkillState?.FindBySkillName(
+			triggerContext.EventSourceSkillName);
+		if (runtime == null)
+		{
+			return false;
+		}
+
+		for (var i = 0; i < slots.Length; i++)
+		{
+			if (slots[i] == runtime.Slot)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private static bool IsChosenOneEncore(SkillReaction trigger)
+	{
+		return trigger != null
+			&& string.Equals(
+				trigger.ReactionName,
+				"chosen-one-encore-trigger",
+				StringComparison.OrdinalIgnoreCase);
 	}
 
 	/// 지연 전에 사건이 제공한 수치를 반응 입력으로 고정한다.

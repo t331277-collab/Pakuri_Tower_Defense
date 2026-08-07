@@ -39,6 +39,7 @@ namespace Pakuri.InGame
             {
                 var renderer = instance.AddComponent<SpriteRenderer>();
                 renderer.sprite = visual.Sprite;
+                renderer.color = new Color(1f, 1f, 1f, Mathf.Clamp01(visual.Alpha));
                 renderer.sortingOrder = visual.SortingOrder;
             }
 

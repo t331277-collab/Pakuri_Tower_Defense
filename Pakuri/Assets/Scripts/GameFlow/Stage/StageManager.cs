@@ -177,7 +177,8 @@ namespace Pakuri.InGame
             EnsureNexusRegistered();
             artifactSynergyManager.PrepareStage(
                 activeSession,
-                spawnManager: unitSpawnManager);
+                spawnManager: unitSpawnManager,
+                effectManager: combatManager.Effects);
             combatManager.BeginPlayerCombat();
 
             currentDay = stageDefinition.FindDay(activeSession.StageIndex, activeSession.DayIndex);

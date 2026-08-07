@@ -98,7 +98,7 @@
 "quantum-computation","Effect","quantum-computation-effect","","2","DamageMultiplier","1.50","","","","","","","","","","","",""
 "absolute-zero-circuit","Effect","absolute-zero-circuit-effect","","1","ConditionSkillAttribute","Ice","","","","","","","","","","","",""
 "absolute-zero-circuit","Effect","absolute-zero-circuit-effect","","2","DamageMultiplier","1.35","","","","","","","","","","","",""
-"absolute-zero-circuit","Effect","absolute-zero-circuit-effect","","3","ConditionalDamageMultiplier","freeze","1.25","1","","","","","","","","","",""
+"absolute-zero-circuit","Effect","absolute-zero-circuit-effect","","3","ConditionalDamageMultiplier","freeze","1","1.25","","","","","","","","","",""
 "nameless-ledger","Effect","nameless-ledger-effect","","1","TargetStatusStackDamageMultiplierBonus","name-mark","0.06","","","","","","","","","","",""
 "black-execution-platform","Effect","black-execution-platform-effect","","1","DamageMultiplier","1.45","","","","","","","","","","","",""
 "convection-arrowhead","Effect","convection-arrowhead-sein-a-effect","","1","DamageMultiplier","1.40","","","","","","","","","","","",""

@@ -495,6 +495,11 @@ namespace Pakuri.Data
                 errors.Add($"Skill trigger '{trigger.Name}' uses unsupported event_skill_runtime_kinds '{trigger.EventSkillRuntimeKinds}'.");
             }
 
+            if (!ValidateSkillSlotList(trigger.EventSkillSlots))
+            {
+                errors.Add($"Skill trigger '{trigger.Name}' uses unsupported event_skill_slots '{trigger.EventSkillSlots}'.");
+            }
+
             ValidateSkillIdList(trigger.EventSkillName, trigger, model, "event_skill_name", errors);
         }
 
@@ -525,6 +530,31 @@ namespace Pakuri.Data
                 }
 
                 if (!Enum.TryParse(token, true, out SkillRuntimeKind _))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        internal static bool ValidateSkillSlotList(string rawValue)
+        {
+            if (string.IsNullOrWhiteSpace(rawValue))
+            {
+                return true;
+            }
+
+            var tokens = rawValue.Split(';', ',');
+            for (var i = 0; i < tokens.Length; i++)
+            {
+                var token = tokens[i]?.Trim();
+                if (string.IsNullOrWhiteSpace(token))
+                {
+                    continue;
+                }
+
+                if (!Enum.TryParse(token, true, out SkillSlot _))
                 {
                     return false;
                 }
@@ -586,6 +616,11 @@ namespace Pakuri.Data
             var synergyLevelNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var synergy in model.ArtifactSynergies.Values)
             {
+                if (synergy.EffectAlphaPercent < 0f || synergy.EffectAlphaPercent > 100f)
+                {
+                    errors.Add($"Artifact synergy '{synergy.Name}' synergy_effect_alpha must be between 0 and 100.");
+                }
+
                 var previousRequiredCount = 0;
                 for (var i = 0; i < synergy.Levels.Length; i++)
                 {

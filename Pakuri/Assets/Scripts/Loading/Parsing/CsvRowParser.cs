@@ -69,6 +69,9 @@ namespace Pakuri.Data
             public string Summary;
             public string DescriptionText;
             public string IconPath;
+            public string EffectPath;
+            public float EffectAlphaPercent = 100f;
+            public int EffectSortingOrder;
             public ArtifactSynergyLevelRow[] Levels = Array.Empty<ArtifactSynergyLevelRow>();
         }
 
@@ -213,6 +216,7 @@ namespace Pakuri.Data
             public string TriggerAttribute;
             public string EventSkillName;
             public string EventSkillRuntimeKinds;
+            public string EventSkillSlots;
             public float ProcChance = 1f;
             public float InternalCooldownSeconds;
             public float TriggerDelaySeconds;
@@ -287,6 +291,9 @@ namespace Pakuri.Data
                 Summary = record.ReadString("summary"),
                 DescriptionText = record.ReadString("description_text"),
                 IconPath = record.ReadString("Icon_Image"),
+                EffectPath = record.ReadString("synergy_effect"),
+                EffectAlphaPercent = ReadOptionalFloat(record, "synergy_effect_alpha", 100f),
+                EffectSortingOrder = ReadOptionalIntIfColumnExists(record, "synergy_effect_layer"),
                 Levels = levels
             };
         }
@@ -464,6 +471,7 @@ namespace Pakuri.Data
                 TriggerAttribute = ReadOptionalStringIfColumnExists(record, "trigger_attribute"),
                 EventSkillName = ReadOptionalStringIfColumnExists(record, "event_skill_name"),
                 EventSkillRuntimeKinds = ReadOptionalStringIfColumnExists(record, "event_skill_runtime_kinds"),
+                EventSkillSlots = ReadOptionalStringIfColumnExists(record, "event_skill_slots"),
                 SortOrder = record.ReadInt("sort_order"),
                 RepeatCount = ReadOptionalIntIfColumnExists(record, "repeat_count"),
                 RepeatIntervalSeconds = ReadOptionalFloatIfColumnExists(record, "repeat_interval_seconds"),

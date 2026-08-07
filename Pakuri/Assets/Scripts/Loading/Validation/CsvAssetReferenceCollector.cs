@@ -89,6 +89,7 @@ namespace Pakuri.Data
             foreach (var synergy in model.ArtifactSynergies.Values)
             {
                 assets.AddSprite(synergy.IconPath, $"Artifact synergy '{synergy.Name}' Icon_Image");
+                assets.AddSprite(synergy.EffectPath, $"Artifact synergy '{synergy.Name}' synergy_effect");
             }
 
             foreach (var skill in model.Skills.Values)

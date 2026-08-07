@@ -30,6 +30,7 @@ namespace Pakuri.Data
     {
         public Sprite Sprite;
         public RuntimeAnimatorController AnimatorController;
+        public float Alpha = 1f;
         public Vector3 LocalScale = Vector3.one;
         public int SortingOrder;
         public RuntimeSkillVisualAnchor Anchor = RuntimeSkillVisualAnchor.Skill;

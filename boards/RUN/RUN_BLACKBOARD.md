@@ -40,6 +40,11 @@ Code Builder 구현 완료. Code Reviewer 수정요청 반영 및 최종 정적 
 - `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore -v:minimal`: 오류 0개.
 - Unity CSV 검증은 동일 프로젝트가 이미 열린 상태라 batchmode가 `Multiple Unity instances cannot open the same project`로 중단됐다.
 - `InGameInfoUI`는 이미 `SynergyName`별 컨테이너와 Y `-93.3` 배치를 구현한다.
+- `artifact_skill_triger.csv`의 선택받은자 앙코르 Trigger는 `proc_chance=1`, `trigger_every_count=3`, `event_skill_slots=A;B;C;D;E`로 제한된다.
+- `ArtifactSynergyManager.PrepareStage`가 선택받은자 보유자와 시너지 2 활성화를 `[ChosenOne]` 로그로 기록한다.
+- `SkillTrigger`가 A~E 시전 집계를 `[ChosenOne][Encore] count=X/3`로 기록하고, 3회마다 재사용 큐 로그를 남긴다.
+- `SkillExecution`은 사건 원본 스킬을 자동 조준으로 재실행하며, 탄창 스킬은 기존 `effectiveTickInterval` 간격으로 최대 탄창 수만큼 0.50 배율 투사체를 순차 재사용한다.
+- Editor.log에는 `[ChosenOne] Encore active`는 있으나 `[ChosenOne][Encore]` 카운트/재사용 로그가 없었고, 원인은 앙코르 OnSkillCast 행이 반응 생성 필터에서 제외된 것이었다.
 
 ### History
 
@@ -51,6 +56,11 @@ Code Builder 구현 완료. Code Reviewer 수정요청 반영 및 최종 정적 
 - 2026-08-07: Code Reviewer가 Encore 후속 사건의 원본 스킬명 전달을 요청했고 Code Builder가 `EventSourceSkillName` 경계를 반영한 뒤 재빌드했다.
 - 2026-08-07: Code Reviewer가 추가·연쇄 적중의 대상별 최종 피해 resolver와 Spawning 중 Highlight tick을 요청했고 Code Builder가 반영 후 재빌드했다.
 - 2026-08-07: 수정 후 runtime/editor 빌드와 CSV 정적 검사를 재확인했다. Unity Play Mode만 사용자 확인 대기다.
+- 2026-08-07: Code Builder가 앙코르 Trigger를 B~E 슬롯과 3회 게이트로 제한하고, 탄창 마지막 발사 시점 집계·자동 재사용·진행/재사용 로그를 연결했다.
+- 2026-08-07: `UseEventSourceSkill` 복제 시 원본 플래그를 보존하도록 교정했고 Runtime/Editor 빌드 오류 0개를 재확인했다.
+- 2026-08-07: `IsNormalCastEffect`의 빈 event skill name 판정을 runtime kind/slot이 비어 있는 경우로 한정해 앙코르 반응 생성을 복구했다.
+- 2026-08-07: 앙코르 Trigger를 A~E 슬롯으로 확장했다. A의 탄창은 마지막 탄환에서만 카운트되고 재사용 시 전탄 자동 발사된다.
+- 2026-08-07: 탄창 앙코르의 동일 프레임 전탄 생성 문제를 수정해 기존 shot_interval 간격으로 투사체를 발사하도록 교정했다.
 
 ## Current State
 

@@ -23,7 +23,8 @@ namespace Pakuri.InGame
         public void PrepareStage(
             RunSession session,
             GameDataCatalog catalog = null,
-            UnitSpawnManager spawnManager = null)
+            UnitSpawnManager spawnManager = null,
+            EffectManager effectManager = null)
         {
             if (session == null)
             {
@@ -57,6 +58,14 @@ namespace Pakuri.InGame
             }
 
             chosenOneOwnerName = ResolveChosenOneOwner(session, catalog);
+            if (Synergies.GetCount("chosen-one") >= 2
+                && !string.IsNullOrWhiteSpace(chosenOneOwnerName))
+            {
+                Debug.Log(
+                    $"[ChosenOne] Encore active: owner={chosenOneOwnerName} "
+                    + $"synergyCount={Synergies.GetCount("chosen-one")}");
+            }
+            CreateChosenOneEffect(catalog, spawnManager, effectManager);
             DistributeSynergyEffects(session, catalog);
             highlightEnabled = Synergies.GetCount("chosen-one") >= 6
                 && !string.IsNullOrWhiteSpace(chosenOneOwnerName);
@@ -96,6 +105,60 @@ namespace Pakuri.InGame
             if (spawnManager != null)
             {
                 ActivateStageEffects(session, catalog, spawnManager);
+            }
+        }
+
+        private void CreateChosenOneEffect(
+            GameDataCatalog catalog,
+            UnitSpawnManager spawnManager,
+            EffectManager effectManager)
+        {
+            if (Synergies.GetCount("chosen-one") < 2
+                || catalog == null
+                || spawnManager == null
+                || effectManager == null
+                || string.IsNullOrWhiteSpace(chosenOneOwnerName))
+            {
+                return;
+            }
+
+            var synergy = catalog.GetData<ArtifactSynergyDefinition>("chosen-one");
+            if (synergy?.SynergyEffect == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < spawnManager.Players.Count; i++)
+            {
+                var entry = spawnManager.Players[i];
+                var model = entry?.Model;
+                if (model?.Identity == null
+                    || !string.Equals(
+                        model.Identity.DefinitionName,
+                        chosenOneOwnerName,
+                        StringComparison.OrdinalIgnoreCase)
+                    || entry.Transform == null)
+                {
+                    continue;
+                }
+
+                effectManager.CreateEffect(new EffectCreateRequest(
+                    new RuntimeSkillVisualSpec
+                    {
+                        Sprite = synergy.SynergyEffect,
+                        Alpha = Mathf.Clamp01(synergy.SynergyEffectAlphaPercent / 100f),
+                        SortingOrder = synergy.SynergyEffectSortingOrder
+                    },
+                    null,
+                    "ChosenOneSynergyEffect",
+                    entry.Transform.position,
+                    Quaternion.identity,
+                    entry.Transform,
+                    null,
+                    false,
+                    false,
+                    false));
+                return;
             }
         }
 

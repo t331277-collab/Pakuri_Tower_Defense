@@ -100,6 +100,9 @@ namespace Pakuri.Data
         public string Summary;
         public string Description;
         public Sprite Icon;
+        public Sprite SynergyEffect;
+        public float SynergyEffectAlphaPercent = 100f;
+        public int SynergyEffectSortingOrder;
         public ArtifactSynergyLevelDefinition[] Levels = Array.Empty<ArtifactSynergyLevelDefinition>();
     }
 }

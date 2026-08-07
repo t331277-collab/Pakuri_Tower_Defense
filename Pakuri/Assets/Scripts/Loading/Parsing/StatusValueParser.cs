@@ -161,6 +161,18 @@ namespace Pakuri.Data
             return conditions.ToArray();
         }
 
+        public static SkillSlot[] ParseSkillSlots(string rawValue)
+        {
+            var values = ParseIdList(rawValue);
+            var slots = new SkillSlot[values.Length];
+            for (var i = 0; i < values.Length; i++)
+            {
+                slots[i] = (SkillSlot)Enum.Parse(typeof(SkillSlot), values[i], true);
+            }
+
+            return slots;
+        }
+
         public static string[] ParseIdList(string rawValue)
         {
             if (string.IsNullOrWhiteSpace(rawValue))

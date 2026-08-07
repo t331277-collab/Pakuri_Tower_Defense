@@ -1,5 +1,52 @@
 # STATUS_EFFECT_BLACKBOARD
 
+## Task: 2026-08-07 Sentinel Combat Runtime Handoff
+
+### Task title
+
+파수꾼 시너지·유물의 방어력, 방어막 사건, 피해 반사와 대상 측 최종 피해 감소를 공통 전투 경로에 연결한다.
+
+### Goals
+
+- 모든 속성 방어력의 비율·고정 보너스를 기존 방어 계산에 합성한다.
+- Ariel-B의 보호막 흡수·소진 Trigger를 파수꾼 반사와 소진 효과에 재사용한다.
+- 최종 피해 증가와 대상 측 최종 피해 감소를 별도 배율로 곱한다.
+- 회복/방어막 수령, 보호막 파괴, 보스전 시작 사건을 공통 Trigger로 추가한다.
+
+### Constraints
+
+- 파수꾼 Effect ID 분기를 Damage Actor나 `DamageCalculator`에 넣지 않는다.
+- 일반 받는 피해 감소와 최종 피해 감소를 같은 구간에 합치지 않는다.
+- 반사 피해는 기존 `IsTrigger` 재귀 차단을 유지한다.
+- Designer 단계에서는 런타임 코드를 구현하지 않는다.
+
+### Role Owner
+
+Designer handoff, Code Builder implementation.
+
+### Status
+
+구현 Handoff 작성 완료. C#·CSV 구현 대기.
+
+### Next Actions
+
+- Code Builder가 `Pakuri/reference/4.run/sentinel-artifact-synergy-implementation-design.md` Phase 1부터 구현한다.
+- 방어·최종 피해·보호막 사건 집중 EditMode 검증 뒤 Runtime/Editor 빌드를 수행한다.
+
+### Evidence
+
+- `DamageCalculator`는 속성별 `UnitDefenseStats`와 `FinalDamageModifier`를 이미 적용한다.
+- `SkillTrigger`는 `OnShieldAbsorb`, `OnShieldExpire`, `ShieldAbsorbedAmount`를 이미 제공한다.
+- Ariel-B Master 2는 흡수량 35% 신성 반사를 기존 Trigger 피해 경로로 실행한다.
+- `InGameCombatManager`는 보호막별 실제 흡수량을 `ShieldAbsorptionRecord`에 기록하고 Trigger 피해의 후속 반응을 차단한다.
+- 현재 대상 측 최종 피해 감소, 보호막 파괴 전용, 지원 수령, 보스전 시작 사건은 존재하지 않는다.
+- 현재 보호막 사건 `EventSource`는 방어막 시전자라 수혜자 Artifact owner 판정에는 맞지 않으며, Handoff는 수혜자를 사건 owner로 교정한다.
+
+### History
+
+- 2026-08-07: 사용자가 파수꾼 2/4/6/8 시너지와 유물 10종 구현 Handoff를 요청했다.
+- 2026-08-07: Designer가 Ariel-B 재사용 경로, 최종 피해 곱연산, 신규 공통 Node/Trigger 경계를 확정했다.
+
 ## Task: 2026-08-07 Chosen One Combat Runtime Design
 
 ### Task title
@@ -40,6 +87,11 @@ Designer.
 - `SkillExecutionRules.ResolveHitFinalDamageModifier`를 Single/Projectile/Line/Zone Actor가 호출해 치명타 이후 최종 배율을 전달한다.
 - `StatusMergePolicy.SameSourceAddStacks`와 `StatusState.Apply`가 동일 출처 상태를 최대 스택까지 합산한다.
 - `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore -v:minimal` 및 Editor 빌드가 오류 0개로 완료됐다.
+- `SkillTrigger`가 `event_skill_slots=A;B;C;D;E`를 파싱해 모든 액티브 슬롯의 앙코르 카운트를 집계한다.
+- 탄창 이벤트는 `PreparedMagazineLastProjectile`가 true인 마지막 발사에서만 `trigger_every_count`를 진행한다.
+- `SkillExecution.RunAutomaticEncoreRecast`는 탄창을 전탄 순차 재사용하고, 기존 `effectiveTickInterval`(shot_interval)마다 투사체를 생성하며, 비탄창 사건은 `hasTargetPoint=false`로 자동 타겟팅한다.
+- 앙코르 카운트와 재사용 스킬/탄환은 `[ChosenOne][Encore]` 로그로 기록된다.
+- `GameDataCatalogBuilder.IsNormalCastEffect`가 `event_skill_name`만 비어 있는 OnSkillCast를 일반 시전으로 제외하던 문제를 수정해, runtime kind/slot 조건이 있는 앙코르 Trigger를 반응 목록에 포함한다.
 
 ### History
 
@@ -50,6 +102,11 @@ Designer.
 - 2026-08-07: Code Reviewer 수정요청에 따라 Encore 실행의 `sourceSkillName`을 이벤트 원본으로 교정하고 runtime/editor 빌드를 재확인했다.
 - 2026-08-07: Code Reviewer 수정요청에 따라 Single/Zone 추가·연쇄 적중도 대상별 피해·최종 피해 resolver를 거치고 Spawning 중 Highlight 시간을 누적하도록 교정했다.
 - 2026-08-07: 수정 후 runtime/editor 빌드 오류 0개와 정적 검사를 재확인했다.
+- 2026-08-07: Code Builder가 B~E 슬롯 필터, 탄창 마지막 발사 집계, 100% 앙코르 자동 재사용과 로그를 구현했다.
+- 2026-08-07: `ExecuteReactionOutcome`의 이벤트 원본 스킬 복제에 `UseEventSourceSkill` 보존을 추가하고 Core/Editor 빌드 오류 0개를 확인했다.
+- 2026-08-07: 활성화 로그는 있으나 앙코르 카운트/재사용 로그가 없음을 Editor.log에서 확인했고, 앙코르 Trigger가 `IsNormalCastEffect`에 의해 제외되던 공통 필터를 교정했다.
+- 2026-08-07: 앙코르 Trigger 슬롯을 `A;B;C;D;E`로 확장했다. A 탄창 스킬은 기존 마지막 탄환 카운트와 전탄 자동 재사용 경계를 그대로 사용한다.
+- 2026-08-07: 탄창 앙코르가 같은 프레임에 전탄을 생성하던 문제를 확인해 `RunAutomaticEncoreRecast` 사이 간격을 기존 `effectiveTickInterval`로 교정했다.
 
 ## Archived History
 

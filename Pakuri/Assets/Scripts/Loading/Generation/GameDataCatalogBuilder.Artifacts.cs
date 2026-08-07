@@ -264,6 +264,9 @@ namespace Pakuri.Data
                     Summary = row.Summary,
                     Description = row.DescriptionText,
                     Icon = LoadSprite(row.IconPath),
+                    SynergyEffect = LoadSprite(row.EffectPath),
+                    SynergyEffectAlphaPercent = row.EffectAlphaPercent,
+                    SynergyEffectSortingOrder = row.EffectSortingOrder,
                     Levels = levels
                 };
             }

@@ -887,6 +887,7 @@ namespace Pakuri.Data
                     EventSkillNames = StatusValueParser.ParseIdList(trigger.EventSkillName),
                     EventSkillRuntimeKindValues = StatusValueParser.ParseSkillRuntimeKindConditions(
                         trigger.EventSkillRuntimeKinds),
+                    EventSkillSlots = StatusValueParser.ParseSkillSlots(trigger.EventSkillSlots),
                     ProcChance = trigger.ProcChance,
                     InternalCooldownSeconds = trigger.InternalCooldownSeconds,
                     SortOrder = trigger.SortOrder,
@@ -923,7 +924,9 @@ namespace Pakuri.Data
             return trigger != null
                 && (trigger.TriggerEvent == SkillTriggerEvent.OnCast
                     || (trigger.TriggerEvent == SkillTriggerEvent.OnSkillCast
-                        && string.IsNullOrWhiteSpace(trigger.EventSkillName)));
+                        && string.IsNullOrWhiteSpace(trigger.EventSkillName)
+                        && string.IsNullOrWhiteSpace(trigger.EventSkillRuntimeKinds)
+                        && string.IsNullOrWhiteSpace(trigger.EventSkillSlots)));
         }
 
         private static SkillNodeOwnerKind GetPassiveTriggerOwnerKind(
