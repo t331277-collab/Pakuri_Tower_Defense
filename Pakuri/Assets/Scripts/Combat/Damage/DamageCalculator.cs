@@ -44,8 +44,11 @@ namespace Pakuri.Combat
         {
             isCritical = false;
             var damage = rawDamage;
+            var artifactModifiers = ArtifactCombatRules.Resolve(target);
             var defense = target.Defenses.Get(attribute);    // 피해 속성에 대응하는 대상의 기본 방어력
             defense *= target.SkillState.PassiveDefenseMultiplier(attribute);    // 학습한 DefenseUp 패시브의 방어력 증가 배율 적용
+            defense *= Mathf.Max(0f, 1f + artifactModifiers.DefenseBonusRate);
+            defense += artifactModifiers.FlatDefenseBonus;
             defense *= StatusCombatRules.ElementResistMultiplier(target, attribute);  // 활성 상태 효과의 속성 저항 감소율을 순차 곱셈
             defense -= StatusCombatRules.FlatElementResistReduction(target, attribute); // 퍼센트 증감 후 고정 속성 방어력 감소량 차감
             damage *= 100f / Mathf.Max(0.01f, 100f + defense);
@@ -85,6 +88,7 @@ namespace Pakuri.Combat
             {
                 damage *= Mathf.Max(0f, attackRule.CriticalFinalDamageModifier);
             }
+            damage *= artifactModifiers.FinalDamageTakenMultiplier;
 
             return Mathf.Round(Mathf.Max(0f, damage));
         }

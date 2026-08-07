@@ -117,7 +117,9 @@ namespace Pakuri.InGame
 
             var actionDeltaTime = deltaTime
                 * StatusCombatRules.ActionSpeedMultiplier(runtime.Owner);
-            runtime.CooldownRemaining = TickDown(runtime.CooldownRemaining, actionDeltaTime);
+            var cooldownDeltaTime = actionDeltaTime
+                * ArtifactCombatRules.CooldownChargeMultiplier(runtime.Owner);
+            runtime.CooldownRemaining = TickDown(runtime.CooldownRemaining, cooldownDeltaTime);
             runtime.CastRemaining = TickDown(runtime.CastRemaining, actionDeltaTime);
             runtime.ActiveDurationRemaining = TickDown(
                 runtime.ActiveDurationRemaining,
@@ -1641,13 +1643,15 @@ namespace Pakuri.InGame
                     : skill.ShieldStatus != null
                         ? skill.ShieldStatus.Duration
                         : 0f;
-                snapshot.PreparedDuration =
-                    shieldDuration * Mathf.Max(0f, snapshot.DurationMultiplier)
-                    + snapshot.DurationBonus;
                 snapshot.PreparedShieldStatusData = SkillExecutionRules.StatusData(
                     skill.ShieldStatus,
                     StatusEffectKind.Shield,
                     snapshot);
+                snapshot.PreparedDuration =
+                    shieldDuration * Mathf.Max(0f, snapshot.DurationMultiplier)
+                    + snapshot.DurationBonus
+                    + snapshot.StatusDurationBonus(
+                        snapshot.PreparedShieldStatusData.StatusTag);
             }
             snapshot.PreparedChargeTargetMaxHealthRatio =
                 Mathf.Max(0f, skill.ChargeTargetMaxHealthRatio);

@@ -226,7 +226,7 @@ namespace Pakuri.InGame
                         effect.TargetSkill.SkillName,
                         skill.SkillName,
                         StringComparison.OrdinalIgnoreCase))
-                && ArtifactConditionsMatch(effect.Nodes, owner, skill);
+                && ArtifactCombatRules.ConditionsMatch(effect.Nodes, owner, skill);
         }
 
         private static bool TryGetDirectDamageBonus(
@@ -272,33 +272,6 @@ namespace Pakuri.InGame
             }
 
             return count;
-        }
-
-        private static bool ArtifactConditionsMatch(
-            IReadOnlyList<SkillNode> nodes,
-            UnitCombatState owner,
-            SkillDefinition skill)
-        {
-            for (var i = 0; nodes != null && i < nodes.Count; i++)
-            {
-                var attribute = nodes[i]?.GetOperation<SkillAttributeConditionOp>();
-                if (attribute.HasValue && skill.Element != attribute.Value.Attribute)
-                {
-                    return false;
-                }
-
-                var status = nodes[i]?.GetOperation<SourceStatusConditionOp>();
-                if (status.HasValue
-                    && (status.Value.StatusKind == StatusEffectKind.Shield
-                        ? owner.GetTotalShield() <= 0f
-                        : owner.Statuses.GetStacks(status.Value.StatusKind)
-                            < status.Value.MinimumStacks))
-                {
-                    return false;
-                }
-            }
-
-            return true;
         }
 
         /// 학습이 끝난 스킬의 고정 실행값을 런타임 상태에 기록한다.
