@@ -349,8 +349,6 @@ MonoBehaviour:
     Asset: {fileID: 7538979978014732465, guid: 8294df7c2037d7142997d50f0d833a04, type: 3}
   - AssetPath: Assets/Image/Monster/Rin/Legacy/Effect_Sprite/1.png
     Asset: {fileID: 21300000, guid: 2f4302a88af1e5541a36857991410656, type: 3}
-  - AssetPath: Assets/Image/Monster/Rin/Legacy/Effect_Sprite/2-5-1.png
-    Asset: {fileID: -1994424207337404346, guid: 6c3dbde4109d7dd4bbbceecc307314f9, type: 3}
   - AssetPath: Assets/Image/Monster/Rin/Legacy/Effect_Sprite/5-1.png
     Asset: {fileID: 6089031415840852981, guid: 6e018c5c32c2bed429bca4d1ad1eb3fd, type: 3}
   - AssetPath: "Assets/Image/Monster/Rin/Legacy/Effect_Sprite/ChatGPT Image 2026\uB144

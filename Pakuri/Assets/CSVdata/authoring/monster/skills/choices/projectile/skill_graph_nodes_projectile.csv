@@ -77,7 +77,7 @@
 "sein","Trigger","c-master-2","sein-c","4","SetDuration","1","","","","","","","","","","","",""
 "vega","Trigger","a-master2-kill-transfer","vega-a","1","ApplyDamage","Physical","","","","","0.5","","","","","","",""
 "vega","Trigger","a-master2-kill-transfer","vega-a","2","SelectTargets","Enemy","Nearest","Single","NearestEnemy","AppliedTargets","false","false","","","","","",""
-"vega","Trigger","a-master2-kill-transfer","vega-a","3","ShowVisual","Assets/Image/Monster/Vega/SkillEffect/Vega_Shoot2.png","","0.19792499","0","","","","","","","","",""
+"vega","Trigger","a-master2-kill-transfer","vega-a","3","ShowVisual","Assets/Image/Monster/Vega/SkillEffect/Sprite/D_1.png","Assets/Image/Monster/Vega/SkillEffect/Sprite/D_1.controller","0.19792499","0","","","","","","","","",""
 "vega","Trigger","a-master2-kill-transfer","vega-a","4","AttachStatusPayload","name-mark","1","이름표식","0","0","3","","","","","","",""
 "vega","Trigger","a-master2-kill-transfer","vega-a","5","SetDuration","1","","","","","","","","","","","",""
 "ariel","Trigger","a-master2-holy-exposure-on-hit","ariel-a","1","ApplyStatus","holy-exposure","","","","","","","","","","","",""

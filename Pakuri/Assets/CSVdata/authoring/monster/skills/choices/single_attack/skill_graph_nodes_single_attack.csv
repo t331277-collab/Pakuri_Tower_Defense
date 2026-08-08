@@ -154,6 +154,6 @@
 "ariel","Trigger","d-master2-mark-expire-burst","ariel-d","2","SelectTargets","Enemy","EventTarget","Single","EffectTarget","","","","1","","","","",""
 "rin","Trigger","d-master1-kill-burst","rin-d","1","ApplyDamage","Holy","45","","0.9","0","2.4","","Fixed","0","","","",""
 "rin","Trigger","d-master1-kill-burst","rin-d","2","SelectTargets","Enemy","EventTarget","Circle","EffectTarget","","","true","","","","","",""
-"rin","Trigger","d-master1-kill-burst","rin-d","3","ShowVisual","Assets/Image/Monster/Rin/Legacy/Effect_Sprite/2-5-1.png","","1","0","3.9373517","3.788869","","","","","","",""
+"rin","Trigger","d-master1-kill-burst","rin-d","3","ShowVisual","Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026년 5월 22일 오전 12_15_03-Photoroom 1.png","Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026년 5월 22일 오전 12_15_03-Photoroom 1.controller","1","0","3.9373517","3.788869","","","","","","",""
 "rin","Trigger","d-master1-kill-burst","rin-d","4","SetDuration","1","","","","","","","","","","","",""
 "spirit-king","Skill","spirit-king-spirit-bombardment","spirit-king-spirit-bombardment","1","RepeatPerTarget","2","0.1","1","","","","","","","","","",""
