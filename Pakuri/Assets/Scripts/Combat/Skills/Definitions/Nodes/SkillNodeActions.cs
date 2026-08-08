@@ -113,7 +113,6 @@ namespace Pakuri.InGame
         MagazineLastProjectileDamageMultiplier,
         FinalDamageModifier,
         CriticalFinalDamageModifier,
-        BeamWidthBonus,
         KnockbackDistanceMultiplier,
         TargetStatusStackDamageMultiplier,
         TargetStatusStackDamageMultiplierBonus,

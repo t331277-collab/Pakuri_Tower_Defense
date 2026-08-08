@@ -1252,7 +1252,7 @@ namespace Pakuri.InGame
             snapshot.PreparedLength = Mathf.Max(0.1f, skill.LineLength);
             snapshot.PreparedWidth = Mathf.Max(
                 0.1f,
-                skill.LineWidth * Mathf.Max(0.01f, 1f + snapshot.BeamWidthBonus));
+                skill.LineWidth * Mathf.Max(0.01f, snapshot.RadiusMultiplier));
             snapshot.PreparedKnockbackDistance = Mathf.Max(
                 0f,
                 skill.KnockbackDistance * Mathf.Max(0f, snapshot.KnockbackDistanceMultiplier));

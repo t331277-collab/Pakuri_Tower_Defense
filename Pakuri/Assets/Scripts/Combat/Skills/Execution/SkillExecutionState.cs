@@ -107,8 +107,6 @@ public class SkillExecutionState
 
 	public float RadiusBonus { get; internal set; }
 
-	public float BeamWidthBonus { get; internal set; }
-
 	public float KnockbackDistanceMultiplier { get; internal set; }
 
 	public float DamageDelayMultiplier { get; internal set; }

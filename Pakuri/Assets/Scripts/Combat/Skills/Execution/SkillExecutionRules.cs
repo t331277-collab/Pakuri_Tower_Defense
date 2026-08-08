@@ -1047,9 +1047,6 @@ namespace Pakuri.InGame
 		case SkillActionOpKind.CriticalFinalDamageModifier:
 			snapshot.CriticalFinalDamageModifier *= PositiveOrDefault(action.Amount, 1f);
 			break;
-		case SkillActionOpKind.BeamWidthBonus:
-			snapshot.BeamWidthBonus += action.Amount;
-			break;
 		case SkillActionOpKind.KnockbackDistanceMultiplier:
 			snapshot.KnockbackDistanceMultiplier *= PositiveOrDefault(action.Amount, 1f);
 			break;

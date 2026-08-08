@@ -59,7 +59,6 @@
 "TriggerProcChanceBonus","TriggerProcChanceBonus","Action","",""
 "CritChanceBonus","CritChanceBonus","CritModifier","",""
 "CritDamageBonus","CritDamageBonus","CritModifier","",""
-"BeamWidthBonus","BeamWidthBonus","Action","",""
 "KnockbackDistanceMultiplier","KnockbackDistanceMultiplier","Action","",""
 "ReloadReducePerHit","ReloadReducePerHit","OnHitAction","",""
 "CoreDamageMultiplier","CoreDamageMultiplier","DamageModifier","",""

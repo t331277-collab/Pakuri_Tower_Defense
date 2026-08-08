@@ -1,5 +1,56 @@
 # DATA_BLACKBOARD
 
+## Task: 2026-08-09 LineAttack RadiusMultiplier Contract Consolidation
+
+### Task title
+
+LineAttack 너비 변경 authoring/runtime 계약을 `RadiusMultiplier`로 단일화
+
+### Goals
+
+- Eve-B, Rin-C, Vega-B 너비 강화·마스터 노드를 동일한 handler로 로드한다.
+- 사용되지 않는 `BeamWidthBonus` 정의·파라미터·파서 분기를 제거한다.
+
+### Constraints
+
+- CSV의 기존 효과량을 보존한다.
+- 범위 변경과 무관한 데이터·스키마는 수정하지 않는다.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+구현 및 자동 검증 완료.
+
+### Next Actions
+
+- 사용자 Play Mode 검증에서 너비가 예상 배율과 다르면 해당 스킬의 이펙트 prefab/runtime visual 생성 경로를 추가 추적한다.
+
+### Evidence
+
+- `skill_graph_nodes_line_attack.csv`의 Rin-C 3개 handler를 `RadiusMultiplier`와 `1.25`, `0.75`, `1.60`으로 변환했다.
+- `skill_node_definitions.csv`, `skill_node_definition_params.csv`, `GameDataCatalogBuilder.Nodes.cs`에서 `BeamWidthBonus` 계약을 삭제했다.
+- 세 authoring CSV 모두 UTF-8 strict decode 및 `Import-Csv` 파싱에 성공했다.
+- `Pakuri/Assets` 전체 `BeamWidthBonus` 참조 0개, Unity EditMode 38/38 통과.
+
+### History
+
+- 2026-08-09 LineAttack 노드 6개를 전수 비교해 Eve/Vega는 기존 `RadiusMultiplier`, Rin은 별도 `BeamWidthBonus`를 사용함을 확인했다.
+- 2026-08-09 런타임 실행식을 공용 배율로 변경하고 중복 계약을 제거했다.
+
+## Task: 2026-08-09 Artifact Popup Description Line Breaks
+
+- Task title: 유물·시너지 팝업 설명의 CSV `\n` 줄바꿈 구현
+- Goals: 유물 설명과 시너지 요약·전체 설명·2/4/6/8 단계 설명의 긴 문장을 의미 단위로 줄바꿈하고 TMP 실제 출력에도 개행을 적용한다.
+- Constraints: `artifacts.csv.description_text`와 `artifact_synergies.csv`의 기존 설명 필드만 사용한다. 새 열·파서·중복 설명 데이터를 만들지 않는다. 짧은 설명에는 불필요한 개행을 강제하지 않는다. `tracker`의 빈 데이터는 임의로 보충하지 않는다.
+- Role Owner: Code Builder.
+- Status: CSV 구현, runtime 변환 회귀 검사, 전체 EditMode 검증 완료. 사용자 Play Mode 시각 확인 대기.
+- Next Actions: Play Mode에서 팝업 TMP의 실제 줄바꿈과 문장 배치를 확인한다.
+- Evidence: `artifacts.csv` 50행 중 긴 설명 30행에 literal `\n`을 추가했고, `artifact_synergies.csv`의 구현된 5개 시너지에서 요약·설명·2/4/6/8 설명 총 30필드에 추가했다. 물리 행 수는 각각 52·8로 유지됐다. `CsvParser.UnescapeCsvCell`의 기존 `value.Replace("\\n", "\n")` 계약을 재사용한다. focused EditMode 검사는 runtime description에 실제 newline이 있고 literal `\n`은 남지 않으며 5개 시너지별 유물 10개와 icon이 완전함을 확인해 1/1 통과했다. 전체 EditMode는 39/39 통과했다.
+- History: 2026-08-09 Designer가 UI 전용 문자열 가공 대신 기존 CSV unescape 계약을 선택했다. 2026-08-09 Code Builder가 의미 절 경계에만 literal `\n`을 추가하고 runtime catalog 회귀 검사를 추가했다. 같은 runtime Description을 쓰는 Reward UI와 팝업이 동일한 실제 줄바꿈을 받는다.
+
 ## Task: 2026-08-08 Stage Encounter Schema Simplification
 
 - Task title: StageEncounter CSV에서 SpawnPoint·보스 플래그·메모 중복 필드 제거

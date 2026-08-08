@@ -298,6 +298,57 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     [Test]
+    public void ArtifactPopupCatalogHasCompleteDisplayDataAndDecodedLineBreaks()
+    {
+        var catalog = ReloadGameDataCatalog();
+        var synergyNames = new[]
+        {
+            "spirit-contract",
+            "executioner",
+            "chosen-one",
+            "sentinel",
+            "artillery"
+        };
+
+        foreach (var synergyName in synergyNames)
+        {
+            var synergy = catalog.GetData<ArtifactSynergyDefinition>(synergyName);
+            var artifacts = catalog.Artifacts
+                .Where(artifact => artifact.SynergyName == synergyName)
+                .ToArray();
+
+            Assert.That(synergy, Is.Not.Null, synergyName);
+            Assert.That(synergy.Icon, Is.Not.Null, synergyName);
+            Assert.That(synergy.Summary, Does.Contain("\n"), synergyName);
+            Assert.That(synergy.Description, Does.Contain("\n"), synergyName);
+            Assert.That(
+                synergy.Levels.Select(level => level.RequiredCount),
+                Is.EqualTo(new[] { 2, 4, 6, 8 }),
+                synergyName);
+            Assert.That(
+                synergy.Levels,
+                Is.All.Matches<ArtifactSynergyLevelDefinition>(
+                    level => !string.IsNullOrWhiteSpace(level.Description)
+                        && level.Description.Contains("\n")
+                        && !level.Description.Contains("\\n")),
+                synergyName);
+            Assert.That(artifacts, Has.Length.EqualTo(10), synergyName);
+            Assert.That(
+                artifacts,
+                Is.All.Matches<ArtifactDefinition>(artifact =>
+                    !string.IsNullOrWhiteSpace(artifact.DisplayName)
+                    && !string.IsNullOrWhiteSpace(artifact.Description)
+                    && artifact.Icon != null
+                    && !artifact.Description.Contains("\\n")),
+                synergyName);
+        }
+
+        Assert.That(
+            catalog.Artifacts.Count(artifact => artifact.Description.Contains("\n")),
+            Is.EqualTo(30));
+    }
+
+    [Test]
     /// 파수꾼 유물의 적용 대상, 사건, 방어막, 반사 계약을 확인한다.
     public void SentinelArtifactsBuildResolvedRuntimeContracts()
     {

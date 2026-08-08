@@ -127,7 +127,6 @@
 "TriggerProcChanceBonus","2","bonus","float","true",""
 "CritChanceBonus","1","bonus","float","true",""
 "CritDamageBonus","1","bonus","float","true",""
-"BeamWidthBonus","1","bonus","float","true",""
 "KnockbackDistanceMultiplier","1","multiplier","float","true",""
 "ReloadReducePerHit","1","target_skill_name","skill_name","true",""
 "ReloadReducePerHit","2","seconds_per_hit","float","true",""

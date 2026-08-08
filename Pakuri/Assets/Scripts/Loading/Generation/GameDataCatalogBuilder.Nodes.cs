@@ -1510,7 +1510,6 @@ namespace Pakuri.Data
 			|| string.Equals(handlerName, "SkillRuntimeKindCritBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "RedistributeConsumedStatus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "AdditionalDamage", StringComparison.OrdinalIgnoreCase)
-			|| string.Equals(handlerName, "BeamWidthBonus", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "CoreAdditionalDamage", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "CoreDamageMultiplier", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerName, "CritChanceBonus", StringComparison.OrdinalIgnoreCase)
@@ -1705,10 +1704,6 @@ namespace Pakuri.Data
 		if (string.Equals(handlerName, "CriticalFinalDamageModifier", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.CriticalFinalDamageModifier, GetFloatParam(node, "multiplier", 1f));
-		}
-		if (string.Equals(handlerName, "BeamWidthBonus", StringComparison.OrdinalIgnoreCase))
-		{
-			return new SkillActionOp(SkillActionOpKind.BeamWidthBonus, GetFloatParam(node, "bonus", 0f));
 		}
 		if (string.Equals(handlerName, "KnockbackDistanceMultiplier", StringComparison.OrdinalIgnoreCase))
 		{

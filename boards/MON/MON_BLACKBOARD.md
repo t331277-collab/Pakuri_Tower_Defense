@@ -8,6 +8,46 @@ The previous Ariel, Eve, Rin, Sein, and Vega boards are preserved under `boards/
 
 For new monster work, inspect the exact current code and data first, then add a required-field task block here only when persistent state is needed.
 
+## Task: 2026-08-09 LineAttack Range Upgrade Runtime Repair
+
+### Task title
+
+Eve-B, Rin-C, Vega-B LineAttack 너비 강화·마스터 효과 적용 복구
+
+### Goals
+
+- LineAttack 계열의 너비 변경 노드를 실제 실행 너비 계산에 연결한다.
+- 중복된 `BeamWidthBonus` 전용 경로를 제거하고 공용 `RadiusMultiplier` 계약으로 통합한다.
+
+### Constraints
+
+- 기존 강화 수치 의미를 보존한다: Rin-C `+25%`, `-25%`, `+60%`는 각각 배율 `1.25`, `0.75`, `1.60`이다.
+- AreaAttack·SingleAttack의 기존 `RadiusMultiplier` 동작을 변경하지 않는다.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+구현 및 자동 검증 완료. Play Mode 체감 확인만 사용자 소유로 남음.
+
+### Next Actions
+
+- Play Mode에서 Eve-B, Rin-C, Vega-B의 해당 강화 전후 이펙트 너비와 판정 범위를 비교한다.
+
+### Evidence
+
+- `SkillExecution.cs`의 LineAttack 너비 계산이 `snapshot.RadiusMultiplier`를 사용한다.
+- LineAttack 선택 CSV의 너비 변경 6개 노드는 모두 `RadiusMultiplier`를 사용한다.
+- `Pakuri/Assets` 전체에서 `BeamWidthBonus` 참조는 0개다.
+- `Pakuri.sln` 빌드 오류 0개, Unity EditMode 38/38 통과.
+
+### History
+
+- 2026-08-09 Code Builder가 미적용 원인을 LineAttack 실행식과 노드 handler 불일치로 확인했다.
+- 2026-08-09 Rin-C 데이터 변환, 실행식 통합, `BeamWidthBonus` enum/state/parser/schema 데드코드 삭제를 완료했다.
+
 ## Task: 2026-08-07 MainMenu Monster Standing Text
 
 ### Task title
