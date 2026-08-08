@@ -60,16 +60,16 @@ namespace Pakuri.InGame
             }
 
             var target = EnemyCombatDecision.FindNearestPlayerTarget(enemyEntry, units);
+            if (target != null && target.Model.IsNexus)
+            {
+                TickNexusAttack(enemyEntry, enemyModel, target, deltaTime);
+                return;
+            }
+
             var activeCharge = EnemyCombatDecision.ResolveActiveCharge(enemyModel);
             if (activeCharge != null)
             {
                 TickCharge(enemyEntry, enemyModel, target, activeCharge, deltaTime);
-                return;
-            }
-
-            if (target != null && target.Model.IsNexus)
-            {
-                TickNexusAttack(enemyEntry, enemyModel, target, deltaTime);
                 return;
             }
 
@@ -213,9 +213,13 @@ namespace Pakuri.InGame
             SkillExecutionState runtime,
             Vector2 movement)
         {
+            var candidates = SkillTargeting.TargetList(
+                enemyEntry,
+                units,
+                runtime?.Data?.Targeting);
             UnitCollisionResolver.CollectTargets(
                 units,
-                units.Players,
+                candidates,
                 enemyEntry,
                 movement,
                 collisionTargets);

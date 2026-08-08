@@ -296,7 +296,11 @@ namespace Pakuri.InGame
         /// 처음 만난 유효 대상에 직격 결과와 후속 규칙을 적용한다.
         private bool TryHitTarget(CombatUnitEntry target)
         {
-            if (target == null || target.Model == null || !target.IsAlive || IsSameSide(target.Model))
+            if (target == null
+                || target.Model == null
+                || !target.IsAlive
+                || target.Model.IsNexus
+                || IsSameSide(target.Model))
             {
                 return false;
             }
