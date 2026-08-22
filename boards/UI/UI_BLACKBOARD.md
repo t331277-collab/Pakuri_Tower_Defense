@@ -1398,3 +1398,103 @@ Implemented and statically compiled.
 ### History
 
 - 2026-08-05: Code Builder changed the display timer from 0.2 to 0.5 seconds and removed version-triggered immediate UI refreshes without changing event-based damage accumulation.
+
+## Task: 2026-08-22 NewScene UI Font Replacement
+
+### Task title
+
+Replace all NewScene Canvas TextMeshProUGUI fonts with `Griun_PolSensibility-Rg SDF`.
+
+### Goals
+
+- Set every `TextMeshProUGUI` font in `InGameScene.unity` and `MainMenuScene.unity` to the requested Griun SDF asset.
+- Keep existing text content, layout, colors, and custom material styling while redirecting font atlases to the requested asset.
+
+### Constraints
+
+- Scope is the two requested scene files and this UI state record.
+- Do not modify scripts, prefabs, unrelated scene objects, or the user’s pre-existing MainMenu scene changes.
+- Play Mode visual verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and statically verified; Unity Play Mode visual verification remains pending.
+
+### Next Actions
+
+- User checks Korean/Latin glyph rendering and layout in both scenes in Play Mode.
+- Recheck Unity scene validation after the editor refreshes externally modified scene assets.
+
+### Evidence
+
+- `Pakuri/Assets/Font/Griun_PolSensibility-Rg SDF.asset.meta` GUID is `61cde95aa4336e14ea49ef7b7151c7bd`.
+- `InGameScene.unity` contains 245 `Unity.TextMeshPro::TMPro.TextMeshProUGUI` components; `MainMenuScene.unity` contains 11.
+- All 256 `m_fontAsset` references now point to the Griun GUID and fileID `11400000`.
+- Default shared materials now point to the Griun material subasset fileID `-2915667805961641681`; 38 inline font materials redirect `_MainTex` to the Griun atlas fileID `-1107103295266493114` and use gradient scale `3`.
+- Old NanumGothic/LiberationSans font and default-material GUIDs remain in neither scene’s TextMeshPro font fields.
+- `git diff --check` passed for both scene files.
+- Unity-MCP scene validation returned 0 issues for the active `MainMenuScene`; `InGameScene` static YAML checks passed, while Play Mode remains user-owned.
+
+### History
+
+- 2026-08-22: Code Builder inspected the actual `Pakuri/Assets` paths, replaced all 256 Canvas TextMeshProUGUI font references, redirected associated materials/atlases, preserved pre-existing MainMenu changes, and recorded static verification evidence.
+
+## Task: 2026-08-22 MainMenu Intro Media and BGM Flow
+
+### Task title
+
+Play MainMenu BGM/video media with sequential Intro UI fades.
+
+### Goals
+
+- Start the requested MP3 as looping BGM when `MainMenuScene` starts.
+- Play BG1 on `Canvas/Intro`, then switch immediately to looping BG2 at BG1 end.
+- Fade `Summary` in over 0.5 seconds, then `GameStart` over 1 second.
+- Keep sound scope to BGM only through the requested `SoundManager.cs` singleton.
+
+### Constraints
+
+- Scope is `MainMenuUIManager.cs`, new `SoundManager.cs`, MainMenu scene asset references, and this UI state record.
+- Video playback uses a runtime `VideoPlayer`/`RawImage` surface under `Canvas/Intro`; no SFX system was added.
+- Unity Play Mode playback and visual timing verification remain user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented with the requested High replacements and playback corrections. Both High assets were converted in place to silent Unity-oriented 1080p H.264 Constrained Baseline/CFR/no-B-frame streams, the scene now references them, and BG1 preparation/BG2 preloading are implemented. Static code, media, and Unity validation passed; user Play Mode playback verification remains pending.
+
+### Next Actions
+
+- User rechecks warning removal, continuous motion, BG1-to-BG2 transition, BG2 loop seam, BGM loop, and Summary/GameStart fade timing in Play Mode.
+- If a device-specific hitch remains, capture that device/build target and the new Unity Console output before changing codec settings again.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/UI/MainMenu/SoundManager.cs` implements a singleton with one looping `AudioSource` and `PlayBgm(AudioClip)` only.
+- `Pakuri/Assets/Scripts/UI/MainMenu/MainMenuUIManager.cs` starts BGM and the Intro coroutine in `Start()`, fades `Summary` for `0.5f`, `GameStart` for `1f`, and handles `VideoPlayer.loopPointReached` from BG1 to looping BG2.
+- `Pakuri/Assets/Scenes/NewScene/MainMenuScene.unity` serializes the MP3 and High BG1/BG2 references; Unity-MCP component inspection reports `Assets/UI/Video/High_BG1_Unity.mp4` and `Assets/UI/Video/High_BG2_Unity.mp4` assigned.
+- Unity-MCP asset inspection reports the MP3 as `UnityEngine.AudioClip` and both videos as `UnityEngine.Video.VideoClip`.
+- `validate_script` returned 0 warnings/0 errors for both scripts; runtime and Editor dotnet builds completed with 0 errors; MainMenuScene validation returned 0 issues; `git diff --check` passed.
+- Before the user Play Mode test, the final Unity refresh returned 0 error/warning entries and editor state reported `is_compiling: false`, `external_changes_dirty: false`, and `play_mode.is_playing: false`; that static check did not exercise playback.
+- Earlier Unity Console evidence after the user test contained the timestamp warning for both old BG1/BG2 streams; the converted High assets require the pending Play Mode recheck.
+- Pre-correction `ffprobe` evidence for the old BG assets showed H.264 High Profile, two-frame reorder depth, decode-order non-monotonic packet PTS, and only the initial keyframe; these facts supported the timestamp-warning diagnosis but do not describe the final High files below.
+- Pre-correction code assigned each clip and called `Play()` without `Prepare()`/`prepareCompleted`, opened BG2 only when BG1 ended, and enabled `skipOnDrop`; these paths were replaced by the final implementation below.
+- The replacement assets retain GUIDs `114299c0d2fd6e04085377c8e51653c5` and `9ad8808ae85de5e4ca73c1740793890d`; `MainMenuScene.unity` now references those exact GUIDs with VideoClip fileID `32900000`.
+- FFmpeg converted both supplied 4K High sources in place using 1920x1080 Lanczos scaling, H.264 Constrained Baseline Level 4.0, yuv420p, 24 fps CFR, no B-frames, one-second GOP, timestamp reset, CRF 18, and no audio stream. Their Unity importer metadata also sets `importAudio: 0`.
+- Final `ffprobe` reports each converted High asset as one video-only stream, start time `0.000000`, 193 frames over `8.041667` seconds, `has_b_frames=0`, and keyframes at every whole second from 0 through 8. Final SHA-256 values are `A04745FAA4D8D42E22261050F5F289EE90C80FC04D3F9773A75AA00DB5E4E0A8` and `5F8E5283D80BC56A780692730320F75AA1387C60DE8025A9731FAA938948F748`.
+- `MainMenuUIManager` now calls `Prepare()` for BG1 and BG2, starts BG1 from `prepareCompleted`, retains prepared BG2 until BG1 `loopPointReached`, swaps the shared RawImage to BG2's RenderTexture, and sets `skipOnDrop = false` plus `VideoAudioOutputMode.None` for both players.
+- After implementation, Runtime and Editor dotnet builds completed with 0 errors; Unity script validation returned 0 warnings/0 errors, MainMenuScene validation returned 0 issues, and editor refresh reported compilation idle. The retrieved console contained only the existing Unity-MCP disposed-NetworkStream diagnostic, not a project compile or video timestamp entry.
+
+### History
+
+- 2026-08-22: Code Builder added `SoundManager.cs`, MainMenu BGM/video/fade flow, serialized the three requested media assets, refreshed Unity, and recorded static verification evidence.
+- 2026-08-22: After the user reported timestamp warnings and rough playback, Designer inspected both files, packet timestamps, keyframes, Unity Console, current VideoPlayer code, and Unity 6000.3 API documentation; no code or media files were changed during diagnosis.
+- 2026-08-22: Designer inspected the newly supplied High sources and prepared a Code Builder handoff: downsample from the 4K sources to Unity-compatible 1080p Baseline/CFR/no-B-frame video, replace the scene references, and add explicit preparation/preloading. No media, code, or scene asset was changed because the user message did not name Code Builder.
+- 2026-08-22: With explicit Code Builder authorization and consent to silence the clips, converted both High assets in place, disabled importer audio, switched scene references, added BG1 preparation and BG2 preloading, disabled frame dropping, and completed static/Unity validation without entering Play Mode.

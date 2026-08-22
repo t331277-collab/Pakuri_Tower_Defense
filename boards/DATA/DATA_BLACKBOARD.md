@@ -2297,3 +2297,45 @@ Implemented and statically/Unity-validated; Play Mode verification remains user-
 ### History
 
 - 2026-08-07: Code Builder mapped the existing enemy encounter-role schema into runtime data without changing CSV content.
+
+## Task: 2026-08-23 Stage1 Enemy Five-Frame Walk Assets
+
+### Task title
+
+Create five-frame running/walking PNG assets for each Stage1 enemy sprite and organize them by sprite folder.
+
+### Goals
+
+- Add five numbered frames under each of the nine folders in `Pakuri/Assets/Enemy/Stage1/Enemy/Animation/`.
+- Preserve each source sprite's canvas dimensions while generating a walk cycle.
+- Make every frame alpha-transparent outside the character and import as Unity Sprite Mode Single.
+
+### Constraints
+
+- Asset-only change; do not create `.anim`, prefab, scene, or runtime wiring in this task.
+- Keep the existing source PNGs and Unity `.asset` representation unchanged.
+- The ninth folder reuses the `shield_King` visual source referenced by the existing Unity `.asset`.
+
+### Role Owner
+
+Designer.
+
+### Status
+
+Complete; assets and importer metadata verified by direct filesystem/image inspection.
+
+### Next Actions
+
+- User may reimport the Animation folder in Unity and author runtime animation clips when ready.
+
+### Evidence
+
+- `Get-ChildItem` reports nine animation folders, each with `Frames=5` and `Metas=5` (45 PNGs and 45 `.meta` files total).
+- Direct `System.Drawing` validation reports `Frames=45 SizePass=45 CornerBad=0 Empty=0 TransparentRGBNonZero=0`.
+- Metadata validation reports `MetaCount=45 SpriteMode1=45 SpriteMode2=0 TextureType8=45`; all 45 frame GUIDs are unique.
+- Generated frame canvases match the source sizes: Achor 225x339, Karin 776x776, Priest 212x339, Rogue 257x314, Shield 254x336, shield_King 738x695, Warrior 302x336, Warrior_King 759x669, and the `.asset`-named duplicate 738x695.
+
+### History
+
+- 2026-08-23: Inspected the existing Animation directory and source dimensions before generation.
+- 2026-08-23: Generated and split five-frame walk sheets, cleaned checkerboard/background pixels to alpha 0, copied the shield_King-derived frames for the existing `.asset` visual, and set all frame importers to Sprite Mode Single.
