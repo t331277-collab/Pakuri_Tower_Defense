@@ -2339,3 +2339,93 @@ Complete; assets and importer metadata verified by direct filesystem/image inspe
 
 - 2026-08-23: Inspected the existing Animation directory and source dimensions before generation.
 - 2026-08-23: Generated and split five-frame walk sheets, cleaned checkerboard/background pixels to alpha 0, copied the shield_King-derived frames for the existing `.asset` visual, and set all frame importers to Sprite Mode Single.
+
+## Task: 2026-08-23 Stage2 Enemy Five-Frame Walk Assets
+
+### Task title
+
+Create five-frame running/walking PNG assets for the eight Stage2 enemy sprites and organize them by sprite folder.
+
+### Goals
+
+- Add five numbered frames under each of the eight folders in `Pakuri/Assets/Enemy/Stage2/Enemy/Animation/`.
+- Preserve each source sprite's canvas dimensions and retain the original character identity/effects.
+- Use clear leg-stride motion with a loop-compatible first/fifth frame and transparent backgrounds.
+
+### Constraints
+
+- Asset-only change; do not create `.anim`, prefab, scene, or runtime wiring in this task.
+- Keep the eight original source PNGs and their existing metadata unchanged.
+- Set every generated frame importer to Unity Sprite Mode Single.
+
+### Role Owner
+
+Designer.
+
+### Status
+
+Complete; assets and importer metadata verified by direct filesystem/image inspection.
+
+### Next Actions
+
+- User may reimport the Stage2 Animation folders in Unity and author runtime animation clips when ready.
+
+### Evidence
+
+- `Get-ChildItem` reports eight Stage2 animation folders, each with five frame PNGs and five `.meta` files (40 PNGs and 40 `.meta` files total).
+- Direct `System.Drawing` validation reports `Frames=40 SizePass=40 CornerPass=40 Blank=0 TransparentRGBNonZero=0`.
+- Metadata validation reports `Metas=40 SpriteMode1=40 SpriteMode2=0 TextureType8=40`; all 40 frame GUIDs are unique.
+- Generated frame canvases match the inspected source sizes: 434x400, 460x613, 369x392, 1044x738, 746x724, 747x724, 368x369, and 265x279.
+- ImageGen source-sheet inspection shows five horizontal panels per sprite with visible alternating leg strides and panel 1/panel 5 loop poses.
+
+### History
+
+- 2026-08-23: Inspected all eight Stage2 source PNGs and their dimensions before generation.
+- 2026-08-23: Generated eight transparent-background five-panel running sheets, split them into 40 source-sized frames, and set all frame importers to Sprite Mode Single.
+
+## Task: 2026-08-23 Stage1-Stage2 Enemy Four-Frame Walk Assets
+
+### Task title
+
+Add a separate four-frame running cycle to every existing Stage1 and Stage2 enemy animation folder without replacing the prior five-frame cycle.
+
+### Goals
+
+- Add `walk4_frame_01.png` through `walk4_frame_04.png` to all nine Stage1 folders and eight Stage2 folders.
+- Keep each frame at the inspected source PNG canvas size, with the complete character/effects inside the canvas.
+- Keep the background alpha-transparent and Unity import mode Single.
+- Verify the intended sequence visually: frame 1 left-leg lead, frame 2 left-to-right transition, frame 3 right-leg lead, frame 4 right-to-left transition.
+
+### Constraints
+
+- Asset-only change; do not create `.anim`, prefab, scene, or runtime wiring.
+- Preserve all existing `frame_01.png` through `frame_05.png` files and their metadata.
+- Interpret “no white” as no white background; preserve white pixels that belong to armor, clothing, ice, or effects.
+- The existing Photoroom-named Stage1 folder is retained and uses the shield_King source dimensions.
+
+### Role Owner
+
+Designer.
+
+### Status
+
+Complete; generated assets and metadata passed direct filesystem, image, and importer checks.
+
+### Next Actions
+
+- User may inspect the four-frame sequence in Unity and later create animation clips/runtime wiring if desired.
+
+### Evidence
+
+- The inspected source roots contain eight unique Stage1 PNGs plus the existing ninth Photoroom animation folder, and eight Stage2 PNGs.
+- New output count is `Frames=68` and `Meta=68`; each of the 17 folders contains exactly four `walk4_frame_*.png` files and matching `.meta` files.
+- Corrected source-size validation reports `Total=68 SizeMismatch=0`; dimensions cover the inspected Stage1 sizes (225x339, 776x776, 212x339, 257x314, 254x336, 738x695, 302x336, 759x669) and Stage2 sizes (434x400, 460x613, 369x392, 1044x738, 746x724, 747x724, 368x369, 265x279).
+- LockBits pixel validation reports `Total=68 SizeMismatch=0 Blank=0 TransparentRGBNonZero=0 EdgeOpaque=0`, confirming nonblank transparent PNGs with no opaque canvas-edge clipping and no nonzero RGB hidden in transparent pixels.
+- Metadata validation reports `MetaCount=68 SpriteMode1=68 SpriteMode2=0 TextureType8=68 UniqueGuid=68 BadRect=0`.
+- Generated horizontal sheets were visually inspected in batches for all Stage1 and Stage2 sprites; the prompts explicitly required opposing odd-frame leads and transition frames, and the resulting panels show distinct stride/transition poses with full margins. The source-sheet view was used to check frame 1/3 leg alternation before splitting.
+
+### History
+
+- 2026-08-23: Inspected `AGENTS.md`, `MDTREE.md`, the DATA board, all Stage1/Stage2 animation folders, source dimensions, and existing five-frame assets before generation.
+- 2026-08-23: Generated four-panel walk sheets from the Stage1/Stage2 references, removed edge-connected checker/white background pixels to alpha 0, fitted each panel into the exact source canvas, and wrote new Single-sprite metadata with unique GUIDs.
+- 2026-08-23: Kept the previous five-frame files untouched and removed the temporary splitting script after the asset run.
