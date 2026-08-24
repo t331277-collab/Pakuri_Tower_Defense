@@ -1,5 +1,16 @@
 # UI_BLACKBOARD
 
+## Task: 2026-08-24 ArtifactPanel Choice1 Format Propagation
+
+- Task title: `InGameScene/UI/Reward/ArtifactPanel/Choice1` 전체 형식을 `Choice2`, `Choice3`에 적용.
+- Goals: Choice1의 카드 배경 이미지·크기와 하위 `ArtifactName`, `Summary`, `Desc`, `Icon`, `PopUP`, `Arti_Icon` 배치를 Choice2/3에도 적용하고 기존 런타임 바인딩을 유지한다.
+- Constraints: 코드·CSV·프리팹을 수정하지 않는다. Choice2의 X `0`, Choice3의 X `557` 수평 배치는 유지한다. `ArtifactUI.BindObject()`의 상대 경로와 `BindChoice()`의 런타임 유물/시너지 아이콘 할당은 변경하지 않는다. 사용자 Play Mode 시각 검증은 사용자 소유다.
+- Role Owner: Code Builder.
+- Status: 씬 적용 및 Unity 정적 검증 완료. 사용자 Play Mode 확인 대기.
+- Next Actions: Play Mode에서 Reward 보상 진입 후 Choice1~3 카드 배경, 텍스트 위치/색상, 유물 아이콘·시너지 아이콘 표시, 버튼 클릭 영역을 확인한다.
+- Evidence: `Pakuri/Assets/Scenes/NewScene/InGameScene.unity`의 Unity hierarchy에서 `Choice1~3` 모두 `childCount: 6`, 컴포넌트 `RectTransform/CanvasRenderer/Image/Button`으로 확인됐다. 저장 후 루트 위치는 Choice1 `(-512,-103.95)`, Choice2 `(0,-103.95)`, Choice3 `(557,-103.95)`이며 자식 순서도 세 카드 모두 `ArtifactName → Summary → Desc → Icon → PopUP → Arti_Icon`으로 일치한다. 자식 배치는 세 카드 모두 `ArtifactName (0,290)`, `Summary (0,-297)`, `Desc (-1.477417,-52)`, `Icon (-1.4774,103)`, `Arti_Icon (-126,-198)`, `PopUP (-216.5904,211.7)`로 일치한다. 세 루트 Image는 `PlotLegend.PNG`, Image type 0, 흰색이며, 세 `Icon` Image의 정적 sprite는 null(런타임 유물 아이콘 할당), 세 `Arti_Icon`은 `Assets/Image/UI/Artifact/ChatGPT Image 2026년 8월 5일 오후 03_39_55.png`를 사용한다. `manage_scene(validate, Assets/Scenes/NewScene/InGameScene.unity)`는 `totalIssues: 0`, `missingScripts: 0`, `brokenPrefabs: 0`이다. `refresh_unity` 후 씬 저장 완료. `git diff --check`는 기존 씬 추가 오브젝트의 빈 `m_Name:` 3건 trailing whitespace를 보고했으며, 해당 기존 변경은 보존했다.
+- History: 2026-08-24 Code Builder가 실제 Choice1/2/3 YAML·Unity hierarchy·컴포넌트를 확인한 뒤 Choice1 루트 Image/RectTransform, 자식 RectTransform, ArtifactName/Summary 색상을 Choice2/3에 씬 데이터로 복제했다. `ArtifactUI.cs`의 상대 경로 런타임 바인딩과 동적 아이콘 할당은 수정하지 않았다. Unity refresh/save/validate를 수행했다.
+
 ## Task: 2026-08-09 Artifact Synergy Info Popup
 
 - Task title: `HUD/Artifact_Container/SynergyInfoPopup` 유물·단계 정보 및 LIFO 닫기 구현
