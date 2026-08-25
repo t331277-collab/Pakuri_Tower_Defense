@@ -10,6 +10,8 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.Animations;
+using UnityEngine.Playables;
 using UnityEngine.Video;
 
 public class MainMenuUIManager : MonoBehaviour
@@ -30,6 +32,7 @@ public class MainMenuUIManager : MonoBehaviour
     private GameObject monsterSelectPanel;
     private GameObject summaryPanel;
     private GameObject gameStartPanel;
+    private GameObject monsterStandingPanel;
     private GameObject monsterStanding;
     private Button introGameStartButton;
     private Button runButton;
@@ -40,6 +43,11 @@ public class MainMenuUIManager : MonoBehaviour
     private Button vegaButton;
     private Button rinButton;
     private Image monsterStandingImage;
+    private Image monsterMainTypeImage;
+    private Image monsterSubTypeImage;
+    private SpriteRenderer monsterStandingSpriteRenderer;
+    private Animator monsterStandingAnimator;
+    private PlayableGraph monsterStandingGraph;
     private TextMeshProUGUI monsterNameText;
     private TextMeshProUGUI monsterDescriptionText;
     private CanvasGroup summaryCanvasGroup;
@@ -54,6 +62,21 @@ public class MainMenuUIManager : MonoBehaviour
     private string selectedMonsterName;
     private bool isLoadingRunScene;
     private bool isLoopVideoPending;
+
+    /// 재생 중인 SpriteRenderer 프레임을 기존 UGUI Image에 반영한다.
+    private void LateUpdate()
+    {
+        if (monsterStandingImage == null || monsterStandingSpriteRenderer == null)
+        {
+            return;
+        }
+
+        var sprite = monsterStandingSpriteRenderer.sprite;
+        if (sprite != null)
+        {
+            monsterStandingImage.sprite = sprite;
+        }
+    }
 
     /// 컴포넌트가 첫 프레임을 처리하기 전에 런타임 초기화를 마친다.
     private void Start()
@@ -87,21 +110,25 @@ public class MainMenuUIManager : MonoBehaviour
         monsterSelectPanel = FindGameObject(canvas, "MosterSelectUI", nameof(monsterSelectPanel), ref valid);
         summaryPanel = FindGameObject(canvas, "Intro/Summary", nameof(summaryPanel), ref valid);
         gameStartPanel = FindGameObject(canvas, "Intro/GameStart", nameof(gameStartPanel), ref valid);
-        monsterStanding = FindGameObject(canvas, "MosterSelectUI/MonsterStanding", nameof(monsterStanding), ref valid);
+        monsterStandingPanel = FindGameObject(canvas, "MosterSelectUI/MonsterStandingPanel", nameof(monsterStandingPanel), ref valid);
+        monsterStanding = FindGameObject(canvas, "MosterSelectUI/MonsterStandingPanel/MonsterStanding", nameof(monsterStanding), ref valid);
 
         introGameStartButton = FindComponent<Button>(canvas, "Intro/GameStart", nameof(introGameStartButton), ref valid);
         runButton = FindComponent<Button>(canvas, "MainMenuUI/RunBtn", nameof(runButton), ref valid);
         monsterSelectGameStartButton = FindComponent<Button>(canvas, "MosterSelectUI/GameStart", nameof(monsterSelectGameStartButton), ref valid);
-        monsterStandingImage = FindComponent<Image>(canvas, "MosterSelectUI/MonsterStanding", nameof(monsterStandingImage), ref valid);
-        monsterNameText = FindComponent<TextMeshProUGUI>(canvas, "MosterSelectUI/MonsterStanding/Name", nameof(monsterNameText), ref valid);
-        monsterDescriptionText = FindComponent<TextMeshProUGUI>(canvas, "MosterSelectUI/MonsterStanding/Desc", nameof(monsterDescriptionText), ref valid);
-        arielButton = FindComponent<Button>(canvas, "MosterSelectUI/Ariel", nameof(arielButton), ref valid);
-        eveButton = FindComponent<Button>(canvas, "MosterSelectUI/Eve", nameof(eveButton), ref valid);
-        seinButton = FindComponent<Button>(canvas, "MosterSelectUI/Sein", nameof(seinButton), ref valid);
-        vegaButton = FindComponent<Button>(canvas, "MosterSelectUI/Vega", nameof(vegaButton), ref valid);
-        rinButton = FindComponent<Button>(canvas, "MosterSelectUI/Rin", nameof(rinButton), ref valid);
+        monsterStandingImage = FindComponent<Image>(canvas, "MosterSelectUI/MonsterStandingPanel/MonsterStanding", nameof(monsterStandingImage), ref valid);
+        monsterNameText = FindComponent<TextMeshProUGUI>(canvas, "MosterSelectUI/MonsterStandingPanel/MonsterStanding/Name", nameof(monsterNameText), ref valid);
+        monsterDescriptionText = FindComponent<TextMeshProUGUI>(canvas, "MosterSelectUI/MonsterStandingPanel/MonsterStanding/Desc", nameof(monsterDescriptionText), ref valid);
+        monsterMainTypeImage = FindComponent<Image>(canvas, "MosterSelectUI/MonsterStandingPanel/MainType", nameof(monsterMainTypeImage), ref valid);
+        monsterSubTypeImage = FindComponent<Image>(canvas, "MosterSelectUI/MonsterStandingPanel/SubType", nameof(monsterSubTypeImage), ref valid);
+        arielButton = FindComponent<Button>(canvas, "MosterSelectUI/Panel/Ariel", nameof(arielButton), ref valid);
+        eveButton = FindComponent<Button>(canvas, "MosterSelectUI/Panel/Eve", nameof(eveButton), ref valid);
+        seinButton = FindComponent<Button>(canvas, "MosterSelectUI/Panel/Sein", nameof(seinButton), ref valid);
+        vegaButton = FindComponent<Button>(canvas, "MosterSelectUI/Panel/Vega", nameof(vegaButton), ref valid);
+        rinButton = FindComponent<Button>(canvas, "MosterSelectUI/Panel/Rin", nameof(rinButton), ref valid);
         if (valid)
         {
+            EnsureStandingAnimationComponents();
             summaryCanvasGroup = GetOrAddCanvasGroup(summaryPanel);
             gameStartCanvasGroup = GetOrAddCanvasGroup(gameStartPanel);
         }
@@ -449,24 +476,84 @@ public class MainMenuUIManager : MonoBehaviour
     private void ShowMonsterSelect()
     {
         SetOnlyActive(monsterSelectPanel);
+        monsterStandingPanel.SetActive(false);
     }
 
-    /// 선택한 몬스터의 Standing 정보와 출전 몬스터를 표시·저장한다.
+    /// 선택한 몬스터의 Standing 애니메이션과 출전 몬스터를 표시·저장한다.
     private void SelectMonster(string monsterName)
     {
         selectedMonsterName = monsterName;
 
         var monster = GameDataLoader.CurrentCatalog?.GetMonster(monsterName);
-        if (monster == null || monster.Image == null)
+        if (monster == null || monster.StandingAnimation == null)
         {
-            Debug.LogError($"MainMenuUIManager cannot resolve standing image for monster '{monsterName}'.", this);
+            Debug.LogError($"MainMenuUIManager cannot resolve standing animation for monster '{monsterName}'.", this);
             return;
         }
 
-        monsterStandingImage.sprite = monster.Image;
         monsterNameText.text = monster.DisplayName;
         monsterDescriptionText.text = monster.RoleSummary;
+        monsterMainTypeImage.sprite = monster.MainTypeIcon;
+        monsterSubTypeImage.sprite = monster.SubTypeIcon;
+        monsterStandingPanel.SetActive(true);
         monsterStanding.SetActive(true);
+        PlayStandingAnimation(monster.StandingAnimation, monster.Image);
+    }
+
+    /// MonsterStanding에 필요한 애니메이터와 SpriteRenderer를 한 번만 구성한다.
+    private void EnsureStandingAnimationComponents()
+    {
+        if (monsterStandingSpriteRenderer == null)
+        {
+            monsterStandingSpriteRenderer = monsterStanding.GetComponent<SpriteRenderer>();
+            if (monsterStandingSpriteRenderer == null)
+            {
+                monsterStandingSpriteRenderer = monsterStanding.AddComponent<SpriteRenderer>();
+            }
+
+            monsterStandingSpriteRenderer.enabled = false;
+        }
+
+        if (monsterStandingAnimator == null)
+        {
+            monsterStandingAnimator = monsterStanding.GetComponent<Animator>();
+            if (monsterStandingAnimator == null)
+            {
+                monsterStandingAnimator = monsterStanding.AddComponent<Animator>();
+            }
+
+            monsterStandingAnimator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+        }
+    }
+
+    /// CSV에서 해석한 AnimationClip을 MonsterStanding의 SpriteRenderer에 재생한다.
+    private void PlayStandingAnimation(AnimationClip animationClip, Sprite fallbackSprite)
+    {
+        EnsureStandingAnimationComponents();
+        DestroyStandingAnimationGraph();
+
+        monsterStandingImage.sprite = fallbackSprite;
+        monsterStandingSpriteRenderer.sprite = fallbackSprite;
+
+        monsterStandingGraph = PlayableGraph.Create("MonsterStandingIdle");
+        monsterStandingGraph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
+        var clipPlayable = AnimationClipPlayable.Create(monsterStandingGraph, animationClip);
+        var output = AnimationPlayableOutput.Create(
+            monsterStandingGraph,
+            "MonsterStandingIdle",
+            monsterStandingAnimator);
+        output.SetSourcePlayable(clipPlayable);
+        monsterStandingGraph.Play();
+        monsterStandingAnimator.Update(0f);
+    }
+
+    /// 선택 변경·씬 종료 시 Standing PlayableGraph를 해제한다.
+    private void DestroyStandingAnimationGraph()
+    {
+        if (monsterStandingGraph.IsValid())
+        {
+            monsterStandingGraph.Destroy();
+        }
     }
 
     /// 선택한 몬스터를 StartContext에 저장하고 Run 씬을 연다.
@@ -516,6 +603,8 @@ public class MainMenuUIManager : MonoBehaviour
     /// 씬 종료 시 런타임 영상 리소스와 이벤트를 정리한다.
     private void OnDestroy()
     {
+        DestroyStandingAnimationGraph();
+
         if (introSequence != null)
         {
             StopCoroutine(introSequence);

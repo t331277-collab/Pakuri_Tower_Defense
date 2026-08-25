@@ -29,10 +29,10 @@ namespace Pakuri.InGame
         private readonly Transform shieldFill;
         private readonly DamageNumberPopup damagePopup;
 
-        public UnitHpBar(Component owner)
+        public UnitHpBar(Component owner, bool includeLabels = true)
         {
-            nameLabel = FindTextMesh(owner, NameLabelObjectName);
-            hpLabel = FindTextMesh(owner, HpLabelObjectName);
+            nameLabel = includeLabels ? FindTextMesh(owner, NameLabelObjectName) : null;
+            hpLabel = includeLabels ? FindTextMesh(owner, HpLabelObjectName) : null;
             hpRoot = FindChild(owner, HpRootObjectName);
             hpBackground = FindChild(owner, HpBackgroundObjectName);
             hpFill = FindChild(owner, HpFillObjectName);

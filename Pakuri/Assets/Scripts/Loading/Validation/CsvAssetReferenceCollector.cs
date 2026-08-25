@@ -1,6 +1,6 @@
 /*
  * 역할: CSV 에셋 참조 수집.
- * 책임: 런타임 카탈로그가 제공해야 하는 Sprite·Prefab·AnimatorController 경로를 모두 수집한다.
+ * 책임: 런타임 카탈로그가 제공해야 하는 Sprite·Prefab·AnimatorController·AnimationClip 경로를 모두 수집한다.
  */
 
 using System;
@@ -34,10 +34,12 @@ namespace Pakuri.Data
             internal readonly HashSet<string> spritePathLookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             internal readonly HashSet<string> prefabPathLookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             internal readonly HashSet<string> animatorControllerPathLookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            internal readonly HashSet<string> animationClipPathLookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             public List<ReferencedAssetPath> SpritePaths { get; } = new List<ReferencedAssetPath>();
             public List<ReferencedAssetPath> PrefabPaths { get; } = new List<ReferencedAssetPath>();
             public List<ReferencedAssetPath> AnimatorControllerPaths { get; } = new List<ReferencedAssetPath>();
+            public List<ReferencedAssetPath> AnimationClipPaths { get; } = new List<ReferencedAssetPath>();
 
             public void AddSprite(string assetPath, string ownerLabel)
             {
@@ -52,6 +54,11 @@ namespace Pakuri.Data
             public void AddAnimatorController(string assetPath, string ownerLabel)
             {
                 Add(assetPath, ownerLabel, animatorControllerPathLookup, AnimatorControllerPaths);
+            }
+
+            public void AddAnimationClip(string assetPath, string ownerLabel)
+            {
+                Add(assetPath, ownerLabel, animationClipPathLookup, AnimationClipPaths);
             }
 
             internal static void Add(
@@ -188,6 +195,9 @@ namespace Pakuri.Data
             {
                 assets.AddSprite(monster.MonsterIconImagePath, $"Monster '{monster.Name}' MonsterIconImage");
                 assets.AddSprite(monster.ImagePath, $"Monster '{monster.Name}' Image");
+                assets.AddSprite(monster.MainTypeIconPath, $"Monster '{monster.Name}' MainTypeIcon");
+                assets.AddSprite(monster.SubTypeIconPath, $"Monster '{monster.Name}' SubTypeIcon");
+                assets.AddAnimationClip(monster.StandingAnimationPath, $"Monster '{monster.Name}' StandingAnimation");
             }
 
             foreach (var enemy in model.Enemies.Values)

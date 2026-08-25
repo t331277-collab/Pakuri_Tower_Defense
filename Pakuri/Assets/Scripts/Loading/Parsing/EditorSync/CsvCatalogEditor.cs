@@ -189,6 +189,7 @@ namespace Pakuri.Data
             sourceCatalog.Sprites = BuildSpriteEntries(sourceModel);
             sourceCatalog.Prefabs = BuildPrefabEntries(sourceModel);
             sourceCatalog.AnimatorControllers = BuildAnimatorControllerEntries(sourceModel);
+            sourceCatalog.AnimationClips = BuildAnimationClipEntries(sourceModel);
             sourceCatalog.ResetLookups();
             EditorUtility.SetDirty(sourceCatalog);
 
@@ -428,6 +429,28 @@ namespace Pakuri.Data
                 {
                     AssetPath = asset.AssetPath,
                     Asset = animatorController
+                });
+            }
+
+            entries.Sort((left, right) => string.Compare(left.AssetPath, right.AssetPath, StringComparison.OrdinalIgnoreCase));
+            return entries.ToArray();
+        }
+
+        internal static CsvRuntimeCatalog.AnimationClipEntry[] BuildAnimationClipEntries(SourceModel sourceModel)
+        {
+            var entries = new List<CsvRuntimeCatalog.AnimationClipEntry>();
+            foreach (var asset in CollectReferencedAssets(sourceModel).AnimationClipPaths)
+            {
+                var animationClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(asset.AssetPath);
+                if (animationClip == null)
+                {
+                    throw new CsvFatalException($"CSV runtime animation clip asset is missing or not an AnimationClip: '{asset.AssetPath}'.");
+                }
+
+                entries.Add(new CsvRuntimeCatalog.AnimationClipEntry
+                {
+                    AssetPath = asset.AssetPath,
+                    Asset = animationClip
                 });
             }
 

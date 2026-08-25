@@ -31,6 +31,9 @@ namespace Pakuri.Data
             public string PassiveSkillName;
             public string MonsterIconImagePath;
             public string ImagePath;
+            public string MainTypeIconPath;
+            public string SubTypeIconPath;
+            public string StandingAnimationPath;
             public float MaxHealth;
             public float PowerStat;
             public float BaseAttackPower;
@@ -242,6 +245,9 @@ namespace Pakuri.Data
                 PassiveSkillName = ReadOptionalStringIfColumnExists(record, "passive_skill_name"),
                 MonsterIconImagePath = ReadOptionalStringIfColumnExists(record, "MonsterIconImage"),
                 ImagePath = ReadOptionalStringIfColumnExists(record, "Image"),
+                MainTypeIconPath = ReadOptionalStringIfColumnExists(record, "MainTypeIcon"),
+                SubTypeIconPath = ReadOptionalStringIfColumnExists(record, "SubTypeIcon"),
+                StandingAnimationPath = ReadOptionalStringIfColumnExists(record, "StandingAnimation"),
                 MaxHealth = record.ReadFloat("max_health"),
                 PowerStat = record.ReadFloat("power_stat"),
                 BaseAttackPower = record.ReadFloat("base_attack_power"),

@@ -63,6 +63,9 @@ namespace Pakuri.Data
                     SkillSlot.F);
                 monster.MonsterIconImage = LoadSprite(sourceMonster.MonsterIconImagePath);
                 monster.Image = LoadSprite(sourceMonster.ImagePath);
+                monster.MainTypeIcon = LoadSprite(sourceMonster.MainTypeIconPath);
+                monster.SubTypeIcon = LoadSprite(sourceMonster.SubTypeIconPath);
+                monster.StandingAnimation = LoadAnimationClip(sourceMonster.StandingAnimationPath);
                 monster.PowerStat = sourceMonster.PowerStat;
                 monster.BaseStats = new UnitCombatStats
                 {
@@ -1480,6 +1483,21 @@ namespace Pakuri.Data
             }
 
             throw new CsvFatalException($"Runtime sprite asset is missing: '{assetPath}'.");
+        }
+
+        private AnimationClip LoadAnimationClip(string assetPath)
+        {
+            if (string.IsNullOrWhiteSpace(assetPath))
+            {
+                return null;
+            }
+
+            if (assetCatalog != null && assetCatalog.TryGetAnimationClip(assetPath, out var animationClip))
+            {
+                return animationClip;
+            }
+
+            throw new CsvFatalException($"Runtime animation clip asset is missing: '{assetPath}'.");
         }
 
         private RuntimeSkillVisualSpec BuildRuntimeVisual(SkillRow row)

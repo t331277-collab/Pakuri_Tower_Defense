@@ -34,6 +34,9 @@ namespace Pakuri.Data
         public string PassiveSkillName = "Passive F";
         public Sprite MonsterIconImage;
         public Sprite Image;
+        public Sprite MainTypeIcon;
+        public Sprite SubTypeIcon;
+        public AnimationClip StandingAnimation;
         public UnitCombatStats BaseStats = new UnitCombatStats
         {
             MaxHealth = 100f,

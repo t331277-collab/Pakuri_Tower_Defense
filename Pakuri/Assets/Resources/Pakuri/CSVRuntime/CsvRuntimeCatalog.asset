@@ -400,6 +400,12 @@ MonoBehaviour:
   - AssetPath: "Assets/Image/UI/Artifact/ChatGPT Image 2026\uB144 8\uC6D4 7\uC77C
       \uC624\uD6C4 01_26_30.png"
     Asset: {fileID: 21300000, guid: 53095bc911da5c04da745173513ed0dc, type: 3}
+  - AssetPath: "Assets/UI/Image/1.\uC815\uCE58\uB825(\uC561\uC790O) (1).png"
+    Asset: {fileID: 21300000, guid: 2e391cc3a72748845957b6f17b463879, type: 3}
+  - AssetPath: "Assets/UI/Image/2.\uCCB4\uB825(\uC561\uC790O).png"
+    Asset: {fileID: 21300000, guid: e286fdd13c2b25f48aae2caa2014dfde, type: 3}
+  - AssetPath: "Assets/UI/Image/\uACBD\uAC74\uD568(\uC561\uC790O).png"
+    Asset: {fileID: 21300000, guid: 2132256e24510ff4f9a80b6b013cd495, type: 3}
   Prefabs:
   - AssetPath: Assets/Prefab/Skill/Rin/Rin_D.prefab
     Asset: {fileID: 4571567099965563202, guid: 4fb536ec34e06544ab6226bf8f02cb08, type: 3}
@@ -497,3 +503,14 @@ MonoBehaviour:
     Asset: {fileID: 9100000, guid: a531fdbb2a677224889af5cab37a8d76, type: 2}
   - AssetPath: Assets/Image/Monster/Vega/SkillEffect/Sprite/E_1.controller
     Asset: {fileID: 9100000, guid: 8da98440a7061014aac80c79f58be8a8, type: 2}
+  AnimationClips:
+  - AssetPath: Assets/Image/Monster/ariel/Animation/Animation_Ariel_Sprite/Anim_Ariel_Idle.anim
+    Asset: {fileID: 7400000, guid: a7ac8c21311d4eacb0943785f40a689b, type: 2}
+  - AssetPath: Assets/Image/Monster/Eve/Animation/Animation_Eve_Sprite/Anim_Eve_Idle.anim
+    Asset: {fileID: 7400000, guid: 9fd0d1eeb4c24618b5087545aef961d5, type: 2}
+  - AssetPath: Assets/Image/Monster/Rin/Animation/Animation_Rin 1/Anim_Rin_Idle.anim
+    Asset: {fileID: 7400000, guid: 4978842a7b5364e4a94bf74781e4b501, type: 2}
+  - AssetPath: Assets/Image/Monster/Sein/Animation/Animation_Sein_Sprite/Anim_Sein_Idle.anim
+    Asset: {fileID: 7400000, guid: 7bb8c29b8f5a4f849e317005be225ec6, type: 2}
+  - AssetPath: Assets/Image/Monster/Vega/Animation/Animation_Vega_Sprite/Anim_Vega_Idle.anim
+    Asset: {fileID: 7400000, guid: 892ac18898594686af5cdd59477b7587, type: 2}

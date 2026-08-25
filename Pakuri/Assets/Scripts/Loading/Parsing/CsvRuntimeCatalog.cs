@@ -1,6 +1,6 @@
 /*
  * 역할: CSV 참조로 생성된 런타임 에셋 조회.
- * 책임: 정규화된 에셋 경로로 Sprite·Prefab·AnimatorController를 색인한다.
+ * 책임: 정규화된 에셋 경로로 Sprite·Prefab·AnimatorController·AnimationClip을 색인한다.
  */
 
 using System;
@@ -35,6 +35,14 @@ namespace Pakuri.Data
         {
             public string AssetPath;
             public RuntimeAnimatorController Asset;
+        }
+
+        /// AnimationClipEntry 처리에 함께 전달되는 값들을 묶는다.
+        [Serializable]
+        public struct AnimationClipEntry
+        {
+            public string AssetPath;
+            public AnimationClip Asset;
         }
 
         [Header("CSV Sources")]
@@ -83,10 +91,12 @@ namespace Pakuri.Data
         public SpriteEntry[] Sprites = Array.Empty<SpriteEntry>();
         public PrefabEntry[] Prefabs = Array.Empty<PrefabEntry>();
         public AnimatorControllerEntry[] AnimatorControllers = Array.Empty<AnimatorControllerEntry>();
+        public AnimationClipEntry[] AnimationClips = Array.Empty<AnimationClipEntry>();
 
         private Dictionary<string, Sprite> spriteLookup;
         private Dictionary<string, GameObject> prefabLookup;
         private Dictionary<string, RuntimeAnimatorController> animatorControllerLookup;
+        private Dictionary<string, AnimationClip> animationClipLookup;
 
         public bool TryGetSprite(string assetPath, out Sprite sprite)
         {
@@ -123,12 +133,24 @@ namespace Pakuri.Data
             return TryGetAnimatorController(assetPath, out _);
         }
 
+        public bool TryGetAnimationClip(string assetPath, out AnimationClip animationClip)
+        {
+            EnsureLookups();
+            return animationClipLookup.TryGetValue(Normalize(assetPath), out animationClip);
+        }
+
+        public bool HasAnimationClip(string assetPath)
+        {
+            return TryGetAnimationClip(assetPath, out _);
+        }
+
         /// CSV를 다시 읽을 수 있도록 Asset lookup 캐시를 비운다.
         public void ResetLookups()
         {
             spriteLookup = null;
             prefabLookup = null;
             animatorControllerLookup = null;
+            animationClipLookup = null;
         }
 
         /// Unity가 컴포넌트를 활성화할 때 구독과 활성 상태를 복원한다.
@@ -139,7 +161,10 @@ namespace Pakuri.Data
 
         private void EnsureLookups()
         {
-            if (spriteLookup != null && prefabLookup != null && animatorControllerLookup != null)
+            if (spriteLookup != null
+                && prefabLookup != null
+                && animatorControllerLookup != null
+                && animationClipLookup != null)
             {
                 return;
             }
@@ -147,12 +172,18 @@ namespace Pakuri.Data
             spriteLookup = new Dictionary<string, Sprite>(StringComparer.OrdinalIgnoreCase);
             prefabLookup = new Dictionary<string, GameObject>(StringComparer.OrdinalIgnoreCase);
             animatorControllerLookup = new Dictionary<string, RuntimeAnimatorController>(StringComparer.OrdinalIgnoreCase);
+            animationClipLookup = new Dictionary<string, AnimationClip>(StringComparer.OrdinalIgnoreCase);
 
             AddEntries(Sprites, spriteLookup, entry => entry.AssetPath, entry => entry.Asset);
             AddEntries(Prefabs, prefabLookup, entry => entry.AssetPath, entry => entry.Asset);
             AddEntries(
                 AnimatorControllers,
                 animatorControllerLookup,
+                entry => entry.AssetPath,
+                entry => entry.Asset);
+            AddEntries(
+                AnimationClips,
+                animationClipLookup,
                 entry => entry.AssetPath,
                 entry => entry.Asset);
         }

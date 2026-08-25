@@ -18,7 +18,7 @@ namespace Pakuri.InGame
         public void Initialize(EnemyCombatState model)
         {
             Model = model;
-            display = new UnitHpBar(this);
+            display = new UnitHpBar(this, includeLabels: false);
             RefreshDisplay();
         }
 
