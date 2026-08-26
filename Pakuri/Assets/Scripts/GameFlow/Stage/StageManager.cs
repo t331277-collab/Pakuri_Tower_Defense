@@ -40,8 +40,24 @@ namespace Pakuri.InGame
         private StageRewardDefinition currentReward;
         private RunSession activeSession;
         private bool endButtonsBound;
+        private StageState state = StageState.NotStarted;
 
-        public StageState State { get; private set; } = StageState.NotStarted;
+        public StageState State
+        {
+            get => state;
+            private set
+            {
+                if (state == value)
+                {
+                    return;
+                }
+
+                state = value;
+                StateChanged?.Invoke(state);
+            }
+        }
+        public event Action<StageState> StateChanged;
+        public event Func<bool> ContinueRequested;
         public int CurrentStage => activeSession != null ? activeSession.StageIndex : 1;
         public int CurrentDay => activeSession != null ? activeSession.DayIndex : 1;
         public IReadOnlyList<string> PendingPrisonerEnemyNames => pendingPrisonerEnemyNames;
@@ -68,6 +84,22 @@ namespace Pakuri.InGame
             stageDefinition = StartContext.Mode == RunMode.Tutorial
                 ? GameDataLoader.CurrentCatalog.TutorialStage
                 : GameDataLoader.CurrentCatalog.Stage;
+
+            if (StartContext.Mode == RunMode.Tutorial)
+            {
+                BeginRunSession();
+                var tutorialRoot = GameObject.Find("TutorialUI");
+                if (tutorialRoot == null)
+                {
+                    Debug.LogError("StageManager requires scene root 'TutorialUI' for a tutorial run.", this);
+                    return;
+                }
+
+                var flowManager = tutorialRoot.GetComponent<TutorialFlowManager>()
+                    ?? tutorialRoot.AddComponent<TutorialFlowManager>();
+                flowManager.Initialize(this, combatManager, FindFirstObjectByType<InGameUIManager>());
+                return;
+            }
 
             if (startFlowOnStart)
             {
@@ -373,6 +405,24 @@ namespace Pakuri.InGame
         private bool IsBossEncounter(StageEncounterDefinition row)
         {
             return IsOriginalBoss(row) || IsRunAssignedBoss(row);
+        }
+
+        public bool CanContinueToNextDay()
+        {
+            if (ContinueRequested == null)
+            {
+                return true;
+            }
+
+            foreach (Func<bool> handler in ContinueRequested.GetInvocationList())
+            {
+                if (!handler())
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private bool IsRunAssignedBoss(StageEncounterDefinition row)

@@ -54,6 +54,7 @@ namespace Pakuri.InGame
         }
 
         internal RewardButtonView ActivePrisonerButton => rewardPanelUI?.ActivePrisonerButton;
+        internal RewardPanelUI RewardPanel => rewardPanelUI;
 
         internal int PrepareArtifactChoices(int requestedCount)
         {
@@ -80,6 +81,11 @@ namespace Pakuri.InGame
 
         internal void ContinueToNextDay()
         {
+            if (stageManager != null && !stageManager.CanContinueToNextDay())
+            {
+                return;
+            }
+
             HideTransientPanels();
             artifactUI?.Clear();
             rewardPanelUI?.Clear();

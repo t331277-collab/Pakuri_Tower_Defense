@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -24,6 +25,9 @@ namespace Pakuri.InGame
         private bool referencesBound;
         private bool bindingFailed;
 
+        public event Action<bool> VisibilityChanged;
+        public bool IsVisible => rewardPanel != null && rewardPanel.activeSelf;
+
         private void Awake()
         {
             if (!BindObject())
@@ -44,7 +48,7 @@ namespace Pakuri.InGame
 
             BindButton(nextButton, ContinueToNextDay);
             Clear();
-            UiObjectUtility.SetActive(rewardPanel, true);
+            SetPanelVisible(true);
             if (rewardSummaryText != null)
             {
                 rewardSummaryText.text = $"Stage {manager.CurrentStage}-{manager.CurrentDay} Reward";
@@ -105,12 +109,12 @@ namespace Pakuri.InGame
 
         public void Hide()
         {
-            UiObjectUtility.SetActive(rewardPanel, false);
+            SetPanelVisible(false);
         }
 
         public void SetVisible(bool visible)
         {
-            UiObjectUtility.SetActive(rewardPanel, visible);
+            SetPanelVisible(visible);
         }
 
         public void Clear()
@@ -153,7 +157,7 @@ namespace Pakuri.InGame
             }
 
             ActivePrisonerButton = view;
-            UiObjectUtility.SetActive(rewardPanel, false);
+            SetPanelVisible(false);
             uiManager?.OpenPrisonPanel();
         }
 
@@ -165,11 +169,11 @@ namespace Pakuri.InGame
             }
 
             ActiveArtifactButton = view;
-            UiObjectUtility.SetActive(rewardPanel, false);
+            SetPanelVisible(false);
             if (uiManager == null || !uiManager.OpenArtifactPanel())
             {
                 ActiveArtifactButton = null;
-                UiObjectUtility.SetActive(rewardPanel, true);
+                SetPanelVisible(true);
             }
         }
 
@@ -214,6 +218,16 @@ namespace Pakuri.InGame
 
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(action);
+        }
+
+        private void SetPanelVisible(bool visible)
+        {
+            var changed = rewardPanel != null && rewardPanel.activeSelf != visible;
+            UiObjectUtility.SetActive(rewardPanel, visible);
+            if (changed)
+            {
+                VisibilityChanged?.Invoke(visible);
+            }
         }
 
         private bool BindObject()
