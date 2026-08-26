@@ -1820,7 +1820,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Pakuri Tower Defence
+  m_text: "Spirit\n &\nEmotion"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 61cde95aa4336e14ea49ef7b7151c7bd, type: 2}
   m_sharedMaterial: {fileID: -2915667805961641681, guid: 61cde95aa4336e14ea49ef7b7151c7bd, type: 2}
