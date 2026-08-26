@@ -1,5 +1,27 @@
 # UI_BLACKBOARD
 
+## Task: 2026-08-26 Manifest Success Monster Type Icons
+
+- Task title: `ManifestSuccessPopup`에 현현 몬스터 MainTypeIcon·SubTypeIcon 표시.
+- Goals: 성공 팝업의 `MonsterType`, `MonsterSubType` Image에 선택된 `MonsterDefinition`의 두 타입 아이콘을 할당한다.
+- Constraints: 기존 현현 후보 선택·팝업·파티 추가 흐름과 사용자 `InGameScene.unity` 변경을 보존한다. 신규 데이터·씬 직렬화 참조를 만들지 않는다.
+- Role Owner: Code Builder.
+- Status: 기존 런타임 바인딩에 아이콘 2개를 추가했고 정적·Unity·빌드 검증을 완료했다. 사용자 Play Mode 확인 대기.
+- Next Actions: Play Mode에서 현현 성공 시 몬스터별 MainTypeIcon·SubTypeIcon이 두 Image에 표시되는지 확인한다.
+- Evidence: `InGameScene.unity`의 `ManifestSuccessPopup` 아래 `MonsterType`, `MonsterSubType`은 각각 UGUI Image다. `MenifestUI.ShowManifestSuccessPopup`이 `monster.MainTypeIcon`, `monster.SubTypeIcon`을 할당하고 `BindObject`가 두 상대 경로를 바인딩한다. Unity 스크립트 진단 errors 0/warnings 0, 씬 validate issues 0, Runtime·Editor 빌드 오류 0이다.
+- History: 2026-08-26 Code Builder가 기존 CSV→MonsterDefinition 데이터 흐름을 재사용해 씬 수정 없이 타입 아이콘 표시를 연결했다.
+
+## Task: 2026-08-26 Offering Skill Description Presentation
+
+- Task title: OfferingPanel 스킬 설명 폰트·SkillName 색상·패시브 해금 아이콘 연결.
+- Goals: `Choice1/2/3/Desc`가 `Assets/Font/NanumGothic SDF.asset`을 사용하고, SkillName은 항상 검은색으로 표시하며, 패시브 Choice Icon은 해금 조건 active skill 아이콘을 표시한다.
+- Constraints: 기존 OfferingUI 바인딩과 일반 보상 흐름을 보존한다. 패시브 조건을 찾지 못할 때만 기존 passive icon으로 fallback한다. 씬의 사용자 변경을 보존한다.
+- Role Owner: Code Builder.
+- Status: 코드·씬 반영 및 정적/Unity 검증 완료. 사용자 Play Mode 확인 대기.
+- Next Actions: Play Mode에서 Offering Choice 3개의 Nanum 폰트, 검은 SkillName, 패시브 선행 스킬 Icon을 확인한다.
+- Evidence: `OfferingUI.cs`는 `ResolvePassiveUnlockIcon`으로 `passive.RequiredActiveSlot`의 active `Icon`을 우선 반환하고, `BindChoiceButton`에서 `view.SkillNameLabel.color = Color.black`을 적용한다. `InGameScene.unity`의 Offering `Choice1/2/3/Desc` TMP 3개가 Nanum SDF GUID `c0ab08eee2c026a4c8537fd85d13ee7e`와 해당 material을 참조한다. `manage_scene(validate)`는 `totalIssues: 0`, `validate_script(OfferingUI.cs)`는 errors 0/warnings 0이다.
+- History: 2026-08-26: Code Builder가 기존 런타임 선택지 바인딩을 유지한 최소 변경으로 폰트, SkillName 색상, 패시브 prerequisite icon을 연결했다.
+
 ## Task: 2026-08-26 Interactive Tutorial UI And End Flow
 
 - Task title: MainMenu Tutorial 진입, Eve 4-Phase 안내, TutoLine Skip/Next, 1-5 TutoEnd 복귀 구현.

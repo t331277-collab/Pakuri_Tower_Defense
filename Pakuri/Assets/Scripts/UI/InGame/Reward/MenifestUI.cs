@@ -17,6 +17,8 @@ namespace Pakuri.InGame
         private TMP_Text monsterNameText;
         private TMP_Text monsterDescText;
         private Image monsterImage;
+        private Image monsterTypeImage;
+        private Image monsterSubTypeImage;
         private StageManager stageManager;
         private UnitSpawnManager unitSpawnManager;
         private InGameUIManager uiManager;
@@ -102,6 +104,16 @@ namespace Pakuri.InGame
                 monsterImage.color = monsterImage.sprite != null
                     ? Color.white
                     : new Color(0f, 0f, 0f, 0.3f);
+            }
+
+            if (monsterTypeImage != null)
+            {
+                monsterTypeImage.sprite = monster != null ? monster.MainTypeIcon : null;
+            }
+
+            if (monsterSubTypeImage != null)
+            {
+                monsterSubTypeImage.sprite = monster != null ? monster.SubTypeIcon : null;
             }
         }
 
@@ -240,6 +252,16 @@ namespace Pakuri.InGame
                 this,
                 "ManifestSuccessPopup/MonsterImage",
                 nameof(monsterImage),
+                ref valid);
+            monsterTypeImage = UiBindingUtility.BindChild<Image>(
+                this,
+                "ManifestSuccessPopup/MonsterType",
+                nameof(monsterTypeImage),
+                ref valid);
+            monsterSubTypeImage = UiBindingUtility.BindChild<Image>(
+                this,
+                "ManifestSuccessPopup/MonsterSubType",
+                nameof(monsterSubTypeImage),
                 ref valid);
             stageManager = UiBindingUtility.BindSceneComponent<StageManager>(
                 this,

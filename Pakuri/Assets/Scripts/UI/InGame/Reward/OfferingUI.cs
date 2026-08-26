@@ -11,8 +11,6 @@ namespace Pakuri.InGame
     public sealed class OfferingUI : MonoBehaviour
     {
         private const int MaxOfferingChoices = 3;
-        private static readonly Color TraitSkillNameColor = new Color(0.5f, 0f, 0.5f);
-
         private enum OfferingKind
         {
             NewActiveSkill,
@@ -272,9 +270,30 @@ namespace Pakuri.InGame
                     SkillName = ResolveChoiceDisplayName(passive.DisplayName, passive.SkillName),
                     Title = $"{monster.DisplayName} · {ResolveChoiceDisplayName(passive.DisplayName, passive.SkillName)}",
                     Description = ResolveDescription(passive.Summary, passive.Description, passive.DisplayName),
-                    Icon = passive.Icon
+                    Icon = ResolvePassiveUnlockIcon(monster, passive)
                 });
             }
+        }
+
+        private static Sprite ResolvePassiveUnlockIcon(
+            MonsterDefinition monster,
+            PassiveSkillDefinition passive)
+        {
+            if (monster?.ActiveSkills != null && passive != null)
+            {
+                for (var i = 0; i < monster.ActiveSkills.Length; i++)
+                {
+                    var active = monster.ActiveSkills[i];
+                    if (active != null
+                        && active.Slot == passive.RequiredActiveSlot
+                        && active.Icon != null)
+                    {
+                        return active.Icon;
+                    }
+                }
+            }
+
+            return passive != null ? passive.Icon : null;
         }
 
         private void AddEnhancementChoices(RunSession session, MonsterDefinition monster, RunSession.RunMonsterState state)
@@ -543,7 +562,7 @@ namespace Pakuri.InGame
             if (view.SkillNameLabel != null)
             {
                 view.SkillNameLabel.text = choice.SkillName;
-                view.SkillNameLabel.color = ResolveSkillNameColor(choice.Kind);
+                view.SkillNameLabel.color = Color.black;
             }
 
             if (view.PopUp != null)
@@ -579,22 +598,6 @@ namespace Pakuri.InGame
                 view.IconImage.sprite = choice.Icon;
                 view.IconImage.enabled = choice.Icon != null;
                 view.IconImage.gameObject.SetActive(choice.Icon != null);
-            }
-        }
-
-        private static Color ResolveSkillNameColor(OfferingKind kind)
-        {
-            switch (kind)
-            {
-                case OfferingKind.NewActiveSkill:
-                case OfferingKind.NewPassiveSkill:
-                    return Color.yellow;
-                case OfferingKind.Trait:
-                    return TraitSkillNameColor;
-                case OfferingKind.Master:
-                    return Color.blue;
-                default:
-                    return Color.white;
             }
         }
 

@@ -1,5 +1,83 @@
 # DATA_BLACKBOARD
 
+## Task: 2026-08-26 Manifest Monster Type Icon Data Reuse
+
+### Task title
+
+현현 성공 팝업에서 monsters.csv MainTypeIcon·SubTypeIcon 계약 재사용
+
+### Goals
+
+- `monsters.csv`의 기존 두 icon asset_path를 런타임 `MonsterDefinition`을 통해 Manifest UI에 전달한다.
+
+### Constraints
+
+- CSV 열·행·아이콘 경로와 parser/catalog 구조를 변경하지 않는다.
+- 사용자 `InGameScene.unity` 변경을 보존한다.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+기존 데이터 계약 재사용과 UI 소비 연결 완료. 사용자 Play Mode 확인 대기.
+
+### Next Actions
+
+- Play Mode 현현 성공 팝업에서 5개 몬스터별 Main/Sub 아이콘 표시를 확인한다.
+
+### Evidence
+
+- `monsters.csv` 5개 행의 `MainTypeIcon`, `SubTypeIcon` 경로 10개가 모두 존재한다.
+- `CsvRowParser`가 두 열을 읽고 `GameDataCatalogBuilder`가 `MonsterDefinition.MainTypeIcon/SubTypeIcon` Sprite를 로드한다.
+- `MenifestUI`가 현현 후보 `MonsterDefinition`에서 두 Sprite를 직접 표시하므로 CSV 수정은 필요하지 않았다.
+
+### History
+
+- 2026-08-26: Code Builder가 기존 타입 아이콘 데이터 흐름을 검증하고 Manifest 성공 팝업 소비 경로를 연결했다.
+
+## Task: 2026-08-26 Monster Skill Description Rich Text
+
+### Task title
+
+몬스터 스킬 설명의 의미 단위 줄바꿈·수치 강조 CSV 반영.
+
+### Goals
+
+- `authoring/monster/skills`의 `description_text`에 필요한 literal `\\n`을 추가한다.
+- 수치가 포함된 적용 구문을 `<color=#D97706>`로 묶어 수치와 대상 설명을 함께 강조한다.
+- 기존 CSV 열·행·런타임 `CsvParser.UnescapeCsvCell` 계약을 보존한다.
+
+### Constraints
+
+- 숫자 없는 설명과 숫자 없는 `base/buff` 설명은 불필요하게 변경하지 않는다.
+- 새 스키마·중복 설명 데이터를 만들지 않는다.
+- Unity runtime catalog는 authoring CSV 동기화 경로만 사용한다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+12개 `description_text` CSV 정적 검증·runtime catalog 동기화 완료.
+
+### Next Actions
+
+- 사용자 Play Mode에서 실제 TMP 줄바꿈과 수치 색상을 확인한다.
+
+### Evidence
+
+- 11개 base/choice CSV에서 288개 변경 라인에 의미 단위 `\\n`과 균형 잡힌 color tag를 적용했다. `base/buff`를 포함한 12개 description 파일 검증 결과 `FILES=12 ROWS=312 COLORED=282 BAD=0`이다.
+- `CsvParser.UnescapeCsvCell`의 literal `\\n` 변환을 재사용한다.
+- Unity 메뉴 `Pakuri/Sync CSV Runtime Catalog Assets` 실행 로그가 authoring에서 runtime catalog 동기화를 확인했다.
+
+### History
+
+- 2026-08-26: Code Builder가 숫자 적용 구문을 한 묶음으로 색상화하고 문장 경계 줄바꿈을 authoring CSV에 반영했다.
+
+
 ## Task: 2026-08-26 Interactive Tutorial Dialogue And Stage Data
 
 ### Task title

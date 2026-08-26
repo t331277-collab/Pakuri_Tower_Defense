@@ -112,7 +112,7 @@ Code Builder
 
 ### Status
 
-8개 애니메이션·Controller·프리팹 연결과 정적 검증 완료. Unity Editor import·Play Mode 확인 대기.
+8개 애니메이션의 잘못된 Sprite subasset 참조 복구와 Unity 재임포트 검증 완료. 사용자 Play Mode 확인 대기.
 
 ### Next Actions
 
@@ -121,13 +121,16 @@ Code Builder
 ### Evidence
 
 - Spirit 8개 폴더에 각각 10개 PNG, New Animation.anim, Controller, StandingImage.png가 존재한다.
-- 정적 검증에서 8개 애니메이션이 10프레임·12fps이고 Controller m_Motion, 프리팹 Animator, 첫 Sprite GUID가 일치했다.
+- 결함 원인은 Sprite Mode Multiple PNG의 실제 subasset ID 대신 존재하지 않는 `fileID: 21300000`을 8개 clip이 사용한 것이다.
+- 8개 clip의 curve 10개와 pptrCurveMapping 10개를 각 PNG에서 가장 큰 Sprite의 실제 internalID로 교체했고 전수 검사 `ALL_PASS=True`를 통과했다.
+- Unity 재임포트 후 8개 파일 모두 `UnityEngine.AnimationClip`, 12fps, loop, 길이 0.8333333초로 로드됐다.
 - Stage2 CSV 8개 행의 display_name과 Image 경로 및 StandingImage 파일 존재를 검증했고 CSV 전체 17행 파싱이 성공했다.
-- git diff --check 통과.
+- 대상 파일 `git diff --check` 통과.
 
 ### History
 
 - 2026-08-26: Code Builder가 CSV sort_order 기준으로 Black→fire-dragon, Blue→lightning, Green→ice, Orange→dark-assassin, Red→holy-priest, Violet→ethan, White→drake, Yellow→arsen을 연결했다.
+- 2026-08-26: 사용자 Animation 창 제보 후 Code Builder가 8개 clip의 잘못된 main asset fileID를 실제 largest Sprite subasset ID로 복구했다.
 
 ## Task: 2026-08-09 LineAttack Range Upgrade Runtime Repair
 

@@ -309,7 +309,7 @@ Transform:
   m_GameObject: {fileID: 5337991091472488672}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 3.52, z: 0}
+  m_LocalPosition: {x: 0, y: 10, z: 0}
   m_LocalScale: {x: 0.1825905, y: 0.1825905, z: 1.2172093}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -379,7 +379,7 @@ TextMesh:
   m_Anchor: 4
   m_Alignment: 1
   m_TabSize: 4
-  m_FontSize: 32
+  m_FontSize: 90
   m_FontStyle: 0
   m_RichText: 1
   m_Font: {fileID: 0}

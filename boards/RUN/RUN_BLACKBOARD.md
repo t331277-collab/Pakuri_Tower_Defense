@@ -1,5 +1,45 @@
 # RUN_BLACKBOARD
 
+## Task: 2026-08-26 Offering Skill Choice Runtime Wiring
+
+### Task title
+
+Reward Offering 선택지의 스킬 설명·패시브 선행 스킬 아이콘 runtime 표시.
+
+### Goals
+
+- OfferingUI가 CSV `description_text`를 기존 선택지 Desc로 전달하도록 유지한다.
+- 패시브 선택지의 Icon을 해당 패시브 해금 조건 active skill의 Icon으로 연결한다.
+- 일반 Reward/Offering commit 흐름과 선택 판정을 변경하지 않는다.
+
+### Constraints
+
+- 튜토리얼 전용 분기를 추가하지 않는다.
+- `RunSession.CanLearnPassive`의 `RequiredActiveSlot` 계약을 재사용한다.
+- 조건 active icon이 없을 때 기존 passive icon fallback을 유지한다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+OfferingUI 구현 및 Unity/C# 정적 검증 완료. 사용자 Play Mode 확인 대기.
+
+### Next Actions
+
+- Play Mode에서 passive prerequisite skill 선택지와 일반 active/passive 선택지의 아이콘·설명을 확인한다.
+
+### Evidence
+
+- `OfferingUI.AddPassiveSkillChoices`가 `ResolvePassiveUnlockIcon(monster, passive)`를 호출하고, helper가 `RequiredActiveSlot` 일치 active definition의 Sprite를 반환한다.
+- `BindChoiceButton`은 기존 `choice.Description`을 Desc에 쓰고 SkillName 색상을 검은색으로 고정한다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore -v:minimal /p:UseSharedCompilation=false`는 errors 0, 기존 assembly-reference warnings 2개다. Unity `validate_script`는 errors 0/warnings 0이다.
+
+### History
+
+- 2026-08-26: Code Builder가 기존 Reward 흐름을 건드리지 않고 Offering 표시 계층 참조만 수정했다.
+
 ## Task: 2026-08-26 Interactive Tutorial Run Orchestration
 
 ### Task title
