@@ -482,6 +482,7 @@ public class MainMenuUIManager : MonoBehaviour
     {
         Bind(introGameStartButton, ShowMainMenu, nameof(introGameStartButton));
         Bind(runButton, ShowMonsterSelect, nameof(runButton));
+        Bind(tutorialButton, StartTutorialRun, nameof(tutorialButton));
         Bind(upArrowButton, () => StartMenuTransition(true), nameof(upArrowButton));
         Bind(downArrowButton, () => StartMenuTransition(false), nameof(downArrowButton));
         Bind(monsterSelectGameStartButton, StartSelectedMonsterRun, nameof(monsterSelectGameStartButton));
@@ -721,13 +722,24 @@ public class MainMenuUIManager : MonoBehaviour
     /// 선택한 몬스터를 StartContext에 저장하고 Run 씬을 연다.
     private void StartSelectedMonsterRun()
     {
+        var monsterName = string.IsNullOrWhiteSpace(selectedMonsterName) ? DefaultMonsterName : selectedMonsterName;
+        StartRun(monsterName, RunMode.Normal);
+    }
+
+    private void StartTutorialRun()
+    {
+        StartRun(DefaultMonsterName, RunMode.Tutorial);
+    }
+
+    /// 선택 몬스터와 Run 종류를 저장하고 기존 비동기 InGameScene 로드를 시작한다.
+    private void StartRun(string monsterName, RunMode mode)
+    {
         if (isLoadingRunScene)
         {
             return;
         }
 
-        var monsterName = string.IsNullOrWhiteSpace(selectedMonsterName) ? DefaultMonsterName : selectedMonsterName;
-        StartContext.Prepare(monsterName);
+        StartContext.Prepare(monsterName, mode);
 
         if (string.IsNullOrWhiteSpace(NewRunScenePath))
         {
@@ -739,6 +751,11 @@ public class MainMenuUIManager : MonoBehaviour
         if (monsterSelectGameStartButton != null)
         {
             monsterSelectGameStartButton.interactable = false;
+        }
+
+        if (tutorialButton != null)
+        {
+            tutorialButton.interactable = false;
         }
 
         StartCoroutine(LoadRunSceneAsync());
@@ -753,6 +770,11 @@ public class MainMenuUIManager : MonoBehaviour
             if (monsterSelectGameStartButton != null)
             {
                 monsterSelectGameStartButton.interactable = true;
+            }
+
+            if (tutorialButton != null)
+            {
+                tutorialButton.interactable = true;
             }
 
             Debug.LogError("MainMenuUIManager failed to start asynchronous InGameScene loading.", this);

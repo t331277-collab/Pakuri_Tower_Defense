@@ -201,7 +201,7 @@ namespace Pakuri.InGame
         private void BeginRunSession()
         {
             var monster = GameDataLoader.CurrentCatalog.GetData<MonsterDefinition>(StartContext.SelectedMonsterName);
-            activeSession = RunSession.Begin(monster);
+            activeSession = RunSession.Begin(monster, StartContext.Mode);
             StartContext.Clear();
         }
 
@@ -464,15 +464,18 @@ namespace Pakuri.InGame
     public static class StartContext
     {
         public static string SelectedMonsterName { get; private set; }
+        public static RunMode Mode { get; private set; } = RunMode.Normal;
 
-        public static void Prepare(string selectedMonsterName)
+        public static void Prepare(string selectedMonsterName, RunMode mode = RunMode.Normal)
         {
             SelectedMonsterName = string.IsNullOrWhiteSpace(selectedMonsterName) ? string.Empty : selectedMonsterName;
+            Mode = mode;
         }
 
         public static void Clear()
         {
             SelectedMonsterName = string.Empty;
+            Mode = RunMode.Normal;
         }
     }
 

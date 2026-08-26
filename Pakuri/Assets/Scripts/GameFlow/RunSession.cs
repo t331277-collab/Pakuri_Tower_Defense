@@ -10,6 +10,12 @@ using Pakuri.Data;
 namespace Pakuri.InGame
 {
 
+    public enum RunMode
+    {
+        Normal,
+        Tutorial
+    }
+
     [Serializable]
     public class RunSession
     {
@@ -34,16 +40,21 @@ namespace Pakuri.InGame
 
         public string SelectedMonsterName => partyMembers.Count > 0 ? partyMembers[0].MonsterName : string.Empty;
         public IReadOnlyList<RunMonsterState> PartyMembers => partyMembers;
+        public RunMode Mode { get; private set; }
+        public bool IsTutorial => Mode == RunMode.Tutorial;
         public int StageIndex = 1;
         public int DayIndex = 1;
         public int Gold;
         public int DarkTrace;
 
         /// 선택한 몬스터를 첫 파티원으로 등록해 새 Run을 시작한다.
-        public static RunSession Begin(MonsterDefinition monster)
+        public static RunSession Begin(MonsterDefinition monster, RunMode mode = RunMode.Normal)
         {
 
-            var session = new RunSession();
+            var session = new RunSession
+            {
+                Mode = mode
+            };
             session.AddPartyMemberState(monster);
             return session;
         }
