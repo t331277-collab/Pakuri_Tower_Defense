@@ -208,7 +208,7 @@ namespace Pakuri.InGame
                 else if (state == StageState.RewardReady && step == Step.AwaitDayOneClear)
                 {
                     Pause();
-                    StartCoroutine(ShowWhenRewardVisible("line1-5"));
+                    ShowLine("line1-5");
                 }
             }
             else if (stageManager.CurrentDay == 2)
@@ -221,7 +221,7 @@ namespace Pakuri.InGame
                 {
                     step = Step.AwaitArtifactIntro;
                     Pause();
-                    StartCoroutine(ShowWhenRewardVisible("line4-1"));
+                    ShowLine("line4-1");
                 }
             }
         }
@@ -367,17 +367,6 @@ namespace Pakuri.InGame
             Pause();
             rewardPanel.SetTutorialInteraction(-1, false, false, false);
             ShowLine("line4-3");
-        }
-
-        private IEnumerator ShowWhenRewardVisible(string lineId)
-        {
-            while (rewardPanel != null && !rewardPanel.IsVisible)
-            {
-                yield return null;
-            }
-
-            rewardPanel.SetTutorialInteraction(-1, false, false, false);
-            ShowLine(lineId);
         }
 
         private bool HandleContinueRequested()

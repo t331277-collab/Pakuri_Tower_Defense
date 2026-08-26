@@ -8,8 +8,8 @@
 - Role Owner: Code Builder.
 - Status: TutorialLineView, 보상/포로/Offering/현현/유물 gate, TutoEnd 복귀 구현과 C# 빌드 검증 완료. Play Mode 확인 대기.
 - Next Actions: Unity Play Mode에서 SKIP!/Next!, 각 패널 gate, Auto/배속 입력, TutoEnd 표시와 MainMenu 복귀를 확인한다.
-- Evidence: `TutorialLineView.cs`는 기존 `TutorialUI/TutoLine/LinePanel/Text (TMP)`와 `SkipBtn`을 바인딩하고 Image-only SkipBtn에 Button을 런타임 추가한다. `Time.unscaledDeltaTime`과 TMP `maxVisibleCharacters`로 typewriter를 구현하고 typing 중 `SKIP!`, 완료 후 `Next!`를 사용한다. `TutorialFlowManager.cs`는 기존 `TutoEnd/Button`을 바인딩하고 day 5 Next를 차단해 transient panel을 숨긴 뒤 TutoEnd를 활성화한다. `RewardPanelUI`, `PrisonPanelUI`, `OfferingUI`, `MenifestUI`의 tutorial-only gate는 Normal mode에서 적용되지 않는다. `InGameScene.unity`는 이번 구현에서 스테이징하지 않았다. C# 빌드는 오류 0, 기존 경고 2개다.
-- History: 2026-08-26 초기 Ariel/6-Phase 설계를 작성했다. 이후 사용자 수정에 따라 Eve 입장, 정확한 15개 대사, 첫 포로 Offering·두 번째 포로 현현, Auto+1.5x/2x, 유물, 1-5 종료 흐름으로 인계서를 교체했다. 같은 날 Code Builder가 기존 계층의 런타임 바인딩으로 Phase C~G UI 흐름을 구현했다.
+- Evidence: `TutorialLineView.cs`는 기존 `TutorialUI/TutoLine/LinePanel/Text (TMP)`와 `SkipBtn`을 바인딩하고 Image-only SkipBtn에 Button을 런타임 추가한다. `Time.unscaledDeltaTime`과 TMP `maxVisibleCharacters`로 typewriter를 구현하고 typing 중 `SKIP!`, 완료 후 `Next!`를 사용한다. `TutorialFlowManager.cs`는 기존 `TutoEnd/Button`을 바인딩하고 day 5 Next를 차단해 transient panel을 숨긴 뒤 TutoEnd를 활성화한다. day 1/2 `RewardReady`에서는 RewardPanel visible 대기를 제거하고 `line1-5`/`line4-1`을 즉시 표시해 RewardPanel보다 안내 UI가 먼저 활성화된다. `RewardPanelUI`, `PrisonPanelUI`, `OfferingUI`, `MenifestUI`의 tutorial-only gate는 Normal mode에서 적용되지 않는다. `InGameScene.unity`는 이번 구현에서 스테이징하지 않았다. 최신 수정 후 C# 빌드는 오류 0·기존 경고 2개, `TutorialFlowManager.cs` Unity diagnostics는 오류/경고 0이다. Unity Console의 단일 오류는 프로젝트 코드가 아닌 MCP package의 disposed `NetworkStream` 오류다.
+- History: 2026-08-26 초기 Ariel/6-Phase 설계를 작성했다. 이후 사용자 수정에 따라 Eve 입장, 정확한 15개 대사, 첫 포로 Offering·두 번째 포로 현현, Auto+1.5x/2x, 유물, 1-5 종료 흐름으로 인계서를 교체했다. 같은 날 Code Builder가 기존 계층의 런타임 바인딩으로 Phase C~G UI 흐름을 구현했다. 첫 RewardPanel이 line1-5보다 먼저 보인다는 Play Mode 제보 후 RewardPanel visible 대기 코루틴을 제거해 대사를 `RewardReady`에서 즉시 표시하도록 수정했다.
 
 ## Task: 2026-08-26 MainMenu Run/Tutorial Vertical Transition
 

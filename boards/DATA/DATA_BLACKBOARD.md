@@ -37,6 +37,7 @@ TutorialLine 15개와 TutorialStage Day/Encounter/Reward, parser/catalog/editor 
 - `stage_flow/TutorialStage/`에 StageDay 5행, day1 enemy 2마리, day2 enemy 5마리 및 전용 Reward 데이터가 존재한다.
 - `CsvRuntimeCatalog`, `CsvCatalogEditor`, `GameDataLoader`, `GameDataCatalog`가 TutorialLine과 TutorialStage 세 CSV를 명시적으로 연결한다.
 - `TutorialLineDefinition.Load()`는 중복 line_id와 정확한 15개 block을 검증한다.
+- `TutorialLine.csv`의 15개 대사는 맞춤법·띄어쓰기와 불필요한 공백을 교정하고, 아리엘의 말투를 부드러운 존댓말과 정화·의식 중심 어휘로 통일했다. line_id/phase/sequence/block 계약은 변경하지 않았다.
 - day1 reward는 `prisoner_count_2_chance=1`, `manifest_success_chance=1`이며 Eve B/C/D ID lookup도 정적 검증됐다.
 - Phase B 커밋 `c145f5f`에 데이터 및 catalog 연결이 포함됐다.
 
@@ -46,6 +47,7 @@ TutorialLine 15개와 TutorialStage Day/Encounter/Reward, parser/catalog/editor 
 - 2026-08-26: 사용자 확정 조건을 반영한 구현 인계서를 작성했다. 데이터 구현은 시작하지 않았다.
 - 2026-08-26: 사용자 수정 플로우에 따라 15개 정확한 대사, Tutorial 1-1/1-2 custom data, 1-3~1-5 복제 전략으로 인계서를 갱신했다.
 - 2026-08-26: Code Builder가 TutorialLine 15행, TutorialStage 1-1~1-5 및 별도 runtime catalog 연결을 구현했다.
+- 2026-08-26: Designer가 TutorialLine 15개 대사의 맞춤법·띄어쓰기와 아리엘의 성녀풍 말투를 교정했다. UTF-8, 5열, 데이터 15행, 고유 line_id 15개를 재검증했다.
 
 ## Task: 2026-08-09 LineAttack RadiusMultiplier Contract Consolidation
 

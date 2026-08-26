@@ -39,6 +39,8 @@ Phase A~G 구현과 C# 빌드 검증 완료. Unity Play Mode 전체 흐름 검�
 - Tutorial day 5의 Next는 `AdvanceDay()` 전에 차단되어 `TutoEnd`를 표시하고 Button에서 기존 MainMenu 복귀 경로를 호출한다.
 - Phase 커밋은 `27699cf`, `c145f5f`, `655c5ca`, `fd1c527`, `335de5f`, `44956b4`이며 Phase G는 최종 종료/문서/검증 변경으로 커밋한다.
 - `dotnet build Pakuri/Pakuri.sln --no-restore`는 오류 0, 기존 assembly-reference 경고 2개로 완료됐다. 최종 Unity MCP 검증은 Editor 세션 부재로 실행하지 못했다.
+- day 1/2 `RewardReady` 처리에서 RewardPanel visible 대기를 제거해 `line1-5`/`line4-1`이 `InGameUIManager.Update()`의 RewardPanel 활성화보다 먼저 실행된다. RewardPanel 자체의 tutorial interaction 잠금은 `RewardPanelUI.Show()`가 유지한다.
+- 최신 수정 후 solution build는 오류 0·기존 assembly-reference 경고 2개, `TutorialFlowManager.cs` Unity diagnostics는 오류/경고 0이다. Console의 단일 오류는 MCP package transport의 disposed `NetworkStream`이다.
 
 ### History
 
@@ -47,6 +49,7 @@ Phase A~G 구현과 C# 빌드 검증 완료. Unity Play Mode 전체 흐름 검�
 - 2026-08-26: Designer가 구현 인계서를 작성했으며 코드는 변경하지 않았다.
 - 2026-08-26: 사용자가 Eve 입장과 Line1-1~Line4-3의 정확한 action sequence, 1.5x/2x 허용, 1-3~1-5 진행을 제공해 기존 설계를 대체했다.
 - 2026-08-26: Code Builder가 Phase A~F를 각각 커밋하고 Phase G의 1-5 종료, TutoEnd, MainMenu 복귀 및 Normal/Tutorial 보상 UI 분리를 구현했다.
+- 2026-08-26: 사용자 Play Mode 제보에 따라 RewardPanel 선행 표시 원인인 `ShowWhenRewardVisible()`을 제거하고 두 보상 안내 대사를 `RewardReady`에서 즉시 표시하도록 수정했다.
 
 ## Task: 2026-08-08 Stage Encounter Spawn and Boss Flag Runtime Contract
 

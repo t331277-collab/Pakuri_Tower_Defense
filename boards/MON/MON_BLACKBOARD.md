@@ -8,6 +8,47 @@ The previous Ariel, Eve, Rin, Sein, and Vega boards are preserved under `boards/
 
 For new monster work, inspect the exact current code and data first, then add a required-field task block here only when persistent state is needed.
 
+## Task: 2026-08-26 Enemy Prefab Visual Normalization
+
+### Task title
+
+Stage1/Stage2 적 프리팹의 고뇌의 정령 Sprite·외형·Collider 기준 통일
+
+### Goals
+
+- Stage1_Achor의 현재 작업본을 기준으로 Stage1 나머지 7개와 Stage2 8개, 총 15개 프리팹의 메인 SpriteRenderer를 동일 Sprite로 교체한다.
+- 루트 외형 Scale, HP Bar/Shield/Background/Fill/Damage 자식 Transform, BoxCollider2D 위치·크기 메타데이터를 Achor 기준으로 통일한다.
+
+### Constraints
+
+- EnemyActor, Animator, SortingGroup, 스탯·스킬·프리팹 이름과 바인딩 계약은 변경하지 않는다.
+- 런타임 스폰 위치는 `UnitSpawnManager`가 지정하므로 프리팹 루트의 기존 위치 값은 보존한다.
+- Stage1_Achor의 기존 사용자 수정은 기준값으로 보존한다.
+- Play Mode 외형 확인은 사용자 소유다.
+
+### Role Owner
+
+Designer
+
+### Status
+
+구현 및 정적·Unity Asset 재임포트 검증 완료. 사용자 Play Mode 시각 확인 대기.
+
+### Next Actions
+
+- Play Mode에서 Stage1/Stage2 적의 Sprite, HP Bar, Damage 표시, 클릭 판정 크기와 위치를 확인한다.
+
+### Evidence
+
+- 지정 PNG `ChatGPT Image 2026년 8월 25일 오후 11_56_28 (1).png`는 GUID `025cfafe05488bf48a3929c992726ecf`, 1024×1536, PPU 100이며 15개 프리팹의 루트 SpriteRenderer가 `fileID: 21300000`으로 이 Sprite를 참조한다.
+- 15개 프리팹 모두 루트 SpriteRenderer의 Color `1,1,1,1`, FlipX/FlipY `0`, Sprite size `3.02×3.36`, 루트 Scale `0.11572`와 Achor의 5개 시각 자식 Transform을 사용한다.
+- 15개 프리팹 모두 BoxCollider2D offset `(-0.092027664, 0.24540877)`, size `(8.323854, 14.433376)`, SpriteTiling old/new size `10.24×15.36`/`3.02×3.36`을 사용한다.
+- 전수 검사 `files=15, allPass=true`, `git diff --check` 통과. Unity `manage_asset get_info` 15/15가 `UnityEngine.GameObject`로 재임포트됐고 대표 Stage1/Stage2의 SpriteRenderer·EnemyActor·BoxCollider2D가 유지됐다.
+
+### History
+
+- 2026-08-26: 사용자가 Achor 기준 Sprite·외형·Collider 통일을 승인했다. Designer가 Stage1/Stage2 15개 프리팹에 적용하고 정적 및 Unity Asset 검증을 완료했다.
+
 ## Task: 2026-08-09 LineAttack Range Upgrade Runtime Repair
 
 ### Task title

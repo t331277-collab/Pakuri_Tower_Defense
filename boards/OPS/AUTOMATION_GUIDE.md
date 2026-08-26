@@ -1,5 +1,96 @@
 # AUTOMATION_GUIDE
 
+## Task: 2026-08-26 Pakuri Defense Notion Markdown Structure
+
+### Task title
+
+Reformat the `md 구조` section on the Pakuri Defense Notion page as a readable Notion directory tree.
+
+### Goals
+
+- Preserve the page's surrounding narrative and downstream sections.
+- Replace the malformed ASCII directory tree with a complete, aligned Notion code-block tree.
+- Keep the shown Markdown paths and responsibilities aligned with the inspected repository.
+
+### Constraints
+
+- Change only the `md 구조` section of the user-selected Notion page.
+- Do not create, delete, or move Notion child pages or databases.
+- Do not modify project code, Unity scenes, prefabs, data, or assets.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed and re-fetched for verification.
+
+### Next Actions
+
+- None.
+
+### Evidence
+
+- Fetched Notion page `파쿠리 디펜스` at `https://app.notion.com/p/3c874254789980b584f3efa20de89e40` before editing; its `md 구조` toggle contained a single malformed ASCII tree with broken line grouping.
+- `rg --files -g "*.md"` confirmed the root Markdown files, role documents, active boards, and archive paths represented in the replacement.
+- Notion `update_content` succeeded for page ID `3c874254-7899-80b5-84f3-efa20de89e40`.
+- Post-update fetch confirmed a code-block tree containing `│`, `├──`, and `└──` markers for the root documents, role documents, boards, and archives; it also preserved `Part 2`, `Part 3`, and later page sections.
+
+### History
+
+- 2026-08-26: User requested that the Markdown structure beneath the Pakuri Defense Notion page be made more suitable for Notion.
+- 2026-08-26: Designer initially replaced only that section's content with readable groupings, then followed the user's correction by rendering the same verified paths as an aligned `│` / `├──` / `└──` directory tree in a Notion code block.
+
+## Task: 2026-08-26 Global Notion MCP Connection
+
+### Task title
+
+Register and authenticate the hosted Notion MCP server for global Codex use.
+
+### Goals
+
+- Add the official Notion Streamable HTTP MCP endpoint to the global Codex configuration.
+- Complete the required Notion OAuth authorization.
+- Verify the configured transport, endpoint, enabled state, and authentication mode.
+
+### Constraints
+
+- Do not change project code, Unity scenes, prefabs, data, or assets.
+- Use the official hosted endpoint `https://mcp.notion.com/mcp`.
+- Notion OAuth workspace selection and permission approval remain user-owned.
+- A Codex restart or new task is required before the newly configured MCP tools appear in the task tool list.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed. Registered, OAuth-authenticated, CLI-verified, loaded in the restarted Codex task, and read-only page discovery/search verified.
+
+### Next Actions
+
+- None for connection verification. Continue to obtain explicit user intent before any Notion write operation.
+
+### Evidence
+
+- `codex mcp add notion --url https://mcp.notion.com/mcp` reported `Added global MCP server 'notion'.`.
+- `codex mcp login notion` reported `Successfully logged in to MCP server 'notion'.` after the user completed OAuth authorization.
+- `codex mcp get notion` reports `enabled: true`, `transport: streamable_http`, and URL `https://mcp.notion.com/mcp`.
+- `codex mcp list` reports `notion` as `enabled` with `OAuth` authentication.
+- The restarted task's tool inventory contains 28 Notion tools, including page discovery, search, fetch, and write operations.
+- Read-only discovery calls succeeded for private, shared, recent, and favorite pages: 25 private results, 1 shared result, 39 recent results, and 0 favorite results.
+- Deduplicating those four discovery lists produced 39 observed items: 35 pages and 4 databases.
+- A read-only workspace search for `파쿠리 디펜스` succeeded and returned the exact `파쿠리 디펜스` page plus related accessible content.
+
+### History
+
+- 2026-08-26: User requested registration of the official Notion MCP server and guidance at the OAuth approval step.
+- 2026-08-26: Designer registered the global server, kept the OAuth callback listener active, and guided the user through authorization.
+- 2026-08-26: The in-app browser displayed a local callback connection error after authorization, while the waiting Codex process confirmed successful login; CLI inspection then verified the enabled OAuth configuration.
+- 2026-08-26: In a restarted task, Designer confirmed 28 loaded Notion tools, successfully listed accessible private/shared/recent/favorite content, and verified workspace search with `파쿠리 디펜스`.
+
 ## Task: 2026-07-31 Codex CLI 0.146.0 Update
 
 ### Task title
