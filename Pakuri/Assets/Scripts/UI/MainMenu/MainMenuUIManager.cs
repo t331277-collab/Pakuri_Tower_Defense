@@ -20,6 +20,9 @@ public class MainMenuUIManager : MonoBehaviour
     private const string DefaultMonsterName = "eve";
     private const float SummaryFadeDuration = 0.5f;
     private const float GameStartFadeDuration = 1f;
+    private const float MenuTransitionDuration = 0.15f;
+    private const float SecondaryMenuFontSize = 40f;
+    private const float PrimaryMenuFontSize = 50f;
     private const int IntroVideoWidth = 1920;
     private const int IntroVideoHeight = 1080;
 
@@ -36,6 +39,9 @@ public class MainMenuUIManager : MonoBehaviour
     private GameObject monsterStanding;
     private Button introGameStartButton;
     private Button runButton;
+    private Button tutorialButton;
+    private Button upArrowButton;
+    private Button downArrowButton;
     private Button monsterSelectGameStartButton;
     private Button arielButton;
     private Button eveButton;
@@ -50,6 +56,11 @@ public class MainMenuUIManager : MonoBehaviour
     private PlayableGraph monsterStandingGraph;
     private TextMeshProUGUI monsterNameText;
     private TextMeshProUGUI monsterDescriptionText;
+    private TextMeshProUGUI runButtonText;
+    private TextMeshProUGUI tutorialButtonText;
+    private RectTransform runButtonRect;
+    private RectTransform tutorialButtonRect;
+    private RectTransform downMarkerRect;
     private CanvasGroup summaryCanvasGroup;
     private CanvasGroup gameStartCanvasGroup;
     private VideoPlayer introVideoPlayer;
@@ -58,6 +69,13 @@ public class MainMenuUIManager : MonoBehaviour
     private RenderTexture introVideoTexture;
     private RenderTexture loopVideoTexture;
     private Coroutine introSequence;
+    private Coroutine menuTransition;
+
+    private Vector2 runOriginalPosition;
+    private Vector2 runOriginalSize;
+    private Vector2 tutorialOriginalPosition;
+    private Vector2 tutorialOriginalSize;
+    private Transform[] originalMenuSiblingOrder;
 
     private string selectedMonsterName;
     private bool isLoadingRunScene;
@@ -86,6 +104,7 @@ public class MainMenuUIManager : MonoBehaviour
             return;
         }
 
+        InitializeMainMenuLayout();
         BindButtons();
         ShowIntro();
         StartMainMenuBgm();
@@ -115,7 +134,15 @@ public class MainMenuUIManager : MonoBehaviour
 
         introGameStartButton = FindComponent<Button>(canvas, "Intro/GameStart", nameof(introGameStartButton), ref valid);
         runButton = FindComponent<Button>(canvas, "MainMenuUI/RunBtn", nameof(runButton), ref valid);
+        tutorialButton = FindComponent<Button>(canvas, "MainMenuUI/Tutorial", nameof(tutorialButton), ref valid);
+        upArrowButton = FindOrAddButton(canvas, "MainMenuUI/UPArrow", nameof(upArrowButton), ref valid);
+        downArrowButton = FindOrAddButton(canvas, "MainMenuUI/DownArrow", nameof(downArrowButton), ref valid);
         monsterSelectGameStartButton = FindComponent<Button>(canvas, "MosterSelectUI/GameStart", nameof(monsterSelectGameStartButton), ref valid);
+        runButtonRect = FindComponent<RectTransform>(canvas, "MainMenuUI/RunBtn", nameof(runButtonRect), ref valid);
+        tutorialButtonRect = FindComponent<RectTransform>(canvas, "MainMenuUI/Tutorial", nameof(tutorialButtonRect), ref valid);
+        downMarkerRect = FindComponent<RectTransform>(canvas, "MainMenuUI/Down", nameof(downMarkerRect), ref valid);
+        runButtonText = FindComponent<TextMeshProUGUI>(canvas, "MainMenuUI/RunBtn/Text (TMP)", nameof(runButtonText), ref valid);
+        tutorialButtonText = FindComponent<TextMeshProUGUI>(canvas, "MainMenuUI/Tutorial/Text (TMP)", nameof(tutorialButtonText), ref valid);
         monsterStandingImage = FindComponent<Image>(canvas, "MosterSelectUI/MonsterStandingPanel/MonsterStanding", nameof(monsterStandingImage), ref valid);
         monsterNameText = FindComponent<TextMeshProUGUI>(canvas, "MosterSelectUI/MonsterStandingPanel/MonsterStanding/Name", nameof(monsterNameText), ref valid);
         monsterDescriptionText = FindComponent<TextMeshProUGUI>(canvas, "MosterSelectUI/MonsterStandingPanel/MonsterStanding/Desc", nameof(monsterDescriptionText), ref valid);
@@ -422,6 +449,27 @@ public class MainMenuUIManager : MonoBehaviour
         return component;
     }
 
+    /// 화살표 Image에 기존 Button을 재사용하거나 클릭용 Button을 런타임으로 추가한다.
+    private Button FindOrAddButton(
+        GameObject root,
+        string path,
+        string fieldName,
+        ref bool valid)
+    {
+        var target = root != null ? root.transform.Find(path) : null;
+        var image = target != null ? target.GetComponent<Image>() : null;
+        if (image == null)
+        {
+            LogBindingError(fieldName, path, "Image");
+            valid = false;
+            return null;
+        }
+
+        var button = target.GetComponent<Button>() ?? target.gameObject.AddComponent<Button>();
+        button.targetGraphic = image;
+        return button;
+    }
+
     /// 자동 참조 연결 실패 원인을 필드·경로·타입과 함께 기록한다.
     private void LogBindingError(string fieldName, string path, string expectedType)
     {
@@ -434,6 +482,8 @@ public class MainMenuUIManager : MonoBehaviour
     {
         Bind(introGameStartButton, ShowMainMenu, nameof(introGameStartButton));
         Bind(runButton, ShowMonsterSelect, nameof(runButton));
+        Bind(upArrowButton, () => StartMenuTransition(true), nameof(upArrowButton));
+        Bind(downArrowButton, () => StartMenuTransition(false), nameof(downArrowButton));
         Bind(monsterSelectGameStartButton, StartSelectedMonsterRun, nameof(monsterSelectGameStartButton));
 
         Bind(arielButton, () => SelectMonster("ariel"), nameof(arielButton));
@@ -458,6 +508,118 @@ public class MainMenuUIManager : MonoBehaviour
         }
 
         button.onClick.AddListener(action);
+    }
+
+    /// 씬에 작성된 세 기준 RectTransform을 저장하고 기본 Run 선택 상태를 적용한다.
+    private void InitializeMainMenuLayout()
+    {
+        runOriginalPosition = runButtonRect.anchoredPosition;
+        runOriginalSize = runButtonRect.sizeDelta;
+        tutorialOriginalPosition = tutorialButtonRect.anchoredPosition;
+        tutorialOriginalSize = tutorialButtonRect.sizeDelta;
+        var menuRoot = runButtonRect.parent;
+        originalMenuSiblingOrder = new Transform[menuRoot.childCount];
+        for (var i = 0; i < originalMenuSiblingOrder.Length; i++)
+        {
+            originalMenuSiblingOrder[i] = menuRoot.GetChild(i);
+        }
+
+        SetMenuLayout(false);
+        SetMenuInteraction(false);
+        upArrowButton.gameObject.SetActive(true);
+        downArrowButton.gameObject.SetActive(false);
+    }
+
+    /// 화살표 입력 하나당 메뉴 전환 코루틴 하나만 실행한다.
+    private void StartMenuTransition(bool tutorialIsPrimary)
+    {
+        if (menuTransition != null)
+        {
+            return;
+        }
+
+        SetMenuLayerOrder(tutorialIsPrimary);
+        runButton.interactable = false;
+        tutorialButton.interactable = false;
+        upArrowButton.interactable = false;
+        downArrowButton.interactable = false;
+        menuTransition = StartCoroutine(AnimateMenuLayout(tutorialIsPrimary));
+    }
+
+    /// Run과 Tutorial의 위치·크기·폰트를 같은 0.3초 동안 보간한다.
+    private IEnumerator AnimateMenuLayout(bool tutorialIsPrimary)
+    {
+        var runStartPosition = runButtonRect.anchoredPosition;
+        var runStartSize = runButtonRect.sizeDelta;
+        var runStartFontSize = runButtonText.fontSize;
+        var tutorialStartPosition = tutorialButtonRect.anchoredPosition;
+        var tutorialStartSize = tutorialButtonRect.sizeDelta;
+        var tutorialStartFontSize = tutorialButtonText.fontSize;
+        var runTargetPosition = tutorialIsPrimary ? downMarkerRect.anchoredPosition : runOriginalPosition;
+        var runTargetSize = tutorialIsPrimary ? tutorialOriginalSize : runOriginalSize;
+        var runTargetFontSize = tutorialIsPrimary ? SecondaryMenuFontSize : PrimaryMenuFontSize;
+        var tutorialTargetPosition = tutorialIsPrimary ? runOriginalPosition : tutorialOriginalPosition;
+        var tutorialTargetSize = tutorialIsPrimary ? runOriginalSize : tutorialOriginalSize;
+        var tutorialTargetFontSize = tutorialIsPrimary ? PrimaryMenuFontSize : SecondaryMenuFontSize;
+        var elapsed = 0f;
+
+        while (elapsed < MenuTransitionDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            var progress = Mathf.Clamp01(elapsed / MenuTransitionDuration);
+            runButtonRect.anchoredPosition = Vector2.Lerp(runStartPosition, runTargetPosition, progress);
+            runButtonRect.sizeDelta = Vector2.Lerp(runStartSize, runTargetSize, progress);
+            runButtonText.fontSize = Mathf.Lerp(runStartFontSize, runTargetFontSize, progress);
+            tutorialButtonRect.anchoredPosition = Vector2.Lerp(tutorialStartPosition, tutorialTargetPosition, progress);
+            tutorialButtonRect.sizeDelta = Vector2.Lerp(tutorialStartSize, tutorialTargetSize, progress);
+            tutorialButtonText.fontSize = Mathf.Lerp(tutorialStartFontSize, tutorialTargetFontSize, progress);
+            yield return null;
+        }
+
+        SetMenuLayout(tutorialIsPrimary);
+        SetMenuInteraction(tutorialIsPrimary);
+        upArrowButton.gameObject.SetActive(!tutorialIsPrimary);
+        downArrowButton.gameObject.SetActive(tutorialIsPrimary);
+        upArrowButton.interactable = true;
+        downArrowButton.interactable = true;
+        menuTransition = null;
+    }
+
+    /// 초기화와 애니메이션 완료 시 목표값을 정확히 적용한다.
+    private void SetMenuLayout(bool tutorialIsPrimary)
+    {
+        runButtonRect.anchoredPosition = tutorialIsPrimary ? downMarkerRect.anchoredPosition : runOriginalPosition;
+        runButtonRect.sizeDelta = tutorialIsPrimary ? tutorialOriginalSize : runOriginalSize;
+        runButtonText.fontSize = tutorialIsPrimary ? SecondaryMenuFontSize : PrimaryMenuFontSize;
+        tutorialButtonRect.anchoredPosition = tutorialIsPrimary ? runOriginalPosition : tutorialOriginalPosition;
+        tutorialButtonRect.sizeDelta = tutorialIsPrimary ? runOriginalSize : tutorialOriginalSize;
+        tutorialButtonText.fontSize = tutorialIsPrimary ? PrimaryMenuFontSize : SecondaryMenuFontSize;
+    }
+
+    /// 중앙에 배치된 기능 버튼 하나만 클릭 가능하게 한다.
+    private void SetMenuInteraction(bool tutorialIsPrimary)
+    {
+        runButton.interactable = !tutorialIsPrimary;
+        tutorialButton.interactable = tutorialIsPrimary;
+    }
+
+    /// Tutorial 선택 중에는 Tutorial을 Run보다 위, 두 화살표보다 아래에 그린다.
+    private void SetMenuLayerOrder(bool tutorialIsPrimary)
+    {
+        if (!tutorialIsPrimary)
+        {
+            for (var i = 0; i < originalMenuSiblingOrder.Length; i++)
+            {
+                originalMenuSiblingOrder[i].SetSiblingIndex(i);
+            }
+
+            return;
+        }
+
+        runButtonRect.SetAsLastSibling();
+        tutorialButtonRect.SetAsLastSibling();
+        upArrowButton.transform.SetAsLastSibling();
+        downArrowButton.transform.SetAsLastSibling();
     }
 
     /// 인트로 패널을 열어 게임 시작 화면을 보여준다.
@@ -608,6 +770,11 @@ public class MainMenuUIManager : MonoBehaviour
         if (introSequence != null)
         {
             StopCoroutine(introSequence);
+        }
+
+        if (menuTransition != null)
+        {
+            StopCoroutine(menuTransition);
         }
 
         if (introVideoPlayer != null)

@@ -1,5 +1,16 @@
 # UI_BLACKBOARD
 
+## Task: 2026-08-26 MainMenu Run/Tutorial Vertical Transition
+
+- Task title: `MainMenuScene/Canvas/MainMenuUI` Run·Tutorial 세로 전환.
+- Goals: 기본 상태에서는 중앙 `RunBtn`만 클릭 가능하게 하고, `UPArrow` 클릭 시 `RunBtn`을 `Down` 위치·Tutorial 원본 크기·폰트 40으로, `Tutorial`을 RunBtn 원본 위치·크기·폰트 50으로 같은 0.3초 동안 이동한다. 전환 중 Tutorial은 RunBtn 위, 두 화살표 아래에 그린다. 완료 후 `UPArrow`를 끄고 `DownArrow`를 켜며, DownArrow 클릭 시 위치·크기·폰트·그리기 순서를 원래대로 복원한다.
+- Constraints: 사용자가 작성 중인 `MainMenuScene.unity` 변경을 보존한다. 기존 `MainMenuUIManager` 런타임 경로 바인딩과 Run 클릭 흐름을 재사용한다. 전환 중 중복 입력을 막고 중앙 기능 버튼 하나만 interactable로 둔다. Tutorial 클릭 결과는 요청되지 않아 새 기능을 연결하지 않는다. 사용자 Play Mode 시각·입력 검증은 사용자 소유다.
+- Role Owner: Code Builder.
+- Status: 코드 구현과 정적 검증 완료. 사용자 Play Mode 확인 대기.
+- Next Actions: Play Mode에서 기본 RunBtn만 클릭되는지, UPArrow 클릭 후 0.3초 동시 보간과 Tutorial만 클릭되는지, 겹치는 동안 Tutorial이 RunBtn 위·화살표 아래인지, 화살표 교대, DownArrow 역보간과 원본 그리기 순서 복원, 반복 입력 차단을 확인한다.
+- Evidence: `MainMenuScene` 라이브 계층에서 `RunBtn`은 위치 `(490,0)`·Button, `Tutorial`은 `(602,145)`·Button, 비활성 `Down`은 `(602,-180)`·Button, `UPArrow`는 활성 Image, `DownArrow`는 비활성 Image로 확인됐다. 라이브 MainMenuUI 자식 순서는 `Down → Tutorial → RunBtn → UPArrow → DownArrow`여서 RunBtn이 Tutorial 위에 그려지는 원인이 확인됐다. `MainMenuUIManager`는 초기 전체 sibling 순서를 저장한다. 확장 시작 시 `RunBtn → Tutorial → UPArrow → DownArrow` 순으로 마지막 sibling에 배치해 Tutorial을 RunBtn 위·화살표 아래로 만들고, 복귀 시작 시 저장한 전체 원본 순서를 복원한다. 세 RectTransform 원본값을 저장하고 `Time.unscaledDeltaTime`/`Vector2.Lerp`/`Mathf.Lerp`로 위치·크기·폰트를 `0.3f` 보간하며 완료 시 정확한 목표값과 interactable/활성 상태를 적용한다. 화살표 Image에는 기존 Button을 재사용하거나 런타임 Button을 추가한다. `MainMenuScene.unity`는 Code Builder가 수정하지 않았다. Runtime·Editor dotnet build는 오류 0·기존 assembly-reference 경고 2개, Unity scene validate는 issues 0, Console 오류·경고 0, `git diff --check` 통과다. 최신 layering 수정 후 Runtime build도 오류 0이며 Console 오류·경고 0이다. `validate_script`는 오류 0이고 이번 코드와 무관한 일반 `Update()` 문자열 연결 경고를 line 0에 1건 보고했다.
+- History: 2026-08-26 Designer가 실제 씬 YAML과 `MainMenuUIManager.cs`를 검사해 요구 상태와 미구현 경로를 확정했다. 같은 날 사용자 Code Builder 지시 후 기존 씬 변경을 보존하며 `MainMenuUIManager.cs`에 런타임 바인딩·0.3초 양방향 전환·입력 잠금·중앙 버튼 상호작용 전환을 추가했다. 사용자 겹침 순서 수정 요청 뒤 Code Builder가 확장 상태의 Tutorial/Run/화살표 sibling 순서를 조정하고 복귀 시 전체 원본 sibling 순서를 복원하도록 추가했다.
+
 ## Task: 2026-08-24 ArtifactPanel Choice1 Format Propagation
 
 - Task title: `InGameScene/UI/Reward/ArtifactPanel/Choice1` 전체 형식을 `Choice2`, `Choice3`에 적용.

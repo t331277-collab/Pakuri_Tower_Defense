@@ -2429,3 +2429,45 @@ Complete; generated assets and metadata passed direct filesystem, image, and imp
 - 2026-08-23: Inspected `AGENTS.md`, `MDTREE.md`, the DATA board, all Stage1/Stage2 animation folders, source dimensions, and existing five-frame assets before generation.
 - 2026-08-23: Generated four-panel walk sheets from the Stage1/Stage2 references, removed edge-connected checker/white background pixels to alpha 0, fitted each panel into the exact source canvas, and wrote new Single-sprite metadata with unique GUIDs.
 - 2026-08-23: Kept the previous five-frame files untouched and removed the temporary splitting script after the asset run.
+## Task: 2026-08-26 Stage1 Enemy Aura Color Variants
+
+### Task title
+
+Create eight deterministic color sets from the ten Stage1 enemy aura PNG frames.
+
+### Goals
+
+- Add ten recolored PNG frames to each of `Red`, `Brown`, `Green`, `Blue`, `Violet`, `Yellow`, `Grad1`, and `Grad2` under `Pakuri/Assets/Enemy/Stage1/Enemy/Animation/Sprit/`.
+- Preserve source geometry, canvas size, pixel coordinates, and alpha while changing only the blue/cyan aura tint.
+- Add a short English guide documenting palettes, invariants, method, and validation.
+
+### Constraints
+
+- Do not use generative reconstruction, resizing, cropping, movement, or shape edits.
+- Keep all outputs at `1024x1536` and retain the source filenames.
+- Keep central white energy, white particles, and non-aura pixels unchanged.
+- Interpret `Grad1` as top `#D32F2F` to bottom `#FFEB3B`; interpret `Grad2` as solid `#616161`.
+
+### Role Owner
+
+Designer.
+
+### Status
+
+Complete; 80 PNG outputs generated and pixel-validated.
+
+### Next Actions
+
+- User may inspect the variants in Unity and choose which color set to wire into animation/runtime content.
+
+### Evidence
+
+- Generation reported `Generated=80; Validated=80; Palettes=8; Frames=10; ChangedAuraPixels=43282582`.
+- Pixel validation confirmed identical dimensions and alpha for every output and rejected any RGB change outside the source blue/cyan aura mask.
+- Representative visual inspection covered all eight palettes and confirmed preserved white energy shapes and the vertical `Grad1` transition.
+- `Pakuri/Assets/Enemy/Stage1/Enemy/Animation/Sprit/AURA_COLOR_VARIANT_GUIDE.md` records the English generation guide.
+
+### History
+
+- 2026-08-26: Inspected the ten source frames and confirmed each is `1024x1536` with `Format32bppArgb`.
+- 2026-08-26: Generated eight ten-frame color sets using deterministic pixel recoloring and completed structural, alpha, mask-boundary, and representative visual checks.
