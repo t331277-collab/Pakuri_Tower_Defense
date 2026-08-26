@@ -1,5 +1,47 @@
 # AUTOMATION_GUIDE
 
+## Task: 2026-08-26 Pakuri Architecture Script Tree
+
+### Task title
+
+Document the current `Pakuri/Assets/Scripts` architecture on the Notion page `아키텍쳐 구조`.
+
+### Goals
+
+- Render the current script architecture as an aligned `│` / `├──` / `└──` tree.
+- Add a concise right-side responsibility note for every displayed structural area.
+- Keep all represented paths and responsibilities grounded in current source evidence.
+
+### Constraints
+
+- Replace content only on the initially empty user-selected Notion page.
+- Do not create, delete, or move Notion child pages or databases.
+- Do not modify project code, Unity scenes, prefabs, data, or assets.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed and re-fetched for verification.
+
+### Next Actions
+
+- None.
+
+### Evidence
+
+- Notion workspace search identified page ID `3c874254-7899-8097-b675-e5bc476fddee` with title `아키텍쳐 구조`; its fetched content contained only an empty block before editing.
+- `rg --files Pakuri/Assets/Scripts -g "*.cs"` confirmed the displayed Combat, GameFlow, Loading, UI, and Units paths and their nested folders.
+- Inspected representative current scripts: `Combat/InGameCombatManager.cs`, `GameFlow/RunSession.cs`, `Loading/GameDataLoader.cs`, `UI/InGame/InGameUIManager.cs`, `UI/MainMenu/MainMenuUIManager.cs`, and `Units/Model/UnitCombatState.cs`.
+- Notion `replace_content` succeeded, and the post-update fetch confirmed the `├── Combat/`, `│   ├── Skills/`, and `└── Units/` markers plus right-side responsibility text.
+
+### History
+
+- 2026-08-26: User requested the current script structure on the architecture page in the same symbol-based tree style as the Markdown structure, with short descriptions on the right.
+- 2026-08-26: Designer added a Notion code-block architecture tree organized by Combat, GameFlow, Loading, UI, and Units.
+
 ## Task: 2026-08-26 Pakuri Defense Notion Markdown Structure
 
 ### Task title

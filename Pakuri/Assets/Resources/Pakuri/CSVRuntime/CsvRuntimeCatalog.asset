@@ -87,56 +87,56 @@ MonoBehaviour:
   TutorialStageEncounter: {fileID: 4900000, guid: a236ef2efbc543f19750f899413ce63d, type: 3}
   TutorialStageReward: {fileID: 4900000, guid: a35ce67d4c9a4f82b6a732b440d67d4c, type: 3}
   Sprites:
-  - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/Achor.png
-    Asset: {fileID: 21300000, guid: ef1e124d1928cc54ea59ccf3db8fdfe0, type: 3}
+  - AssetPath: "Assets/Enemy/Stage1/Enemy/Animation/Sprit/\uACE0\uB1CC\uC758\uC815\uB839/StandingImage.png"
+    Asset: {fileID: 21300000, guid: 6dec9fc51fd05f941a75f9e8a2614fb4, type: 3}
+  - AssetPath: "Assets/Enemy/Stage1/Enemy/Animation/Sprit/\uBD84\uB178\uC640\uC2DC\uAE30\uC758\uC815\uB839/StandingImage.png"
+    Asset: {fileID: 21300000, guid: 054bb98b9ca1eb54da96e3cf0e4ab364, type: 3}
+  - AssetPath: "Assets/Enemy/Stage1/Enemy/Animation/Sprit/\uBD84\uB178\uC758\uC815\uB839/StandingImage.png"
+    Asset: {fileID: 21300000, guid: c7598afb82806e34faa09caa2c1205a6, type: 3}
+  - AssetPath: "Assets/Enemy/Stage1/Enemy/Animation/Sprit/\uC2DC\uAE30\uC758\uC815\uB839/StandingImage.png"
+    Asset: {fileID: 21300000, guid: 0c7cce5d0b74cf1468d18ce702376735, type: 3}
+  - AssetPath: "Assets/Enemy/Stage1/Enemy/Animation/Sprit/\uC545\uC758\uC758\uC815\uB839/StandingImage.png"
+    Asset: {fileID: 21300000, guid: 57aab8027c06fdb499e4f6f26245a494, type: 3}
+  - AssetPath: "Assets/Enemy/Stage1/Enemy/Animation/Sprit/\uC758\uC2EC\uC758\uC815\uB839/StandingImage.png"
+    Asset: {fileID: 21300000, guid: 0f9768ca09acc4144ba0c57360217e60, type: 3}
+  - AssetPath: "Assets/Enemy/Stage1/Enemy/Animation/Sprit/\uC808\uB9DD\uC758\uC815\uB839/StandingImage.png"
+    Asset: {fileID: 21300000, guid: 0b4baa8ceec22b044b115f597fb206da, type: 3}
+  - AssetPath: "Assets/Enemy/Stage1/Enemy/Animation/Sprit/\uC9C8\uD22C\uC758\uC815\uB839/StandingImage.png"
+    Asset: {fileID: 21300000, guid: fe30b5b345cb91f4083bc23dbdf706f9, type: 3}
   - AssetPath: "Assets/Enemy/Stage1/Enemy/Stage1/Achor/ChatGPT Image 2026\uB144 5\uC6D4
       15\uC77C \uC624\uD6C4 07_37_41 1.png"
     Asset: {fileID: 21300000, guid: 36a465a8e68bc1048aeaee89f14bba4b, type: 3}
-  - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/Karin.png
-    Asset: {fileID: 1808257718800082522, guid: 1c5b79067b759104d85275723ee5cb94, type: 3}
   - AssetPath: "Assets/Enemy/Stage1/Enemy/Stage1/Karin/ChatGPT Image 2026\uB144 5\uC6D4
       16\uC77C \uC624\uC804 01_32_22-Photoroom 1.png"
     Asset: {fileID: 21300000, guid: 6d8e56c2f1195b24090e6838d46f3927, type: 3}
   - AssetPath: "Assets/Enemy/Stage1/Enemy/Stage1/Preist/ChatGPT Image 2026\uB144
       5\uC6D4 15\uC77C \uC624\uD6C4 07_43_34-Photoroom 1.png"
     Asset: {fileID: 21300000, guid: 22d7d618afc0ac04b8a5180e83ade844, type: 3}
-  - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/Priest.png
-    Asset: {fileID: 21300000, guid: 8734391ccbebaae48b6a4ab04c78cab3, type: 3}
-  - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/Rogue.png
-    Asset: {fileID: 21300000, guid: 91290f9ea0955e84cbf23401ff72fdac, type: 3}
-  - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/Shield.png
-    Asset: {fileID: 21300000, guid: 0caea6bc70c48504bb727429d31f5bc3, type: 3}
   - AssetPath: "Assets/Enemy/Stage1/Enemy/Stage1/Shield/ChatGPT Image 2026\uB144
       5\uC6D4 16\uC77C \uC624\uC804 01_33_45-Photoroom 1.png"
     Asset: {fileID: -4406097972065725354, guid: 920e1af41d651d643914a42765a4e2ff, type: 3}
-  - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/shield_King.png
-    Asset: {fileID: 5329664460044583310, guid: 4312d1c1e8278e04c87ea0af07b79ea4, type: 3}
   - AssetPath: "Assets/Enemy/Stage1/Enemy/Stage1/shield_King/ChatGPT Image 2026\uB144
       5\uC6D4 16\uC77C \uC624\uC804 01_39_04-Photoroom 1.png"
     Asset: {fileID: -4871535039512559577, guid: 9de87d17ab47da445a9ede28d1e047bb, type: 3}
-  - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/Warrior.png
-    Asset: {fileID: 21300000, guid: 128ccc7f23263be428abee49b68f0e07, type: 3}
   - AssetPath: "Assets/Enemy/Stage1/Enemy/Stage1/Warrior/ChatGPT Image 2026\uB144
       5\uC6D4 15\uC77C \uC624\uD6C4 07_34_03-Photoroom (1) 1.png"
     Asset: {fileID: 21300000, guid: 50ac20857de2edc41841a7054881284f, type: 3}
-  - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/Warrior_King.png
-    Asset: {fileID: -5698586340642219917, guid: 8e13bac01f1f8ab4b9c938787626ae2a, type: 3}
-  - AssetPath: "Assets/Enemy/Stage2/Enemy/\uB1CC\uB8E1 \uCC99\uD6C4\uB2E8\uC6D0.png"
-    Asset: {fileID: 21300000, guid: 352fed34cba62c24190384763005c3d8, type: 3}
-  - AssetPath: "Assets/Enemy/Stage2/Enemy/\uBE59\uB8E1 \uC218\uBE44\uB2E8\uC6D0.png"
-    Asset: {fileID: 21300000, guid: 021e4567759a0e548bf1df6f3569a723, type: 3}
-  - AssetPath: "Assets/Enemy/Stage2/Enemy/\uC131\uB8E1 \uC0AC\uC81C\uB2E8\uC6D0.png"
-    Asset: {fileID: 21300000, guid: f5a5548d487cda147886df69feb08837, type: 3}
-  - AssetPath: "Assets/Enemy/Stage2/Enemy/\uC131\uCC3D\uCD94\uC801\uC790 \uC5D0\uB2E8.png"
-    Asset: {fileID: 21300000, guid: ffd6fa1beb832944db2b1a9703f28dd3, type: 3}
-  - AssetPath: "Assets/Enemy/Stage2/Enemy/\uC6A9\uC0B4\uAE30\uC0AC\uB2E8\uC7A5 \uC544\uB974\uC13C.png"
-    Asset: {fileID: 21300000, guid: 59f823bbd0582d8429669e3ed68d617f, type: 3}
-  - AssetPath: "Assets/Enemy/Stage2/Enemy/\uC6A9\uC0B4\uC790 \uB4DC\uB808\uC774\uD06C.png"
-    Asset: {fileID: 21300000, guid: f75c15062d99c2345bcd363a8bcec41d, type: 3}
-  - AssetPath: "Assets/Enemy/Stage2/Enemy/\uD654\uB8E1 \uB3CC\uACA9\uB2E8\uC6D0.png"
-    Asset: {fileID: 21300000, guid: f827d0b126472b14cb686d6e67b22d8c, type: 3}
-  - AssetPath: "Assets/Enemy/Stage2/Enemy/\uD751\uB8E1 \uC554\uC2B5\uB2E8\uC6D0.png"
-    Asset: {fileID: 21300000, guid: 6b9adb9fc3694f84d988caa673a758f5, type: 3}
+  - AssetPath: "Assets/Enemy/Stage2/Enemy/Spirit/Black_\uACF5\uD3EC\uC758\uC815\uB839/StandingImage.png"
+    Asset: {fileID: 21300000, guid: 2ebe88d1c52a07a4ca1dc2a2d3c9f7eb, type: 3}
+  - AssetPath: "Assets/Enemy/Stage2/Enemy/Spirit/Blue_\uC774\uAE30\uC2EC\uC758\uC815\uB839/StandingImage.png"
+    Asset: {fileID: 21300000, guid: af40885d7c0b3a4459bea3e6125a2ad3, type: 3}
+  - AssetPath: "Assets/Enemy/Stage2/Enemy/Spirit/Green_\uAD50\uB9CC\uC758\uC815\uB839/StandingImage.png"
+    Asset: {fileID: 21300000, guid: 40be68273b4102a44bdce486e783f974, type: 3}
+  - AssetPath: "Assets/Enemy/Stage2/Enemy/Spirit/Orange_\uC695\uB9DD\uC758\uC815\uB839/StandingImage.png"
+    Asset: {fileID: 21300000, guid: e49ec9a56b3178b4793e841ac2c6121d, type: 3}
+  - AssetPath: "Assets/Enemy/Stage2/Enemy/Spirit/Red_\uACA9\uB178\uC758\uC815\uB839/StandingImage.png"
+    Asset: {fileID: 21300000, guid: 9b423e329948eeb4d9295be2fbfda62b, type: 3}
+  - AssetPath: "Assets/Enemy/Stage2/Enemy/Spirit/Violet_\uACE0\uB3C5\uC758\uC815\uB839/StandingImage.png"
+    Asset: {fileID: 21300000, guid: 83b8b492f10b68f44847cac2fc285aaa, type: 3}
+  - AssetPath: "Assets/Enemy/Stage2/Enemy/Spirit/White_\uD0D0\uC695\uC758\uC815\uB839/StandingImage.png"
+    Asset: {fileID: 21300000, guid: 4e590ba86e5290e409ae75c5b8e69b17, type: 3}
+  - AssetPath: "Assets/Enemy/Stage2/Enemy/Spirit/Yellow_\uD5C8\uBB34\uC758\uC815\uB839/StandingImage.png"
+    Asset: {fileID: 7513066065608604215, guid: 029cb113012d8b54ea922838fa81c63c, type: 3}
   - AssetPath: Assets/Enemy/Stage2/Skill/arsen_1.png
     Asset: {fileID: 21300000, guid: 1fb2a83c6b841ab47bc7e46797284539, type: 3}
   - AssetPath: Assets/Enemy/Stage2/Skill/dark-assassin_1.png

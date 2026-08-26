@@ -49,6 +49,86 @@ Designer
 
 - 2026-08-26: 사용자가 Achor 기준 Sprite·외형·Collider 통일을 승인했다. Designer가 Stage1/Stage2 15개 프리팹에 적용하고 정적 및 Unity Asset 검증을 완료했다.
 
+## Task: 2026-08-26 Stage1 Enemy Animation Attachment
+
+### Task title
+
+Stage1 8개 적 프리팹에 지정 정령 애니메이션 Animator 연결
+
+### Goals
+
+- 사용자가 지정한 순서대로 Stage1 8개 프리팹에 각 폴더의 Animator Controller를 연결한다.
+- 각 애니메이션의 첫 Sprite를 루트 SpriteRenderer에 설정해 에디터 정적 외형과 재생 시작 프레임을 맞춘다.
+
+### Constraints
+
+- EnemyActor, Collider2D, SortingGroup, 스탯·스킬·프리팹 이름과 런타임 로직은 변경하지 않는다.
+- 대상은 Assets/Prefab/Enemy/Stage1의 지정 8개 프리팹으로 한정한다.
+- Unity Play Mode 재생·시각 확인은 사용자 소유다.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Animator/controller 연결 및 정적 참조 검증 완료. Unity Editor import·Play Mode 확인 대기.
+
+### Next Actions
+
+- Unity Editor에서 8개 프리팹 재임포트 후 각 Animator가 지정 클립을 재생하고 루트 SpriteRenderer를 갱신하는지 확인한다.
+
+### Evidence
+
+- 지정 폴더 8개에 각각 .controller, .anim, StandingImage.png가 존재한다.
+- 8개 프리팹 각각 Animator 1개, 지정 controller GUID, 해당 애니메이션 첫 프레임 Sprite GUID를 보유한다.
+- PowerShell 정적 검증에서 8개 프리팹·CSV 행·StandingImage 경로·GUID 참조가 모두 OK, CSV 17행 파싱과 전체 검증이 PASS였다.
+- git diff --check 통과.
+
+### History
+
+- 2026-08-26: Code Builder가 Achor→질투, Karin→고뇌, Priest→분노와 시기, Rogue→분노, Shield→시기, ShieldKing→악의, WarriorKing→의심, WarriorUnit→절망 순으로 Animator를 연결했다.
+
+## Task: 2026-08-26 Stage2 Spirit Animation Attachment
+
+### Task title
+
+Stage2 8개 적 프리팹에 Spirit PNG 애니메이션 연결
+
+### Goals
+
+- Spirit 폴더별 10개 PNG를 12fps Sprite PPtr animation으로 구성하고 Animator Controller 상태에 연결한다.
+- CSV sort_order 0~7을 Spirit 폴더명 알파벳 순으로 매칭해 기존 Stage2 프리팹의 Animator와 첫 프레임 Sprite를 교체한다.
+
+### Constraints
+
+- Stage2 프리팹의 GameObject·컴포넌트 구조, EnemyActor, Collider2D, SortingGroup, 스탯·스킬·이동 로직은 변경하지 않는다.
+- 변경 대상 프리팹은 Stage2 8개로 한정하며, CSV는 표시 이름과 Image만 변경한다.
+- Unity Editor import·Play Mode 재생 확인은 사용자 소유다.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+8개 애니메이션·Controller·프리팹 연결과 정적 검증 완료. Unity Editor import·Play Mode 확인 대기.
+
+### Next Actions
+
+- Unity Editor에서 Stage2 프리팹을 재임포트해 10프레임 애니메이션 재생, SpriteRenderer·Collider 표시를 확인한다.
+
+### Evidence
+
+- Spirit 8개 폴더에 각각 10개 PNG, New Animation.anim, Controller, StandingImage.png가 존재한다.
+- 정적 검증에서 8개 애니메이션이 10프레임·12fps이고 Controller m_Motion, 프리팹 Animator, 첫 Sprite GUID가 일치했다.
+- Stage2 CSV 8개 행의 display_name과 Image 경로 및 StandingImage 파일 존재를 검증했고 CSV 전체 17행 파싱이 성공했다.
+- git diff --check 통과.
+
+### History
+
+- 2026-08-26: Code Builder가 CSV sort_order 기준으로 Black→fire-dragon, Blue→lightning, Green→ice, Orange→dark-assassin, Red→holy-priest, Violet→ethan, White→drake, Yellow→arsen을 연결했다.
+
 ## Task: 2026-08-09 LineAttack Range Upgrade Runtime Repair
 
 ### Task title

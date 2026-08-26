@@ -49,6 +49,84 @@ TutorialLine 15개와 TutorialStage Day/Encounter/Reward, parser/catalog/editor 
 - 2026-08-26: Code Builder가 TutorialLine 15행, TutorialStage 1-1~1-5 및 별도 runtime catalog 연결을 구현했다.
 - 2026-08-26: Designer가 TutorialLine 15개 대사의 맞춤법·띄어쓰기와 아리엘의 성녀풍 말투를 교정했다. UTF-8, 5열, 데이터 15행, 고유 line_id 15개를 재검증했다.
 
+## Task: 2026-08-26 Stage1 Enemy Animation Image Wiring
+
+### Task title
+
+Stage1 적 8개 enemies.csv 표시 이름·StandingImage 경로 연결
+
+### Goals
+
+- 프리팹 순서에 맞춰 display_name을 정령 폴더명 공백형으로 변경한다.
+- 각 행의 Image를 해당 애니메이션 폴더 StandingImage.png asset path로 변경한다.
+
+### Constraints
+
+- enemies.csv 열 구조·전투 수치·스킬·역할을 보존한다.
+- 변경 대상은 Stage1 8개 enemy 행과 지정 StandingImage asset path로 한정한다.
+- 기존 Stage1/Stage2 데이터 및 런타임 catalog 계약은 변경하지 않는다.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+8개 행 변경 및 UTF-8 CSV 정적 검증 완료. Unity CSV reimport·Play Mode 확인 대기.
+
+### Next Actions
+
+- Unity Editor에서 enemies.csv 재임포트 후 각 Image가 StandingImage Sprite로 로드되는지 확인한다.
+
+### Evidence
+
+- enemies.csv Stage1 행을 stage1-archer=질투의 정령, stage1-hero-karin=고뇌의 정령, stage1-priest=분노와 시기의 정령, stage1-rogue=분노의 정령, stage1-shieldbearer=시기의 정령, stage1-guardian-captain=악의의 정령, stage1-attack-captain=의심의 정령, stage1-swordsman=절망의 정령으로 변경했다.
+- 8개 Image 경로가 모두 Assets/Enemy/Stage1/Enemy/Animation/Sprit/<폴더>/StandingImage.png 형식이며 파일 존재를 정적 검사했다.
+- PowerShell ConvertFrom-Csv가 UTF-8 파일 17개 데이터 행을 파싱했고 8개 매핑 검증이 모두 OK, 전체 PASS였다.
+
+### History
+
+- 2026-08-26: Code Builder가 사용자 확정 순서에 맞춰 Stage1 8개 표시 이름과 Image asset path를 갱신했다.
+
+## Task: 2026-08-26 Stage2 Spirit Image Display Wiring
+
+### Task title
+
+Stage2 8개 enemy CSV의 정령 표시 이름·StandingImage 연결
+
+### Goals
+
+- Spirit 폴더의 영어 접두사와 밑줄을 제거한 정령명을 display_name에 기록한다.
+- 각 Stage2 enemy 행의 Image를 연결된 Spirit 폴더 StandingImage asset path로 변경한다.
+
+### Constraints
+
+- CSV sort_order 0~7을 Spirit 폴더명 알파벳 순으로 임의 매칭한다.
+- 전투 수치·역할·속성·스킬·열 구조 및 기존 Stage1 데이터는 변경하지 않는다.
+- Unity CSV reimport·Play Mode 확인은 사용자 소유다.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Stage2 8개 행 변경 및 UTF-8 정적 검증 완료. Unity CSV reimport 확인 대기.
+
+### Next Actions
+
+- Unity Editor에서 enemies.csv를 재임포트하고 Stage2 적 표시 이름과 Standing Sprite 로드를 확인한다.
+
+### Evidence
+
+- stage2-fire-dragon-slayer부터 stage2-arsen까지 8개 행 display_name을 공포의 정령, 이기심의 정령, 교만의 정령, 욕망의 정령, 격노의 정령, 고독의 정령, 탐욕의 정령, 허무의 정령으로 변경했다.
+- Image 8개가 모두 Assets/Enemy/Stage2/Enemy/Spirit/<folder>/StandingImage.png 형식이며 실제 파일 존재를 확인했다.
+- ConvertFrom-Csv UTF-8 파싱 17행과 Stage2 매핑 정적 검사 결과가 PASS였다.
+
+### History
+
+- 2026-08-26: Code Builder가 Spirit 폴더 알파벳 순과 CSV sort_order를 기준으로 Stage2 표시 데이터 연결을 완료했다.
+
 ## Task: 2026-08-09 LineAttack RadiusMultiplier Contract Consolidation
 
 ### Task title
