@@ -26,6 +26,15 @@ namespace Pakuri.InGame
         private bool bindingFailed;
 
         public bool IsFailurePopupVisible => manifestedFailPopUp != null && manifestedFailPopUp.activeSelf;
+        public event Action<string> ManifestCommitted;
+
+        public void SetManifestChoiceRequired(bool required)
+        {
+            if (dontChoiceButton != null)
+            {
+                dontChoiceButton.interactable = !required;
+            }
+        }
 
         private void Awake()
         {
@@ -123,11 +132,13 @@ namespace Pakuri.InGame
                 return;
             }
 
+            var manifestedName = pendingManifestMonster.MonsterName;
             unitSpawnManager?.SpawnManifestedMonster(session, pendingManifestMonster, slotIndex);
             pendingManifestMonster = null;
             UiObjectUtility.SetActive(manifestedSuccessPopUp, false);
             uiManager?.RefreshInfo();
             uiManager?.CompletePrisonAction();
+            ManifestCommitted?.Invoke(manifestedName);
         }
 
         private static MonsterDefinition ResolveNextManifestCandidate(RunSession session)

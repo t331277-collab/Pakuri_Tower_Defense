@@ -55,6 +55,9 @@ namespace Pakuri.InGame
 
         internal RewardButtonView ActivePrisonerButton => rewardPanelUI?.ActivePrisonerButton;
         internal RewardPanelUI RewardPanel => rewardPanelUI;
+        internal PrisonPanelUI PrisonPanel => prisonPanelUI;
+        internal OfferingUI OfferingPanel => offeringUI;
+        internal MenifestUI ManifestPanel => menifestUI;
 
         internal int PrepareArtifactChoices(int requestedCount)
         {

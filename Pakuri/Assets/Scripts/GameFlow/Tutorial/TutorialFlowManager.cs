@@ -15,12 +15,21 @@ namespace Pakuri.InGame
             AwaitDayOneCombat,
             AwaitBasicHit,
             AwaitDayOneClear,
-            AwaitFirstOffering
+            AwaitFirstOffering,
+            AwaitOfferingPanel,
+            AwaitOfferingCommit,
+            AwaitManifestCommit,
+            AwaitDayOneRewards,
+            ReadyForDayTwo,
+            AwaitDayTwoCombat
         }
 
         private StageManager stageManager;
         private InGameCombatManager combatManager;
         private RewardPanelUI rewardPanel;
+        private PrisonPanelUI prisonPanel;
+        private OfferingUI offeringPanel;
+        private MenifestUI manifestPanel;
         private TutorialLineView lineView;
         private Step step;
         private float resumeTimeScale = 1f;
@@ -40,10 +49,16 @@ namespace Pakuri.InGame
             stageManager = stage;
             combatManager = combat;
             rewardPanel = uiManager != null ? uiManager.RewardPanel : null;
+            prisonPanel = uiManager != null ? uiManager.PrisonPanel : null;
+            offeringPanel = uiManager != null ? uiManager.OfferingPanel : null;
+            manifestPanel = uiManager != null ? uiManager.ManifestPanel : null;
             lineView = GetComponent<TutorialLineView>() ?? gameObject.AddComponent<TutorialLineView>();
             if (stageManager == null
                 || combatManager == null
                 || rewardPanel == null
+                || prisonPanel == null
+                || offeringPanel == null
+                || manifestPanel == null
                 || !lineView.Initialize(transform))
             {
                 Debug.LogError("TutorialFlowManager initialization failed because required runtime references are missing.", this);
@@ -57,6 +72,10 @@ namespace Pakuri.InGame
             stageManager.ContinueRequested += HandleContinueRequested;
             combatManager.DamageApplied += HandleDamageApplied;
             lineView.NextRequested += HandleLineNext;
+            rewardPanel.RewardConsumed += HandleRewardConsumed;
+            offeringPanel.Opened += HandleOfferingOpened;
+            offeringPanel.ChoiceCommitted += HandleOfferingCommitted;
+            manifestPanel.ManifestCommitted += HandleManifestCommitted;
             Pause();
             step = Step.Intro;
             ShowLine("line1-1");
@@ -85,6 +104,28 @@ namespace Pakuri.InGame
                 case "line1-5":
                     step = Step.AwaitFirstOffering;
                     ShowLine("line2-1");
+                    break;
+                case "line2-1":
+                    step = Step.AwaitOfferingPanel;
+                    offeringPanel.SetTutorialSkills(new[] { "eve-b", "eve-c", "eve-d" }, false);
+                    prisonPanel.SetActionMode(PrisonActionMode.OfferingOnly);
+                    rewardPanel.SetTutorialInteraction(0, false, false, false);
+                    break;
+                case "line2-2":
+                    step = Step.AwaitOfferingCommit;
+                    offeringPanel.SetChoiceInputEnabled(true);
+                    break;
+                case "line2-3":
+                    step = Step.AwaitManifestCommit;
+                    prisonPanel.SetActionMode(PrisonActionMode.ManifestOnly);
+                    manifestPanel.SetManifestChoiceRequired(true);
+                    rewardPanel.SetTutorialInteraction(1, false, false, false);
+                    break;
+                case "line2-4":
+                    step = Step.AwaitDayOneRewards;
+                    prisonPanel.SetActionMode(PrisonActionMode.Any);
+                    rewardPanel.SetTutorialInteraction(-1, true, false, false);
+                    HandleRewardConsumed();
                     break;
             }
         }
@@ -128,6 +169,56 @@ namespace Pakuri.InGame
             ShowLine("line1-4");
         }
 
+        private void HandleOfferingOpened()
+        {
+            if (step != Step.AwaitOfferingPanel)
+            {
+                return;
+            }
+
+            Pause();
+            ShowLine("line2-2");
+        }
+
+        private void HandleOfferingCommitted(string skillName)
+        {
+            if (step != Step.AwaitOfferingCommit
+                || (skillName != "eve-b" && skillName != "eve-c" && skillName != "eve-d"))
+            {
+                return;
+            }
+
+            step = Step.None;
+            Pause();
+            rewardPanel.SetTutorialInteraction(-1, false, false, false);
+            ShowLine("line2-3");
+        }
+
+        private void HandleManifestCommitted(string monsterName)
+        {
+            if (step != Step.AwaitManifestCommit || string.IsNullOrWhiteSpace(monsterName))
+            {
+                return;
+            }
+
+            step = Step.None;
+            manifestPanel.SetManifestChoiceRequired(false);
+            Pause();
+            rewardPanel.SetTutorialInteraction(-1, false, false, false);
+            ShowLine("line2-4");
+        }
+
+        private void HandleRewardConsumed()
+        {
+            if (step != Step.AwaitDayOneRewards || !rewardPanel.AllActiveRewardsConsumed)
+            {
+                return;
+            }
+
+            step = Step.ReadyForDayTwo;
+            rewardPanel.SetTutorialInteraction(-1, true, false, true);
+        }
+
         private IEnumerator ShowWhenRewardVisible(string lineId)
         {
             while (rewardPanel != null && !rewardPanel.IsVisible)
@@ -135,12 +226,26 @@ namespace Pakuri.InGame
                 yield return null;
             }
 
+            rewardPanel.SetTutorialInteraction(-1, false, false, false);
             ShowLine(lineId);
         }
 
         private bool HandleContinueRequested()
         {
-            return step != Step.AwaitFirstOffering;
+            if (stageManager.CurrentDay != 1)
+            {
+                return true;
+            }
+
+            if (step != Step.ReadyForDayTwo)
+            {
+                return false;
+            }
+
+            offeringPanel.SetTutorialSkills(null, true);
+            step = Step.AwaitDayTwoCombat;
+            Resume();
+            return true;
         }
 
         private void ShowLine(string lineId)
@@ -183,6 +288,10 @@ namespace Pakuri.InGame
             stageManager.ContinueRequested -= HandleContinueRequested;
             combatManager.DamageApplied -= HandleDamageApplied;
             lineView.NextRequested -= HandleLineNext;
+            rewardPanel.RewardConsumed -= HandleRewardConsumed;
+            offeringPanel.Opened -= HandleOfferingOpened;
+            offeringPanel.ChoiceCommitted -= HandleOfferingCommitted;
+            manifestPanel.ManifestCommitted -= HandleManifestCommitted;
         }
     }
 }

@@ -6,6 +6,14 @@ using UnityEngine.UI;
 
 namespace Pakuri.InGame
 {
+    public enum PrisonActionMode
+    {
+        Any,
+        OfferingOnly,
+        ManifestOnly,
+        ArtifactRecipient
+    }
+
     /// 포로 선택, 파티 슬롯, Offering·현현 진입을 관리한다.
     public sealed class PrisonPanelUI : MonoBehaviour
     {
@@ -26,8 +34,18 @@ namespace Pakuri.InGame
         private string pendingArtifactName;
         private bool referencesBound;
         private bool bindingFailed;
+        private PrisonActionMode actionMode = PrisonActionMode.Any;
 
         public bool IsVisible => prisonPanel != null && prisonPanel.activeSelf;
+
+        public void SetActionMode(PrisonActionMode mode)
+        {
+            actionMode = mode;
+            if (IsVisible)
+            {
+                Refresh();
+            }
+        }
 
         private void Awake()
         {
@@ -130,6 +148,11 @@ namespace Pakuri.InGame
 
             if (!string.IsNullOrWhiteSpace(pendingArtifactName))
             {
+                if (actionMode != PrisonActionMode.Any && actionMode != PrisonActionMode.ArtifactRecipient)
+                {
+                    return;
+                }
+
                 AcquireArtifact(slotIndex);
                 return;
             }
@@ -137,6 +160,11 @@ namespace Pakuri.InGame
             var monsterName = prisonSlotMonsterNames[slotIndex];
             if (!string.IsNullOrWhiteSpace(monsterName))
             {
+                if (actionMode == PrisonActionMode.ManifestOnly || slotIndex != 0 && actionMode == PrisonActionMode.OfferingOnly)
+                {
+                    return;
+                }
+
                 if (offeringUI != null && offeringUI.OpenOfferingPanel(monsterName))
                 {
                     UiObjectUtility.SetActive(prisonPanel, false);
@@ -150,6 +178,12 @@ namespace Pakuri.InGame
             var occupiedCount = partyMembers != null
                 ? Math.Min(partyMembers.Count, PrisonPartySlotCount)
                 : 0;
+            if (actionMode == PrisonActionMode.OfferingOnly
+                || actionMode == PrisonActionMode.ArtifactRecipient)
+            {
+                return;
+            }
+
             if (slotIndex != occupiedCount || menifestUI == null || !menifestUI.TryManifestPrisoner())
             {
                 return;
@@ -180,7 +214,7 @@ namespace Pakuri.InGame
             uiManager?.CompleteArtifactAcquisition();
         }
 
-        private static void RefreshPrisonPartySlot(
+        private void RefreshPrisonPartySlot(
             PrisonPartySlotView slot,
             string monsterName,
             bool isOccupied,
@@ -206,9 +240,23 @@ namespace Pakuri.InGame
 
             if (slot.Button != null)
             {
-                slot.Button.interactable = isArtifactAcquisition
+                var baseInteractable = isArtifactAcquisition
                     ? canAcquireArtifact
                     : isOccupied || isNextManifestSlot;
+                if (actionMode == PrisonActionMode.OfferingOnly)
+                {
+                    baseInteractable = isOccupied && string.Equals(monsterName, "eve", StringComparison.OrdinalIgnoreCase);
+                }
+                else if (actionMode == PrisonActionMode.ManifestOnly)
+                {
+                    baseInteractable = isNextManifestSlot;
+                }
+                else if (actionMode == PrisonActionMode.ArtifactRecipient)
+                {
+                    baseInteractable = isArtifactAcquisition && canAcquireArtifact;
+                }
+
+                slot.Button.interactable = baseInteractable;
             }
 
             if (slot.MoreInfoButton != null)

@@ -28,6 +28,30 @@ namespace Pakuri.InGame
         private InGameUIManager uiManager;
         private bool referencesBound;
         private bool bindingFailed;
+        private string[] tutorialSkillNames;
+        private bool choiceInputEnabled = true;
+
+        public event Action Opened;
+        public event Action<string> ChoiceCommitted;
+
+        public void SetTutorialSkills(string[] skillNames, bool inputEnabled)
+        {
+            tutorialSkillNames = skillNames;
+            choiceInputEnabled = inputEnabled;
+        }
+
+        public void SetChoiceInputEnabled(bool enabled)
+        {
+            choiceInputEnabled = enabled;
+            for (var i = 0; i < offeringButtonViews.Length; i++)
+            {
+                var button = offeringButtonViews[i]?.Button;
+                if (button != null && button.gameObject.activeSelf)
+                {
+                    button.interactable = enabled;
+                }
+            }
+        }
 
         private void Awake()
         {
@@ -72,7 +96,7 @@ namespace Pakuri.InGame
                 button.onClick.RemoveAllListeners();
                 var hasChoice = i < offeringChoices.Count;
                 button.gameObject.SetActive(hasChoice);
-                button.interactable = hasChoice;
+                button.interactable = hasChoice && choiceInputEnabled;
                 if (!hasChoice)
                 {
                     continue;
@@ -84,6 +108,7 @@ namespace Pakuri.InGame
                 button.onClick.AddListener(() => CommitOfferingChoice(capturedIndex));
             }
 
+            Opened?.Invoke();
             return true;
         }
 
@@ -124,6 +149,7 @@ namespace Pakuri.InGame
             UiObjectUtility.SetActive(offeringPanel, false);
             uiManager?.RefreshInfo();
             uiManager?.CompletePrisonAction();
+            ChoiceCommitted?.Invoke(choice.ActiveSkillName);
         }
 
         private void BuildOfferingChoices(string monsterName)
@@ -147,6 +173,12 @@ namespace Pakuri.InGame
                 return;
             }
 
+            if (tutorialSkillNames != null && tutorialSkillNames.Length > 0)
+            {
+                AddTutorialSkillChoices(session, monster, state);
+                return;
+            }
+
             AddActiveSkillChoices(session, monster, state);
             AddPassiveSkillChoices(session, monster, state);
             AddEnhancementChoices(session, monster, state);
@@ -155,6 +187,33 @@ namespace Pakuri.InGame
             while (offeringChoices.Count > MaxOfferingChoices)
             {
                 offeringChoices.RemoveAt(offeringChoices.Count - 1);
+            }
+        }
+
+        private void AddTutorialSkillChoices(
+            RunSession session,
+            MonsterDefinition monster,
+            RunSession.RunMonsterState state)
+        {
+            for (var i = 0; i < tutorialSkillNames.Length; i++)
+            {
+                var skill = GameDataLoader.CurrentCatalog.GetData<SkillDefinition>(tutorialSkillNames[i]);
+                if (skill == null || !session.CanLearnActive(state, monster, skill))
+                {
+                    continue;
+                }
+
+                offeringChoices.Add(new OfferingChoiceView
+                {
+                    MonsterName = state.MonsterName,
+                    ActiveSkillName = skill.SkillName,
+                    Kind = OfferingKind.NewActiveSkill,
+                    Summary = monster.DisplayName,
+                    SkillName = ResolveChoiceDisplayName(skill.DisplayName, skill.SkillName),
+                    Title = $"{monster.DisplayName} · {ResolveChoiceDisplayName(skill.DisplayName, skill.SkillName)}",
+                    Description = ResolveDescription(skill.Summary, skill.Description, skill.DisplayName),
+                    Icon = skill.Icon
+                });
             }
         }
 

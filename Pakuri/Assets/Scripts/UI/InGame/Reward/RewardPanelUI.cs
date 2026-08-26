@@ -19,6 +19,8 @@ namespace Pakuri.InGame
         private Button nextButton;
         private TMP_Text rewardSummaryText;
         private InGameUIManager uiManager;
+        private RewardButtonView artifactRewardButton;
+        private int prisonerButtonCount;
 
         internal RewardButtonView ActivePrisonerButton { get; private set; }
         internal RewardButtonView ActiveArtifactButton { get; private set; }
@@ -26,7 +28,23 @@ namespace Pakuri.InGame
         private bool bindingFailed;
 
         public event Action<bool> VisibilityChanged;
+        public event Action RewardConsumed;
         public bool IsVisible => rewardPanel != null && rewardPanel.activeSelf;
+        public bool AllActiveRewardsConsumed
+        {
+            get
+            {
+                for (var i = 0; i < rewardButtons.Count; i++)
+                {
+                    if (!rewardButtons[i].Consumed)
+                    {
+                        return false;
+                    }
+                }
+
+                return rewardButtons.Count > 0;
+            }
+        }
 
         private void Awake()
         {
@@ -68,6 +86,7 @@ namespace Pakuri.InGame
                 view.SetDisplay("포로", uiManager.ResolvePrisonerDisplayName(prisonerName), prisonerName);
                 BindButton(view.Button, () => OpenPrisonPanel(view));
             }
+            prisonerButtonCount = order;
 
             if (manager.PendingGoldReward > 0)
             {
@@ -100,8 +119,14 @@ namespace Pakuri.InGame
                 if (view != null)
                 {
                     view.SetDisplay("유물", artifactChoiceCount.ToString(), string.Empty);
+                    artifactRewardButton = view;
                     BindButton(view.Button, () => OpenArtifactPanel(view));
                 }
+            }
+
+            if (manager.ActiveSession != null && manager.ActiveSession.IsTutorial)
+            {
+                SetTutorialInteraction(-1, false, false, false);
             }
 
             uiManager?.RefreshInfo();
@@ -132,16 +157,51 @@ namespace Pakuri.InGame
             rewardButtons.Clear();
             ActivePrisonerButton = null;
             ActiveArtifactButton = null;
+            artifactRewardButton = null;
+            prisonerButtonCount = 0;
         }
 
         public void ConsumeActivePrisonerButton()
         {
-            ActivePrisonerButton?.SetConsumed();
+            if (ActivePrisonerButton == null || ActivePrisonerButton.Consumed)
+            {
+                return;
+            }
+
+            ActivePrisonerButton.SetConsumed();
+            RewardConsumed?.Invoke();
         }
 
         public void ConsumeActiveArtifactButton()
         {
-            ActiveArtifactButton?.SetConsumed();
+            if (ActiveArtifactButton == null || ActiveArtifactButton.Consumed)
+            {
+                return;
+            }
+
+            ActiveArtifactButton.SetConsumed();
+            RewardConsumed?.Invoke();
+        }
+
+        public void SetTutorialInteraction(
+            int allowedPrisonerIndex,
+            bool allowMaterials,
+            bool allowArtifact,
+            bool allowNext)
+        {
+            for (var i = 0; i < rewardButtons.Count; i++)
+            {
+                var view = rewardButtons[i];
+                var allowed = i < prisonerButtonCount
+                    ? i == allowedPrisonerIndex
+                    : view == artifactRewardButton ? allowArtifact : allowMaterials;
+                view.Button.interactable = allowed && !view.Consumed;
+            }
+
+            if (nextButton != null)
+            {
+                nextButton.interactable = allowNext;
+            }
         }
 
         private void ContinueToNextDay()
@@ -192,6 +252,7 @@ namespace Pakuri.InGame
 
             session.ClaimMaterialReward(gold, darkTrace);
             view.SetConsumed();
+            RewardConsumed?.Invoke();
             uiManager?.RefreshInfo();
         }
 
