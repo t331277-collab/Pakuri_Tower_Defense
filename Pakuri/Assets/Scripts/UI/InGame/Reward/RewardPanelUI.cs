@@ -193,7 +193,7 @@ namespace Pakuri.InGame
             {
                 var view = rewardButtons[i];
                 var allowed = i < prisonerButtonCount
-                    ? i == allowedPrisonerIndex
+                    ? allowedPrisonerIndex == -2 || i == allowedPrisonerIndex
                     : view == artifactRewardButton ? allowArtifact : allowMaterials;
                 view.Button.interactable = allowed && !view.Consumed;
             }

@@ -37,6 +37,7 @@ namespace Pakuri.InGame
         private PrisonActionMode actionMode = PrisonActionMode.Any;
 
         public bool IsVisible => prisonPanel != null && prisonPanel.activeSelf;
+        public event Action<string> ArtifactAcquired;
 
         public void SetActionMode(PrisonActionMode mode)
         {
@@ -210,8 +211,10 @@ namespace Pakuri.InGame
                 return;
             }
 
+            var acquiredArtifactName = pendingArtifactName;
             pendingArtifactName = string.Empty;
             uiManager?.CompleteArtifactAcquisition();
+            ArtifactAcquired?.Invoke(acquiredArtifactName);
         }
 
         private void RefreshPrisonPartySlot(

@@ -21,7 +21,16 @@ namespace Pakuri.InGame
             AwaitManifestCommit,
             AwaitDayOneRewards,
             ReadyForDayTwo,
-            AwaitDayTwoCombat
+            AwaitDayTwoCombat,
+            AwaitManualInput,
+            ManualInputDelay,
+            AwaitAutoSpeed,
+            AwaitDayTwoClear,
+            AwaitArtifactIntro,
+            AwaitArtifactAcquired,
+            AwaitDayTwoRewards,
+            ReadyForDayThree,
+            FreePlay
         }
 
         private StageManager stageManager;
@@ -30,6 +39,8 @@ namespace Pakuri.InGame
         private PrisonPanelUI prisonPanel;
         private OfferingUI offeringPanel;
         private MenifestUI manifestPanel;
+        private PlayerCombatInputController playerInput;
+        private InGameUtilityPanelController utilityPanel;
         private TutorialLineView lineView;
         private Step step;
         private float resumeTimeScale = 1f;
@@ -39,7 +50,9 @@ namespace Pakuri.InGame
         public void Initialize(
             StageManager stage,
             InGameCombatManager combat,
-            InGameUIManager uiManager)
+            InGameUIManager uiManager,
+            PlayerCombatInputController input,
+            InGameUtilityPanelController utility)
         {
             if (initialized)
             {
@@ -52,6 +65,8 @@ namespace Pakuri.InGame
             prisonPanel = uiManager != null ? uiManager.PrisonPanel : null;
             offeringPanel = uiManager != null ? uiManager.OfferingPanel : null;
             manifestPanel = uiManager != null ? uiManager.ManifestPanel : null;
+            playerInput = input;
+            utilityPanel = utility;
             lineView = GetComponent<TutorialLineView>() ?? gameObject.AddComponent<TutorialLineView>();
             if (stageManager == null
                 || combatManager == null
@@ -59,6 +74,8 @@ namespace Pakuri.InGame
                 || prisonPanel == null
                 || offeringPanel == null
                 || manifestPanel == null
+                || playerInput == null
+                || utilityPanel == null
                 || !lineView.Initialize(transform))
             {
                 Debug.LogError("TutorialFlowManager initialization failed because required runtime references are missing.", this);
@@ -76,6 +93,11 @@ namespace Pakuri.InGame
             offeringPanel.Opened += HandleOfferingOpened;
             offeringPanel.ChoiceCommitted += HandleOfferingCommitted;
             manifestPanel.ManifestCommitted += HandleManifestCommitted;
+            prisonPanel.ArtifactAcquired += HandleArtifactAcquired;
+            playerInput.ManualInputDetected += HandleManualInputDetected;
+            playerInput.AutoSkillChanged += HandleAutoSkillChanged;
+            utilityPanel.TimeScaleChanged += HandleTimeScaleChanged;
+            utilityPanel.SetTutorialInputEnabled(false);
             Pause();
             step = Step.Intro;
             ShowLine("line1-1");
@@ -127,25 +149,64 @@ namespace Pakuri.InGame
                     rewardPanel.SetTutorialInteraction(-1, true, false, false);
                     HandleRewardConsumed();
                     break;
+                case "line3-1":
+                    ShowLine("line3-2");
+                    break;
+                case "line3-2":
+                    step = Step.AwaitAutoSpeed;
+                    utilityPanel.SetTutorialInputEnabled(true);
+                    Resume();
+                    CheckAutoAndSpeed();
+                    break;
+                case "line3-3":
+                    step = Step.AwaitDayTwoClear;
+                    utilityPanel.SetTutorialInputEnabled(true);
+                    Resume();
+                    break;
+                case "line4-1":
+                    ShowLine("line4-2");
+                    break;
+                case "line4-2":
+                    step = Step.AwaitArtifactAcquired;
+                    prisonPanel.SetActionMode(PrisonActionMode.ArtifactRecipient);
+                    rewardPanel.SetTutorialInteraction(-1, false, true, false);
+                    break;
+                case "line4-3":
+                    step = Step.AwaitDayTwoRewards;
+                    prisonPanel.SetActionMode(PrisonActionMode.Any);
+                    rewardPanel.SetTutorialInteraction(-2, true, false, false);
+                    HandleRewardConsumed();
+                    break;
             }
         }
 
         private void HandleStageStateChanged(StageState state)
         {
-            if (stageManager.CurrentDay != 1)
+            if (stageManager.CurrentDay == 1)
             {
-                return;
+                if (state == StageState.Combat && step == Step.AwaitDayOneCombat)
+                {
+                    Pause();
+                    ShowLine("line1-3");
+                }
+                else if (state == StageState.RewardReady && step == Step.AwaitDayOneClear)
+                {
+                    Pause();
+                    StartCoroutine(ShowWhenRewardVisible("line1-5"));
+                }
             }
-
-            if (state == StageState.Combat && step == Step.AwaitDayOneCombat)
+            else if (stageManager.CurrentDay == 2)
             {
-                Pause();
-                ShowLine("line1-3");
-            }
-            else if (state == StageState.RewardReady && step == Step.AwaitDayOneClear)
-            {
-                Pause();
-                StartCoroutine(ShowWhenRewardVisible("line1-5"));
+                if (state == StageState.Combat && step == Step.AwaitDayTwoCombat)
+                {
+                    step = Step.AwaitManualInput;
+                }
+                else if (state == StageState.RewardReady && step == Step.AwaitDayTwoClear)
+                {
+                    step = Step.AwaitArtifactIntro;
+                    Pause();
+                    StartCoroutine(ShowWhenRewardVisible("line4-1"));
+                }
             }
         }
 
@@ -210,13 +271,86 @@ namespace Pakuri.InGame
 
         private void HandleRewardConsumed()
         {
-            if (step != Step.AwaitDayOneRewards || !rewardPanel.AllActiveRewardsConsumed)
+            if (!rewardPanel.AllActiveRewardsConsumed)
             {
                 return;
             }
 
-            step = Step.ReadyForDayTwo;
-            rewardPanel.SetTutorialInteraction(-1, true, false, true);
+            if (step == Step.AwaitDayOneRewards)
+            {
+                step = Step.ReadyForDayTwo;
+                rewardPanel.SetTutorialInteraction(-1, true, false, true);
+            }
+            else if (step == Step.AwaitDayTwoRewards)
+            {
+                step = Step.ReadyForDayThree;
+                rewardPanel.SetTutorialInteraction(-2, true, false, true);
+            }
+        }
+
+        private void HandleManualInputDetected()
+        {
+            if (step != Step.AwaitManualInput)
+            {
+                return;
+            }
+
+            step = Step.ManualInputDelay;
+            StartCoroutine(PauseAfterManualInputDelay());
+        }
+
+        private IEnumerator PauseAfterManualInputDelay()
+        {
+            yield return new WaitForSecondsRealtime(2f);
+            if (step != Step.ManualInputDelay
+                || stageManager.CurrentDay != 2
+                || stageManager.State != StageState.Combat)
+            {
+                yield break;
+            }
+
+            step = Step.None;
+            Pause();
+            ShowLine("line3-1");
+        }
+
+        private void HandleAutoSkillChanged(bool enabled)
+        {
+            CheckAutoAndSpeed();
+        }
+
+        private void HandleTimeScaleChanged(float timeScale)
+        {
+            CheckAutoAndSpeed();
+        }
+
+        private void CheckAutoAndSpeed()
+        {
+            var speed = utilityPanel.CurrentTimeScale;
+            if (step != Step.AwaitAutoSpeed
+                || !playerInput.AutoSkillEnabled
+                || (!Mathf.Approximately(speed, 1.5f) && !Mathf.Approximately(speed, 2f)))
+            {
+                return;
+            }
+
+            step = Step.None;
+            utilityPanel.SetTutorialInputEnabled(false);
+            Pause();
+            ShowLine("line3-3");
+        }
+
+        private void HandleArtifactAcquired(string artifactName)
+        {
+            if (step != Step.AwaitArtifactAcquired || string.IsNullOrWhiteSpace(artifactName))
+            {
+                return;
+            }
+
+            step = Step.None;
+            Pause();
+            rewardPanel.SetTutorialInteraction(-1, false, false, false);
+            ShowLine("line4-3");
         }
 
         private IEnumerator ShowWhenRewardVisible(string lineId)
@@ -232,19 +366,31 @@ namespace Pakuri.InGame
 
         private bool HandleContinueRequested()
         {
-            if (stageManager.CurrentDay != 1)
+            if (stageManager.CurrentDay == 1)
             {
+                if (step != Step.ReadyForDayTwo)
+                {
+                    return false;
+                }
+
+                offeringPanel.SetTutorialSkills(null, true);
+                step = Step.AwaitDayTwoCombat;
+                Resume();
                 return true;
             }
 
-            if (step != Step.ReadyForDayTwo)
+            if (stageManager.CurrentDay == 2)
             {
-                return false;
+                if (step != Step.ReadyForDayThree)
+                {
+                    return false;
+                }
+
+                step = Step.FreePlay;
+                Resume();
+                return true;
             }
 
-            offeringPanel.SetTutorialSkills(null, true);
-            step = Step.AwaitDayTwoCombat;
-            Resume();
             return true;
         }
 
@@ -292,6 +438,10 @@ namespace Pakuri.InGame
             offeringPanel.Opened -= HandleOfferingOpened;
             offeringPanel.ChoiceCommitted -= HandleOfferingCommitted;
             manifestPanel.ManifestCommitted -= HandleManifestCommitted;
+            prisonPanel.ArtifactAcquired -= HandleArtifactAcquired;
+            playerInput.ManualInputDetected -= HandleManualInputDetected;
+            playerInput.AutoSkillChanged -= HandleAutoSkillChanged;
+            utilityPanel.TimeScaleChanged -= HandleTimeScaleChanged;
         }
     }
 }

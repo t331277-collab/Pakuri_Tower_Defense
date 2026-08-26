@@ -97,7 +97,12 @@ namespace Pakuri.InGame
 
                 var flowManager = tutorialRoot.GetComponent<TutorialFlowManager>()
                     ?? tutorialRoot.AddComponent<TutorialFlowManager>();
-                flowManager.Initialize(this, combatManager, FindFirstObjectByType<InGameUIManager>());
+                flowManager.Initialize(
+                    this,
+                    combatManager,
+                    FindFirstObjectByType<InGameUIManager>(),
+                    FindFirstObjectByType<PlayerCombatInputController>(),
+                    FindFirstObjectByType<InGameUtilityPanelController>());
                 return;
             }
 

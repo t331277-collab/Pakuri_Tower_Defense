@@ -3,6 +3,7 @@
  * 책임: 일시정지·배속·Debug·Damage Meter·설정·종료 동작을 관리한다.
  */
 
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -27,6 +28,22 @@ namespace Pakuri.InGame
         private bool hasAutoButtonDefaultColors;
         private bool referencesBound;
         private bool bindingFailed;
+
+        public float CurrentTimeScale => TimeScales[timeScaleIndex];
+        public event Action<float> TimeScaleChanged;
+
+        public void SetTutorialInputEnabled(bool enabled)
+        {
+            if (autoButton != null)
+            {
+                autoButton.interactable = enabled;
+            }
+
+            if (timeButton != null)
+            {
+                timeButton.interactable = enabled;
+            }
+        }
 
         /// Unity가 컴포넌트를 로드할 때 의존성과 소유 런타임 상태를 초기화한다.
         private void Awake()
@@ -101,6 +118,7 @@ namespace Pakuri.InGame
             var timeScale = TimeScales[timeScaleIndex];
             Time.timeScale = timeScale;
             Time.fixedDeltaTime = baseFixedDeltaTime * timeScale;
+            TimeScaleChanged?.Invoke(timeScale);
 
             if (onePointFiveIndicator != null)
             {

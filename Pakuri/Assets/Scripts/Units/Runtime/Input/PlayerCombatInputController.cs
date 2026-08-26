@@ -4,6 +4,7 @@
  */
 
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -22,6 +23,8 @@ namespace Pakuri.InGame
         private Vector2 savedTargetPoint;
 
         public bool AutoSkillEnabled => autoSkillEnabled;
+        public event Action ManualInputDetected;
+        public event Action<bool> AutoSkillChanged;
 
         internal void HandleManualInput(
             UnitSpawnManager roster,
@@ -52,6 +55,11 @@ namespace Pakuri.InGame
                 out var currentAim,
                 out var currentTarget);
             var activeSkills = player.Model.SkillState.ActiveSkills;
+
+            if (hasInput)
+            {
+                ManualInputDetected?.Invoke();
+            }
 
             if (!hasInput && !HasBurstingProjectile(activeSkills))
             {
@@ -116,6 +124,7 @@ namespace Pakuri.InGame
             autoSkillEnabled = !autoSkillEnabled;
 
             ApplyAutoSkillModeToSelectedPlayer(roster);
+            AutoSkillChanged?.Invoke(autoSkillEnabled);
         }
 
         public void ApplyAutoSkillModeToSelectedPlayer(UnitSpawnManager roster)
