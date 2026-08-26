@@ -1,5 +1,16 @@
 # UI_BLACKBOARD
 
+## Task: 2026-08-26 Interactive Tutorial UI And End Flow
+
+- Task title: MainMenu Tutorial 진입, Eve 4-Phase 안내, TutoLine Skip/Next, 1-5 TutoEnd 복귀 구현.
+- Goals: Tutorial 버튼으로 Eve Tutorial Run에 진입하고, 사용자 제공 Line1-1~Line4-3을 typewriter로 출력한다. 기본 공격, Offering/현현, Auto+1.5x/2x, 유물 조건을 통과한 뒤 1-3~1-5를 진행하고 `TutorialUI/TutoEnd/Button`으로 MainMenu에 복귀한다.
+- Constraints: 기존 0.15초 MainMenu Run/Tutorial 전환과 일반 Run UI를 보존한다. 대사 중에는 unscaled time을 사용하고, 성공 판정은 UI 클릭이 아니라 authoritative runtime 결과를 사용한다. 사용자 소유 `InGameScene.unity`는 수정하지 않고 기존 계층을 런타임 바인딩한다.
+- Role Owner: Code Builder.
+- Status: TutorialLineView, 보상/포로/Offering/현현/유물 gate, TutoEnd 복귀 구현과 C# 빌드 검증 완료. Play Mode 확인 대기.
+- Next Actions: Unity Play Mode에서 SKIP!/Next!, 각 패널 gate, Auto/배속 입력, TutoEnd 표시와 MainMenu 복귀를 확인한다.
+- Evidence: `TutorialLineView.cs`는 기존 `TutorialUI/TutoLine/LinePanel/Text (TMP)`와 `SkipBtn`을 바인딩하고 Image-only SkipBtn에 Button을 런타임 추가한다. `Time.unscaledDeltaTime`과 TMP `maxVisibleCharacters`로 typewriter를 구현하고 typing 중 `SKIP!`, 완료 후 `Next!`를 사용한다. `TutorialFlowManager.cs`는 기존 `TutoEnd/Button`을 바인딩하고 day 5 Next를 차단해 transient panel을 숨긴 뒤 TutoEnd를 활성화한다. `RewardPanelUI`, `PrisonPanelUI`, `OfferingUI`, `MenifestUI`의 tutorial-only gate는 Normal mode에서 적용되지 않는다. `InGameScene.unity`는 이번 구현에서 스테이징하지 않았다. C# 빌드는 오류 0, 기존 경고 2개다.
+- History: 2026-08-26 초기 Ariel/6-Phase 설계를 작성했다. 이후 사용자 수정에 따라 Eve 입장, 정확한 15개 대사, 첫 포로 Offering·두 번째 포로 현현, Auto+1.5x/2x, 유물, 1-5 종료 흐름으로 인계서를 교체했다. 같은 날 Code Builder가 기존 계층의 런타임 바인딩으로 Phase C~G UI 흐름을 구현했다.
+
 ## Task: 2026-08-26 MainMenu Run/Tutorial Vertical Transition
 
 - Task title: `MainMenuScene/Canvas/MainMenuUI` Run·Tutorial 세로 전환.

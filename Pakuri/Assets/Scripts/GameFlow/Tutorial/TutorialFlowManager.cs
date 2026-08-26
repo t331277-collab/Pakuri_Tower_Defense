@@ -34,6 +34,7 @@ namespace Pakuri.InGame
         }
 
         private StageManager stageManager;
+        private InGameUIManager uiManager;
         private InGameCombatManager combatManager;
         private RewardPanelUI rewardPanel;
         private PrisonPanelUI prisonPanel;
@@ -45,7 +46,12 @@ namespace Pakuri.InGame
         private Step step;
         private float resumeTimeScale = 1f;
         private float resumeFixedDeltaTime;
+        private float initialFixedDeltaTime;
         private bool initialized;
+        private bool cleanedUp;
+        private bool ending;
+        private GameObject endRoot;
+        private UnityEngine.UI.Button endButton;
 
         public void Initialize(
             StageManager stage,
@@ -61,6 +67,7 @@ namespace Pakuri.InGame
 
             stageManager = stage;
             combatManager = combat;
+            this.uiManager = uiManager;
             rewardPanel = uiManager != null ? uiManager.RewardPanel : null;
             prisonPanel = uiManager != null ? uiManager.PrisonPanel : null;
             offeringPanel = uiManager != null ? uiManager.OfferingPanel : null;
@@ -68,6 +75,9 @@ namespace Pakuri.InGame
             playerInput = input;
             utilityPanel = utility;
             lineView = GetComponent<TutorialLineView>() ?? gameObject.AddComponent<TutorialLineView>();
+            var endTransform = transform.Find("TutoEnd");
+            endRoot = endTransform != null ? endTransform.gameObject : null;
+            endButton = endTransform != null ? endTransform.Find("Button")?.GetComponent<UnityEngine.UI.Button>() : null;
             if (stageManager == null
                 || combatManager == null
                 || rewardPanel == null
@@ -76,15 +86,21 @@ namespace Pakuri.InGame
                 || manifestPanel == null
                 || playerInput == null
                 || utilityPanel == null
+                || endRoot == null
+                || endButton == null
                 || !lineView.Initialize(transform))
             {
                 Debug.LogError("TutorialFlowManager initialization failed because required runtime references are missing.", this);
                 enabled = false;
+                stageManager?.ReturnToMainMenu();
                 return;
             }
 
             initialized = true;
             resumeFixedDeltaTime = Time.fixedDeltaTime;
+            initialFixedDeltaTime = Time.fixedDeltaTime;
+            endRoot.SetActive(false);
+            endButton.onClick.AddListener(HandleEndButtonClicked);
             stageManager.StateChanged += HandleStageStateChanged;
             stageManager.ContinueRequested += HandleContinueRequested;
             combatManager.DamageApplied += HandleDamageApplied;
@@ -391,7 +407,44 @@ namespace Pakuri.InGame
                 return true;
             }
 
+            if (stageManager.CurrentDay == 5)
+            {
+                ShowTutorialEnd();
+                return false;
+            }
+
             return true;
+        }
+
+        private void ShowTutorialEnd()
+        {
+            if (ending)
+            {
+                return;
+            }
+
+            ending = true;
+            lineView.Hide();
+            uiManager.HideAllTransientPanels();
+            utilityPanel.SetTutorialInputEnabled(false);
+            Pause();
+            endRoot.SetActive(true);
+            endButton.interactable = true;
+        }
+
+        private void HandleEndButtonClicked()
+        {
+            if (!ending || !endButton.interactable)
+            {
+                return;
+            }
+
+            endButton.interactable = false;
+            ClearTutorialRestrictions();
+            Cleanup();
+            Time.timeScale = 1f;
+            Time.fixedDeltaTime = initialFixedDeltaTime;
+            stageManager.ReturnToMainMenu();
         }
 
         private void ShowLine(string lineId)
@@ -400,10 +453,23 @@ namespace Pakuri.InGame
             if (line == null)
             {
                 Debug.LogError($"TutorialFlowManager cannot find dialogue '{lineId}'.", this);
+                ClearTutorialRestrictions();
+                Cleanup();
+                Time.timeScale = 1f;
+                Time.fixedDeltaTime = initialFixedDeltaTime;
+                stageManager.ReturnToMainMenu();
                 return;
             }
 
             lineView.Show(line);
+        }
+
+        private void ClearTutorialRestrictions()
+        {
+            utilityPanel.SetTutorialInputEnabled(true);
+            prisonPanel.SetActionMode(PrisonActionMode.Any);
+            manifestPanel.SetManifestChoiceRequired(false);
+            offeringPanel.SetTutorialSkills(null, true);
         }
 
         private void Pause()
@@ -425,11 +491,22 @@ namespace Pakuri.InGame
 
         private void OnDestroy()
         {
-            if (!initialized)
+            Cleanup();
+            Time.timeScale = 1f;
+            if (initialFixedDeltaTime > 0f)
+            {
+                Time.fixedDeltaTime = initialFixedDeltaTime;
+            }
+        }
+
+        private void Cleanup()
+        {
+            if (!initialized || cleanedUp)
             {
                 return;
             }
 
+            cleanedUp = true;
             stageManager.StateChanged -= HandleStageStateChanged;
             stageManager.ContinueRequested -= HandleContinueRequested;
             combatManager.DamageApplied -= HandleDamageApplied;
@@ -442,6 +519,7 @@ namespace Pakuri.InGame
             playerInput.ManualInputDetected -= HandleManualInputDetected;
             playerInput.AutoSkillChanged -= HandleAutoSkillChanged;
             utilityPanel.TimeScaleChanged -= HandleTimeScaleChanged;
+            endButton.onClick.RemoveListener(HandleEndButtonClicked);
         }
     }
 }

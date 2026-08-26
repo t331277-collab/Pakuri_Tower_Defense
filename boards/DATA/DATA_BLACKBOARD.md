@@ -1,5 +1,52 @@
 # DATA_BLACKBOARD
 
+## Task: 2026-08-26 Interactive Tutorial Dialogue And Stage Data
+
+### Task title
+
+Line1-1~Line4-3 대사와 Tutorial 1-1~1-5 Day/Encounter/Reward runtime catalog 구현.
+
+### Goals
+
+- `TutorialLine.csv`를 line_id/phase/sequence/block 순서의 15개 대사 source로 사용한다.
+- `stage_flow/TutorialStage`의 StageDay/StageEncounter/StageReward를 일반 Stage와 분리된 StageDefinition으로 빌드한다.
+- 1-1은 swordsman/priest 각 1, 포로 확정 2명, 현현 100%다. 1-2는 swordsman 2, rogue/priest/guardian captain 각 1과 유물 보상을 사용한다.
+- 기존 Stage1/Stage2 데이터와 스키마를 보존한다.
+
+### Constraints
+
+- 일반 Stage CSV와 catalog 결과를 변경하지 않고 Tutorial source를 별도 collection으로 유지한다.
+- CSV에는 대사와 Stage 데이터만 두고 C# 함수명이나 GameObject 실행 명령을 넣지 않는다.
+- 수량 미지정 enemy는 Designer assumption으로 1마리다. 1-3~1-5는 현재 Stage1 day3~day5 값을 tutorial 전용 key로 복제한다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+TutorialLine 15개와 TutorialStage Day/Encounter/Reward, parser/catalog/editor sync 구현 및 정적 검증 완료.
+
+### Next Actions
+
+- Unity Editor가 연결되면 CSV source validation 메뉴와 runtime catalog reimport 상태를 재확인한다.
+
+### Evidence
+
+- `TutorialLine.csv`는 UTF-8 15개 대사 block과 고유 line_id를 보유한다.
+- `stage_flow/TutorialStage/`에 StageDay 5행, day1 enemy 2마리, day2 enemy 5마리 및 전용 Reward 데이터가 존재한다.
+- `CsvRuntimeCatalog`, `CsvCatalogEditor`, `GameDataLoader`, `GameDataCatalog`가 TutorialLine과 TutorialStage 세 CSV를 명시적으로 연결한다.
+- `TutorialLineDefinition.Load()`는 중복 line_id와 정확한 15개 block을 검증한다.
+- day1 reward는 `prisoner_count_2_chance=1`, `manifest_success_chance=1`이며 Eve B/C/D ID lookup도 정적 검증됐다.
+- Phase B 커밋 `c145f5f`에 데이터 및 catalog 연결이 포함됐다.
+
+### History
+
+- 2026-08-26: Designer가 TutorialLine과 TutorialStage의 현재 파일 상태 및 runtime catalog 고정 참조를 확인했다.
+- 2026-08-26: 사용자 확정 조건을 반영한 구현 인계서를 작성했다. 데이터 구현은 시작하지 않았다.
+- 2026-08-26: 사용자 수정 플로우에 따라 15개 정확한 대사, Tutorial 1-1/1-2 custom data, 1-3~1-5 복제 전략으로 인계서를 갱신했다.
+- 2026-08-26: Code Builder가 TutorialLine 15행, TutorialStage 1-1~1-5 및 별도 runtime catalog 연결을 구현했다.
+
 ## Task: 2026-08-09 LineAttack RadiusMultiplier Contract Consolidation
 
 ### Task title
@@ -2471,3 +2518,45 @@ Complete; 80 PNG outputs generated and pixel-validated.
 
 - 2026-08-26: Inspected the ten source frames and confirmed each is `1024x1536` with `Format32bppArgb`.
 - 2026-08-26: Generated eight ten-frame color sets using deterministic pixel recoloring and completed structural, alpha, mask-boundary, and representative visual checks.
+## Task: 2026-08-26 Stage2 Spirit Aura Color Variants
+
+### Task title
+
+Create seven deterministic color sets from the ten Stage2 `A_Origon` spirit PNG frames.
+
+### Goals
+
+- Recolor the ten `A_Origon` frames into the existing Red, Blue, Green, Orange, Black, Violet, and Yellow spirit folders.
+- Preserve source geometry, canvas size, pixel coordinates, filenames, and alpha while changing only the blue/cyan aura tint.
+- Use the same deterministic HSV aura-mask method as the completed Stage1 color-variant task.
+
+### Constraints
+
+- Do not use generative reconstruction, resizing, cropping, movement, or shape edits.
+- Keep all outputs at `1024x1536` and retain the source filenames.
+- Keep central white energy, white particles, and non-aura pixels unchanged.
+- Leave `White_탐욕의정령` unchanged because the user supplied no White color code.
+
+### Role Owner
+
+Designer.
+
+### Status
+
+Complete; 70 PNG outputs generated and pixel-validated.
+
+### Next Actions
+
+- User may inspect the seven variants in Unity and provide a White palette only if `White_탐욕의정령` also needs generated frames.
+
+### Evidence
+
+- Source inspection found ten `1024x1536` `Format32bppArgb` PNGs under `Pakuri/Assets/Enemy/Stage2/Enemy/Spirit/A_Origon/`.
+- Generation reported `Generated=70; Validated=70; Palettes=7; Frames=10; ChangedAuraPixels=38020976`.
+- Pixel validation confirmed identical dimensions and alpha for every output and rejected any RGB change outside the source blue/cyan aura mask.
+- Representative visual inspection covered Red `#FF5252`, Blue `#03A9F4`, Green `#AFB42B`, Orange `#E64A19`, Black `#212121`, Violet `#9C27B0`, and Yellow `#FFC107`.
+
+### History
+
+- 2026-08-26: Inspected all ten Stage2 source frames and confirmed all seven destination folders were empty before generation.
+- 2026-08-26: Generated and validated ten frames in each of seven destination folders; left the White folder empty because no White palette was provided.

@@ -1,5 +1,53 @@
 # RUN_BLACKBOARD
 
+## Task: 2026-08-26 Interactive Tutorial Run Orchestration
+
+### Task title
+
+Eve Tutorial Run의 4개 안내 Phase, 1-1~1-5 전용 Stage 실행, 종료 후 MainMenu 복귀 구현.
+
+### Goals
+
+- Normal/Tutorial RunMode를 씬 진입부터 RunSession까지 보존한다.
+- TutorialFlowManager가 기본 공격, Offering/현현, Auto+배속, 유물 조건과 pause/resume, Stage/Reward 진행을 순서대로 조정한다.
+- Phase 3은 Auto on과 1.5x 또는 2x가 동시에 참일 때 성공한다.
+- Phase 4 유물 완료 뒤 1-3~1-5를 진행하고 1-5 final Next가 TutoEnd/Button MainMenu 복귀로 이어진다.
+
+### Constraints
+
+- 기존 코어 흐름은 유지하고 튜토리얼 전용 분기·상태 event만 노출한다.
+- 기존 일반 11-Day 진행, 승리/패배, 비동기 MainMenu-InGame 로드 흐름을 보존한다.
+- Tutorial Stage 자동 시작은 첫 대사 준비 전 발생하면 안 된다.
+
+### Role Owner
+
+Code Builder.
+
+### Status
+
+Phase A~G 구현과 C# 빌드 검증 완료. Unity Play Mode 전체 흐름 검증은 사용자 확인 대기.
+
+### Next Actions
+
+- Unity Play Mode에서 Normal Run 회귀와 Tutorial 1-1~1-5 전체 흐름을 확인한다.
+
+### Evidence
+
+- `RunSession.Mode`와 `StartContext.Mode`가 Normal/Tutorial을 보존하며 MainMenu Tutorial 버튼은 `eve`로 기존 비동기 InGameScene 로드를 호출한다.
+- `StageManager`는 Tutorial mode에서 `GameDataCatalog.TutorialStage`를 선택하고 `StateChanged`/`ContinueRequested`를 노출한다.
+- `TutorialFlowManager.cs`가 실제 피해, Offering commit, 현현 commit, 수동 입력, Auto/배속, 유물 획득을 authoritative event로 판정한다.
+- Tutorial day 5의 Next는 `AdvanceDay()` 전에 차단되어 `TutoEnd`를 표시하고 Button에서 기존 MainMenu 복귀 경로를 호출한다.
+- Phase 커밋은 `27699cf`, `c145f5f`, `655c5ca`, `fd1c527`, `335de5f`, `44956b4`이며 Phase G는 최종 종료/문서/검증 변경으로 커밋한다.
+- `dotnet build Pakuri/Pakuri.sln --no-restore`는 오류 0, 기존 assembly-reference 경고 2개로 완료됐다. 최종 Unity MCP 검증은 Editor 세션 부재로 실행하지 못했다.
+
+### History
+
+- 2026-08-26: 사용자가 인터랙티브 튜토리얼 흐름을 정의했다.
+- 2026-08-26: 사용자가 1.5x 성공과 TutoEnd/Button MainMenu 복귀를 확정했다.
+- 2026-08-26: Designer가 구현 인계서를 작성했으며 코드는 변경하지 않았다.
+- 2026-08-26: 사용자가 Eve 입장과 Line1-1~Line4-3의 정확한 action sequence, 1.5x/2x 허용, 1-3~1-5 진행을 제공해 기존 설계를 대체했다.
+- 2026-08-26: Code Builder가 Phase A~F를 각각 커밋하고 Phase G의 1-5 종료, TutoEnd, MainMenu 복귀 및 Normal/Tutorial 보상 UI 분리를 구현했다.
+
 ## Task: 2026-08-08 Stage Encounter Spawn and Boss Flag Runtime Contract
 
 ### Task title

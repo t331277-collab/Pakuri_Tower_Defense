@@ -503,7 +503,7 @@ namespace Pakuri.InGame
             endButtonsBound = true;
         }
 
-        private void ReturnToMainMenu()
+        public void ReturnToMainMenu()
         {
             SceneManager.LoadScene(mainMenuScenePath);
         }

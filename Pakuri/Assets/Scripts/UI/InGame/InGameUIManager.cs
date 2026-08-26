@@ -120,6 +120,11 @@ namespace Pakuri.InGame
             RefreshInfo();
         }
 
+        internal void HideAllTransientPanels()
+        {
+            HideTransientPanels();
+        }
+
         internal void RefreshInfo()
         {
             infoUI?.Refresh(

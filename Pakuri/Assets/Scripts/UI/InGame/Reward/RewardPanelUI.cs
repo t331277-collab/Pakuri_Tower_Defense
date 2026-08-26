@@ -124,7 +124,9 @@ namespace Pakuri.InGame
                 }
             }
 
-            if (manager.ActiveSession != null && manager.ActiveSession.IsTutorial)
+            if (manager.ActiveSession != null
+                && manager.ActiveSession.IsTutorial
+                && manager.CurrentDay <= 2)
             {
                 SetTutorialInteraction(-1, false, false, false);
             }
