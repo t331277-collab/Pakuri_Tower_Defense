@@ -734,27 +734,23 @@ public sealed class SkillCatalogRuntimeTests
     }
 
     [Test]
-    /// Stage 1/2의 Day5·Day10 Midboss와 Day11 Boss가 모두 유물 선택 세 개를 제공하는지 확인한다.
-    public void StageArtifactRewardsIncludeMidbossAndBoss()
+    /// Stage 1/2의 Day3·Day6·Day9·Day11만 유물 선택 세 개를 제공하는지 확인한다.
+    public void StageArtifactRewardsFollowScheduledDays()
     {
         var stage = ReloadGameDataCatalog().Stage;
-        var rewardNames = new[]
-        {
-            "reward-stage1-midboss",
-            "reward-stage1-day10-midboss",
-            "reward-stage1-boss",
-            "reward-stage2-midboss",
-            "reward-stage2-day10-midboss",
-            "reward-stage2-boss"
-        };
+        var artifactDays = new[] { 3, 6, 9, 11 };
 
-        for (var i = 0; i < rewardNames.Length; i++)
+        for (var stageIndex = 1; stageIndex <= 2; stageIndex++)
         {
-            Assert.That(stage.FindReward(rewardNames[i]).ArtifactChoiceCount, Is.EqualTo(3));
+            for (var day = 1; day <= 11; day++)
+            {
+                var reward = stage.FindReward(stage.FindDay(stageIndex, day).RewardRuleName);
+                Assert.That(
+                    reward.ArtifactChoiceCount,
+                    Is.EqualTo(Array.IndexOf(artifactDays, day) >= 0 ? 3 : 0),
+                    $"Stage {stageIndex}-{day} artifact reward count");
+            }
         }
-
-        Assert.That(stage.FindReward("reward-stage1-normal").ArtifactChoiceCount, Is.Zero);
-        Assert.That(stage.FindReward("reward-stage2-normal").ArtifactChoiceCount, Is.Zero);
     }
 
     [Test]

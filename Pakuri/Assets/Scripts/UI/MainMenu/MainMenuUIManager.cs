@@ -27,6 +27,9 @@ public class MainMenuUIManager : MonoBehaviour
     private const int IntroVideoHeight = 1080;
 
     [SerializeField] private AudioClip mainMenuBgm;
+    [SerializeField] private AudioClip inGameBgm;
+    [SerializeField] private AudioClip stageTwoBgm;
+    [SerializeField] private AudioClip uiButtonClickSfx;
     [SerializeField] private VideoClip introVideoClip;
     [SerializeField] private VideoClip loopVideoClip;
 
@@ -106,6 +109,7 @@ public class MainMenuUIManager : MonoBehaviour
 
         InitializeMainMenuLayout();
         BindButtons();
+        SoundManager.Instance.Configure(inGameBgm, stageTwoBgm, uiButtonClickSfx);
         ShowIntro();
         StartMainMenuBgm();
         StartIntroSequence();

@@ -1,5 +1,16 @@
 # UI_BLACKBOARD
 
+## Task: 2026-08-26 Cross-Scene BGM And Button SFX
+
+- Task title: MainMenu→InGame BGM 전환과 두 씬 공용 UI Button 클릭음.
+- Goals: InGameScene 로드 시 MainMenu BGM을 중단하고 `Assets/UI/성가의 행진.mp3`를 반복 재생한다. MainMenuScene·InGameScene의 활성 UGUI Button pointer/submit 입력에 `Assets/UI/ESM_Cool_UI_Button_10_Game_Click_Switch_UI_Classic.wav`를 재생한다.
+- Constraints: 기존 `SoundManager` singleton·MainMenu 비동기 씬 로드·Button 동작을 보존한다. Button의 `onClick` 교체와 무관하게 SFX가 유지돼야 하며 BGM과 SFX는 별도 AudioSource를 사용한다. Play Mode 청각 검증은 사용자 소유다.
+- Role Owner: Code Builder.
+- Status: 코드·MainMenuScene 오디오 참조 반영과 정적·Unity·빌드 검증 완료. 사용자 Play Mode 확인 대기.
+- Next Actions: MainMenu에서 각 Button 클릭음, Run/Tutorial 진입 직후 BGM 교체, InGame의 기존·동적 Button 클릭음, MainMenu 복귀 시 기존 BGM 재개를 확인한다.
+- Evidence: `SoundManager`는 `DontDestroyOnLoad` 상태에서 `SceneManager.sceneLoaded`의 `InGameScene` 진입을 받아 기존 BGM AudioSource를 `Stop()`한 뒤 InGame clip을 반복 재생하고 별도 SFX AudioSource를 사용한다. `UiButtonClickSound`는 `IPointerClickHandler`·`ISubmitHandler`로 활성·interactable Button만 재생하므로 `RemoveAllListeners()`의 영향을 받지 않는다. `MainMenuUIManager`가 singleton에 두 clip을 설정하며 MainMenuScene live component는 `Assets/UI/성가의 행진.mp3`와 지정 WAV를 참조한다. 두 파일은 Unity `AudioClip`으로 확인됐다. 사용자 Play Mode 상태의 읽기 전용 검사에서 InGameScene `Button=120`, `UiButtonClickSound=120`으로 전 버튼 부착이 일치했다. Runtime·Editor 빌드 오류 0, 신규 두 스크립트 Unity 진단 오류/경고 0, MainMenuScene validate issues 0, Console errors 0이다.
+- History: 2026-08-26 Code Builder가 기존 BGM singleton을 확장하고 공용 Button 입력 컴포넌트를 추가해 씬별 오디오를 연결했다.
+
 ## Task: 2026-08-26 Manifest Success Monster Type Icons
 
 - Task title: `ManifestSuccessPopup`에 현현 몬스터 MainTypeIcon·SubTypeIcon 표시.
@@ -1532,7 +1543,7 @@ Implemented with the requested High replacements and playback corrections. Both 
 
 ### Evidence
 
-- `Pakuri/Assets/Scripts/UI/MainMenu/SoundManager.cs` implements a singleton with one looping `AudioSource` and `PlayBgm(AudioClip)` only.
+- `Pakuri/Assets/Scripts/UI/MainMenu/SoundManager.cs`의 원래 baseline은 one looping BGM AudioSource와 `PlayBgm(AudioClip)`이었다. 2026-08-26 cross-scene audio task에서 별도 SFX AudioSource와 InGame BGM 전환이 추가됐다.
 - `Pakuri/Assets/Scripts/UI/MainMenu/MainMenuUIManager.cs` starts BGM and the Intro coroutine in `Start()`, fades `Summary` for `0.5f`, `GameStart` for `1f`, and handles `VideoPlayer.loopPointReached` from BG1 to looping BG2.
 - `Pakuri/Assets/Scenes/NewScene/MainMenuScene.unity` serializes the MP3 and High BG1/BG2 references; Unity-MCP component inspection reports `Assets/UI/Video/High_BG1_Unity.mp4` and `Assets/UI/Video/High_BG2_Unity.mp4` assigned.
 - Unity-MCP asset inspection reports the MP3 as `UnityEngine.AudioClip` and both videos as `UnityEngine.Video.VideoClip`.
@@ -1553,3 +1564,4 @@ Implemented with the requested High replacements and playback corrections. Both 
 - 2026-08-22: After the user reported timestamp warnings and rough playback, Designer inspected both files, packet timestamps, keyframes, Unity Console, current VideoPlayer code, and Unity 6000.3 API documentation; no code or media files were changed during diagnosis.
 - 2026-08-22: Designer inspected the newly supplied High sources and prepared a Code Builder handoff: downsample from the 4K sources to Unity-compatible 1080p Baseline/CFR/no-B-frame video, replace the scene references, and add explicit preparation/preloading. No media, code, or scene asset was changed because the user message did not name Code Builder.
 - 2026-08-22: With explicit Code Builder authorization and consent to silence the clips, converted both High assets in place, disabled importer audio, switched scene references, added BG1 preparation and BG2 preloading, disabled frame dropping, and completed static/Unity validation without entering Play Mode.
+- 2026-08-26: Cross-scene audio task extended the persistent SoundManager beyond the original BGM-only scope; see the current task at the top of this board.

@@ -172,6 +172,10 @@ namespace Pakuri.InGame
 
             activeSession.DayIndex = 1;
             activeSession.StageIndex = Math.Min(activeSession.StageIndex + 1, 4);
+            if (activeSession.StageIndex == 2)
+            {
+                global::SoundManager.Instance.PlayStageTwoBgm();
+            }
         }
 
         /// 다음 Day 시작 전에 복구된 플레이어 몬스터의 체력을 최대치로 채운다.
