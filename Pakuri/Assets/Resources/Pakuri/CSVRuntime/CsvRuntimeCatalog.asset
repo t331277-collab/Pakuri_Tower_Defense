@@ -82,6 +82,10 @@ MonoBehaviour:
   Stage1Reward: {fileID: 4900000, guid: 70a401a65360442ab6e8a8d0519db05f, type: 3}
   Stage2Encounter: {fileID: 4900000, guid: a115e01031f64929bc66cbb85cb284e4, type: 3}
   Stage2Reward: {fileID: 4900000, guid: a2fd51fccf1d48149de3dfd1a6079460, type: 3}
+  TutorialLine: {fileID: 4900000, guid: 25be8450b614fae439c9f1b5e2a4b96c, type: 3}
+  TutorialStageDay: {fileID: 4900000, guid: a135b7d973bd4819adf39cb4d89d50f1, type: 3}
+  TutorialStageEncounter: {fileID: 4900000, guid: a236ef2efbc543f19750f899413ce63d, type: 3}
+  TutorialStageReward: {fileID: 4900000, guid: a35ce67d4c9a4f82b6a732b440d67d4c, type: 3}
   Sprites:
   - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/Achor.png
     Asset: {fileID: 21300000, guid: ef1e124d1928cc54ea59ccf3db8fdfe0, type: 3}

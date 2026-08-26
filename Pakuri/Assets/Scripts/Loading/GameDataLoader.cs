@@ -41,6 +41,8 @@ namespace Pakuri.Data
         internal const string ArtifactEffectCsvAssetRoot = ArtifactCsvAssetRoot + "/Effect";
         internal const string ArtifactSkillCsvAssetRoot = ArtifactCsvAssetRoot + "/Skill";
         internal const string StageFlowCsvAssetRoot = CsvDataAssetRoot + "/stage_flow";
+        internal const string TutorialCsvAssetRoot = CsvDataAssetRoot + "/Tutorial";
+        internal const string TutorialStageCsvAssetRoot = StageFlowCsvAssetRoot + "/TutorialStage";
         internal const string RuntimeResourcesFolderAssetPath = "Assets/Resources/Pakuri/CSVRuntime";
         internal const string RuntimeCatalogAssetPath = RuntimeResourcesFolderAssetPath + "/CsvRuntimeCatalog.asset";
         internal const string RuntimeCatalogResourcesPath = "Pakuri/CSVRuntime/CsvRuntimeCatalog";
@@ -72,6 +74,7 @@ namespace Pakuri.Data
         internal const string ArtifactSkillTriggerFileName = "artifact_skill_triger.csv";
         internal const string SummonUnitsFileName = "summon_units.csv";
         internal const string SummonSkillsFileName = "summon_units_skill.csv";
+        internal const string TutorialLineFileName = "TutorialLine.csv";
 
         internal static bool initialized;
         internal static bool failed;
@@ -293,6 +296,10 @@ namespace Pakuri.Data
             Require(sourceCatalog.Stage1Reward != null, "stage_flow/Stage1/" + StageFileNames.StageReward);
             Require(sourceCatalog.Stage2Encounter != null, "stage_flow/Stage2/" + StageFileNames.StageEncounter);
             Require(sourceCatalog.Stage2Reward != null, "stage_flow/Stage2/" + StageFileNames.StageReward);
+            Require(sourceCatalog.TutorialLine != null, "Tutorial/" + TutorialLineFileName);
+            Require(sourceCatalog.TutorialStageDay != null, "stage_flow/TutorialStage/" + StageFileNames.StageDay);
+            Require(sourceCatalog.TutorialStageEncounter != null, "stage_flow/TutorialStage/" + StageFileNames.StageEncounter);
+            Require(sourceCatalog.TutorialStageReward != null, "stage_flow/TutorialStage/" + StageFileNames.StageReward);
 
             if (missingAssets.Count > 0)
             {

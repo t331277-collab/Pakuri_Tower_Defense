@@ -1,0 +1,7 @@
+stage,day,day_key,combat_type,encounter_name,reward_rule_name,elite_option_chance,shop_option_enabled,event_roll_enabled,notes
+int,int,string,string,string,string,float,bool,bool,string
+1,1,tutorial-stage1-day1,Tutorial,tutorial-stage1-day1-basic,reward-tutorial-stage1-day1,0,false,false,Tutorial basic attack and fixed prisoner reward.
+1,2,tutorial-stage1-day2,Tutorial,tutorial-stage1-day2-auto-speed,reward-tutorial-stage1-day2-artifact,0,false,false,Tutorial auto speed and artifact reward.
+1,3,tutorial-stage1-day3,Normal,tutorial-stage1-day3-normal,reward-tutorial-stage1-day3-normal,0,false,false,Copy current Stage1 day3 values.
+1,4,tutorial-stage1-day4,Normal,tutorial-stage1-day4-normal,reward-tutorial-stage1-day4-normal,0,false,false,Copy current Stage1 day4 values.
+1,5,tutorial-stage1-day5,Day5Midboss,tutorial-stage1-day5-midboss,reward-tutorial-stage1-day5-midboss,0,false,false,Copy current Stage1 day5 values; final Next opens TutoEnd.

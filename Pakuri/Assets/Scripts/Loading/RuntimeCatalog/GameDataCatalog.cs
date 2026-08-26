@@ -42,6 +42,22 @@ namespace Pakuri.Data
         public EnemyDefinition[] StageTwoEnemies = Array.Empty<EnemyDefinition>();
         public StatusEffectDefinition[] StatusEffects = Array.Empty<StatusEffectDefinition>();
         public StageDefinition Stage = new StageDefinition();
+        public StageDefinition TutorialStage = new StageDefinition();
+        public TutorialLineDefinition[] TutorialLines = Array.Empty<TutorialLineDefinition>();
+
+        public TutorialLineDefinition GetTutorialLine(string lineId)
+        {
+            for (var i = 0; i < TutorialLines.Length; i++)
+            {
+                var line = TutorialLines[i];
+                if (line != null && string.Equals(line.LineId, lineId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return line;
+                }
+            }
+
+            return null;
+        }
 
         public void RebuildLookup()
         {

@@ -183,6 +183,18 @@ namespace Pakuri.Data
             sourceCatalog.Stage2Reward = LoadTextAssetOrThrow(
                 $"{StageFlowCsvAssetRoot}/Stage2/{StageFileNames.StageReward}",
                 "Create Stage2/StageReward.csv under Assets/CSVdata/stage_flow before validation.");
+            sourceCatalog.TutorialLine = LoadTextAssetOrThrow(
+                $"{TutorialCsvAssetRoot}/{TutorialLineFileName}",
+                "Create TutorialLine.csv under Assets/CSVdata/Tutorial before validation.");
+            sourceCatalog.TutorialStageDay = LoadTextAssetOrThrow(
+                $"{TutorialStageCsvAssetRoot}/{StageFileNames.StageDay}",
+                "Create TutorialStage/StageDay.csv before validation.");
+            sourceCatalog.TutorialStageEncounter = LoadTextAssetOrThrow(
+                $"{TutorialStageCsvAssetRoot}/{StageFileNames.StageEncounter}",
+                "Create TutorialStage/StageEncounter.csv before validation.");
+            sourceCatalog.TutorialStageReward = LoadTextAssetOrThrow(
+                $"{TutorialStageCsvAssetRoot}/{StageFileNames.StageReward}",
+                "Create TutorialStage/StageReward.csv before validation.");
             EditorUtility.SetDirty(sourceCatalog);
 
             var sourceModel = LoadSourceModel(sourceCatalog);

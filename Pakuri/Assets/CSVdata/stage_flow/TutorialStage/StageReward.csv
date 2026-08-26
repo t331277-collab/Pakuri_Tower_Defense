@@ -1,0 +1,7 @@
+reward_rule_name,combat_type,stage,gold,dark_trace,prisoner_count_1_chance,prisoner_count_2_chance,prisoner_count_3_chance,manifest_success_chance,elite_bonus_prisoners,artifact_choice_count,guaranteed_prisoner_source,notes
+string,string,int,int,int,float,float,float,float,int,int,string,string
+reward-tutorial-stage1-day1,Tutorial,1,10,10,0,1,0,1,0,0,EncounterBoss,Tutorial day 1 fixed two prisoners and guaranteed manifestation.
+reward-tutorial-stage1-day2-artifact,Tutorial,1,30,20,0.05,0.80,0.15,0.70,0,3,GuaranteedBoss,Tutorial day 2 artifact reward.
+reward-tutorial-stage1-day3-normal,Normal,1,10,10,0.05,0.80,0.15,0.70,0,0,EncounterBoss,Copy current Stage1 normal reward.
+reward-tutorial-stage1-day4-normal,Normal,1,10,10,0.05,0.80,0.15,0.70,0,0,EncounterBoss,Copy current Stage1 normal reward.
+reward-tutorial-stage1-day5-midboss,Day5Midboss,1,30,20,0.05,0.80,0.15,0.70,0,3,GuaranteedBoss,Copy current Stage1 day 5 midboss reward.

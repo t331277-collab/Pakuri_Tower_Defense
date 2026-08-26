@@ -65,7 +65,9 @@ namespace Pakuri.InGame
         {
             HideEndPanels();
             BindEndPanelButtons();
-            stageDefinition = GameDataLoader.CurrentCatalog.Stage;
+            stageDefinition = StartContext.Mode == RunMode.Tutorial
+                ? GameDataLoader.CurrentCatalog.TutorialStage
+                : GameDataLoader.CurrentCatalog.Stage;
 
             if (startFlowOnStart)
             {

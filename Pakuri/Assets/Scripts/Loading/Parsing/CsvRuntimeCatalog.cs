@@ -87,6 +87,12 @@ namespace Pakuri.Data
         public TextAsset Stage2Encounter;
         public TextAsset Stage2Reward;
 
+        [Header("Tutorial Sources")]
+        public TextAsset TutorialLine;
+        public TextAsset TutorialStageDay;
+        public TextAsset TutorialStageEncounter;
+        public TextAsset TutorialStageReward;
+
         [Header("Unity Assets")]
         public SpriteEntry[] Sprites = Array.Empty<SpriteEntry>();
         public PrefabEntry[] Prefabs = Array.Empty<PrefabEntry>();

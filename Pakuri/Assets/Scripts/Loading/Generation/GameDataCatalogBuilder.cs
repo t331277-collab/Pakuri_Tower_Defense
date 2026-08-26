@@ -115,6 +115,8 @@ namespace Pakuri.Data
             catalog.StageOneEnemies = BuildEnemies(model, "stage_one", catalog.StatusEffects);
             catalog.StageTwoEnemies = BuildEnemies(model, "stage_two", catalog.StatusEffects);
             catalog.Stage = StageDefinitionBuilder.Build(assetCatalog);
+            catalog.TutorialStage = StageDefinitionBuilder.BuildTutorial(assetCatalog);
+            catalog.TutorialLines = TutorialLineDefinition.Load(assetCatalog.TutorialLine);
             return catalog;
         }
 

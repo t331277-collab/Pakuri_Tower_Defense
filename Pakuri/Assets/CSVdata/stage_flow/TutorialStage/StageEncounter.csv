@@ -1,0 +1,15 @@
+encounter_name,spawn_order,enemy_name,count,interval_sec,spawn_y_min,spawn_y_max,is_boss_candidate,boss_health_multiplier_min,boss_health_multiplier_max,guaranteed_prisoner
+string,int,string,int,float,float,float,bool,float,float,bool
+tutorial-stage1-day1-basic,0,stage1-swordsman,1,0.5,-5,5,true,3,5,true
+tutorial-stage1-day1-basic,1,stage1-priest,1,0.5,-5,5,true,3,5,true
+tutorial-stage1-day2-auto-speed,0,stage1-swordsman,2,0.5,-5,5,true,3,5,false
+tutorial-stage1-day2-auto-speed,1,stage1-rogue,1,0.5,-5,5,true,3,5,false
+tutorial-stage1-day2-auto-speed,2,stage1-priest,1,0.5,-5,5,true,3,5,false
+tutorial-stage1-day2-auto-speed,3,stage1-guardian-captain,1,0.5,0,0,false,3,5,true
+tutorial-stage1-day3-normal,0,stage1-shieldbearer,2,0.5,-5,5,true,3,5,true
+tutorial-stage1-day3-normal,1,stage1-priest,2,0.5,-5,5,true,3,5,false
+tutorial-stage1-day4-normal,0,stage1-swordsman,3,0.5,-5,5,true,3,5,true
+tutorial-stage1-day4-normal,1,stage1-shieldbearer,3,0.5,-5,5,true,3,5,false
+tutorial-stage1-day4-normal,2,stage1-rogue,3,0.5,-5,5,true,3,5,false
+tutorial-stage1-day5-midboss,0,stage1-guardian-captain,1,0.5,0,0,false,3,5,true
+tutorial-stage1-day5-midboss,1,stage1-swordsman,8,0.5,-5,5,true,1,1,false

@@ -16,6 +16,16 @@ namespace Pakuri.Data
             };
         }
 
+        internal static StageDefinition BuildTutorial(CsvRuntimeCatalog sourceCatalog)
+        {
+            return new StageDefinition
+            {
+                Days = LoadDays(sourceCatalog.TutorialStageDay),
+                Encounters = LoadEncounters(sourceCatalog.TutorialStageEncounter),
+                Rewards = LoadRewards(sourceCatalog.TutorialStageReward)
+            };
+        }
+
         private static StageDayDefinition[] LoadDays(TextAsset csv)
         {
             var rows = new List<StageDayDefinition>();
@@ -39,11 +49,13 @@ namespace Pakuri.Data
             return rows.ToArray();
         }
 
-        private static StageEncounterDefinition[] LoadEncounters(TextAsset stage1Csv, TextAsset stage2Csv)
+        private static StageEncounterDefinition[] LoadEncounters(params TextAsset[] files)
         {
             var rows = new List<StageEncounterDefinition>();
-            LoadEncounterRows(rows, stage1Csv);
-            LoadEncounterRows(rows, stage2Csv);
+            for (var i = 0; i < files.Length; i++)
+            {
+                LoadEncounterRows(rows, files[i]);
+            }
             return rows.ToArray();
         }
 
@@ -68,11 +80,13 @@ namespace Pakuri.Data
             }
         }
 
-        private static StageRewardDefinition[] LoadRewards(TextAsset stage1Csv, TextAsset stage2Csv)
+        private static StageRewardDefinition[] LoadRewards(params TextAsset[] files)
         {
             var rows = new List<StageRewardDefinition>();
-            LoadRewardRows(rows, stage1Csv);
-            LoadRewardRows(rows, stage2Csv);
+            for (var i = 0; i < files.Length; i++)
+            {
+                LoadRewardRows(rows, files[i]);
+            }
             return rows.ToArray();
         }
 
